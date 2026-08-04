@@ -35,9 +35,8 @@ describe Dashboard, "#index" do
 
     it "assigns invitations for the current user" do
       # Scopes return an ActiveRecord::Relation rather than an Array since
-      # Rails 3; what matters is that it enumerates the right invitations,
-      # which the two assertions below check.
-      @response.assigns(:invitations).should be_kind_of(Enumerable)
+      # Rails 3, and Relation does not include Enumerable. What matters is
+      # that it yields the right invitations, which is asserted below.
       @response.assigns(:invitations).length.should == @expected_invitations.length
       @response.assigns(:invitations).each do |invitation|
         expected_invitation?(invitation).should be_truthy

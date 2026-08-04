@@ -14,7 +14,13 @@ class Question < ActiveRecord::Base
       self.answers.first.value
   end
 
+  # Stored answer values are stripped on save, so the submitted one is stripped
+  # here too. check_answer! already does it for its own path, but this is the
+  # single point where a code is actually compared, and players type these on
+  # phones where a stray leading or trailing space is easy to introduce.
   def matches_any_answer(answer_value)
-    self.answers.any? {|answer| answer.value.to_s.upcase_utf8_cyr == answer_value.to_s.upcase_utf8_cyr}
+    self.answers.any? do |answer|
+      answer.value.to_s.strip.upcase_utf8_cyr == answer_value.to_s.strip.upcase_utf8_cyr
+    end
   end
 end

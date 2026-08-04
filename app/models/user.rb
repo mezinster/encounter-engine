@@ -6,6 +6,12 @@ class User < ActiveRecord::Base
 
   validates_presence_of :email, :message => "Не введён e-mail"
 
+  # Restored verbatim from before d21a177 ("Upgrade to ActiveRecord 4.0"), which
+  # dropped it along with the icq/jabber/phone format validations. Without it any
+  # string is accepted as an address and the welcome letter goes nowhere.
+  validates_format_of :email, :with => /\A([^@\s]+)@((?:[-a-z0-9]+.)+[a-z]{2,})\Z/i,
+    :message => "Неправильный формат поля e-mail"
+
   validates_uniqueness_of :email,
     :message => "Пользователь с таким адресом уже зарегистрирован"
 

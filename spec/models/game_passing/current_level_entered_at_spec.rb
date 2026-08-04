@@ -16,7 +16,10 @@ describe GamePassing, "#current_level_entered_at" do
 
       describe "when game passing created" do
         it "should be equal to creation time" do
-          @game_passing.current_level_entered_at.to_s.should == @game_passing.created_at.to_s
+          # Compare instants, not formatted strings: the two attributes come
+          # back in different zones (one UTC, one local), so #to_s differs even
+          # when they refer to the same moment.
+          @game_passing.current_level_entered_at.to_i.should == @game_passing.created_at.to_i
         end
       end
 

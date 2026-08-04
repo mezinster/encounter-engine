@@ -11,8 +11,8 @@ describe Game do
 
       it "should not be valid" do
         @game.should_not be_valid
-        @game.errors.on(:name).should_not be_empty
-        @game.errors.on(:description).should_not be_empty
+        @game.errors[:name].should_not be_empty
+        @game.errors[:description].should_not be_empty
       end
     end
   end
@@ -20,7 +20,7 @@ describe Game do
   describe "starts_at field" do
     describe "when valid date and time entered" do
       before :each do
-        @game = build_game :starts_at => "2026-01-10 18:30"
+        @game = build_game :starts_at => "2099-01-10 18:30"
         @game.valid?
       end
 
@@ -67,7 +67,7 @@ describe Game do
 
       it "should not be valid" do
         @game.should_not be_valid
-        @game.errors.on(:starts_at).should_not be_empty
+        @game.errors[:starts_at].should_not be_empty
       end
     end
   end

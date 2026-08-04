@@ -19,6 +19,9 @@
 - The local bundle is configured `without production`, so `pg` is not installed locally. A naive `RAILS_ENV=production` boot dies on a `pg` LoadError before reaching anything interesting; substitute `DATABASE_URL="sqlite3:db/probe.sqlite3"` to test production config locally.
 - Existing test suites must not regress: `bundle exec rspec` (421 examples, 0 failures, 6 pending) and `bundle exec cucumber` (234 scenarios, 2362 steps).
 - Branch: `deploy/kamal`, based on `modernize/rails`.
+- **This workstation has no container runtime.** `docker`, `podman` and `nerdctl` are all absent, and Docker Desktop has been uninstalled from the Windows side. No image can be built or run locally.
+- **This workstation cannot reach the host's SSH port directly.** A raw TCP connect to `23.100.7.86:22` is blocked; `~/.ssh/config` reaches it only through `ProxyCommand /home/mezinster/.ssh/mezin-proxy.sh`, a SOCKS bridge on the Windows side. The `ssh` binary and Ansible honour that ProxyCommand; Kamal, which drives SSH through net-ssh rather than the binary, cannot be relied on to.
+- **Consequence — CI builds and CI deploys.** Every `docker build` and every `kamal` invocation runs on a GitHub Actions runner, never on this workstation and never on the target host. Verification that needs only `ssh` or `curl` still runs from here.
 
 ---
 
@@ -34,7 +37,8 @@
 | `config/deploy.yml` | Kamal: service, servers, proxy/TLS, registry, accessory, env split |
 | `.kamal/secrets` | Secret *references* only — never values |
 | `.kamal/hooks/pre-deploy` | Runs `db:migrate` once against the exact image being deployed |
-| `.github/workflows/deploy.yml` | Build → push GHCR → `kamal deploy`, gated on an Environment |
+| `.github/workflows/images.yml` | Builds and smoke-tests both images on every branch push — the build gate this workstation cannot provide |
+| `.github/workflows/deploy.yml` | `kamal deploy` from a runner, gated on a reviewed Environment |
 | `ansible/inventory.ini` | The single host |
 | `ansible/playbook.yml` | Docker install plus a non-destructive verification of existing listeners |
 | `docs/runbooks/restore.md` | The PITR procedure, written to be followed under pressure |
@@ -296,35 +300,71 @@ EXPOSE 3000
 CMD ["bundle", "exec", "puma", "-b", "tcp://0.0.0.0:3000"]
 ```
 
-- [ ] **Step 4: Build the image locally**
+- [ ] **Step 4: Write `.github/workflows/images.yml`**
 
-```bash
-docker build -t encounter-engine:test .
+This workstation has no container runtime, so the build gate lives in CI. This
+workflow is not the deploy — it builds and *runs* the image on every branch
+push, so a broken Dockerfile is caught here rather than during a deploy.
+
+```yaml
+name: Images
+
+on:
+  push:
+    branches-ignore: []
+  workflow_dispatch:
+
+jobs:
+  app-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the application image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: encounter-engine:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Prove the image actually serves
+        run: |
+          docker run -d --name ee-smoke -p 3001:3000 \
+            -e SECRET_KEY_BASE=$(openssl rand -hex 64) \
+            -e DATABASE_URL="sqlite3:/tmp/smoke.sqlite3" \
+            -e APP_HOST=game.mezin.eu \
+            -e SMTP_USERNAME=x -e SMTP_PASSWORD=y \
+            encounter-engine:test
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3001/up || true)
+            [ "$code" = "200" ] && echo "up: 200 after ${i}s" && exit 0
+            sleep 1
+          done
+          echo "FAILED: /up never returned 200"
+          docker logs ee-smoke
+          exit 1
 ```
 
-Expected: a successful build. If Docker is unavailable on this workstation, build it in CI via Task 7 and mark this step done there instead — but do not skip verifying the image runs.
+The retry loop replaces a fixed `sleep`: a runner under load can take longer
+than any constant you would pick, and a flaky gate is a gate people learn to
+ignore.
 
-- [ ] **Step 5: Prove the image actually serves**
-
-```bash
-docker run -d --name ee-smoke -p 3001:3000 \
-  -e SECRET_KEY_BASE=$(openssl rand -hex 64) \
-  -e DATABASE_URL="sqlite3:/tmp/smoke.sqlite3" \
-  -e APP_HOST=game.mezin.eu -e SMTP_USERNAME=x -e SMTP_PASSWORD=y \
-  encounter-engine:test
-sleep 8
-curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3001/up
-docker rm -f ee-smoke
-```
-
-Expected: `200`. A non-200 means the image cannot serve, and no amount of Kamal configuration will fix that later.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit and push, then watch the gate**
 
 ```bash
-git add Dockerfile .dockerignore Gemfile Gemfile.lock
-git commit -m "Add the application image and the kamal gem"
+git add Dockerfile .dockerignore Gemfile Gemfile.lock .github/workflows/images.yml
+git commit -m "Add the application image, the kamal gem, and a CI build gate"
+git push -u origin deploy/kamal
+gh run watch
 ```
+
+Expected: the `app-image` job green, with `up: 200 after Ns` in its log. A red
+run means the image cannot serve, and no amount of Kamal configuration will fix
+that later — fix the Dockerfile and push again before moving on.
 
 ---
 
@@ -371,39 +411,65 @@ CONF
 CMD ["postgres", "-c", "config_file=/usr/share/postgresql/postgresql.conf.sample", "-c", "include_dir=/etc/postgresql/conf.d"]
 ```
 
-- [ ] **Step 2: Build it**
+- [ ] **Step 2: Add a `postgres-image` job to `.github/workflows/images.yml`**
 
-```bash
-docker build -f Dockerfile.postgres -t ee-postgres:test .
+Append alongside the existing `app-image` job (same indentation, under `jobs:`).
+No container runtime exists on this workstation, so this is where the image is
+proven.
+
+```yaml
+  postgres-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the PostgreSQL image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.postgres
+          load: true
+          tags: ee-postgres:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: wal-g must be runnable INSIDE the image
+        run: docker run --rm ee-postgres:test wal-g --version
+
+      - name: PostgreSQL must still start with the tuning file
+        run: |
+          docker run -d --name pg-smoke -e POSTGRES_PASSWORD=smoke ee-postgres:test
+          for i in $(seq 1 30); do
+            docker exec pg-smoke pg_isready -U postgres >/dev/null 2>&1 && break
+            sleep 1
+          done
+          docker exec pg-smoke psql -U postgres -c "SHOW shared_buffers;" | grep -q 128MB
+          docker exec pg-smoke psql -U postgres -c "SHOW archive_mode;"   | grep -q on
+          echo "tuning applied"
+          docker rm -f pg-smoke
 ```
 
-Expected: a successful build.
+The `wal-g --version` step is the check that would have caught the design error
+where wal-g was installed on the host instead — `archive_command` is executed by
+the PostgreSQL process, and a host binary is unreachable from inside the
+container. The two `grep`s matter: `psql` prints the value and exits zero even
+when the include never loaded, so without them the step passes on a config file
+PostgreSQL ignored.
 
-- [ ] **Step 3: Verify wal-g is present and runnable inside the image**
-
-```bash
-docker run --rm ee-postgres:test wal-g --version
-```
-
-Expected: a version string. This is the check that would have caught the design error where wal-g was installed on the host instead — a host binary cannot be reached by `archive_command`.
-
-- [ ] **Step 4: Verify PostgreSQL still starts with the tuning file**
+- [ ] **Step 3: Commit, push, and watch the gate**
 
 ```bash
-docker run -d --name pg-smoke -e POSTGRES_PASSWORD=smoke ee-postgres:test
-sleep 10
-docker exec pg-smoke psql -U postgres -c "SHOW shared_buffers; SHOW archive_mode;"
-docker rm -f pg-smoke
-```
-
-Expected: `128MB` and `on`. If the container exits, the config include path is wrong — read `docker logs pg-smoke` rather than guessing.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add Dockerfile.postgres
+git add Dockerfile.postgres .github/workflows/images.yml
 git commit -m "Add the PostgreSQL image carrying wal-g and small-host tuning"
+git push
+gh run watch
 ```
+
+Expected: both jobs green, with a wal-g version string and `tuning applied` in
+the `postgres-image` log. If the container exits instead, the config include
+path is wrong — read the job's `docker logs` output rather than guessing.
 
 ---
 
@@ -644,23 +710,126 @@ echo "Migrations complete"
 chmod +x .kamal/hooks/pre-deploy
 ```
 
-- [ ] **Step 5: Generate and export the secrets, then run setup**
+- [ ] **Step 5: Generate the secrets and load them into a reviewed GitHub Environment**
+
+Kamal cannot run from this workstation — no local Docker, and no direct SSH to
+the host — so the deploy runs on a GitHub Actions runner and the secrets live in
+GitHub, not in a local shell.
+
+Generate the two values nobody else holds:
 
 ```bash
-export SECRET_KEY_BASE=$(ruby -rsecurerandom -e 'puts SecureRandom.hex(64)')
-export POSTGRES_PASSWORD=$(ruby -rsecurerandom -e 'puts SecureRandom.hex(24)')
-export SMTP_USERNAME='<the gmail address>'
-export SMTP_PASSWORD='<the gmail app password>'
-export AZURE_STORAGE_ACCOUNT='<storage account>'
-export AZURE_STORAGE_ACCESS_KEY='<storage key>'
-export KAMAL_REGISTRY_PASSWORD='<ghcr PAT with write:packages>'
-
-bundle exec kamal setup
+export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
+ruby -rsecurerandom -e 'puts "SECRET_KEY_BASE=#{SecureRandom.hex(64)}"'
+ruby -rsecurerandom -e 'puts "POSTGRES_PASSWORD=#{SecureRandom.hex(24)}"'
 ```
 
-Record `SECRET_KEY_BASE` and `POSTGRES_PASSWORD` somewhere durable **now** — regenerating `SECRET_KEY_BASE` logs every user out, and regenerating the PostgreSQL password without also changing it in the database locks the app out of its own data.
+Record both somewhere durable **now** — regenerating `SECRET_KEY_BASE` logs
+every user out, and regenerating the PostgreSQL password without also changing
+it in the database locks the app out of its own data.
 
-- [ ] **Step 6: Verify the deploy end to end**
+In repository settings create an Environment named `production` with **required
+reviewers**, then add these secrets to it:
+
+| Secret | Value |
+|---|---|
+| `SECRET_KEY_BASE` | generated above |
+| `POSTGRES_PASSWORD` | generated above |
+| `SMTP_USERNAME` | the Gmail address |
+| `SMTP_PASSWORD` | the Gmail **app password**, not the account password |
+| `AZURE_STORAGE_ACCOUNT` | the storage account name |
+| `AZURE_STORAGE_ACCESS_KEY` | the storage account key |
+| `KAMAL_REGISTRY_PASSWORD` | a GHCR PAT with `write:packages` |
+| `SSH_PRIVATE_KEY` | the private half of the `eugene@mezin.eu` key that reaches `mezinster@23.100.7.86` |
+
+The required reviewer is the point: a merge must not silently deploy while a
+game is running.
+
+- [ ] **Step 6: Write `.github/workflows/deploy.yml`**
+
+Manual trigger only for now — Task 7 adds the push trigger once a deploy has
+been proven to work. The `command` input exists because the *first* run must be
+`kamal setup` (which boots the PostgreSQL accessory) while every later run is
+`kamal deploy`.
+
+```yaml
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "kamal subcommand"
+        type: choice
+        options: [deploy, setup]
+        default: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+
+      - name: Build and push the PostgreSQL image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.postgres
+          push: true
+          tags: ghcr.io/mezinster/encounter-engine-postgres:latest
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Trust the host key
+        run: ssh-keyscan -H 23.100.7.86 >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+          AZURE_STORAGE_ACCESS_KEY: ${{ secrets.AZURE_STORAGE_ACCESS_KEY }}
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+        run: bundle exec kamal ${{ inputs.command }}
+```
+
+`ssh-keyscan` is not optional: without a `known_hosts` entry the runner's
+non-interactive SSH refuses the unknown host and the deploy fails with an error
+that reads like an authentication problem.
+
+- [ ] **Step 7: Run the first deploy**
+
+```bash
+git add config/deploy.yml .kamal/ .github/workflows/deploy.yml
+git commit -m "Add Kamal configuration, the pre-deploy migration hook, and the deploy workflow"
+git push
+gh workflow run Deploy -f command=setup
+gh run watch
+```
+
+Expected: the run pauses for your review, then installs nothing on the host
+(Ansible already did that), boots the PostgreSQL accessory, pushes the app image
+to GHCR, runs the migration hook once, and starts kamal-proxy with a Let's
+Encrypt certificate.
+
+- [ ] **Step 8: Verify the deploy end to end**
 
 ```bash
 curl -s -o /dev/null -w "up:      %{http_code}\n" https://game.mezin.eu/up
@@ -673,7 +842,7 @@ ssh mezin 'docker logs $(docker ps -q --filter name=encounter-engine-web) 2>&1 |
 
 Expected: `up: 200`, root `200`, a Let's Encrypt issuer with valid dates, three running containers, and Rails request logs on stdout — that last one proving Task 1's STDOUT logging works in the real container.
 
-- [ ] **Step 7: Confirm the neighbours are still fine**
+- [ ] **Step 9: Confirm the neighbours are still fine**
 
 ```bash
 ssh mezin 'systemctl is-active danted inreach inreach-kate'
@@ -682,13 +851,6 @@ diff /tmp/listeners-before.txt /tmp/listeners-deployed.txt || echo "NOTE: only :
 ```
 
 Expected: three `active`, and the only additions being `:80` and `:443`.
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add config/deploy.yml .kamal/
-git commit -m "Add Kamal configuration and the pre-deploy migration hook"
-```
 
 ---
 
@@ -757,74 +919,42 @@ git commit -m "Add wal-g archiving and a rehearsed restore runbook"
 
 ---
 
-### Task 7: Deploy from CI
+### Task 7: Make the deploy continuous, then prove it
 
 **Files:**
-- Create: `.github/workflows/deploy.yml`
+- Modify: `.github/workflows/deploy.yml`
 
 **Interfaces:**
-- Consumes: everything above.
+- Consumes: everything above. The workflow and the `production` Environment were created in Task 5; this task turns a manual deploy into an automatic one and proves the properties that make that safe.
 
-- [ ] **Step 1: Create the GitHub Environment**
+- [ ] **Step 1: Add the push trigger**
 
-In repository settings, create an Environment named `production` with **required reviewers**, then add these secrets to it: `SECRET_KEY_BASE`, `POSTGRES_PASSWORD`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `AZURE_STORAGE_ACCOUNT`, `AZURE_STORAGE_ACCESS_KEY`, `KAMAL_REGISTRY_PASSWORD`, `SSH_PRIVATE_KEY`.
-
-The required reviewer is the point: a merge must not silently deploy while a game is running.
-
-- [ ] **Step 2: Write the workflow**
+In `.github/workflows/deploy.yml`, replace the `on:` block with:
 
 ```yaml
-name: Deploy
-
 on:
   push:
     branches: ["master"]
   workflow_dispatch:
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
-
-      - name: Build and push the PostgreSQL image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile.postgres
-          push: true
-          tags: ghcr.io/mezinster/encounter-engine-postgres:latest
-
-      - uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy
-        env:
-          SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_STORAGE_ACCESS_KEY: ${{ secrets.AZURE_STORAGE_ACCESS_KEY }}
-          KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
-        run: bundle exec kamal deploy
+    inputs:
+      command:
+        description: "kamal subcommand"
+        type: choice
+        options: [deploy, setup]
+        default: deploy
 ```
 
-- [ ] **Step 3: Trigger it and watch**
+A `push` event supplies no `inputs.command`, so the run step must not depend on
+one. Change it to:
+
+```yaml
+        run: bundle exec kamal ${{ inputs.command || 'deploy' }}
+```
+
+Without the fallback, every push-triggered deploy would run `bundle exec kamal`
+with an empty subcommand and fail.
+
+- [ ] **Step 2: Trigger it and watch**
 
 ```bash
 gh workflow run Deploy
@@ -833,7 +963,7 @@ gh run watch
 
 Expected: it pauses for review, then deploys. Confirm the log shows `Running migrations for version …` exactly once.
 
-- [ ] **Step 4: Prove zero-downtime**
+- [ ] **Step 3: Prove zero-downtime**
 
 In one shell:
 
@@ -843,22 +973,24 @@ while true; do curl -s -o /dev/null -w "%{http_code} " https://game.mezin.eu/up;
 
 Trigger another deploy from a second shell. Expected: an unbroken run of `200` — no `502`, no `000`. Anything else means the health-checked cutover is not working and the config needs fixing before this is trusted during a game.
 
-- [ ] **Step 5: Verify mail actually arrives**
+- [ ] **Step 4: Verify mail actually arrives**
 
 Sign up on `https://game.mezin.eu` with a real address that is **not** the sending Gmail account, and confirm the welcome letter arrives. Check the spam folder too — invitations from a personal Gmail address to strangers frequently land there, and this app forms teams by invitation, so the failure is silent.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add .github/workflows/deploy.yml
-git commit -m "Deploy from CI, gated on a reviewed environment"
+git commit -m "Deploy on every push to master, gated on a reviewed environment"
 ```
 
 ---
 
 ## Self-Review
 
-**Spec coverage.** production.rb (Task 1); `/up`, which the spec did not mention but kamal-proxy's healthcheck requires (Task 1); Dockerfile and `.dockerignore` (Task 2); `Dockerfile.postgres` with wal-g inside the container (Task 3); Ansible with no firewall changes plus the listener diff (Task 4); `deploy.yml`, `.kamal/secrets`, pre-deploy hook, first deploy, TLS (Task 5); WAL archiving, nightly backup, runbook and the rehearsed restore (Task 6); CI deploy behind a reviewed Environment, zero-downtime proof, mail delivery (Task 7). All eight spec acceptance criteria map to a step. Postgres tuning lives in Task 3 rather than a task of its own, because it belongs to the image.
+**Spec coverage.** production.rb (Task 1); `/up`, which the spec did not mention but kamal-proxy's healthcheck requires (Task 1); Dockerfile and `.dockerignore` (Task 2); `Dockerfile.postgres` with wal-g inside the container (Task 3); Ansible with no firewall changes plus the listener diff (Task 4); `deploy.yml`, `.kamal/secrets`, pre-deploy hook, the reviewed Environment, first deploy, TLS (Task 5); WAL archiving, nightly backup, runbook and the rehearsed restore (Task 6); automatic deploy on push, zero-downtime proof, mail delivery (Task 7). All eight spec acceptance criteria map to a step. Postgres tuning lives in Task 3 rather than a task of its own, because it belongs to the image.
+
+**Amended after Task 1** (2026-08-05), on discovering this workstation has no container runtime and cannot reach the host's SSH port directly: every `docker build` and every `kamal` invocation moved to GitHub Actions. Tasks 2 and 3 gained `.github/workflows/images.yml` as their build gate in place of local `docker build`; Task 5 creates the deploy workflow and the reviewed Environment and runs `kamal setup` from a runner instead of `kamal setup` from this machine; Task 7 shrank to adding the push trigger and proving the properties. Verification that needs only `ssh` or `curl` still runs locally, because the `ssh` binary and Ansible do honour the SOCKS ProxyCommand.
 
 **Placeholder scan.** No "TBD" or "handle errors appropriately". Two placeholders are deliberate and marked with angle brackets because only the owner holds the values: the Gmail credentials and the Azure storage keys in Task 5 Step 5.
 

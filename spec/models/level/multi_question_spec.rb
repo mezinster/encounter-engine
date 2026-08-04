@@ -9,7 +9,7 @@ describe Level, "multi_question?" do
   subject { @level.multi_question?  }
 
   context "when there is one question" do    
-    it { should be_false }
+    it { should be_falsey }
   end
 
   context "when there are more than one question" do
@@ -17,6 +17,6 @@ describe Level, "multi_question?" do
       create_question :level => @level
     end
 
-    it { should be_true }
+    it { should be_truthy }
   end
 end

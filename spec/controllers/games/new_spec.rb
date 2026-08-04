@@ -23,8 +23,8 @@ describe Games, "#new" do
   
   def perform_request(opts={}, params={})
     dispatch_to Games, :new, params do |controller|
-      controller.session.stub!(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub!(:user).and_return(opts[:as_user])
+      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
+      controller.session.stub(:user).and_return(opts[:as_user])
     end
   end
 end

@@ -13,7 +13,7 @@ describe Team, "#finished?(game)" do
     end
 
     it "should return true" do
-      @team.finished?(@game).should be_true
+      @team.finished?(@game).should be_truthy
     end
   end
 
@@ -23,13 +23,13 @@ describe Team, "#finished?(game)" do
     end
 
     it "should return false" do
-      @team.finished?(@game).should be_false
+      @team.finished?(@game).should be_falsey
     end
   end
 
   describe "when team has not even started the game" do
     it "should return false" do
-      @team.finished?(@game).should be_false
+      @team.finished?(@game).should be_falsey
     end
   end
 end

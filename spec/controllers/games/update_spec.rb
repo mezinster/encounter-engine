@@ -40,7 +40,7 @@ describe Games, "#update" do
       tomorrow = DateTime.now + 1
       @game = create_game :author => @author, :starts_at => tomorrow
       day_after_tomorrow = tomorrow + 1
-      Time.stub!(:now => day_after_tomorrow)
+      Time.stub(:now => day_after_tomorrow)
     end
 
     it "raises Unauthorized exception" do
@@ -50,8 +50,8 @@ describe Games, "#update" do
 
   def perform_request(opts={})
     dispatch_to Games, :update, { :id => @game.id } do |controller|
-      controller.session.stub!(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub!(:user).and_return(opts[:as_user])
+      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
+      controller.session.stub(:user).and_return(opts[:as_user])
     end
   end
 end

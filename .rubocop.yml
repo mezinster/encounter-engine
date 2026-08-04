@@ -1,0 +1,42 @@
+AllCops:
+  TargetRubyVersion: 2.6
+  NewCops: disable
+  Exclude:
+    - 'vendor/**/*'        # vendored Merb + merb-auth submodules
+    - 'schema/migrations/*'
+    - 'db/**/*'
+    - 'public/**/*'
+    - 'merb/**/*'
+
+# House style: hash rockets are used universally in this codebase, including
+# for symbol keys. Converting them would touch nearly every file.
+Style/HashSyntax:
+  Enabled: false
+
+# Files carry `# -*- encoding : utf-8 -*-` rather than a frozen-string comment.
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# String literals are a mix of single and double quotes throughout, and many
+# contain Russian text where the distinction carries no meaning.
+Style/StringLiterals:
+  Enabled: false
+
+Documentation:
+  Enabled: false
+
+# Merb controllers legitimately have long filter chains and view-building actions.
+Metrics/MethodLength:
+  Max: 25
+Metrics/AbcSize:
+  Enabled: false
+Metrics/ClassLength:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 120
+
+# RSpec 1.x specs use `.should`, which the modern cop set flags.
+Lint/Void:
+  Exclude:
+    - 'spec/**/*'

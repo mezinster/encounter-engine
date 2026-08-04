@@ -12,19 +12,19 @@ describe GamePassing, "correct_answer?" do
 
 		context "when asnwer equals to correct_answer" do
 		  it "should return true" do
-		    subject.correct_answer?(@correct_answer).should be_true
+		    subject.correct_answer?(@correct_answer).should be_truthy
 		  end
 		end
 
 		context "when asnwer equals to correct_answer but with redundant spaces" do
 		  it "should return true" do
-		    subject.correct_answer?( " #{@correct_answer}  ").should be_true
+		    subject.correct_answer?( " #{@correct_answer}  ").should be_truthy
 		  end
 		end
 
 		context "when asnwer does not equal to correct_answer" do
 		  it "should return false" do
-		    subject.correct_answer?("BLAAAABLABLABLA").should be_false
+		    subject.correct_answer?("BLAAAABLABLABLA").should be_falsey
 		  end
 		end
 	end
@@ -35,7 +35,7 @@ describe GamePassing, "correct_answer?" do
 
 			@correct_answers = ['answer1', 'answer2', 'answer3']
 			@correct_answers.each do |correct_answer|
-				@level.questions.create! :answer => correct_answer
+				@level.questions.create! :correct_answer => correct_answer
 			end
 
 		  GamePassing.create! :current_level => @level
@@ -43,7 +43,7 @@ describe GamePassing, "correct_answer?" do
 
 		context "when anwser equals to any of correct answers" do
 			it "should return true" do
-				subject.correct_answer?(@correct_answers.first).should be_true
+				subject.correct_answer?(@correct_answers.first).should be_truthy
 			end
 		end
 
@@ -53,19 +53,19 @@ describe GamePassing, "correct_answer?" do
 			end
 
 			it "should return false" do
-				subject.correct_answer?(@correct_answers.first).should be_false
+				subject.correct_answer?(@correct_answers.first).should be_falsey
 			end
 		end
 
 		context "when answer does not equal to any of correct answers" do
 			it "should return false" do
-				subject.correct_answer?('Bla-bla-bla').should be_false
+				subject.correct_answer?('Bla-bla-bla').should be_falsey
 			end
 		end
 
 		context "when asnwer equals to correct_answer but with redundant spaces" do
 			it "should return true" do
-				subject.correct_answer?("  #{@correct_answers.first}  ").should be_true
+				subject.correct_answer?("  #{@correct_answers.first}  ").should be_truthy
 			end
 		end
 	end

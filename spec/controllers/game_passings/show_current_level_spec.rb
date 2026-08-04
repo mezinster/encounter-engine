@@ -4,19 +4,18 @@ require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
 describe GamePassing, "#index" do
   before :each do
     now = Time.now
-    Time.stub!(:now => now - 1)
+    Time.stub(:now => now - 1)
     @started_game = create_game :starts_at => now
     @first_level = create_level :game => @started_game
     create_level :game => @started_game
     @started_game.reload
-    Time.stub!(:now => now + 1)
+    Time.stub(:now => now + 1)
 
     @team_member = create_user
     @team = create_team :captain => @team_member
   end
 
   after :each do
-    Time.rspec_reset
   end
 
   describe "when guest tries to enter game passing" do
@@ -97,8 +96,8 @@ describe GamePassing, "#index" do
 
   def perform_request(opts={})
     dispatch_to GamePassings, :show_current_level, { :game_id => opts[:game].id } do |controller|
-      controller.session.stub!(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub!(:user).and_return(opts[:as_user])
+      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
+      controller.session.stub(:user).and_return(opts[:as_user])
     end
   end
 end

@@ -1,9 +1,12 @@
 # -*- encoding : utf-8 -*-
 require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
 
-describe Question, "#strip_spaces" do
-  describe "when correct_answers contains leading or trailing spaces" do
-    subject { Question.new :answer => "   bla bla   " }
+# Stripping moved from Question to Answer#strip_spaces when migration 024
+# extracted the answers table. The behaviour is still reached through
+# Question#correct_answer, which is how callers use it.
+describe Question, "#correct_answer" do
+  describe "when the answer contains leading or trailing spaces" do
+    subject { Question.new :correct_answer => "   bla bla   " }
 
     describe "when saved" do
       before :each do
@@ -11,7 +14,7 @@ describe Question, "#strip_spaces" do
       end
 
       it "should strip redundant spaces" do
-        subject.answer.should == "bla bla"
+        subject.correct_answer.should == "bla bla"
       end
     end
   end

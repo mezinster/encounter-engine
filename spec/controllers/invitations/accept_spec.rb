@@ -83,8 +83,8 @@ describe Invitations, "#accept" do
   def perform_request(opts={})
     params = { :id => @invitation.id }
     dispatch_to Invitations, :accept, params do |controller|
-      controller.session.stub!(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub!(:user).and_return(opts[:as_user])
+      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
+      controller.session.stub(:user).and_return(opts[:as_user])
     end
   end
 end

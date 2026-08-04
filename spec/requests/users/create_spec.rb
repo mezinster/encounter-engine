@@ -18,11 +18,11 @@ describe "resource(:users)" do
     end
 
     it "creates a user" do
-      User.exists?(:email => EMAIL).should be_true
+      User.exists?(:email => EMAIL).should be_truthy
     end
 
     it "delivers a welcome letter" do
-      Merb::Mailer.should have(1).delivery
+      Merb::Mailer.deliveries.size.should == 1
       last_delivered_mail.to.first.should == EMAIL
       last_delivered_mail.text.should match(/#{EMAIL}/)
       last_delivered_mail.text.should match(/#{PASSWORD}/)
@@ -50,7 +50,7 @@ describe "resource(:users)" do
     end
 
     it "shows a error message" do
-      @response.body.include?("уже зарегистрирован").should be_true
+      @response.body.include?("уже зарегистрирован").should be_truthy
     end
 
     it "does not deliver email" do
@@ -74,7 +74,7 @@ describe "resource(:users)" do
     end
 
     it "shows a error message" do
-      @response.body.include?("Пароль и его подтверждение не совпадают").should be_true
+      @response.body.include?("Пароль и его подтверждение не совпадают").should be_truthy
     end
 
     it "does not deliver email" do
@@ -98,7 +98,7 @@ describe "resource(:users)" do
     end
 
     it "shows a error message" do
-      @response.body.include?("Неправильный формат").should be_true
+      @response.body.include?("Неправильный формат").should be_truthy
     end
 
     it "does not deliver email" do

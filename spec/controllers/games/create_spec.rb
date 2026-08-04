@@ -10,7 +10,8 @@ describe Games, "#create" do
 
       describe "data is valid" do
         before :each do
-          @params = { :game => { :name => "Blablabla#{rand(10000)}", :description => "More blablablablabla" } }
+          @params = { :game => { :name => "Blablabla#{rand(10000)}", :description => "More blablablablabla",
+            :max_team_number => 10 } }
         end
 
         it "crates a game" do
@@ -45,8 +46,8 @@ describe Games, "#create" do
 
   def perform_request(opts={}, params={})
     dispatch_to Games, :create, params do |controller|
-      controller.session.stub!(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub!(:user).and_return(opts[:as_user])
+      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
+      controller.session.stub(:user).and_return(opts[:as_user])
     end
   end
 end

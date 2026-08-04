@@ -32,7 +32,7 @@ describe Levels, "#update" do
       @game = create_game :author => @author, :starts_at => tomorrow
       @level = create_level :game => @game
       day_after_tomorrow = tomorrow + 1
-      Time.stub!(:now => day_after_tomorrow)
+      Time.stub(:now => day_after_tomorrow)
     end
 
     it "raises Unauthorized exception" do
@@ -60,8 +60,8 @@ describe Levels, "#update" do
   def perform_request(opts={}, params={})
     params = params.merge(:id => @level.id, :game_id => @level.game.id)
     dispatch_to Levels, :update, params do |controller|
-      controller.session.stub!(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub!(:user).and_return(opts[:as_user])
+      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
+      controller.session.stub(:user).and_return(opts[:as_user])
     end
   end
 end

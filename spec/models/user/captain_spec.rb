@@ -9,7 +9,7 @@ describe User, '#captain?' do
     end
 
     it "returns true" do
-      @user.captain?.should be_true
+      @user.captain?.should be_truthy
     end
   end
 
@@ -19,7 +19,7 @@ describe User, '#captain?' do
     end
 
     it "returns false" do
-      @user.captain?.should be_false
+      @user.captain?.should be_falsey
     end
   end
 
@@ -33,7 +33,7 @@ describe User, '#captain?' do
     end
 
     it "returns false" do
-      @user.captain?.should be_false
+      @user.captain?.should be_falsey
     end
   end
 end

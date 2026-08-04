@@ -4,9 +4,12 @@ class GamePassings < Application
 
   before :find_game, :exclude => [:exit_game]
   before :find_game_by_id, :only => [:exit_game]
+  # ensure_authenticated has to run before find_team: find_team dereferences
+  # current_user, so for a guest it raised NoMethodError on nil and returned a
+  # 500 instead of asking them to log in.
+  before :ensure_authenticated, :exclude => [:index, :show_results]
   before :find_team, :exclude => [:show_results, :index]
   before :find_or_create_game_passing, :exclude => [:show_results, :index]
-  before :ensure_authenticated, :exclude => [:index, :show_results]
   before :ensure_game_is_started
   before :ensure_team_captain, :only => [:exit_game]
   before :ensure_not_finished, :exclude => [:index, :show_results]

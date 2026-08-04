@@ -6,7 +6,12 @@ set -e
 set -x
 
 heroku apps:create $1 --region eu --remote $1
-heroku config:set MERB_ENV=production RACK_ENV=production TZ="$2" -r $1
+
+# Every instance gets its own session signing key. Without it the app refuses
+# to boot in production, by design -- a shared or committed key lets anyone
+# forge a session for any user.
+heroku config:set MERB_ENV=production RACK_ENV=production TZ="$2" \
+  SESSION_SECRET_KEY="$(ruby -rsecurerandom -e 'puts SecureRandom.hex(40)')" -r $1
 git push $1 master
 heroku run rake db:migrate -r $1
 heroku restart -r $1

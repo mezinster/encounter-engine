@@ -21,7 +21,7 @@ describe GamePassing, "#check_answer!" do
       end
 
       it "should return false" do
-        @result.should be_false
+        @result.should be_falsey
       end
 
       it "should not change current_level" do
@@ -31,11 +31,11 @@ describe GamePassing, "#check_answer!" do
 
     describe "when answer is correct" do
       before :each do
-        @result = @game_passing.check_answer!(@first_level.questions.first.answer)
+        @result = @game_passing.check_answer!(@first_level.questions.first.correct_answer)
       end
 
       it "should return true" do
-        @result.should be_true
+        @result.should be_truthy
       end
 
       it "should set next level as current" do        
@@ -49,20 +49,24 @@ describe GamePassing, "#check_answer!" do
 
     describe "when answer contains redundant spaces" do
       before :each do
-        @result = @game_passing.check_answer!("   #{@first_level.questions.first.answer}   ")
+        @result = @game_passing.check_answer!("   #{@first_level.questions.first.correct_answer}   ")
       end
 
       it "should return true" do
-        @result.should be_true
+        @result.should be_truthy
       end
     end
   end
 
 	describe "when current level contains several questions" do
 		before :each do
+			# The questions need their level up front. Answer validates value for
+			# uniqueness scoped to level_id, and the database is rebuilt once per
+			# suite rather than per example, so level-less answers from an earlier
+			# example collide with this one on level_id = nil.
 			@second_level.questions = [
-				Question.create!(:answer => 'encode1'),
-				Question.create!(:answer => 'encode2')
+				Question.create!(:level => @second_level, :correct_answer => 'encode1'),
+				Question.create!(:level => @second_level, :correct_answer => 'encode2')
 			]
 
 			@game_passing = GamePassing.create! :game => @game, :team => @team, :current_level => @second_level
@@ -94,7 +98,7 @@ describe GamePassing, "#check_answer!" do
 				end
 			
 				it "return false" do
-					@return_value.should be_false
+					@return_value.should be_falsey
 				end
 
 				it "should stay on the same level" do
@@ -127,11 +131,11 @@ describe GamePassing, "#check_answer!" do
 
     describe "when answer is correct" do
       before :each do
-        @result = @game_passing.check_answer!(@final_level.questions.first.answer)
+        @result = @game_passing.check_answer!(@final_level.questions.first.correct_answer)
       end
 
       it "should return true" do
-        @result.should be_true
+        @result.should be_truthy
       end
 
       it "should set current level to nil" do

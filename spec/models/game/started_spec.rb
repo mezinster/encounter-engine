@@ -9,18 +9,18 @@ describe Game, '#started?' do
 
   describe "when game start date is in future" do
     it "returns false" do
-      @game.started?.should be_false
+      @game.started?.should be_falsey
     end
   end
 
   describe "when game start date is in the past" do
     before :each do
       day_after_tomorrow = DateTime.now + 2
-      Time.stub! :now => day_after_tomorrow
+      allow(Time).to receive(:now).and_return(day_after_tomorrow)
     end
 
     it "returns true" do
-      @game.started?.should be_true
+      @game.started?.should be_truthy
     end
   end
 
@@ -30,7 +30,7 @@ describe Game, '#started?' do
     end
 
     it "returns false" do
-      @game.started?.should be_false
+      @game.started?.should be_falsey
     end
   end
 end

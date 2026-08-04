@@ -16,15 +16,18 @@ describe GamePassing, "#current_level_entered_at" do
 
       describe "when game passing created" do
         it "should be equal to creation time" do
-          @game_passing.current_level_entered_at.to_s.should == @game_passing.created_at.to_s
+          # Compare instants, not formatted strings: the two attributes come
+          # back in different zones (one UTC, one local), so #to_s differs even
+          # when they refer to the same moment.
+          @game_passing.current_level_entered_at.to_i.should == @game_passing.created_at.to_i
         end
       end
 
       describe "when team enters next level" do
         before :each do
-          Time.stub! :now => @game_passing.created_at + 1.hour
-          @game_passing.stub! :correct_answer? => true
-          @game_passing.check_answer!(@game.levels.first.questions.first.answer)
+          allow(Time).to receive(:now).and_return(@game_passing.created_at + 1.hour)
+          allow(@game_passing).to receive(:correct_answer?).and_return(true)
+          @game_passing.check_answer!(@game.levels.first.questions.first.correct_answer)
         end
 
         it "should be equal to time of level changing" do
@@ -36,8 +39,8 @@ describe GamePassing, "#current_level_entered_at" do
         before :each do
           @previous_value = @game_passing.current_level_entered_at
 
-          Time.stub! :now => @game_passing.created_at + 1.hour
-          @game_passing.stub! :correct_answer? => false
+          allow(Time).to receive(:now).and_return(@game_passing.created_at + 1.hour)
+          allow(@game_passing).to receive(:correct_answer?).and_return(false)
           @game_passing.check_answer!('incorrect-answer')
         end
 

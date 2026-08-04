@@ -17,12 +17,8 @@ class InvitationsController < ApplicationController
     @invitation.to_team = current_user.team
 
     if @invitation.save
-      # TODO(Task 10): app/mailers/notification_mailer.rb is still the
-      # pre-port Merb::MailController and cannot be referenced from Rails
-      # yet (referencing the constant raises NameError: uninitialized
-      # constant Merb, since nothing in the Rails boot defines it). The
-      # Merb original sent an "invitation_notification" email here; restore
-      # that call once Task 10 ports NotificationMailer to ActionMailer.
+      # Merb original: app/controllers/invitations.rb#send_invitation_notification.
+      NotificationMailer.invitation_notification(@invitation.for_user, @invitation.to_team).deliver_now
       redirect_to new_invitation_path,
                   notice: t("invitations.notice_sent", nickname: @invitation.recepient_nickname)
     else
@@ -35,8 +31,11 @@ class InvitationsController < ApplicationController
     add_user_to_team_members
     @invitation.delete
 
-    # TODO(Task 10): send_accept_notification -- see the NotificationMailer
-    # note in #create above.
+    # Merb original: app/controllers/invitations.rb#send_accept_notification.
+    # @invitation.delete only removes the DB row -- the in-memory object and
+    # its already-resolved for_user/to_team associations are still valid.
+    NotificationMailer.accept_notification(@invitation.for_user, @invitation.to_team).deliver_now
+
     reject_rest_of_invitations
 
     redirect_to dashboard_path
@@ -44,8 +43,8 @@ class InvitationsController < ApplicationController
 
   def reject
     @invitation.delete
-    # TODO(Task 10): send_reject_notification -- see the NotificationMailer
-    # note in #create above.
+    # Merb original: app/controllers/invitations.rb#send_reject_notification.
+    NotificationMailer.reject_notification(@invitation.for_user, @invitation.to_team).deliver_now
     redirect_to dashboard_path
   end
 
@@ -67,10 +66,14 @@ class InvitationsController < ApplicationController
     @invitation.to_team.members << current_user
   end
 
-  # TODO(Task 10): each rejection here used to email the invited user too
-  # (send_reject_notification); deferred along with the rest of the mailer
-  # calls in this controller.
+  # Merb original: app/controllers/invitations.rb#reject_rest_of_invitations.
+  # When a user accepts one invitation, every other pending invitation to
+  # them is auto-rejected -- and each of those captains gets the same
+  # reject_notification a manual #reject would have sent them.
   def reject_rest_of_invitations
-    Invitation.for(current_user).each(&:delete)
+    Invitation.for(current_user).each do |invitation|
+      invitation.delete
+      NotificationMailer.reject_notification(invitation.for_user, invitation.to_team).deliver_now
+    end
   end
 end

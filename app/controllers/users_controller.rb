@@ -79,13 +79,12 @@ class UsersController < ApplicationController
                    :phone_number, :password, :password_confirmation)
   end
 
-  # TODO(Task 10): app/mailers/notification_mailer.rb is still the pre-port
-  # Merb::MailController and cannot be referenced from Rails yet (referencing
-  # the constant raises NameError: uninitialized constant Merb -- same
-  # situation as the four TODO(Task 10) sites in
-  # app/controllers/invitations_controller.rb). The Merb original sent a
-  # "welcome_letter" email here containing the user's plaintext password;
-  # restore that call once Task 10 ports NotificationMailer to ActionMailer.
+  # Merb original: app/controllers/users.rb#send_welcome_letter_to, which
+  # passed user.email and user.password to NotificationMailer#welcome_letter.
+  # user.password is the plaintext virtual attribute set earlier in #create
+  # (before_save hashes it into crypted_password), so it's still readable
+  # here.
   def send_welcome_letter_to(user)
+    NotificationMailer.welcome_letter(user, user.password).deliver_now
   end
 end

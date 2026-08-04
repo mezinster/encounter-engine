@@ -144,6 +144,34 @@ ru:
       jabber_label: "Jabber ID:"
       phone_label: "Контактный телефон:"
       edit_link: "Редактировать профиль..."
+  notification_mailer:
+    # Sent in the recipient's locale, not the sender's -- see
+    # NotificationMailer#mail_in_recipient_locale. Body text below is
+    # unchanged from the pre-port app/mailers/views/notification_mailer/
+    # *.text.erb templates (diffed word-for-word while porting), except for
+    # welcome_letter's "bien.kg" -- see the %{host} note there.
+    welcome_letter:
+      subject: "Регистрация на bienkg"
+      body: |-
+        Спасибо за регистрацию!
+
+        Вы зарегистрировались на сайте %{host} и теперь можете войти со следующими данными:
+
+        Email:  %{email}
+        Пароль: %{password}
+
+        Всего хорошего :)
+    invitation_notification:
+      subject: "Вас пригласили вступить в команду %{team_name}"
+      body: |-
+        Вас пригласили вступить в команду %{team_name}
+        Чтобы принять приглашение или отказаться от него, зайдите в ваш личный кабинет
+    reject_notification:
+      subject: "Пользователь %{nickname} отказался от приглашения"
+      body: "Пользователь %{nickname} отказался от приглашения вступить в вашу команду"
+    accept_notification:
+      subject: "Пользователь %{nickname} принял Ваше приглашение"
+      body: "Пользователь %{nickname} принял Ваше приглашение и вступил в команду"
   layout:
     title: "Активные городские игры"
     header:

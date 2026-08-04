@@ -1,0 +1,4 @@
+<%# notification_mailer.invitation_notification.body in
+    config/locales/{ru,en}.yml. team_name is game/team data (not
+    translated), interpolated same as the pre-port template. %>
+<%= t("notification_mailer.invitation_notification.body", team_name: @team.name) %>

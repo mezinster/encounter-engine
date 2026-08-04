@@ -144,6 +144,29 @@ en:
       jabber_label: "Jabber ID:"
       phone_label: "Contact phone number:"
       edit_link: "Edit profile..."
+  notification_mailer:
+    welcome_letter:
+      subject: "Registration complete"
+      body: |-
+        Thank you for registering!
+
+        You have registered at %{host} and can now log in with the following details:
+
+        Email:  %{email}
+        Password: %{password}
+
+        All the best :)
+    invitation_notification:
+      subject: "You have been invited to join the team %{team_name}"
+      body: |-
+        You have been invited to join the team %{team_name}
+        To accept or decline the invitation, go to your personal dashboard
+    reject_notification:
+      subject: "%{nickname} has declined your invitation"
+      body: "User %{nickname} has declined the invitation to join your team"
+    accept_notification:
+      subject: "%{nickname} has accepted your invitation"
+      body: "User %{nickname} has accepted your invitation and joined the team"
   layout:
     title: "Active urban games"
     header:

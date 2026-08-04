@@ -61,20 +61,12 @@ RSpec.describe InvitationsController, "#create", type: :controller do
       end.to change(Invitation, :count).by(1)
     end
 
-    # TODO(Task 10): app/mailers/notification_mailer.rb is still the
-    # pre-port Merb::MailController -- referencing NotificationMailer from
-    # Rails raises NameError (uninitialized constant Merb), so
-    # InvitationsController#create no longer sends this email (see the four
-    # TODO(Task 10) comments in app/controllers/invitations_controller.rb:
-    # lines 20-25, 38-39, 47-48, 70-72). Written against ActionMailer::Base's
-    # real API (not the old Merb::Mailer.deliveries/assert_sends_email,
-    # which no longer exist) so that once Task 10 ports the mailer and
-    # restores the controller call, this either passes for real or fails
-    # loudly -- it will not stay silently green if any of the four TODO
-    # sites gets missed.
+    # Task 10 ported NotificationMailer to ActionMailer and restored the
+    # four TODO(Task 10) call sites in app/controllers/invitations_controller.rb
+    # (lines 20-25, 38-39, 47-48, 70-72), including this one
+    # (InvitationsController#create). Un-pending this now exercises the real
+    # call site end-to-end.
     it "sends a notification to invited user by email" do
-      pending "NotificationMailer is not yet ported to ActionMailer (Task 10)"
-
       expect do
         perform_request({ :as_user => @captain }, @params)
       end.to change(ActionMailer::Base.deliveries, :size).by(1)

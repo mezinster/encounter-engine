@@ -279,7 +279,6 @@ en:
       invite: "Invite members"
   teams:
     new:
-      error_header: "Error"
       name_label: "Title"
       submit: "Create team"
   time:

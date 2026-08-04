@@ -1,10 +1,24 @@
 # -*- encoding : utf-8 -*-
-# Not part of Task 8's scope (Task 9 owns app/helpers' actual content), but
-# `module Merb; module GlobalHelpers; end; end` blocked `bin/rails
-# zeitwerk:check` -- Zeitwerk expects a file at app/helpers/global_helpers.rb
-# to define top-level GlobalHelpers, not Merb::GlobalHelpers. Fixed the
-# nesting only; the module is still empty, exactly as it was under Merb.
-module GlobalHelpers
+# Renamed from global_helpers.rb (module GlobalHelpers) in Task 9c's fix
+# round 1. The old name was never actually wired up for real requests:
+# ActionController::Railties::Helpers only calls `helper :all` once, when
+# ApplicationController itself is defined (it's the sole direct subclass of
+# ActionController::Base), and that scan
+# (ActionController::Helpers#all_helpers_from_path) globs
+# `app/helpers/**/*_helper.rb` -- SINGULAR. "global_helpers.rb" is plural and
+# never matched, so `error_messages_for` was undefined on every real request
+# to a template that calls it (/signup, /games/new, /games/:id/edit, and 9
+# more -- see task-9c-report.md's fix-round-1 addendum). A rspec-rails view
+# spec never caught this either: it doesn't ask the controller what helpers
+# it has, it independently checks `Object.const_defined?('ApplicationHelper')`
+# (rspec-rails' ViewExampleGroup::ClassMethods#_default_helpers) and includes
+# that by literal name. Naming the file/module the Rails-conventional way
+# fixes both: the `**/*_helper.rb` glob now matches, and the literal
+# `ApplicationHelper` constant now exists, so it's genuinely available in
+# every real controller (inherited from ApplicationController._helpers) and
+# every view spec (rspec-rails' own convention), with no explicit `helper`
+# call or spec-side stub required anywhere.
+module ApplicationHelper
   # helpers defined here available to all views.
 
   # Ports merb-helpers' Errorifier#error_messages_for

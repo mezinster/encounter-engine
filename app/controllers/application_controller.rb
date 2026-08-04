@@ -8,6 +8,15 @@ class ApplicationController < ActionController::Base
 
   helper_method :current_user, :logged_in?
 
+  # No explicit `helper` call needed for app/helpers/application_helper.rb's
+  # ApplicationHelper (error_messages_for): Rails' `include_all_helpers`
+  # default already wires it up automatically, the same way it already did
+  # for GamePassingsHelper. See app/helpers/application_helper.rb's header
+  # comment for the bug this fixed (Task 9c fix round 1) -- the module used
+  # to be named GlobalHelpers in a plural-named global_helpers.rb file,
+  # which never matched Rails' helper auto-loading glob and was therefore
+  # never actually available to any real request.
+
   # Several views read the ivar directly (e.g.
   # app/views/shared/_countdown.html.erb: `@current_user.author_of?(@game)`)
   # rather than calling the `current_user` helper. `current_user` (see

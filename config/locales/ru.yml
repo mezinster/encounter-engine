@@ -279,7 +279,6 @@ ru:
       invite: "Пригласить участников"
   teams:
     new:
-      error_header: "Ошибка"
       name_label: "Название"
       submit: "Создать команду"
   time:

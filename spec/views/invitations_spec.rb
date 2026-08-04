@@ -27,7 +27,7 @@ RSpec.describe "invitations/new", type: :view do
   it "renders validation errors with the helper's default (untranslated) header, per the preserved Merb quirk" do
     # error_messages_for @invitation has no :header override in the Merb
     # original (unlike every other form in this port) -- it falls through
-    # to GlobalHelpers#error_messages_for's own English default header,
+    # to ApplicationHelper#error_messages_for's own English default header,
     # which is preserved here, not "fixed" with a Russian one.
     invitation = Invitation.new
     invitation.valid?

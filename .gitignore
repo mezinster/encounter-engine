@@ -32,3 +32,5 @@ output
 rerun.txt
 features/step_definitions
 db/development.sqlite
+CLAUDE.local.md
+.bundle/

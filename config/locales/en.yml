@@ -327,7 +327,7 @@ en:
     invalid_credentials: "Wrong e-mail or password"
     new:
       title: "Log in"
-      email_label: "E-mail"
+      email_label: "Email"
       password_label: "Password"
       submit: "Log in"
   activerecord:

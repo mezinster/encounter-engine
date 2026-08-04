@@ -336,10 +336,10 @@ ru:
       - "ноября"
       - "декабря"
   sessions:
-    invalid_credentials: "Неправильный e-mail или пароль"
+    invalid_credentials: "Неправильный email или пароль"
     new:
       title: "Вход"
-      email_label: "E-mail"
+      email_label: "Email"
       password_label: "Пароль"
       submit: "Войти"
   activerecord:

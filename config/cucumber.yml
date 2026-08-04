@@ -1,9 +1,20 @@
 <%
+# Cucumber 11 dropped the `~@wip` tag syntax in favour of tag expressions
+# ("not @wip"), so this file is regenerated from the cucumber-rails template.
+# `-r features/support` is kept from the Merb-era config: it is what stops
+# Cucumber from auto-requiring features/step_definitions (gitignored, generated)
+# and leaves features/support/env.rb in charge of loading the step files that
+# live beside their features.
 rerun = File.file?('rerun.txt') ? IO.read('rerun.txt') : ""
-rerun_opts = rerun.to_s.strip.empty? ? "--format progress features" : "--format #{ENV['CUCUMBER_FORMAT'] || 'pretty'} #{rerun}"
-std_opts = "#{rerun_opts} --format rerun --out rerun.txt --strict --tags ~@wip"
+rerun = rerun.strip.gsub(/\s/, ' ')
+rerun_opts = rerun.empty? ? "--format #{ENV['CUCUMBER_FORMAT'] || 'progress'} features" : "--format #{ENV['CUCUMBER_FORMAT'] || 'pretty'} #{rerun}"
+# NB: no --strict in the default profile, same as the Merb-era default
+# ("-r features/support --format pretty"). features/multi-questional-levels/
+# managing-additional-codes.feature:30,32 are two deliberately empty
+# placeholder scenarios; --strict would turn those into a red run.
+std_opts = "--format #{ENV['CUCUMBER_FORMAT'] || 'progress'} --tags 'not @wip' --publish-quiet"
 %>
-default: -r features/support --format pretty
-rerun: <%= std_opts %> -r features/support
-wip: --tags @wip:3 --wip features
-all: -r features/support features
+default: <%= std_opts %> -r features/support features
+rerun: <%= rerun_opts %> -r features/support --format rerun --out rerun.txt --strict --tags 'not @wip'
+wip: --tags @wip:3 --wip -r features/support features
+all: --strict -r features/support features

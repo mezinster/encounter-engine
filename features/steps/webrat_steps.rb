@@ -1,6 +1,7 @@
 # -*- encoding : utf-8 -*-
-# Commonly used webrat steps
-# http://github.com/brynary/webrat
+# Commonly used navigation and form steps. Was Webrat; now Capybara on the
+# rack_test driver. The API maps one-to-one, so the step regexes -- which the
+# feature files match against character for character -- are untouched.
 
 When /захожу по адресу (.*)$/ do |path|
   visit path

@@ -71,8 +71,16 @@ class GamePassingsController < ApplicationController
     @game = Game.find(params[:game_id])
   end
 
+  # PORT DEFECT (found by features/game-passing/throw_in_the_towel.feature):
+  # Merb reached #exit_game through the catch-all /:controller/:action/:id
+  # route, so the game arrived as params[:id]. The Rails route restored for it
+  # names the segment :game_id ("/game_passings/exit_game/:game_id",
+  # config/routes.rb) -- as does the link that drives it
+  # (app/views/game_passings/show_current_level.html.erb) and spec/routing_spec.rb.
+  # Only this lookup was left reading params[:id], so every "Сойти с дистанции"
+  # click raised RecordNotFound before the action ever ran.
   def find_game_by_id
-    @game = Game.find(params[:id])
+    @game = Game.find(params[:game_id])
   end
 
   def find_team

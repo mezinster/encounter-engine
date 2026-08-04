@@ -28,11 +28,14 @@ RSpec.describe GamesController, "#update", type: :controller do
         @game = create_game :is_draft => false
       end
 
-      # See the equivalent note in games/edit_spec.rb: the old Games
-      # controller runs ensure_authenticated (excluding only index/show)
-      # before ensure_author, so a guest gets Unauthenticated here too --
-      # assert_unauthorized (checking for Unauthorized) never matched actual
-      # behaviour. Fixed to match the description and the real filter order.
+      # See games/edit_spec.rb for the full explanation: under Merb,
+      # Unauthenticated is a subclass of Unauthorized, so assert_unauthorized
+      # matched here too even though ensure_authenticated (not ensure_author)
+      # is what actually rejects a guest. Rails' two exception classes are
+      # unrelated (separate rescue_from handlers, redirect vs. 401), so the
+      # assertion has to name the one that's actually raised -- still
+      # Unauthenticated, since :update is not excluded from
+      # require_authentication!.
       it "raises Unauthenticated exception" do
         assert_unauthenticated { perform_request }
       end

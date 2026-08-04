@@ -34,18 +34,23 @@ RSpec.describe InvitationsController, "#new", type: :controller do
     end
   end
 
+  # These two used to assert `should_not raise_error`, which -- now that a
+  # denial redirects/401s instead of raising -- would pass whether the
+  # captain was let through or rejected, and #new never even reads these
+  # params (see InvitationsController#new), so the assertion proved
+  # nothing about "for_user" handling either. Asserting the real response
+  # status confirms the captain still reaches the form regardless of what
+  # (unused, on this action) recepient_nickname value happens to be present.
   describe "when it receives blank string as 'for_user' parameter" do
     before :each do
       @captain = create_user
       @team = create_team :captain => @captain
-      @response = perform_request :as_user => @captain
       @params = { :invitation => { :recepient_nickname => "" } }
     end
 
-    it "does not raise error" do
-      expect do
-        perform_request( { :as_user => @captain }, @params)
-      end.not_to raise_error
+    it "still responds successfully" do
+      perform_request({ :as_user => @captain }, @params)
+      expect(response).to have_http_status(:success)
     end
   end
 
@@ -53,14 +58,12 @@ RSpec.describe InvitationsController, "#new", type: :controller do
     before :each do
       @captain = create_user
       @team = create_team :captain => @captain
-      @response = perform_request :as_user => @captain
       @params = { :invitation => { :recepient_nickname => "SomeUser" } }
     end
 
-    it "does not raise error" do
-      expect do
-        perform_request( { :as_user => @captain }, @params)
-      end.not_to raise_error
+    it "still responds successfully" do
+      perform_request({ :as_user => @captain }, @params)
+      expect(response).to have_http_status(:success)
     end
   end
 

@@ -17,6 +17,9 @@ end
 group :test do
   gem "cucumber-rails", require: false
   gem "capybara"
+  # Restores the bare `assigns(:x)` helper controller specs relied on before
+  # Rails 5 split it out. Four ported specs need it for @answer/
+  # @answer_was_correct etc. -- there's no equivalent way to read those
+  # without it.
+  gem "rails-controller-testing", "~> 1.0"
 end
-
-gem "rails-controller-testing", "~> 1.0", group: :test

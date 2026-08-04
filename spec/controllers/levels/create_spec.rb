@@ -9,8 +9,15 @@ RSpec.describe LevelsController, "#create", type: :controller do
         @game = create_game :author => @author
       end
 
-      it "does not raise any exception" do
-        expect { perform_request(:as_user => @author) }.not_to raise_error
+      # Under Merb this asserted `should_not raise_error`, which passed
+      # whether ensure_author allowed or denied the request -- a denial now
+      # redirects/401s instead of raising, so that assertion proved nothing
+      # about the security filter. Asserting the real redirect proves the
+      # author was let through.
+      it "is not rejected by the security filters" do
+        perform_request({ :as_user => @author },
+                         { :level => { :name => "L", :text => "T", :correct_answer => "A" } })
+        expect(response).to redirect_to(game_level_path(@game, Level.last))
       end
 
       it "redirects to level profile"

@@ -4,6 +4,9 @@ class GamesController < ApplicationController
 
   before_action :require_authentication!, except: [:index, :show]
   before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test]
+  before_action :find_team, only: [:show]
+  before_action :ensure_author_if_game_is_draft, only: [:show]
+  before_action :ensure_author_if_no_start_time, only: [:show]
   before_action :ensure_author, only: [:edit, :update]
   before_action :ensure_game_was_not_started, only: [:edit, :update]
 
@@ -98,5 +101,35 @@ class GamesController < ApplicationController
 
   def find_game
     @game = Game.find(params[:id])
+  end
+
+  # No view reads @team today (Task 9 hasn't ported app/views/games/show yet),
+  # but the Merb original set it unconditionally on #show and dropping it
+  # silently would change what that port can rely on.
+  def find_team
+    @team = current_user&.team
+  end
+
+  def game_is_draft?
+    @game.draft?
+  end
+
+  def no_start_time?
+    @game.starts_at.nil?
+  end
+
+  # A draft or not-yet-scheduled game is only visible to its author -- a
+  # guest or any other user gets Unauthorized (via SecurityFilters#ensure_author,
+  # which itself distinguishes "not logged in" from "logged in but not the
+  # author" -- both land here as a 401, matching the Merb original). Without
+  # these two guards, an unpublished game's name/description/level count
+  # leak from the moment its author saves the draft, before it's meant to be
+  # public.
+  def ensure_author_if_game_is_draft
+    ensure_author if game_is_draft?
+  end
+
+  def ensure_author_if_no_start_time
+    ensure_author if no_start_time?
   end
 end

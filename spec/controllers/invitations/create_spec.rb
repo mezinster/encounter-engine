@@ -7,12 +7,19 @@ RSpec.describe InvitationsController, "#create", type: :controller do
       before :each do
         @captain = create_user
         @team = create_team :captain => @captain
+        @invited_user = create_user
       end
 
-      it "does not raise any error" do
-        expect do
-          perform_request :as_user => @captain
-        end.not_to raise_error
+      # Under Merb this asserted `should_not raise_error`, which passed
+      # whether ensure_team_captain allowed or denied the request (a denial
+      # now redirects/401s instead of raising, so that assertion would pass
+      # either way and prove nothing). Asserting the actual redirect proves
+      # the captain was let through the security filter, not just that
+      # nothing blew up.
+      it "is not rejected by the security filters" do
+        perform_request({ :as_user => @captain },
+                         { :invitation => { :recepient_nickname => @invited_user.nickname } })
+        expect(response).to redirect_to(new_invitation_path)
       end
     end
 
@@ -57,17 +64,24 @@ RSpec.describe InvitationsController, "#create", type: :controller do
     # TODO(Task 10): app/mailers/notification_mailer.rb is still the
     # pre-port Merb::MailController -- referencing NotificationMailer from
     # Rails raises NameError (uninitialized constant Merb), so
-    # InvitationsController#create no longer sends this email (see the
-    # TODO comment there). This example depended on Merb::Mailer.deliveries,
-    # which no longer exists either. Un-pend once Task 10 ports the mailer
-    # and the controller call is restored.
+    # InvitationsController#create no longer sends this email (see the four
+    # TODO(Task 10) comments in app/controllers/invitations_controller.rb:
+    # lines 20-25, 38-39, 47-48, 70-72). Written against ActionMailer::Base's
+    # real API (not the old Merb::Mailer.deliveries/assert_sends_email,
+    # which no longer exist) so that once Task 10 ports the mailer and
+    # restores the controller call, this either passes for real or fails
+    # loudly -- it will not stay silently green if any of the four TODO
+    # sites gets missed.
     it "sends a notification to invited user by email" do
       pending "NotificationMailer is not yet ported to ActionMailer (Task 10)"
 
-      assert_sends_email { perform_request({ :as_user => @captain }, @params) }
+      expect do
+        perform_request({ :as_user => @captain }, @params)
+      end.to change(ActionMailer::Base.deliveries, :size).by(1)
 
-      Merb::Mailer.deliveries.last.to.first.should == @user.email
-      Merb::Mailer.deliveries.last.text.should match(/Вас пригласили вступить в команду #{@team.name}/)
+      mail = ActionMailer::Base.deliveries.last
+      mail.to.should include(@user.email)
+      mail.body.encoded.should match(/Вас пригласили вступить в команду #{@team.name}/)
     end
 
     it "assigns captain team as invitation target team" do

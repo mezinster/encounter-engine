@@ -31,14 +31,20 @@ RSpec.describe GamesController, "#edit", type: :controller do
         @game = create_game :is_draft => false
       end
 
-      # The Merb original asserted this with assert_unauthorized (checking
-      # for Merb::ControllerExceptions::Unauthorized), but the actual old
-      # Games controller ran `before :ensure_authenticated, :exclude =>
-      # [:index, :show]` -- :edit is not excluded, so a guest hit that
-      # filter first and got Unauthenticated, never reaching ensure_author.
-      # assert_unauthorized never matched real behaviour here; this test's
-      # own description ("raises Unauthenticated exception") already said
-      # so. Fixed to match what the controller actually does.
+      # The Merb original asserted this with assert_unauthorized. That
+      # worked under Merb even though the guest actually raises
+      # Unauthenticated (ensure_authenticated runs before ensure_author for
+      # :edit -- see the old `before :ensure_authenticated, :exclude =>
+      # [:index, :show]`): Merb::Controller::Unauthenticated is a *subclass*
+      # of ControllerExceptions::Unauthorized (vendor/merb-auth/merb-auth-
+      # core/lib/merb-auth-core/authenticated_helper.rb:2), so
+      # raise_error(Unauthorized) matched either exception. Rails'
+      # Authentication::Unauthenticated and Authentication::Unauthorized
+      # (app/controllers/concerns/authentication.rb) have no such
+      # relationship -- both are plain StandardError with separate
+      # rescue_from handlers (redirect vs. 401) -- so the assertion has to
+      # name whichever one is actually raised. That's still Unauthenticated
+      # here, matching this test's own description.
       it "raises Unauthenticated exception" do
         assert_unauthenticated { perform_request }
       end

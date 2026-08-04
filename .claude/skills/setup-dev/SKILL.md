@@ -58,13 +58,14 @@ Native extensions that do get built: `sqlite3` (pinned `<1.4`), `nokogiri`, `thi
 ## 5. Database
 
 ```bash
-cp -n config/database.yml.sample config/database.yml   # only if the file is missing
 MERB_ENV=rake bundle exec rake db:migrate
 ```
 
-`config/database.yml` is gitignored. The committed sample defaults development to MySQL — for a
-local sqlite setup point `:development:` at `db/development.sqlite` with `:adapter: sqlite3`.
-The test environment already uses in-memory sqlite and needs no setup.
+`config/database.yml` is committed and already points development at
+`db/development.sqlite` and test at in-memory sqlite, so no configuration is needed. The
+development database file itself is not in the repository — the migrate above creates it. Expect
+`Skipping Merb plugin rakefile merb-auth-slice-password/spectasks` on every rake invocation;
+those are RSpec 1 tasks that cannot load under RSpec 3, and `Rakefile` skips them deliberately.
 
 ## 6. Verify
 

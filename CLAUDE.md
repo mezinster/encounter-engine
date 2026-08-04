@@ -18,8 +18,9 @@ bundle install --without production
 ```
 
 Ruby is pinned to **2.6.5** (`Gemfile`, `Gemfile.lock`), bundler 2.2.3. `config/database.yml` is
-gitignored — copy `config/database.yml.sample` if it is absent. Development uses sqlite
-(`db/development.sqlite`); production uses Postgres via `DATABASE_URL`.
+committed and already points development and test at sqlite; production uses Postgres via
+`DATABASE_URL`. The development database itself is not in the repository — create it with
+`MERB_ENV=rake bundle exec rake db:migrate`.
 
 ## Commands
 

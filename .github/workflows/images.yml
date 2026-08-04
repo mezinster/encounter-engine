@@ -78,7 +78,8 @@ jobs:
             docker exec pg-smoke pg_isready -U postgres >/dev/null 2>&1 && break
             sleep 1
           done
-          docker exec pg-smoke psql -U postgres -c "SHOW shared_buffers;" | grep -q 128MB
-          docker exec pg-smoke psql -U postgres -c "SHOW archive_mode;"   | grep -q on
+          docker exec pg-smoke psql -U postgres -tAc "SHOW max_connections;"      | grep -qx 20
+          docker exec pg-smoke psql -U postgres -tAc "SHOW effective_cache_size;" | grep -qx 512MB
+          docker exec pg-smoke psql -U postgres -tAc "SHOW archive_mode;"         | grep -qx on
           echo "tuning applied"
           docker rm -f pg-smoke

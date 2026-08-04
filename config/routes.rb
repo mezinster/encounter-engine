@@ -16,6 +16,12 @@ Rails.application.routes.draw do
   # button_to/link_to method: :delete.
   get    "/login",  to: "sessions#new",     as: :login
   post   "/login",  to: "sessions#create"
+  # merb-auth's login form posted a hidden _method=PUT
+  # (vendor/merb-auth/merb-auth-slice-password/app/views/exceptions/unauthenticated.html.erb:9-10)
+  # against the PUT /login route (…lib/merb-auth-slice-password.rb:65). Keep
+  # PUT accepted alongside POST so that verb is still served, even though
+  # Task 6/9 own the actual form markup going forward.
+  put    "/login",  to: "sessions#create"
   get    "/logout", to: "sessions#destroy", as: nil
   delete "/logout", to: "sessions#destroy", as: :logout
   get    "/signup", to: "users#new",        as: :signup
@@ -34,16 +40,40 @@ Rails.application.routes.draw do
   resources :teams
   resources :invitations
 
+  # Merb's `resources` auto-added `GET /<resource>/:id/edit` AND
+  # `GET /<resource>/:id/delete` to every `resources` call by default
+  # (vendor/merb/merb-core/lib/merb-core/dispatch/router/resources.rb:80,
+  # `member = { :edit => :get, :delete => :get }`). Rails' `resources` only
+  # adds :edit. None of these controllers define a `destroy` action (Rails'
+  # convention) -- they define `delete` (a GET-rendered confirmation page,
+  # per app/controllers/games.rb:55, levels.rb:37, hints.rb:35,
+  # answers.rb:23), and every deletion link in app/views calls that
+  # `/.../:id/delete` path via `resource(..., :delete)`. Restore the member
+  # route for the four resources actually linked that way.
   resources :games do
-    resources :levels do
-      resources :hints
-      resources :questions do
-        resources :answers
-      end
+    member do
+      get :delete
+    end
 
+    resources :levels do
       member do
+        get :delete
         get :move_up
         get :move_down
+      end
+
+      resources :hints do
+        member do
+          get :delete
+        end
+      end
+
+      resources :questions do
+        resources :answers do
+          member do
+            get :delete
+          end
+        end
       end
     end
   end
@@ -60,6 +90,18 @@ Rails.application.routes.draw do
   get "/games/end_game/:id",    to: "games#end_game"
 
   get "/game_passings/exit_game/:game_id", to: "game_passings#exit_game", as: :exit_game
+
+  # app/views/dashboard/_finished_games.html.erb:7 and
+  # app/views/shared/_current_games.html.erb:13 build this URL with
+  # `url(:controller => :game_passings, :action => :show_results, :game_id
+  # => game.id)` -- a Hash argument, which Merb resolves through the
+  # `:default` route (vendor/merb/merb-core/lib/merb-core/dispatch/router.rb:
+  # 221-232, i.e. default_routes' `/:controller(/:action(/:id))`), NOT
+  # through the named `game_stats` route below. The generated URL is
+  # `/game_passings/show_results?game_id=7` (leftover params become a query
+  # string), not `/stats/show_results/7`. game_id arrives via the query
+  # string, so it isn't declared as a path segment here.
+  get "/game_passings/show_results", to: "game_passings#show_results"
 
   get "/invitations/accept/:id", to: "invitations#accept"
   get "/invitations/reject/:id", to: "invitations#reject"

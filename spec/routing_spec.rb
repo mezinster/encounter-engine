@@ -87,6 +87,10 @@ RSpec.describe "routing" do
     method: :post, path: "/login",
     to: { controller: "sessions", action: "create" }
 
+  it_recognizes "keeps PUT /login (merb-auth's login form posted _method=PUT)",
+    method: :put, path: "/login",
+    to: { controller: "sessions", action: "create" }
+
   it_recognizes "keeps GET /logout (the existing plain link and Cucumber's raw GET visits rely on this)",
     method: :get, path: "/logout",
     to: { controller: "sessions", action: "destroy" }
@@ -119,6 +123,26 @@ RSpec.describe "routing" do
     method: :get, path: "/game_passings/exit_game/7",
     to: { controller: "game_passings", action: "exit_game", game_id: "7" }
 
+  it_recognizes "keeps /game_passings/show_results (Merb's :default route for a Hash url(), game_id arrives via query string)",
+    method: :get, path: "/game_passings/show_results",
+    to: { controller: "game_passings", action: "show_results" }
+
+  it_recognizes "keeps /games/:id/delete (Merb resources' auto member :delete)",
+    method: :get, path: "/games/7/delete",
+    to: { controller: "games", action: "delete", id: "7" }
+
+  it_recognizes "keeps /games/:game_id/levels/:id/delete",
+    method: :get, path: "/games/7/levels/9/delete",
+    to: { controller: "levels", action: "delete", game_id: "7", id: "9" }
+
+  it_recognizes "keeps /games/:game_id/levels/:level_id/hints/:id/delete",
+    method: :get, path: "/games/7/levels/9/hints/3/delete",
+    to: { controller: "hints", action: "delete", game_id: "7", level_id: "9", id: "3" }
+
+  it_recognizes "keeps /games/:game_id/levels/:level_id/questions/:question_id/answers/:id/delete",
+    method: :get, path: "/games/7/levels/9/questions/2/answers/1/delete",
+    to: { controller: "answers", action: "delete", game_id: "7", level_id: "9", question_id: "2", id: "1" }
+
   it_recognizes "keeps /invitations/accept/:id",
     method: :get, path: "/invitations/accept/5",
     to: { controller: "invitations", action: "accept", id: "5" }
@@ -150,4 +174,21 @@ RSpec.describe "routing" do
   it_recognizes "keeps /game_entries/cancel/:id",
     method: :get, path: "/game_entries/cancel/5",
     to: { controller: "game_entries", action: "cancel", id: "5" }
+
+  # Negative checks: prove the router is not over-permissive. A route file
+  # that matched everything would pass every `it_recognizes` example above
+  # too, so these guard against that.
+  it "does not recognize /play/:game_id for an unexpected verb" do
+    expect(recognized_params(method: :delete, path: "/play/7")).to be_nil
+    expect(recognized_params(method: :put, path: "/play/7")).to be_nil
+  end
+
+  it "does not recognize a nonsense path" do
+    expect(recognized_params(method: :get, path: "/this/does/not/exist/anywhere")).to be_nil
+  end
+
+  it "does not recognize /logout for verbs we did not intentionally add (only GET and DELETE are wired up)" do
+    expect(recognized_params(method: :put, path: "/logout")).to be_nil
+    expect(recognized_params(method: :post, path: "/logout")).to be_nil
+  end
 end

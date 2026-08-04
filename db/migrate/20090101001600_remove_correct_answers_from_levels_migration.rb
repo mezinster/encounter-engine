@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class RemoveCorrectAnswersFromLevels < ActiveRecord::Migration[4.2]
+class RemoveCorrectAnswersFromLevelsMigration < ActiveRecord::Migration[4.2]
 	def self.up
 		remove_column :levels, :correct_answers
 	end

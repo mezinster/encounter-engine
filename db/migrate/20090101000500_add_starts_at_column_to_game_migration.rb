@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class AddStartsAtColumnToGame < ActiveRecord::Migration[4.2]
+class AddStartsAtColumnToGameMigration < ActiveRecord::Migration[4.2]
   def self.up
     add_column :games, :starts_at, :datetime
   end

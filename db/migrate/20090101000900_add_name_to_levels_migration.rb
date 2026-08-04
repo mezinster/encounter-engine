@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class AddNameToLevels < ActiveRecord::Migration[4.2]
+class AddNameToLevelsMigration < ActiveRecord::Migration[4.2]
   def self.up
     add_column :levels, :name, :string
   end

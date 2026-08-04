@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class Question < ActiveRecord::Migration[4.2]
+class QuestionMigration < ActiveRecord::Migration[4.2]
   def self.up
     create_table :questions do |t|
     	t.string :questions

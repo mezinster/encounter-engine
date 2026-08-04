@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class Level < ActiveRecord::Migration[4.2]
+class LevelMigration < ActiveRecord::Migration[4.2]
   def self.up
     create_table :levels do |t|
       t.text :text

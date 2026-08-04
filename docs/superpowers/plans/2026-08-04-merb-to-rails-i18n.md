@@ -336,7 +336,12 @@ mkdir -p db/migrate
 i=0
 for f in $(ls schema/migrations/*.rb | sort); do
   base=$(basename "$f" .rb)
-  name=$(echo "$base" | sed -E 's/^[0-9]+_//; s/_migration$//')
+  # Keep the _migration suffix. Stripping it yields class names like User and
+  # Team that collide with the models of the same name: with eager_load on,
+  # app/models loads first and reopening `class User` with a different
+  # superclass raises TypeError. The Merb originals kept the suffix
+  # (TeamMigration, LogMigration) for exactly this reason.
+  name=$(echo "$base" | sed -E 's/^[0-9]+_//')
   ts=$(date -u -d "2009-01-01 00:00:00 UTC + $i minute" +%Y%m%d%H%M%S)
   cp "$f" "db/migrate/${ts}_${name}.rb"
   i=$((i+1))

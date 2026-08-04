@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class GameEntry < ActiveRecord::Migration[4.2]
+class GameEntryMigration < ActiveRecord::Migration[4.2]
   def self.up
     create_table :game_entries do |t|
       t.integer :game_id

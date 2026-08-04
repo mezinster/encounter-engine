@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class Log < ActiveRecord::Migration[4.2]
+class LogMigration < ActiveRecord::Migration[4.2]
   def self.up
     create_table :logs do |t|
       t.integer :game_id

@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class Team < ActiveRecord::Migration[4.2]
+class TeamMigration < ActiveRecord::Migration[4.2]
   def self.up
     create_table :teams do |t|
       t.string :name

@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class User < ActiveRecord::Migration[4.2]
+class UserMigration < ActiveRecord::Migration[4.2]
   def self.up
     create_table :users do |t|
       t.string :email

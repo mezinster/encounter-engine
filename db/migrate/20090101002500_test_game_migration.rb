@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class TestGame < ActiveRecord::Migration[4.2]
+class TestGameMigration < ActiveRecord::Migration[4.2]
  def self.up
   add_column :games, :is_testing, :boolean, :null => false, :default => false
   add_column :games, :test_date, :datetime

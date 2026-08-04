@@ -8,6 +8,18 @@ on:
 jobs:
   app-image:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: smoke
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
 
@@ -24,14 +36,14 @@ jobs:
 
       - name: Prove the image actually serves
         run: |
-          docker run -d --name ee-smoke -p 3001:3000 \
+          docker run -d --name ee-smoke --network host \
             -e SECRET_KEY_BASE=$(openssl rand -hex 64) \
-            -e DATABASE_URL="sqlite3:/tmp/smoke.sqlite3" \
+            -e DATABASE_URL="postgresql://postgres:smoke@127.0.0.1:5432/postgres" \
             -e APP_HOST=game.mezin.eu \
             -e SMTP_USERNAME=x -e SMTP_PASSWORD=y \
             encounter-engine:test
           for i in $(seq 1 30); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3001/up || true)
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/up || true)
             [ "$code" = "200" ] && echo "up: 200 after ${i}s" && exit 0
             sleep 1
           done

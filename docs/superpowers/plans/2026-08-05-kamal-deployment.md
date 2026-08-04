@@ -22,6 +22,9 @@
 - **This workstation has no container runtime.** `docker`, `podman` and `nerdctl` are all absent, and Docker Desktop has been uninstalled from the Windows side. No image can be built or run locally.
 - **This workstation cannot reach the host's SSH port directly.** A raw TCP connect to `23.100.7.86:22` is blocked; `~/.ssh/config` reaches it only through `ProxyCommand /home/mezinster/.ssh/mezin-proxy.sh`, a SOCKS bridge on the Windows side. The `ssh` binary and Ansible honour that ProxyCommand; Kamal, which drives SSH through net-ssh rather than the binary, cannot be relied on to.
 - **Consequence — CI builds and CI deploys.** Every `docker build` and every `kamal` invocation runs on a GitHub Actions runner, never on this workstation and never on the target host. Verification that needs only `ssh` or `curl` still runs from here.
+- **Azure is driven through Windows.** `az` is not installed anywhere, but Windows has PowerShell 7.4 with the Az module 4.2.0 and a cached context for `Evgeny_Mezin@epam.com` (subscription `Visual Studio Professional`, Owner at subscription scope). Reach it from WSL with `pwsh.exe -NoProfile -NonInteractive -File 'C:\...\script.ps1'`; write the script to a Windows-visible path such as `/mnt/c/Users/Evgeny_Mezin/AppData/Local/Temp/ee-deploy/`. Inline `-Command` strings suffer badly from double quoting — always use a script file.
+- **The WAL archive already exists** (provisioned 2026-08-05): storage account `eewalxypkl1ft` (Standard_LRS, StorageV2, HTTPS-only, TLS1.2 minimum, public blob access disabled) in resource group `mezineu`/westeurope, private container `encounter-engine-wal`. Do not create another.
+- **wal-g authenticates with a managed identity, not a storage key.** VM `web` has a system-assigned identity (principal `b6c5b1e5-ff11-4cfa-a0ee-8cb6748e2446`) holding `Storage Blob Data Contributor` scoped to that one storage account. wal-g uses the Azure default credential chain, so setting `AZURE_STORAGE_ACCOUNT` and omitting `AZURE_STORAGE_ACCESS_KEY` makes it fetch short-lived tokens from IMDS. Verified from the host: the token endpoint returns `expires_in 86400` for `https://storage.azure.com/`. **Not yet verified from inside a container** — Task 4 settles that, and only if it fails does the storage-key fallback come back.
 
 ---
 
@@ -578,7 +581,35 @@ Expected: `NO LISTENERS LOST`, three `active` lines, and a Docker version. Docke
 
 **If a listener disappeared:** stop. Remove Docker (`sudo apt-get remove --purge docker-ce docker-ce-cli containerd.io && sudo reboot`) and report before going further — do not attempt to patch iptables by hand.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Settle how wal-g will authenticate to Azure**
+
+The VM holds a managed identity with `Storage Blob Data Contributor` on the WAL
+storage account, and the *host* can fetch tokens from IMDS. What matters is
+whether a **container** can: IMDS lives at the link-local address
+`169.254.169.254`, and whether that is reachable through Docker's bridge is a
+property of this host, not something to assume.
+
+```bash
+ssh mezin 'sudo docker run --rm curlimages/curl:latest -s -m 10 \
+  -H "Metadata:true" \
+  "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://storage.azure.com/" \
+  | head -c 120; echo'
+```
+
+Expected: a JSON body containing `access_token`. Record which branch you took:
+
+- **Token returned** — the managed identity works from a container. Task 5 sets
+  `AZURE_STORAGE_ACCOUNT` as clear env and defines **no** `AZURE_STORAGE_ACCESS_KEY`
+  anywhere. This is the intended path: no long-lived storage credential exists in
+  GitHub, in `.kamal/secrets`, or in the container environment.
+- **Anything else** (connection refused, timeout, an error body) — the fallback
+  applies. Report it, and Task 5 adds `AZURE_STORAGE_ACCESS_KEY` back as a secret,
+  sourced with
+  `pwsh.exe -NoProfile -NonInteractive -Command "(Get-AzStorageAccountKey -ResourceGroupName mezineu -Name eewalxypkl1ft)[0].Value"`.
+  Do not silently pick the fallback: the whole point of the identity is that this
+  credential does not exist.
+
+- [ ] **Step 7: Commit**
 
 ```bash
 git add ansible/
@@ -661,10 +692,15 @@ accessories:
         POSTGRES_USER: encounter
         POSTGRES_DB: encounter_production
         WALG_AZ_PREFIX: azure://encounter-engine-wal
+        # No AZURE_STORAGE_ACCESS_KEY. The VM holds a system-assigned managed
+        # identity with Storage Blob Data Contributor on this account only, and
+        # wal-g's Azure default credential chain fetches short-lived tokens from
+        # IMDS. A storage account name is not a secret; the key would be, and it
+        # does not exist here. If Task 4 Step 6 found IMDS unreachable from a
+        # container, add AZURE_STORAGE_ACCESS_KEY to the secret list below.
+        AZURE_STORAGE_ACCOUNT: eewalxypkl1ft
       secret:
         - POSTGRES_PASSWORD
-        - AZURE_STORAGE_ACCOUNT
-        - AZURE_STORAGE_ACCESS_KEY
     volumes:
       - encounter_engine_pg_data:/var/lib/postgresql/data
 ```
@@ -682,10 +718,11 @@ POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 DATABASE_URL=postgresql://encounter:${POSTGRES_PASSWORD}@127.0.0.1:5432/encounter_production
 SMTP_USERNAME=$SMTP_USERNAME
 SMTP_PASSWORD=$SMTP_PASSWORD
-AZURE_STORAGE_ACCOUNT=$AZURE_STORAGE_ACCOUNT
-AZURE_STORAGE_ACCESS_KEY=$AZURE_STORAGE_ACCESS_KEY
 KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD
 ```
+
+No Azure entries: wal-g authenticates with the VM's managed identity, so there is
+no storage credential for this file to reference.
 
 - [ ] **Step 4: Write the pre-deploy migration hook**
 
@@ -737,8 +774,6 @@ reviewers**, then add these secrets to it:
 | `POSTGRES_PASSWORD` | generated above |
 | `SMTP_USERNAME` | the Gmail address |
 | `SMTP_PASSWORD` | the Gmail **app password**, not the account password |
-| `AZURE_STORAGE_ACCOUNT` | the storage account name |
-| `AZURE_STORAGE_ACCESS_KEY` | the storage account key |
 | `KAMAL_REGISTRY_PASSWORD` | a GHCR PAT with `write:packages` |
 | `SSH_PRIVATE_KEY` | the private half of the `eugene@mezin.eu` key that reaches `mezinster@23.100.7.86` |
 
@@ -804,8 +839,6 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
-          AZURE_STORAGE_ACCESS_KEY: ${{ secrets.AZURE_STORAGE_ACCESS_KEY }}
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
         run: bundle exec kamal ${{ inputs.command }}
 ```

@@ -802,6 +802,12 @@ git commit -m "Use native Unicode casing for answer codes and drop unicode_utils
 
 ---
 
+> **Execution order note:** run Task 7 (Routes) *before* Task 6. Task 6's `SessionsController`
+> references `login_path`, `dashboard_path` and `root_path`, and its spec issues `post :create`,
+> all of which need routes to exist. Task 7 depends on nothing — routing specs assert route
+> recognition, not controller existence — so it is safe to run first. The task numbering is left
+> as written to keep the briefs stable.
+
 ### Task 6: Authentication
 
 **Files:**

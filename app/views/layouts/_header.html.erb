@@ -1,6 +1,6 @@
 <% if logged_in? %>
-  <%= link_to "Личный кабинет", url(:dashboard), :class => "home-link" %>
+  <%= link_to t("layout.header.dashboard"), dashboard_path, class: "home-link" %>
 <% else %>
-  <%= link_to "Главная", url(:index_page), :class => "home-link" %>
+  <%= link_to t("layout.header.home"), root_path, class: "home-link" %>
 <% end %>
-<%= Time.now.strftime("%Y-%m-%d %H:%M")%>
+<%= l(Time.current, format: :short) %>

@@ -19,13 +19,7 @@ class GamePassingsController < ApplicationController
 
   def show_current_level
     @level = @game_passing.current_level
-    # TODO(Task 9): the Merb original rendered this with a dedicated
-    # "in_game" layout (app/views/layout/in_game.html.erb). App views/layouts
-    # are out of this task's scope and that file hasn't been moved to Rails'
-    # app/views/layouts/ yet, so an explicit `layout: "in_game"` here would
-    # raise ActionView::MissingTemplate on every request, not just in tests.
-    # Falls back to the controller's default layout until Task 9 ports it;
-    # restore `layout: "in_game"` at that point.
+    render layout: "in_game"
   end
 
   def index
@@ -59,8 +53,7 @@ class GamePassingsController < ApplicationController
     if @game_passing.finished?
       render :show_results
     else
-      # See the TODO in #show_current_level about the "in_game" layout.
-      render :show_current_level
+      render :show_current_level, layout: "in_game"
     end
   end
 

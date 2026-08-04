@@ -17,6 +17,66 @@ en:
   game:
     not_started: "The game has not started yet. Where did you even get this link? :-)"
     already_in_team: "You are already a member of a team"
+  layout:
+    title: "Active urban games"
+    header:
+      dashboard: "Dashboard"
+      home: "Home"
+    left_menu:
+      dashboard: "Dashboard"
+      profile: "Profile"
+      team_room: "Team room"
+      create_team: "Create a team"
+      all_games: "All games in this domain"
+      logout: "Log out"
+      login_legend: "Log in"
+      login: "Log in"
+      signup: "Sign up"
+  shared:
+    game_entry_controls:
+      applied: "Application submitted"
+      recall: "Withdraw"
+      registered: "You are registered"
+      decline: "Decline"
+      reapply: "Re-apply for registration"
+      entries_exceeded: "You cannot register because the number of participants has been exceeded"
+      deadline_passed: "You cannot register because you missed the registration deadline"
+      apply: "Apply for registration"
+    current_games:
+      legend: "Current games in this domain"
+      started: "Game has started"
+      view_results: "View results"
+      no_levels: "The game has no tasks"
+    current_games_status:
+      play: "Play!"
+      not_registered: "You are not registered"
+    countdown:
+      prefix: "Time left: "
+      years: ["year", "years", "years"]
+      months: ["month", "months", "months"]
+      days: ["day", "days", "days"]
+      hours: ["hour", "hours", "hours"]
+      minutes: ["minute", "minutes", "minutes"]
+      seconds: ["second", "seconds", "seconds"]
+  time:
+    formats:
+      short: "%Y-%m-%d %H:%M"
+      long: "%B %-d, %Y at %H:%M"
+  date:
+    month_names:
+      - ~
+      - "January"
+      - "February"
+      - "March"
+      - "April"
+      - "May"
+      - "June"
+      - "July"
+      - "August"
+      - "September"
+      - "October"
+      - "November"
+      - "December"
   sessions:
     invalid_credentials: "Wrong e-mail or password"
     new:

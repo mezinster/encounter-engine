@@ -388,10 +388,16 @@ FROM postgres:16-bookworm
 # wal-g must live INSIDE this image. archive_command is executed by the
 # PostgreSQL process itself, so a wal-g installed on the host is unreachable.
 ARG WALG_VERSION=v3.0.3
+# Pinned deliberately: this deployment host proxies outbound traffic (SOCKS +
+# squid), so a pinned tag alone doesn't rule out the release asset being
+# swapped or tampered with in transit. Must be updated whenever WALG_VERSION
+# changes — a stale digest should fail the build loudly, which is intended.
+ARG WALG_SHA256=e56f515e6219f4d498e729023b404b4c9068a4deaebbaf95ac6f4cf6bcd1a783
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y ca-certificates curl cron && \
     curl -fsSL -o /tmp/walg.tar.gz \
       "https://github.com/wal-g/wal-g/releases/download/${WALG_VERSION}/wal-g-pg-ubuntu-20.04-amd64.tar.gz" && \
+    echo "${WALG_SHA256}  /tmp/walg.tar.gz" | sha256sum -c - && \
     tar -xzf /tmp/walg.tar.gz -C /tmp && \
     mv /tmp/wal-g-pg-ubuntu-20.04-amd64 /usr/local/bin/wal-g && \
     chmod +x /usr/local/bin/wal-g && \
@@ -411,7 +417,13 @@ archive_timeout = 300
 wal_level = replica
 CONF
 
-CMD ["postgres", "-c", "config_file=/usr/share/postgresql/postgresql.conf.sample", "-c", "include_dir=/etc/postgresql/conf.d"]
+# `include_dir` is a config-FILE directive, not a settable GUC: passing it as
+# `-c include_dir=...` makes postgres fail with "unrecognized configuration
+# parameter" the moment initdb starts its temporary server. It has to live
+# inside the config file itself instead.
+RUN echo "include_dir = '/etc/postgresql/conf.d'" >> /usr/share/postgresql/postgresql.conf.sample
+
+CMD ["postgres", "-c", "config_file=/usr/share/postgresql/postgresql.conf.sample"]
 ```
 
 - [ ] **Step 2: Add a `postgres-image` job to `.github/workflows/images.yml`**
@@ -448,8 +460,9 @@ proven.
             docker exec pg-smoke pg_isready -U postgres >/dev/null 2>&1 && break
             sleep 1
           done
-          docker exec pg-smoke psql -U postgres -c "SHOW shared_buffers;" | grep -q 128MB
-          docker exec pg-smoke psql -U postgres -c "SHOW archive_mode;"   | grep -q on
+          docker exec pg-smoke psql -U postgres -tAc "SHOW max_connections;"      | grep -qx 20
+          docker exec pg-smoke psql -U postgres -tAc "SHOW effective_cache_size;" | grep -qx 512MB
+          docker exec pg-smoke psql -U postgres -tAc "SHOW archive_mode;"         | grep -qx on
           echo "tuning applied"
           docker rm -f pg-smoke
 ```
@@ -457,9 +470,15 @@ proven.
 The `wal-g --version` step is the check that would have caught the design error
 where wal-g was installed on the host instead — `archive_command` is executed by
 the PostgreSQL process, and a host binary is unreachable from inside the
-container. The two `grep`s matter: `psql` prints the value and exits zero even
-when the include never loaded, so without them the step passes on a config file
-PostgreSQL ignored.
+container.
+
+The three asserted settings are chosen because each **diverges from PostgreSQL's
+compiled-in default** — `max_connections` defaults to 100, `effective_cache_size`
+to 4GB, `archive_mode` to off. That is the whole point: `psql` prints a value and
+exits zero whether or not the include ever loaded, so an assertion on a setting
+that happens to equal its default proves nothing. `shared_buffers` is exactly
+such a trap — the tuning file sets it to 128MB, which *is* the default. `-tAc`
+gives unaligned, tuple-only output so `grep -qx` can anchor on the whole line.
 
 - [ ] **Step 3: Commit, push, and watch the gate**
 

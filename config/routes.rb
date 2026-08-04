@@ -2,14 +2,15 @@ Rails.application.routes.draw do
   root to: "index#index"
 
   # Session/registration URLs replace merb-auth's merb_auth_slice_password
-  # slice (vendor/merb-auth/merb-auth-slice-password), which served:
+  # slice (formerly vendor/merb-auth/merb-auth-slice-password, removed by
+  # Task 13 -- see git history before this port's commits), which served:
   #   GET  /login   -> exceptions#unauthenticated (renders the login form)
   #   PUT  /login   -> sessions#update            (performs the login)
   #   *    /logout  -> sessions#destroy           (no :method restriction --
   #                    matched ANY verb)
   # The controllers are redesigned in a later task with standard Rails verbs
   # (new/create/destroy), but /logout must keep responding to GET: the
-  # existing "Выйти" link (app/views/layout/_left_menu.html.erb) is a plain
+  # existing "Выйти" link (app/views/layouts/_left_menu.html.erb) is a plain
   # <a href="/logout">, and features/authentication/logout.feature drives it
   # with a raw GET ("захожу по адресу /logout" -> Capybara #visit). DELETE is
   # added too, for whenever the view is updated to a Rails-idiomatic
@@ -17,7 +18,8 @@ Rails.application.routes.draw do
   get    "/login",  to: "sessions#new",     as: :login
   post   "/login",  to: "sessions#create"
   # merb-auth's login form posted a hidden _method=PUT
-  # (vendor/merb-auth/merb-auth-slice-password/app/views/exceptions/unauthenticated.html.erb:9-10)
+  # (merb-auth-slice-password/app/views/exceptions/unauthenticated.html.erb:9-10,
+  # removed by Task 13 -- see git history)
   # against the PUT /login route (…lib/merb-auth-slice-password.rb:65). Keep
   # PUT accepted alongside POST so that verb is still served, even though
   # Task 6/9 own the actual form markup going forward.
@@ -42,8 +44,9 @@ Rails.application.routes.draw do
 
   # Merb's `resources` auto-added `GET /<resource>/:id/edit` AND
   # `GET /<resource>/:id/delete` to every `resources` call by default
-  # (vendor/merb/merb-core/lib/merb-core/dispatch/router/resources.rb:80,
-  # `member = { :edit => :get, :delete => :get }`). Rails' `resources` only
+  # (merb-core/lib/merb-core/dispatch/router/resources.rb:80, removed by
+  # Task 13 -- see git history -- `member = { :edit => :get, :delete => :get }`).
+  # Rails' `resources` only
   # adds :edit. None of these controllers define a `destroy` action (Rails'
   # convention) -- they define `delete` (a GET-rendered confirmation page,
   # per app/controllers/games.rb:55, levels.rb:37, hints.rb:35,
@@ -95,8 +98,9 @@ Rails.application.routes.draw do
   # app/views/shared/_current_games.html.erb:13 build this URL with
   # `url(:controller => :game_passings, :action => :show_results, :game_id
   # => game.id)` -- a Hash argument, which Merb resolves through the
-  # `:default` route (vendor/merb/merb-core/lib/merb-core/dispatch/router.rb:
-  # 221-232, i.e. default_routes' `/:controller(/:action(/:id))`), NOT
+  # `:default` route (merb-core/lib/merb-core/dispatch/router.rb:221-232,
+  # i.e. default_routes' `/:controller(/:action(/:id))`; removed by Task 13,
+  # see git history), NOT
   # through the named `game_stats` route below. The generated URL is
   # `/game_passings/show_results?game_id=7` (leftover params become a query
   # string), not `/stats/show_results/7`. game_id arrives via the query

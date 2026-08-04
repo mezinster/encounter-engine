@@ -28,8 +28,11 @@ Features are written in **Russian Gherkin** (`# language: ru`). Prefer targeting
 line number rather than by name. Profiles live in `config/cucumber.yml`:
 
 - default — `--format pretty`
-- `-p rerun` — replays only what failed last run, reading `rerun.txt`; adds `--strict --tags ~@wip`
+- `-p rerun` — replays only what failed last run, reading `rerun.txt`; adds
+  `--strict --tags 'not @wip'`. (Not `~@wip` — Cucumber 11 removed that tag syntax; see the
+  comment at the top of `config/cucumber.yml`.)
 - `-p wip` — only `@wip`-tagged scenarios
+- `-p all` — `--strict` over the whole suite, no tag filter
 
 `rerun.txt` is gitignored and rewritten each run. `--strict` makes undefined or pending steps a
 failure, so a scenario that "passes" under the default profile can still fail under `rerun`.
@@ -47,7 +50,7 @@ bundle exec rspec spec/models/game/created_by_spec.rb    # one file
 bundle exec rspec spec/models/game/created_by_spec.rb:12    # one example by line
 ```
 
-Options live in `.rspec`. Roughly 185 assertions ported from the pre-Rails RSpec 1.x suite still
+Options live in `.rspec`. Roughly 140 assertions ported from the pre-Rails RSpec 1.x suite still
 use the legacy `should` syntax; `spec/rails_helper.rb` enables both, so `x.should == y` and
 `expect(x).to eq(y)` work side by side. Prefer `expect` in new specs.
 
@@ -57,7 +60,7 @@ use the legacy `should` syntax; `spec/rails_helper.rb` enables both, so `x.shoul
   are pre-existing empty placeholders in
   `features/multi-questional-levels/managing-additional-codes.feature` (lines 30, 32), not a
   regression. Any other failure here is real.
-- **RSpec: 405 examples, 0 failures, 6 pending.** The 6 pending are unimplemented controller specs
+- **RSpec: 407 examples, 0 failures, 6 pending.** The 6 pending are unimplemented controller specs
   (`GamesController#create` x2, `GamesController#update`, `InvitationsController#accept`/`#reject`,
   `LevelsController#create`) — pre-existing placeholders, not a regression. Any failure is real.
 

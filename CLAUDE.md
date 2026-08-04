@@ -87,12 +87,12 @@ deliberately; this is documented in `config/routes.rb` too.
 
 - **Cucumber** — `features/**/*.feature`, Russian Gherkin. 234 scenarios, 2362 steps (2 scenarios
   are pre-existing empty placeholders reported as "undefined" — not a regression). Profiles live in
-  `config/cucumber.yml` (default / `rerun` / `wip`).
-- **RSpec** — 405 examples (406 after the `game_passing` legacy-row-format spec below), 0 failures,
-  6 pending (unimplemented controller specs, pre-existing). `spec/rails_helper.rb` enables the
-  legacy `should` syntax (`config.expect_with :rspec do |c| c.syntax = [:should, :expect] end`)
-  because roughly 185 assertions ported from the Merb-era RSpec 1.x suite still use
-  `x.should == y`; new specs may use either syntax, prefer `expect`.
+  `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
+- **RSpec** — 407 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+  `spec/rails_helper.rb` enables the legacy `should` syntax
+  (`config.expect_with :rspec do |c| c.syntax = [:should, :expect] end`) because roughly 140
+  assertions ported from the Merb-era RSpec 1.x suite still use `x.should == y`; new specs may use
+  either syntax, prefer `expect`.
 - The test database is real sqlite (`db/test.sqlite3`), managed the standard Rails way —
   `db/schema.rb` plus `ActiveRecord::Migration.maintain_test_schema!` in `rails_helper.rb`. Run
   `bin/rails db:test:prepare` after adding a migration, same as any Rails app.
@@ -102,7 +102,11 @@ deliberately; this is documented in `config/routes.rb` too.
 
 ## Conventions
 
-- Every Ruby file starts with `# -*- encoding : utf-8 -*-`. Keep it on new files.
+- Many older files start with `# -*- encoding : utf-8 -*-` (or, inconsistently,
+  `# coding: utf-8` — see `app/models/level.rb`). It's not universal: files this port itself wrote
+  (`config/application.rb`, `config/routes.rb`, `app/controllers/concerns/locale_selection.rb`,
+  and others) have neither. Ruby's been UTF-8-by-default since Ruby 2.0, so the comment is a no-op
+  either way — match the surrounding file, don't feel obligated to add it to new ones.
 - Hash rockets (`:key => value`) are used throughout, including for symbol keys. Match the
   surrounding file rather than switching to `key:` syntax.
 - User-facing strings and Cucumber features are in Russian (or `t()` calls resolving to Russian).
@@ -121,9 +125,19 @@ reasoning and proof.
 
 Heroku. `Procfile` runs `puma`. `create-heroku-instance <app-name> <TZ> [DEFAULT_LOCALE]`
 provisions a new instance, sets `RAILS_ENV=production`, `TZ`, `DEFAULT_LOCALE` (defaults to `ru`),
-and generates a per-instance `SESSION_SECRET_KEY`.
+and generates a per-instance `SECRET_KEY_BASE`.
 
-**Session secret:** the cookie session store signs cookies with `SESSION_SECRET_KEY`, read from
-the environment. Development and test fall back to a fixed insecure value so a fresh clone runs
-with no setup; production raises at boot if the variable is unset or too short.
-Never reintroduce a committed default — this repository is public.
+**Session secret:** this app has no `config/credentials.yml.enc`/`master.key` and no
+`config/initializers/`, so `secret_key_base` (which the cookie session store, and everything else
+that signs or encrypts, derives from) comes from the `SECRET_KEY_BASE` environment variable —
+Rails' own default lookup, nothing app-specific reads or maps it. **In `development`/`test` Rails
+auto-generates one per checkout** (`tmp/local_secret.txt`, gitignored, created on first boot) so a
+fresh clone runs with no setup. **In `production` there is no fallback**: boot raises
+`ArgumentError: Missing 'secret_key_base' for 'production' environment` if `SECRET_KEY_BASE` is
+unset — verified by booting with `RAILS_ENV=production` both with and without it set. Never
+introduce a committed default or fallback for production — this repository is public.
+
+Historical note: the Merb app read a variable named `SESSION_SECRET_KEY` from
+`config/init.rb`, which Task 1 deleted when the Rails skeleton replaced it. `create-heroku-instance`
+now sets `SECRET_KEY_BASE`, the name Rails 8 actually reads; nothing in this codebase reads
+`SESSION_SECRET_KEY` any more, so don't reintroduce that name expecting it to do anything.

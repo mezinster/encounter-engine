@@ -24,8 +24,9 @@ class User < ApplicationRecord
   validates :nickname, presence: true, uniqueness: true
   validates :password, length: { minimum: 4 }, confirmation: true, if: :password_required?
 
-  # merb-auth's SaltedUser mixin (vendor/merb-auth/.../ar_salted_user.rb:10)
-  # also required password_confirmation itself, not just that it match when
+  # merb-auth's SaltedUser mixin (merb-auth-more/.../ar_salted_user.rb:10,
+  # removed by Task 13; see git history) also required password_confirmation
+  # itself, not just that it match when
   # present. Rails' confirmation validator returns early on a nil
   # confirmation, so without this a signup that omits the confirmation
   # parameter entirely would validate.
@@ -50,8 +51,9 @@ class User < ApplicationRecord
   before_save :encrypt_password, if: -> { password.present? }
 
   # Digest::SHA1.hexdigest("--" + salt + "--" + password + "--") -- this is
-  # merb-auth's SaltedUser#encrypt (vendor/merb-auth/merb-auth-more/lib/
-  # merb-auth-more/mixins/salted_user.rb:53), preserved byte-for-byte.
+  # merb-auth's SaltedUser#encrypt (merb-auth-more/lib/
+  # merb-auth-more/mixins/salted_user.rb:53, removed by Task 13; see git
+  # history), preserved byte-for-byte.
   # Existing crypted_password values were produced by this exact formula;
   # changing it silently locks out every current user, since a mismatched
   # hash raises no error -- the login form just rejects a correct password.

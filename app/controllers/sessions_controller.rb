@@ -9,8 +9,9 @@ class SessionsController < ApplicationController
 
     if user&.authenticate(params[:password])
       # merb-auth abandoned (cleared) the session on login
-      # (vendor/merb-auth/merb-auth-slice-password/app/controllers/sessions.rb:4,
-      # merb-auth-core/lib/merb-auth-core/authentication.rb:113-116). Without
+      # (merb-auth-slice-password/app/controllers/sessions.rb:4,
+      # merb-auth-core/lib/merb-auth-core/authentication.rb:113-116 -- removed
+      # by Task 13, see git history). Without
       # this, session[:user_id] merges into whatever session the request
       # arrived with, including a session fixated by an attacker before the
       # victim logs in -- and since the session cookie also carries the CSRF

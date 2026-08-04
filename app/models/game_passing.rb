@@ -44,6 +44,15 @@ class GamePassing < ApplicationRecord
       by_id = Question.where(id: ids).index_by(&:id)
       ids.filter_map { |id| by_id[id] }
     rescue Psych::DisallowedClass, Psych::SyntaxError
+      # A silently-dropped answered_questions column is exactly the support
+      # case the comment above describes -- a team's progress on a level
+      # disappearing with nothing in the UI to explain it. The coder itself
+      # is handed only the raw column value, not the record it belongs to
+      # (ActiveRecord::Type::Serialized#deserialize calls `coder.load(value)`
+      # with no id in scope), so it can't name which row. GamePassing's
+      # `warn_if_answered_questions_unreadable` after_find callback below
+      # re-checks the same raw value with access to `id` and logs there --
+      # this branch stays responsible only for making `load` itself safe.
       []
     end
   end
@@ -64,6 +73,8 @@ class GamePassing < ApplicationRecord
   before_create :update_current_level_entered_at
 
   before_save { self.answered_questions ||= [] }
+
+  after_find :warn_if_answered_questions_unreadable
 
   def self.of(team, game)
     self.of_team(team).of_game(game).first
@@ -163,6 +174,24 @@ protected
 
   def reset_answered_questions
     self.answered_questions.clear
+  end
+
+  # AnsweredQuestionsCoder.load silently returns [] when the column holds a
+  # pre-coder legacy value it can't safely parse (see the coder's comment) --
+  # by design, so one bad row can't 500 every request that touches it. But
+  # silent is exactly wrong for anyone trying to find out why a team's
+  # progress vanished, and the coder has no access to `id` to say which row.
+  # Re-check the same raw value here, where `id` is in scope, purely to log.
+  def warn_if_answered_questions_unreadable
+    raw = read_attribute_before_type_cast(:answered_questions)
+    return if raw.nil?
+
+    YAML.safe_load(raw)
+  rescue Psych::DisallowedClass, Psych::SyntaxError
+    Rails.logger.warn(
+      "GamePassing##{id}: answered_questions column holds an unreadable " \
+      "(pre-coder legacy format?) value; treating it as no questions answered."
+    )
   end
 
   # TODO: keep SRP, extract this to a separate helper

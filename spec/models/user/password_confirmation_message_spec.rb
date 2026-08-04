@@ -27,8 +27,9 @@ describe User, "password confirmation validation messages" do
   end
 
   it "requires password_confirmation to be present at all, not just matching when given" do
-    # merb-auth's SaltedUser mixin (vendor/merb-auth/.../ar_salted_user.rb:10)
-    # validated presence of :password_confirmation on top of the match check.
+    # merb-auth's SaltedUser mixin (merb-auth-more/.../ar_salted_user.rb:10,
+    # removed by Task 13; see git history) validated presence of
+    # :password_confirmation on top of the match check.
     # Rails' ConfirmationValidator returns early when the confirmation is
     # nil, so a signup that omits the field entirely would otherwise pass.
     user = User.new(

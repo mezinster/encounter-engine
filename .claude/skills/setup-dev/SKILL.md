@@ -24,11 +24,15 @@ export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 ## 2. Gems
 
 ```bash
+bundle config set --local without production
 bundle install
 ```
 
-The `production` group holds `pg`, which needs Postgres headers and is not required locally
-(sqlite is used for development/test — see `config/database.yml`).
+The `production` group holds `pg`, which needs `libpq` headers to build and is not required
+locally (sqlite is used for development/test — see `config/database.yml`). Skipping the
+`bundle config` line is not just unnecessary but will actively fail the install on any machine
+without `libpq-dev`/`postgresql-devel` installed — this is what CI does too
+(`.github/workflows/ci.yml`).
 
 ## 3. Database
 
@@ -43,7 +47,7 @@ test at `db/test.sqlite3`, so no configuration is needed. Neither sqlite file is
 ## 4. Verify
 
 ```bash
-bundle exec rspec               # 405 examples, 0 failures, 6 pending
+bundle exec rspec               # 407 examples, 0 failures, 6 pending
 bundle exec cucumber            # 234 scenarios (2 undefined placeholders), 2362 steps
 bin/rails server                # dev server on http://localhost:3000
 ```

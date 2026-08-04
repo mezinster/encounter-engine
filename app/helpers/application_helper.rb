@@ -22,9 +22,10 @@ module ApplicationHelper
   # helpers defined here available to all views.
 
   # Ports merb-helpers' Errorifier#error_messages_for
-  # (vendor/merb/merb-helpers/lib/merb-helpers/form/builder.rb:403-416) and
+  # (merb-helpers/lib/merb-helpers/form/builder.rb:403-416) and
   # its default options from the top-level wrapper
-  # (vendor/merb/merb-helpers/lib/merb-helpers/form/helpers.rb:435-441).
+  # (merb-helpers/lib/merb-helpers/form/helpers.rb:435-441). Both removed
+  # by Task 13; see git history for the original source.
   # Rails' `errors.full_messages` is composed the same way the Merb original
   # relied on (humanized attribute + message), so the rendered text is
   # unchanged -- only the framework wiring is new.
@@ -33,7 +34,7 @@ module ApplicationHelper
   #   error_messages_for @user
   #   error_messages_for @user, header: "<h2>Ошибка</h2>"
   #
-  # Before (Merb, vendor/merb/merb-helpers/.../builder.rb:404-416):
+  # Before (Merb, merb-helpers/.../builder.rb:404-416, removed by Task 13):
   #   header_message = header % [errors.size, errors.size == 1 ? "" : "s"]
   #   markup = "<div class='#{error_class}'>#{header_message}<ul>"
   #   errors.full_messages.each { |err| markup << (build_li % err) }

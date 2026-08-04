@@ -36,8 +36,9 @@ RSpec.describe GamesController, "#edit", type: :controller do
       # Unauthenticated (ensure_authenticated runs before ensure_author for
       # :edit -- see the old `before :ensure_authenticated, :exclude =>
       # [:index, :show]`): Merb::Controller::Unauthenticated is a *subclass*
-      # of ControllerExceptions::Unauthorized (vendor/merb-auth/merb-auth-
-      # core/lib/merb-auth-core/authenticated_helper.rb:2), so
+      # of ControllerExceptions::Unauthorized (merb-auth-
+      # core/lib/merb-auth-core/authenticated_helper.rb:2, removed by Task 13;
+      # see git history), so
       # raise_error(Unauthorized) matched either exception. Rails'
       # Authentication::Unauthenticated and Authentication::Unauthorized
       # (app/controllers/concerns/authentication.rb) have no such

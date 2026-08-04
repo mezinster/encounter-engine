@@ -4,6 +4,9 @@ en:
     already_in_team: "You are already a member of a team"
   activerecord:
     errors:
+      messages:
+        blank: "can't be blank"
+        confirmation: "doesn't match %{attribute}"
       models:
         answer:
           attributes:
@@ -65,4 +68,6 @@ en:
               taken: "That name is already taken"
             password:
               too_short: "Password is too short (minimum 4 characters)"
+            password_confirmation:
+              blank: "Password confirmation is required"
               confirmation: "Password and confirmation do not match"

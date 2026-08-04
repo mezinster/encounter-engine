@@ -4,6 +4,9 @@ ru:
     already_in_team: "Вы уже являетесь членом команды"
   activerecord:
     errors:
+      messages:
+        blank: "не может быть пустым"
+        confirmation: "не совпадает с %{attribute}"
       models:
         answer:
           attributes:
@@ -65,4 +68,6 @@ ru:
               taken: "Пользователь с таким именем уже зарегистрирован"
             password:
               too_short: "Слишком короткий пароль (минимум 4 символа)"
+            password_confirmation:
+              blank: "Вы не ввели подтверждение пароля"
               confirmation: "Пароль и его подтверждение не совпадают"

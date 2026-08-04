@@ -1,16 +1,45 @@
 class GamePassing < ApplicationRecord
-  # Rails 7.1+ requires the coder to be explicit. YAML preserves the existing
-  # column contents; changing it would strand every row already written.
+  # Rails 7.1+ requires the coder to be explicit, and plain `coder: YAML`
+  # (Rails' safe-mode YAMLColumn) can only load/dump a small permitted-class
+  # allowlist. This column used to hold full Question (ActiveRecord)
+  # instances -- going back to the Merb app's unrestricted
+  # `serialize :answered_questions` -- and a full AR object's dump embeds
+  # adapter-internal type-cast classes (ActiveSupport::TimeWithZone,
+  # ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer here in
+  # dev/test; entirely different PostgreSQL::OID::* classes in production).
+  # That allowlist is neither small nor stable across adapters: permitting
+  # exactly [Question, ActiveModel::Attribute::FromDatabase,
+  # ActiveModel::Attribute::FromUser] (the minimal set for a single freshly
+  # -reloaded record) still leaves 14 of the 97 examples in `spec/models/`
+  # raising Psych::DisallowedClass, because the suite (like real gameplay
+  # sequences) mixes freshly-built and freshly-loaded Question objects.
   #
-  # coder: YAML alone resolves to Rails' safe-mode YAMLColumn, which refuses
-  # to load/dump anything beyond a small permitted-class allowlist. This
-  # column stores full Question (ActiveRecord) instances -- as it always has,
-  # going back to the Merb app's unrestricted `serialize :answered_questions`
-  # -- so safe mode raises Psych::DisallowedClass on every save. unsafe_load
-  # restores the original unrestricted YAML.load/dump behaviour rather than
-  # trying to enumerate every internal AttributeSet class AR would need
-  # permitted to safe-load one of its own models.
-  serialize :answered_questions, coder: YAML, type: Array, yaml: { unsafe_load: true }
+  # unsafe_load would dodge that but turns any future write to this column
+  # into remote code execution on the next read -- unacceptable given this
+  # project has already seen intrusion attempts (see README).
+  #
+  # Instead of storing full model instances, this coder stores just the
+  # question ids and resolves them back to Question records on load. Ids are
+  # plain Integers inside an Array -- both permitted by Psych's built-in safe
+  # defaults, no allowlist or adapter-specific class needed at all. Safe to
+  # change now: the only legacy row found in the Merb-era database backups is
+  # `--- []\n` (empty), so there is no populated pre-Rails row whose on-disk
+  # format this would break.
+  class AnsweredQuestionsCoder
+    def self.dump(questions)
+      YAML.dump(Array(questions).map(&:id))
+    end
+
+    def self.load(yaml)
+      return [] if yaml.nil?
+
+      ids = YAML.safe_load(yaml) || []
+      by_id = Question.where(id: ids).index_by(&:id)
+      ids.filter_map { |id| by_id[id] }
+    end
+  end
+
+  serialize :answered_questions, coder: AnsweredQuestionsCoder, type: Array
 
   belongs_to :team, optional: true
   belongs_to :game, optional: true

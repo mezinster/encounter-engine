@@ -22,6 +22,13 @@ class User < ApplicationRecord
   validates :nickname, presence: true, uniqueness: true
   validates :password, length: { minimum: 4 }, confirmation: true, if: :password_required?
 
+  # merb-auth's SaltedUser mixin (vendor/merb-auth/.../ar_salted_user.rb:10)
+  # also required password_confirmation itself, not just that it match when
+  # present. Rails' confirmation validator returns early on a nil
+  # confirmation, so without this a signup that omits the confirmation
+  # parameter entirely would validate.
+  validates :password_confirmation, presence: true, if: :password_required?
+
   def member_of_any_team?
     !! team
   end

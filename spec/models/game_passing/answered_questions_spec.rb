@@ -20,7 +20,7 @@ describe GamePassing, "answered_quesions" do
 
   context "when it contains some values" do
     before :each do
-      @question = Question.create! :answer => 'answer'
+      @question = Question.create! :correct_answer => 'answer'
       subject.answered_questions << @question
     end
 

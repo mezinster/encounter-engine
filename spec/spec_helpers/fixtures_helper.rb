@@ -61,7 +61,7 @@ module FixturesHelper
 
   def create_question(options={})
     creation_params = {
-      :answer => random_string
+      :correct_answer => random_string
     }.merge(options)
 
     question = Question.new creation_params

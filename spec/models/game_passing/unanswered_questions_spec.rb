@@ -7,7 +7,7 @@ describe GamePassing, "#unanswered_quesions" do
       @level = create_level :correct_answer => 'answer1'
 
       %w(answer2 answer3).each do |answer|
-        @level.questions.create! :answer => answer
+        @level.questions.create! :correct_answer => answer
       end
     end
 

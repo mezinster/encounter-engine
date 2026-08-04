@@ -67,7 +67,7 @@ describe Levels, "#create" do
       end
 
       it "should strip them" do
-        Level.last.questions.first.answer.should == 'the answer'
+        Level.last.questions.first.correct_answer.should == 'the answer'
       end
     end
 

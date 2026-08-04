@@ -31,7 +31,7 @@ describe GamePassing, "#check_answer!" do
 
     describe "when answer is correct" do
       before :each do
-        @result = @game_passing.check_answer!(@first_level.questions.first.answer)
+        @result = @game_passing.check_answer!(@first_level.questions.first.correct_answer)
       end
 
       it "should return true" do
@@ -49,7 +49,7 @@ describe GamePassing, "#check_answer!" do
 
     describe "when answer contains redundant spaces" do
       before :each do
-        @result = @game_passing.check_answer!("   #{@first_level.questions.first.answer}   ")
+        @result = @game_passing.check_answer!("   #{@first_level.questions.first.correct_answer}   ")
       end
 
       it "should return true" do
@@ -61,8 +61,8 @@ describe GamePassing, "#check_answer!" do
 	describe "when current level contains several questions" do
 		before :each do
 			@second_level.questions = [
-				Question.create!(:answer => 'encode1'),
-				Question.create!(:answer => 'encode2')
+				Question.create!(:correct_answer => 'encode1'),
+				Question.create!(:correct_answer => 'encode2')
 			]
 
 			@game_passing = GamePassing.create! :game => @game, :team => @team, :current_level => @second_level
@@ -127,7 +127,7 @@ describe GamePassing, "#check_answer!" do
 
     describe "when answer is correct" do
       before :each do
-        @result = @game_passing.check_answer!(@final_level.questions.first.answer)
+        @result = @game_passing.check_answer!(@final_level.questions.first.correct_answer)
       end
 
       it "should return true" do

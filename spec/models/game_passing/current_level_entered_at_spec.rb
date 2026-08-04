@@ -24,7 +24,7 @@ describe GamePassing, "#current_level_entered_at" do
         before :each do
           allow(Time).to receive(:now).and_return(@game_passing.created_at + 1.hour)
           allow(@game_passing).to receive(:correct_answer?).and_return(true)
-          @game_passing.check_answer!(@game.levels.first.questions.first.answer)
+          @game_passing.check_answer!(@game.levels.first.questions.first.correct_answer)
         end
 
         it "should be equal to time of level changing" do

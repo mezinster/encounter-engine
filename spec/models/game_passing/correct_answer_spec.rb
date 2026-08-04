@@ -35,7 +35,7 @@ describe GamePassing, "correct_answer?" do
 
 			@correct_answers = ['answer1', 'answer2', 'answer3']
 			@correct_answers.each do |correct_answer|
-				@level.questions.create! :answer => correct_answer
+				@level.questions.create! :correct_answer => correct_answer
 			end
 
 		  GamePassing.create! :current_level => @level

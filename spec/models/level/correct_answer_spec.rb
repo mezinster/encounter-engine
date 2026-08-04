@@ -11,7 +11,7 @@ describe Level do
 
       it "should build a question with a given answer" do
         subject.questions.size.should == 1
-        subject.questions.first.answer.should == @correct_answer
+        subject.questions.first.correct_answer.should == @correct_answer
       end
     end
   end
@@ -25,7 +25,7 @@ describe Level do
 
     context "when there is one question" do
       before :each do
-        subject.questions.build :answer => "the_answer"
+        subject.questions.build :correct_answer => "the_answer"
       end
 
       it "should return its answer" do

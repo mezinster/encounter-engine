@@ -27,4 +27,10 @@ archive_timeout = 300
 wal_level = replica
 CONF
 
-CMD ["postgres", "-c", "config_file=/usr/share/postgresql/postgresql.conf.sample", "-c", "include_dir=/etc/postgresql/conf.d"]
+# `include_dir` is a config-FILE directive, not a settable GUC: passing it as
+# `-c include_dir=...` makes postgres fail with "unrecognized configuration
+# parameter" the moment initdb starts its temporary server. It has to live
+# inside the config file itself instead.
+RUN echo "include_dir = '/etc/postgresql/conf.d'" >> /usr/share/postgresql/postgresql.conf.sample
+
+CMD ["postgres", "-c", "config_file=/usr/share/postgresql/postgresql.conf.sample"]

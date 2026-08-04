@@ -40,8 +40,17 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Trust the host key
-        run: ssh-keyscan -H 23.100.7.86 >> ~/.ssh/known_hosts
+      - name: Pin the host key
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          # Read from the host itself over an already-trusted session, not
+          # scanned from the network: ssh-keyscan trusts whatever answers, which
+          # on a hostile path is the attacker. If this ever stops matching, the
+          # host was rebuilt (or something is wrong) — do not "fix" it by
+          # scanning; re-read /etc/ssh/ssh_host_ed25519_key.pub over a known-good
+          # connection.
+          echo '23.100.7.86 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBESJGNohuozwA1DTg1Tjlghw/G0krguiE0Enw5BfMew' >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Deploy
         env:

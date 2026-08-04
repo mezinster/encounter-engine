@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2009_01_01_002600) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_04_100155) do
   create_table "answers", force: :cascade do |t|
     t.integer "question_id"
     t.integer "level_id"
@@ -109,5 +109,6 @@ ActiveRecord::Schema[8.0].define(version: 2009_01_01_002600) do
     t.string "icq_number"
     t.date "date_of_birth"
     t.string "phone_number"
+    t.string "locale"
   end
 end

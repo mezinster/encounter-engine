@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
 describe Invitations, "#reject" do
   describe "when recepient attempts to reject the invitation" do

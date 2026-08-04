@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
 describe Invitation do
   describe "regular case, captain attempts to invite a new user" do

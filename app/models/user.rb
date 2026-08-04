@@ -1,39 +1,26 @@
 # -*- encoding : utf-8 -*-
-class User < ActiveRecord::Base
-  belongs_to :team
+class User < ApplicationRecord
+  belongs_to :team, optional: true
 
   has_many :created_games, :class_name => "Game", :foreign_key => "author_id"
 
-  validates_presence_of :email, :message => "Не введён e-mail"
+  # password/password_confirmation are virtual attributes backed by the
+  # crypted_password + salt columns. The Merb app got these, plus
+  # #password_required?, from merb-auth's SaltedUser mixin, included into
+  # User at boot (merb/merb-auth/setup.rb) rather than declared in this file.
+  # Task 6 (Authentication) replaces this with real hashing (encrypt_password,
+  # authenticate); this is only enough for the validations below to run.
+  attr_accessor :password, :password_confirmation
 
-  # Restored from before d21a177 ("Upgrade to ActiveRecord 4.0"), which dropped
-  # it along with the icq/jabber/phone format validations. Without it any string
-  # is accepted as an address and the welcome letter goes nowhere.
-  #
-  # The dot in the domain group is escaped, which the original was not: an
-  # unescaped . matches any character, so "user@localhost" passed by consuming
-  # the final "t" as the separator. No address used anywhere in the suites is
-  # affected by tightening it.
-  validates_format_of :email, :with => /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i,
-    :message => "Неправильный формат поля e-mail"
-
-  validates_uniqueness_of :email,
-    :message => "Пользователь с таким адресом уже зарегистрирован"
-
-  validates_presence_of :nickname,
-    :message => "Вы не ввели имя"
-
-  validates_uniqueness_of :nickname,
-    :message => "Пользователь с таким именем уже зарегистрирован"
-
-  validates_length_of :password, :minimum => 4,
-    :message => "Слишком короткий пароль (минимум 4 символа)",
-    :if => :password_required?
-
-  validates_confirmation_of :password,
-    :message => "Пароль и его подтверждение не совпадают",
-    :if => :password_required?
-
+  # The dot in the domain group is escaped, which an earlier version (before
+  # d21a177, "Upgrade to ActiveRecord 4.0") was not: an unescaped . matches
+  # any character, so "user@localhost" passed by consuming the final "t" as
+  # the separator. No address used anywhere in the suites is affected by
+  # tightening it.
+  validates :email, presence: true, uniqueness: true,
+                    format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i }
+  validates :nickname, presence: true, uniqueness: true
+  validates :password, length: { minimum: 4 }, confirmation: true, if: :password_required?
 
   def member_of_any_team?
     !! team
@@ -45,5 +32,9 @@ class User < ActiveRecord::Base
 
   def author_of?(game)
     game.author.id == self.id
+  end
+
+  def password_required?
+    crypted_password.blank? || password.present?
   end
 end

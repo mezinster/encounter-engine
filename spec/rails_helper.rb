@@ -10,6 +10,19 @@ abort("The Rails environment is running in production mode!") if Rails.env.produ
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
 
+# The Merb-era specs (~185 assertions) use `.should`/`.should_not`. Converting
+# them to `expect` syntax is not this task's job -- mirror what the Merb
+# spec_helper enabled so they keep running under RSpec 3.
+require 'rspec/expectations'
+
+# The model specs depend on factory helpers the Merb spec_helper used to load
+# from spec/spec_helpers/. merb_matchers.rb is deliberately NOT required here:
+# it defines be_successful/redirect_to for Merb response objects and belongs
+# to the controller work in a later task.
+require Rails.root.join('spec/spec_helpers/fixtures_helper')
+require Rails.root.join('spec/spec_helpers/mailer_helper')
+require Rails.root.join('spec/spec_helpers/exceptions_helper')
+
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
 # run as spec files by default. This means that files in spec/support that end
@@ -33,6 +46,20 @@ rescue ActiveRecord::PendingMigrationError => e
   abort e.to_s.strip
 end
 RSpec.configure do |config|
+  # Mirrors the (now-replaced) Merb spec_helper, which enabled `should` syntax.
+  # ~185 existing assertions use `x.should == y` / `x.should be_truthy`;
+  # converting them to `expect` is explicitly not part of this task.
+  config.expect_with :rspec do |expectations|
+    expectations.syntax = [:should, :expect]
+  end
+  config.mock_with :rspec do |mocks|
+    mocks.syntax = [:should, :expect]
+  end
+
+  config.include FixturesHelper
+  config.include MailerHelper
+  config.include ExceptionsHelper
+
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [
     Rails.root.join('spec/fixtures')

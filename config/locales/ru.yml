@@ -2,3 +2,67 @@ ru:
   game:
     not_started: "Нельзя играть в игру до её начала. И вообще, где вы достали эту ссылку? :-)"
     already_in_team: "Вы уже являетесь членом команды"
+  activerecord:
+    errors:
+      models:
+        answer:
+          attributes:
+            value:
+              blank: "Вы не ввели вариант кода"
+              taken: "Такой код уже есть в задании"
+        game:
+          attributes:
+            name:
+              blank: "Вы не ввели название"
+              taken: "Игра с таким названием уже существует"
+            description:
+              blank: "Вы не ввели описание"
+            max_team_number:
+              not_a_number: "Диапазон количества команд от 1 до 10000"
+              greater_than: "Диапазон количества команд от 1 до 10000"
+              less_than: "Диапазон количества команд от 1 до 10000"
+              exceeds_requested: "Количество команд, подавших заявку превышает заданное число"
+            starts_at:
+              in_the_past: "Вы выбрали дату из прошлого. Так нельзя :-)"
+            registration_deadline:
+              in_the_past: "Вы указали крайний срок регистрации из прошлого, так нельзя :-)"
+              after_game_start: "Вы указали крайний срок регистрации больше даты начала игры, так нельзя :-)"
+        game_entry:
+          attributes:
+            game:
+              blank: "Вы не выбрали игру"
+            team_id:
+              blank: "Вы не указали команду"
+        invitation:
+          attributes:
+            for_user:
+              blank: "Пользователя с таким именем не существует"
+            recepient_nickname:
+              blank: "Вы не ввели имени пользователя"
+            for_user_id:
+              taken: "Вы уже высылали этому пользователю приглашение и он ещё не ответил"
+            base:
+              recipient_already_team_member: "Пользователь уже является членом одной из команд"
+        level:
+          attributes:
+            name:
+              blank: "Вы не ввели название задания"
+            text:
+              blank: "Вы не ввели текст задания"
+        team:
+          attributes:
+            name:
+              taken: "Команда с таким названием уже существует"
+              blank: "Название команды должно быть непустым"
+        user:
+          attributes:
+            email:
+              blank: "Не введён e-mail"
+              taken: "Пользователь с таким адресом уже зарегистрирован"
+              invalid: "Неправильный формат поля e-mail"
+            nickname:
+              blank: "Вы не ввели имя"
+              taken: "Пользователь с таким именем уже зарегистрирован"
+            password:
+              too_short: "Слишком короткий пароль (минимум 4 символа)"
+              confirmation: "Пароль и его подтверждение не совпадают"

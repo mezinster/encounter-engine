@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
 describe GamePassing, "#hints_to_show" do
   describe "given a level with hints after 10, 30 and 50 minutes" do

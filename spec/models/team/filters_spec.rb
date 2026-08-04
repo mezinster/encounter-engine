@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
 describe Team do
   describe "when assigning a team member as a captain" do

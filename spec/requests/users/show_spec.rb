@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
 # Was Merb's `given "..." do` / `describe "...", :given => "..."` DSL, defined in
 # merb-core/test/test_ext/rspec.rb on top of RSpec 1's ExampleGroupFactory.

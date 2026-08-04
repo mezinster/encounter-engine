@@ -2,3 +2,67 @@ en:
   game:
     not_started: "The game has not started yet. Where did you even get this link? :-)"
     already_in_team: "You are already a member of a team"
+  activerecord:
+    errors:
+      models:
+        answer:
+          attributes:
+            value:
+              blank: "You didn't enter an answer code"
+              taken: "That code is already used in this task"
+        game:
+          attributes:
+            name:
+              blank: "Name is required"
+              taken: "A game with that name already exists"
+            description:
+              blank: "Description is required"
+            max_team_number:
+              not_a_number: "Team count must be between 1 and 10000"
+              greater_than: "Team count must be between 1 and 10000"
+              less_than: "Team count must be between 1 and 10000"
+              exceeds_requested: "The number of teams that have already applied exceeds this limit"
+            starts_at:
+              in_the_past: "You picked a date in the past. That's not allowed :-)"
+            registration_deadline:
+              in_the_past: "You set a registration deadline in the past. That's not allowed :-)"
+              after_game_start: "You set a registration deadline later than the game's start date. That's not allowed :-)"
+        game_entry:
+          attributes:
+            game:
+              blank: "You didn't select a game"
+            team_id:
+              blank: "You didn't specify a team"
+        invitation:
+          attributes:
+            for_user:
+              blank: "No user with that name exists"
+            recepient_nickname:
+              blank: "You didn't enter a user name"
+            for_user_id:
+              taken: "You've already sent this user an invitation and they haven't responded yet"
+            base:
+              recipient_already_team_member: "That user is already a member of a team"
+        level:
+          attributes:
+            name:
+              blank: "Task name is required"
+            text:
+              blank: "Task text is required"
+        team:
+          attributes:
+            name:
+              taken: "A team with that name already exists"
+              blank: "Team name cannot be empty"
+        user:
+          attributes:
+            email:
+              blank: "E-mail is required"
+              taken: "That address is already registered"
+              invalid: "That e-mail address is not valid"
+            nickname:
+              blank: "Name is required"
+              taken: "That name is already taken"
+            password:
+              too_short: "Password is too short (minimum 4 characters)"
+              confirmation: "Password and confirmation do not match"

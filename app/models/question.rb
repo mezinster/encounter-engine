@@ -1,7 +1,7 @@
-require Merb.root + '/lib/ee_strings'
+require Rails.root.join("lib/ee_strings")
 
-class Question < ActiveRecord::Base
-  belongs_to :level
+class Question < ApplicationRecord
+  belongs_to :level, optional: true
   has_many :answers
 
   def correct_answer=(answer)

@@ -1,21 +1,17 @@
 # coding: utf-8
-require Merb.root + '/lib/ee_strings'
+require Rails.root.join("lib/ee_strings")
 
-class Level < ActiveRecord::Base
+class Level < ApplicationRecord
   acts_as_list :scope => :game
 
-  belongs_to :game
+  belongs_to :game, optional: true
   has_many :questions
   has_many :answers
   has_many :hints, -> { order('delay ASC') }
 
-  validates_presence_of :name,
-    :message => "Вы не ввели название задания"
-
-  validates_presence_of :text,
-    :message => "Вы не ввели текст задания"
-
-  validates_presence_of :game
+  validates :name, presence: true
+  validates :text, presence: true
+  validates :game, presence: true
 
   scope :of_game, ->(game) { where(game_id: game) }
 

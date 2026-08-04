@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
 # Stripping moved from Question to Answer#strip_spaces when migration 024
 # extracted the answers table. The behaviour is still reached through

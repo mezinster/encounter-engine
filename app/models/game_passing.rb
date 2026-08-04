@@ -1,9 +1,20 @@
-class GamePassing < ActiveRecord::Base
-  serialize :answered_questions
+class GamePassing < ApplicationRecord
+  # Rails 7.1+ requires the coder to be explicit. YAML preserves the existing
+  # column contents; changing it would strand every row already written.
+  #
+  # coder: YAML alone resolves to Rails' safe-mode YAMLColumn, which refuses
+  # to load/dump anything beyond a small permitted-class allowlist. This
+  # column stores full Question (ActiveRecord) instances -- as it always has,
+  # going back to the Merb app's unrestricted `serialize :answered_questions`
+  # -- so safe mode raises Psych::DisallowedClass on every save. unsafe_load
+  # restores the original unrestricted YAML.load/dump behaviour rather than
+  # trying to enumerate every internal AttributeSet class AR would need
+  # permitted to safe-load one of its own models.
+  serialize :answered_questions, coder: YAML, type: Array, yaml: { unsafe_load: true }
 
-  belongs_to :team
-  belongs_to :game
-  belongs_to :current_level, :class_name => "Level"
+  belongs_to :team, optional: true
+  belongs_to :game, optional: true
+  belongs_to :current_level, :class_name => "Level", optional: true
 
   scope :of_game, ->(game) { where(game_id: game) }
   scope :of_team, ->(team) { where(team_id: team) }
@@ -15,21 +26,6 @@ class GamePassing < ActiveRecord::Base
   before_create :update_current_level_entered_at
 
   before_save { self.answered_questions ||= [] }
-
-  # answered_questions is a serialised column, so it reads back as nil until
-  # something writes it. The before_save above only covers persisted records,
-  # which leaves reset_answered_questions (self.answered_questions.clear) and
-  # answered_questions << question raising NoMethodError on a new record.
-  # Always hand back a real array. Assigning through self[] rather than
-  # returning a throwaway [] matters: << has to mutate the stored value.
-  def answered_questions
-    # Assign and then re-read rather than using ||=. For a serialised column
-    # `self[:x] ||= []` evaluates to the assignment's own value -- the bare []
-    # literal -- while ActiveRecord stores a type-cast copy of it. Callers
-    # would then push onto an orphaned array and lose the first write.
-    self[:answered_questions] = [] if self[:answered_questions].nil?
-    self[:answered_questions]
-  end
 
   def self.of(team, game)
     self.of_team(team).of_game(game).first

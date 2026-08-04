@@ -348,6 +348,7 @@ en:
       messages:
         blank: "can't be blank"
         confirmation: "doesn't match %{attribute}"
+        invalid: "is invalid"
       models:
         answer:
           attributes:

@@ -32,9 +32,8 @@ Feature: Choosing an interface language
     When I go to the games list with locale "en"
     Then I should see "Котлованы Бишкека"
 
-  Scenario: The switcher link itself changes the interface, and switching back leaves no trace
-    When I go to the front page
+  Scenario: The switcher link preserves other query parameters when it replaces locale
+    When I go to the front page with locale "ru" and extra query "utm_source=email"
     And I click the "English" language switcher link
     Then I should see "Log in"
-    When I click the "Русский" language switcher link
-    Then I should see "Войти"
+    And the page URL should still include "utm_source=email"

@@ -37,12 +37,18 @@ Given('a game {string} was created by {string}') do |game_name, author_nickname|
   step %{#{author_nickname} создаёт игру "#{game_name}"}
 end
 
-When('I go to the front page') do
-  visit root_path
-end
-
 When('I go to the front page with locale {string}') do |locale|
   visit root_path(locale: locale)
+end
+
+When('I go to the front page with locale {string} and extra query {string}') do |locale, extra_query|
+  # An arbitrary, app-meaningless query parameter, added specifically to
+  # prove the switcher preserves whatever else was in the query string
+  # (app/views/layouts/_header.html.erb builds its link by merging "locale"
+  # into request.query_parameters, not by replacing the query string
+  # wholesale) -- a real property of that code, independent of which page
+  # it's tested from.
+  visit "#{root_path}?locale=#{locale}&#{extra_query}"
 end
 
 # Exercises the actual switcher markup (app/views/layouts/_header.html.erb),
@@ -50,6 +56,10 @@ end
 # directly and never touch the partial's own link-generation code at all.
 When('I click the {string} language switcher link') do |label|
   within("#locale-switcher") { click_link(label) }
+end
+
+Then('the page URL should still include {string}') do |fragment|
+  expect(current_url).to include(fragment)
 end
 
 When('I go to the games list with locale {string}') do |locale|

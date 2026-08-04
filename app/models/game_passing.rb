@@ -21,10 +21,17 @@ class GamePassing < ApplicationRecord
   # Instead of storing full model instances, this coder stores just the
   # question ids and resolves them back to Question records on load. Ids are
   # plain Integers inside an Array -- both permitted by Psych's built-in safe
-  # defaults, no allowlist or adapter-specific class needed at all. Safe to
-  # change now: the only legacy row found in the Merb-era database backups is
-  # `--- []\n` (empty), so there is no populated pre-Rails row whose on-disk
-  # format this would break.
+  # defaults, no allowlist or adapter-specific class needed at all.
+  #
+  # Belt-and-braces: `load` also rescues Psych::DisallowedClass /
+  # Psych::SyntaxError. A row written before this coder shipped can still
+  # hold the old, unrestricted `serialize :answered_questions` format (full
+  # YAML-dumped ActiveRecord objects); reading one of those with the new
+  # coder would otherwise raise on every request that touches it, a 500 with
+  # no recovery through the UI for whichever team is mid-level at deploy
+  # time. Treating an unreadable value as "no questions answered yet" is the
+  # same outcome an empty row already produces, so it is a safe default even
+  # though it does lose that team's progress on the affected level.
   class AnsweredQuestionsCoder
     def self.dump(questions)
       YAML.dump(Array(questions).map(&:id))
@@ -36,6 +43,8 @@ class GamePassing < ApplicationRecord
       ids = YAML.safe_load(yaml) || []
       by_id = Question.where(id: ids).index_by(&:id)
       ids.filter_map { |id| by_id[id] }
+    rescue Psych::DisallowedClass, Psych::SyntaxError
+      []
     end
   end
 

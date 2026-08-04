@@ -1,12 +1,11 @@
 AllCops:
-  TargetRubyVersion: 2.6
+  TargetRubyVersion: 3.3
   NewCops: disable
   Exclude:
-    - 'vendor/**/*'        # vendored Merb + merb-auth submodules
+    - 'vendor/**/*'        # `bundle install --path vendor/bundle` output
     - 'schema/migrations/*'
     - 'db/**/*'
     - 'public/**/*'
-    - 'merb/**/*'
 
 # House style: hash rockets are used universally in this codebase, including
 # for symbol keys. Converting them would touch nearly every file.
@@ -25,7 +24,7 @@ Style/StringLiterals:
 Documentation:
   Enabled: false
 
-# Merb controllers legitimately have long filter chains and view-building actions.
+# Several controller actions legitimately have long filter chains and view-building logic.
 Metrics/MethodLength:
   Max: 25
 Metrics/AbcSize:

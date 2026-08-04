@@ -9,22 +9,13 @@ jobs:
   cucumber:
     name: Cucumber
     runs-on: ubuntu-latest
-
-    # Ruby 2.6.5 is far older than anything GitHub's hosted runners provide, and
-    # it cannot build its openssl extension against the OpenSSL 3 that current
-    # Ubuntu images ship. The official ruby:2.6.5 image is Debian buster with
-    # OpenSSL 1.1, and its buildpack-deps base already carries libsqlite3-dev,
-    # libxml2-dev and libxslt-dev for the native extensions.
-    container: ruby:2.6.5
+    container: ruby:3.3.12
 
     steps:
-      - name: Check out, including the vendored Merb submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - uses: actions/checkout@v4
 
       - name: Install bundler
-        run: gem install bundler -v 2.2.3 --no-document
+        run: gem install bundler --no-document
 
       - name: Cache gems
         uses: actions/cache@v4
@@ -39,23 +30,26 @@ jobs:
           bundle config set --local path vendor/bundle
           bundle install --jobs 4 --retry 3
 
-      # The authoritative suite: 230 scenarios covering signup, teams,
-      # invitations, game creation, levels, hints and the game-passing loop.
+      - name: Prepare test database
+        run: bin/rails db:test:prepare
+
+      # The authoritative suite: features/**/*.feature is the contract this
+      # port was validated against, byte-identical to what the Merb app
+      # passed. 234 scenarios covering signup, teams, invitations, game
+      # creation, levels, hints, the game-passing loop and i18n.
       - name: Cucumber
         run: bundle exec cucumber --format progress
 
   rspec:
     name: RSpec
     runs-on: ubuntu-latest
-    container: ruby:2.6.5
+    container: ruby:3.3.12
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install bundler
-        run: gem install bundler -v 2.2.3 --no-document
+        run: gem install bundler --no-document
 
       - name: Cache gems
         uses: actions/cache@v4
@@ -70,5 +64,8 @@ jobs:
           bundle config set --local path vendor/bundle
           bundle install --jobs 4 --retry 3
 
+      - name: Prepare test database
+        run: bin/rails db:test:prepare
+
       - name: RSpec
-        run: bundle exec rspec spec/
+        run: bundle exec rspec

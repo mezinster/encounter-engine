@@ -19,10 +19,10 @@
     <% if available_locale == I18n.locale %>
       <span class="locale-switcher-current"><%= t("locales.#{available_locale}") %></span>
     <% else %>
-      <%# request.query_parameters has STRING keys (Rack::Utils.parse_nested_query) --
-          merging with a symbol :locale key would sit alongside rather than replace an
-          existing string "locale" key (e.g. after already following one of these links),
-          producing "?locale=en&locale=ru" instead of overwriting it. %>
+      <%# request.query_parameters is an ActiveSupport::HashWithIndifferentAccess
+          (ActionDispatch::ParamBuilder#make_params), so merging with a string
+          "locale" key replaces any existing :locale/"locale" key rather than
+          sitting alongside it -- no risk of "?locale=en&locale=ru". %>
       <%= link_to t("locales.#{available_locale}"),
             "#{request.path}?#{request.query_parameters.merge("locale" => available_locale).to_query}",
             class: "locale-switcher-link" %>

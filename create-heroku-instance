@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 
-# TZ database: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+# Usage: create-heroku-instance <app-name> <TZ> [DEFAULT_LOCALE]
+#
+#   <app-name>       Heroku app name.
+#   <TZ>             TZ database name for this instance's city, e.g.
+#                     "Europe/Moscow" -- https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+#   [DEFAULT_LOCALE] Platform-chrome locale for this instance: one of ru, en,
+#                     uk, ka (see config/locales). Optional, defaults to ru,
+#                     so omitting it reproduces the previous, single-locale
+#                     behaviour. Game content itself is never translated --
+#                     this only affects UI copy.
 
 set -e
 set -x
@@ -10,7 +19,7 @@ heroku apps:create $1 --region eu --remote $1
 # Every instance gets its own session signing key. Without it the app refuses
 # to boot in production, by design -- a shared or committed key lets anyone
 # forge a session for any user.
-heroku config:set MERB_ENV=production RACK_ENV=production TZ="$2" \
+heroku config:set RAILS_ENV=production TZ="$2" DEFAULT_LOCALE="${3:-ru}" \
   SESSION_SECRET_KEY="$(ruby -rsecurerandom -e 'puts SecureRandom.hex(40)')" -r $1
 git push $1 master
 heroku run rake db:migrate -r $1

@@ -24,9 +24,24 @@ describe GamePassing, "answered_quesions" do
       subject.answered_questions << @question
     end
 
-    it "should be persisted correctly" do      
+    it "should be persisted correctly" do
       subject.save!
       GamePassing.last.answered_questions.should == [@question]
+    end
+  end
+
+  context "when the column holds a row written in the old, pre-coder format" do
+    it "does not raise Psych::DisallowedClass and treats it as no answered questions" do
+      subject.save!
+      legacy_yaml = "--- !ruby/object:Question\nid: 1\n"
+      ActiveRecord::Base.connection.execute(
+        "UPDATE game_passings SET answered_questions = #{ActiveRecord::Base.connection.quote(legacy_yaml)} WHERE id = #{subject.id}"
+      )
+
+      reloaded = GamePassing.find(subject.id)
+
+      expect { reloaded.answered_questions }.not_to raise_error
+      expect(reloaded.answered_questions).to eq([])
     end
   end
 end

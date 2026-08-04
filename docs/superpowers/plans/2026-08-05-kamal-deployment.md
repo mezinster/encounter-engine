@@ -515,8 +515,15 @@ Expected to include `0.0.0.0:1080`, `0.0.0.0:22`, `*:3128`, `*:3129`, `*:3130`, 
 
 ```ini
 # ansible/inventory.ini
+#
+# The host is the ssh alias `mezin`, NOT the IP and NOT game.mezin.eu. WSL2
+# cannot reach 23.100.7.86:22 directly; ~/.ssh/config gets there through
+# `ProxyCommand /home/mezinster/.ssh/mezin-proxy.sh`, and ssh_config Host
+# patterns match the literal name passed to ssh. Setting ansible_host to the IP
+# makes Ansible run `ssh 23.100.7.86`, which matches no Host block, skips the
+# ProxyCommand, and times out — verified.
 [web]
-game.mezin.eu ansible_user=mezinster ansible_host=23.100.7.86
+mezin ansible_user=mezinster
 ```
 
 - [ ] **Step 3: Write the playbook**
@@ -563,9 +570,14 @@ game.mezin.eu ansible_user=mezinster ansible_host=23.100.7.86
         groups: docker
         append: true
 
+    # Deliberately a plain command, not community.docker.docker_volume: that
+    # module needs the Docker Python SDK installed on the target, and adding a
+    # Python package to this shared production host buys nothing. `docker
+    # volume create` is already idempotent.
     - name: Create the PostgreSQL data volume
-      community.docker.docker_volume:
-        name: encounter_engine_pg_data
+      ansible.builtin.command:
+        cmd: docker volume create encounter_engine_pg_data
+      changed_when: false
 
     - name: Enable unattended security upgrades
       ansible.builtin.apt:
@@ -584,6 +596,10 @@ game.mezin.eu ansible_user=mezinster ansible_host=23.100.7.86
 ```bash
 ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
 ```
+
+Confirm connectivity first with `ansible -i ansible/inventory.ini web -m ping`;
+expect `"ping": "pong"`. Ansible core 2.13.13 is already installed at
+`~/.local/bin/ansible-playbook`; no Galaxy collections are needed.
 
 Expected: `ok`/`changed` throughout, and the final assertion passing — if UFW came up, something enabled it and that must be undone before continuing.
 

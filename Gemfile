@@ -8,11 +8,6 @@ gem "pg", group: :production
 gem "puma"
 gem "acts_as_list"
 
-# Question#matches_any_answer (via lib/ee_strings.rb) still depends on this
-# for case-insensitive Cyrillic comparison. Task 5 replaces it with native
-# String#upcase and drops this gem along with lib/ee_strings.rb.
-gem "unicode_utils"
-
 group :development, :test do
   gem "rspec-rails", "~> 7.0"
   gem "pry"

@@ -1,6 +1,4 @@
 # coding: utf-8
-require Rails.root.join("lib/ee_strings")
-
 class Level < ApplicationRecord
   acts_as_list :scope => :game
 
@@ -33,9 +31,16 @@ class Level < ApplicationRecord
     self.questions.count > 1
   end
 
+  # Made consistent with Question#matches_any_answer, which strips both sides
+  # before comparing. This path used to skip the strip, relying on
+  # GamePassing#check_answer! to strip the submitted value first — that
+  # masked the inconsistency in the live flow but left this method unsafe if
+  # called directly. See Question#matches_any_answer for why plain
+  # String#upcase (rather than the old upcase_utf8_cyr monkey patch) is
+  # correct here.
   def find_question_by_answer(answer_value)
     self.questions.detect do |question|
-      question.answers.any? { |answer| answer.value.to_s.upcase_utf8_cyr == answer_value.to_s.upcase_utf8_cyr }
+      question.answers.any? { |answer| answer.value.to_s.strip.upcase == answer_value.to_s.strip.upcase }
     end
   end
 end

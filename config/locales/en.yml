@@ -1,4 +1,6 @@
 en:
+  answers:
+    must_have_at_least_one_variant: "There must be at least one answer code"
   errors:
     unauthenticated: "You are not authorized to visit this page. Please log in."
     unauthorized: "You are not authorized to perform this action"

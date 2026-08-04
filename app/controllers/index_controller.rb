@@ -1,6 +1,5 @@
 # -*- encoding : utf-8 -*-
-class Index < Application
+class IndexController < ApplicationController
   def index
-    render
   end
 end

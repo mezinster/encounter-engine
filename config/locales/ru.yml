@@ -149,9 +149,16 @@ ru:
     # NotificationMailer#mail_in_recipient_locale. Body text below is
     # unchanged from the pre-port app/mailers/views/notification_mailer/
     # *.text.erb templates (diffed word-for-word while porting), except for
-    # welcome_letter's "bien.kg" -- see the %{host} note there.
+    # welcome_letter's host references. The Merb original hardcoded the
+    # subject as the static string "Регистрация на bienkg" (that "bienkg"
+    # typo -- no dot -- is original, not introduced here) while the body
+    # said "bien.kg" (correctly spelled) -- two different spellings of the
+    # same one hardcoded installation. Fix round 1: both subject and body
+    # now interpolate %{host} (see NotificationMailer#app_host), which
+    # fixes the typo as a side effect (the interpolated value has the dot)
+    # and keeps subject/body/ru/en all naming the same host consistently.
     welcome_letter:
-      subject: "Регистрация на bienkg"
+      subject: "Регистрация на %{host}"
       body: |-
         Спасибо за регистрацию!
 

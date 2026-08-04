@@ -17,7 +17,8 @@ RSpec.describe NotificationMailer do
     it "writes the letter in the recipient's locale, not the sender's" do
       I18n.with_locale(:ru) do
         mail = described_class.welcome_letter(user, "1234")
-        expect(mail.subject).to eq(I18n.t("notification_mailer.welcome_letter.subject", locale: :en))
+        expect(mail.subject).to eq(I18n.t("notification_mailer.welcome_letter.subject",
+                                           host: "bien.kg", locale: :en))
       end
     end
 
@@ -26,19 +27,42 @@ RSpec.describe NotificationMailer do
       expect(mail.body.encoded).to match(/1234/)
     end
 
+    # The Merb-era spec.mailers.notification_mailer/welcome_letter_spec.rb
+    # asserted this too ("contains email"); restoring it here so the
+    # coverage isn't lost in the port.
+    it "includes the user's email in the body" do
+      mail = described_class.welcome_letter(user, "1234")
+      expect(mail.body.encoded).to match(/iv@diesel\.kg/)
+    end
+
     it "defaults the hardcoded-domain sentence to bien.kg, unchanged from the pre-port template" do
       mail = described_class.welcome_letter(user, "1234")
       expect(mail.body.encoded).to match(/bien\.kg/)
     end
 
-    it "lets the domain be overridden per-instance via APP_HOST" do
-      begin
-        ENV["APP_HOST"] = "example-instance.org"
+    it "names the same host in the subject as in the body" do
+      mail = described_class.welcome_letter(user, "1234")
+      expect(mail.subject).to match(/bien\.kg/)
+    end
+
+    it "lets the domain be overridden per-instance via APP_HOST, in both subject and body" do
+      with_env("APP_HOST" => "example-instance.org") do
         mail = described_class.welcome_letter(user, "1234")
         expect(mail.body.encoded).to match(/example-instance\.org/)
-      ensure
-        ENV.delete("APP_HOST")
+        expect(mail.subject).to match(/example-instance\.org/)
       end
+    end
+
+    it "lets the from address be overridden per-instance via MAIL_FROM" do
+      with_env("MAIL_FROM" => "hello@example-instance.org") do
+        mail = described_class.welcome_letter(user, "1234")
+        expect(mail.from).to eq(["hello@example-instance.org"])
+      end
+    end
+
+    it "defaults the from address to noreply@bien.kg, unchanged from the pre-port controllers" do
+      mail = described_class.welcome_letter(user, "1234")
+      expect(mail.from).to eq(["noreply@bien.kg"])
     end
   end
 
@@ -89,5 +113,18 @@ RSpec.describe NotificationMailer do
       expect(mail.to).to eq(["iv@diesel.kg"])
       expect(mail.subject).to match(/Пользователь Alisa отказался от приглашения/)
     end
+  end
+
+  # Saves and restores each var's *prior* value (not just ENV.delete), so a
+  # developer who happens to already export APP_HOST or MAIL_FROM in their
+  # shell doesn't see this example corrupt it for the rest of the process,
+  # or see unrelated examples fail because a bare ENV.delete wiped a value
+  # that was there before the test ran.
+  def with_env(vars)
+    previous = vars.keys.to_h { |k| [k, ENV[k]] }
+    vars.each { |k, v| ENV[k] = v }
+    yield
+  ensure
+    previous.each { |k, v| v.nil? ? ENV.delete(k) : ENV[k] = v }
   end
 end

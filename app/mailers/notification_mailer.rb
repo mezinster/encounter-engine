@@ -1,17 +1,21 @@
 # -*- encoding : utf-8 -*-
 class NotificationMailer < ActionMailer::Base
-  # Preserved verbatim from the Merb original (app/controllers/users.rb and
-  # app/controllers/invitations.rb both hardcoded this same address). Not
-  # part of Task 10's domain-configurability fix -- see the APP_HOST
-  # override in app/views/notification_mailer/welcome_letter.text.erb for
-  # what *is* being generalized (the mail body) and why "from" is
-  # deliberately left alone (no feature exercises it, and the brief's
-  # domain-wart callout was specifically about the mail body).
-  default from: "noreply@bien.kg"
+  # Fix round 1: this was hardcoded to "noreply@bien.kg" -- the same
+  # single-instance-domain wart as the welcome letter body (see #app_host
+  # below), just missed on the first pass. A Proc (not a plain string) is
+  # required here: ActionMailer evaluates a plain `default from:` value once,
+  # when this class body first runs, so a literal ENV.fetch(...) would freeze
+  # in whatever MAIL_FROM was set (or unset) at boot/autoload time. A Proc is
+  # re-evaluated on every #mail call, so it also picks up ENV changes made
+  # after the class has already loaded -- which is what lets a spec exercise
+  # the override at all. Default preserved as "noreply@bien.kg" so existing
+  # deployments that don't set MAIL_FROM see no change in behavior.
+  default from: -> { ENV.fetch("MAIL_FROM", "noreply@bien.kg") }
 
   def welcome_letter(user, password)
     @user = user
     @password = password
+    @host = app_host
     mail_in_recipient_locale(user, :welcome_letter)
   end
 
@@ -69,9 +73,27 @@ class NotificationMailer < ActionMailer::Base
   # harmless (I18n ignores unused %{} vars), so one helper can serve all
   # four subjects rather than four bespoke var hashes.
   def subject_vars
-    vars = {}
+    vars = { host: app_host }
     vars[:nickname] = @user.nickname if @user
     vars[:team_name] = @team.name if @team
     vars
+  end
+
+  # Fix round 1: the welcome letter's subject ("Регистрация на bienkg" --
+  # "bienkg" typo included, verbatim from the Merb original controller) and
+  # body used to name the domain two different ways: the body already went
+  # through APP_HOST (see app/views/notification_mailer/welcome_letter.text.erb),
+  # but the subject was still a static string with the old hardcoded,
+  # misspelled host baked in, and the English translation didn't mention a
+  # host at all -- ru and en said different things even though the leaf-key
+  # sets matched. Centralizing host resolution here, used by both the
+  # subject (via subject_vars) and the body (via @host), fixes both: one
+  # source of truth, ru and en both say "registered at/on %{host}" now, and
+  # interpolating the var naturally fixes the "bienkg" typo (renders with
+  # the dot). Same ENV var and default as the body fix -- see
+  # app/views/notification_mailer/welcome_letter.text.erb for why APP_HOST
+  # and not a new name.
+  def app_host
+    ENV.fetch("APP_HOST", "bien.kg")
   end
 end

@@ -146,7 +146,7 @@ en:
       edit_link: "Edit profile..."
   notification_mailer:
     welcome_letter:
-      subject: "Registration complete"
+      subject: "Registration on %{host}"
       body: |-
         Thank you for registering!
 

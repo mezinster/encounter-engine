@@ -1,0 +1,65 @@
+service: encounter-engine
+image: mezinster/encounter-engine
+
+servers:
+  web:
+    - 23.100.7.86
+
+proxy:
+  ssl: true
+  host: game.mezin.eu
+  app_port: 3000
+  healthcheck:
+    path: /up
+
+registry:
+  server: ghcr.io
+  username: mezinster
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+  # Built in CI and pushed. This host has 1 vCPU and ~1.1 GB spare; building
+  # here would starve danted and the APRS forwarders.
+  remote: false
+
+ssh:
+  user: mezinster
+
+env:
+  clear:
+    RAILS_ENV: production
+    TZ: Europe/Vienna
+    DEFAULT_LOCALE: ru
+    APP_HOST: game.mezin.eu
+    MAIL_FROM: noreply@mezin.eu
+    SMTP_ADDRESS: smtp.gmail.com
+    SMTP_PORT: "587"
+  secret:
+    - SECRET_KEY_BASE
+    - DATABASE_URL
+    - SMTP_USERNAME
+    - SMTP_PASSWORD
+
+accessories:
+  db:
+    image: ghcr.io/mezinster/encounter-engine-postgres:latest
+    host: 23.100.7.86
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_USER: encounter
+        POSTGRES_DB: encounter_production
+        WALG_AZ_PREFIX: azure://encounter-engine-wal
+        # No AZURE_STORAGE_ACCESS_KEY. The VM holds a system-assigned managed
+        # identity with Storage Blob Data Contributor on this account only, and
+        # wal-g's Azure default credential chain fetches short-lived tokens from
+        # IMDS. A storage account name is not a secret; the key would be, and it
+        # does not exist here. If Task 4 Step 6 found IMDS unreachable from a
+        # container, add AZURE_STORAGE_ACCESS_KEY to the secret list below.
+        AZURE_STORAGE_ACCOUNT: eewalxypkl1ft
+      secret:
+        - POSTGRES_PASSWORD
+    volumes:
+      - encounter_engine_pg_data:/var/lib/postgresql/data

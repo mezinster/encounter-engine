@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  # kamal-proxy polls this during deploys and will not cut traffic over to a
+  # container that does not answer it. Rails ships the controller; this app's
+  # routes were ported from Merb, so the route was never added.
+  get "up" => "rails/health#show", as: :rails_health_check
+
   root to: "index#index"
 
   # Session/registration URLs replace merb-auth's merb_auth_slice_password

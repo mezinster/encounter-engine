@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# .kamal/hooks/pre-deploy
+#
+# Migrations run exactly once, here, before any new container starts.
+# Running db:prepare in this hook, ahead of cutover, keeps it a single
+# authoritative step against the current version's schema -- rather than
+# something each new container might attempt on its own as it boots,
+# which would race across replicas and apply migrations while traffic is
+# still shifting from the old version to the new one.
+#
+# set -e matters: without it a failed migration logs and returns zero, the
+# deploy proceeds, and the app runs against a half-migrated schema.
+set -euo pipefail
+
+echo "Running migrations for version ${KAMAL_VERSION}"
+kamal app exec --version "${KAMAL_VERSION}" --no-reuse "bin/rails db:prepare"
+echo "Migrations complete"

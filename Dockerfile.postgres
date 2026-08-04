@@ -1,0 +1,42 @@
+# syntax=docker/dockerfile:1
+FROM postgres:16-bookworm
+
+# wal-g must live INSIDE this image. archive_command is executed by the
+# PostgreSQL process itself, so a wal-g installed on the host is unreachable.
+ARG WALG_VERSION=v3.0.3
+# Pinned deliberately: this deployment host proxies outbound traffic (SOCKS +
+# squid), so a pinned tag alone doesn't rule out the release asset being
+# swapped or tampered with in transit. Must be updated whenever WALG_VERSION
+# changes — a stale digest should fail the build loudly, which is intended.
+ARG WALG_SHA256=e56f515e6219f4d498e729023b404b4c9068a4deaebbaf95ac6f4cf6bcd1a783
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y ca-certificates curl cron && \
+    curl -fsSL -o /tmp/walg.tar.gz \
+      "https://github.com/wal-g/wal-g/releases/download/${WALG_VERSION}/wal-g-pg-ubuntu-20.04-amd64.tar.gz" && \
+    echo "${WALG_SHA256}  /tmp/walg.tar.gz" | sha256sum -c - && \
+    tar -xzf /tmp/walg.tar.gz -C /tmp && \
+    mv /tmp/wal-g-pg-ubuntu-20.04-amd64 /usr/local/bin/wal-g && \
+    chmod +x /usr/local/bin/wal-g && \
+    rm -rf /tmp/walg.tar.gz /var/lib/apt/lists/*
+
+# Tuned for a 1 vCPU / 1.9 GB host that is ALSO running danted, several
+# proxies and two APRS forwarders. Defaults assume far more headroom.
+COPY <<'CONF' /etc/postgresql/conf.d/10-tuning.conf
+shared_buffers = 128MB
+work_mem = 4MB
+maintenance_work_mem = 64MB
+effective_cache_size = 512MB
+max_connections = 20
+archive_mode = on
+archive_command = 'wal-g wal-push %p'
+archive_timeout = 300
+wal_level = replica
+CONF
+
+# `include_dir` is a config-FILE directive, not a settable GUC: passing it as
+# `-c include_dir=...` makes postgres fail with "unrecognized configuration
+# parameter" the moment initdb starts its temporary server. It has to live
+# inside the config file itself instead.
+RUN echo "include_dir = '/etc/postgresql/conf.d'" >> /usr/share/postgresql/postgresql.conf.sample
+
+CMD ["postgres", "-c", "config_file=/usr/share/postgresql/postgresql.conf.sample"]

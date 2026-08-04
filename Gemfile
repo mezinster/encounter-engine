@@ -12,6 +12,7 @@ group :development, :test do
   gem "rspec-rails", "~> 7.0"
   gem "pry"
   gem "pry-byebug"
+  gem "kamal", "~> 2.0", require: false
 end
 
 group :test do

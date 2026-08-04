@@ -31,7 +31,8 @@ module FixturesHelper
       :author => create_user,
       :name => random_string,
       :description => random_string,
-      :starts_at => "2099-01-01 00:00"
+      :starts_at => "2099-01-01 00:00",
+      :max_team_number => 100
     }.merge(options)
     Game.new creation_params
   end

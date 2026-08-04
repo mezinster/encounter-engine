@@ -45,16 +45,9 @@ jobs:
         run: bundle exec cucumber --format progress
 
   rspec:
-    name: RSpec (not yet gating)
+    name: RSpec
     runs-on: ubuntu-latest
     container: ruby:2.6.5
-
-    # 59 of 206 examples fail for reasons that predate this workflow — mostly
-    # specs referencing Question#answer, a column dropped by migration 024 when
-    # the Answer model was extracted. Reported so the count is visible and can
-    # be driven down; made non-blocking so it does not mask real Cucumber
-    # regressions. Flip continue-on-error off once the suite is green.
-    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4

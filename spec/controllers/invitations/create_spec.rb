@@ -43,10 +43,13 @@ describe Invitations, "#create" do
       @params = { :invitation => { :recepient_nickname => @user.nickname } }
     end
 
-    it "redirects with notice" do
+    # The redirect is asserted; the notice itself still is not. The trailing
+    # `pending` that used to stand in for that was a no-op under RSpec 1, but
+    # RSpec 3 reads pending as "expected to fail" and reports the example as
+    # FIXED when it passes.
+    it "redirects" do
       response = perform_request({ :as_user => @captain }, @params)
-      response.status.should == 302      
-      pending
+      response.status.should == 302
     end
 
     it "creates an invitation" do

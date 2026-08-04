@@ -31,7 +31,7 @@ describe Teams, "#new" do
     it "raises Unauthorized exception" do
       lambda do
         perform_request :as_user => @user, :skip_authentication => true
-      end.should raise_error(Exception::Merb::ControllerExceptions::Unauthorized,
+      end.should raise_error(Merb::ControllerExceptions::Unauthorized,
         "Вы уже являетесь членом команды")
     end
   end

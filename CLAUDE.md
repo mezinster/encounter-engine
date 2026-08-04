@@ -109,5 +109,8 @@ constraints — read them before bumping a version.
 Heroku. `Procfile` runs `merb -a thin`. `create-heroku-instance <app-name> <TZ>` provisions a
 new instance and sets `MERB_ENV`/`RACK_ENV`/`TZ`.
 
-**Security:** `config/init.rb` contains a hardcoded, committed `session_secret_key`. Any real
-deployment must override it — flag this if touching session or auth code.
+**Session secret:** the cookie session store signs cookies with `SESSION_SECRET_KEY`, read from
+the environment in `config/init.rb`. Development, test and rake fall back to a fixed insecure
+value so a fresh clone runs with no setup; every other environment raises at boot if the
+variable is unset or under 16 characters. `create-heroku-instance` generates one per instance.
+Never reintroduce a committed default — this repository is public.

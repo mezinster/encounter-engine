@@ -2,6 +2,13 @@ en:
   game:
     not_started: "The game has not started yet. Where did you even get this link? :-)"
     already_in_team: "You are already a member of a team"
+  sessions:
+    invalid_credentials: "Wrong e-mail or password"
+    new:
+      title: "Log in"
+      email_label: "E-mail"
+      password_label: "Password"
+      submit: "Log in"
   activerecord:
     errors:
       messages:

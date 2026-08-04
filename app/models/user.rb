@@ -1,4 +1,6 @@
 # -*- encoding : utf-8 -*-
+require "digest/sha1"
+
 class User < ApplicationRecord
   belongs_to :team, optional: true
 
@@ -43,5 +45,45 @@ class User < ApplicationRecord
 
   def password_required?
     crypted_password.blank? || password.present?
+  end
+
+  before_save :encrypt_password, if: -> { password.present? }
+
+  # Digest::SHA1.hexdigest("--" + salt + "--" + password + "--") -- this is
+  # merb-auth's SaltedUser#encrypt (vendor/merb-auth/merb-auth-more/lib/
+  # merb-auth-more/mixins/salted_user.rb:53), preserved byte-for-byte.
+  # Existing crypted_password values were produced by this exact formula;
+  # changing it silently locks out every current user, since a mismatched
+  # hash raises no error -- the login form just rejects a correct password.
+  # Verified against two real (salt, crypted_password) pairs captured from a
+  # database written by the running Merb app -- see
+  # spec/models/user/authenticate_spec.rb and
+  # .superpowers/sdd/2026-08-04-merb-to-rails-i18n/task-6-password-vectors.txt.
+  def self.encrypt(password, salt)
+    Digest::SHA1.hexdigest("--#{salt}--#{password}--")
+  end
+
+  def authenticate(candidate)
+    return false if crypted_password.blank?
+
+    self.class.encrypt(candidate, salt) == crypted_password
+  end
+
+  private
+
+  def encrypt_password
+    # merb-auth generated new salts as
+    #   Digest::SHA1.hexdigest("--#{Time.now.to_s}--#{login_param}--")
+    # (login_param is the constant :email). Time.now.to_s has one-second
+    # resolution and login_param never varies, so that salt carries no
+    # per-user entropy at all -- it's fully predictable from a timestamp.
+    # The vectors file demonstrates this directly: two distinct demo
+    # accounts created in the same second share one salt. RULING (see
+    # task-6-password-vectors.txt): do NOT reproduce that formula for new
+    # salts. Salts are stored per row, so existing users keep verifying
+    # against whatever salt is already in their row -- only *new* salts
+    # change here, to a cryptographically strong SecureRandom.hex(20).
+    self.salt ||= SecureRandom.hex(20)
+    self.crypted_password = self.class.encrypt(password, salt)
   end
 end

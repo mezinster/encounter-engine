@@ -88,19 +88,12 @@ RSpec.describe "dashboard/_my_games", type: :view do
     author = create_user
     create_game(author: author)
 
+    # games/_list.html.erb (rendered by dashboard/_my_games below) reads
+    # both logged_in? and current_user -- Task 9c has ported it for real now,
+    # so both need stubbing (the render stub that used to short-circuit
+    # games/* partials is gone, per task-9c-report.md).
+    view.define_singleton_method(:logged_in?) { true }
     view.define_singleton_method(:current_user) { author }
-
-    # games/_list.html.erb is part (c)'s scope (games/*) and still calls
-    # unported Merb helpers as of this task -- stub it out so this spec
-    # exercises _my_games.html.erb's own logic for real.
-    allow(view).to receive(:render).and_wrap_original do |original, *args, **kwargs, &block|
-      name = args.first
-      if name.is_a?(String) && name.start_with?("games/")
-        "".html_safe
-      else
-        original.call(*args, **kwargs, &block)
-      end
-    end
 
     render partial: "dashboard/my_games"
 
@@ -126,23 +119,11 @@ RSpec.describe "dashboard/index", type: :view do
     view.define_singleton_method(:logged_in?) { true }
     view.define_singleton_method(:current_user) { captain }
 
-    # games/_game_entries.html.erb, games/_teams.html.erb, and (via
-    # dashboard/_my_games) games/_list.html.erb are part (c)'s scope
-    # (games/*) and still call unported Merb helpers (resource/partial) as
-    # of this task. Stub exactly those three out so this spec still exercises
-    # every render call MY dashboard/index.html.erb makes for real --
-    # my_team, my_games, shared/current_games, dashboard/coming_games, and
-    # dashboard/finished_games all render unstubbed. Delete the stub once
-    # part (c) lands.
-    allow(view).to receive(:render).and_wrap_original do |original, *args, **kwargs, &block|
-      name = args.first
-      if name.is_a?(String) && name.start_with?("games/")
-        "".html_safe
-      else
-        original.call(*args, **kwargs, &block)
-      end
-    end
-
+    # Task 9c ported games/_game_entries.html.erb, games/_teams.html.erb,
+    # and (via dashboard/_my_games) games/_list.html.erb -- the render stub
+    # that used to short-circuit games/* partials (see task-9b-report.md) is
+    # gone; every render call dashboard/index.html.erb makes now executes
+    # for real.
     render
 
     expect(rendered).to include(I18n.t("dashboard.index.greeting"))

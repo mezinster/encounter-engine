@@ -1,5 +1,8 @@
-<% require_js 'jquery.js', 'jquery.autocomplete.js' %>
-<% require_css 'jquery.autocomplete.css' %>
+<% content_for :head do %>
+  <script src="/javascripts/jquery.js"></script>
+  <script src="/javascripts/jquery.autocomplete.js"></script>
+  <link rel="stylesheet" href="/stylesheets/jquery.autocomplete.css">
+<% end %>
 
 <script>
 
@@ -7,9 +10,9 @@
 
         var data = new Array();
         <% @all_users.each do |user| %>
-            <%if user!=@current_user%>
-                data.push({nick: '<%=user.nickname%>', email: '<%=user.email%>'});
-            <%end%>
+            <% if user != @current_user %>
+                data.push({nick: '<%= user.nickname %>', email: '<%= user.email %>'});
+            <% end %>
         <% end %>
         $("#invitation_recepient_nickname").autocomplete(data, {
             minChars: 1,
@@ -32,7 +35,8 @@
 
 <%= error_messages_for @invitation %>
 
-<%= form_for @invitation, :action => url(:invitations) do %>
-    <%= text_field :recepient_nickname, :label => "Пригласить нового участника" %>
-    <%= submit "Пригласить" %>
-<% end =%>
+<%= form_with model: @invitation, url: invitations_path do |f| %>
+    <%= f.label :recepient_nickname, t("invitations.new.recipient_label") %>
+    <%= f.text_field :recepient_nickname %>
+    <%= f.submit t("invitations.new.submit") %>
+<% end %>

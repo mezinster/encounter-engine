@@ -1,15 +1,15 @@
 <p>
-  Редактирование подсказки к заданию "<%= link_to @level.name, resource(@game, @level) %>" игры "<%= link_to @game.name, resource(@game) %>"
+  <%= t("hints.edit.heading_prefix") %> "<%= link_to @level.name, game_level_path(@game, @level) %>" <%= t("hints.edit.heading_game_prefix") %> "<%= link_to @game.name, game_path(@game) %>"
 </p>
 
 <br />
 
-<%= error_messages_for @hint, :header => "<h2>Ошибка</h2>" %>
+<%= error_messages_for @hint, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
-<%= form_for @hint, :action => resource(@game, @level, @hint) do %>
+<%= form_with model: [@game, @level, @hint], url: game_level_hint_path(@game, @level, @hint) do |f| %>
 
-  <%= partial 'form', :hint => @hint %>
+  <%= render "form", f: f %>
 
-  <%= submit "Отредактировать", :style => "width:150px" %>
-  <em><%= link_to "(отменить)", resource(@hint.level.game, @hint.level) %></em>
-<% end =%>
+  <%= f.submit t("hints.edit.submit"), style: "width:150px" %>
+  <em><%= link_to t("shared.cancel"), game_level_path(@hint.level.game, @hint.level) %></em>
+<% end %>

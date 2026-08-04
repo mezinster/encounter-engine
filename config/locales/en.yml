@@ -1,6 +1,12 @@
 en:
   answers:
     must_have_at_least_one_variant: "There must be at least one answer code"
+    index:
+      title: "Task"
+      game_prefix: "game"
+      variants_label: "Code variants:"
+      new_variant_label: "Another code variant"
+      submit: "Add code variant"
   errors:
     unauthenticated: "You are not authorized to visit this page. Please log in."
     unauthorized: "You are not authorized to perform this action"
@@ -15,9 +21,129 @@ en:
     team_exited: "Your team has left the race"
   invitations:
     notice_sent: "An invitation was sent to %{nickname}"
+    new:
+      recipient_label: "Invite a new member"
+      submit: "Invite"
   game:
     not_started: "The game has not started yet. Where did you even get this link? :-)"
     already_in_team: "You are already a member of a team"
+  games:
+    list:
+      view: "(view)"
+      stats: "(statistics)"
+      live_channel: "(live feed)"
+      full_log: "(answer log)"
+      end_game: "END THE GAME"
+      author_finished: "You have ended the game"
+    game_entries:
+      legend: "Registration applications:"
+      accept: "(accept)"
+      reject: "(reject)"
+    teams:
+      legend: "Participating teams:"
+    form:
+      name: "Title"
+      description: "Description"
+      starts_at: "Game start"
+      registration_deadline: "Registration deadline "
+      max_team_number: "Maximum number of teams"
+      is_draft: "Draft?"
+    new:
+      submit: "Create game"
+    edit:
+      submit: "Save"
+    show:
+      title: "Game"
+      draft_label: "Draft"
+      author_label: "Author"
+      starts_at_label: "Game start"
+      starts_at_not_set: "The game's start date has not been set yet"
+      registration_deadline_label: "Registration deadline"
+      registration_deadline_not_set: "The registration deadline has not been set yet"
+      description_label: "Description:"
+      max_team_number_label: "Maximum number of teams:"
+      levels_legend: "Tasks:"
+      add_level: "Add a new task"
+      edit_link: "Edit this game"
+      delete_link: "Delete this game"
+      countdown_prefix: "Time until start: "
+      start_test: "Start testing"
+      start: "Start"
+      finish_test: "Finish testing"
+  levels:
+    form:
+      name: "Title"
+      text: "Task text"
+      correct_answer: "Code"
+    edit:
+      title: "Task"
+      game_prefix: "game"
+      submit: "Save"
+    new:
+      heading: "New task for game %{name}"
+      hint_more_codes: "after creating this you will be able to add more codes to the task"
+      submit: "Add task"
+    show:
+      title: "Task"
+      game_prefix: "game"
+      text_label: "Task text:"
+      edit_link: "Edit the task's text and title"
+      code_label: "Code:"
+      codes_label: "Codes (%{count}):"
+      add_code: "Add another code"
+      hints_legend: "Hints:"
+      add_hint: "Add a hint"
+      delete_level: "Delete this level"
+      back_to_game: 'Back to game "%{name}"'
+  hints:
+    form:
+      text_label: "Text"
+      delay_label: "After"
+      minutes_suffix: "minutes"
+    list:
+      empty: "There are no hints"
+      after: "After"
+      minutes_colon: "minutes:"
+    edit:
+      heading_prefix: "Editing the hint for task"
+      heading_game_prefix: "of game"
+      submit: "Save"
+    new:
+      heading_prefix: "New hint for task"
+      heading_game_prefix: "of game"
+      submit: "Add hint"
+  questions:
+    new:
+      title: "Task"
+      game_prefix: "game"
+      code_label: "Code"
+      submit: "Add code"
+  users:
+    new:
+      nickname_label: "Name"
+      email_label: "Email"
+      password_label: "Password"
+      password_confirmation_label: "Confirmation"
+      submit: "Sign up"
+    edit:
+      title: 'Editing player profile %{nickname}'
+      nickname_label: "Your name"
+      date_of_birth_label: "Date of birth"
+      icq_label: "ICQ number"
+      jabber_label: "Jabber ID"
+      phone_label: "Contact phone number"
+      password_label: "New password"
+      password_confirmation_label: "Password confirmation"
+      submit: "Save changes"
+    index:
+      title: "User profile"
+      captain_prefix: "captain of team"
+      email_label: "E-mail:"
+      date_of_birth_label: "Date of birth:"
+      icq_label: "ICQ number:"
+      jabber_label: "Jabber ID:"
+      phone_label: "Contact phone number:"
+      edit_link: "Edit profile..."
   layout:
     title: "Active urban games"
     header:
@@ -59,6 +185,10 @@ en:
       hours: ["hour", "hours", "hours"]
       minutes: ["minute", "minutes", "minutes"]
       seconds: ["second", "seconds", "seconds"]
+    cancel: "(cancel)"
+    edit_short: "(edit)"
+    delete_short: "(delete)"
+    error_header: "Error"
   game_passings:
     index:
       title: 'Game "%{name}"'

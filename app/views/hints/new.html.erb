@@ -1,16 +1,15 @@
 <p>
-    Новое подсказка для задания "<%= link_to @level.name, resource(@game, @level) %>" игры "<%= link_to @game.name, resource(@game) %>"
+    <%= t("hints.new.heading_prefix") %> "<%= link_to @level.name, game_level_path(@game, @level) %>" <%= t("hints.new.heading_game_prefix") %> "<%= link_to @game.name, game_path(@game) %>"
 </p>
 
 <br />
 
-<%= error_messages_for @hint, :header => "<h2>Ошибка</h2>" %>
+<%= error_messages_for @hint, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
-<%= form_for @hint, :action => resource(@game, @level, :hints) do %>
+<%= form_with model: [@game, @level, @hint], url: game_level_hints_path(@game, @level) do |f| %>
 
-  <%= partial 'form', :hint => @hint %>
+  <%= render "form", f: f %>
 
-  <%= submit "Добавить подсказку", :style => "width:170px" %>
-  <em><%= link_to "(отменить)", resource(@hint.level.game, @hint.level) %></em>
-<% end =%>
-
+  <%= f.submit t("hints.new.submit"), style: "width:170px" %>
+  <em><%= link_to t("shared.cancel"), game_level_path(@hint.level.game, @hint.level) %></em>
+<% end %>

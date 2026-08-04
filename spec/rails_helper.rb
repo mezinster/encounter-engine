@@ -60,6 +60,22 @@ RSpec.configure do |config|
   config.include MailerHelper
   config.include ExceptionsHelper
 
+  # rspec-rails' ViewExampleGroup only auto-includes a helper module matching
+  # the spec's own top-level description (e.g. "game_passings/index" ->
+  # GamePassingsHelper) plus ApplicationHelper if it exists -- and this app
+  # has no ApplicationHelper (see app/helpers/global_helpers.rb's header
+  # comment: GlobalHelpers plays that "available to every view" role instead,
+  # via Rails' own include_all_helpers default for real requests). Without
+  # this, every view spec for a template outside games_passings/ that calls
+  # error_messages_for (12 templates repo-wide as of Task 9c: games, levels,
+  # hints, users, answers, questions, invitations) would need its own
+  # `helper GlobalHelpers` line -- Task 9b already hit this once for
+  # teams/new and left the explicit line in spec/views/teams_spec.rb; adding
+  # it here once, globally, is the fix task-9a/9b's reports flagged as
+  # needed. Matches how a real request behaves (every helper module is
+  # available in every view) instead of rspec-rails' narrower default.
+  config.before(type: :view) { view.singleton_class.include(GlobalHelpers) }
+
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [
     Rails.root.join('spec/fixtures')

@@ -24,7 +24,13 @@ require "rails_helper"
 # vectors file for why Task 6 replaces salt generation for NEW users with
 # SecureRandom.hex(20) while leaving `encrypt` itself untouched.
 describe User, "authenticating against merb-auth-produced hashes" do
-  GOLDEN_VECTORS = [
+  # A plain local variable, not a top-level constant: `GOLDEN_VECTORS = [...]`
+  # written directly inside a `describe` block is evaluated in a context
+  # that lands it on Object, making it a global constant reachable (and
+  # collidable) from any other spec file in the suite. `it` blocks are
+  # closures, so they still see this local across the whole describe block
+  # without needing a constant.
+  golden_vectors = [
     {
       email: "author@example.com",
       salt: "06e9ffff5b950eb0733ee392e3a991cdd04e88e2",
@@ -37,7 +43,7 @@ describe User, "authenticating against merb-auth-produced hashes" do
     }
   ].freeze
 
-  GOLDEN_VECTORS.each do |vector|
+  golden_vectors.each do |vector|
     it "verifies the real merb-auth hash captured for #{vector[:email]}" do
       User.encrypt("demo1234", vector[:salt]).should == vector[:crypted_password]
     end
@@ -48,11 +54,26 @@ describe User, "authenticating against merb-auth-produced hashes" do
       nickname: "golden#{random_string}",
       email: "golden#{random_string}@diesel.kg"
     )
-    user.salt = GOLDEN_VECTORS.first[:salt]
-    user.crypted_password = GOLDEN_VECTORS.first[:crypted_password]
+    user.salt = golden_vectors.first[:salt]
+    user.crypted_password = golden_vectors.first[:crypted_password]
     user.save!(validate: false)
 
     user.authenticate("demo1234").should be_truthy
     user.authenticate("wrong-password").should be_falsey
+  end
+
+  it "fails closed when salt is blank, rather than hashing against an empty salt" do
+    user = User.new(
+      nickname: "golden#{random_string}",
+      email: "golden#{random_string}@diesel.kg"
+    )
+    user.salt = nil
+    # What "demo1234" would hash to with an empty-string salt -- if the
+    # blank-salt guard were missing, authenticating with "demo1234" against
+    # this row would incorrectly succeed.
+    user.crypted_password = User.encrypt("demo1234", "")
+    user.save!(validate: false)
+
+    user.authenticate("demo1234").should be_falsey
   end
 end

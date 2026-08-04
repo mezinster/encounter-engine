@@ -64,7 +64,11 @@ class User < ApplicationRecord
   end
 
   def authenticate(candidate)
-    return false if crypted_password.blank?
+    # Guard salt as well as crypted_password: a row with a null/blank salt
+    # would otherwise hash "----#{candidate}--" (salt interpolated as "")
+    # and could authenticate against it. Any row missing either half of the
+    # pair is malformed and must fail closed, not verify.
+    return false if crypted_password.blank? || salt.blank?
 
     self.class.encrypt(candidate, salt) == crypted_password
   end

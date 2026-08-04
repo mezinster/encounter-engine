@@ -110,6 +110,11 @@ Then /должен увидеть следующюю таблицу:/ do |string
   strings_table.diff!(tableish('#results tr', 'td,th'), :missing_col => false)
 end
 
+# Was an empty no-op, like "страница перегружается" in games_steps.rb. Both are
+# implemented now: re-issuing a GET for the current URL is what a browser
+# refresh does, and it is the entire subject of ticket #83
+# (features/tickets/ticket-83(5).feature). Implementing it exposed a real 500
+# on refresh at game end -- see GamePassingsController#show_current_level.
 Given /^я обновляю страницу$/ do
-
+  visit page.current_url
 end

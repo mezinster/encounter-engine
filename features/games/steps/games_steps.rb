@@ -74,7 +74,7 @@ end
 
 Then %r{должен быть перенаправлен в профиль игры "(.*)"$}i do |game_name|
   game = Game.where(name: game_name).first
-  step %{должен быть перенаправлен по адресу #{game_path(game)}}
+  assert_redirected_to_path game_path(game)
 end
 
 Given /^(.*) добавил задание "([^\"]*)" в игру "([^\"]*)"$/ do |author_name, level_name, game_name|
@@ -152,8 +152,10 @@ Given /^должен видеть ссылку "([^\"]*)"$/ do |link|
   step %{должен видеть ссылку на #{link}$}
 end
 
+# Was an empty no-op; see the twin step "я обновляю страницу" in
+# features/game-passing/steps/game-passing_steps.rb.
 Given /^страница перегружается$/ do
-
+  visit page.current_url
 end
 
 When /^нажимаю на "([^\"]*)"$/ do |link|

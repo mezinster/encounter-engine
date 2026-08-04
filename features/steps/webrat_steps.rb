@@ -11,8 +11,22 @@ When /нажимаю "(.*)"$/ do |button|
   click_button(button)
 end
 
+# first(:link, …).click rather than click_link, and rather than a global
+# Capybara.match = :first.
+#
+# Webrat resolved an ambiguous locator by picking a match; Capybara's default
+# :smart raises Capybara::Ambiguous. Running the suite under :smart finds
+# exactly two ambiguities, both LINKS, and both same-href duplications that
+# exist verbatim in the Merb layouts: "Создать команду" (left-menu partial +
+# dashboard body, 137 scenarios) and "Личный кабинет" (header + left menu, 2).
+# Since both duplicates point at the same URL, picking the first is what Webrat
+# did and masks nothing.
+#
+# Scoping the tolerance here keeps buttons and form fields strict: a global
+# Capybara.match = :first would also make click_button and fill_in silently
+# pick among genuinely different targets.
 When /иду по ссылке "(.*)"$/ do |link|
-  click_link(link)
+  first(:link, link).click
 end
 
 When /ввожу "(.*)" в поле "(.*)"$/ do |value, field|

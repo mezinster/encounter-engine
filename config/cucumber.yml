@@ -12,7 +12,10 @@ rerun_opts = rerun.empty? ? "--format #{ENV['CUCUMBER_FORMAT'] || 'progress'} fe
 # ("-r features/support --format pretty"). features/multi-questional-levels/
 # managing-additional-codes.feature:30,32 are two deliberately empty
 # placeholder scenarios; --strict would turn those into a red run.
-std_opts = "--format #{ENV['CUCUMBER_FORMAT'] || 'progress'} --tags 'not @wip' --publish-quiet"
+# `pretty` (the Merb-era default), not `progress`: under progress an exception
+# raised in a Before/Around hook prints no diagnostic at all, just a bare error
+# count. Override with CUCUMBER_FORMAT=progress for a terse run.
+std_opts = "--format #{ENV['CUCUMBER_FORMAT'] || 'pretty'} --tags 'not @wip' --publish-quiet"
 %>
 default: <%= std_opts %> -r features/support features
 rerun: <%= rerun_opts %> -r features/support --format rerun --out rerun.txt --strict --tags 'not @wip'

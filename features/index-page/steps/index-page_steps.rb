@@ -4,5 +4,5 @@ When %r{захожу на главную страницу$}i do
 end
 
 Then %r{должен быть перенаправлен на главную страницу}i do
-  step %{должен быть перенаправлен по адресу /}
+  assert_redirected_to_path root_path
 end

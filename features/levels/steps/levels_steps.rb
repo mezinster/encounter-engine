@@ -92,5 +92,5 @@ end
 
 Then /должен быть перенаправлен в профиль задания "(.*)"/ do |level_name|
   level = Level.where(name: level_name).first
-  step %{должен быть перенаправлен по адресу #{game_level_path(level.game, level)}}
+  assert_redirected_to_path game_level_path(level.game, level)
 end

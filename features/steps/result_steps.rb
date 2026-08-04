@@ -64,27 +64,37 @@ Then /должен увидеть кнопку "(.*)"$/ do |text|
   expect(page).to have_button(text)
 end
 
+# The real redirect assertion. Called by the four *derived* redirect steps --
+# "…в личный кабинет" (dashboard_steps.rb), "…на главную страницу"
+# (index-page_steps.rb), "…в профиль игры" (games_steps.rb) and "…в профиль
+# задания" (levels_steps.rb) -- which build the expected path from a route
+# helper and therefore always name a path the app really serves. That is 2,129
+# executed assertions per suite run.
+def assert_redirected_to_path(url)
+  expect(page.current_path).to eq(url.strip)
+end
+
 Then /должен быть перенаправлен по адресу (.*)/ do |url|
-  # Still a no-op, as it was in the Merb suite, where the entire body was the
-  # comment "# WTF?!". Capybara does know where the browser ended up, so this
-  # CAN assert what its name claims --
+  # Deliberately still a no-op FOR ITS FIVE DIRECT FEATURE-FILE CALLERS, as it
+  # was in the Merb suite, where the entire body was the comment "# WTF?!".
+  # The four derived steps above do not come through here -- they call
+  # #assert_redirected_to_path directly -- so this no-op costs only the five
+  # sites below, all of which write "/play/" for a path the app never has:
   #
-  #     expect(page.current_path).to eq(url.strip)
+  #   features/games/enter-game-before-start.feature:31,50
+  #     Nine lines apart, the same scenario asserts BOTH "должен быть
+  #     перенаправлен в профиль игры" (/games/1, and that one now really does
+  #     assert) AND "должен быть перенаправлен по адресу /play/". The second
+  #     describes what the countdown's JS finish() handler does when the clock
+  #     runs out (app/views/shared/_countdown.html.erb:46), which a rack_test
+  #     run never executes. Mutually exclusive without a JavaScript driver.
   #
-  # -- and that was tried. It is left off because two scenarios cannot satisfy
-  # it as written, and the .feature files are the read-only contract:
+  #   features/games/test-game-1.feature:57,70,82
+  #     Say "/play/" for a path that is and always was "/play/<game id>" -- the
+  #     id was simply left off.
   #
-  #   features/games/enter-game-before-start.feature:31,50 assert, three lines
-  #   apart, both "должен быть перенаправлен в профиль игры" (/games/1) and
-  #   "должен быть перенаправлен по адресу /play/". The second describes what
-  #   the countdown's JS finish() handler does when the clock runs out
-  #   (app/views/shared/_countdown.html.erb:46) -- which a rack_test run never
-  #   executes. The two assertions are mutually exclusive without JavaScript.
-  #
-  # Turning it on also flags features/games/test-game-1.feature:57,70,82, which
-  # say "/play/" for a path that is and always was "/play/<game id>". Both are
-  # scenario-text defects rather than porting defects; see the task report for
-  # the full findings and the patch to enable the assertion.
+  # Both are scenario-text defects, not porting defects, and the .feature files
+  # are the read-only contract. See task-11-report.md.
 end
 
 # THE VACUOUS ASSERTION. This was

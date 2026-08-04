@@ -7,11 +7,15 @@
 # Merb::Mailer's delivery struct, so the `include?` filter carries over
 # unchanged.
 #
-# KNOWN VACUITY, LEFT AS-IS ON PURPOSE -- see the report.
-# The only caller of "никакие письма не должны быть высланы на X"
-# (features/invitations/steps/invitations_steps.rb:25) passes the address with
-# a trailing space, which the step's `(.*)$` capture keeps, so the lookup can
-# never match a real delivery and the assertion is always true. Adding a
+# PARTIAL KNOWN VACUITY, LEFT AS-IS ON PURPOSE -- see the report.
+# "никакие письма не должны быть высланы на X" has two kinds of caller. The
+# direct one, features/invitations/reject-invitations.feature:37, passes a bare
+# address and is a REAL, working assertion. The indirect one --
+# features/invitations/steps/invitations_steps.rb:25, reached from the three
+# "пользователь X не должен получить приглашение" sites in
+# send-invitations.feature:62,73,82 -- interpolates the address with a trailing
+# space, which the step's `(.*)$` capture keeps, so for those three the lookup
+# can never match a real delivery and the assertion is always true. Adding a
 # `.strip` here does make it mean what it says -- and then
 # features/invitations/send-invitations.feature:64 fails, not because of an
 # application bug but because the scenario's own setup ("пользователь Alisa

@@ -24,16 +24,11 @@ Capybara.default_driver = :rack_test
 # sides restores the old, intended meaning: "does the page say this?".
 Capybara.default_normalize_ws = true
 
-# Webrat resolved an ambiguous locator by picking a match rather than raising
-# (Webrat::Locators::LinkLocator#matching_links, FieldLocator#matching_fields),
-# and the feature files were written against that. Several pages legitimately
-# render the same label twice -- "Создать команду" appears both in the left
-# menu partial and in the dashboard body, for instance, and both are real,
-# working links in the Merb original too. Capybara's default :smart strategy
-# raises Capybara::Ambiguous for those. :first restores Webrat's behaviour;
-# without it 137 scenarios fail on duplicate navigation labels that are not a
-# porting defect.
-Capybara.match = :first
+# NB: Capybara.match is deliberately left at its default (:smart), so ambiguous
+# buttons and form fields still raise Capybara::Ambiguous. The suite's only two
+# ambiguities are duplicated navigation LINKS, and the tolerance for those is
+# scoped to the one step that needs it -- see "иду по ссылке" in
+# features/steps/webrat_steps.rb.
 
 # Every feature file asserts Russian UI copy verbatim; that is what let all 59
 # of them survive this migration byte-identical. config/environments/test.rb
@@ -73,10 +68,13 @@ end
 # then belongs to a stranger's game. So start the run from an empty database,
 # exactly as recreate_database! used to guarantee.
 #
-# sqlite_sequence has to go too, not just the rows: Rails declares SQLite
-# primary keys AUTOINCREMENT, so leftover counters would keep the first game
-# of a scenario from getting id 1 -- which features/logs/log.feature depends
-# on (see the report).
+# The identity counters have to go too, not just the rows: Rails declares
+# SQLite primary keys AUTOINCREMENT, so a leftover counter would stop the first
+# game of a scenario from getting id 1 -- and features/logs/log.feature:53-82
+# passes only because game id 1 and level id 1 coincide there
+# (app/views/logs/show_game_log.html.erb:7 passes a level to Log.of_game, which
+# resolves to `where(game_id: level.id)`). That is load-bearing, so this must
+# not fail quietly.
 BeforeAll do
   connection = ActiveRecord::Base.connection
   keep = %w[schema_migrations ar_internal_metadata]
@@ -86,13 +84,27 @@ BeforeAll do
       connection.execute("DELETE FROM #{connection.quote_table_name(table)}")
     end
   end
-  # sqlite_sequence is an internal table, so it is absent from #tables and
-  # #table_exists?; it also only exists once something has been inserted.
-  begin
-    connection.execute('DELETE FROM sqlite_sequence')
-  rescue ActiveRecord::StatementInvalid
-    nil
+
+  reset_primary_key_sequences!(connection)
+end
+
+# Rewinds the database's identity counters. SQLite keeps them in the internal
+# table sqlite_sequence, which is absent from #tables and #table_exists? and is
+# only created once something has been inserted -- so "no such table" is the
+# expected state on a virgin database and is the ONLY tolerated failure. Any
+# other error, and any non-SQLite adapter, raises loudly rather than silently
+# leaving the counters where they were.
+def reset_primary_key_sequences!(connection)
+  adapter = connection.adapter_name.downcase
+  unless adapter.include?('sqlite')
+    raise "features/support/env.rb resets AUTOINCREMENT counters via sqlite_sequence, " \
+          "but the test database is #{connection.adapter_name}. Port this to that adapter " \
+          "(see the comment above -- features/logs/log.feature depends on ids starting at 1)."
   end
+
+  connection.execute('DELETE FROM sqlite_sequence')
+rescue ActiveRecord::StatementInvalid => e
+  raise unless e.message.include?('no such table: sqlite_sequence')
 end
 
 # --- Time travel -------------------------------------------------------------

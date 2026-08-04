@@ -2,8 +2,7 @@
 class GamePassingsController < ApplicationController
   include SecurityFilters
 
-  before_action :find_game, except: [:exit_game]
-  before_action :find_game_by_id, only: [:exit_game]
+  before_action :find_game
   # Authentication first: find_team dereferences current_user, so running it
   # before this filter turned a guest's request into a 500.
   before_action :require_authentication!, except: [:index, :show_results]
@@ -17,7 +16,26 @@ class GamePassingsController < ApplicationController
   before_action :ensure_not_author_of_the_game, except: [:index, :show_results]
   before_action :ensure_author, only: [:index]
 
+  # TICKET #83 ("Игрок удачно обновляется при завершении игры"): a team that
+  # has finished has no current_level, so rendering show_current_level for one
+  # raised NoMethodError on nil at
+  # app/views/game_passings/show_current_level.html.erb:5 -- i.e. refreshing the
+  # page at game end 500'd. #post_answer already had exactly this guard (see
+  # below); GET simply never got it, in the Merb original as much as here. The
+  # scenario that is supposed to cover this,
+  # features/tickets/ticket-83(5).feature:29, could not see the bug because the
+  # "я обновляю страницу" step was an empty no-op -- it is implemented now
+  # (features/game-passing/steps/game-passing_steps.rb), so that scenario is a
+  # real regression test for the first time.
+  #
+  # Same predicate, same template and the same default-layout choice as
+  # #post_answer, so a team that has NOT finished is unaffected.
   def show_current_level
+    if @game_passing.finished?
+      render :show_results
+      return
+    end
+
     @level = @game_passing.current_level
     render layout: "in_game"
   end
@@ -67,19 +85,18 @@ class GamePassingsController < ApplicationController
 
   private
 
-  def find_game
-    @game = Game.find(params[:game_id])
-  end
-
-  # PORT DEFECT (found by features/game-passing/throw_in_the_towel.feature):
+  # PORT DEFECT, now fixed (found by
+  # features/game-passing/throw_in_the_towel.feature): there used to be a second
+  # finder, #find_game_by_id, used only by #exit_game and reading params[:id].
   # Merb reached #exit_game through the catch-all /:controller/:action/:id
-  # route, so the game arrived as params[:id]. The Rails route restored for it
-  # names the segment :game_id ("/game_passings/exit_game/:game_id",
-  # config/routes.rb) -- as does the link that drives it
-  # (app/views/game_passings/show_current_level.html.erb) and spec/routing_spec.rb.
-  # Only this lookup was left reading params[:id], so every "Сойти с дистанции"
-  # click raised RecordNotFound before the action ever ran.
-  def find_game_by_id
+  # route, so the game did arrive as params[:id] there -- but the Rails route
+  # restored for it names the segment :game_id
+  # ("/game_passings/exit_game/:game_id", config/routes.rb), as do the link that
+  # drives it (app/views/game_passings/show_current_level.html.erb) and
+  # spec/routing_spec.rb. Every "Сойти с дистанции" click therefore raised
+  # RecordNotFound before the action ever ran. Once corrected the two finders
+  # were byte-identical, so #exit_game just uses this one.
+  def find_game
     @game = Game.find(params[:game_id])
   end
 

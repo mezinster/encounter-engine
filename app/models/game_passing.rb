@@ -16,6 +16,16 @@ class GamePassing < ActiveRecord::Base
 
   before_save { self.answered_questions ||= [] }
 
+  # answered_questions is a serialised column, so it reads back as nil until
+  # something writes it. The before_save above only covers persisted records,
+  # which leaves reset_answered_questions (self.answered_questions.clear) and
+  # answered_questions << question raising NoMethodError on a new record.
+  # Always hand back a real array. Assigning through self[] rather than
+  # returning a throwaway [] matters: << has to mutate the stored value.
+  def answered_questions
+    self[:answered_questions] ||= []
+  end
+
   def self.of(team, game)
     self.of_team(team).of_game(game).first
   end

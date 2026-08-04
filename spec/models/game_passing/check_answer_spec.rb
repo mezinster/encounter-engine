@@ -60,9 +60,13 @@ describe GamePassing, "#check_answer!" do
 
 	describe "when current level contains several questions" do
 		before :each do
+			# The questions need their level up front. Answer validates value for
+			# uniqueness scoped to level_id, and the database is rebuilt once per
+			# suite rather than per example, so level-less answers from an earlier
+			# example collide with this one on level_id = nil.
 			@second_level.questions = [
-				Question.create!(:correct_answer => 'encode1'),
-				Question.create!(:correct_answer => 'encode2')
+				Question.create!(:level => @second_level, :correct_answer => 'encode1'),
+				Question.create!(:level => @second_level, :correct_answer => 'encode2')
 			]
 
 			@game_passing = GamePassing.create! :game => @game, :team => @team, :current_level => @second_level

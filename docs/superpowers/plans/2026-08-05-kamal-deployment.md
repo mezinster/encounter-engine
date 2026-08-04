@@ -628,10 +628,17 @@ property of this host, not something to assume.
 ssh mezin 'sudo docker run --rm curlimages/curl:latest -s -m 10 \
   -H "Metadata:true" \
   "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://storage.azure.com/" \
-  | head -c 120; echo'
+  | grep -q access_token && echo "IMDS OK: token issued inside a container" \
+                         || echo "IMDS UNREACHABLE from a container"'
 ```
 
-Expected: a JSON body containing `access_token`. Record which branch you took:
+**Never print the response body.** IMDS returns a live bearer token; piping it to
+`head` or `cat` writes a working cloud credential into a terminal, a log and an
+agent transcript. `grep -q` answers the only question that matters — whether a
+token was issued — without materialising one. This applies to anyone re-running
+or verifying this step, including reviewers.
+
+Expected: `IMDS OK`. Record which branch you took:
 
 - **Token returned** — the managed identity works from a container. Task 5 sets
   `AZURE_STORAGE_ACCOUNT` as clear env and defines **no** `AZURE_STORAGE_ACCESS_KEY`

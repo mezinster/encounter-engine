@@ -7,9 +7,16 @@ require "rails_helper"
 # left out of the :ensure_author list -- so a team still mid-game could read
 # every remaining answer code for the game via this action. The rule
 # implemented here (LogsController#ensure_full_log_access): allowed for the
-# game's author, or for a player whose team has a *finished* GamePassing for
-# this game (features/logs/log.feature:105 and :113); blocked for a team
-# still playing and for anyone with no team at all.
+# game's author, or for a player whose team GENUINELY finished the game
+# (features/logs/log.feature:105 and :113); blocked for a team still
+# playing, an exited team, and anyone with no team at all.
+#
+# The exited-team case matters on its own: GamePassing#finished? is also
+# true for a team that merely exited (GamePassing#exit! sets finished_at
+# too), so without the extra !exited? check, a team could exit on purpose
+# mid-game purely to unlock the full log and relay every remaining answer
+# code to a colluding team that is still playing -- the cost of that attack
+# is one throwaway team, not actually finishing the game.
 RSpec.describe LogsController, "#show_full_log", type: :controller do
   before :each do
     now = Time.now
@@ -53,6 +60,19 @@ RSpec.describe LogsController, "#show_full_log", type: :controller do
     it "raises Unauthorized exception for a logged-in user with no team at all" do
       lonely_user = create_user
       assert_unauthorized { perform_request(:as_user => lonely_user) }
+    end
+
+    # The collusion bypass: an exited GamePassing has finished_at set (same
+    # as a real finish), but the team never actually completed the game --
+    # it can't resume either (ensure_team_not_exited blocks /play/:id), so
+    # exiting must not be a shortcut to reading the remaining answer codes.
+    it "raises Unauthorized exception for a team that exited rather than finished" do
+      captain = create_user
+      team = create_team(:captain => captain)
+      game_passing = create_game_passing(:team => team, :level => @level)
+      game_passing.exit!
+
+      assert_unauthorized { perform_request(:as_user => captain) }
     end
   end
 

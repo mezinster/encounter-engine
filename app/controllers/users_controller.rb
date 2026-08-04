@@ -13,7 +13,10 @@ class UsersController < ApplicationController
   # current_user, never on an id taken from the request. #edit gets the same
   # require_authentication! for consistency -- it already scoped @user to
   # current_user, so it was never exploitable, but a guest hitting it hit a
-  # 500 (form_for a nil @user) instead of a clean login redirect.
+  # 500 instead of a clean login redirect (the real cause is unrelated to
+  # @user: app/views/users/edit.html.erb calls error_messages_for, an
+  # unported Merb helper -- one of 11 views repo-wide still doing that.
+  # That belongs to the view-porting task, not this one).
   before_action :require_authentication!, only: [:edit, :update]
 
   def show

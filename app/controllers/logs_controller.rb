@@ -62,17 +62,25 @@ class LogsController < ApplicationController
     @level = @team.current_level_in(@game)
   end
 
-  # Allowed: the game's author, or a player on a team whose GamePassing for
-  # this game is finished (GamePassing#finished? is also true for a team
-  # that exited rather than completed every level -- both statuses render
-  # the "Лог ответов" link from game_passings/show_results.html.erb, so
-  # both are treated as done playing). Blocked: a team still mid-game, and
-  # anyone with no team at all.
+  # Allowed: the game's author, or a player on a team that genuinely
+  # finished the game -- GamePassing#finished? alone is not enough, because
+  # it is also true for a team that merely *exited* (GamePassing#exit! sets
+  # finished_at too). An exited team cannot resume play (ensure_team_not_exited
+  # in GamePassingsController blocks both GET and POST /play/:id), but
+  # without the exited? check here, one team could exit on purpose mid-game
+  # purely to unlock the full log and relay every remaining answer code to
+  # a colluding team that is still playing -- the cost of that attack is one
+  # throwaway team, not actually finishing the game. Both real full-log
+  # scenarios (features/logs/log.feature:113,
+  # features/games/game_full_log.feature:20) reach this page by completing
+  # every level through real gameplay, never by exiting, so requiring
+  # !exited? breaks neither. Blocked: a team still mid-game, an exited team,
+  # and anyone with no team at all.
   def ensure_full_log_access
     return if @game.created_by?(current_user)
 
     game_passing = current_user.team && GamePassing.of(current_user.team, @game)
-    unless game_passing&.finished?
+    unless game_passing&.finished? && !game_passing.exited?
       raise Authentication::Unauthorized, t("errors.must_be_author_or_finished_player")
     end
   end

@@ -18,3 +18,5 @@ group :test do
   gem "cucumber-rails", require: false
   gem "capybara"
 end
+
+gem "rails-controller-testing", "~> 1.0", group: :test

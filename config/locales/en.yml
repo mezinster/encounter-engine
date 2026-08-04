@@ -1,4 +1,17 @@
 en:
+  errors:
+    unauthenticated: "You are not authorized to visit this page. Please log in."
+    unauthorized: "You are not authorized to perform this action"
+    not_team_member: "You are not authorized to visit this page"
+    must_be_captain: "You must be the team captain to perform this action"
+    must_be_author: "You must be the game's author to view this page"
+    game_already_started: "You can't edit a game after it has started"
+    must_be_recipient: "You must be the invitation's recipient to perform this action"
+    cannot_play_own_game: "You can't play your own games, sorry :-)"
+    game_finished_by_author: "The game was ended by its author, you can no longer play it"
+    team_exited: "Your team has left the race"
+  invitations:
+    notice_sent: "An invitation was sent to %{nickname}"
   game:
     not_started: "The game has not started yet. Where did you even get this link? :-)"
     already_in_team: "You are already a member of a team"

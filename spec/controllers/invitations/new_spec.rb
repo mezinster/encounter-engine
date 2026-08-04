@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
 require "rails_helper"
 
-describe Invitations, "#new" do
+RSpec.describe InvitationsController, "#new", type: :controller do
   describe "security filters" do
     describe "captain attempts to invites a new member" do
       before :each do
@@ -11,7 +11,7 @@ describe Invitations, "#new" do
       end
 
       it "responds successfully" do
-        @response.should be_successful
+        expect(@response).to have_http_status(:success)
       end
     end
 
@@ -43,9 +43,9 @@ describe Invitations, "#new" do
     end
 
     it "does not raise error" do
-      lambda do
+      expect do
         perform_request( { :as_user => @captain }, @params)
-      end.should_not raise_error
+      end.not_to raise_error
     end
   end
 
@@ -58,16 +58,15 @@ describe Invitations, "#new" do
     end
 
     it "does not raise error" do
-      lambda do
+      expect do
         perform_request( { :as_user => @captain }, @params)
-      end.should_not raise_error
+      end.not_to raise_error
     end
   end
 
   def perform_request(opts={}, params={})
-    dispatch_to Invitations, :new, params do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    get :new, params: params
+    response
   end
 end

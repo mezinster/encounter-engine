@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
 require "rails_helper"
 
-describe GamePassing, "#index" do
+RSpec.describe GamePassingsController, "#show_current_level", type: :controller do
   before :each do
     now = Time.now
     Time.stub(:now => now - 1)
@@ -15,23 +15,16 @@ describe GamePassing, "#index" do
     @team = create_team :captain => @team_member
   end
 
-  after :each do
-  end
-
   describe "when guest tries to enter game passing" do
     it "raises Unauthenticated exception" do
-      lambda do
-        perform_request :game => @started_game
-      end.should raise_error(Merb::Controller::Unauthenticated)
+      assert_unauthenticated { perform_request :game => @started_game }
     end
   end
 
   describe "when not a team member tries to enter game passing" do
     it "raises Unauthorized exception" do
-      lambda do
-        lonely_user = create_user
-        perform_request :as_user => lonely_user, :game => @started_game
-      end.should raise_error(Merb::Controller::Unauthorized)
+      lonely_user = create_user
+      assert_unauthorized { perform_request :as_user => lonely_user, :game => @started_game }
     end
   end
 
@@ -41,9 +34,7 @@ describe GamePassing, "#index" do
     end
 
     it "raises Unauthorized exception" do
-      lambda do        
-        perform_request :as_user => @team_member, :game => @not_started_game
-      end.should raise_error(Merb::Controller::Unauthorized)
+      assert_unauthorized { perform_request :as_user => @team_member, :game => @not_started_game }
     end
   end
 
@@ -55,39 +46,37 @@ describe GamePassing, "#index" do
     end
 
     it "raises Unauthorized exception" do
-      lambda do        
-        perform_request :as_user => @author, :game => @started_game
-      end.should raise_error(Merb::Controller::Unauthorized)
+      assert_unauthorized { perform_request :as_user => @author, :game => @started_game }
     end
   end
 
   describe "when a team member enters game passing" do
     it "responds successfully" do
       @response = perform_request :as_user => @team_member, :game => @started_game
-      @response.should be_successful
+      expect(@response).to have_http_status(:success)
     end
 
-    it "creates and assigns game passing" do      
-      lambda do
+    it "creates and assigns game passing" do
+      expect do
         @response = perform_request :as_user => @team_member, :game => @started_game
-      end.should change(GamePassing, :count).by(1)      
+      end.to change(GamePassing, :count).by(1)
     end
 
     it "does not create game passing for any subsequent call" do
       @response = perform_request :as_user => @team_member, :game => @started_game
-      initial_game_passing = @response.assigns(:game_passing)
+      initial_game_passing = assigns(:game_passing)
 
-      lambda do
+      expect do
         @response = perform_request :as_user => @team_member, :game => @started_game
-      end.should_not change(GamePassing, :count)
+      end.not_to change(GamePassing, :count)
 
-      @response.assigns(:game_passing).id.should == initial_game_passing.id
+      assigns(:game_passing).id.should == initial_game_passing.id
     end
 
     it "assigns correct data to game passing attribute" do
       @response = perform_request :as_user => @team_member, :game => @started_game
 
-      game_passing = @response.assigns(:game_passing)
+      game_passing = assigns(:game_passing)
       game_passing.game.id.should == @started_game.id
       game_passing.team.id.should == @team.id
       game_passing.current_level.id.should == @first_level.id
@@ -95,9 +84,8 @@ describe GamePassing, "#index" do
   end
 
   def perform_request(opts={})
-    dispatch_to GamePassings, :show_current_level, { :game_id => opts[:game].id } do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    get :show_current_level, params: { game_id: opts[:game].id }
+    response
   end
 end

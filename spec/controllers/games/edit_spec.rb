@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
 require "rails_helper"
 
-describe Games, "#edit" do
+RSpec.describe GamesController, "#edit", type: :controller do
   describe "security filters" do
     describe "when the game author attempts to see game edit form" do
       before :each do
@@ -10,8 +10,8 @@ describe Games, "#edit" do
       end
 
       it "responds successfully" do
-        response = perform_request(:as_user => @user)
-        response.should be_successful
+        perform_request(:as_user => @user)
+        expect(response).to have_http_status(:success)
       end
     end
 
@@ -31,8 +31,16 @@ describe Games, "#edit" do
         @game = create_game :is_draft => false
       end
 
+      # The Merb original asserted this with assert_unauthorized (checking
+      # for Merb::ControllerExceptions::Unauthorized), but the actual old
+      # Games controller ran `before :ensure_authenticated, :exclude =>
+      # [:index, :show]` -- :edit is not excluded, so a guest hit that
+      # filter first and got Unauthenticated, never reaching ensure_author.
+      # assert_unauthorized never matched real behaviour here; this test's
+      # own description ("raises Unauthenticated exception") already said
+      # so. Fixed to match what the controller actually does.
       it "raises Unauthenticated exception" do
-        assert_unauthorized { perform_request }
+        assert_unauthenticated { perform_request }
       end
     end
   end
@@ -52,9 +60,8 @@ describe Games, "#edit" do
   end
 
   def perform_request(opts={})
-    dispatch_to Games, :edit, { :id => @game.id } do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    get :edit, params: { id: @game.id }
+    response
   end
 end

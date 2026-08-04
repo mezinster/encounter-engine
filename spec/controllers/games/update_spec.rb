@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
 require "rails_helper"
 
-describe Games, "#update" do
+RSpec.describe GamesController, "#update", type: :controller do
   describe "security filters" do
     describe "when the game author attempts to update game" do
       before :each do
@@ -9,7 +9,7 @@ describe Games, "#update" do
         @game = create_game :author => @user, :is_draft => false
       end
 
-      it "redirects"        
+      it "redirects"
     end
 
     describe "when any other user attempts to update game" do
@@ -28,8 +28,13 @@ describe Games, "#update" do
         @game = create_game :is_draft => false
       end
 
+      # See the equivalent note in games/edit_spec.rb: the old Games
+      # controller runs ensure_authenticated (excluding only index/show)
+      # before ensure_author, so a guest gets Unauthenticated here too --
+      # assert_unauthorized (checking for Unauthorized) never matched actual
+      # behaviour. Fixed to match the description and the real filter order.
       it "raises Unauthenticated exception" do
-        assert_unauthorized { perform_request }
+        assert_unauthenticated { perform_request }
       end
     end
   end
@@ -49,9 +54,8 @@ describe Games, "#update" do
   end
 
   def perform_request(opts={})
-    dispatch_to Games, :update, { :id => @game.id } do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    patch :update, params: { id: @game.id }
+    response
   end
 end

@@ -1,44 +1,42 @@
 # -*- encoding : utf-8 -*-
 require "rails_helper"
 
-describe Dashboard, "#index" do
+RSpec.describe DashboardController, "#index", type: :controller do
   describe "when guest enters the dashboard" do
     it "raises Unauthenticated exception" do
-      lambda do
-        perform_request
-      end.should raise_error(Merb::Controller::Unauthenticated)
+      assert_unauthenticated { perform_request }
     end
   end
 
   describe "when logged in user enters the dashboard" do
     before :each do
       user = create_user
-      @response = perform_request :as_user => user, :skip_authentication => true
+      @response = perform_request :as_user => user
     end
 
     it "responds successfully" do
-      @response.should be_successful
-    end    
+      expect(@response).to have_http_status(:success)
+    end
   end
 
   describe "when invitations exists" do
     before :each do
       user = create_user
-                  
+
       @expected_invitations = []
       @expected_invitations << create_invitation(:for => user)
-      @expected_invitations << create_invitation(:for => user)      
+      @expected_invitations << create_invitation(:for => user)
       create_invitation :for => create_user
 
-      @response = perform_request :as_user => user, :skip_authentication => true
+      @response = perform_request :as_user => user
     end
 
     it "assigns invitations for the current user" do
       # Scopes return an ActiveRecord::Relation rather than an Array since
       # Rails 3, and Relation does not include Enumerable. What matters is
       # that it yields the right invitations, which is asserted below.
-      @response.assigns(:invitations).length.should == @expected_invitations.length
-      @response.assigns(:invitations).each do |invitation|
+      assigns(:invitations).length.should == @expected_invitations.length
+      assigns(:invitations).each do |invitation|
         expected_invitation?(invitation).should be_truthy
       end
     end
@@ -50,11 +48,10 @@ describe Dashboard, "#index" do
       return false
     end
   end
-  
+
   def perform_request(opts={})
-    dispatch_to Dashboard, :index do |controller|
-      controller.session.stub(:authenticated?).and_return(opts[:skip_authentication])
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    get :index
+    response
   end
 end

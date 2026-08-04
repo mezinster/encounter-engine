@@ -16,9 +16,9 @@ require 'rspec/rails'
 require 'rspec/expectations'
 
 # The model specs depend on factory helpers the Merb spec_helper used to load
-# from spec/spec_helpers/. merb_matchers.rb is deliberately NOT required here:
-# it defines be_successful/redirect_to for Merb response objects and belongs
-# to the controller work in a later task.
+# from spec/spec_helpers/. merb_matchers.rb (be_successful/redirect_to for
+# Merb response objects) is gone -- the controller specs it was written for
+# now use Rails' own have_http_status/redirect_to matchers instead.
 require Rails.root.join('spec/spec_helpers/fixtures_helper')
 require Rails.root.join('spec/spec_helpers/mailer_helper')
 require Rails.root.join('spec/spec_helpers/exceptions_helper')

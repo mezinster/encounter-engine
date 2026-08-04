@@ -22,11 +22,9 @@ gems/doc/*
 gems/gems
 gems/specifications
 gems/doc
-merb_profile_results
 out.html
 config/database.yml
 nbproject
-webrat-*.html
 .idea
 output
 rerun.txt

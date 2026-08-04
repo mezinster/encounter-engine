@@ -1,0 +1,4 @@
+<%# notification_mailer.accept_notification.body in
+    config/locales/{ru,en}.yml. @user is the user who accepted the
+    invitation (nickname is user-authored data, not translated). %>
+<%= t("notification_mailer.accept_notification.body", nickname: @user.nickname) %>

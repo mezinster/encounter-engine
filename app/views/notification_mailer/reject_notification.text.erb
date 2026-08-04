@@ -1,0 +1,4 @@
+<%# notification_mailer.reject_notification.body in
+    config/locales/{ru,en}.yml. @user is the user who declined the
+    invitation (nickname is user-authored data, not translated). %>
+<%= t("notification_mailer.reject_notification.body", nickname: @user.nickname) %>

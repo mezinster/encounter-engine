@@ -1,16 +1,23 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Games, "#new" do
+RSpec.describe GamesController, "#new", type: :controller do
   describe "security filters" do
     describe "registered user attempts to create a game" do
       before :each do
+        # The Merb original stubbed session.user to @captain here, which was
+        # never assigned (nil) -- but session.authenticated? was stubbed
+        # from opts.key?(:as_user), true even for a nil value, so the old
+        # test exercised an "authenticated with no real user" edge case that
+        # session[:user_id]-based auth has no equivalent for. @user (the
+        # user actually created above) is what this block's own title says
+        # was intended.
         @user = create_user
-        @response = perform_request :as_user => @captain
+        @response = perform_request :as_user => @user
       end
 
       it "responds successfully" do
-        @response.should be_successful
+        expect(@response).to have_http_status(:success)
       end
     end
 
@@ -20,11 +27,10 @@ describe Games, "#new" do
       end
     end
   end
-  
+
   def perform_request(opts={}, params={})
-    dispatch_to Games, :new, params do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    get :new, params: params
+    response
   end
 end

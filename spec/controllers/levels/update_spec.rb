@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Levels, "#update" do
+RSpec.describe LevelsController, "#update", type: :controller do
   describe "security filters" do
     describe "when any other user attempts to update a level" do
       before :each do
@@ -19,7 +19,8 @@ describe Levels, "#update" do
         @level = create_level
       end
 
-      it "raises Unauthenticated exception" do
+      # See the equivalent note in levels/move_down_spec.rb.
+      it "raises Unauthorized exception" do
         assert_unauthorized { perform_request }
       end
     end
@@ -58,10 +59,8 @@ describe Levels, "#update" do
   end
 
   def perform_request(opts={}, params={})
-    params = params.merge(:id => @level.id, :game_id => @level.game.id)
-    dispatch_to Levels, :update, params do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    patch :update, params: params.merge(:id => @level.id, :game_id => @level.game.id)
+    response
   end
 end

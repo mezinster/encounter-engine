@@ -1,14 +1,14 @@
-Команда <%= @team.name %> <br />
+<%= t("team_room.index.title", name: @team.name) %> <br />
 <br />
 
 <fieldset>
   <legend>
-    Состав
+    <%= t("team_room.index.composition") %>
   </legend>
 
   <% @team.members.each do |member| %>
     <p>
-      <%= member.nickname %> <%= "- капитан" if member.captain? %>
+      <%= member.nickname %> <%= t("team_room.index.captain_suffix") if member.captain? %>
     </p>
   <% end %>
 
@@ -16,18 +16,18 @@
   <hr class="short-line" />
 
   <p>
-    <%= link_to "Пригласить участников", resource(:invitations, :new) if @current_user.captain? %>
+    <%= link_to t("team_room.index.invite"), new_invitation_path if @current_user.captain? %>
   </p>
 </fieldset>
 
 <br />
 
-<%= partial 'shared/current_games' %>
+<%= render "shared/current_games" %>
 
 <b />
 
-<%= partial 'dashboard/coming_games' %>
+<%= render "dashboard/coming_games" %>
 
 <b />
 
-<%= partial 'dashboard/finished_games' %>
+<%= render "dashboard/finished_games" %>

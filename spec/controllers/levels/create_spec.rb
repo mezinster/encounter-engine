@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Levels, "#create" do
+RSpec.describe LevelsController, "#create", type: :controller do
   describe "security filters" do
     describe "when the game author attempts to create a new level" do
       before :each do
@@ -9,8 +9,15 @@ describe Levels, "#create" do
         @game = create_game :author => @author
       end
 
-      it "does not raise any exception" do
-        lambda { perform_request(:as_user => @author) }.should_not raise_error
+      # Under Merb this asserted `should_not raise_error`, which passed
+      # whether ensure_author allowed or denied the request -- a denial now
+      # redirects/401s instead of raising, so that assertion proved nothing
+      # about the security filter. Asserting the real redirect proves the
+      # author was let through.
+      it "is not rejected by the security filters" do
+        perform_request({ :as_user => @author },
+                         { :level => { :name => "L", :text => "T", :correct_answer => "A" } })
+        expect(response).to redirect_to(game_level_path(@game, Level.last))
       end
 
       it "redirects to level profile"
@@ -32,7 +39,7 @@ describe Levels, "#create" do
         @game = create_game :is_draft => false
       end
 
-      it "raises Unauthenticated exception" do
+      it "raises Unauthorized exception" do
         assert_unauthorized { perform_request }
       end
     end
@@ -46,9 +53,9 @@ describe Levels, "#create" do
     end
 
     it "creates a new level" do
-      lambda do
+      expect do
         perform_request({ :as_user => @author }, { :level => @params })
-      end.should change(Level, :count).by(1)
+      end.to change(Level, :count).by(1)
     end
 
     it "sets 'game' attribute of the level" do
@@ -91,7 +98,7 @@ describe Levels, "#create" do
       end
     end
   end
-  
+
   describe "when author entered incorrect data" do
     before :each do
       @author = create_user
@@ -101,17 +108,15 @@ describe Levels, "#create" do
     end
 
     it "does not create a new level" do
-      lambda do
+      expect do
         perform_request({ :as_user => @author }, { :level => @params })
-      end.should_not change(Level, :count)
+      end.not_to change(Level, :count)
     end
   end
 
   def perform_request(opts={}, params={})
-    params = params.merge(:game_id => @game.id)
-    dispatch_to Levels, :create, params do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    post :create, params: params.merge(:game_id => @game.id)
+    response
   end
 end

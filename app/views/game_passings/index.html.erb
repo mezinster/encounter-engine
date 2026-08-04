@@ -1,11 +1,11 @@
-Игра "<%= @game.name %>"
+<%= t("game_passings.index.title", name: @game.name) %>
 
 <table id="stats">
   <thead>
     <tr>
-      <th>Команда</th>
-      <th>Уровень</th>
-      <th>Время на уровне</th>
+      <th><%= t("game_passings.index.team") %></th>
+      <th><%= t("game_passings.index.level") %></th>
+      <th><%= t("game_passings.index.time_at_level") %></th>
       <th>#</th>
       <th>#</th>
     </tr>
@@ -26,34 +26,34 @@
       <tr>
         <td><%= game_passing.team.name %></td>
         <% if game_passing.exited? %>
-          <td>(Сошли с дистанции)</td>
+          <td><%= t("game_passings.index.exited") %></td>
           <td><%= Level.find(game_passing.current_level_id).name %></td>
         <% elsif game_passing.finished? %>
-          <td>(закончили игру)</td>
+          <td><%= t("game_passings.index.finished") %></td>
           <td>--:--:--</td>
         <% else %>
           <td><%= game_passing.current_level.name %></td>
           <td><%= game_passing.time_at_level %></td>
         <% end %>
-        
+
         <td>
           <em>
             <%=
                unless game_passing.finished?
-                 link_to "(лог по уровню)", "/logs/level/#{game_passing.game_id}/#{game_passing.team_id}"
+                 link_to t("game_passings.index.level_log"), show_level_log_path(game_id: game_passing.game_id, team_id: game_passing.team_id)
                else
-                 "(лог по уровню)"
+                 t("game_passings.index.level_log")
                end
             %>
           </em>
         </td>
-        
+
         <td>
           <em>
-            <%= link_to "(лог по игре)", "/logs/game/#{game_passing.game_id}/#{game_passing.team_id}" %>
+            <%= link_to t("game_passings.index.game_log"), show_game_log_path(game_id: game_passing.game_id, team_id: game_passing.team_id) %>
           </em>
         </td>
-        
+
       </tr>
     <% end %>
   </tbody>
@@ -61,4 +61,4 @@
 
 <br />
 
-<%= link_to "Полный лог ответов", "/logs/full/#{@game.id}" %>
+<%= link_to t("game_passings.index.full_log"), show_full_log_path(@game) %>

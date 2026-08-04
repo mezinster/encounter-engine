@@ -1,15 +1,15 @@
 <h2>
-  Задание "<strong><%= @level.name %></strong>"
+  <%= t("levels.show.title") %> "<strong><%= @level.name %></strong>"
 </h2>
 
 <p>
-  <em>(игра "<%= link_to @game.name, resource(@game) %>")</em>
+  <em>(<%= t("levels.show.game_prefix") %> "<%= link_to @game.name, game_path(@game) %>")</em>
 </p>
 
 <br />
 
 <p>
-  <em>Текст задания:</em>
+  <em><%= t("levels.show.text_label") %></em>
 </p>
 
 <p>
@@ -17,59 +17,59 @@
 </p>
 
 <p>
-  <%= link_to "Редактировать текст и название задания", resource(@game, @level, :edit) unless @level.game.started? %>
+  <%= link_to t("levels.show.edit_link"), edit_game_level_path(@game, @level) unless @level.game.started? %>
 </p>
 
 <br />
 
 <% unless @level.multi_question? %>
   <p>
-    <em>Код:</em>
+    <em><%= t("levels.show.code_label") %></em>
     <div id="question-<%= @level.questions.first.id %>">
       <%= @level.correct_answer %>
-      <%= link_to "(редактировать)", resource(@game, @level, @level.questions.first, :answers) %>
+      <%= link_to t("shared.edit_short"), game_level_question_answers_path(@game, @level, @level.questions.first) %>
     </div>
   </p>
 <% else %>
   <p>
-    <em>Коды (<%= @level.questions.count %>):</em>
+    <em><%= t("levels.show.codes_label", count: @level.questions.count) %></em>
   </p>
   <% @level.questions.each do |question| %>
     <div id="question-<%=  question.id %>">
       <p><%= question.correct_answer %></p>
-      <%= link_to "(редактировать)", resource(@game, @level, question, :answers) %>
+      <%= link_to t("shared.edit_short"), game_level_question_answers_path(@game, @level, question) %>
     </div>
   <% end %>
 <% end %>
 
 <p>
-  <%= link_to "Добавить ещё один код", resource(@game, @level, :questions, :new) %>
+  <%= link_to t("levels.show.add_code"), new_game_level_question_path(@game, @level) %>
 </p>
 
 <br />
 
 <fieldset>
   <legend>
-    Подсказки:
+    <%= t("levels.show.hints_legend") %>
   </legend>
 
   <p>
-    <%= partial 'hints/list', :hints => @level.hints %>
+    <%= render "hints/list", hints: @level.hints %>
   </p>
 
   <p>
-    <%= link_to "Добавить подсказку", resource(@game, @level, :hints, :new) %>
+    <%= link_to t("levels.show.add_hint"), new_game_level_hint_path(@game, @level) %>
   </p>
 </fieldset>
 
 <br />
 
 <p>
-  <%= link_to "Удалить этот уровень", resource(@game, @level, :delete) %> <br />
+  <%= link_to t("levels.show.delete_level"), delete_game_level_path(@game, @level) %> <br />
 </p>
 
 <br />
 
 <p>
-  <%= link_to "Вернуться к игре \"#{@level.game.name}\"", resource(@level.game) %>
+  <%= link_to t("levels.show.back_to_game", name: @level.game.name), game_path(@level.game) %>
 </p>

@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Invitations, "#new" do
+RSpec.describe InvitationsController, "#new", type: :controller do
   describe "security filters" do
     describe "captain attempts to invites a new member" do
       before :each do
@@ -11,7 +11,7 @@ describe Invitations, "#new" do
       end
 
       it "responds successfully" do
-        @response.should be_successful
+        expect(@response).to have_http_status(:success)
       end
     end
 
@@ -34,18 +34,23 @@ describe Invitations, "#new" do
     end
   end
 
+  # These two used to assert `should_not raise_error`, which -- now that a
+  # denial redirects/401s instead of raising -- would pass whether the
+  # captain was let through or rejected, and #new never even reads these
+  # params (see InvitationsController#new), so the assertion proved
+  # nothing about "for_user" handling either. Asserting the real response
+  # status confirms the captain still reaches the form regardless of what
+  # (unused, on this action) recepient_nickname value happens to be present.
   describe "when it receives blank string as 'for_user' parameter" do
     before :each do
       @captain = create_user
       @team = create_team :captain => @captain
-      @response = perform_request :as_user => @captain
       @params = { :invitation => { :recepient_nickname => "" } }
     end
 
-    it "does not raise error" do
-      lambda do
-        perform_request( { :as_user => @captain }, @params)
-      end.should_not raise_error
+    it "still responds successfully" do
+      perform_request({ :as_user => @captain }, @params)
+      expect(response).to have_http_status(:success)
     end
   end
 
@@ -53,21 +58,18 @@ describe Invitations, "#new" do
     before :each do
       @captain = create_user
       @team = create_team :captain => @captain
-      @response = perform_request :as_user => @captain
       @params = { :invitation => { :recepient_nickname => "SomeUser" } }
     end
 
-    it "does not raise error" do
-      lambda do
-        perform_request( { :as_user => @captain }, @params)
-      end.should_not raise_error
+    it "still responds successfully" do
+      perform_request({ :as_user => @captain }, @params)
+      expect(response).to have_http_status(:success)
     end
   end
 
   def perform_request(opts={}, params={})
-    dispatch_to Invitations, :new, params do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    get :new, params: params
+    response
   end
 end

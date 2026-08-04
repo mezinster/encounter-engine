@@ -1,45 +1,25 @@
-source 'https://rubygems.org'
+source "https://rubygems.org"
 
-ruby '2.6.5'
+ruby "3.3.12"
 
-merb_gems_version = '1.1.3'
-gem 'merb-core', path: 'vendor/merb/merb-core'
-gem 'merb-helpers', path: 'vendor/merb/merb-helpers'
-gem 'merb-slices', path: 'vendor/merb/merb-slices'
-gem 'merb-assets', merb_gems_version
-gem 'merb-mailer', merb_gems_version
-gem 'merb-param-protection', merb_gems_version
-gem 'merb-exceptions', merb_gems_version
+gem "rails", "8.0.5.1"
+gem "sqlite3", "~> 2.0", group: [:development, :test]
+gem "pg", group: :production
+gem "puma"
+gem "acts_as_list"
 
-gem 'merb-auth-core', path: 'vendor/merb-auth/merb-auth-core'
-gem 'merb-auth-more', path: 'vendor/merb-auth/merb-auth-more'
-gem 'merb-auth-slice-password', path: 'vendor/merb-auth/merb-auth-slice-password'
-
-gem 'merb_activerecord', git: 'https://github.com/DanielVartanov/merb_activerecord.git', branch: 'modernize'
-gem 'activerecord', '~> 4.2.5'
-gem 'acts_as_list'
-gem 'thin'
-gem 'unicode_utils'
-
-gem 'rake', '~> 12.3.3' # Remove this constraint after upgrading to the latest RSpec
-
-gem 'rspec', '~> 3.13'
-
-group :development do
-  gem 'sqlite3', '<1.4' # Remove this constraint after upgrading to latest Rails
-  gem 'pry'
-  gem 'pry-byebug'
+group :development, :test do
+  gem "rspec-rails", "~> 7.0"
+  gem "pry"
+  gem "pry-byebug"
 end
 
 group :test do
-  gem 'cucumber', '0.10.6'
-  gem 'cucumber-rails', '0.3.2'
-  gem 'launchy'
-  gem 'merb_cucumber', '0.6.1'
-  gem 'webrat'
-  gem 'nokogiri'
-end
-
-group :production do
-  gem 'pg'
+  gem "cucumber-rails", require: false
+  gem "capybara"
+  # Restores the bare `assigns(:x)` helper controller specs relied on before
+  # Rails 5 split it out. Four ported specs need it for @answer/
+  # @answer_was_correct etc. -- there's no equivalent way to read those
+  # without it.
+  gem "rails-controller-testing", "~> 1.0"
 end

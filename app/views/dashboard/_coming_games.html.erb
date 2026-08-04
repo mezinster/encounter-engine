@@ -1,17 +1,17 @@
 <fieldset id="coming">
   <legend>
-    Предстоящие игры (<%= Game.notstarted.count  %>)
+    <%= t("dashboard.coming_games.legend", count: Game.notstarted.count) %>
   </legend>
   <% Game.notstarted.each do |game | %>
-    Предстоит игра <b><%= link_to game.name, resource(game) %></b> |
+    <%= t("dashboard.coming_games.upcoming") %> <b><%= link_to game.name, game_path(game) %></b> |
     <% if game.created_by?(current_user) %>
-      <b>Вы автор игры</b>
+      <b><%= t("dashboard.coming_games.you_are_author") %></b>
     <% else %>
       <% if @current_user.captain? %>
         <% @game_entry = GameEntry.of(@team,game)%>
-        <%= partial 'shared/game_entry_controls', :game_entry => @game_entry,  :game => game, :team => @team %>
+        <%= render "shared/game_entry_controls", game_entry: @game_entry, game: game, team: @team %>
       <% end %>
-      <%= link_to "Войти!", resource(game) %>
+      <%= link_to t("dashboard.coming_games.enter"), game_path(game) %>
     <% end %>
     <br/>
   <% end %>

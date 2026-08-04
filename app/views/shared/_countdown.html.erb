@@ -2,17 +2,17 @@
   jQuery.fn.countdown = function (date, settings) {
     var countdown_settings = {
       lang: {
-        years:   ['год', 'года', 'лет'],
-        months:  ['месяц', 'месяца', 'месяцев'],
-        days:    ['день', 'дня', 'дней'],
-        hours:   ['час', 'часа', 'часов'],
-        minutes: ['минута', 'минуты', 'минут'],
-        seconds: ['секунда', 'секунды', 'секунд'],
+        years:   <%= t("shared.countdown.years").to_json.html_safe %>,
+        months:  <%= t("shared.countdown.months").to_json.html_safe %>,
+        days:    <%= t("shared.countdown.days").to_json.html_safe %>,
+        hours:   <%= t("shared.countdown.hours").to_json.html_safe %>,
+        minutes: <%= t("shared.countdown.minutes").to_json.html_safe %>,
+        seconds: <%= t("shared.countdown.seconds").to_json.html_safe %>,
         plurar:  function(n) {
           return (n % 10 == 1 && n % 100 != 11 ? 0 : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2);
         }
       },
-      prefix: "Осталось: ",
+      prefix: "<%= t("shared.countdown.prefix") %>",
       finish : function() {
         <% if logged_in? and @current_user.author_of?(@game) %>
           return

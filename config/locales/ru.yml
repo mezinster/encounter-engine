@@ -1,0 +1,427 @@
+ru:
+  answers:
+    must_have_at_least_one_variant: "Должен быть хотя бы один вариант кода"
+    index:
+      title: "Задание"
+      game_prefix: "игра"
+      variants_label: "Варианты кодов:"
+      new_variant_label: "Ещё один вариант кода"
+      submit: "Добавить вариант кода"
+  errors:
+    unauthenticated: "Вы не авторизованы для посещения этой страницы. Попробуйте выполнить вход."
+    unauthorized: "У вас нет прав для выполнения этого действия"
+    not_team_member: "Вы не авторизованы для посещения этой страницы"
+    must_be_captain: "Вы должны быть капитаном чтобы выполнить это действие"
+    must_be_author: "Вы должны быть автором игры, чтобы видеть эту страницу"
+    must_be_author_or_finished_player: "Полный лог ответов доступен только автору игры или игроку из команды, закончившей игру"
+    game_already_started: "Нельзя редактировать игру после её начала"
+    must_be_recipient: "Вы должны быть получателем приглашения чтобы выполнить это действие"
+    cannot_play_own_game: "Нельзя играть в собственные игры, сорри :-)"
+    game_finished_by_author: "Игра была завершена автором, и вы не можете в нее больше играть"
+    team_exited: "Команда сошла с дистанции"
+  invitations:
+    notice_sent: "Пользователю %{nickname} выслано приглашение"
+    new:
+      recipient_label: "Пригласить нового участника"
+      submit: "Пригласить"
+  game:
+    not_started: "Нельзя играть в игру до её начала. И вообще, где вы достали эту ссылку? :-)"
+    already_in_team: "Вы уже являетесь членом команды"
+  games:
+    list:
+      view: "(просмотреть)"
+      stats: "(статистика)"
+      live_channel: "(прямой эфир)"
+      full_log: "(лог ответов)"
+      end_game: "ЗАВЕРШИТЬ ИГРУ"
+      author_finished: "Вы завершили игру"
+    game_entries:
+      legend: "Заявки на регистрацию:"
+      accept: "(принять)"
+      reject: "(отказать)"
+    teams:
+      legend: "Участвуют команды:"
+    form:
+      name: "Название"
+      description: "Описание"
+      starts_at: "Начало игры"
+      registration_deadline: "Крайний срок регистрации "
+      max_team_number: "Максимальное количество команд"
+      is_draft: "Черновик?"
+    new:
+      submit: "Создать игру"
+    edit:
+      submit: "Сохранить"
+    show:
+      title: "Игра"
+      draft_label: "Черновик"
+      author_label: "Автор"
+      starts_at_label: "Начало игры"
+      starts_at_not_set: "Дата начала игры ещё не назначена"
+      registration_deadline_label: "Крайний срок регистрации"
+      registration_deadline_not_set: "Крайний срок регистрации ещё не назначен"
+      description_label: "Описание:"
+      max_team_number_label: "Максимальное количество команд:"
+      levels_legend: "Задания:"
+      add_level: "Добавить новое задание"
+      edit_link: "Редактировать эту игру"
+      delete_link: "Удалить эту игру"
+      countdown_prefix: "До начала осталось: "
+      start_test: "Начать тестирование"
+      start: "Старт"
+      finish_test: "Завершить тестирование"
+  levels:
+    form:
+      name: "Название"
+      text: "Текст задания"
+      correct_answer: "Код"
+    edit:
+      title: "Задание"
+      game_prefix: "игра"
+      submit: "Сохранить"
+    new:
+      heading: "Новое задание для игры %{name}"
+      hint_more_codes: "после создания вы сможете добавить больше кодов в задание"
+      submit: "Добавить задание"
+    show:
+      title: "Задание"
+      game_prefix: "игра"
+      text_label: "Текст задания:"
+      edit_link: "Редактировать текст и название задания"
+      code_label: "Код:"
+      codes_label: "Коды (%{count}):"
+      add_code: "Добавить ещё один код"
+      hints_legend: "Подсказки:"
+      add_hint: "Добавить подсказку"
+      delete_level: "Удалить этот уровень"
+      back_to_game: 'Вернуться к игре "%{name}"'
+  hints:
+    form:
+      text_label: "Текст"
+      delay_label: "Через"
+      minutes_suffix: "минут"
+    list:
+      empty: "Подсказок нет"
+      after: "Через"
+      minutes_colon: "минут:"
+    edit:
+      heading_prefix: "Редактирование подсказки к заданию"
+      heading_game_prefix: "игры"
+      submit: "Отредактировать"
+    new:
+      heading_prefix: "Новое подсказка для задания"
+      heading_game_prefix: "игры"
+      submit: "Добавить подсказку"
+  questions:
+    new:
+      title: "Задание"
+      game_prefix: "игра"
+      code_label: "Код"
+      submit: "Добавить код"
+  users:
+    new:
+      nickname_label: "Имя"
+      email_label: "Email"
+      password_label: "Пароль"
+      password_confirmation_label: "Подтверждение"
+      submit: "Зарегистрироваться"
+    edit:
+      title: 'Редактирование профиля игрока %{nickname}'
+      nickname_label: "Ваше имя"
+      date_of_birth_label: "Дата рождения"
+      icq_label: "Номер ICQ"
+      jabber_label: "Jabber ID"
+      phone_label: "Контактный телефон"
+      locale_label: "Язык интерфейса"
+      password_label: "Новый пароль"
+      password_confirmation_label: "Подтверждение пароля"
+      submit: "Принять изменения"
+    index:
+      title: "Профиль пользователя"
+      captain_prefix: "капитан команды"
+      email_label: "E-mail:"
+      date_of_birth_label: "Дата рождения:"
+      icq_label: "Номер ICQ:"
+      jabber_label: "Jabber ID:"
+      phone_label: "Контактный телефон:"
+      edit_link: "Редактировать профиль..."
+  notification_mailer:
+    # Sent in the recipient's locale, not the sender's -- see
+    # NotificationMailer#mail_in_recipient_locale. Body text below is
+    # unchanged from the pre-port app/mailers/views/notification_mailer/
+    # *.text.erb templates (diffed word-for-word while porting), except for
+    # welcome_letter's host references. The Merb original hardcoded the
+    # subject as the static string "Регистрация на bienkg" (that "bienkg"
+    # typo -- no dot -- is original, not introduced here) while the body
+    # said "bien.kg" (correctly spelled) -- two different spellings of the
+    # same one hardcoded installation. Fix round 1: both subject and body
+    # now interpolate %{host} (see NotificationMailer#app_host), which
+    # fixes the typo as a side effect (the interpolated value has the dot)
+    # and keeps subject/body/ru/en all naming the same host consistently.
+    welcome_letter:
+      subject: "Регистрация на %{host}"
+      body: |-
+        Спасибо за регистрацию!
+
+        Вы зарегистрировались на сайте %{host} и теперь можете войти со следующими данными:
+
+        Email:  %{email}
+        Пароль: %{password}
+
+        Всего хорошего :)
+    invitation_notification:
+      subject: "Вас пригласили вступить в команду %{team_name}"
+      body: |-
+        Вас пригласили вступить в команду %{team_name}
+        Чтобы принять приглашение или отказаться от него, зайдите в ваш личный кабинет
+    reject_notification:
+      subject: "Пользователь %{nickname} отказался от приглашения"
+      body: "Пользователь %{nickname} отказался от приглашения вступить в вашу команду"
+    accept_notification:
+      subject: "Пользователь %{nickname} принял Ваше приглашение"
+      body: "Пользователь %{nickname} принял Ваше приглашение и вступил в команду"
+  # Language names for the switcher (app/views/layouts/_header.html.erb) and
+  # the profile form's language field (app/views/users/edit.html.erb).
+  # Deliberately identical across every locale file: each language is named
+  # in its own endonym ("Русский", "English", ...) rather than translated, so
+  # a reader sees their own language's name spelled the way they'd recognise
+  # it no matter which locale currently renders the page. spec/i18n_spec.rb's
+  # untranslated-copy-paste check knows about this key and allows it.
+  locales:
+    ru: "Русский"
+    en: "English"
+    uk: "Українська"
+    ka: "ქართული"
+  layout:
+    title: "Активные городские игры"
+    header:
+      dashboard: "Личный кабинет"
+      home: "Главная"
+    left_menu:
+      dashboard: "Личный кабинет"
+      profile: "Профиль"
+      team_room: "Комната команды"
+      create_team: "Создать команду"
+      all_games: "Все игры домена"
+      logout: "Выйти"
+      login_legend: "Вход"
+      login: "Войти"
+      signup: "Зарегистрироваться"
+  shared:
+    game_entry_controls:
+      applied: "Заявка подана"
+      recall: "Отозвать"
+      registered: "Вы зарегистрированы"
+      decline: "Отказаться"
+      reapply: "Подать заявку на регистрацию заново"
+      entries_exceeded: "Вы не можете зарегистрироваться так как превышено количество участников"
+      deadline_passed: "Вы не можете зарегистрироваться, так как опоздали на игру"
+      apply: "Подать заявку на регистрацию"
+    current_games:
+      legend: "Текущие игры домена"
+      started: "Началась игра"
+      view_results: "Посмотреть результаты"
+      no_levels: "Игра не содержит заданий"
+    current_games_status:
+      play: "Играть!"
+      not_registered: "Вы не зарегистрированы"
+    countdown:
+      prefix: "Осталось: "
+      years: ["год", "года", "лет"]
+      months: ["месяц", "месяца", "месяцев"]
+      days: ["день", "дня", "дней"]
+      hours: ["час", "часа", "часов"]
+      minutes: ["минута", "минуты", "минут"]
+      seconds: ["секунда", "секунды", "секунд"]
+    cancel: "(отменить)"
+    edit_short: "(редактировать)"
+    delete_short: "(удалить)"
+    error_header: "Ошибка"
+  game_passings:
+    index:
+      title: 'Игра "%{name}"'
+      team: "Команда"
+      level: "Уровень"
+      time_at_level: "Время на уровне"
+      exited: "(Сошли с дистанции)"
+      finished: "(закончили игру)"
+      level_log: "(лог по уровню)"
+      game_log: "(лог по игре)"
+      full_log: "Полный лог ответов"
+    show_current_level:
+      title_prefix: "Игра"
+      level_label: "Задание"
+      hint_label: "Подсказка"
+      until_next_hint: "До следующей подсказки"
+      countdown_placeholder: "3 минуты"
+      loading: "Загрузка..."
+      no_more_hints: "Подсказок больше не будет"
+      answer_correct: "Код '%{answer}' -- верный."
+      answer_incorrect: "Код неверный, вы ввели '%{answer}'."
+      multi_question_progress: "Правильных кодов введено: %{answered} из %{total}"
+      answer_label: "Код"
+      submit: "Отправить!"
+      exit_game: "Сойти с дистанции"
+      finish_testing: "Завершить тестирование"
+    show_results:
+      congrats: "Поздравляем, вы закончили игру!"
+      place: "Место"
+      team: "Команда"
+      finish_time: "Время финиша"
+      exited: "Сошли с дистанции"
+      not_finished: "Не финишировали"
+      full_log: "Лог ответов"
+      finish_testing: "Завершить тестирование"
+  logs:
+    index:
+      title: "Индекс"
+    show_full_log:
+      title: "Полный лог ответов"
+      correct_answer_one: "Верный код:"
+      correct_answer_many: "Верные коды:"
+    show_game_log:
+      title: 'Лог ответов команды "%{team}" по игре "%{game}"'
+      correct_answer: "Верный код:"
+    show_level_log:
+      title: 'Лог ответов команды "%{team}" по уровню "%{level}" игры "%{game}"'
+      correct_answer: "Верный код:"
+    show_live_channel:
+      title: 'Прямой эфир игры "%{name}"'
+      time: "Время"
+      team: "Команда"
+      level: "Задание"
+      code: "Код"
+  dashboard:
+    index:
+      greeting: "Вы"
+    coming_games:
+      legend: "Предстоящие игры (%{count})"
+      upcoming: "Предстоит игра"
+      you_are_author: "Вы автор игры"
+      enter: "Войти!"
+    finished_games:
+      legend: "Завершенные игры"
+      finished: "Завершена игра"
+    my_games:
+      legend: "Мои игры (%{count})"
+      create: "Создать игру >> "
+    my_team:
+      legend: "Моя команда"
+      no_team: "Вы не состоите ни в одной из команд"
+      create_team: "Создать команду"
+      invited: "Вас пригласили в команду %{team}"
+      accept: "(принять)"
+      decline: "(отказаться)"
+      captain_of: "Вы - капитан команды"
+      member_of: "Вы состоите в команде"
+      go_to_team_room: "Перейти в комнату команды"
+  index:
+    index:
+      title: "Главная страница"
+      games_list: "Список игр"
+  team_room:
+    index:
+      title: "Команда %{name}"
+      composition: "Состав"
+      captain_suffix: "- капитан"
+      invite: "Пригласить участников"
+  teams:
+    new:
+      name_label: "Название"
+      submit: "Создать команду"
+  time:
+    formats:
+      short: "%Y-%m-%d %H:%M"
+      long: "%d %B %Y, %H:%M"
+  date:
+    month_names:
+      - ~
+      - "января"
+      - "февраля"
+      - "марта"
+      - "апреля"
+      - "мая"
+      - "июня"
+      - "июля"
+      - "августа"
+      - "сентября"
+      - "октября"
+      - "ноября"
+      - "декабря"
+  sessions:
+    invalid_credentials: "Неправильный email или пароль"
+    new:
+      title: "Вход"
+      email_label: "Email"
+      password_label: "Пароль"
+      submit: "Войти"
+  activerecord:
+    errors:
+      messages:
+        blank: "не может быть пустым"
+        confirmation: "не совпадает с %{attribute}"
+        invalid: "имеет неверное значение"
+      models:
+        answer:
+          attributes:
+            value:
+              blank: "Вы не ввели вариант кода"
+              taken: "Такой код уже есть в задании"
+        game:
+          attributes:
+            name:
+              blank: "Вы не ввели название"
+              taken: "Игра с таким названием уже существует"
+            description:
+              blank: "Вы не ввели описание"
+            max_team_number:
+              not_a_number: "Диапазон количества команд от 1 до 10000"
+              greater_than: "Диапазон количества команд от 1 до 10000"
+              less_than: "Диапазон количества команд от 1 до 10000"
+              exceeds_requested: "Количество команд, подавших заявку превышает заданное число"
+            starts_at:
+              in_the_past: "Вы выбрали дату из прошлого. Так нельзя :-)"
+            registration_deadline:
+              in_the_past: "Вы указали крайний срок регистрации из прошлого, так нельзя :-)"
+              after_game_start: "Вы указали крайний срок регистрации больше даты начала игры, так нельзя :-)"
+        game_entry:
+          attributes:
+            game:
+              blank: "Вы не выбрали игру"
+            team_id:
+              blank: "Вы не указали команду"
+        invitation:
+          attributes:
+            for_user:
+              blank: "Пользователя с таким именем не существует"
+            recepient_nickname:
+              blank: "Вы не ввели имени пользователя"
+            for_user_id:
+              taken: "Вы уже высылали этому пользователю приглашение и он ещё не ответил"
+            base:
+              recipient_already_team_member: "Пользователь уже является членом одной из команд"
+        level:
+          attributes:
+            name:
+              blank: "Вы не ввели название задания"
+            text:
+              blank: "Вы не ввели текст задания"
+        team:
+          attributes:
+            name:
+              taken: "Команда с таким названием уже существует"
+              blank: "Название команды должно быть непустым"
+        user:
+          attributes:
+            email:
+              blank: "Не введён e-mail"
+              taken: "Пользователь с таким адресом уже зарегистрирован"
+              invalid: "Неправильный формат поля e-mail"
+            nickname:
+              blank: "Вы не ввели имя"
+              taken: "Пользователь с таким именем уже зарегистрирован"
+            password:
+              too_short: "Слишком короткий пароль (минимум 4 символа)"
+            password_confirmation:
+              blank: "Вы не ввели подтверждение пароля"
+              confirmation: "Пароль и его подтверждение не совпадают"

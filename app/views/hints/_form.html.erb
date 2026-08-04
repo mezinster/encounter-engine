@@ -1,7 +1,9 @@
 <p>
-  <%= text_field :text, :label => "Текст" %>
+  <%= f.label :text, t("hints.form.text_label") %>
+  <%= f.text_field :text %>
 </p>
 
 <p>
-  <%= text_field :delay_in_minutes, :label => "Через" %> минут
+  <%= f.label :delay_in_minutes, t("hints.form.delay_label") %>
+  <%= f.text_field :delay_in_minutes %> <%= t("hints.form.minutes_suffix") %>
 </p>

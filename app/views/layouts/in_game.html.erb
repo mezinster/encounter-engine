@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <title><%= t("layout.title") %></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <%= csrf_meta_tags %>
+    <link rel="stylesheet" href="/stylesheets/master.css">
+    <%= yield :head %>
+  </head>
+  <body>
+    <br />
+    <div id="header-container">
+      <div id="header">
+        <%= render "layouts/header" %>
+      </div>
+    </div>
+
+    <% flash.each do |type, message| %>
+      <p class="flash-<%= type %>"><%= message %></p>
+    <% end %>
+    <hr />
+    <br />
+
+    <div id="in_game-container">
+      <div id="in_game">
+        <%= yield %>
+      </div>
+    </div>
+
+  </body>
+</html>

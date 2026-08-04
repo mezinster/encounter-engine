@@ -1,6 +1,6 @@
 # -*- encoding : utf-8 -*-
-class Hint < ActiveRecord::Base
-  belongs_to :level
+class Hint < ApplicationRecord
+  belongs_to :level, optional: true
 
   def delay_in_minutes
     self.delay.nil? ? nil : self.delay / 60

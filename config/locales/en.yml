@@ -1,0 +1,415 @@
+en:
+  answers:
+    must_have_at_least_one_variant: "There must be at least one answer code"
+    index:
+      title: "Task"
+      game_prefix: "game"
+      variants_label: "Code variants:"
+      new_variant_label: "Another code variant"
+      submit: "Add code variant"
+  errors:
+    unauthenticated: "You are not authorized to visit this page. Please log in."
+    unauthorized: "You are not authorized to perform this action"
+    not_team_member: "You are not authorized to visit this page"
+    must_be_captain: "You must be the team captain to perform this action"
+    must_be_author: "You must be the game's author to view this page"
+    must_be_author_or_finished_player: "The full log is only available to the game's author or a player whose team has finished the game"
+    game_already_started: "You can't edit a game after it has started"
+    must_be_recipient: "You must be the invitation's recipient to perform this action"
+    cannot_play_own_game: "You can't play your own games, sorry :-)"
+    game_finished_by_author: "The game was ended by its author, you can no longer play it"
+    team_exited: "Your team has left the race"
+  invitations:
+    notice_sent: "An invitation was sent to %{nickname}"
+    new:
+      recipient_label: "Invite a new member"
+      submit: "Invite"
+  game:
+    not_started: "The game has not started yet. Where did you even get this link? :-)"
+    already_in_team: "You are already a member of a team"
+  games:
+    list:
+      view: "(view)"
+      stats: "(statistics)"
+      live_channel: "(live feed)"
+      full_log: "(answer log)"
+      end_game: "END THE GAME"
+      author_finished: "You have ended the game"
+    game_entries:
+      legend: "Registration applications:"
+      accept: "(accept)"
+      reject: "(reject)"
+    teams:
+      legend: "Participating teams:"
+    form:
+      name: "Title"
+      description: "Description"
+      starts_at: "Game start"
+      registration_deadline: "Registration deadline "
+      max_team_number: "Maximum number of teams"
+      is_draft: "Draft?"
+    new:
+      submit: "Create game"
+    edit:
+      submit: "Save"
+    show:
+      title: "Game"
+      draft_label: "Draft"
+      author_label: "Author"
+      starts_at_label: "Game start"
+      starts_at_not_set: "The game's start date has not been set yet"
+      registration_deadline_label: "Registration deadline"
+      registration_deadline_not_set: "The registration deadline has not been set yet"
+      description_label: "Description:"
+      max_team_number_label: "Maximum number of teams:"
+      levels_legend: "Tasks:"
+      add_level: "Add a new task"
+      edit_link: "Edit this game"
+      delete_link: "Delete this game"
+      countdown_prefix: "Time until start: "
+      start_test: "Start testing"
+      start: "Start"
+      finish_test: "Finish testing"
+  levels:
+    form:
+      name: "Title"
+      text: "Task text"
+      correct_answer: "Code"
+    edit:
+      title: "Task"
+      game_prefix: "game"
+      submit: "Save"
+    new:
+      heading: "New task for game %{name}"
+      hint_more_codes: "after creating this you will be able to add more codes to the task"
+      submit: "Add task"
+    show:
+      title: "Task"
+      game_prefix: "game"
+      text_label: "Task text:"
+      edit_link: "Edit the task's text and title"
+      code_label: "Code:"
+      codes_label: "Codes (%{count}):"
+      add_code: "Add another code"
+      hints_legend: "Hints:"
+      add_hint: "Add a hint"
+      delete_level: "Delete this level"
+      back_to_game: 'Back to game "%{name}"'
+  hints:
+    form:
+      text_label: "Text"
+      delay_label: "After"
+      minutes_suffix: "minutes"
+    list:
+      empty: "There are no hints"
+      after: "After"
+      minutes_colon: "minutes:"
+    edit:
+      heading_prefix: "Editing the hint for task"
+      heading_game_prefix: "of game"
+      submit: "Save"
+    new:
+      heading_prefix: "New hint for task"
+      heading_game_prefix: "of game"
+      submit: "Add hint"
+  questions:
+    new:
+      title: "Task"
+      game_prefix: "game"
+      code_label: "Code"
+      submit: "Add code"
+  users:
+    new:
+      nickname_label: "Name"
+      email_label: "Email"
+      password_label: "Password"
+      password_confirmation_label: "Confirmation"
+      submit: "Sign up"
+    edit:
+      title: 'Editing player profile %{nickname}'
+      nickname_label: "Your name"
+      date_of_birth_label: "Date of birth"
+      icq_label: "ICQ number"
+      jabber_label: "Jabber ID"
+      phone_label: "Contact phone number"
+      locale_label: "Interface language"
+      password_label: "New password"
+      password_confirmation_label: "Password confirmation"
+      submit: "Save changes"
+    index:
+      title: "User profile"
+      captain_prefix: "captain of team"
+      email_label: "E-mail:"
+      date_of_birth_label: "Date of birth:"
+      icq_label: "ICQ number:"
+      jabber_label: "Jabber ID:"
+      phone_label: "Contact phone number:"
+      edit_link: "Edit profile..."
+  notification_mailer:
+    welcome_letter:
+      subject: "Registration on %{host}"
+      body: |-
+        Thank you for registering!
+
+        You have registered at %{host} and can now log in with the following details:
+
+        Email:  %{email}
+        Password: %{password}
+
+        All the best :)
+    invitation_notification:
+      subject: "You have been invited to join the team %{team_name}"
+      body: |-
+        You have been invited to join the team %{team_name}
+        To accept or decline the invitation, go to your personal dashboard
+    reject_notification:
+      subject: "%{nickname} has declined your invitation"
+      body: "User %{nickname} has declined the invitation to join your team"
+    accept_notification:
+      subject: "%{nickname} has accepted your invitation"
+      body: "User %{nickname} has accepted your invitation and joined the team"
+  # Language names for the switcher (app/views/layouts/_header.html.erb) and
+  # the profile form's language field (app/views/users/edit.html.erb).
+  # Deliberately identical across every locale file: each language is named
+  # in its own endonym ("Русский", "English", ...) rather than translated, so
+  # a reader sees their own language's name spelled the way they'd recognise
+  # it no matter which locale currently renders the page. spec/i18n_spec.rb's
+  # untranslated-copy-paste check knows about this key and allows it.
+  locales:
+    ru: "Русский"
+    en: "English"
+    uk: "Українська"
+    ka: "ქართული"
+  layout:
+    title: "Active urban games"
+    header:
+      dashboard: "Dashboard"
+      home: "Home"
+    left_menu:
+      dashboard: "Dashboard"
+      profile: "Profile"
+      team_room: "Team room"
+      create_team: "Create a team"
+      all_games: "All games in this domain"
+      logout: "Log out"
+      login_legend: "Log in"
+      login: "Log in"
+      signup: "Sign up"
+  shared:
+    game_entry_controls:
+      applied: "Application submitted"
+      recall: "Withdraw"
+      registered: "You are registered"
+      decline: "Decline"
+      reapply: "Re-apply for registration"
+      entries_exceeded: "You cannot register because the number of participants has been exceeded"
+      deadline_passed: "You cannot register because you missed the registration deadline"
+      apply: "Apply for registration"
+    current_games:
+      legend: "Current games in this domain"
+      started: "Game has started"
+      view_results: "View results"
+      no_levels: "The game has no tasks"
+    current_games_status:
+      play: "Play!"
+      not_registered: "You are not registered"
+    countdown:
+      prefix: "Time left: "
+      years: ["year", "years", "years"]
+      months: ["month", "months", "months"]
+      days: ["day", "days", "days"]
+      hours: ["hour", "hours", "hours"]
+      minutes: ["minute", "minutes", "minutes"]
+      seconds: ["second", "seconds", "seconds"]
+    cancel: "(cancel)"
+    edit_short: "(edit)"
+    delete_short: "(delete)"
+    error_header: "Error"
+  game_passings:
+    index:
+      title: 'Game "%{name}"'
+      team: "Team"
+      level: "Level"
+      time_at_level: "Time at level"
+      exited: "(left the race)"
+      finished: "(finished the game)"
+      level_log: "(level log)"
+      game_log: "(game log)"
+      full_log: "Full answer log"
+    show_current_level:
+      title_prefix: "Game"
+      level_label: "Task"
+      hint_label: "Hint"
+      until_next_hint: "Next hint in"
+      countdown_placeholder: "3 minutes"
+      loading: "Loading..."
+      no_more_hints: "There will be no more hints"
+      answer_correct: "Code '%{answer}' -- correct."
+      answer_incorrect: "Code incorrect, you entered '%{answer}'."
+      multi_question_progress: "Correct codes entered: %{answered} out of %{total}"
+      answer_label: "Code"
+      submit: "Submit!"
+      exit_game: "Leave the race"
+      finish_testing: "Finish testing"
+    show_results:
+      congrats: "Congratulations, you finished the game!"
+      place: "Place"
+      team: "Team"
+      finish_time: "Finish time"
+      exited: "Left the race"
+      not_finished: "Did not finish"
+      full_log: "Answer log"
+      finish_testing: "Finish testing"
+  logs:
+    index:
+      title: "Index"
+    show_full_log:
+      title: "Full answer log"
+      correct_answer_one: "Correct code:"
+      correct_answer_many: "Correct codes:"
+    show_game_log:
+      title: 'Answer log for team "%{team}" in game "%{game}"'
+      correct_answer: "Correct code:"
+    show_level_log:
+      title: 'Answer log for team "%{team}" at level "%{level}" in game "%{game}"'
+      correct_answer: "Correct code:"
+    show_live_channel:
+      title: 'Live feed for game "%{name}"'
+      time: "Time"
+      team: "Team"
+      level: "Task"
+      code: "Code"
+  dashboard:
+    index:
+      greeting: "You are"
+    coming_games:
+      legend: "Upcoming games (%{count})"
+      upcoming: "Upcoming game"
+      you_are_author: "You are the game's author"
+      enter: "Enter!"
+    finished_games:
+      legend: "Finished games"
+      finished: "Finished game"
+    my_games:
+      legend: "My games (%{count})"
+      create: "Create a game >> "
+    my_team:
+      legend: "My team"
+      no_team: "You are not a member of any team"
+      create_team: "Create a team"
+      invited: "You were invited to join team %{team}"
+      accept: "(accept)"
+      decline: "(decline)"
+      captain_of: "You are the team captain of"
+      member_of: "You are a member of"
+      go_to_team_room: "Go to team room"
+  index:
+    index:
+      title: "Home page"
+      games_list: "List of games"
+  team_room:
+    index:
+      title: "Team %{name}"
+      composition: "Members"
+      captain_suffix: "- captain"
+      invite: "Invite members"
+  teams:
+    new:
+      name_label: "Title"
+      submit: "Create team"
+  time:
+    formats:
+      short: "%Y-%m-%d %H:%M"
+      long: "%B %-d, %Y at %H:%M"
+  date:
+    month_names:
+      - ~
+      - "January"
+      - "February"
+      - "March"
+      - "April"
+      - "May"
+      - "June"
+      - "July"
+      - "August"
+      - "September"
+      - "October"
+      - "November"
+      - "December"
+  sessions:
+    invalid_credentials: "Wrong e-mail or password"
+    new:
+      title: "Log in"
+      email_label: "Email"
+      password_label: "Password"
+      submit: "Log in"
+  activerecord:
+    errors:
+      messages:
+        blank: "can't be blank"
+        confirmation: "doesn't match %{attribute}"
+        invalid: "is invalid"
+      models:
+        answer:
+          attributes:
+            value:
+              blank: "You didn't enter an answer code"
+              taken: "That code is already used in this task"
+        game:
+          attributes:
+            name:
+              blank: "Name is required"
+              taken: "A game with that name already exists"
+            description:
+              blank: "Description is required"
+            max_team_number:
+              not_a_number: "Team count must be between 1 and 10000"
+              greater_than: "Team count must be between 1 and 10000"
+              less_than: "Team count must be between 1 and 10000"
+              exceeds_requested: "The number of teams that have already applied exceeds this limit"
+            starts_at:
+              in_the_past: "You picked a date in the past. That's not allowed :-)"
+            registration_deadline:
+              in_the_past: "You set a registration deadline in the past. That's not allowed :-)"
+              after_game_start: "You set a registration deadline later than the game's start date. That's not allowed :-)"
+        game_entry:
+          attributes:
+            game:
+              blank: "You didn't select a game"
+            team_id:
+              blank: "You didn't specify a team"
+        invitation:
+          attributes:
+            for_user:
+              blank: "No user with that name exists"
+            recepient_nickname:
+              blank: "You didn't enter a user name"
+            for_user_id:
+              taken: "You've already sent this user an invitation and they haven't responded yet"
+            base:
+              recipient_already_team_member: "That user is already a member of a team"
+        level:
+          attributes:
+            name:
+              blank: "Task name is required"
+            text:
+              blank: "Task text is required"
+        team:
+          attributes:
+            name:
+              taken: "A team with that name already exists"
+              blank: "Team name cannot be empty"
+        user:
+          attributes:
+            email:
+              blank: "E-mail is required"
+              taken: "That address is already registered"
+              invalid: "That e-mail address is not valid"
+            nickname:
+              blank: "Name is required"
+              taken: "That name is already taken"
+            password:
+              too_short: "Password is too short (minimum 4 characters)"
+            password_confirmation:
+              blank: "Password confirmation is required"
+              confirmation: "Password and confirmation do not match"

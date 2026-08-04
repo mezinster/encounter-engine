@@ -1,6 +1,6 @@
 <fieldset>
   <legend>
-    Заявки на регистрацию:
+    <%= t("games.game_entries.legend") %>
   </legend>
 
   <p>
@@ -11,8 +11,8 @@
 %>
   <p>
     <strong><%= @team.name %> <%= @game.name %></strong>
-    <em><%= link_to "(принять)", "/game_entries/accept/#{entry.id}" %></em>
-    <em><%= link_to "(отказать)", "/game_entries/reject/#{entry.id}" %></em>
+    <em><%= link_to t("games.game_entries.accept"), "/game_entries/accept/#{entry.id}" %></em>
+    <em><%= link_to t("games.game_entries.reject"), "/game_entries/reject/#{entry.id}" %></em>
   </p>
 <% end %>
 </p>

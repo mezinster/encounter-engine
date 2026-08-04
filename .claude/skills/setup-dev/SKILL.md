@@ -1,79 +1,60 @@
 ---
 name: setup-dev
-description: Bootstrap a local development environment for this Merb app from a fresh clone — submodules, Ruby 2.6.5, gems, and the development database.
+description: Bootstrap a local development environment for this Rails 8 app from a fresh clone — gems and the development/test databases.
 disable-model-invocation: true
 ---
 
 Bring this repository from a fresh clone to a running local server. Work through the steps in
 order and stop at the first failure — later steps depend on earlier ones.
 
-## 1. Vendored framework submodules
+## 1. Ruby via rbenv
 
-Merb and merb-auth are vendored, not installed from RubyGems. The app cannot boot without them.
+Ruby 3.3.12 is pinned (`.ruby-version`, `Gemfile`). If it isn't already installed:
 
 ```bash
-git submodule update --init --recursive
-git submodule status   # both lines must start with a space, not '-'
+rbenv install 3.3.12   # skip if already installed: rbenv versions
 ```
 
-## 2. System build dependencies
-
-Ruby 2.6.5 is compiled from source, so it needs a toolchain. This step requires `sudo` — ask the
-user to run it themselves rather than attempting it:
+rbenv is not on `PATH` in non-login shells here. Prefix commands with:
 
 ```bash
-sudo apt-get update && sudo apt-get install -y \
-  build-essential autoconf bison libssl-dev libyaml-dev libreadline-dev \
-  zlib1g-dev libncurses5-dev libffi-dev libgdbm-dev libsqlite3-dev \
-  libxml2-dev libxslt1-dev
-```
-
-`libssl-dev` matters most: Ruby 2.6 builds against OpenSSL 1.1 and **fails** against OpenSSL 3.0.
-Check with `openssl version` — on Ubuntu 22.04+ this step needs a separately built OpenSSL 1.1.1.
-
-## 3. Ruby 2.6.5 via rbenv
-
-```bash
-git clone --depth 1 https://github.com/rbenv/rbenv.git ~/.rbenv
-git clone --depth 1 https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
 export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
-rbenv install 2.6.5      # compiles from source; takes several minutes
-rbenv local 2.6.5        # writes .ruby-version in the repo
 ```
 
-rbenv is not on PATH in non-login shells here. Prefix commands with the `export PATH=...` line
-above, or invoke binaries as `~/.rbenv/shims/<cmd>`.
-
-## 4. Gems
+## 2. Gems
 
 ```bash
-gem install bundler -v 2.2.3
 bundle config set --local without production
 bundle install
 ```
 
-The `production` group holds `pg`, which needs Postgres headers and is not needed locally.
-Native extensions that do get built: `sqlite3` (pinned `<1.4`), `nokogiri`, `thin`, `byebug`.
+The `production` group holds `pg`, which needs `libpq` headers to build and is not required
+locally (sqlite is used for development/test — see `config/database.yml`). Skipping the
+`bundle config` line is not just unnecessary but will actively fail the install on any machine
+without `libpq-dev`/`postgresql-devel` installed — this is what CI does too
+(`.github/workflows/ci.yml`).
 
-## 5. Database
+## 3. Database
 
 ```bash
-MERB_ENV=rake bundle exec rake db:migrate
+bin/rails db:setup db:test:prepare
 ```
 
-`config/database.yml` is committed and already points development at
-`db/development.sqlite` and test at in-memory sqlite, so no configuration is needed. The
-development database file itself is not in the repository — the migrate above creates it. Expect
-`Skipping Merb plugin rakefile merb-auth-slice-password/spectasks` on every rake invocation;
-those are RSpec 1 tasks that cannot load under RSpec 3, and `Rakefile` skips them deliberately.
+`config/database.yml` is committed and already points development at `db/development.sqlite3` and
+test at `db/test.sqlite3`, so no configuration is needed. Neither sqlite file is in the repository
+— `db:setup`/`db:test:prepare` create them from `db/schema.rb` and `db/migrate/*`.
 
-## 6. Verify
+## 4. Verify
 
 ```bash
-bundle exec spec spec/          # RSpec 1.x specs
-bundle exec cucumber            # full feature suite — what CI runs
-bundle exec merb                # dev server on http://localhost:4000
+bundle exec rspec               # 407 examples, 0 failures, 6 pending
+bundle exec cucumber            # 234 scenarios (2 undefined placeholders), 2362 steps
+bin/rails server                # dev server on http://localhost:3000
 ```
 
 Report which of these passed and which did not. Do not claim the environment works until the
 server has actually booted and at least one suite has run.
+
+There are no git submodules and no vendored framework — this is a plain Rails app. If a step
+mentions submodules, a vendored `merb`/`merb-auth`, or Ruby 2.6, that instruction is stale; ignore
+it and follow this file instead.

@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Games, "#edit" do
+RSpec.describe GamesController, "#edit", type: :controller do
   describe "security filters" do
     describe "when the game author attempts to see game edit form" do
       before :each do
@@ -10,8 +10,8 @@ describe Games, "#edit" do
       end
 
       it "responds successfully" do
-        response = perform_request(:as_user => @user)
-        response.should be_successful
+        perform_request(:as_user => @user)
+        expect(response).to have_http_status(:success)
       end
     end
 
@@ -31,8 +31,23 @@ describe Games, "#edit" do
         @game = create_game :is_draft => false
       end
 
+      # The Merb original asserted this with assert_unauthorized. That
+      # worked under Merb even though the guest actually raises
+      # Unauthenticated (ensure_authenticated runs before ensure_author for
+      # :edit -- see the old `before :ensure_authenticated, :exclude =>
+      # [:index, :show]`): Merb::Controller::Unauthenticated is a *subclass*
+      # of ControllerExceptions::Unauthorized (merb-auth-
+      # core/lib/merb-auth-core/authenticated_helper.rb:2, removed by Task 13;
+      # see git history), so
+      # raise_error(Unauthorized) matched either exception. Rails'
+      # Authentication::Unauthenticated and Authentication::Unauthorized
+      # (app/controllers/concerns/authentication.rb) have no such
+      # relationship -- both are plain StandardError with separate
+      # rescue_from handlers (redirect vs. 401) -- so the assertion has to
+      # name whichever one is actually raised. That's still Unauthenticated
+      # here, matching this test's own description.
       it "raises Unauthenticated exception" do
-        assert_unauthorized { perform_request }
+        assert_unauthenticated { perform_request }
       end
     end
   end
@@ -52,9 +67,8 @@ describe Games, "#edit" do
   end
 
   def perform_request(opts={})
-    dispatch_to Games, :edit, { :id => @game.id } do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    get :edit, params: { id: @game.id }
+    response
   end
 end

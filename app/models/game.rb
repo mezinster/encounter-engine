@@ -1,24 +1,15 @@
 # -*- encoding : utf-8 -*-
-class Game < ActiveRecord::Base
-  belongs_to :author, :class_name => "User"
+class Game < ApplicationRecord
+  belongs_to :author, class_name: "User", optional: true
   has_many :levels, -> {  order('position') }
   has_many :logs, -> { order('time') }
   has_many :game_entries, :class_name => "GameEntry"
   has_many :game_passings, :class_name => "GamePassing"
 
-  validates_presence_of :name,
-    :message => "Вы не ввели название"
-
-  validates_uniqueness_of :name,
-    :message => "Игра с таким названием уже существует"
-
-  validates_presence_of :description,
-    :message => "Вы не ввели описание"
-
-  validates_numericality_of :max_team_number, :greater_than => 0, :less_than => 10000,
-    :message => "Диапазон количества команд от 1 до 10000"
-
-  validates_presence_of :author
+  validates :name, presence: true, uniqueness: true
+  validates :description, presence: true
+  validates :max_team_number, numericality: { greater_than: 0, less_than: 10000 }
+  validates :author, presence: true
 
   validate :game_starts_in_the_future
   validate :valid_max_num
@@ -96,26 +87,26 @@ protected
 
   def game_starts_in_the_future
     if self.author_finished_at.nil? and self.starts_at and self.starts_at < Time.now
-      self.errors.add(:starts_at, "Вы выбрали дату из прошлого. Так нельзя :-)")
+      self.errors.add(:starts_at, :in_the_past)
     end
   end
 
   def valid_max_num
     if self.max_team_number
       if self.max_team_number < self.requested_teams_number
-        self.errors.add(:max_team_number, "Количество команд, подавших заявку превышает заданное число")
+        self.errors.add(:max_team_number, :exceeds_requested)
       end
     end
   end
   def deadline_is_in_future
     if self.author_finished_at.nil? and self.registration_deadline and self.registration_deadline < Time.now
-        self.errors.add(:registration_deadline,"Вы указали крайний срок регистрации из прошлого, так нельзя :-)")
+        self.errors.add(:registration_deadline, :in_the_past)
     end
   end
   def deadline_is_before_game_start
     if self.registration_deadline and
         self.starts_at and self.registration_deadline > self.starts_at
-      self.errors.add(:registration_deadline,"Вы указали крайний срок регистрации больше даты начала игры, так нельзя :-)")
+      self.errors.add(:registration_deadline, :after_game_start)
     end
   end
 end

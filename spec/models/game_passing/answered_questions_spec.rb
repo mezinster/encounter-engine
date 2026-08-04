@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
 describe GamePassing, "answered_quesions" do
   subject do
@@ -24,9 +24,32 @@ describe GamePassing, "answered_quesions" do
       subject.answered_questions << @question
     end
 
-    it "should be persisted correctly" do      
+    it "should be persisted correctly" do
       subject.save!
       GamePassing.last.answered_questions.should == [@question]
+    end
+  end
+
+  context "when the column holds a row written in the old, pre-coder format" do
+    before :each do
+      subject.save!
+      legacy_yaml = "--- !ruby/object:Question\nid: 1\n"
+      ActiveRecord::Base.connection.execute(
+        "UPDATE game_passings SET answered_questions = #{ActiveRecord::Base.connection.quote(legacy_yaml)} WHERE id = #{subject.id}"
+      )
+    end
+
+    it "does not raise Psych::DisallowedClass and treats it as no answered questions" do
+      reloaded = GamePassing.find(subject.id)
+
+      expect { reloaded.answered_questions }.not_to raise_error
+      expect(reloaded.answered_questions).to eq([])
+    end
+
+    it "logs a warning naming the affected game_passing id, instead of failing silently" do
+      expect(Rails.logger).to receive(:warn).with(a_string_including("GamePassing##{subject.id}"))
+
+      GamePassing.find(subject.id)
     end
   end
 end

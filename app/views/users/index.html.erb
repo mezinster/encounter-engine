@@ -1,25 +1,25 @@
 <h2>
-  Профиль пользователя <%= @current_user.nickname %>
+  <%= t("users.index.title") %> <%= @current_user.nickname %>
   <% if @current_user.captain? %>
-    (капитан команды <%= link_to @current_user.team.name, url(:team_room) %>)
+    (<%= t("users.index.captain_prefix") %> <%= link_to @current_user.team.name, team_room_path %>)
   <% end %>
 </h2>
 <br>
 
 <table>
-  <tr><td width="150"><b>E-mail:</b></td>
+  <tr><td width="150"><b><%= t("users.index.email_label") %></b></td>
       <td><%= current_user.email %></td></tr>
-  <tr><td><b>Дата рождения:</b></td>
+  <tr><td><b><%= t("users.index.date_of_birth_label") %></b></td>
       <td><%= current_user.date_of_birth %></td></tr>
-  <tr><td><b>Номер ICQ:</b></td>
+  <tr><td><b><%= t("users.index.icq_label") %></b></td>
       <td><%= current_user.icq_number %></td></tr>
-  <tr><td><b>Jabber ID:</b></td>
+  <tr><td><b><%= t("users.index.jabber_label") %></b></td>
       <td><%= current_user.jabber_id %></td></tr>
   <% if current_user.captain? %>
-    <tr><td><b>Контактный телефон:</b></td>
+    <tr><td><b><%= t("users.index.phone_label") %></b></td>
         <td><%= current_user.phone_number %></td></tr>
   <% end %>
 </table>
 <br>
 
-<em><%= link_to "Редактировать профиль...", resource(current_user, :edit) %></em>
+<em><%= link_to t("users.index.edit_link"), edit_user_path(current_user) %></em>

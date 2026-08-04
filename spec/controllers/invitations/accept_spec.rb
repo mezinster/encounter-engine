@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Invitations, "#accept" do
+RSpec.describe InvitationsController, "#accept", type: :controller do
   describe "when recepient attempts to accept the invitation" do
     before :each do
       @recepient = create_user
@@ -36,7 +36,7 @@ describe Invitations, "#accept" do
     end
 
     it "does not delete any invitation" do
-      assert_does_not_delete_invitation { perform_rescued_request :as_user => @captain }
+      assert_does_not_delete_invitation { perform_request :as_user => @captain }
     end
   end
 
@@ -51,7 +51,7 @@ describe Invitations, "#accept" do
     end
 
     it "does not delete any invitation" do
-      assert_does_not_delete_invitation { perform_rescued_request :as_user => @some_user }
+      assert_does_not_delete_invitation { perform_request :as_user => @some_user }
     end
   end
 
@@ -65,26 +65,17 @@ describe Invitations, "#accept" do
     end
 
     it "does not delete any invitation" do
-      assert_does_not_delete_invitation { perform_rescued_request }
+      assert_does_not_delete_invitation { perform_request }
     end
   end
 
   def assert_does_not_delete_invitation(&block)
-    block.should_not change(Invitation, :count)
-  end
-
-  def perform_rescued_request(opts={})
-    begin
-      perform_request opts
-    rescue
-    end
+    expect(&block).not_to change(Invitation, :count)
   end
 
   def perform_request(opts={})
-    params = { :id => @invitation.id }
-    dispatch_to Invitations, :accept, params do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    get :accept, params: { id: @invitation.id }
+    response
   end
 end

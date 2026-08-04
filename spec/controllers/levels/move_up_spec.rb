@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Levels, "#move_up" do
+RSpec.describe LevelsController, "#move_up", type: :controller do
   before :each do
     @level = create_level
   end
@@ -18,7 +18,9 @@ describe Levels, "#move_up" do
     end
 
     describe "when a guest attempts to move a level" do
-      it "raises Unauthenticated exception" do
+      # See the equivalent note in levels/move_down_spec.rb: no separate
+      # authentication filter here, ensure_author covers guests too.
+      it "raises Unauthorized exception" do
         assert_unauthorized { perform_request }
       end
     end
@@ -32,21 +34,18 @@ describe Levels, "#move_up" do
       @level = create_level :game => @game
       create_level :game => @game
       @initial_level_position = @level.position
-
     end
 
     it "actually moves level up" do
-      lambda do
+      expect do
         perform_request :as_user => @author
-      end.should change{ @level.reload.position }.by(-1)
+      end.to change { @level.reload.position }.by(-1)
     end
   end
 
   def perform_request(opts={}, params={})
-    params = params.merge(:id => @level.id, :game_id => @level.game.id)
-    dispatch_to Levels, :move_up, params do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    get :move_up, params: params.merge(:id => @level.id, :game_id => @level.game.id)
+    response
   end
 end

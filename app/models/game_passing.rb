@@ -1,9 +1,67 @@
-class GamePassing < ActiveRecord::Base
-  serialize :answered_questions
+class GamePassing < ApplicationRecord
+  # Rails 7.1+ requires the coder to be explicit, and plain `coder: YAML`
+  # (Rails' safe-mode YAMLColumn) can only load/dump a small permitted-class
+  # allowlist. This column used to hold full Question (ActiveRecord)
+  # instances -- going back to the Merb app's unrestricted
+  # `serialize :answered_questions` -- and a full AR object's dump embeds
+  # adapter-internal type-cast classes (ActiveSupport::TimeWithZone,
+  # ActiveRecord::ConnectionAdapters::SQLite3Adapter::SQLite3Integer here in
+  # dev/test; entirely different PostgreSQL::OID::* classes in production).
+  # That allowlist is neither small nor stable across adapters: permitting
+  # exactly [Question, ActiveModel::Attribute::FromDatabase,
+  # ActiveModel::Attribute::FromUser] (the minimal set for a single freshly
+  # -reloaded record) still leaves 14 of the 97 examples in `spec/models/`
+  # raising Psych::DisallowedClass, because the suite (like real gameplay
+  # sequences) mixes freshly-built and freshly-loaded Question objects.
+  #
+  # unsafe_load would dodge that but turns any future write to this column
+  # into remote code execution on the next read -- unacceptable given this
+  # project has already seen intrusion attempts (see README).
+  #
+  # Instead of storing full model instances, this coder stores just the
+  # question ids and resolves them back to Question records on load. Ids are
+  # plain Integers inside an Array -- both permitted by Psych's built-in safe
+  # defaults, no allowlist or adapter-specific class needed at all.
+  #
+  # Belt-and-braces: `load` also rescues Psych::DisallowedClass /
+  # Psych::SyntaxError. A row written before this coder shipped can still
+  # hold the old, unrestricted `serialize :answered_questions` format (full
+  # YAML-dumped ActiveRecord objects); reading one of those with the new
+  # coder would otherwise raise on every request that touches it, a 500 with
+  # no recovery through the UI for whichever team is mid-level at deploy
+  # time. Treating an unreadable value as "no questions answered yet" is the
+  # same outcome an empty row already produces, so it is a safe default even
+  # though it does lose that team's progress on the affected level.
+  class AnsweredQuestionsCoder
+    def self.dump(questions)
+      YAML.dump(Array(questions).map(&:id))
+    end
 
-  belongs_to :team
-  belongs_to :game
-  belongs_to :current_level, :class_name => "Level"
+    def self.load(yaml)
+      return [] if yaml.nil?
+
+      ids = YAML.safe_load(yaml) || []
+      by_id = Question.where(id: ids).index_by(&:id)
+      ids.filter_map { |id| by_id[id] }
+    rescue Psych::DisallowedClass, Psych::SyntaxError
+      # A silently-dropped answered_questions column is exactly the support
+      # case the comment above describes -- a team's progress on a level
+      # disappearing with nothing in the UI to explain it. The coder itself
+      # is handed only the raw column value, not the record it belongs to
+      # (ActiveRecord::Type::Serialized#deserialize calls `coder.load(value)`
+      # with no id in scope), so it can't name which row. GamePassing's
+      # `warn_if_answered_questions_unreadable` after_find callback below
+      # re-checks the same raw value with access to `id` and logs there --
+      # this branch stays responsible only for making `load` itself safe.
+      []
+    end
+  end
+
+  serialize :answered_questions, coder: AnsweredQuestionsCoder, type: Array
+
+  belongs_to :team, optional: true
+  belongs_to :game, optional: true
+  belongs_to :current_level, :class_name => "Level", optional: true
 
   scope :of_game, ->(game) { where(game_id: game) }
   scope :of_team, ->(team) { where(team_id: team) }
@@ -16,20 +74,7 @@ class GamePassing < ActiveRecord::Base
 
   before_save { self.answered_questions ||= [] }
 
-  # answered_questions is a serialised column, so it reads back as nil until
-  # something writes it. The before_save above only covers persisted records,
-  # which leaves reset_answered_questions (self.answered_questions.clear) and
-  # answered_questions << question raising NoMethodError on a new record.
-  # Always hand back a real array. Assigning through self[] rather than
-  # returning a throwaway [] matters: << has to mutate the stored value.
-  def answered_questions
-    # Assign and then re-read rather than using ||=. For a serialised column
-    # `self[:x] ||= []` evaluates to the assignment's own value -- the bare []
-    # literal -- while ActiveRecord stores a type-cast copy of it. Callers
-    # would then push onto an orphaned array and lose the first write.
-    self[:answered_questions] = [] if self[:answered_questions].nil?
-    self[:answered_questions]
-  end
+  after_find :warn_if_answered_questions_unreadable
 
   def self.of(team, game)
     self.of_team(team).of_game(game).first
@@ -129,6 +174,24 @@ protected
 
   def reset_answered_questions
     self.answered_questions.clear
+  end
+
+  # AnsweredQuestionsCoder.load silently returns [] when the column holds a
+  # pre-coder legacy value it can't safely parse (see the coder's comment) --
+  # by design, so one bad row can't 500 every request that touches it. But
+  # silent is exactly wrong for anyone trying to find out why a team's
+  # progress vanished, and the coder has no access to `id` to say which row.
+  # Re-check the same raw value here, where `id` is in scope, purely to log.
+  def warn_if_answered_questions_unreadable
+    raw = read_attribute_before_type_cast(:answered_questions)
+    return if raw.nil?
+
+    YAML.safe_load(raw)
+  rescue Psych::DisallowedClass, Psych::SyntaxError
+    Rails.logger.warn(
+      "GamePassing##{id}: answered_questions column holds an unreadable " \
+      "(pre-coder legacy format?) value; treating it as no questions answered."
+    )
   end
 
   # TODO: keep SRP, extract this to a separate helper

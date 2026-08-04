@@ -1,14 +1,10 @@
 # -*- encoding : utf-8 -*-
-class Team < ActiveRecord::Base
+class Team < ApplicationRecord
   has_many :game_entries, :class_name => "GameEntry"
   has_many :members, :class_name => "User"
-  belongs_to :captain, :class_name => "User"
+  belongs_to :captain, :class_name => "User", optional: true
 
-  validates_uniqueness_of :name,
-    :message => "Команда с таким названием уже существует"
-
-  validates_presence_of :name,
-    :message => "Название команды должно быть непустым"
+  validates :name, presence: true, uniqueness: true
 
   after_save :adopt_captain
 

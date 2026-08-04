@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <title><%= t("layout.title") %></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <%= csrf_meta_tags %>
+    <link rel="stylesheet" href="/stylesheets/master.css">
+    <%# Individual templates hook additional <script>/<link> tags in here via
+        `content_for(:head) { ... }` -- the Rails replacement for Merb's
+        require_js/require_css + include_required_js/include_required_css
+        (see app/views/games/new.html.erb, games/edit.html.erb,
+        invitations/new.html.erb once Task 9b/c ports them). %>
+    <%= yield :head %>
+  </head>
+  <body>
+    <br />
+    <div id="header-container">
+      <div id="header">
+        <%= render "layouts/header" %>
+      </div>
+    </div>
+
+    <% flash.each do |type, message| %>
+      <p class="flash-<%= type %>"><%= message %></p>
+    <% end %>
+    <hr />
+    <br />
+
+    <div id="left-container">
+      <div class="left">
+        <%= render "layouts/left_menu" %>
+      </div>
+    </div>
+
+    <div id="main-container">
+      <div id="main">
+        <%= yield %>
+      </div>
+    </div>
+  </body>
+</html>

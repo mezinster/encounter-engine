@@ -1,0 +1,18 @@
+<%# Body copy lives in config/locales/ru.yml and en.yml under
+    notification_mailer.welcome_letter.body -- see NotificationMailer for
+    why the mail is rendered in the recipient's locale, not the sender's.
+
+    @host (set by NotificationMailer#welcome_letter via #app_host) replaces
+    the "bien.kg" that was hardcoded into the Merb-era version of this
+    template: encounter-engine is meant to be installed by anyone on their
+    own domain (see README.md), so naming one specific installation's
+    domain in every deployment's mail was a bug, not a feature. Defaults to
+    "bien.kg" so existing deployments see no change; override per-instance
+    with APP_HOST, alongside this app's other per-instance ENV overrides
+    (TZ, DEFAULT_LOCALE -- see config/application.rb). The subject uses the
+    same @host, via #app_host and subject_vars, so ru/en subject and body
+    always agree on which host they're naming. %>
+<%= t("notification_mailer.welcome_letter.body",
+      host: @host,
+      email: @user.email,
+      password: @password) %>

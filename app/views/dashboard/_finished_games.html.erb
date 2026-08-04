@@ -1,10 +1,10 @@
 <fieldset>
   <legend>
-    Завершенные игры
+    <%= t("dashboard.finished_games.legend") %>
   </legend>
   <% Game.finished.each do |game | %>
-    Завершена игра <b><%= link_to game.name, resource(game) %></b> |
-      <%= link_to "Посмотреть результаты", url(:controller => :game_passings, :action => :show_results, :game_id => game.id) %>
+    <%= t("dashboard.finished_games.finished") %> <b><%= link_to game.name, game_path(game) %></b> |
+      <%= link_to t("shared.current_games.view_results"), game_passings_show_results_path(game_id: game.id) %>
     <br/>
   <% end %>
 </fieldset>

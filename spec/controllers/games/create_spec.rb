@@ -1,11 +1,11 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Games, "#create" do
+RSpec.describe GamesController, "#create", type: :controller do
   describe "security filters" do
     describe "registered user attempts create a game" do
       before :each do
-        @user = create_user        
+        @user = create_user
       end
 
       describe "data is valid" do
@@ -15,9 +15,9 @@ describe Games, "#create" do
         end
 
         it "crates a game" do
-          lambda do
+          expect do
             perform_request({ :as_user => @user }, @params)
-          end.should change(Game, :count).by(1)
+          end.to change(Game, :count).by(1)
         end
 
         it "assigns current user as an author of the game" do
@@ -45,9 +45,8 @@ describe Games, "#create" do
   end
 
   def perform_request(opts={}, params={})
-    dispatch_to Games, :create, params do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    post :create, params: params
+    response
   end
 end

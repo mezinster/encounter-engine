@@ -1,18 +1,25 @@
-Новое задание для игры <%= @level.game.name %><br />
+<%= t("levels.new.heading", name: @level.game.name) %><br />
 <br />
 
-<%= error_messages_for @level, :header => "<h2>Ошибка</h2>" %>
+<%= error_messages_for @level, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
-<%= form_for @level, :action => resource(@game, :levels) do %>
-  <p><%= text_field :name, :label => "Название" %></p>
-
-  <p><%= text_area :text, :label => "Текст задания" %></p>
-  
+<%= form_with model: @level, url: game_levels_path(@game) do |f| %>
   <p>
-    <%= text_field :correct_answer, :label => "Код" %>
-    <em>после создания вы сможете добавить больше кодов в задание</em>
+    <%= f.label :name, t("levels.form.name") %>
+    <%= f.text_field :name %>
   </p>
 
-  <%= submit "Добавить задание" %>
-  <em><%= link_to "(отменить)", resource(@level.game) %></em>
-<% end =%>
+  <p>
+    <%= f.label :text, t("levels.form.text") %>
+    <%= f.text_area :text %>
+  </p>
+
+  <p>
+    <%= f.label :correct_answer, t("levels.form.correct_answer") %>
+    <%= f.text_field :correct_answer %>
+    <em><%= t("levels.new.hint_more_codes") %></em>
+  </p>
+
+  <%= f.submit t("levels.new.submit") %>
+  <em><%= link_to t("shared.cancel"), game_path(@level.game) %></em>
+<% end %>

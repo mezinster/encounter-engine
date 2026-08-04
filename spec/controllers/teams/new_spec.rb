@@ -1,24 +1,22 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Teams, "#new" do
+RSpec.describe TeamsController, "#new", type: :controller do
   describe "regular case, fresh user attempts to create a team" do
     before :each do
       User.delete_all
       user = create_user
-      @response = perform_request :as_user => user, :skip_authentication => true
+      @response = perform_request :as_user => user
     end
 
     it "responds successfully" do
-      @response.should be_successful
+      expect(@response).to have_http_status(:success)
     end
   end
 
   describe "a guest attempts to create a team" do
     it "raises Unauthenticated exception" do
-      lambda do
-        perform_request
-      end.should raise_error(Merb::Controller::Unauthenticated)
+      assert_unauthenticated { perform_request }
     end
   end
 
@@ -28,18 +26,16 @@ describe Teams, "#new" do
       @team = create_team :captain => @user
     end
 
-    it "raises Unauthorized exception" do
-      lambda do
-        perform_request :as_user => @user, :skip_authentication => true
-      end.should raise_error(Merb::ControllerExceptions::Unauthorized,
-        "Вы уже являетесь членом команды")
+    it "raises Unauthorized exception with the right message" do
+      perform_request :as_user => @user
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.body).to eq("Вы уже являетесь членом команды")
     end
   end
 
   def perform_request(opts={})
-    dispatch_to Teams, :new do |controller|
-      controller.session.stub(:authenticated?).and_return(opts[:skip_authentication])
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    get :new
+    response
   end
 end

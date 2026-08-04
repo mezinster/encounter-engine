@@ -1,13 +1,10 @@
 # -*- encoding : utf-8 -*-
-class GameEntry < ActiveRecord::Base
-  belongs_to :game
-  belongs_to :team
+class GameEntry < ApplicationRecord
+  belongs_to :game, optional: true
+  belongs_to :team, optional: true
 
-  validates_presence_of :game,
-    :message => "Вы не выбрали игру"
-
-  validates_presence_of :team_id,
-    :message => "Вы не указали команду"
+  validates :game, presence: true
+  validates :team_id, presence: true
 
   scope :of_game, ->(game) { where(game_id: game.id) }
   scope :of_team, ->(team) { where(team_id: team.id) }

@@ -2,7 +2,7 @@
 <script language="javascript" src="/javascripts/level_hint_updater.js"></script>
 
 <h2>
-  Игра "<strong><%= @game.name %></strong>", Задание #<%= @game_passing.current_level.position %>
+  <%= t("game_passings.show_current_level.title_prefix") %> "<strong><%= @game.name %></strong>", <%= t("game_passings.show_current_level.level_label") %> #<%= @game_passing.current_level.position %>
 </h2>
 
 <br />
@@ -21,7 +21,7 @@
   <% @game_passing.hints_to_show.each_with_index do |hint, index| %>
     <fieldset>
       <legend>
-        Подсказка #<%= index + 1 %>
+        <%= t("game_passings.show_current_level.hint_label") %> #<%= index + 1 %>
       </legend>
       <%= hint.text %>
     </fieldset>
@@ -30,8 +30,8 @@
 </div>
 
 <% unless @game_passing.upcoming_hints.empty?  %>
-  <div id="LevelHintCountdownContainer">До следующей подсказки <span id="LevelHintCountdownTimerText">3 минуты</span></div>
-  <div id="LevelHintCountdownLoadIndicator" style="display: none;">Загрузка...</div>
+  <div id="LevelHintCountdownContainer"><%= t("game_passings.show_current_level.until_next_hint") %> <span id="LevelHintCountdownTimerText"><%= t("game_passings.show_current_level.countdown_placeholder") %></span></div>
+  <div id="LevelHintCountdownLoadIndicator" style="display: none;"><%= t("game_passings.show_current_level.loading") %></div>
 
   <script>
   LevelHintUpdater.setup({
@@ -41,7 +41,7 @@
   </script>
 <% else %>
   <div>
-  Подсказок больше не будет
+  <%= t("game_passings.show_current_level.no_more_hints") %>
   </div>
 <% end %>
 
@@ -50,32 +50,35 @@
 <% if answer_posted? %>
   <% if answer_was_correct? %>
     <div>
-      Код '<%= @answer %>' -- верный.
+      <%= t("game_passings.show_current_level.answer_correct", answer: @answer) %>
     </div>
   <% else %>
     <p>
-      Код неверный, вы ввели '<%= @answer %>'.
+      <%= t("game_passings.show_current_level.answer_incorrect", answer: @answer) %>
     </p>
   <% end %>
 <% end %>
 
 <% if @game_passing.current_level.multi_question? %>
   <div>
-    Правильных кодов введено: <%= @game_passing.answered_questions.size %> из <%= @game_passing.current_level.questions.count %>
+    <%= t("game_passings.show_current_level.multi_question_progress", answered: @game_passing.answered_questions.size, total: @game_passing.current_level.questions.count) %>
   </div>
 <% end %>
 
-<%= form :action => url(:post_answer), :method => :post do %>
-  <p><%= text_field :name => 'answer', :label => "Код" %></p>
-  <%= submit "Отправить!" %>
-<% end =%>
+<%= form_with url: post_answer_path(game_id: @game.id), method: :post do %>
+  <p>
+    <%= label_tag :answer, t("game_passings.show_current_level.answer_label") %>
+    <%= text_field_tag :answer %>
+  </p>
+  <%= submit_tag t("game_passings.show_current_level.submit") %>
+<% end %>
 
 <br/>
 
 <% if current_user.captain? %>
-    <%= link_to "Сойти с дистанции", "/game_passings/exit_game/#{@game_passing.game_id}" %>
+    <%= link_to t("game_passings.show_current_level.exit_game"), exit_game_path(game_id: @game_passing.game_id) %>
 <% end %>
 <% if @game.is_testing? %>
   <br/>
-  <%= link_to "Завершить тестирование", url("games/finish_test/#{@game.id}") %>
+  <%= link_to t("game_passings.show_current_level.finish_testing"), "/games/finish_test/#{@game.id}" %>
 <% end %>

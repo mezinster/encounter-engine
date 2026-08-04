@@ -1,7 +1,7 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Games, "#update" do
+RSpec.describe GamesController, "#update", type: :controller do
   describe "security filters" do
     describe "when the game author attempts to update game" do
       before :each do
@@ -9,7 +9,7 @@ describe Games, "#update" do
         @game = create_game :author => @user, :is_draft => false
       end
 
-      it "redirects"        
+      it "redirects"
     end
 
     describe "when any other user attempts to update game" do
@@ -28,8 +28,16 @@ describe Games, "#update" do
         @game = create_game :is_draft => false
       end
 
+      # See games/edit_spec.rb for the full explanation: under Merb,
+      # Unauthenticated is a subclass of Unauthorized, so assert_unauthorized
+      # matched here too even though ensure_authenticated (not ensure_author)
+      # is what actually rejects a guest. Rails' two exception classes are
+      # unrelated (separate rescue_from handlers, redirect vs. 401), so the
+      # assertion has to name the one that's actually raised -- still
+      # Unauthenticated, since :update is not excluded from
+      # require_authentication!.
       it "raises Unauthenticated exception" do
-        assert_unauthorized { perform_request }
+        assert_unauthenticated { perform_request }
       end
     end
   end
@@ -49,9 +57,8 @@ describe Games, "#update" do
   end
 
   def perform_request(opts={})
-    dispatch_to Games, :update, { :id => @game.id } do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    patch :update, params: { id: @game.id }
+    response
   end
 end

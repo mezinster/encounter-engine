@@ -1,23 +1,23 @@
 <% if game_entry %>
   <% case game_entry.status %>
   <% when "new" %>
-    Заявка подана
-    <%= link_to "Отозвать", "/game_entries/recall/#{game_entry.id}" %>
-  <% when "accepted"%> Вы зарегистрированы
-    <%= link_to "Отказаться", "/game_entries/cancel/#{game_entry.id}" %>
+    <%= t("shared.game_entry_controls.applied") %>
+    <%= link_to t("shared.game_entry_controls.recall"), "/game_entries/recall/#{game_entry.id}" %>
+  <% when "accepted"%> <%= t("shared.game_entry_controls.registered") %>
+    <%= link_to t("shared.game_entry_controls.decline"), "/game_entries/cancel/#{game_entry.id}" %>
   <% when "recalled", "rejected", "canceled", nil %>
     <% if game.requested_teams_number < game.max_team_number %>
-      <%= link_to "Подать заявку на регистрацию заново", "/game_entries/reopen/#{game_entry.id}" %>
+      <%= link_to t("shared.game_entry_controls.reapply"), "/game_entries/reopen/#{game_entry.id}" %>
     <% else %>
-      Вы не можете зарегистрироваться так как превышено количество участников
+      <%= t("shared.game_entry_controls.entries_exceeded") %>
     <% end %>
   <% end %>
 <% else %>
   <% if game.requested_teams_number >= game.max_team_number %>
-    Вы не можете зарегистрироваться так как превышено количество участников
+    <%= t("shared.game_entry_controls.entries_exceeded") %>
   <% elsif game.registration_deadline and game.registration_deadline <= Time.now %>
-    Вы не можете зарегистрироваться, так как опоздали на игру
+    <%= t("shared.game_entry_controls.deadline_passed") %>
   <% else %>
-    <%= link_to "Подать заявку на регистрацию", "/game_entries/new/#{game.id}/#{team.id}" %>
+    <%= link_to t("shared.game_entry_controls.apply"), new_game_entry_path(game_id: game.id, team_id: team.id) %>
   <% end %>
 <% end %>

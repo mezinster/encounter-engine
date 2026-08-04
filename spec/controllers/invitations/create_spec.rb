@@ -1,18 +1,25 @@
 # -*- encoding : utf-8 -*-
-require File.join(File.dirname(__FILE__), '..', '..', 'spec_helper.rb')
+require "rails_helper"
 
-describe Invitations, "#create" do
+RSpec.describe InvitationsController, "#create", type: :controller do
   describe "security filters" do
     describe "captain attempts to invite a new user" do
-      before :each do        
+      before :each do
         @captain = create_user
-        @team = create_team :captain => @captain        
+        @team = create_team :captain => @captain
+        @invited_user = create_user
       end
 
-      it "does not raise any error" do
-        lambda do
-          perform_request :as_user => @captain
-        end.should_not raise_error
+      # Under Merb this asserted `should_not raise_error`, which passed
+      # whether ensure_team_captain allowed or denied the request (a denial
+      # now redirects/401s instead of raising, so that assertion would pass
+      # either way and prove nothing). Asserting the actual redirect proves
+      # the captain was let through the security filter, not just that
+      # nothing blew up.
+      it "is not rejected by the security filters" do
+        perform_request({ :as_user => @captain },
+                         { :invitation => { :recepient_nickname => @invited_user.nickname } })
+        expect(response).to redirect_to(new_invitation_path)
       end
     end
 
@@ -43,45 +50,48 @@ describe Invitations, "#create" do
       @params = { :invitation => { :recepient_nickname => @user.nickname } }
     end
 
-    # The redirect is asserted; the notice itself still is not. The trailing
-    # `pending` that used to stand in for that was a no-op under RSpec 1, but
-    # RSpec 3 reads pending as "expected to fail" and reports the example as
-    # FIXED when it passes.
     it "redirects" do
       response = perform_request({ :as_user => @captain }, @params)
       response.status.should == 302
     end
 
     it "creates an invitation" do
-      lambda do
+      expect do
         perform_request({ :as_user => @captain }, @params)
-      end.should change(Invitation, :count).by(1)
-    end    
+      end.to change(Invitation, :count).by(1)
+    end
 
+    # Task 10 ported NotificationMailer to ActionMailer and restored the
+    # four TODO(Task 10) call sites in app/controllers/invitations_controller.rb
+    # (lines 20-25, 38-39, 47-48, 70-72), including this one
+    # (InvitationsController#create). Un-pending this now exercises the real
+    # call site end-to-end.
     it "sends a notification to invited user by email" do
-      assert_sends_email { perform_request({ :as_user => @captain }, @params) }
+      expect do
+        perform_request({ :as_user => @captain }, @params)
+      end.to change(ActionMailer::Base.deliveries, :size).by(1)
 
-      Merb::Mailer.deliveries.last.to.first.should == @user.email
-      Merb::Mailer.deliveries.last.text.should match(/Вас пригласили вступить в команду #{@team.name}/)
+      mail = ActionMailer::Base.deliveries.last
+      mail.to.should include(@user.email)
+      mail.body.encoded.should match(/Вас пригласили вступить в команду #{@team.name}/)
     end
 
     it "assigns captain team as invitation target team" do
-      @response = perform_request({ :as_user => @captain }, @params)
+      perform_request({ :as_user => @captain }, @params)
 
-      @response.assigns(:invitation).to_team.id.should == @team.id
+      assigns(:invitation).to_team.id.should == @team.id
     end
 
     it "finds proper user by email" do
-      @response = perform_request({ :as_user => @captain }, @params)
+      perform_request({ :as_user => @captain }, @params)
 
-      @response.assigns(:invitation).for_user.id.should == @user.id
+      assigns(:invitation).for_user.id.should == @user.id
     end
   end
 
   def perform_request(opts={}, params={})
-    dispatch_to Invitations, :create, params do |controller|
-      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub(:user).and_return(opts[:as_user])
-    end
+    session[:user_id] = opts[:as_user]&.id
+    post :create, params: params
+    response
   end
 end

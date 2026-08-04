@@ -1,12 +1,12 @@
 <% if hints.empty? %>
-    <em>Подсказок нет</em>
+    <em><%= t("hints.list.empty") %></em>
 <% else %>
     <% hints.each do |hint| %>
         <p>
-          <em>Через</em> <strong><%= link_to hint.delay_in_minutes, resource(hint.level.game, hint.level, hint, :edit) unless @level.game.started? %></strong> <em>минут:</em>
+          <em><%= t("hints.list.after") %></em> <strong><%= link_to hint.delay_in_minutes, edit_game_level_hint_path(hint.level.game, hint.level, hint) unless @level.game.started? %></strong> <em><%= t("hints.list.minutes_colon") %></em>
           <em>
-            <%= link_to "(редактировать)", resource(hint.level.game, hint.level, hint, :edit) unless @level.game.started? %>
-            <%= link_to "(удалить)", resource(hint.level.game, hint.level, hint, :delete) unless @level.game.started? %>
+            <%= link_to t("shared.edit_short"), edit_game_level_hint_path(hint.level.game, hint.level, hint) unless @level.game.started? %>
+            <%= link_to t("shared.delete_short"), delete_game_level_hint_path(hint.level.game, hint.level, hint) unless @level.game.started? %>
           </em>
         </p>
         <p>

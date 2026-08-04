@@ -1,7 +1,5 @@
-require Merb.root + '/lib/ee_strings'
-
-class Question < ActiveRecord::Base
-  belongs_to :level
+class Question < ApplicationRecord
+  belongs_to :level, optional: true
   has_many :answers
 
   def correct_answer=(answer)
@@ -18,9 +16,16 @@ class Question < ActiveRecord::Base
   # here too. check_answer! already does it for its own path, but this is the
   # single point where a code is actually compared, and players type these on
   # phones where a stray leading or trailing space is easy to introduce.
+  #
+  # Comparison used to go through lib/ee_strings.rb's upcase_utf8_cyr, a
+  # monkey patch backed by the unicode_utils gem. That existed because Ruby
+  # 1.9's String#upcase was ASCII-only. Ruby 2.4 made String#upcase fully
+  # Unicode-aware, so the gem and the patch were dead weight — native
+  # String#upcase is the more multilingual-correct choice, not a riskier one,
+  # since answer codes may be authored in any script.
   def matches_any_answer(answer_value)
     self.answers.any? do |answer|
-      answer.value.to_s.strip.upcase_utf8_cyr == answer_value.to_s.strip.upcase_utf8_cyr
+      answer.value.to_s.strip.upcase == answer_value.to_s.strip.upcase
     end
   end
 end

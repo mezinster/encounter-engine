@@ -25,6 +25,54 @@ Azure Blob. One instance serves every community, against the app's current per-i
 | VM | Provided by the owner; Ansible configures it | Owner controls the Azure account |
 | TLS | kamal-proxy + Let's Encrypt on an owner-supplied domain | `force_ssl` makes TLS mandatory for the app to respond at all |
 
+## The target host (verified 2026-08-05, not assumed)
+
+`mezin.eu` — an Azure VM, `AzurePublicCloud` / `westeurope`, hostname `web`, public IP
+`23.100.7.86`, Ubuntu 22.04.5, x86_64.
+
+| | |
+|---|---|
+| CPU / RAM | **1 vCPU, 1.9 GB total, ~1.1 GB available** |
+| Disk | 30 GB, 17 GB free |
+| Swap | 2 GB, already configured |
+| Docker | **not installed** |
+| Access | user `mezinster`, passwordless sudo |
+| sshd | `0.0.0.0:22`, publicly reachable |
+| Ports 80 / 443 / 5432 | free |
+
+**This is not a dedicated VM. It is a working utility host**, and the deployment is a new tenant
+that must not disturb the neighbours:
+
+| Service | Port | Note |
+|---|---|---|
+| `danted` SOCKS proxy | `0.0.0.0:1080` | enabled; plausibly load-bearing for the owner's own access |
+| Squid-family proxies | 3128, 3129, 3130, 8080, 8081 | |
+| `inreach` / `inreach-kate` | outbound | live APRS forwarders run from `~/iR-APRSISD` |
+| Postfix | 25, localhost only | |
+| Apache | — | installed but **disabled and inactive**; will not contend for 80 |
+
+### Consequences
+
+- **The firewall is not touched.** UFW is currently inactive and Azure's NSG is the control point;
+  it stays that way. An earlier draft had Ansible enabling UFW for 22/80/443 only, which would have
+  firewalled off `danted` and the proxies — potentially severing the owner's access to the machine.
+- **Docker rewrites iptables on install.** On a host whose purpose is relaying traffic this is a
+  real risk, not a formality. Installation must be followed by verifying every existing listener is
+  still reachable, and the plan must state how to roll back if not.
+- **Never build images on this box.** 1 vCPU and ~1.1 GB free will not build a Ruby image
+  comfortably, and the attempt would starve the running services. CI builds; the VM only pulls.
+- **PostgreSQL needs explicit tuning.** Defaults assume far more memory than is spare here.
+- **Hostname: `game.mezin.eu`**, not the apex. `mezin.eu` already resolves to this box and serves
+  the owner's other purposes; the app takes a subdomain. A DNS A record to `23.100.7.86` is a
+  prerequisite, and Let's Encrypt will issue for that name once it resolves.
+
+### A note on SSH access
+
+The maintainer's workstation (WSL2) cannot reach the internet directly and connects through a
+Windows-side SOCKS bridge (`ssh mezin`). **This is a workstation concern, not a deployment one** —
+the server's sshd is publicly reachable, so GitHub Actions can connect to it directly with a deploy
+key. Do not design around the bridge.
+
 ## Non-goals
 
 - Per-game timezone and locale. That belongs to the content-i18n project and would change the
@@ -171,14 +219,17 @@ unchanged by this work.
 
 ## Ansible boundary
 
-Ansible configures the **machine** and nothing about the application:
+Ansible configures the **machine** and nothing about the application. On this shared host its scope
+is deliberately small:
 
-- Docker engine and the compose plugin
-- UFW: 22, 80, 443 only
+- Docker engine and the compose plugin — followed by a check that `danted` (1080), the proxies
+  (3128–3130, 8080–8081) and sshd are all still reachable
 - The named Docker volume for PostgreSQL data
 - `unattended-upgrades` for security patches
-- A swap file (a small VM with PostgreSQL wants one)
 - The deploy key in `authorized_keys`
+
+Explicitly **not** in scope: any firewall change (UFW stays inactive, NSG remains the control
+point), and swap (2 GB already configured).
 
 It does **not** template `deploy.yml`, manage app env, or run Kamal. One tool owns the runtime and
 that tool is Kamal.
@@ -204,6 +255,13 @@ that tool is Kamal.
   criterion, and the nightly job must alert on failure rather than fail quietly.
 - **Single VM is a single point of failure.** Accepted: the recovery path is rebuild plus restore,
   which the runbook covers. Not worth HA at this scale.
+- **Coexistence on a shared host.** Docker's iptables changes, or memory pressure from PostgreSQL
+  and puma, could disturb `danted` and the proxy services this box exists to run — including the
+  owner's own route to it. Mitigation: verify every existing listener after Docker installs, cap
+  container memory, and keep a rollback path (`docker` removal) documented before starting.
+- **Capacity.** 1 vCPU and ~1.1 GB spare RAM is genuinely tight for puma plus PostgreSQL plus a
+  proxy. Mitigation: tune `shared_buffers`/`work_mem` down, set Docker memory limits, rely on the
+  existing 2 GB swap, and measure headroom during acceptance rather than assuming it.
 - **Disk exhaustion from WAL if archiving stalls.** PostgreSQL retains WAL when `archive_command`
   fails, and a full disk stops the database. Mitigation: monitor free space; make archive failures
   loud.

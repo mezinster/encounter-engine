@@ -12,7 +12,8 @@
 
 - Ruby 3.3.x. Rails 8.0.x. Pin exact patch versions in `Gemfile` at Task 1 and do not drift.
 - The 59 files under `features/**/*.feature` are **read-only** for the entire migration. If a scenario fails, the port is wrong, not the scenario. The only permitted exception is Task 12, which adds new files.
-- Every task ends with both suites green: `bundle exec rspec` and `bundle exec cucumber`. Cucumber is the gate; a red Cucumber run blocks the commit.
+- **Tasks 1–10 are mid-port and the full suites cannot pass.** Task 1 replaces the Gemfile, so the Merb-coupled `spec/spec_helper.rb` and the whole webrat Cucumber suite stop loading from that moment. Each of these tasks names the exact spec files that must pass, and *only those* are its gate. Do not judge Tasks 1–10 against `bundle exec cucumber` or a full `bundle exec rspec`.
+- **Task 11 restores the real gate.** From Task 11 onward, `bundle exec cucumber` (230 scenarios, 2,355 steps) and the full `bundle exec rspec` must both pass, and every later task must keep them green. Cucumber is the acceptance gate; a red Cucumber run from Task 11 on blocks the commit.
 - The test environment always runs with `I18n.locale = :ru` and `config.i18n.default_locale = :ru`.
 - User-generated content is **never** passed through `I18n.t`. Game names, descriptions, level names and texts, hint texts, and answer codes are author-authored data.
 - No string visible in the platform UI may be hardcoded after Task 9. Every one lives in `config/locales/<locale>.yml`.

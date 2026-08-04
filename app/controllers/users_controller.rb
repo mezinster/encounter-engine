@@ -1,14 +1,21 @@
 # -*- encoding : utf-8 -*-
 class UsersController < ApplicationController
+  # SECURITY FIX (see .superpowers/sdd/2026-08-04-merb-to-rails-i18n/task-S-report.md):
   # The Merb original (app/controllers/users.rb) had no `before` filters at
-  # all -- not even ensure_authenticated on #update, which loads @user by
-  # params[:id] rather than from current_user. That means any logged-in
-  # user (arguably any guest, since #update has no auth check either) could
-  # already update any other user's profile by posting a different :id in
-  # the Merb app. This port preserves that behaviour unchanged rather than
-  # silently hardening it -- see task-8b-report.md for the full writeup;
-  # it's flagged there as a concern for a reviewer to weigh in on, not
-  # something this mechanical-port task should fix on its own judgment.
+  # all -- not even ensure_authenticated on #update, which loaded @user by
+  # params[:id] rather than from current_user. That meant ANY request,
+  # including an anonymous one, could take over any account by PATCHing
+  # /users/:id with a new password -- User#before_save re-hashes whenever a
+  # password is present, so the victim's account would immediately
+  # authenticate with the attacker's password. This was preserved unchanged
+  # through the mechanical port (see task-8b-report.md) and is fixed here:
+  # #update now requires a signed-in user and always operates on
+  # current_user, never on an id taken from the request. #edit gets the same
+  # require_authentication! for consistency -- it already scoped @user to
+  # current_user, so it was never exploitable, but a guest hitting it hit a
+  # 500 (form_for a nil @user) instead of a clean login redirect.
+  before_action :require_authentication!, only: [:edit, :update]
+
   def show
     @user = User.find(params[:id])
   end
@@ -37,7 +44,7 @@ class UsersController < ApplicationController
   end
 
   def update
-    @user = User.find(params[:id])
+    @user = current_user
 
     if @user.update(profile_params)
       redirect_to users_path

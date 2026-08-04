@@ -7,6 +7,7 @@ en:
     not_team_member: "You are not authorized to visit this page"
     must_be_captain: "You must be the team captain to perform this action"
     must_be_author: "You must be the game's author to view this page"
+    must_be_author_or_finished_player: "The full log is only available to the game's author or a player whose team has finished the game"
     game_already_started: "You can't edit a game after it has started"
     must_be_recipient: "You must be the invitation's recipient to perform this action"
     cannot_play_own_game: "You can't play your own games, sorry :-)"

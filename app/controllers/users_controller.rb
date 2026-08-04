@@ -70,13 +70,18 @@ class UsersController < ApplicationController
   end
 
   # app/views/users/edit.html.erb (profile form) submits nickname,
-  # date_of_birth, icq_number, jabber_id, phone_number, password,
+  # date_of_birth, icq_number, jabber_id, phone_number, locale, password,
   # password_confirmation. No email, and no team_id or any field that could
   # let a user attach themself to a different team through this form.
+  #
+  # :locale is not restricted to I18n.available_locales here -- the <select>
+  # only ever offers those values (app/views/users/edit.html.erb), and
+  # LocaleSelection#current_user_locale re-checks membership on every read,
+  # so a value smuggled in by a raw PATCH is stored but never trusted.
   def profile_params
     params.fetch(:user, ActionController::Parameters.new)
           .permit(:nickname, :date_of_birth, :icq_number, :jabber_id,
-                   :phone_number, :password, :password_confirmation)
+                   :phone_number, :locale, :password, :password_confirmation)
   end
 
   # Merb original: app/controllers/users.rb#send_welcome_letter_to, which

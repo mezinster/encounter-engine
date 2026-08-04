@@ -4,3 +4,28 @@
   <%= link_to t("layout.header.home"), root_path, class: "home-link" %>
 <% end %>
 <%= l(Time.current, format: :short) %>
+
+<%# Language switcher. Explicit ?locale= wins over the signed-in user's
+    stored preference (see app/controllers/concerns/locale_selection.rb), so
+    a link that only appends ?locale=X to the CURRENT path -- rather than a
+    route helper, which would need to know what page it's on -- previews any
+    available locale from anywhere in the app without a form or JS. It
+    changes the platform chrome only: game content is author-authored and is
+    never translated (see features/i18n/switch-language.feature). Persisting
+    a choice across visits is done separately, on the profile form
+    (app/views/users/edit.html.erb). %>
+<div id="locale-switcher">
+  <% I18n.available_locales.each do |available_locale| %>
+    <% if available_locale == I18n.locale %>
+      <span class="locale-switcher-current"><%= t("locales.#{available_locale}") %></span>
+    <% else %>
+      <%# request.query_parameters has STRING keys (Rack::Utils.parse_nested_query) --
+          merging with a symbol :locale key would sit alongside rather than replace an
+          existing string "locale" key (e.g. after already following one of these links),
+          producing "?locale=en&locale=ru" instead of overwriting it. %>
+      <%= link_to t("locales.#{available_locale}"),
+            "#{request.path}?#{request.query_parameters.merge("locale" => available_locale).to_query}",
+            class: "locale-switcher-link" %>
+    <% end %>
+  <% end %>
+</div>

@@ -9,7 +9,11 @@ RSpec.describe "Rails application" do
     expect(I18n.default_locale).to eq(:ru)
   end
 
-  it "offers Russian and English" do
-    expect(I18n.available_locales).to contain_exactly(:ru, :en)
+  it "offers Russian, English, Ukrainian and Georgian" do
+    # uk and ka were registered by task 12 ("register them now, translate
+    # later" -- see config/application.rb and config/locales/{uk,ka}.yml):
+    # available for selection even though most of their copy still falls
+    # back to Russian.
+    expect(I18n.available_locales).to contain_exactly(:ru, :en, :uk, :ka)
   end
 end

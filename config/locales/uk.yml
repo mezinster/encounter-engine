@@ -1,0 +1,20 @@
+# Ukrainian.
+#
+# Registered per the project owner's task-12 decision: the platform's target
+# language set is en, ru, uk and ka, and uk is "registered now, translate
+# later" -- available in config.i18n.available_locales (config/application.rb)
+# so it can be selected, with only the keys needed to label it in the
+# language switcher and the profile form's language field filled in so far.
+#
+# Every other key is intentionally absent. config.i18n.fallbacks is [:ru]
+# (config/application.rb), so any key not defined here resolves to the
+# Russian copy rather than raising a translation-missing error or rendering
+# blank -- see spec/i18n_spec.rb for the fallback proof and for why the
+# key-parity spec treats this file as allowed to be a partial subset of
+# ru.yml rather than requiring full coverage.
+uk:
+  locales:
+    ru: "Русский"
+    en: "English"
+    uk: "Українська"
+    ka: "ქართული"

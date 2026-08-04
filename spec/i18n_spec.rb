@@ -1,24 +1,105 @@
 # spec/i18n_spec.rb
 require "rails_helper"
 
+def leaf_pairs(hash, prefix = "")
+  hash.flat_map do |key, value|
+    path = prefix.empty? ? key.to_s : "#{prefix}.#{key}"
+    value.is_a?(Hash) ? leaf_pairs(value, path) : [[path, value]]
+  end
+end
+
+def locale_data(locale)
+  yaml = YAML.load_file(Rails.root.join("config/locales/#{locale}.yml"))
+  leaf_pairs(yaml.fetch(locale.to_s)).to_h
+end
+
 RSpec.describe "internationalization" do
-  it "has the same keys in every locale file" do
-    def leaf_keys(hash, prefix = "")
-      hash.flat_map do |key, value|
-        path = prefix.empty? ? key.to_s : "#{prefix}.#{key}"
-        value.is_a?(Hash) ? leaf_keys(value, path) : [path]
-      end
+  ru = locale_data(:ru)
+  en = locale_data(:en)
+
+  it "has the same keys in ru and en" do
+    # ru and en are the platform's two complete, actively-maintained
+    # locales -- every screen is expected to say something in both. This
+    # guard has caught real key drift repeatedly (a key added to one file
+    # and not the other) and must stay strict for this pair. uk and ka are
+    # deliberately NOT held to this standard -- see below.
+    expect(en.keys.sort).to eq(ru.keys.sort)
+  end
+
+  # uk and ka were registered (config/application.rb) ahead of being
+  # translated -- task 12's explicit "register them now, translate later"
+  # -- so most of their keys don't exist yet and resolve through
+  # config.i18n.fallbacks to the Russian copy instead (proved below). That
+  # makes them legitimately PARTIAL locale files, which the strict ru/en
+  # parity check above would wrongly reject. What must still hold, even for
+  # a partial file, is that every key it DOES define is a real key: a
+  # subset of ru's keys, never a superset (an orphan nobody reads) or a
+  # sideways set (a typo'd path that silently never resolves). Subset-only,
+  # not exact-match, is the whole relaxation.
+  %i[uk ka].each do |locale|
+    it "only defines keys that also exist in ru (#{locale}.yml may be an incomplete subset)" do
+      data = locale_data(locale)
+      expect(data.keys - ru.keys).to eq([])
     end
-
-    ru = leaf_keys(YAML.load_file(Rails.root.join("config/locales/ru.yml")).fetch("ru"))
-    en = leaf_keys(YAML.load_file(Rails.root.join("config/locales/en.yml")).fetch("en"))
-
-    expect(en.sort).to eq(ru.sort)
   end
 
   it "falls back to Russian for a missing English key" do
     I18n.with_locale(:en) do
       expect(I18n.t("game.not_started")).to be_present
     end
+  end
+
+  # uk.yml and ka.yml don't define game.not_started (or almost anything
+  # else yet) -- this is the proof that a key missing from a registered but
+  # still-partial locale doesn't raise or render blank, it silently reads
+  # the Russian copy, which is what makes "register now, translate later"
+  # viable at all.
+  %i[uk ka].each do |locale|
+    it "falls back to the exact Russian copy for a missing #{locale} key" do
+      I18n.with_locale(locale) do
+        expect(I18n.t("game.not_started")).to eq(ru.fetch("game.not_started"))
+      end
+    end
+  end
+
+  # Key parity is not meaning parity. Earlier in this migration ru.yml and
+  # en.yml both defined the same key while saying materially different
+  # things (ru named a specific host, en was generic) -- and a parity check
+  # like the one above, which only compares key SETS, is blind to that: both
+  # sides had *a* value, just not the same one. This doesn't try to detect
+  # that in general -- telling "different wording, same meaning" from
+  # "different wording, different meaning" needs a human reader, not a
+  # spec. It catches one cheap, narrow proxy instead: an en value that is
+  # byte-identical to its ru value almost always means the string was
+  # copy-pasted across during translation and never actually translated.
+  #
+  # A handful of pairs are identical on purpose and are not bugs: a
+  # borrowed term ("Email"), a date format, or an endonym in the
+  # `locales.*` block (locales.en is meant to read "English" no matter
+  # which locale is currently rendering the switcher). Those are named
+  # explicitly below rather than exempted by a blanket rule like "identical
+  # single words are fine" -- so a *new* identical pair still fails the
+  # spec and has to be looked at, not silently waved through.
+  it "does not have en values that are an untranslated copy of their ru value" do
+    known_legitimate_duplicates = %w[
+      users.new.email_label
+      users.edit.jabber_label
+      users.index.email_label
+      users.index.jabber_label
+      time.formats.short
+      sessions.new.email_label
+      locales.ru
+      locales.en
+      locales.uk
+      locales.ka
+    ]
+
+    shared_keys = en.keys & ru.keys
+    suspicious_keys = shared_keys.select do |key|
+      value = en[key].to_s
+      !value.strip.empty? && value == ru[key].to_s
+    end
+
+    expect(suspicious_keys - known_legitimate_duplicates).to eq([])
   end
 end

@@ -26,6 +26,10 @@
       <%= f.text_field :phone_number %>
     <% end %>
   </p>
+  <p>
+    <%= f.label :locale, t("users.edit.locale_label") %>
+    <%= f.select :locale, I18n.available_locales.map { |l| [t("locales.#{l}"), l] } %>
+  </p>
   <br/>
   <p>
     <%= f.label :password, t("users.edit.password_label") %>

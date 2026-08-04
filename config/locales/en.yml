@@ -132,6 +132,7 @@ en:
       icq_label: "ICQ number"
       jabber_label: "Jabber ID"
       phone_label: "Contact phone number"
+      locale_label: "Interface language"
       password_label: "New password"
       password_confirmation_label: "Password confirmation"
       submit: "Save changes"
@@ -167,6 +168,18 @@ en:
     accept_notification:
       subject: "%{nickname} has accepted your invitation"
       body: "User %{nickname} has accepted your invitation and joined the team"
+  # Language names for the switcher (app/views/layouts/_header.html.erb) and
+  # the profile form's language field (app/views/users/edit.html.erb).
+  # Deliberately identical across every locale file: each language is named
+  # in its own endonym ("Русский", "English", ...) rather than translated, so
+  # a reader sees their own language's name spelled the way they'd recognise
+  # it no matter which locale currently renders the page. spec/i18n_spec.rb's
+  # untranslated-copy-paste check knows about this key and allows it.
+  locales:
+    ru: "Русский"
+    en: "English"
+    uk: "Українська"
+    ka: "ქართული"
   layout:
     title: "Active urban games"
     header:

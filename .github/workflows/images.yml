@@ -1,0 +1,40 @@
+name: Images
+
+on:
+  push:
+    branches-ignore: []
+  workflow_dispatch:
+
+jobs:
+  app-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the application image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: encounter-engine:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Prove the image actually serves
+        run: |
+          docker run -d --name ee-smoke -p 3001:3000 \
+            -e SECRET_KEY_BASE=$(openssl rand -hex 64) \
+            -e DATABASE_URL="sqlite3:/tmp/smoke.sqlite3" \
+            -e APP_HOST=game.mezin.eu \
+            -e SMTP_USERNAME=x -e SMTP_PASSWORD=y \
+            encounter-engine:test
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3001/up || true)
+            [ "$code" = "200" ] && echo "up: 200 after ${i}s" && exit 0
+            sleep 1
+          done
+          echo "FAILED: /up never returned 200"
+          docker logs ee-smoke
+          exit 1

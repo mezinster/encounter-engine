@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class RegistrationDeadlineMigration < ActiveRecord::Migration
+class RegistrationDeadline < ActiveRecord::Migration[4.2]
   def self.up
     add_column :games, :registration_deadline, :datetime
   end

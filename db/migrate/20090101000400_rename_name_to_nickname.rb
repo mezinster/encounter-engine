@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class RenameNameToNicknameMigration < ActiveRecord::Migration
+class RenameNameToNickname < ActiveRecord::Migration[4.2]
   def self.up
     rename_column :users, :name, :nickname
   end

@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class AddIsDraftColumnToGameMigration < ActiveRecord::Migration
+class AddIsDraftColumnToGame < ActiveRecord::Migration[4.2]
   def self.up
     add_column :games, :is_draft, :boolean, :null => false, :default => false
   end

@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class AddCurrentLevelEnteredAtToGamePassingsMigration < ActiveRecord::Migration
+class AddCurrentLevelEnteredAtToGamePassings < ActiveRecord::Migration[4.2]
   def self.up
     add_column :game_passings, :current_level_entered_at, :datetime
   end

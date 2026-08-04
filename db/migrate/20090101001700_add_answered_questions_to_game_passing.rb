@@ -1,5 +1,5 @@
 # -*- encoding : utf-8 -*-
-class AddAnsweredQuestionsToGamePassingMigration < ActiveRecord::Migration
+class AddAnsweredQuestionsToGamePassing < ActiveRecord::Migration[4.2]
   def self.up
     add_column :game_passings, :answered_questions, :string
   end

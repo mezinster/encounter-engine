@@ -13,7 +13,7 @@ describe Hint, "#ready_to_show" do
       end
 
       it "should return false" do
-        @hint.ready_to_show?(@current_level_entered_at).should be_false
+        @hint.ready_to_show?(@current_level_entered_at).should be_falsey
       end
     end
 
@@ -23,7 +23,7 @@ describe Hint, "#ready_to_show" do
       end
 
       it "should return true" do
-        @hint.ready_to_show?(@current_level_entered_at).should be_true
+        @hint.ready_to_show?(@current_level_entered_at).should be_truthy
       end
     end
   end

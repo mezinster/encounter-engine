@@ -12,7 +12,7 @@ describe Invitations, "#reject" do
 
     it "deletes the invitation" do
       perform_request :as_user => @recepient
-      Invitation.exists?(@invitation.id).should be_false
+      Invitation.exists?(@invitation.id).should be_falsey
     end
   end
 
@@ -75,8 +75,8 @@ describe Invitations, "#reject" do
   def perform_request(opts={})
     params = { :id => @invitation.id }
     dispatch_to Invitations, :reject, params do |controller|
-      controller.session.stub!(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub!(:user).and_return(opts[:as_user])
+      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
+      controller.session.stub(:user).and_return(opts[:as_user])
     end
   end
 end

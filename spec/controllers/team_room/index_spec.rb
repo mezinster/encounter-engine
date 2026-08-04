@@ -33,8 +33,8 @@ describe TeamRoom, "#index" do
 
   def perform_request(opts={})
     dispatch_to TeamRoom, :index do |controller|
-      controller.session.stub!(:authenticated?).and_return(opts[:skip_authentication])
-      controller.session.stub!(:user).and_return(opts[:as_user])
+      controller.session.stub(:authenticated?).and_return(opts[:skip_authentication])
+      controller.session.stub(:user).and_return(opts[:as_user])
     end
   end
 end

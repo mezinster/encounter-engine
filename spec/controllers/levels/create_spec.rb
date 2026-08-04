@@ -110,8 +110,8 @@ describe Levels, "#create" do
   def perform_request(opts={}, params={})
     params = params.merge(:game_id => @game.id)
     dispatch_to Levels, :create, params do |controller|
-      controller.session.stub!(:authenticated?).and_return(opts.key?(:as_user))
-      controller.session.stub!(:user).and_return(opts[:as_user])
+      controller.session.stub(:authenticated?).and_return(opts.key?(:as_user))
+      controller.session.stub(:user).and_return(opts[:as_user])
     end
   end
 end

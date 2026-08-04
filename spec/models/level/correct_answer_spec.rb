@@ -10,7 +10,7 @@ describe Level do
       end
 
       it "should build a question with a given answer" do
-        subject.questions.should have(1).player
+        subject.questions.size.should == 1
         subject.questions.first.answer.should == @correct_answer
       end
     end

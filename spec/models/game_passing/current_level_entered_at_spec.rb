@@ -22,8 +22,8 @@ describe GamePassing, "#current_level_entered_at" do
 
       describe "when team enters next level" do
         before :each do
-          Time.stub! :now => @game_passing.created_at + 1.hour
-          @game_passing.stub! :correct_answer? => true
+          allow(Time).to receive(:now).and_return(@game_passing.created_at + 1.hour)
+          allow(@game_passing).to receive(:correct_answer?).and_return(true)
           @game_passing.check_answer!(@game.levels.first.questions.first.answer)
         end
 
@@ -36,8 +36,8 @@ describe GamePassing, "#current_level_entered_at" do
         before :each do
           @previous_value = @game_passing.current_level_entered_at
 
-          Time.stub! :now => @game_passing.created_at + 1.hour
-          @game_passing.stub! :correct_answer? => false
+          allow(Time).to receive(:now).and_return(@game_passing.created_at + 1.hour)
+          allow(@game_passing).to receive(:correct_answer?).and_return(false)
           @game_passing.check_answer!('incorrect-answer')
         end
 

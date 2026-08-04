@@ -8,16 +8,30 @@ if (local_gem_dir = File.join(File.dirname(__FILE__), '..', 'gems')) && $BUNDLE.
 end
 
 require "merb-core"
-require "spec" # Satisfies Autotest and anyone else not using the Rake tasks
+require "rspec"
 
 # this loads all plugins required in your init file so don't add them
 # here again, Merb will do it for you
 Merb.start_environment(:testing => true, :adapter => 'runner', :environment => ENV['MERB_ENV'] || 'test')
 
-Spec::Runner.configure do |config|
-  config.include(Merb::Test::ViewHelper)
+RSpec.configure do |config|
+  # Merb::Test::ViewHelper is defined in merb-core/test/matchers.rb, which does
+  # not load under RSpec 3 (see spec/spec_helpers/merb_matchers.rb). No spec in
+  # this suite uses it, so it is simply dropped. RouteHelper and ControllerHelper
+  # come from merb-core/test/helpers.rb and are RSpec-independent.
   config.include(Merb::Test::RouteHelper)
   config.include(Merb::Test::ControllerHelper)
+
+  # The suite carries ~185 `.should` assertions written against RSpec 1.x.
+  # Enabling both syntaxes keeps them passing so the runner upgrade stays
+  # separable from converting assertions to `expect`.
+  config.expect_with :rspec do |expectations|
+    expectations.syntax = [:should, :expect]
+  end
+
+  config.mock_with :rspec do |mocks|
+    mocks.syntax = [:should, :expect]
+  end
 end
 
 glob = Merb.root / 'spec' / 'spec_helpers' / '**' / '*.rb'

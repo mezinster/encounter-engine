@@ -12,7 +12,7 @@ describe User, "#member_of_any_team" do
     end
 
     it "returns true" do
-      @user.member_of_any_team?.should be_true
+      @user.member_of_any_team?.should be_truthy
     end
   end
 
@@ -23,7 +23,7 @@ describe User, "#member_of_any_team" do
     end
 
     it "returns true" do
-      @user.member_of_any_team?.should be_true
+      @user.member_of_any_team?.should be_truthy
     end
   end
 
@@ -33,7 +33,7 @@ describe User, "#member_of_any_team" do
     end
 
     it "returns false" do
-      @user.member_of_any_team?.should be_false
+      @user.member_of_any_team?.should be_falsey
     end
   end
 end

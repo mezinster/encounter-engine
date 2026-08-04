@@ -25,7 +25,7 @@ describe GamePassing, "#hints_to_show" do
 
       describe "when 10 minutes passed" do
         before :each do
-          Time.stub!(:now => @game_passing.current_level_entered_at + 10.minutes)
+          Time.stub(:now => @game_passing.current_level_entered_at + 10.minutes)
         end        
 
         it "should return one first hint" do
@@ -35,7 +35,7 @@ describe GamePassing, "#hints_to_show" do
 
       describe "when 30 minutes passed" do
         before :each do
-          Time.stub!(:now => @game_passing.current_level_entered_at + 30.minutes)
+          Time.stub(:now => @game_passing.current_level_entered_at + 30.minutes)
         end
 
         it "should return two first hints" do
@@ -45,7 +45,7 @@ describe GamePassing, "#hints_to_show" do
       
       describe "when 50 minutes passed" do
         before :each do
-          Time.stub!(:now => @game_passing.current_level_entered_at + 50.minutes)
+          Time.stub(:now => @game_passing.current_level_entered_at + 50.minutes)
         end
 
         it "should return all three hints" do

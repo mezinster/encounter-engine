@@ -9,7 +9,7 @@ describe User, '#author_of?' do
     end
 
     it "returns true" do
-      @user.author_of?(@game).should be_true
+      @user.author_of?(@game).should be_truthy
     end
   end
 
@@ -20,7 +20,7 @@ describe User, '#author_of?' do
     end
 
     it "returns false" do
-      @user.author_of?(@game).should be_false
+      @user.author_of?(@game).should be_falsey
     end
   end
 end

@@ -9,7 +9,7 @@ describe Game, '#created_by?' do
     end
 
     it "returns true" do
-      @game.created_by?(@user).should be_true
+      @game.created_by?(@user).should be_truthy
     end
   end
 
@@ -20,7 +20,7 @@ describe Game, '#created_by?' do
     end
 
     it "returns false" do
-      @game.created_by?(@user).should be_false
+      @game.created_by?(@user).should be_falsey
     end
   end
 end

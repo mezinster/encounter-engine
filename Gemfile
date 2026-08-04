@@ -23,7 +23,7 @@ gem 'unicode_utils'
 
 gem 'rake', '~> 12.3.3' # Remove this constraint after upgrading to the latest RSpec
 
-gem 'rspec', '1.3.0', :require => 'spec'  # Read upgrade docs, maybe?
+gem 'rspec', '~> 3.13'
 
 group :development do
   gem 'sqlite3', '<1.4' # Remove this constraint after upgrading to latest Rails

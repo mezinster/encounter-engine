@@ -12,7 +12,7 @@ describe GamePassing, "#all_questions_answered?" do
 
     context "when no questions were answered" do
       it "should return false" do
-        subject.all_questions_answered?.should be_false
+        subject.all_questions_answered?.should be_falsey
       end
     end
 
@@ -22,7 +22,7 @@ describe GamePassing, "#all_questions_answered?" do
       end
 
       it "should return false" do
-        subject.all_questions_answered?.should be_false
+        subject.all_questions_answered?.should be_falsey
       end
     end
 
@@ -33,7 +33,7 @@ describe GamePassing, "#all_questions_answered?" do
       end
 
       it "should return false" do
-        subject.all_questions_answered?.should be_true
+        subject.all_questions_answered?.should be_truthy
       end
     end
   end

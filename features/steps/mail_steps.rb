@@ -14,7 +14,7 @@ Then %r{одно письмо с текстом "(.*)" должно быть в�
 end
 
 Then %r{никакие письма не должны быть высланы$}i do
-  Merb::Mailer.should have(0).deliveries
+  Merb::Mailer.deliveries.should be_empty
 end
 
 Then %r{никакие письма не должны быть высланы на (.*)$}i do |email|

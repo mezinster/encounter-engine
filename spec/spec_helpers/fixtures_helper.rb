@@ -1,7 +1,18 @@
 # -*- encoding : utf-8 -*-
 module FixturesHelper
+  # Returns a value unique within the process, not merely unlikely to repeat.
+  # rand(1000000) alone was a birthday-paradox collision waiting to happen:
+  # create_user derives both nickname and email from this, both are unique
+  # columns, and the database is rebuilt once per suite rather than per
+  # example, so every user from every example shares one table. A few hundred
+  # rows against a 10^6 space fails a few runs in a hundred -- rarely enough
+  # to look like a fluke, often enough to break CI.
+  def self.next_sequence_number
+    @sequence_number = (@sequence_number || 0) + 1
+  end
+
   def random_string
-    rand(1000000).to_s
+    "#{FixturesHelper.next_sequence_number}#{rand(1000000)}"
   end
 
   def create_user

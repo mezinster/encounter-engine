@@ -64,6 +64,12 @@ jobs:
           bundle config set --local path vendor/bundle
           bundle install --jobs 4 --retry 3
 
+      # Cheapest place to run this: it takes seconds and needs nothing this
+      # job doesn't already have. It caught the production-boot blocker
+      # twice during this migration -- guard against it recurring.
+      - name: Zeitwerk check
+        run: bin/rails zeitwerk:check
+
       - name: Prepare test database
         run: bin/rails db:test:prepare
 

@@ -31,5 +31,14 @@ module EncounterEngine
     # the TZ variable create-heroku-instance already sets.
     config.time_zone = ENV.fetch("TZ", "UTC")
     config.active_record.default_timezone = :utc
+
+    # config/initializers/filter_parameter_logging.rb is what a generated
+    # Rails app ships with -- this repo never had a config/initializers
+    # directory at all (Merb had no equivalent concept), so the redaction it
+    # normally provides was simply missing. Without it, every login and
+    # signup request logs its params -- including a plaintext password --
+    # at :info, which config/environments/production.rb sets as the
+    # production log level.
+    config.filter_parameters += [:password, :password_confirmation, :secret, :token]
   end
 end

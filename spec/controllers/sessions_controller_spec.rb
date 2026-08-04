@@ -17,6 +17,15 @@ RSpec.describe SessionsController, type: :controller do
     expect(session[:user_id]).to be_nil
   end
 
+  # config/application.rb sets config.filter_parameters -- without it, this
+  # repo (which has no config/initializers directory, so never got the
+  # filter_parameter_logging.rb every generated Rails app ships with) logs
+  # a plaintext password in production at :info on every login/signup.
+  it "redacts the password from filtered_parameters" do
+    post :create, params: { email: "iv@diesel.kg", password: "1234" }
+    expect(request.filtered_parameters["password"]).to eq("[FILTERED]")
+  end
+
   it "does not let a pre-existing session key survive login (session fixation)" do
     session[:attacker_planted] = "still here?"
     post :create, params: { email: "iv@diesel.kg", password: "1234" }

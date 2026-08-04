@@ -102,4 +102,29 @@ RSpec.describe "internationalization" do
 
     expect(suspicious_keys - known_legitimate_duplicates).to eq([])
   end
+
+  # Key parity (checked above) says nothing about interpolation-variable
+  # parity. A value carrying a %{placeholder} its caller never passes raises
+  # I18n::MissingInterpolationArgument -- a 500 that only shows up in
+  # whichever locale has the mismatched placeholder. The four locales here
+  # are ru, en, uk, ka; uk/ka are partial (see above) so this only compares
+  # keys where more than one locale actually defines a value.
+  it "uses the same interpolation variables for a key across every locale that defines it" do
+    interpolation_vars = ->(value) { value.to_s.scan(/%\{(\w+)\}/).flatten.sort.uniq }
+
+    locales = { ru: ru, en: en, uk: locale_data(:uk), ka: locale_data(:ka) }
+    all_keys = locales.values.flat_map(&:keys).uniq
+
+    mismatches = all_keys.filter_map do |key|
+      present_in = locales.select { |_, data| data.key?(key) }
+      next if present_in.size < 2
+
+      vars_by_locale = present_in.transform_values { |data| interpolation_vars.call(data[key]) }
+      next if vars_by_locale.values.uniq.size <= 1
+
+      [key, vars_by_locale]
+    end
+
+    expect(mismatches).to eq([])
+  end
 end

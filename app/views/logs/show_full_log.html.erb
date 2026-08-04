@@ -1,4 +1,4 @@
-<h1>Полный лог ответов</h1>
+<h1><%= t("logs.show_full_log.title") %></h1>
 
 <table id="stats" border="1">
   <tbody>
@@ -7,9 +7,9 @@
         <td colspan="0">
           <h2><%= level.name %></h2>
           <% if level.questions.count == 1 %>
-            <strong>Верный код:</strong><%= level.questions.first.correct_answer %>
+            <strong><%= t("logs.show_full_log.correct_answer_one") %></strong><%= level.questions.first.correct_answer %>
           <% else %>
-            <strong>Верные коды:</strong>
+            <strong><%= t("logs.show_full_log.correct_answer_many") %></strong>
             <% level.questions.each do |question| %>
               <%= question.correct_answer %><% if question!=level.questions.last %>,<% end %>
             <% end %>

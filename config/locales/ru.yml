@@ -59,6 +59,99 @@ ru:
       hours: ["час", "часа", "часов"]
       minutes: ["минута", "минуты", "минут"]
       seconds: ["секунда", "секунды", "секунд"]
+  game_passings:
+    index:
+      title: 'Игра "%{name}"'
+      team: "Команда"
+      level: "Уровень"
+      time_at_level: "Время на уровне"
+      exited: "(Сошли с дистанции)"
+      finished: "(закончили игру)"
+      level_log: "(лог по уровню)"
+      game_log: "(лог по игре)"
+      full_log: "Полный лог ответов"
+    show_current_level:
+      title_prefix: "Игра"
+      level_label: "Задание"
+      hint_label: "Подсказка"
+      until_next_hint: "До следующей подсказки"
+      countdown_placeholder: "3 минуты"
+      loading: "Загрузка..."
+      no_more_hints: "Подсказок больше не будет"
+      answer_correct: "Код '%{answer}' -- верный."
+      answer_incorrect: "Код неверный, вы ввели '%{answer}'."
+      multi_question_progress: "Правильных кодов введено: %{answered} из %{total}"
+      answer_label: "Код"
+      submit: "Отправить!"
+      exit_game: "Сойти с дистанции"
+      finish_testing: "Завершить тестирование"
+    show_results:
+      congrats: "Поздравляем, вы закончили игру!"
+      place: "Место"
+      team: "Команда"
+      finish_time: "Время финиша"
+      exited: "Сошли с дистанции"
+      not_finished: "Не финишировали"
+      full_log: "Лог ответов"
+      finish_testing: "Завершить тестирование"
+  logs:
+    index:
+      title: "Индекс"
+    show_full_log:
+      title: "Полный лог ответов"
+      correct_answer_one: "Верный код:"
+      correct_answer_many: "Верные коды:"
+    show_game_log:
+      title: 'Лог ответов команды "%{team}" по игре "%{game}"'
+      correct_answer: "Верный код:"
+    show_level_log:
+      title: 'Лог ответов команды "%{team}" по уровню "%{level}" игры "%{game}"'
+      correct_answer: "Верный код:"
+    show_live_channel:
+      title: 'Прямой эфир игры "%{name}"'
+      time: "Время"
+      team: "Команда"
+      level: "Задание"
+      code: "Код"
+  dashboard:
+    index:
+      greeting: "Вы"
+    coming_games:
+      legend: "Предстоящие игры (%{count})"
+      upcoming: "Предстоит игра"
+      you_are_author: "Вы автор игры"
+      enter: "Войти!"
+    finished_games:
+      legend: "Завершенные игры"
+      finished: "Завершена игра"
+    my_games:
+      legend: "Мои игры (%{count})"
+      create: "Создать игру >> "
+    my_team:
+      legend: "Моя команда"
+      no_team: "Вы не состоите ни в одной из команд"
+      create_team: "Создать команду"
+      invited: "Вас пригласили в команду %{team}"
+      accept: "(принять)"
+      decline: "(отказаться)"
+      captain_of: "Вы - капитан команды"
+      member_of: "Вы состоите в команде"
+      go_to_team_room: "Перейти в комнату команды"
+  index:
+    index:
+      title: "Главная страница"
+      games_list: "Список игр"
+  team_room:
+    index:
+      title: "Команда %{name}"
+      composition: "Состав"
+      captain_suffix: "- капитан"
+      invite: "Пригласить участников"
+  teams:
+    new:
+      error_header: "Ошибка"
+      name_label: "Название"
+      submit: "Создать команду"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

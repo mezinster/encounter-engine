@@ -1,12 +1,12 @@
-Прямой эфир игры "<%= @game.name %>"
+<%= t("logs.show_live_channel.title", name: @game.name) %>
 
 <table id="livechannel">
   <thead>
     <tr>
-      <th>Время</th>
-      <th>Команда</th>
-      <th>Задание</th>
-      <th>Код</th>
+      <th><%= t("logs.show_live_channel.time") %></th>
+      <th><%= t("logs.show_live_channel.team") %></th>
+      <th><%= t("logs.show_live_channel.level") %></th>
+      <th><%= t("logs.show_live_channel.code") %></th>
     </tr>
   </thead>
   <tbody>

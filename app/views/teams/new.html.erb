@@ -1,6 +1,9 @@
-<%= error_messages_for @team, :header => "<h2>Ошибка</h2>" %>
+<%= error_messages_for @team, header: "<h2>#{t("teams.new.error_header")}</h2>" %>
 
-<%= form_for @team, :action => url(:teams) do %>
-  <p><%= text_field :name, :label => "Название" %></p>
-  <%= submit "Создать команду" %>
-<% end =%>
+<%= form_with model: @team, url: teams_path do |f| %>
+  <p>
+    <%= f.label :name, t("teams.new.name_label") %>
+    <%= f.text_field :name %>
+  </p>
+  <%= f.submit t("teams.new.submit") %>
+<% end %>

@@ -59,6 +59,99 @@ en:
       hours: ["hour", "hours", "hours"]
       minutes: ["minute", "minutes", "minutes"]
       seconds: ["second", "seconds", "seconds"]
+  game_passings:
+    index:
+      title: 'Game "%{name}"'
+      team: "Team"
+      level: "Level"
+      time_at_level: "Time at level"
+      exited: "(left the race)"
+      finished: "(finished the game)"
+      level_log: "(level log)"
+      game_log: "(game log)"
+      full_log: "Full answer log"
+    show_current_level:
+      title_prefix: "Game"
+      level_label: "Task"
+      hint_label: "Hint"
+      until_next_hint: "Next hint in"
+      countdown_placeholder: "3 minutes"
+      loading: "Loading..."
+      no_more_hints: "There will be no more hints"
+      answer_correct: "Code '%{answer}' -- correct."
+      answer_incorrect: "Code incorrect, you entered '%{answer}'."
+      multi_question_progress: "Correct codes entered: %{answered} out of %{total}"
+      answer_label: "Code"
+      submit: "Submit!"
+      exit_game: "Leave the race"
+      finish_testing: "Finish testing"
+    show_results:
+      congrats: "Congratulations, you finished the game!"
+      place: "Place"
+      team: "Team"
+      finish_time: "Finish time"
+      exited: "Left the race"
+      not_finished: "Did not finish"
+      full_log: "Answer log"
+      finish_testing: "Finish testing"
+  logs:
+    index:
+      title: "Index"
+    show_full_log:
+      title: "Full answer log"
+      correct_answer_one: "Correct code:"
+      correct_answer_many: "Correct codes:"
+    show_game_log:
+      title: 'Answer log for team "%{team}" in game "%{game}"'
+      correct_answer: "Correct code:"
+    show_level_log:
+      title: 'Answer log for team "%{team}" at level "%{level}" in game "%{game}"'
+      correct_answer: "Correct code:"
+    show_live_channel:
+      title: 'Live feed for game "%{name}"'
+      time: "Time"
+      team: "Team"
+      level: "Task"
+      code: "Code"
+  dashboard:
+    index:
+      greeting: "You are"
+    coming_games:
+      legend: "Upcoming games (%{count})"
+      upcoming: "Upcoming game"
+      you_are_author: "You are the game's author"
+      enter: "Enter!"
+    finished_games:
+      legend: "Finished games"
+      finished: "Finished game"
+    my_games:
+      legend: "My games (%{count})"
+      create: "Create a game >> "
+    my_team:
+      legend: "My team"
+      no_team: "You are not a member of any team"
+      create_team: "Create a team"
+      invited: "You were invited to join team %{team}"
+      accept: "(accept)"
+      decline: "(decline)"
+      captain_of: "You are the team captain of"
+      member_of: "You are a member of"
+      go_to_team_room: "Go to team room"
+  index:
+    index:
+      title: "Home page"
+      games_list: "List of games"
+  team_room:
+    index:
+      title: "Team %{name}"
+      composition: "Members"
+      captain_suffix: "- captain"
+      invite: "Invite members"
+  teams:
+    new:
+      error_header: "Error"
+      name_label: "Title"
+      submit: "Create team"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

@@ -22,6 +22,7 @@
   --time:       #fb923c;
   --danger:     #dc5555;
   --focus:      #fbbf24;
+  --scrim:      rgba(0, 0, 0, 0.5);
 }
 
 :root[data-theme="light"] {
@@ -40,6 +41,8 @@
   --time:       #b45309;
   --danger:     #b42318;
   --focus:      #966006;
+  /* A light UI needs less dimming to read as dimmed. */
+  --scrim:      rgba(0, 0, 0, 0.35);
 }
 
 :root {

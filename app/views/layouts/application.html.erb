@@ -20,12 +20,15 @@
     <%= yield :head %>
   </head>
   <body>
-    <input type="checkbox" id="drawer-state" aria-hidden="true" tabindex="-1">
+    <%# The checkbox IS the control: focusable, named, and toggled by Space
+        natively. The label below is only its visual presentation, so it is
+        hidden from assistive tech to avoid announcing the same thing twice. %>
+    <input type="checkbox" id="drawer-state"
+           aria-label="<%= t("layout.header.menu") %>">
 
     <div class="page">
       <header class="topbar">
-        <label for="drawer-state" id="drawer-toggle" role="button"
-               aria-label="<%= t("layout.header.menu") %>">☰</label>
+        <label for="drawer-state" id="drawer-toggle" aria-hidden="true">☰</label>
         <%= render "layouts/header" %>
       </header>
 

@@ -28,8 +28,25 @@
 /* The drawer is driven by a hidden checkbox so it opens with CSS alone.
    drawer.js only adds Escape-to-close and focus handling -- without it the
    navigation still works, which matters because this markup is on the login
-   page too. */
-#drawer-state { position: absolute; opacity: 0; pointer-events: none; }
+   page too.
+
+   Visually hidden but still focusable. NOT display:none and NOT
+   visibility:hidden -- either removes it from the tab order, and it is the
+   only keyboard-operable way to open the drawer. */
+#drawer-state {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+}
+
+/* The focus ring has to appear on the thing the user can see. */
+#drawer-state:focus-visible ~ .page #drawer-toggle {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
 
 #drawer-toggle {
   display: inline-flex;
@@ -63,7 +80,7 @@
 .drawer-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--scrim);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.18s ease;
@@ -87,8 +104,17 @@
   .main { grid-area: main; }
 }
 
-/* The play shell: no menu, no max-width, room for a pinned bar. */
-.page--focused { grid-template-columns: 1fr; }
+/* The play shell: no menu, no max-width, room for a pinned bar.
+   Both properties must be overridden together. grid-template-areas from the
+   60rem block above still declares two columns, and the explicit grid takes
+   the MAX of the two definitions -- so overriding only the columns leaves a
+   phantom second track and pushes .main into it. */
+.page--focused {
+  grid-template-columns: 1fr;
+  grid-template-areas: "top" "main";
+}
+/* 12rem clears space for the pinned answer bar Task 4 adds at the bottom of
+   the play screen -- not a colour, so no token. */
 .page--focused .main { max-width: 44rem; padding-bottom: 12rem; }
 
 @media (prefers-reduced-motion: reduce) {

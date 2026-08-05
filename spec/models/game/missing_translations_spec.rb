@@ -65,5 +65,22 @@ describe Game do
       create_level(:game => game, :name => "Уровень", :text => "Текст")
       expect(game).to be_valid
     end
+
+    it "refuses a game created directly as published while a locale is incomplete" do
+      g = Game.new(:name => "Новая", :description => "Описание", :author => create_user,
+                   :max_team_number => 5, :starts_at => Time.now + 1.day, :is_draft => false)
+      g.primary_locale = "ru"
+      g.available_locale_list = %w[ru en]
+      expect(g).not_to be_valid
+      expect(g.errors[:base]).to be_present
+    end
+
+    it "refuses to add a locale to an already-published game without translating it" do
+      published = create_game(:is_draft => false)
+      create_level(:game => published)
+      published.available_locale_list = %w[ru en]
+      expect(published).not_to be_valid
+      expect(published.errors[:base]).to be_present
+    end
   end
 end

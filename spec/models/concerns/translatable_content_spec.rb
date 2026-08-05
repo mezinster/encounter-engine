@@ -2,8 +2,11 @@
 require "rails_helper"
 
 describe TranslatableContent do
+  # Draft: this file exercises the TranslatableContent concern in isolation,
+  # not the publish gate, and most examples here save a level/hint/question
+  # while "en"/"ka" are deliberately left untranslated.
   let(:game) do
-    g = create_game(:name => "Городской квест")
+    g = create_game(:name => "Городской квест", :is_draft => true)
     g.available_locale_list = %w[ru en ka]
     g.save!
     g

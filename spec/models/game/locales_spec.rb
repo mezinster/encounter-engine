@@ -10,7 +10,10 @@ describe Game do
     end
 
     it "round-trips a locale list through the comma-separated column" do
-      game = create_game
+      # Draft: this test is about the comma-separated column round-trip, not
+      # about translation completeness, and a published game with untranslated
+      # locales would now be blocked by the publish gate.
+      game = create_game(:is_draft => true)
       game.available_locale_list = %w[ru en ka]
       game.save!
       expect(game.reload.available_locales).to eq("ru,en,ka")

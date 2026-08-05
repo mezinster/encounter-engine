@@ -28,6 +28,12 @@ en:
     not_started: "The game has not started yet. Where did you even get this link? :-)"
     already_in_team: "You are already a member of a team"
   games:
+    translations:
+      incomplete: "This game declares languages it is not fully translated into: %{count} fields are missing"
+      game_field: "Game — %{field}"
+      level_field: "Level %{position} — %{field}"
+      hint_field: "Level %{position} — hint after %{minutes} min"
+      question_field: "Level %{position} — question"
     list:
       view: "(view)"
       stats: "(statistics)"

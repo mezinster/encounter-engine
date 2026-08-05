@@ -28,6 +28,12 @@ ru:
     not_started: "Нельзя играть в игру до её начала. И вообще, где вы достали эту ссылку? :-)"
     already_in_team: "Вы уже являетесь членом команды"
   games:
+    translations:
+      incomplete: "Игра объявляет языки, на которые переведено не всё: не хватает %{count} полей"
+      game_field: "Игра — %{field}"
+      level_field: "Уровень %{position} — %{field}"
+      hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
+      question_field: "Уровень %{position} — вопрос"
     list:
       view: "(просмотреть)"
       stats: "(статистика)"

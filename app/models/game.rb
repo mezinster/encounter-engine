@@ -4,6 +4,11 @@ class Game < ApplicationRecord
 
   TRANSLATABLE_FIELDS = %w[name description].freeze
 
+  # Not a boolean: these entries are simultaneously the publish gate's reason
+  # for refusing and the author's to-do list, so they carry enough to render a
+  # deep link straight to the offending field.
+  MissingTranslation = Struct.new(:record, :field, :locale, :label)
+
   def translation_game
     self
   end
@@ -106,9 +111,29 @@ class Game < ApplicationRecord
     self.available_locale_list.size > 1
   end
 
+  def missing_translations
+    non_primary = self.available_locale_list - [self.primary_locale.to_s]
+    return [] if non_primary.empty?
+
+    non_primary.flat_map do |locale|
+      translatable_records.flat_map do |record|
+        record.class::TRANSLATABLE_FIELDS.map do |field|
+          next if record.translated?(field, locale)
+
+          MissingTranslation.new(record, field, locale, label_for(record, field))
+        end.compact
+      end
+    end
+  end
+
+  def translations_complete?
+    self.missing_translations.empty?
+  end
+
   validate :available_locales_are_known
   validate :available_locales_include_primary
   validate :primary_locale_is_settled
+  validate :declared_locales_are_translated_before_publication
 
 protected
 
@@ -166,5 +191,37 @@ private
 
     self.errors.add(:primary_locale,
                     I18n.t("activerecord.errors.models.game.attributes.primary_locale.settled"))
+  end
+
+  # Runs only on the draft -> published transition, so an author can add a
+  # language and fill it in over several sittings. game_params permits
+  # :is_draft and GamesController#start_test also flips it, so this belongs on
+  # the model where both paths pass through it.
+  def declared_locales_are_translated_before_publication
+    return unless self.is_draft_changed?(:from => true, :to => false)
+    return if self.translations_complete?
+
+    self.errors.add(:base, I18n.t("games.translations.incomplete",
+                                  :count => self.missing_translations.size))
+  end
+
+  def translatable_records
+    records = [ self ]
+    self.levels.includes(:hints, :questions, :content_translations).each do |level|
+      records << level
+      records.concat(level.hints)
+      records.concat(level.questions)
+    end
+    records
+  end
+
+  def label_for(record, field)
+    case record
+    when Game     then I18n.t("games.translations.game_field",  :field => field)
+    when Level    then I18n.t("games.translations.level_field", :position => record.position, :field => field)
+    when Hint     then I18n.t("games.translations.hint_field",  :position => record.level&.position,
+                                                                :minutes => record.delay_in_minutes)
+    when Question then I18n.t("games.translations.question_field", :position => record.level&.position)
+    end
   end
 end

@@ -28,3 +28,10 @@ ka:
               missing_primary: "должны включать основной язык игры"
             primary_locale:
               settled: "нельзя изменить после того, как добавлены переводы"
+  games:
+    translations:
+      incomplete: "Игра объявляет языки, на которые переведено не всё: не хватает %{count} полей"
+      game_field: "Игра — %{field}"
+      level_field: "Уровень %{position} — %{field}"
+      hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
+      question_field: "Уровень %{position} — вопрос"

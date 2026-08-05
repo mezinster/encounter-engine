@@ -1,6 +1,7 @@
 # -*- encoding : utf-8 -*-
 class GamesController < ApplicationController
   include SecurityFilters
+  include AdminAudit
 
   before_action :require_authentication!, except: [:index, :show]
   before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :lock, :unlock]
@@ -53,6 +54,7 @@ class GamesController < ApplicationController
 
   def update
     if @game.update(game_attributes)
+      record_admin_action("update", @game) if acting_as_operator?
       redirect_to @game
     else
       render :edit, status: :unprocessable_entity
@@ -64,13 +66,16 @@ class GamesController < ApplicationController
       redirect_to @game, :alert => t("games.not_deletable") and return
     end
 
+    operator = acting_as_operator?
     @game.destroy
+    record_admin_action("delete", @game) if operator
     redirect_to dashboard_path
   end
 
   def end_game
     @game.finish_game!
     GamePassing.of_game(@game).each(&:end!)
+    record_admin_action("end_game", @game) if acting_as_operator?
     redirect_to dashboard_path
   end
 
@@ -82,26 +87,31 @@ class GamesController < ApplicationController
     @game.registration_deadline = nil
     @game.save!
 
+    record_admin_action("start_test", @game) if acting_as_operator?
     redirect_to @game
   end
 
   def withdraw
     @game.update!(:withdrawn_at => Time.now)
+    record_admin_action("withdraw", @game)
     redirect_to admin_games_path, :notice => t("games.withdrawn_notice")
   end
 
   def restore
     @game.update!(:withdrawn_at => nil)
+    record_admin_action("restore", @game)
     redirect_to admin_games_path, :notice => t("games.restored_notice")
   end
 
   def lock
     @game.update!(:editing_locked_at => Time.now)
+    record_admin_action("lock", @game)
     redirect_to admin_games_path, :notice => t("games.locked_notice")
   end
 
   def unlock
     @game.update!(:editing_locked_at => nil)
+    record_admin_action("unlock", @game)
     redirect_to admin_games_path, :notice => t("games.unlocked_notice")
   end
 
@@ -115,10 +125,21 @@ class GamesController < ApplicationController
     GamePassing.of_game(@game).delete_all
     Log.of_game(@game).delete_all
 
+    record_admin_action("finish_test", @game) if acting_as_operator?
     redirect_to @game
   end
 
   private
+
+  # Audited only when an operator acts on someone else's game. An author
+  # editing their own game is ordinary use, not an administrative act, and
+  # recording it would bury the administrative entries under routine ones.
+  #
+  # Compares author_id directly rather than calling User#author_of?, which is
+  # `game.author.id == self.id` and raises on a game whose author is missing.
+  def acting_as_operator?
+    logged_in? && current_user.superadmin? && @game.author_id != current_user.id
+  end
 
   # Merb passed params[:game] straight to update_attributes with no
   # top-level key required. fetch (rather than require) keeps that

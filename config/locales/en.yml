@@ -55,6 +55,8 @@ en:
       registration_deadline: "Registration deadline "
       max_team_number: "Maximum number of teams"
       is_draft: "Draft?"
+    primary_locale_label: "Primary language"
+    available_locales_label: "Game languages"
     new:
       submit: "Create game"
     edit:

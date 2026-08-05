@@ -10,7 +10,7 @@
 
 <%= error_messages_for @level, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
-<% active_locale = params[:locale].presence || @level.game.primary_locale %>
+<% active_locale = params[:tab].presence_in(@level.game.available_locale_list) || @level.game.primary_locale %>
 <%= render "shared/language_tabs", :game => @level.game, :record => @level,
                                    :fields => Level::TRANSLATABLE_FIELDS,
                                    :active => active_locale %>

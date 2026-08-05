@@ -27,4 +27,78 @@ describe "authoring translations", type: :request do
     expect(game.reload.translated(:name, "en")).to eq("City Quest")
     expect(game.reload.name).not_to eq("City Quest")
   end
+
+  # Round 2 review: the two examples above only prove the model-level
+  # contract (Task 2's writer). Neither exercises an actual HTTP request, so
+  # neither would have caught the params-shape bugs in games_controller /
+  # levels_controller (or the ?tab vs ?locale collision below). These do.
+  describe "through the real controllers" do
+    def login(user)
+      post login_path, params: { email: user.email, password: "1234" }
+    end
+
+    it "declares a game's languages, then saves a level translation from the English tab, leaving primary columns untouched" do
+      login(author)
+      solo_game = create_game(:author => author, :is_draft => true)
+
+      put game_path(solo_game), params: {
+        game: {
+          name: solo_game.name, description: solo_game.description,
+          max_team_number: solo_game.max_team_number, is_draft: true,
+          primary_locale: "ru", :available_locale_list => %w[ru en]
+        }
+      }
+      expect(solo_game.reload.available_locale_list).to match_array(%w[ru en])
+      expect(solo_game.reload.primary_locale).to eq("ru")
+
+      level = create_level(:game => solo_game, :name => "Уровень", :text => "Текст")
+
+      put "#{game_level_path(solo_game, level)}?tab=en", params: {
+        level: {
+          translations: { "en" => { "name" => "Level", "text" => "Text" } }
+        }
+      }
+
+      expect(level.reload.translated(:name, "en")).to eq("Level")
+      expect(level.reload.translated(:text, "en")).to eq("Text")
+      expect(level.reload.name).to eq("Уровень")
+      expect(level.reload.text).to eq("Текст")
+    end
+
+    # This is the Critical bug's exact reproduction: the platform's
+    # pre-existing chrome switcher (app/views/layouts/_header.html.erb) uses
+    # ?locale=, on every page, for a purpose that has nothing to do with
+    # this feature. Before the fix, levels/edit and games/edit read that
+    # same param to pick the active translation tab, so clicking the chrome
+    # switcher on a single-locale game's edit form silently rebound the
+    # inputs from the model's own columns to a translation hash the game
+    # never declared -- an edit that looked like it saved but never touched
+    # the primary column.
+    it "still binds the level form to the primary columns when ?locale=en is present (single-locale game)" do
+      login(author)
+      solo_game = create_game(:author => author, :is_draft => true)
+      level = create_level(:game => solo_game, :name => "Уровень", :text => "Текст")
+      expect(solo_game.multilingual?).to eq(false)
+
+      get "#{edit_game_level_path(solo_game, level)}?locale=en"
+
+      expect(response.body).to include("level[name]")
+      expect(response.body).to include("level[text]")
+      expect(response.body).not_to include("level[translations]")
+      expect(response.body).not_to include("language-tabs")
+    end
+
+    it "still binds the game form to the primary columns when ?locale=en is present (single-locale game)" do
+      login(author)
+      solo_game = create_game(:author => author, :is_draft => true)
+      expect(solo_game.multilingual?).to eq(false)
+
+      get "#{edit_game_path(solo_game)}?locale=en"
+
+      expect(response.body).to include("game[name]")
+      expect(response.body).to include("game[description]")
+      expect(response.body).not_to include("game[translations]")
+      expect(response.body).not_to include("language-tabs")
+    end
+  end
 end

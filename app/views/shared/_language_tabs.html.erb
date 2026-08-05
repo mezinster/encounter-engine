@@ -8,13 +8,21 @@
 
     Renders nothing for a single-locale game, so monolingual authors see the
     form exactly as it was before this feature existed.
+
+    Deliberately its own :tab query param, distinct from the platform's
+    pre-existing chrome switcher (?locale=, app/views/layouts/_header.html.erb,
+    read by LocaleSelection on every request). Reusing ?locale= here would mean
+    clicking the header's chrome switcher on a game/level form silently
+    rebinds the inputs to a translation hash instead of the model's own
+    columns -- an edit that looks like it saved but never touched the primary
+    column. See Task 6 review round 2.
 %>
 <% if game.multilingual? %>
   <ul class="language-tabs">
     <% game.available_locale_list.each do |locale| %>
       <% missing = record.new_record? ? [] : record.missing_translated_fields(fields, locale) %>
       <li class="<%= "active" if locale == active %> <%= "incomplete" if missing.any? %>">
-        <%= link_to url_for(request.query_parameters.merge(:locale => locale)) do %>
+        <%= link_to url_for(request.query_parameters.merge(:tab => locale)) do %>
           <%# "locales.<code>" is the key the header's language switcher already
               uses for a language's own name -- there is no separate
               "locale_name.*" key. %>

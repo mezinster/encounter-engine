@@ -7,7 +7,7 @@
 
 <%= error_messages_for @game, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
-<% active_locale = params[:locale].presence || @game.primary_locale %>
+<% active_locale = params[:tab].presence_in(@game.available_locale_list) || @game.primary_locale %>
 <%= render "shared/language_tabs", :game => @game, :record => @game,
                                    :fields => Game::TRANSLATABLE_FIELDS,
                                    :active => active_locale %>
@@ -29,6 +29,26 @@
     <% else %>
       <%= text_area_tag "game[translations][#{active_locale}][description]",
                         @game.translated(:description, active_locale) %>
+    <% end %>
+  </p>
+  <p>
+    <%= f.label :primary_locale, t("games.primary_locale_label") %>
+    <%= f.select :primary_locale, I18n.available_locales.map { |l| [t("locales.#{l}"), l] } %>
+  </p>
+  <p>
+    <%= f.label :available_locale_list, t("games.available_locales_label") %>
+    <% I18n.available_locales.each do |locale| %>
+      <% is_primary = locale.to_s == @game.primary_locale.to_s %>
+      <label>
+        <% if is_primary %>
+          <%= check_box_tag "game[available_locale_list][]", locale, true, :disabled => true %>
+          <%= hidden_field_tag "game[available_locale_list][]", locale %>
+        <% else %>
+          <%= check_box_tag "game[available_locale_list][]", locale,
+                            @game.available_locale_list.include?(locale.to_s) %>
+        <% end %>
+        <%= t("locales.#{locale}") %>
+      </label>
     <% end %>
   </p>
   <p>

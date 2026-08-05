@@ -20,6 +20,7 @@ uk:
     ka: "ქართული"
   errors:
     must_be_superadmin: "Доступ только для администратора"
+    game_is_locked: "Редактирование игры заморожено администратором"
   activerecord:
     errors:
       messages:

@@ -16,6 +16,7 @@ en:
     must_be_superadmin: "Administrator access only"
     must_be_author_or_finished_player: "The full log is only available to the game's author or a player whose team has finished the game"
     game_already_started: "You can't edit a game after it has started"
+    game_is_locked: "Editing this game has been frozen by an administrator"
     must_be_recipient: "You must be the invitation's recipient to perform this action"
     cannot_play_own_game: "You can't play your own games, sorry :-)"
     game_finished_by_author: "The game was ended by its author, you can no longer play it"

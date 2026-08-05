@@ -46,6 +46,14 @@ class Game < ApplicationRecord
     self.starts_at.nil? ? false : Time.now > self.starts_at
   end
 
+  def editing_locked?
+    self.editing_locked_at.present?
+  end
+
+  def withdrawn?
+    self.withdrawn_at.present?
+  end
+
   def created_by?(user)
     user.author_of?(self)
   end

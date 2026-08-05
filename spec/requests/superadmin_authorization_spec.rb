@@ -37,4 +37,18 @@ describe "superadmin authorization", type: :request do
     get edit_game_path(game)
     expect(response).not_to have_http_status(:ok)
   end
+
+  it "stops the author editing a locked game" do
+    game.update!(:editing_locked_at => Time.now)
+    sign_in(author)
+    get edit_game_path(game)
+    expect(response).not_to have_http_status(:ok)
+  end
+
+  it "still lets a superadmin edit a locked game" do
+    game.update!(:editing_locked_at => Time.now)
+    sign_in(superadmin)
+    get edit_game_path(game)
+    expect(response).to have_http_status(:ok)
+  end
 end

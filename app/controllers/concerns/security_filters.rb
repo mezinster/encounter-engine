@@ -32,6 +32,7 @@ module SecurityFilters
     return if logged_in? && current_user.superadmin?
 
     raise Authentication::Unauthorized, t("errors.must_be_author") unless logged_in? && current_user.author_of?(@game)
+    raise Authentication::Unauthorized, t("errors.game_is_locked") if @game&.editing_locked?
   end
 
   def require_superadmin!

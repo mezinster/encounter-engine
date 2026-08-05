@@ -81,8 +81,11 @@ describe "withdrawal", type: :request do
     sign_in(superadmin)
     post withdraw_game_path(game)
     expect(game.reload.withdrawn?).to be true
+    expect(response).to redirect_to(admin_games_path)
+
     post restore_game_path(game)
     expect(game.reload.withdrawn?).to be false
+    expect(response).to redirect_to(admin_games_path)
   end
 
   it "cannot be withdrawn by the author" do

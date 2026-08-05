@@ -1,4 +1,23 @@
 ru:
+  admin:
+    games:
+      index:
+        title: "Все игры"
+        name: "Название"
+        author: "Автор"
+        locales: "Языки"
+        status: "Статус"
+        teams: "Команд"
+        draft: "Черновик"
+        scheduled: "Запланирована"
+        running: "Идёт"
+        withdrawn: "Снята с публикации"
+        locked: "редактирование заморожено"
+        edit: "Редактировать"
+        withdraw: "Снять"
+        restore: "Опубликовать"
+        delete: "Удалить"
+        delete_confirm: "Удалить игру «%{name}» со всеми уровнями? Это необратимо."
   answers:
     must_have_at_least_one_variant: "Должен быть хотя бы один вариант кода"
     index:

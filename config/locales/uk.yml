@@ -13,6 +13,25 @@
 # key-parity spec treats this file as allowed to be a partial subset of
 # ru.yml rather than requiring full coverage.
 uk:
+  admin:
+    games:
+      index:
+        title: "Все игры"
+        name: "Название"
+        author: "Автор"
+        locales: "Языки"
+        status: "Статус"
+        teams: "Команд"
+        draft: "Черновик"
+        scheduled: "Запланирована"
+        running: "Идёт"
+        withdrawn: "Снята с публикации"
+        locked: "редактирование заморожено"
+        edit: "Редактировать"
+        withdraw: "Снять"
+        restore: "Опубликовать"
+        delete: "Удалить"
+        delete_confirm: "Удалить игру «%{name}» со всеми уровнями? Это необратимо."
   locales:
     ru: "Русский"
     en: "English"

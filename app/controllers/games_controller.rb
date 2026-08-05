@@ -77,21 +77,14 @@ class GamesController < ApplicationController
     redirect_to @game
   end
 
-  # PLAN DEFECT (task-ordering): the brief redirects here to admin_games_path,
-  # but that route/controller is Task 5's deliverable (the console), not yet
-  # built on this branch -- redirecting to it would raise UrlGenerationError.
-  # Redirect to the game itself instead: it satisfies the same requirement
-  # (the operator lands somewhere that still shows the game, withdrawn or
-  # not) without depending on a task that hasn't landed. Task 5 is expected
-  # to change this redirect target once its console route exists.
   def withdraw
     @game.update!(:withdrawn_at => Time.now)
-    redirect_to @game, :notice => t("games.withdrawn_notice")
+    redirect_to admin_games_path, :notice => t("games.withdrawn_notice")
   end
 
   def restore
     @game.update!(:withdrawn_at => nil)
-    redirect_to @game, :notice => t("games.restored_notice")
+    redirect_to admin_games_path, :notice => t("games.restored_notice")
   end
 
   def finish_test

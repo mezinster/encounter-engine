@@ -1,0 +1,41 @@
+<%# app/views/admin/games/index.html.erb %>
+<h1><%= t("admin.games.index.title") %></h1>
+
+<table class="admin-games">
+  <tr>
+    <th><%= t("admin.games.index.name") %></th>
+    <th><%= t("admin.games.index.author") %></th>
+    <th><%= t("admin.games.index.locales") %></th>
+    <th><%= t("admin.games.index.status") %></th>
+    <th><%= t("admin.games.index.teams") %></th>
+    <th></th>
+  </tr>
+  <% @games.each do |game| %>
+    <tr>
+      <td><%= link_to game.name, game_path(game) %></td>
+      <td><%= game.author&.nickname %></td>
+      <td><%= game.available_locale_list.join(", ") %></td>
+      <td>
+        <% if game.withdrawn? %><%= t("admin.games.index.withdrawn") %>
+        <% elsif game.draft? %><%= t("admin.games.index.draft") %>
+        <% elsif game.started? %><%= t("admin.games.index.running") %>
+        <% else %><%= t("admin.games.index.scheduled") %>
+        <% end %>
+        <% if game.editing_locked? %> &middot; <%= t("admin.games.index.locked") %><% end %>
+      </td>
+      <td><%= game.game_passings.size %></td>
+      <td>
+        <%= link_to t("admin.games.index.edit"), edit_game_path(game) %>
+        <% if game.withdrawn? %>
+          <%= button_to t("admin.games.index.restore"), restore_game_path(game), :method => :post %>
+        <% else %>
+          <%= button_to t("admin.games.index.withdraw"), withdraw_game_path(game), :method => :post %>
+        <% end %>
+        <% if game.deletable? %>
+          <%= link_to t("admin.games.index.delete"), delete_game_path(game),
+                      :data => { :confirm => t("admin.games.index.delete_confirm", :name => game.name) } %>
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+</table>

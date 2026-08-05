@@ -1,4 +1,23 @@
 en:
+  admin:
+    games:
+      index:
+        title: "All games"
+        name: "Name"
+        author: "Author"
+        locales: "Languages"
+        status: "Status"
+        teams: "Teams"
+        draft: "Draft"
+        scheduled: "Scheduled"
+        running: "Running"
+        withdrawn: "Withdrawn"
+        locked: "editing frozen"
+        edit: "Edit"
+        withdraw: "Withdraw"
+        restore: "Publish"
+        delete: "Delete"
+        delete_confirm: "Delete the game “%{name}” and all its levels? This cannot be undone."
   answers:
     must_have_at_least_one_variant: "There must be at least one answer code"
     index:

@@ -327,6 +327,7 @@ ru:
     header:
       dashboard: "Личный кабинет"
       home: "Главная"
+      theme: "Тема"
     left_menu:
       administration: "Администрирование"
       dashboard: "Личный кабинет"

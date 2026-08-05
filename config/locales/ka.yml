@@ -346,6 +346,7 @@ ka:
     header:
       dashboard: "პირადი კაბინეტი"
       home: "მთავარი"
+      theme: "თემა"
     left_menu:
       administration: "ადმინისტრირება"
       dashboard: "პირადი კაბინეტი"

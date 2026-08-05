@@ -315,6 +315,7 @@ en:
     header:
       dashboard: "Dashboard"
       home: "Home"
+      theme: "Theme"
     left_menu:
       administration: "Administration"
       dashboard: "Dashboard"

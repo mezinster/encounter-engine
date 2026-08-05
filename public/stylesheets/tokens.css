@@ -1,0 +1,59 @@
+/* public/stylesheets/tokens.css
+ *
+ * Every colour in the application resolves through these. Dark is the
+ * default; light is the same token names with different values, so no
+ * component is ever authored twice.
+ *
+ * Ember palette. go / time / danger are neighbours on the colour wheel, so
+ * they are ALSO separated by treatment -- see components.css. Never rely on
+ * hue alone to tell a countdown from a destructive button.
+ */
+:root,
+:root[data-theme="dark"] {
+  --bg:         #12100e;
+  --surface:    #1c1917;
+  --surface-2:  #241f1c;
+  --border:     #332e29;
+  --text:       #f5f1ed;
+  --text-dim:   #9a8f85;
+
+  --go:         #fbbf24;
+  --go-ink:     #1a1205;   /* text on a filled go button */
+  --time:       #fb923c;
+  --danger:     #dc5555;
+  --focus:      #fbbf24;
+}
+
+:root[data-theme="light"] {
+  --bg:         #faf8f6;
+  --surface:    #ffffff;
+  --surface-2:  #f3efec;
+  --border:     #ddd5cd;
+  --text:       #1c1917;
+  --text-dim:   #6b6259;
+
+  /* Darker than the dark theme's values: the same amber that reads clearly
+     on #12100e fails AA on white. */
+  --go:         #a86a08;
+  --go-ink:     #ffffff;
+  --time:       #b45309;
+  --danger:     #b42318;
+  --focus:      #a86a08;
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 40px;
+
+  --radius:    8px;
+  --radius-sm: 6px;
+
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --tap: 44px;
+}

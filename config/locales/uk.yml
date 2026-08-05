@@ -1,52 +1,466 @@
 # Ukrainian.
 #
 # Registered per the project owner's task-12 decision: the platform's target
-# language set is en, ru, uk and ka, and uk is "registered now, translate
-# later" -- available in config.i18n.available_locales (config/application.rb)
-# so it can be selected, with only the keys needed to label it in the
-# language switcher and the profile form's language field filled in so far.
+# language set is en, ru, uk and ka. uk was originally "registered now,
+# translate later" -- present in config.i18n.available_locales
+# (config/application.rb) with only the language-switcher endonyms filled in.
+# It is now fully translated: every key in ru.yml has a Ukrainian value here,
+# so config.i18n.fallbacks ([:ru], config/application.rb) is no longer
+# exercised for this locale in practice. spec/i18n_spec.rb still permits a
+# partial file (it asserts subset-of-ru, not equality) -- that relaxation is
+# deliberate and stays, it simply no longer bites.
 #
-# Every other key is intentionally absent. config.i18n.fallbacks is [:ru]
-# (config/application.rb), so any key not defined here resolves to the
-# Russian copy rather than raising a translation-missing error or rendering
-# blank -- see spec/i18n_spec.rb for the fallback proof and for why the
-# key-parity spec treats this file as allowed to be a partial subset of
-# ru.yml rather than requiring full coverage.
+# Translated from ru.yml, cross-checked against en.yml. Game jargon follows
+# the Russian consistently: задание -> завдання (the puzzle a level poses),
+# уровень -> рівень (the numbered position in the game), код -> код (the
+# answer string players find in the city), подсказка -> підказка,
+# "сойти с дистанции" -> "зійти з дистанції" (quit mid-game).
 uk:
+  answers:
+    must_have_at_least_one_variant: "Має бути хоча б один варіант коду"
+    index:
+      title: "Завдання"
+      game_prefix: "гра"
+      variants_label: "Варіанти кодів:"
+      new_variant_label: "Ще один варіант коду"
+      submit: "Додати варіант коду"
+  errors:
+    unauthenticated: "Ви не авторизовані для відвідування цієї сторінки. Спробуйте увійти."
+    unauthorized: "У вас немає прав для виконання цієї дії"
+    not_team_member: "Ви не авторизовані для відвідування цієї сторінки"
+    must_be_captain: "Ви маєте бути капітаном, щоб виконати цю дію"
+    must_be_author: "Ви маєте бути автором гри, щоб бачити цю сторінку"
+    must_be_author_or_finished_player: "Повний лог відповідей доступний лише автору гри або гравцеві з команди, яка завершила гру"
+    game_already_started: "Не можна редагувати гру після її початку"
+    must_be_recipient: "Ви маєте бути отримувачем запрошення, щоб виконати цю дію"
+    cannot_play_own_game: "Не можна грати у власні ігри, сорі :-)"
+    game_finished_by_author: "Гру було завершено автором, і ви більше не можете в неї грати"
+    team_exited: "Команда зійшла з дистанції"
+  invitations:
+    notice_sent: "Користувачеві %{nickname} надіслано запрошення"
+    new:
+      recipient_label: "Запросити нового учасника"
+      submit: "Запросити"
+  game:
+    not_started: "Не можна грати в гру до її початку. І взагалі, де ви взяли це посилання? :-)"
+    already_in_team: "Ви вже є членом команди"
+  games:
+    translations:
+      incomplete: "Гра оголошує мови, якими перекладено не все: бракує %{count} полів"
+      game_field: "Гра — %{field}"
+      level_field: "Рівень %{position} — %{field}"
+      hint_field: "Рівень %{position} — підказка через %{minutes} хв"
+      question_field: "Рівень %{position} — питання"
+      missing_count: "бракує: %{count}"
+      heading: "Не перекладено (%{count})"
+      fields:
+        name: "назва"
+        description: "опис"
+        text: "текст завдання"
+    list:
+      view: "(переглянути)"
+      stats: "(статистика)"
+      live_channel: "(прямий ефір)"
+      full_log: "(лог відповідей)"
+      end_game: "ЗАВЕРШИТИ ГРУ"
+      author_finished: "Ви завершили гру"
+    game_entries:
+      legend: "Заявки на реєстрацію:"
+      accept: "(прийняти)"
+      reject: "(відмовити)"
+    teams:
+      legend: "Беруть участь команди:"
+    form:
+      name: "Назва"
+      description: "Опис"
+      starts_at: "Початок гри"
+      registration_deadline: "Кінцевий термін реєстрації "
+      max_team_number: "Максимальна кількість команд"
+      is_draft: "Чернетка?"
+    primary_locale_label: "Основна мова"
+    available_locales_label: "Мови гри"
+    new:
+      submit: "Створити гру"
+    edit:
+      submit: "Зберегти"
+    show:
+      title: "Гра"
+      draft_label: "Чернетка"
+      author_label: "Автор"
+      starts_at_label: "Початок гри"
+      starts_at_not_set: "Дату початку гри ще не призначено"
+      registration_deadline_label: "Кінцевий термін реєстрації"
+      registration_deadline_not_set: "Кінцевий термін реєстрації ще не призначено"
+      description_label: "Опис:"
+      max_team_number_label: "Максимальна кількість команд:"
+      levels_legend: "Завдання:"
+      add_level: "Додати нове завдання"
+      edit_link: "Редагувати цю гру"
+      delete_link: "Видалити цю гру"
+      countdown_prefix: "До початку залишилося: "
+      start_test: "Почати тестування"
+      start: "Старт"
+      finish_test: "Завершити тестування"
+  levels:
+    form:
+      name: "Назва"
+      text: "Текст завдання"
+      correct_answer: "Код"
+    edit:
+      title: "Завдання"
+      game_prefix: "гра"
+      submit: "Зберегти"
+    new:
+      heading: "Нове завдання для гри %{name}"
+      hint_more_codes: "після створення ви зможете додати до завдання більше кодів"
+      submit: "Додати завдання"
+    show:
+      title: "Завдання"
+      game_prefix: "гра"
+      text_label: "Текст завдання:"
+      edit_link: "Редагувати текст і назву завдання"
+      code_label: "Код:"
+      codes_label: "Коди (%{count}):"
+      add_code: "Додати ще один код"
+      hints_legend: "Підказки:"
+      add_hint: "Додати підказку"
+      delete_level: "Видалити цей рівень"
+      back_to_game: 'Повернутися до гри "%{name}"'
+  hints:
+    form:
+      text_label: "Текст"
+      delay_label: "Через"
+      minutes_suffix: "хвилин"
+    list:
+      empty: "Підказок немає"
+      after: "Через"
+      minutes_colon: "хвилин:"
+    edit:
+      heading_prefix: "Редагування підказки до завдання"
+      heading_game_prefix: "гри"
+      submit: "Відредагувати"
+    new:
+      heading_prefix: "Нова підказка для завдання"
+      heading_game_prefix: "гри"
+      submit: "Додати підказку"
+  questions:
+    new:
+      title: "Завдання"
+      game_prefix: "гра"
+      code_label: "Код"
+      submit: "Додати код"
+    answers_are_shared: "Коди відповідей спільні для всіх мов. Якщо відповідь пишеться по-різному, додайте кожен варіант як окрему правильну відповідь."
+  users:
+    new:
+      nickname_label: "Ім'я"
+      email_label: "Email"
+      password_label: "Пароль"
+      password_confirmation_label: "Підтвердження"
+      submit: "Зареєструватися"
+    edit:
+      title: 'Редагування профілю гравця %{nickname}'
+      nickname_label: "Ваше ім'я"
+      date_of_birth_label: "Дата народження"
+      icq_label: "Номер ICQ"
+      jabber_label: "Jabber ID"
+      phone_label: "Контактний телефон"
+      locale_label: "Мова інтерфейсу"
+      password_label: "Новий пароль"
+      password_confirmation_label: "Підтвердження пароля"
+      submit: "Прийняти зміни"
+    index:
+      title: "Профіль користувача"
+      captain_prefix: "капітан команди"
+      email_label: "E-mail:"
+      date_of_birth_label: "Дата народження:"
+      icq_label: "Номер ICQ:"
+      jabber_label: "Jabber ID:"
+      phone_label: "Контактний телефон:"
+      edit_link: "Редагувати профіль..."
+  notification_mailer:
+    # Sent in the recipient's locale, not the sender's -- see
+    # NotificationMailer#mail_in_recipient_locale.
+    welcome_letter:
+      subject: "Реєстрація на %{host}"
+      body: |-
+        Дякуємо за реєстрацію!
+
+        Ви зареєструвалися на сайті %{host} і тепер можете увійти з такими даними:
+
+        Email:  %{email}
+        Пароль: %{password}
+
+        Усього найкращого :)
+    invitation_notification:
+      subject: "Вас запросили вступити до команди %{team_name}"
+      body: |-
+        Вас запросили вступити до команди %{team_name}
+        Щоб прийняти запрошення або відмовитися від нього, зайдіть до свого особистого кабінету
+    reject_notification:
+      subject: "Користувач %{nickname} відмовився від запрошення"
+      body: "Користувач %{nickname} відмовився від запрошення вступити до вашої команди"
+    accept_notification:
+      subject: "Користувач %{nickname} прийняв Ваше запрошення"
+      body: "Користувач %{nickname} прийняв Ваше запрошення і вступив до команди"
+  # Language names for the switcher (app/views/layouts/_header.html.erb) and
+  # the profile form's language field (app/views/users/edit.html.erb).
+  # Deliberately identical across every locale file: each language is named
+  # in its own endonym ("Русский", "English", ...) rather than translated, so
+  # a reader sees their own language's name spelled the way they'd recognise
+  # it no matter which locale currently renders the page. spec/i18n_spec.rb's
+  # untranslated-copy-paste check knows about this key and allows it.
   locales:
     ru: "Русский"
     en: "English"
     uk: "Українська"
     ka: "ქართული"
+  layout:
+    title: "Активні міські ігри"
+    header:
+      dashboard: "Особистий кабінет"
+      home: "Головна"
+    left_menu:
+      dashboard: "Особистий кабінет"
+      profile: "Профіль"
+      team_room: "Кімната команди"
+      create_team: "Створити команду"
+      all_games: "Усі ігри домену"
+      logout: "Вийти"
+      login_legend: "Вхід"
+      login: "Увійти"
+      signup: "Зареєструватися"
+  shared:
+    game_entry_controls:
+      applied: "Заявку подано"
+      recall: "Відкликати"
+      registered: "Ви зареєстровані"
+      decline: "Відмовитися"
+      reapply: "Подати заявку на реєстрацію заново"
+      entries_exceeded: "Ви не можете зареєструватися, оскільки перевищено кількість учасників"
+      deadline_passed: "Ви не можете зареєструватися, оскільки запізнилися на гру"
+      apply: "Подати заявку на реєстрацію"
+    current_games:
+      legend: "Поточні ігри домену"
+      started: "Почалася гра"
+      view_results: "Переглянути результати"
+      no_levels: "Гра не містить завдань"
+    current_games_status:
+      play: "Грати!"
+      not_registered: "Ви не зареєстровані"
+    countdown:
+      # Three-element arrays indexed by the hard-coded Slavic plural function
+      # in app/views/shared/_countdown.html.erb: [n%10==1 and n%100!=11,
+      # n%10 in 2..4 and n%100 not in 12..14, everything else]. Ukrainian
+      # shares that rule with Russian, so the same three-way shape applies.
+      prefix: "Залишилося: "
+      years: ["рік", "роки", "років"]
+      months: ["місяць", "місяці", "місяців"]
+      days: ["день", "дні", "днів"]
+      hours: ["година", "години", "годин"]
+      minutes: ["хвилина", "хвилини", "хвилин"]
+      seconds: ["секунда", "секунди", "секунд"]
+    cancel: "(скасувати)"
+    edit_short: "(редагувати)"
+    delete_short: "(видалити)"
+    error_header: "Помилка"
+  game_passings:
+    content_not_translated: "Це завдання ще не перекладено вашою мовою — показано мову оригіналу."
+    content_language: "Мова завдань"
+    index:
+      title: 'Гра "%{name}"'
+      team: "Команда"
+      level: "Рівень"
+      time_at_level: "Час на рівні"
+      exited: "(Зійшли з дистанції)"
+      finished: "(завершили гру)"
+      level_log: "(лог по рівню)"
+      game_log: "(лог по грі)"
+      full_log: "Повний лог відповідей"
+    show_current_level:
+      title_prefix: "Гра"
+      level_label: "Завдання"
+      hint_label: "Підказка"
+      until_next_hint: "До наступної підказки"
+      countdown_placeholder: "3 хвилини"
+      loading: "Завантаження..."
+      no_more_hints: "Підказок більше не буде"
+      answer_correct: "Код '%{answer}' -- правильний."
+      answer_incorrect: "Код неправильний, ви ввели '%{answer}'."
+      multi_question_progress: "Правильних кодів введено: %{answered} з %{total}"
+      answer_label: "Код"
+      submit: "Надіслати!"
+      exit_game: "Зійти з дистанції"
+      finish_testing: "Завершити тестування"
+    show_results:
+      congrats: "Вітаємо, ви завершили гру!"
+      place: "Місце"
+      team: "Команда"
+      finish_time: "Час фінішу"
+      exited: "Зійшли з дистанції"
+      not_finished: "Не фінішували"
+      full_log: "Лог відповідей"
+      finish_testing: "Завершити тестування"
+  logs:
+    index:
+      title: "Індекс"
+    show_full_log:
+      # Not a Rails pluralisation group -- app/views/logs/show_full_log.html.erb
+      # picks between these two keys with an if on the question count, so they
+      # are two independent strings, not `one:`/`many:` under a shared parent.
+      title: "Повний лог відповідей"
+      correct_answer_one: "Правильний код:"
+      correct_answer_many: "Правильні коди:"
+    show_game_log:
+      title: 'Лог відповідей команди "%{team}" по грі "%{game}"'
+      correct_answer: "Правильний код:"
+    show_level_log:
+      title: 'Лог відповідей команди "%{team}" по рівню "%{level}" гри "%{game}"'
+      correct_answer: "Правильний код:"
+    show_live_channel:
+      title: 'Прямий ефір гри "%{name}"'
+      time: "Час"
+      team: "Команда"
+      level: "Завдання"
+      code: "Код"
+  dashboard:
+    index:
+      greeting: "Ви"
+    coming_games:
+      legend: "Майбутні ігри (%{count})"
+      upcoming: "Попереду гра"
+      you_are_author: "Ви автор гри"
+      enter: "Увійти!"
+    finished_games:
+      legend: "Завершені ігри"
+      finished: "Завершена гра"
+    my_games:
+      legend: "Мої ігри (%{count})"
+      create: "Створити гру >> "
+    my_team:
+      legend: "Моя команда"
+      no_team: "Ви не входите до жодної команди"
+      create_team: "Створити команду"
+      invited: "Вас запросили до команди %{team}"
+      accept: "(прийняти)"
+      decline: "(відмовитися)"
+      captain_of: "Ви - капітан команди"
+      member_of: "Ви входите до команди"
+      go_to_team_room: "Перейти до кімнати команди"
+  index:
+    index:
+      title: "Головна сторінка"
+      games_list: "Список ігор"
+  team_room:
+    index:
+      title: "Команда %{name}"
+      composition: "Склад"
+      captain_suffix: "- капітан"
+      invite: "Запросити учасників"
+  teams:
+    new:
+      name_label: "Назва"
+      submit: "Створити команду"
+  time:
+    formats:
+      short: "%Y-%m-%d %H:%M"
+      long: "%d %B %Y, %H:%M"
+  date:
+    # Genitive case, as in ru.yml -- these are only used by the `long` format
+    # above, which renders them after a day number ("5 травня 2025").
+    month_names:
+      - ~
+      - "січня"
+      - "лютого"
+      - "березня"
+      - "квітня"
+      - "травня"
+      - "червня"
+      - "липня"
+      - "серпня"
+      - "вересня"
+      - "жовтня"
+      - "листопада"
+      - "грудня"
+  sessions:
+    invalid_credentials: "Неправильний email або пароль"
+    new:
+      title: "Вхід"
+      email_label: "Email"
+      password_label: "Пароль"
+      submit: "Увійти"
   activerecord:
     errors:
       messages:
-        record_invalid: "Запись недействительна"
+        blank: "не може бути порожнім"
+        confirmation: "не збігається з %{attribute}"
+        invalid: "має неправильне значення"
+        record_invalid: "Запис недійсний"
       models:
+        answer:
+          attributes:
+            value:
+              blank: "Ви не ввели варіант коду"
+              taken: "Такий код уже є в завданні"
         game:
           attributes:
+            name:
+              blank: "Ви не ввели назву"
+              taken: "Гра з такою назвою вже існує"
+            description:
+              blank: "Ви не ввели опис"
+            max_team_number:
+              not_a_number: "Діапазон кількості команд від 1 до 10000"
+              greater_than: "Діапазон кількості команд від 1 до 10000"
+              less_than: "Діапазон кількості команд від 1 до 10000"
+              exceeds_requested: "Кількість команд, які подали заявку, перевищує задане число"
+            starts_at:
+              in_the_past: "Ви обрали дату з минулого. Так не можна :-)"
+            registration_deadline:
+              in_the_past: "Ви вказали кінцевий термін реєстрації з минулого, так не можна :-)"
+              after_game_start: "Ви вказали кінцевий термін реєстрації пізніший за дату початку гри, так не можна :-)"
             available_locales:
-              unknown: "содержит неизвестные языки: %{locales}"
-              missing_primary: "должны включать основной язык игры"
+              unknown: "містить невідомі мови: %{locales}"
+              missing_primary: "мають включати основну мову гри"
             primary_locale:
-              settled: "нельзя изменить после того, как добавлены переводы"
-  games:
-    translations:
-      incomplete: "Игра объявляет языки, на которые переведено не всё: не хватает %{count} полей"
-      game_field: "Игра — %{field}"
-      level_field: "Уровень %{position} — %{field}"
-      hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
-      question_field: "Уровень %{position} — вопрос"
-      missing_count: "не хватает: %{count}"
-      heading: "Не переведено (%{count})"
-      fields:
-        name: "название"
-        description: "описание"
-        text: "текст задания"
-    primary_locale_label: "Основной язык"
-    available_locales_label: "Языки игры"
-  game_passings:
-    content_not_translated: "Это задание пока не переведено на ваш язык — показан язык оригинала."
-    content_language: "Язык заданий"
-  questions:
-    answers_are_shared: "Коды ответов общие для всех языков. Если ответ пишется по-разному, добавьте каждый вариант как отдельный правильный ответ."
+              settled: "не можна змінити після того, як додано переклади"
+        game_entry:
+          attributes:
+            game:
+              blank: "Ви не обрали гру"
+            team_id:
+              blank: "Ви не вказали команду"
+        invitation:
+          attributes:
+            for_user:
+              blank: "Користувача з таким ім'ям не існує"
+            recepient_nickname:
+              blank: "Ви не ввели імені користувача"
+            for_user_id:
+              taken: "Ви вже надсилали цьому користувачеві запрошення, і він ще не відповів"
+            base:
+              recipient_already_team_member: "Користувач уже є членом однієї з команд"
+        level:
+          attributes:
+            name:
+              blank: "Ви не ввели назву завдання"
+            text:
+              blank: "Ви не ввели текст завдання"
+        team:
+          attributes:
+            name:
+              taken: "Команда з такою назвою вже існує"
+              blank: "Назва команди має бути непорожньою"
+        user:
+          attributes:
+            email:
+              blank: "Не введено e-mail"
+              taken: "Користувач з такою адресою вже зареєстрований"
+              invalid: "Неправильний формат поля e-mail"
+            nickname:
+              blank: "Ви не ввели ім'я"
+              taken: "Користувач з таким ім'ям уже зареєстрований"
+            password:
+              too_short: "Занадто короткий пароль (мінімум 4 символи)"
+            password_confirmation:
+              blank: "Ви не ввели підтвердження пароля"
+              confirmation: "Пароль і його підтвердження не збігаються"

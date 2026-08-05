@@ -45,11 +45,21 @@ class GamePassingsController < ApplicationController
     @game_passings = GamePassing.of_game(@game)
   end
 
+  # This is the live delivery path: level_hint_updater.js polls this route and
+  # injects hint_text straight into the page as each countdown elapses, so a
+  # hint unlocked after the initial page load never goes through
+  # show_current_level.html.erb's translated() render at all. Translating
+  # only the view left every hint but the ones already elapsed at page load
+  # in the wrong language for a non-primary-locale player.
   def get_current_level_tip
+    @game_passing.current_level = preloaded_level_for_tip(@game_passing.current_level)
+
     next_hint = @game_passing.upcoming_hints.first
+    hint = @game_passing.hints_to_show.last
+    content_locale = content_locale_for(@game_passing.game)
 
     render json: { hint_num: @game_passing.hints_to_show.length,
-                    hint_text: @game_passing.hints_to_show.last.text,
+                    hint_text: hint.translated(:text, content_locale),
                     next_available_in: next_hint&.available_in(@game_passing.current_level_entered_at) }
   end
 
@@ -138,6 +148,15 @@ class GamePassingsController < ApplicationController
     Level.includes(:game, :content_translations,
                    :hints => :content_translations,
                    :questions => :content_translations).find(level.id)
+  end
+
+  # Same reasoning as preloaded_level, deliberately narrower: every playing
+  # team polls #get_current_level_tip repeatedly, and this JSON response
+  # never includes level or question text, so there's no reason to pay for
+  # loading (or translating) either -- just the hints and the :game a
+  # translated() call on one of them needs to resolve primary_locale.
+  def preloaded_level_for_tip(level)
+    Level.includes(:game, :hints => :content_translations).find(level.id)
   end
 
   # TODO: must be a critical section, double creation is possible!

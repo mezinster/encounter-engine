@@ -9,12 +9,12 @@
 
 <br />
 
+<% content_locale = content_locale_for(@game_passing.game) %>
 <fieldset>
   <legend>
-    <%= @game_passing.current_level.name %>
+    <%= @game_passing.current_level.translated(:name, content_locale) %>
   </legend>
 
-  <% content_locale = content_locale_for(@game_passing.game) %>
   <% if @game_passing.current_level.missing_translated_fields(Level::TRANSLATABLE_FIELDS, content_locale).any? %>
     <p class="notice"><%= t("game_passings.content_not_translated") %></p>
   <% end %>
@@ -30,7 +30,7 @@
       <legend>
         <%= t("game_passings.show_current_level.hint_label") %> #<%= index + 1 %>
       </legend>
-      <%= hint.translated(:text, content_locale_for(@game_passing.game)) %>
+      <%= hint.translated(:text, content_locale) %>
     </fieldset>
     <br />
   <% end %>

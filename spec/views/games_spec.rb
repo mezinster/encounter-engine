@@ -2,10 +2,13 @@
 require "rails_helper"
 
 # Task 9c: real ERB compilation for the 7 games/* templates, exercising real
-# path helpers (including the game_stats landmine -- see
-# task-9c-report.md -- game_stats_path requires an explicit :action, unlike
-# Merb's url(:game_stats, ...) which silently defaulted :action to "index")
-# and every locale key each template reads.
+# path helpers and every locale key each template reads.
+#
+# game_stats_path used to be a landmine here: the route carried a dynamic
+# :action segment, so the helper demanded an explicit one, unlike Merb's
+# url(:game_stats, ...) which silently defaulted it to "index". The route is
+# now two static ones (see config/routes.rb) and the helper takes just the
+# game, so the landmine is gone.
 RSpec.describe "games/_list", type: :view do
   it "shows a plain view link to a non-author viewer" do
     game = create_game
@@ -40,7 +43,7 @@ RSpec.describe "games/_list", type: :view do
     # fallback, so the view must supply action: "index" explicitly to keep
     # generating /stats/index/<id> instead of raising
     # ActionController::UrlGenerationError.
-    expect(rendered).to include(game_stats_path(action: "index", game_id: game.id))
+    expect(rendered).to include(game_stats_path(game))
     expect(rendered).to include("/stats/index/#{game.id}")
     expect(rendered).to include(show_live_channel_path(game.id))
     expect(rendered).to include(show_full_log_path(game.id))

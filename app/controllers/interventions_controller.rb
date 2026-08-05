@@ -72,10 +72,10 @@ class InterventionsController < ApplicationController
   end
 
   def back_to_stats(notice)
-    redirect_to game_stats_path(:index, @game), :notice => notice
+    redirect_to game_stats_path(@game), :notice => notice
   end
 
   def refused(exception)
-    redirect_to game_stats_path(:index, @game), :alert => t("interventions.refused")
+    redirect_to game_stats_path(@game), :alert => t("interventions.refused")
   end
 end

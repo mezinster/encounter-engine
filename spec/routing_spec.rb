@@ -47,9 +47,25 @@ RSpec.describe "routing" do
     method: :get, path: "/games/3/levels/9/hints",
     to: { controller: "hints", action: "index", game_id: "3", level_id: "9" }
 
-  it_recognizes "keeps /stats/:action/:game_id",
+  it_recognizes "keeps /stats/show_results/:game_id",
     method: :get, path: "/stats/show_results/7",
     to: { controller: "game_passings", action: "show_results", game_id: "7" }
+
+  it_recognizes "keeps /stats/index/:game_id",
+    method: :get, path: "/stats/index/7",
+    to: { controller: "game_passings", action: "index", game_id: "7" }
+
+  # These two used to route. `/stats/:action/:game_id` mapped EVERY action on
+  # GamePassingsController, so a state-changing action was reachable over GET
+  # with no CSRF token -- a captain who followed a crafted link, or whose
+  # browser prefetched one, quit their team out of a live game. The pair of
+  # static routes that replaced it is what closes that, and this is the
+  # assertion that would notice a dynamic segment creeping back.
+  [ "exit_game", "post_answer", "get_current_level_tip", "set_content_locale" ].each do |action|
+    it "does not expose game_passings##{action} over GET /stats" do
+      expect(recognized_params(:method => :get, :path => "/stats/#{action}/7")).to be_nil
+    end
+  end
 
   it_recognizes "keeps /logs/livechannel/:game_id",
     method: :get, path: "/logs/livechannel/7",

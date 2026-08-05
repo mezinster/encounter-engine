@@ -24,7 +24,7 @@ describe "superadmin authorization", type: :request do
   it "refuses a stranger" do
     sign_in(stranger)
     get edit_game_path(game)
-    expect(response).not_to have_http_status(:ok)
+    expect(response).to have_http_status(:unauthorized)
   end
 
   it "lets a superadmin edit someone else's game" do
@@ -33,16 +33,22 @@ describe "superadmin authorization", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  # A signed-out visitor is refused earlier and differently: require_authentication!
+  # runs before ensure_author, raises Unauthenticated, and deny_unauthenticated
+  # redirects to the login form. Still a refusal -- nothing renders -- but a 302
+  # rather than the 401 a signed-in non-author gets. Asserting the redirect
+  # target rather than "not 200" keeps a future 500 from passing as a refusal.
   it "still refuses an anonymous visitor" do
     get edit_game_path(game)
-    expect(response).not_to have_http_status(:ok)
+    expect(response).to have_http_status(:found)
+    expect(response).to redirect_to(login_path)
   end
 
   it "stops the author editing a locked game" do
     game.update!(:editing_locked_at => Time.now)
     sign_in(author)
     get edit_game_path(game)
-    expect(response).not_to have_http_status(:ok)
+    expect(response).to have_http_status(:unauthorized)
   end
 
   it "still lets a superadmin edit a locked game" do

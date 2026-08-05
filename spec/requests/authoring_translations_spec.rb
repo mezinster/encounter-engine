@@ -28,6 +28,25 @@ describe "authoring translations", type: :request do
     expect(game.reload.name).not_to eq("City Quest")
   end
 
+  it "saves a hint translation" do
+    level = create_level(:game => game, :name => "Уровень", :text => "Текст")
+    hint = create_hint(:level => level, :text => "Подсказка")
+    hint.translations_attributes = { "en" => { "text" => "Hint" } }
+    hint.save!
+
+    expect(hint.reload.translated(:text, "en")).to eq("Hint")
+    expect(hint.reload.text).to eq("Подсказка")
+  end
+
+  it "saves a question translation" do
+    level = create_level(:game => game, :name => "Уровень", :text => "Текст")
+    question = create_question(:level => level)
+    question.translations_attributes = { "en" => { "questions" => "What colour is the door?" } }
+    question.save!
+
+    expect(question.reload.translated(:questions, "en")).to eq("What colour is the door?")
+  end
+
   # Round 2 review: the two examples above only prove the model-level
   # contract (Task 2's writer). Neither exercises an actual HTTP request, so
   # neither would have caught the params-shape bugs in games_controller /

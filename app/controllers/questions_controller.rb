@@ -40,11 +40,27 @@ class QuestionsController < ApplicationController
   # virtual setter (see app/models/question.rb) that builds the question's
   # first Answer.
   def build_question
-    @question = Question.new(question_params)
+    @question = Question.new(question_attributes)
     @question.level = @level
   end
 
   def question_params
-    params.fetch(:question, ActionController::Parameters.new).permit(:correct_answer)
+    params.fetch(:question, ActionController::Parameters.new)
+          .permit(:correct_answer,
+                  :translations => translation_params_shape(Question::TRANSLATABLE_FIELDS))
+  end
+
+  # params.permit cannot express "any locale key", so build the shape from the
+  # locales this platform actually knows.
+  def translation_params_shape(fields)
+    I18n.available_locales.map(&:to_s).index_with { fields.map(&:to_sym) }
+  end
+
+  # translations_attributes= is the concern's writer; the form posts
+  # `translations` because that is what reads naturally in the markup.
+  def question_attributes
+    attributes = question_params.to_h
+    translations = attributes.delete("translations")
+    attributes.merge("translations_attributes" => translations)
   end
 end

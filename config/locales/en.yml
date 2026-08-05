@@ -127,6 +127,7 @@ en:
       game_prefix: "game"
       code_label: "Code"
       submit: "Add code"
+    answers_are_shared: "Answer codes are shared across languages. If the answer is written differently in each, add every spelling as a separate correct answer."
   users:
     new:
       nickname_label: "Name"

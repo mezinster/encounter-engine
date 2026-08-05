@@ -30,7 +30,7 @@ class HintsController < ApplicationController
   end
 
   def update
-    if @hint.update(hint_params)
+    if @hint.update(hint_attributes)
       redirect_to [@level.game, @level]
     else
       render :edit, status: :unprocessable_entity
@@ -45,7 +45,7 @@ class HintsController < ApplicationController
   private
 
   def build_hint
-    @hint = Hint.new(hint_params)
+    @hint = Hint.new(hint_attributes)
     @hint.level = @level
   end
 
@@ -65,6 +65,22 @@ class HintsController < ApplicationController
   # virtual setter on Hint that converts to the stored :delay in seconds --
   # see app/models/hint.rb).
   def hint_params
-    params.fetch(:hint, ActionController::Parameters.new).permit(:text, :delay_in_minutes)
+    params.fetch(:hint, ActionController::Parameters.new)
+          .permit(:text, :delay_in_minutes,
+                  :translations => translation_params_shape(Hint::TRANSLATABLE_FIELDS))
+  end
+
+  # params.permit cannot express "any locale key", so build the shape from the
+  # locales this platform actually knows.
+  def translation_params_shape(fields)
+    I18n.available_locales.map(&:to_s).index_with { fields.map(&:to_sym) }
+  end
+
+  # translations_attributes= is the concern's writer; the form posts
+  # `translations` because that is what reads naturally in the markup.
+  def hint_attributes
+    attributes = hint_params.to_h
+    translations = attributes.delete("translations")
+    attributes.merge("translations_attributes" => translations)
   end
 end

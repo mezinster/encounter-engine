@@ -93,4 +93,95 @@ describe "withdrawal", type: :request do
     post withdraw_game_path(game)
     expect(game.reload.withdrawn?).to be false
   end
+
+  # Finding 2 of the whole-branch review: editing_locked_at existed as a
+  # predicate, a count and a filter, but nothing could ever set or clear it --
+  # an operator needed psql to lock a game, and an author locked that way had
+  # no route out through the UI. lock/unlock mirror withdraw/restore exactly.
+  it "can be locked and unlocked by a superadmin" do
+    sign_in(superadmin)
+    post lock_game_path(game)
+    expect(game.reload.editing_locked?).to be true
+    expect(response).to redirect_to(admin_games_path)
+
+    post unlock_game_path(game)
+    expect(game.reload.editing_locked?).to be false
+    expect(response).to redirect_to(admin_games_path)
+  end
+
+  it "cannot be locked by the author" do
+    sign_in(author)
+    post lock_game_path(game)
+    expect(game.reload.editing_locked?).to be false
+  end
+
+  # Finding 5 of the whole-branch review: Spec A's headline guarantee --
+  # "teams already mid-race continue uninterrupted" -- had no test pinning it.
+  # GamePassingsController#find_game does a bare Game.find (see that
+  # method's comment), never Game.visible, so withdrawal must not block an
+  # in-flight game_passing. This proves it end to end over HTTP rather than
+  # trusting that no future before_action tightens the scope.
+  it "lets a team mid-race keep playing a game that is withdrawn under them" do
+    now = Time.now
+    Time.stub(:now => now - 1)
+    started_game = create_game(:author => author, :is_draft => false, :starts_at => now)
+    level = create_level(:game => started_game)
+    Time.stub(:now => now + 1)
+
+    captain = create_user
+    team = create_team(:captain => captain)
+    create_game_passing(:level => level, :team => team)
+
+    # update_column, not update!: starts_at is now in the past relative to
+    # the stubbed clock, and game_starts_in_the_future re-validates on every
+    # save regardless of which attribute changed (see
+    # spec/models/game/count_by_status_spec.rb for the same workaround).
+    started_game.update_column(:withdrawn_at, Time.now)
+
+    sign_in(captain)
+    get show_current_level_path(game_id: started_game.id)
+
+    expect(response).to have_http_status(:ok)
+  end
+
+  # Finding 4 of the whole-branch review: GamesController#index is exempt
+  # from require_authentication!, and its params[:user_id] branch returned
+  # `User.find(params[:user_id]).created_games` completely unscoped --
+  # Game.visible guarded only the other (no user_id) branch. GET
+  # /games?user_id=N therefore rendered a withdrawn game to any anonymous
+  # visitor.
+  it "does not leak a withdrawn game through ?user_id= to an anonymous visitor" do
+    game.update!(:withdrawn_at => Time.now)
+
+    get games_path(:user_id => author.id)
+
+    expect(response.body).not_to include(game.name)
+  end
+
+  it "does not leak a withdrawn game through ?user_id= to a logged-in stranger" do
+    game.update!(:withdrawn_at => Time.now)
+    sign_in(create_user)
+
+    get games_path(:user_id => author.id)
+
+    expect(response.body).not_to include(game.name)
+  end
+
+  it "still shows the author their own withdrawn game through ?user_id=" do
+    game.update!(:withdrawn_at => Time.now)
+    sign_in(author)
+
+    get games_path(:user_id => author.id)
+
+    expect(response.body).to include(game.name)
+  end
+
+  it "still shows a superadmin a withdrawn game through ?user_id=" do
+    game.update!(:withdrawn_at => Time.now)
+    sign_in(superadmin)
+
+    get games_path(:user_id => author.id)
+
+    expect(response.body).to include(game.name)
+  end
 end

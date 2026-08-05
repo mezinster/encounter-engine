@@ -3,19 +3,27 @@ class GamesController < ApplicationController
   include SecurityFilters
 
   before_action :require_authentication!, except: [:index, :show]
-  before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore]
+  before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :lock, :unlock]
   before_action :find_team, only: [:show]
   before_action :ensure_author_if_game_is_draft, only: [:show]
   before_action :ensure_author_if_no_start_time, only: [:show]
   before_action :ensure_author_if_game_is_withdrawn, only: [:show]
   before_action :ensure_author, only: [:edit, :update, :delete, :end_game, :start_test, :finish_test]
-  before_action :ensure_editing_not_locked, only: [:edit, :update, :delete]
+  before_action :ensure_editing_not_locked, only: [:edit, :update, :delete, :end_game, :start_test, :finish_test]
   before_action :ensure_game_was_not_started, only: [:edit, :update]
-  before_action :require_superadmin!, only: [:withdraw, :restore]
+  before_action :require_superadmin!, only: [:withdraw, :restore, :lock, :unlock]
 
   def index
     @games = if params[:user_id].present?
-               User.find(params[:user_id]).created_games
+               games = User.find(params[:user_id]).created_games
+               # A withdrawn game stays visible to its author and to an
+               # operator; to everyone else this listing is as public as the
+               # main one. Review finding: this branch used to be unscoped,
+               # so GET /games?user_id=N rendered a withdrawn game to any
+               # anonymous visitor.
+               games = games.merge(Game.visible) unless logged_in? &&
+                                                        (current_user.superadmin? || current_user.id == params[:user_id].to_i)
+               games
              else
                Game.visible
              end
@@ -85,6 +93,16 @@ class GamesController < ApplicationController
   def restore
     @game.update!(:withdrawn_at => nil)
     redirect_to admin_games_path, :notice => t("games.restored_notice")
+  end
+
+  def lock
+    @game.update!(:editing_locked_at => Time.now)
+    redirect_to admin_games_path, :notice => t("games.locked_notice")
+  end
+
+  def unlock
+    @game.update!(:editing_locked_at => nil)
+    redirect_to admin_games_path, :notice => t("games.unlocked_notice")
   end
 
   def finish_test

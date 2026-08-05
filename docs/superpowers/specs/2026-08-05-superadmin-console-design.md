@@ -88,18 +88,22 @@ operator wants while investigating.
 
 | Column | Meaning | Enforced at |
 |---|---|---|
-| `editing_locked_at` | The author can no longer modify the game or anything beneath it | `ensure_author` — refuses the author, still admits a superadmin |
+| `editing_locked_at` | The author can no longer modify the game or anything beneath it | `ensure_editing_not_locked` — refuses the author, still admits a superadmin |
 | `withdrawn_at` | Hidden from the public list, refuses new teams | `Game.non_drafts`, `Game.notstarted`, and the `show` guard |
 
 They are independent switches and may be applied together or separately.
 
 Two boundaries worth stating, because both are guessable the wrong way:
 
-- **`editing_locked_at` locks content and settings, not lifecycle.** The author cannot change the
-  game, its levels, hints, questions or answers. A superadmin still can, and the existing
-  lifecycle actions (`start_test`, `end_game`) remain available to a superadmin — a lock is for
-  stopping an author changing things under investigation, not for freezing the operator's own
-  ability to act.
+- **`editing_locked_at` locks content, settings AND lifecycle, for the author.** The author cannot
+  change the game, its levels, hints, questions or answers, and cannot reach `end_game`,
+  `start_test` or `finish_test` either. That last one is the reason lifecycle is in scope at all:
+  `finish_test` deletes every `game_passing` and `log` line for the game, which makes
+  `Game#deletable?` true and hands a locked author a path to erasing the evidence an operator
+  locked the game to investigate, then deleting the game itself. A superadmin remains exempt from
+  the lock throughout — `ensure_editing_not_locked` returns immediately for a superadmin — so the
+  lock is for stopping an author changing things under investigation, not for freezing the
+  operator's own ability to act.
 - **A withdrawn game stays visible to its author and to a superadmin.** It disappears from the
   public listing and refuses new teams; it does not vanish from the author's own dashboard. A game
   silently disappearing from its creator's view, with no explanation, would generate a support

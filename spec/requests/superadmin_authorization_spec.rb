@@ -62,4 +62,34 @@ describe "superadmin authorization", type: :request do
     get show_live_channel_path(game)
     expect(response).to have_http_status(:ok)
   end
+
+  # Finding 1 of the whole-branch review: finish_test (GamesController#finish_test)
+  # unconditionally deletes every game_passing and log line for the game. That
+  # was guarded only by ensure_author, not by the lock -- so a locked author
+  # could erase the very evidence an operator locked the game to investigate,
+  # which makes Game#deletable? true and opens a path to deleting the game
+  # outright. Both new invariants (frozen content, frozen lifecycle) fell to
+  # one GET.
+  it "stops a locked author erasing history and passings through finish_test" do
+    game.update!(:editing_locked_at => Time.now)
+    passing = create_game_passing(:level => create_level(:game => game))
+    sign_in(author)
+
+    expect do
+      get "/games/finish_test/#{game.id}"
+    end.not_to change(GamePassing, :count)
+
+    expect(response).to have_http_status(:unauthorized)
+    expect(GamePassing.exists?(passing.id)).to be true
+    expect(game.reload.deletable?).to be false
+  end
+
+  it "still lets a superadmin reach finish_test on a locked game" do
+    game.update!(:editing_locked_at => Time.now)
+    sign_in(superadmin)
+
+    get "/games/finish_test/#{game.id}"
+
+    expect(response).to redirect_to(game_path(game))
+  end
 end

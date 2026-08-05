@@ -18,6 +18,7 @@
       <td>
         <% if game.withdrawn? %><%= t("admin.games.index.withdrawn") %>
         <% elsif game.draft? %><%= t("admin.games.index.draft") %>
+        <% elsif game.author_finished? %><%= t("admin.games.index.finished") %>
         <% elsif game.started? %><%= t("admin.games.index.running") %>
         <% else %><%= t("admin.games.index.scheduled") %>
         <% end %>
@@ -25,11 +26,16 @@
       </td>
       <td><%= game.game_passings.size %></td>
       <td>
-        <%= link_to t("admin.games.index.edit"), edit_game_path(game) %>
+        <%= link_to t("admin.games.index.edit"), edit_game_path(game) unless game.started? %>
         <% if game.withdrawn? %>
           <%= button_to t("admin.games.index.restore"), restore_game_path(game), :method => :post %>
         <% else %>
           <%= button_to t("admin.games.index.withdraw"), withdraw_game_path(game), :method => :post %>
+        <% end %>
+        <% if game.editing_locked? %>
+          <%= button_to t("admin.games.index.unlock"), unlock_game_path(game), :method => :post %>
+        <% else %>
+          <%= button_to t("admin.games.index.lock"), lock_game_path(game), :method => :post %>
         <% end %>
         <% if game.deletable? %>
           <%= link_to t("admin.games.index.delete"), delete_game_path(game),

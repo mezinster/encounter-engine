@@ -11,15 +11,22 @@ describe "superadmin reporting", type: :request do
   end
 
   describe "the stats screen" do
+    # Two-minors cleanup, cheap-minor 1 of the whole-branch review: tightened
+    # from `not_to have_http_status(:ok)`. An anonymous visitor hits
+    # require_authentication! before require_superadmin! ever runs, so this
+    # is Authentication::Unauthenticated (redirect to login), not
+    # Authentication::Unauthorized (401) -- verified live. The signed-in
+    # case below does reach require_superadmin! and gets the 401.
     it "refuses an anonymous visitor" do
       get admin_dashboard_path
-      expect(response).not_to have_http_status(:ok)
+      expect(response).to have_http_status(:found)
+      expect(response).to redirect_to(login_path)
     end
 
     it "refuses an ordinary signed-in user" do
       sign_in(ordinary)
       get admin_dashboard_path
-      expect(response).not_to have_http_status(:ok)
+      expect(response).to have_http_status(:unauthorized)
     end
 
     it "shows a superadmin the counts" do
@@ -35,15 +42,18 @@ describe "superadmin reporting", type: :request do
   end
 
   describe "the users list" do
+    # Same reasoning as the stats screen's anonymous case above: anonymous
+    # never reaches require_superadmin!.
     it "refuses an anonymous visitor" do
       get admin_users_path
-      expect(response).not_to have_http_status(:ok)
+      expect(response).to have_http_status(:found)
+      expect(response).to redirect_to(login_path)
     end
 
     it "refuses an ordinary signed-in user" do
       sign_in(ordinary)
       get admin_users_path
-      expect(response).not_to have_http_status(:ok)
+      expect(response).to have_http_status(:unauthorized)
     end
 
     it "shows every user's identity and email to a superadmin" do
@@ -89,7 +99,7 @@ describe "superadmin reporting", type: :request do
     it "refuses an ordinary signed-in user" do
       sign_in(ordinary)
       get admin_user_path(create_user)
-      expect(response).not_to have_http_status(:ok)
+      expect(response).to have_http_status(:unauthorized)
     end
 
     it "shows contact details to a superadmin" do

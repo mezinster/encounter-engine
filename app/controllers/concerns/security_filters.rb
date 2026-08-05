@@ -41,7 +41,12 @@ module SecurityFilters
   # Deliberately NOT part of ensure_author. That filter is shared by read-only
   # views too -- the live log, the level and game logs, the team-passings list --
   # and an author under investigation should still be able to watch their own
-  # game. The lock covers content and settings, nothing else.
+  # game. The lock covers content, settings AND lifecycle (GamesController
+  # applies this to edit/update/delete as well as end_game/start_test/
+  # finish_test) -- finish_test in particular deletes every game_passing and
+  # log line, which would let a locked author erase the evidence an operator
+  # locked the game to investigate, and then delete the game itself now that
+  # it has no game_passings left. Read-only views stay off this filter.
   def ensure_editing_not_locked
     return if logged_in? && current_user.superadmin?
 

@@ -59,11 +59,14 @@ en:
         draft: "Draft"
         scheduled: "Scheduled"
         running: "Running"
+        finished: "Finished"
         withdrawn: "Withdrawn"
         locked: "editing frozen"
         edit: "Edit"
         withdraw: "Withdraw"
         restore: "Publish"
+        lock: "Lock"
+        unlock: "Unlock"
         delete: "Delete"
         delete_confirm: "Delete the game “%{name}” and all its levels? This cannot be undone."
   answers:
@@ -100,6 +103,8 @@ en:
   games:
     withdrawn_notice: "Game withdrawn from players"
     restored_notice: "Game published again"
+    locked_notice: "Game editing locked"
+    unlocked_notice: "Game editing unlocked"
     not_deletable: "This game cannot be deleted because teams have played it. Withdraw it instead."
     translations:
       incomplete: "This game declares languages it is not fully translated into: %{count} fields are missing"

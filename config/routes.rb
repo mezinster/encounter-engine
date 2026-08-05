@@ -61,6 +61,8 @@ Rails.application.routes.draw do
   resources :games do
     member do
       get :delete
+      post :withdraw
+      post :restore
     end
 
     resources :levels do

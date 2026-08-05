@@ -34,8 +34,14 @@ class Game < ApplicationRecord
   scope :non_drafts, -> { where(is_draft: false) }
   scope :finished, -> { where.not(author_finished_at: nil) }
 
+  # The single place "may a player see this?" is answered. non_drafts stays as
+  # it is -- other callers use it for its literal meaning -- and this composes
+  # on top, so a future caller that forgets `visible` is a visible mistake
+  # rather than a silent leak.
+  scope :visible, -> { non_drafts.where(:withdrawn_at => nil) }
+
   def self.started
-    Game.all.select(&:started?)
+    Game.visible.select(&:started?)
   end
 
   def draft?
@@ -71,7 +77,7 @@ class Game < ApplicationRecord
   end
 
   def self.notstarted
-    Game.all.select { |game| !game.draft? && !game.started? }
+    Game.visible.reject(&:started?)
   end
 
   def free_place_of_team!

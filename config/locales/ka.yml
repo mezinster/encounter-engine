@@ -34,6 +34,8 @@ ka:
             primary_locale:
               settled: "нельзя изменить после того, как добавлены переводы"
   games:
+    withdrawn_notice: "Игра снята с публикации"
+    restored_notice: "Игра снова опубликована"
     translations:
       incomplete: "Игра объявляет языки, на которые переведено не всё: не хватает %{count} полей"
       game_field: "Игра — %{field}"

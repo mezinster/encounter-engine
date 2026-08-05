@@ -10,14 +10,29 @@
 
 <%= error_messages_for @level, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
+<% active_locale = params[:tab].presence_in(@level.game.available_locale_list) || @level.game.primary_locale %>
+<%= render "shared/language_tabs", :game => @level.game, :record => @level,
+                                   :fields => Level::TRANSLATABLE_FIELDS,
+                                   :active => active_locale %>
+
 <%= form_with model: [@level.game, @level], url: game_level_path(@level.game, @level) do |f| %>
   <p>
     <%= f.label :name, t("levels.form.name") %>
-    <%= f.text_field :name %>
+    <% if active_locale == @level.game.primary_locale %>
+      <%= f.text_field :name %>
+    <% else %>
+      <%= text_field_tag "level[translations][#{active_locale}][name]",
+                         @level.translated(:name, active_locale) %>
+    <% end %>
   </p>
   <p>
     <%= f.label :text, t("levels.form.text") %>
-    <%= f.text_area :text %>
+    <% if active_locale == @level.game.primary_locale %>
+      <%= f.text_area :text %>
+    <% else %>
+      <%= text_area_tag "level[translations][#{active_locale}][text]",
+                        @level.translated(:text, active_locale) %>
+    <% end %>
   </p>
   <%= f.submit t("levels.edit.submit") %>
   <em><%= link_to t("shared.cancel"), game_level_path(@level.game, @level) %></em>

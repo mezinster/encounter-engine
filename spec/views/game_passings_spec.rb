@@ -48,6 +48,11 @@ RSpec.describe "game_passings/show_current_level", type: :view do
     assign(:game, game)
     assign(:game_passing, game_passing)
     view.define_singleton_method(:current_user) { captain }
+    # content_locale_for is a helper_method on ApplicationController (Task 5);
+    # isolated view specs don't run through the real controller stack, so it
+    # has to be stubbed the same way current_user already is above. A
+    # single-locale game's content locale is always its primary_locale.
+    view.define_singleton_method(:content_locale_for) { |g| g.primary_locale }
 
     render
 
@@ -84,6 +89,7 @@ RSpec.describe "game_passings/show_current_level", type: :view do
     assign(:answer, "WRONG")
     assign(:answer_was_correct, false)
     view.define_singleton_method(:current_user) { captain }
+    view.define_singleton_method(:content_locale_for) { |g| g.primary_locale }
 
     render
 

@@ -158,6 +158,11 @@ RSpec.describe "games/show", type: :view do
     assign(:game_entries, [])
     assign(:teams, [])
     view.define_singleton_method(:logged_in?) { false }
+    # content_locale_for is a helper_method on ApplicationController (Task 5);
+    # isolated view specs don't run through the real controller stack, so it
+    # has to be stubbed the same way it is in spec/views/game_passings_spec.rb.
+    # A single-locale game's content locale is always its primary_locale.
+    view.define_singleton_method(:content_locale_for) { |g| g.primary_locale }
 
     render
 
@@ -181,6 +186,7 @@ RSpec.describe "games/show", type: :view do
     assign(:teams, [])
     view.define_singleton_method(:logged_in?) { true }
     view.define_singleton_method(:current_user) { author }
+    view.define_singleton_method(:content_locale_for) { |g| g.primary_locale }
     assign(:current_user, author)
 
     render
@@ -206,6 +212,7 @@ RSpec.describe "games/show", type: :view do
     assign(:game_entries, [])
     assign(:teams, [])
     view.define_singleton_method(:logged_in?) { false }
+    view.define_singleton_method(:content_locale_for) { |g| g.primary_locale }
 
     render
 

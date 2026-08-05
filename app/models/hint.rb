@@ -1,5 +1,13 @@
 # -*- encoding : utf-8 -*-
 class Hint < ApplicationRecord
+  include TranslatableContent
+
+  TRANSLATABLE_FIELDS = %w[text].freeze
+
+  def translation_game
+    self.level&.game
+  end
+
   belongs_to :level, optional: true
 
   def delay_in_minutes

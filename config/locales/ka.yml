@@ -18,3 +18,35 @@ ka:
     en: "English"
     uk: "Українська"
     ka: "ქართული"
+  activerecord:
+    errors:
+      messages:
+        record_invalid: "Запись недействительна"
+      models:
+        game:
+          attributes:
+            available_locales:
+              unknown: "содержит неизвестные языки: %{locales}"
+              missing_primary: "должны включать основной язык игры"
+            primary_locale:
+              settled: "нельзя изменить после того, как добавлены переводы"
+  games:
+    translations:
+      incomplete: "Игра объявляет языки, на которые переведено не всё: не хватает %{count} полей"
+      game_field: "Игра — %{field}"
+      level_field: "Уровень %{position} — %{field}"
+      hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
+      question_field: "Уровень %{position} — вопрос"
+      missing_count: "не хватает: %{count}"
+      heading: "Не переведено (%{count})"
+      fields:
+        name: "название"
+        description: "описание"
+        text: "текст задания"
+    primary_locale_label: "Основной язык"
+    available_locales_label: "Языки игры"
+  game_passings:
+    content_not_translated: "Это задание пока не переведено на ваш язык — показан язык оригинала."
+    content_language: "Язык заданий"
+  questions:
+    answers_are_shared: "Коды ответов общие для всех языков. Если ответ пишется по-разному, добавьте каждый вариант как отдельный правильный ответ."

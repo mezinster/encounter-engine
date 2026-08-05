@@ -1,4 +1,21 @@
 class Question < ApplicationRecord
+  include TranslatableContent
+
+  # Deliberately empty. The `questions` column is vestigial: nothing in this
+  # application writes it (the form sets correct_answer, which builds Answer
+  # records) and nothing renders it — every view reference is to the `questions`
+  # association, not this column. Listing it here would make Game#missing_translations
+  # demand a translation for a field no author can reach, permanently blocking any
+  # multilingual game that has questions from leaving draft.
+  #
+  # A question's actual author-facing content is its answer codes, which are
+  # shared across languages by design.
+  TRANSLATABLE_FIELDS = [].freeze
+
+  def translation_game
+    self.level&.game
+  end
+
   belongs_to :level, optional: true
   has_many :answers
 

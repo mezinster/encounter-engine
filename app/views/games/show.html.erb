@@ -1,5 +1,7 @@
+<% content_locale = content_locale_for(@game) %>
+
 <h2>
-  <%= t("games.show.title") %> "<strong><%= @game.name %></strong>"
+  <%= t("games.show.title") %> "<strong><%= @game.translated(:name, content_locale) %></strong>"
 </h2>
 
 <% if @game.draft? %>
@@ -31,7 +33,7 @@
 </p>
 
 <p>
-  <%= @game.description %>
+  <%= @game.translated(:description, content_locale) %>
 </p>
 <p>
   <em><%= t("games.show.max_team_number_label") %></em>
@@ -43,6 +45,10 @@
 <br />
 
 <% if logged_in? and @current_user.author_of?(@game) %>
+
+  <% if @game.author == current_user %>
+    <%= render "games/missing_translations", :game => @game %>
+  <% end %>
 
   <fieldset>
     <legend>

@@ -127,6 +127,7 @@ Rails.application.routes.draw do
   get  "/play/:game_id/tip", to: "game_passings#get_current_level_tip", as: :get_current_level_tip
   get  "/play/:game_id",     to: "game_passings#show_current_level",    as: :show_current_level
   post "/play/:game_id",     to: "game_passings#post_answer",           as: :post_answer
+  post "/play/:game_id/content_locale", to: "game_passings#set_content_locale", as: :set_content_locale
 
   get "/stats/:action/:game_id", controller: "game_passings", as: :game_stats
   get "/logs/livechannel/:game_id",     to: "logs#show_live_channel", as: :show_live_channel # прямой эфир

@@ -28,6 +28,18 @@ en:
     not_started: "The game has not started yet. Where did you even get this link? :-)"
     already_in_team: "You are already a member of a team"
   games:
+    translations:
+      incomplete: "This game declares languages it is not fully translated into: %{count} fields are missing"
+      game_field: "Game — %{field}"
+      level_field: "Level %{position} — %{field}"
+      hint_field: "Level %{position} — hint after %{minutes} min"
+      question_field: "Level %{position} — question"
+      missing_count: "%{count} missing"
+      heading: "Not translated yet (%{count})"
+      fields:
+        name: "name"
+        description: "description"
+        text: "task text"
     list:
       view: "(view)"
       stats: "(statistics)"
@@ -48,6 +60,8 @@ en:
       registration_deadline: "Registration deadline "
       max_team_number: "Maximum number of teams"
       is_draft: "Draft?"
+    primary_locale_label: "Primary language"
+    available_locales_label: "Game languages"
     new:
       submit: "Create game"
     edit:
@@ -118,6 +132,7 @@ en:
       game_prefix: "game"
       code_label: "Code"
       submit: "Add code"
+    answers_are_shared: "Answer codes are shared across languages. If the answer is written differently in each, add every spelling as a separate correct answer."
   users:
     new:
       nickname_label: "Name"
@@ -226,6 +241,8 @@ en:
     delete_short: "(delete)"
     error_header: "Error"
   game_passings:
+    content_not_translated: "This task is not translated into your language yet — showing the original."
+    content_language: "Task language"
     index:
       title: 'Game "%{name}"'
       team: "Team"
@@ -349,6 +366,7 @@ en:
         blank: "can't be blank"
         confirmation: "doesn't match %{attribute}"
         invalid: "is invalid"
+        record_invalid: "Record is invalid"
       models:
         answer:
           attributes:
@@ -372,6 +390,11 @@ en:
             registration_deadline:
               in_the_past: "You set a registration deadline in the past. That's not allowed :-)"
               after_game_start: "You set a registration deadline later than the game's start date. That's not allowed :-)"
+            available_locales:
+              unknown: "contains unknown languages: %{locales}"
+              missing_primary: "must include the game's primary language"
+            primary_locale:
+              settled: "cannot be changed once translations exist"
         game_entry:
           attributes:
             game:

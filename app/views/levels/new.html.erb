@@ -3,15 +3,30 @@
 
 <%= error_messages_for @level, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
+<% active_locale = params[:tab].presence_in(@game.available_locale_list) || @game.primary_locale %>
+<%= render "shared/language_tabs", :game => @game, :record => @level,
+                                   :fields => Level::TRANSLATABLE_FIELDS,
+                                   :active => active_locale %>
+
 <%= form_with model: @level, url: game_levels_path(@game) do |f| %>
   <p>
     <%= f.label :name, t("levels.form.name") %>
-    <%= f.text_field :name %>
+    <% if active_locale == @game.primary_locale %>
+      <%= f.text_field :name %>
+    <% else %>
+      <%= text_field_tag "level[translations][#{active_locale}][name]",
+                         @level.translated(:name, active_locale) %>
+    <% end %>
   </p>
 
   <p>
     <%= f.label :text, t("levels.form.text") %>
-    <%= f.text_area :text %>
+    <% if active_locale == @game.primary_locale %>
+      <%= f.text_area :text %>
+    <% else %>
+      <%= text_area_tag "level[translations][#{active_locale}][text]",
+                        @level.translated(:text, active_locale) %>
+    <% end %>
   </p>
 
   <p>

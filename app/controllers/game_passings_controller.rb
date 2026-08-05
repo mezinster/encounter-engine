@@ -36,6 +36,7 @@ class GamePassingsController < ApplicationController
       return
     end
 
+    @game_passing.current_level = preloaded_level(@game_passing.current_level)
     @level = @game_passing.current_level
     render layout: "in_game"
   end
@@ -44,11 +45,21 @@ class GamePassingsController < ApplicationController
     @game_passings = GamePassing.of_game(@game)
   end
 
+  # This is the live delivery path: level_hint_updater.js polls this route and
+  # injects hint_text straight into the page as each countdown elapses, so a
+  # hint unlocked after the initial page load never goes through
+  # show_current_level.html.erb's translated() render at all. Translating
+  # only the view left every hint but the ones already elapsed at page load
+  # in the wrong language for a non-primary-locale player.
   def get_current_level_tip
+    @game_passing.current_level = preloaded_level_for_tip(@game_passing.current_level)
+
     next_hint = @game_passing.upcoming_hints.first
+    hint = @game_passing.hints_to_show.last
+    content_locale = content_locale_for(@game_passing.game)
 
     render json: { hint_num: @game_passing.hints_to_show.length,
-                    hint_text: @game_passing.hints_to_show.last.text,
+                    hint_text: hint.translated(:text, content_locale),
                     next_available_in: next_hint&.available_in(@game_passing.current_level_entered_at) }
   end
 
@@ -71,6 +82,10 @@ class GamePassingsController < ApplicationController
     if @game_passing.finished?
       render :show_results
     else
+      # check_answer! may have advanced current_level (pass_level!), so the
+      # preload has to happen after it, same as show_current_level -- this
+      # render path shows the same view and reads translated() the same way.
+      @game_passing.current_level = preloaded_level(@game_passing.current_level)
       render :show_current_level, layout: "in_game"
     end
   end
@@ -81,6 +96,22 @@ class GamePassingsController < ApplicationController
   def exit_game
     @game_passing.exit!
     render :show_results
+  end
+
+  # Writes on behalf of current_user, which require_authentication! (see the
+  # before_action list above) already guarantees is present for every action
+  # on this controller except :index and :show_results -- but that filter's
+  # job is authentication, not this action's, so still check rather than
+  # trust it silently and let a future filter change turn this into a
+  # NoMethodError on nil instead of a no-op.
+  def set_content_locale
+    if current_user && @game.available_locale_list.include?(params[:locale].to_s)
+      preference = GameLocalePreference.find_or_initialize_by(:user_id => current_user.id,
+                                                             :game_id => @game.id)
+      preference.locale = params[:locale].to_s
+      preference.save!
+    end
+    redirect_to show_current_level_path(:game_id => @game.id)
   end
 
   private
@@ -96,12 +127,41 @@ class GamePassingsController < ApplicationController
   # spec/routing_spec.rb. Every "Сойти с дистанции" click therefore raised
   # RecordNotFound before the action ever ran. Once corrected the two finders
   # were byte-identical, so #exit_game just uses this one.
+  # show_current_level.html.erb (and the identical post_answer render) reads
+  # @game.translated(:name, content_locale) -- see Finding 2 of the
+  # whole-branch review -- so this needs its own content_translations
+  # preloaded too; @game_passing.current_level's preloaded :game (below) is a
+  # different, separately-loaded Game object and does not cover this one.
   def find_game
-    @game = Game.find(params[:game_id])
+    @game = Game.includes(:content_translations).find(params[:game_id])
   end
 
   def find_team
     @team = current_user.team
+  end
+
+  # translated() searches the loaded association rather than querying, so this
+  # preload is what makes it O(1) per page instead of O(fields). Nested, not
+  # sibling: includes(:hints, :questions, :content_translations) preloads
+  # only the LEVEL's own translations and leaves each hint and question to
+  # lazy-load its own -- one query per record (see the same tradeoff
+  # documented on Game#translatable_records). :game is preloaded too, since
+  # every translated() call resolves primary_locale through it; Rails'
+  # automatic inverse_of means each preloaded hint/question's `level` is this
+  # same object, so this one row covers all of them.
+  def preloaded_level(level)
+    Level.includes(:game, :content_translations,
+                   :hints => :content_translations,
+                   :questions => :content_translations).find(level.id)
+  end
+
+  # Same reasoning as preloaded_level, deliberately narrower: every playing
+  # team polls #get_current_level_tip repeatedly, and this JSON response
+  # never includes level or question text, so there's no reason to pay for
+  # loading (or translating) either -- just the hints and the :game a
+  # translated() call on one of them needs to resolve primary_locale.
+  def preloaded_level_for_tip(level)
+    Level.includes(:game, :hints => :content_translations).find(level.id)
   end
 
   # TODO: must be a critical section, double creation is possible!

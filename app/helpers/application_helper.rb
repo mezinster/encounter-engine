@@ -57,4 +57,24 @@ module ApplicationHelper
 
     markup.html_safe
   end
+
+  # Each link opens the right form on the right language tab, so the author
+  # goes from "what is missing" to "fixing it" in one click.
+  #
+  # The Question branch is currently unreachable: Question::TRANSLATABLE_FIELDS
+  # is deliberately empty (the `questions` column is vestigial), so
+  # Game#missing_translations never yields a Question entry. Kept anyway --
+  # it costs nothing, keeps the case statement symmetric with the other three
+  # translatable record types, and stops this helper from silently returning
+  # nil the day a Question field becomes translatable.
+  def missing_translation_path_for(entry)
+    case entry.record
+    when Game     then edit_game_path(entry.record, :tab => entry.locale)
+    when Level    then edit_game_level_path(entry.record.game, entry.record, :tab => entry.locale)
+    when Hint     then edit_game_level_hint_path(entry.record.level.game, entry.record.level,
+                                                 entry.record, :tab => entry.locale)
+    when Question then new_game_level_question_path(entry.record.level.game, entry.record.level,
+                                                    :tab => entry.locale)
+    end
+  end
 end

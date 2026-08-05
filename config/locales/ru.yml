@@ -28,6 +28,18 @@ ru:
     not_started: "Нельзя играть в игру до её начала. И вообще, где вы достали эту ссылку? :-)"
     already_in_team: "Вы уже являетесь членом команды"
   games:
+    translations:
+      incomplete: "Игра объявляет языки, на которые переведено не всё: не хватает %{count} полей"
+      game_field: "Игра — %{field}"
+      level_field: "Уровень %{position} — %{field}"
+      hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
+      question_field: "Уровень %{position} — вопрос"
+      missing_count: "не хватает: %{count}"
+      heading: "Не переведено (%{count})"
+      fields:
+        name: "название"
+        description: "описание"
+        text: "текст задания"
     list:
       view: "(просмотреть)"
       stats: "(статистика)"
@@ -48,6 +60,8 @@ ru:
       registration_deadline: "Крайний срок регистрации "
       max_team_number: "Максимальное количество команд"
       is_draft: "Черновик?"
+    primary_locale_label: "Основной язык"
+    available_locales_label: "Языки игры"
     new:
       submit: "Создать игру"
     edit:
@@ -118,6 +132,7 @@ ru:
       game_prefix: "игра"
       code_label: "Код"
       submit: "Добавить код"
+    answers_are_shared: "Коды ответов общие для всех языков. Если ответ пишется по-разному, добавьте каждый вариант как отдельный правильный ответ."
   users:
     new:
       nickname_label: "Имя"
@@ -238,6 +253,8 @@ ru:
     delete_short: "(удалить)"
     error_header: "Ошибка"
   game_passings:
+    content_not_translated: "Это задание пока не переведено на ваш язык — показан язык оригинала."
+    content_language: "Язык заданий"
     index:
       title: 'Игра "%{name}"'
       team: "Команда"
@@ -361,6 +378,7 @@ ru:
         blank: "не может быть пустым"
         confirmation: "не совпадает с %{attribute}"
         invalid: "имеет неверное значение"
+        record_invalid: "Запись недействительна"
       models:
         answer:
           attributes:
@@ -384,6 +402,11 @@ ru:
             registration_deadline:
               in_the_past: "Вы указали крайний срок регистрации из прошлого, так нельзя :-)"
               after_game_start: "Вы указали крайний срок регистрации больше даты начала игры, так нельзя :-)"
+            available_locales:
+              unknown: "содержит неизвестные языки: %{locales}"
+              missing_primary: "должны включать основной язык игры"
+            primary_locale:
+              settled: "нельзя изменить после того, как добавлены переводы"
         game_entry:
           attributes:
             game:

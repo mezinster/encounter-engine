@@ -22,7 +22,14 @@
     <% game.available_locale_list.each do |locale| %>
       <% missing = record.new_record? ? [] : record.missing_translated_fields(fields, locale) %>
       <li class="<%= "active" if locale == active %> <%= "incomplete" if missing.any? %>">
-        <%= link_to url_for(request.query_parameters.merge(:tab => locale)) do %>
+        <%# The language being edited is rendered as text, not a link. That is
+            not only for looks: it means the active tab stays distinguishable
+            even with no stylesheet, and an author can always tell which
+            language the fields below are bound to. This strip shipped once with
+            no CSS at all, which made every tab look identical -- the fields
+            were correctly bound to whichever language the ?tab= param named,
+            and the author had no way to know which one that was. %>
+        <% label = capture do %>
           <%# "locales.<code>" is the key the header's language switcher already
               uses for a language's own name -- there is no separate
               "locale_name.*" key. %>
@@ -30,6 +37,11 @@
           <% if missing.any? %>
             <span class="missing-count"><%= t("games.translations.missing_count", :count => missing.size) %></span>
           <% end %>
+        <% end %>
+        <% if locale == active %>
+          <span class="current"><%= label %></span>
+        <% else %>
+          <%= link_to label, url_for(request.query_parameters.merge(:tab => locale)) %>
         <% end %>
       </li>
     <% end %>

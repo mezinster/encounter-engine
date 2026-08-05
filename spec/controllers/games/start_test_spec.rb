@@ -93,8 +93,20 @@ RSpec.describe GamesController, "#start_test", type: :controller do
         create_level(:game => @game, :name => "Уровень", :text => "Текст")
       end
 
-      it "refuses to start the test and leaves the game a draft" do
-        expect { perform_request(:as_user => @user) }.to raise_error(ActiveRecord::RecordInvalid)
+      # The refusal itself is unchanged; how it surfaces is not. This used to
+      # assert raise_error(ActiveRecord::RecordInvalid), which was the old
+      # save! behaviour: unrescued, Rails answered 422, and because this app
+      # ships no public/422.html the author's browser showed a bare page that
+      # read as "page does not exist" -- pointing them at the router for what
+      # is actually an unfinished translation. The reason was computed, put in
+      # errors[:base], and thrown away by the exception.
+      it "refuses to start the test, says why, and leaves the game a draft" do
+        expect { perform_request(:as_user => @user) }.not_to raise_error
+        expect(response).to redirect_to(@game)
+        expect(flash[:alert]).to include(
+          I18n.t("games.translations.incomplete", :count => @game.missing_translations.size)
+        )
+
         @game.reload
         expect(@game.is_draft?).to be true
         expect(@game.is_testing?).to be false

@@ -9,7 +9,7 @@
     <%= f.text_field :text %>
   <% else %>
     <%= text_field_tag "hint[translations][#{active_locale}][text]",
-                       @hint.translated(:text, active_locale) %>
+                       @hint.translation_draft(:text, active_locale) %>
   <% end %>
 </p>
 

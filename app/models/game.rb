@@ -14,9 +14,9 @@ class Game < ApplicationRecord
   end
 
   belongs_to :author, class_name: "User", optional: true
-  has_many :levels, -> {  order('position') }
+  has_many :levels, -> {  order('position') }, :dependent => :destroy
   has_many :logs, -> { order('time') }
-  has_many :game_entries, :class_name => "GameEntry"
+  has_many :game_entries, :class_name => "GameEntry", :dependent => :destroy
   has_many :game_passings, :class_name => "GamePassing"
 
   validates :name, presence: true, uniqueness: true
@@ -58,6 +58,14 @@ class Game < ApplicationRecord
 
   def withdrawn?
     self.withdrawn_at.present?
+  end
+
+  # Logs and game passings are players' history, not the author's content, and
+  # destroy would orphan them rather than remove them -- there are no foreign
+  # keys and no dependent: option on those associations. Withdrawal achieves
+  # what deletion is usually reached for, without leaving unreachable rows.
+  def deletable?
+    self.game_passings.empty?
   end
 
   def created_by?(user)

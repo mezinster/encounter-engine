@@ -37,6 +37,7 @@ ka:
   games:
     withdrawn_notice: "Игра снята с публикации"
     restored_notice: "Игра снова опубликована"
+    not_deletable: "Игру нельзя удалить: в неё уже играли. Снимите её с публикации."
     translations:
       incomplete: "Игра объявляет языки, на которые переведено не всё: не хватает %{count} полей"
       game_field: "Игра — %{field}"

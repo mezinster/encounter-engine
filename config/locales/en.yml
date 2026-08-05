@@ -33,6 +33,7 @@ en:
   games:
     withdrawn_notice: "Game withdrawn from players"
     restored_notice: "Game published again"
+    not_deletable: "This game cannot be deleted because teams have played it. Withdraw it instead."
     translations:
       incomplete: "This game declares languages it is not fully translated into: %{count} fields are missing"
       game_field: "Game — %{field}"

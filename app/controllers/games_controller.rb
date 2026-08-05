@@ -52,6 +52,10 @@ class GamesController < ApplicationController
   end
 
   def delete
+    unless @game.deletable?
+      redirect_to @game, :alert => t("games.not_deletable") and return
+    end
+
     @game.destroy
     redirect_to dashboard_path
   end

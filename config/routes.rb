@@ -12,7 +12,10 @@ Rails.application.routes.draw do
   namespace :admin do
     get "/", to: "dashboard#show", as: :dashboard
     resources :games, only: [ :index ]
-    resources :users, only: [ :index, :show ]
+    resources :users, only: [ :index, :show ] do
+      post "grant",  on: :member
+      post "revoke", on: :member
+    end
   end
 
   # Session/registration URLs replace merb-auth's merb_auth_slice_password

@@ -48,6 +48,15 @@ class User < ApplicationRecord
     self.is_superadmin
   end
 
+  def self.superadmin_count
+    where(:is_superadmin => true).count
+  end
+
+  # The instance must never end up with nobody able to administer it.
+  def last_superadmin?
+    self.superadmin? && User.superadmin_count <= 1
+  end
+
   def password_required?
     crypted_password.blank? || password.present?
   end

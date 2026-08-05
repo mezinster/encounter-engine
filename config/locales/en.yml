@@ -1,6 +1,10 @@
 en:
   admin:
     users:
+      granted_notice: "Administrator rights granted"
+      revoked_notice: "Administrator rights revoked"
+      cannot_revoke_self: "You cannot revoke your own rights"
+      cannot_revoke_last: "You cannot revoke the last administrator"
       index:
         title: "Players"
         nickname: "Nickname"
@@ -22,6 +26,8 @@ en:
         signed_up: "Registered"
         authored_games: "Games created"
         back: "Back to players"
+        grant: "Make administrator"
+        revoke: "Revoke administrator rights"
     dashboard:
       show:
         title: "Overview"

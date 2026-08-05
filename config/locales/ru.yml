@@ -1,6 +1,10 @@
 ru:
   admin:
     users:
+      granted_notice: "Права администратора выданы"
+      revoked_notice: "Права администратора отозваны"
+      cannot_revoke_self: "Нельзя снять права с самого себя"
+      cannot_revoke_last: "Нельзя снять права с последнего администратора"
       index:
         title: "Игроки"
         nickname: "Ник"
@@ -22,6 +26,8 @@ ru:
         signed_up: "Регистрация"
         authored_games: "Созданные игры"
         back: "К списку игроков"
+        grant: "Сделать администратором"
+        revoke: "Снять права администратора"
     dashboard:
       show:
         title: "Обзор"

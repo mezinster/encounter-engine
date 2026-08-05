@@ -347,6 +347,7 @@ ka:
       dashboard: "პირადი კაბინეტი"
       home: "მთავარი"
     left_menu:
+      administration: "ადმინისტრირება"
       dashboard: "პირადი კაბინეტი"
       profile: "პროფილი"
       team_room: "გუნდის ოთახი"

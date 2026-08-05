@@ -384,6 +384,11 @@ ru:
             registration_deadline:
               in_the_past: "Вы указали крайний срок регистрации из прошлого, так нельзя :-)"
               after_game_start: "Вы указали крайний срок регистрации больше даты начала игры, так нельзя :-)"
+            available_locales:
+              unknown: "содержит неизвестные языки: %{locales}"
+              missing_primary: "должны включать основной язык игры"
+            primary_locale:
+              settled: "нельзя изменить после того, как добавлены переводы"
         game_entry:
           attributes:
             game:

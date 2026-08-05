@@ -18,3 +18,13 @@ uk:
     en: "English"
     uk: "Українська"
     ka: "ქართული"
+  activerecord:
+    errors:
+      models:
+        game:
+          attributes:
+            available_locales:
+              unknown: "содержит неизвестные языки: %{locales}"
+              missing_primary: "должны включать основной язык игры"
+            primary_locale:
+              settled: "нельзя изменить после того, как добавлены переводы"

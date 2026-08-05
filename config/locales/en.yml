@@ -372,6 +372,11 @@ en:
             registration_deadline:
               in_the_past: "You set a registration deadline in the past. That's not allowed :-)"
               after_game_start: "You set a registration deadline later than the game's start date. That's not allowed :-)"
+            available_locales:
+              unknown: "contains unknown languages: %{locales}"
+              missing_primary: "must include the game's primary language"
+            primary_locale:
+              settled: "cannot be changed once translations exist"
         game_entry:
           attributes:
             game:

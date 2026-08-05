@@ -83,6 +83,25 @@ class Game < ApplicationRecord
     self.is_testing
   end
 
+  # Stored comma-separated rather than serialised: it is a short list of ASCII
+  # locale codes, it has to be readable in a SQLite console during an incident,
+  # and a plain string needs no coder on either database.
+  def available_locale_list
+    self.available_locales.to_s.split(",").map(&:strip).reject(&:blank?)
+  end
+
+  def available_locale_list=(list)
+    self.available_locales = Array(list).map(&:to_s).map(&:strip).reject(&:blank?).join(",")
+  end
+
+  def multilingual?
+    self.available_locale_list.size > 1
+  end
+
+  validate :available_locales_are_known
+  validate :available_locales_include_primary
+  validate :primary_locale_is_settled
+
 protected
 
   def game_starts_in_the_future
@@ -108,5 +127,36 @@ protected
         self.starts_at and self.registration_deadline > self.starts_at
       self.errors.add(:registration_deadline, :after_game_start)
     end
+  end
+
+private
+
+  def available_locales_are_known
+    known = I18n.available_locales.map(&:to_s)
+    unknown = self.available_locale_list - known
+    return if unknown.empty?
+
+    self.errors.add(:available_locales,
+                    I18n.t("activerecord.errors.models.game.attributes.available_locales.unknown",
+                           :locales => unknown.join(", ")))
+  end
+
+  def available_locales_include_primary
+    return if self.available_locale_list.include?(self.primary_locale.to_s)
+
+    self.errors.add(:available_locales,
+                    I18n.t("activerecord.errors.models.game.attributes.available_locales.missing_primary"))
+  end
+
+  # The columns hold the primary language's text. Repointing primary_locale
+  # once translations exist would leave the columns holding one language while
+  # the game claims another, and every fallback would then serve the wrong one.
+  def primary_locale_is_settled
+    return unless self.primary_locale_changed?
+    return if self.new_record?
+    return if ContentTranslation.where(:translatable => self).none? && self.draft?
+
+    self.errors.add(:primary_locale,
+                    I18n.t("activerecord.errors.models.game.attributes.primary_locale.settled"))
   end
 end

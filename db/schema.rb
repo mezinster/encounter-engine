@@ -10,17 +10,37 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_04_100155) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_05_005247) do
   create_table "answers", force: :cascade do |t|
     t.integer "question_id"
     t.integer "level_id"
     t.string "value"
   end
 
+  create_table "content_translations", force: :cascade do |t|
+    t.string "translatable_type", null: false
+    t.integer "translatable_id", null: false
+    t.string "field", null: false
+    t.string "locale", null: false
+    t.text "value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["translatable_type", "translatable_id", "field", "locale"], name: "index_content_translations_uniqueness", unique: true
+  end
+
   create_table "game_entries", force: :cascade do |t|
     t.integer "game_id"
     t.integer "team_id"
     t.string "status"
+  end
+
+  create_table "game_locale_preferences", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "game_id", null: false
+    t.string "locale", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "game_id"], name: "index_game_locale_preferences_on_user_id_and_game_id", unique: true
   end
 
   create_table "game_passings", force: :cascade do |t|
@@ -49,6 +69,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_04_100155) do
     t.datetime "author_finished_at", precision: nil
     t.boolean "is_testing", default: false, null: false
     t.datetime "test_date", precision: nil
+    t.string "primary_locale", default: "ru", null: false
+    t.string "available_locales", default: "ru", null: false
   end
 
   create_table "hints", force: :cascade do |t|

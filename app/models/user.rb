@@ -32,6 +32,8 @@ class User < ApplicationRecord
   # parameter entirely would validate.
   validates :password_confirmation, presence: true, if: :password_required?
 
+  validate :last_superadmin_keeps_the_role
+
   def member_of_any_team?
     !! team
   end
@@ -89,6 +91,21 @@ class User < ApplicationRecord
   end
 
   private
+
+  # The instance must never end up with nobody able to
+  # administer it. Enforced here rather than only in the
+  # controller because the controller path cannot actually
+  # be reached: require_superadmin! means the actor holds
+  # the role, so if the target is the LAST superadmin the
+  # target is the actor, and the self-revoke guard fires
+  # first. A console mistake is the real risk.
+  def last_superadmin_keeps_the_role
+    return unless is_superadmin_changed?(:from => true, :to => false)
+    return if User.superadmin_count > 1
+
+    errors.add(:is_superadmin,
+               I18n.t("admin.users.cannot_revoke_last"))
+  end
 
   def encrypt_password
     # merb-auth generated new salts as

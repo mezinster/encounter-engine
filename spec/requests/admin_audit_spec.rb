@@ -58,6 +58,32 @@ describe "auditing administrative changes", type: :request do
       expect { get "/games/end_game/#{game.id}" }.to change { AdminAction.count }.by(1)
       expect(AdminAction.newest_first.first.action).to eq("end_game")
     end
+
+    it "records an update" do
+      expect {
+        put game_path(game), :params => { :game => { :name => "Renamed by operator" } }
+      }.to change { AdminAction.count }.by(1)
+
+      expect(AdminAction.newest_first.first.action).to eq("update")
+    end
+
+    it "records nothing when the update is rejected" do
+      expect {
+        put game_path(game), :params => { :game => { :name => "" } }
+      }.not_to change { AdminAction.count }
+    end
+
+    it "records starting a test" do
+      expect { get "/games/start_test/#{game.id}" }.to change { AdminAction.count }.by(1)
+      expect(AdminAction.newest_first.first.action).to eq("start_test")
+    end
+
+    it "records finishing a test" do
+      testing_game = create_game(:author => author, :is_testing => true, :test_date => "2099-02-02 00:00")
+
+      expect { get "/games/finish_test/#{testing_game.id}" }.to change { AdminAction.count }.by(1)
+      expect(AdminAction.newest_first.first.action).to eq("finish_test")
+    end
   end
 
   # The condition is "superadmin AND not the author". Getting it wrong in the

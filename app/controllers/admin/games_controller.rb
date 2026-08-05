@@ -9,6 +9,10 @@ class Admin::GamesController < ApplicationController
 
   def index
     # "What just appeared on my instance?" is the operator's first question.
-    @games = Game.includes(:author).order(:created_at => :desc)
+    #
+    # game_passings is preloaded because the view renders a count per row.
+    # Without it this console issues one COUNT per game -- the one query
+    # pattern a screen that lists *everything* can least afford.
+    @games = Game.includes(:author, :game_passings).order(:created_at => :desc)
   end
 end

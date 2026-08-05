@@ -335,6 +335,7 @@ uk:
       dashboard: "Особистий кабінет"
       home: "Головна"
     left_menu:
+      administration: "Адміністрування"
       dashboard: "Особистий кабінет"
       profile: "Профіль"
       team_room: "Кімната команди"

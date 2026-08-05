@@ -328,6 +328,7 @@ ru:
       dashboard: "Личный кабинет"
       home: "Главная"
     left_menu:
+      administration: "Администрирование"
       dashboard: "Личный кабинет"
       profile: "Профиль"
       team_room: "Комната команды"

@@ -27,6 +27,32 @@
     <%= link_to t("layout.left_menu.all_games"), games_path %>
   </p>
 
+  <%# Inside the logged_in? branch, so current_user is guaranteed. The admin
+      screens are scattered across four paths that are easy to forget and are
+      linked from nowhere else -- the console links onward to the others, but
+      only once you have found the console. %>
+  <% if current_user.superadmin? %>
+    <p>
+      <strong><%= t("layout.left_menu.administration") %></strong>
+    </p>
+
+    <p>
+      <%= link_to t("admin.dashboard.show.title"), admin_dashboard_path %>
+    </p>
+
+    <p>
+      <%= link_to t("admin.games.index.title"), admin_games_path %>
+    </p>
+
+    <p>
+      <%= link_to t("admin.users.index.title"), admin_users_path %>
+    </p>
+
+    <p>
+      <%= link_to t("admin.dashboard.show.audit_log"), admin_audit_index_path %>
+    </p>
+  <% end %>
+
   <p>
     <%= link_to t("layout.left_menu.logout"), logout_path %>
   </p>

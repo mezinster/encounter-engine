@@ -316,6 +316,7 @@ en:
       dashboard: "Dashboard"
       home: "Home"
     left_menu:
+      administration: "Administration"
       dashboard: "Dashboard"
       profile: "Profile"
       team_room: "Team room"

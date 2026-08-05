@@ -315,16 +315,29 @@ In `app/models/game.rb`, beside `draft?` and `started?`:
 
 In `app/controllers/concerns/security_filters.rb`, extend `ensure_author`:
 
+The lock gets its **own filter**, not a line inside `ensure_author`:
+
 ```ruby
-  def ensure_author
+  # Deliberately NOT part of ensure_author. That filter is shared by read-only
+  # views too -- the live log, the level and game logs, the team-passings list --
+  # and an author under investigation should still be able to watch their own
+  # game. The lock covers content and settings, nothing else.
+  #
+  # The superadmin early return is repeated here rather than inherited: each
+  # filter must be independently safe, because a future call site might apply
+  # one without the other.
+  def ensure_editing_not_locked
     return if logged_in? && current_user.superadmin?
 
-    raise Authentication::Unauthorized, t("errors.must_be_author") unless logged_in? && current_user.author_of?(@game)
     raise Authentication::Unauthorized, t("errors.game_is_locked") if @game&.editing_locked?
   end
 ```
 
-Order matters: the superadmin returns before the lock check, so a lock never freezes the operator who applied it. The lock covers content and settings only — lifecycle actions remain available to a superadmin, because they pass this same filter.
+`ensure_author` is left exactly as Task 1 wrote it.
+
+Apply the new filter beside the existing `ensure_author` in `LevelsController`, `HintsController`, `QuestionsController` and `AnswersController` (all actions), and in `GamesController` with `only: [:edit, :update, :delete]`.
+
+**Deliberately not applied** to `LogsController` or `GamePassingsController` — both are read-only views of the author's own game — nor to `GamesController`'s lifecycle actions. Putting the check inside `ensure_author` looks tidier and is wrong: that filter guards eight controllers including read-only ones, so the lock would silently inherit a scope the spec never granted it ("content and settings only"), and an author would lose sight of their own live log during a race.
 
 - [ ] **Step 6: Add a spec for the lock's effect on each party**
 

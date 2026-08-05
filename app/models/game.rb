@@ -88,6 +88,43 @@ class Game < ApplicationRecord
     Game.visible.reject(&:started?)
   end
 
+  # Each game counts once, under the first status that matches, in this order:
+  # withdrawn, draft, finished, running, scheduled. The predicates overlap by
+  # construction -- a draft has no start time in the past, a withdrawn game may
+  # also be finished -- so without a precedence the columns would not sum to
+  # the total and nobody would notice.
+  #
+  # The order matches how the admin console labels a game in its status column,
+  # deliberately: two admin screens disagreeing about what a game IS would be
+  # worse than either being wrong on its own.
+  #
+  # Counted in SQL. Game.started and Game.notstarted just above load every row
+  # and filter in memory, which is fine for a listing of two and wrong for a
+  # counter -- do not build counts on them.
+  def self.count_by_status(now = Time.now)
+    live       = where(:withdrawn_at => nil)
+    published  = live.where(:is_draft => false)
+    unfinished = published.where(:author_finished_at => nil)
+
+    {
+      :withdrawn => where.not(:withdrawn_at => nil).count,
+      :draft     => live.where(:is_draft => true).count,
+      :finished  => published.where.not(:author_finished_at => nil).count,
+      # starts_at is nullable and Game#started? treats NULL as not started, so
+      # the NULL check is explicit rather than left to a comparison that would
+      # evaluate to unknown and drop the row from every bucket.
+      :running   => unfinished.where.not(:starts_at => nil).where("starts_at < ?", now).count,
+      :scheduled => unfinished.where("starts_at IS NULL OR starts_at >= ?", now).count
+    }
+  end
+
+  # Reported alongside the status table rather than as a row in it: a game can
+  # be locked AND running, and forcing it into the precedence above would hide
+  # one fact in order to show the other.
+  def self.editing_locked_count
+    where.not(:editing_locked_at => nil).count
+  end
+
   def free_place_of_team!
     if self.requested_teams_number>0
       self.requested_teams_number-=1

@@ -77,7 +77,9 @@ var LevelHintUpdater = function() {
                 hideLoadIndicator();
                 showCountdownContainer();
 
-                appendHint(data.hint_num, data.hint_text);
+                if ( data.hint_text ) {
+                    appendHint(data.hint_num, data.hint_text);
+                }
 
                 if ( !data.next_available_in ) {
                     $countdownContainer.text('Подсказок больше не будет');

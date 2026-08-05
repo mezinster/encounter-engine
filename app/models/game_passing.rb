@@ -181,7 +181,7 @@ class GamePassing < ApplicationRecord
 
     self.current_level = level
     self.answered_questions = []
-    self.current_level_entered_at = Time.now
+    self.current_level_entered_at = effective_now
     # A team standing on a level is not finished. Clearing these here is what
     # keeps a moved team from being simultaneously mid-level and finished.
     self.finished_at = nil
@@ -192,7 +192,7 @@ class GamePassing < ApplicationRecord
   def reinstate!
     # exit! leaves the entry clock alone, so without this reset a team that
     # quit an hour ago returns to a level with every hint already elapsed.
-    self.current_level_entered_at = Time.now
+    self.current_level_entered_at = effective_now
     self.finished_at = nil
     self.status = nil
     save!
@@ -201,7 +201,7 @@ class GamePassing < ApplicationRecord
   def reset_level_clock!
     raise ArgumentError, "team has finished" if self.finished?
 
-    self.current_level_entered_at = Time.now
+    self.current_level_entered_at = effective_now
     save!
   end
 

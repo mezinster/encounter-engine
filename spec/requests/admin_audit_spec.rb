@@ -94,6 +94,17 @@ describe "auditing administrative changes", type: :request do
       sign_in(author)
       expect { get "/games/end_game/#{game.id}" }.not_to change { AdminAction.count }
     end
+
+    # acting_as_operator? is "superadmin AND not the author". The example
+    # above only exercises a non-superadmin author; this is the other half of
+    # the conjunction -- a superadmin who is ALSO the author must still record
+    # nothing, or the log would bury every superadmin's ordinary games under
+    # administrative noise.
+    it "records nothing when the author is also a superadmin" do
+      author.update!(:is_superadmin => true)
+      sign_in(author)
+      expect { get "/games/end_game/#{game.id}" }.not_to change { AdminAction.count }
+    end
   end
 
   # Entries are written only once the change has landed. An entry for a

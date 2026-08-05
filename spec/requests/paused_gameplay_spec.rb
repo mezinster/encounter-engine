@@ -42,7 +42,8 @@ describe "playing a paused game", type: :request do
 
     post post_answer_path(:game_id => game.id), :params => { :answer => "правильно" }
 
-    expect(response).not_to have_http_status(:unauthorized)
+    expect(response).to have_http_status(:found)
+    expect(response).to redirect_to(show_current_level_path(:game_id => game.id))
     expect(passing.reload.current_level).to eq(level)
   end
 

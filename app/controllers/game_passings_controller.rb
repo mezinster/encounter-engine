@@ -62,7 +62,7 @@ class GamePassingsController < ApplicationController
     content_locale = content_locale_for(@game_passing.game)
 
     render json: { hint_num: @game_passing.hints_to_show.length,
-                    hint_text: hint.translated(:text, content_locale),
+                    hint_text: hint&.translated(:text, content_locale),
                     next_available_in: next_hint&.available_in(@game_passing.current_level_entered_at, @game_passing.effective_now) }
   end
 

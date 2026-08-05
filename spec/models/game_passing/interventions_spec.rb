@@ -91,4 +91,25 @@ describe GamePassing, "interventions" do
       expect { passing.reset_level_clock! }.to raise_error(ArgumentError)
     end
   end
+
+  # Whole-branch review, Finding 2: Game#resume! shifts every unfinished
+  # passing's current_level_entered_at forward by the WHOLE held duration, on
+  # the assumption that entered_at has stood still since the pause began. An
+  # intervention that stamps Time.now instead of effective_now breaks that
+  # assumption -- the team gets the pause duration credited a SECOND time on
+  # resume, landing its clock in the future. Pinned here so it fails again if
+  # move_to_level!/reinstate!/reset_level_clock! go back to Time.now.
+  describe "an intervention during a pause, followed by resume" do
+    it "leaves the intervened-on team's clock near zero elapsed, not shifted by the pause duration" do
+      game.pause!
+
+      travel_to(30.minutes.from_now) { passing.reset_level_clock! }
+
+      travel_to(40.minutes.from_now) do
+        game.reload.resume!
+
+        expect(passing.reload.current_level_entered_at).to be_within(5.seconds).of(Time.now)
+      end
+    end
+  end
 end

@@ -1,0 +1,24 @@
+<%# app/views/game_passings/_intervention_controls.html.erb
+    One team's row of operator controls. Every control posts to a named
+    action -- there is deliberately no field that writes a column directly. %>
+<td class="interventions">
+  <%= form_with :url => move_team_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
+                :method => :post, :local => true do |f| %>
+    <%# Level names are author-written content: rendered verbatim, never
+        through t(). %>
+    <%= f.select :level_id, levels.map { |level| [ level.name, level.id ] } %>
+    <%= f.submit t("game_passings.index.move") %>
+  <% end %>
+
+  <% if game_passing.exited? %>
+    <%= button_to t("game_passings.index.reinstate"),
+                  reinstate_team_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
+                  :method => :post %>
+  <% end %>
+
+  <% unless game_passing.finished? %>
+    <%= button_to t("game_passings.index.reset_clock"),
+                  reset_team_clock_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
+                  :method => :post %>
+  <% end %>
+</td>

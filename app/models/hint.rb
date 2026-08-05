@@ -18,12 +18,12 @@ class Hint < ApplicationRecord
     self.delay = value.to_i * 60
   end
 
-  def ready_to_show?(current_level_entered_at)
-    seconds_passed = Time.now - current_level_entered_at
+  def ready_to_show?(current_level_entered_at, now = Time.now)
+    seconds_passed = now - current_level_entered_at
     seconds_passed >= self.delay
   end
 
-  def available_in(current_level_entered_at)
-    (current_level_entered_at - Time.now).to_i + self.delay
+  def available_in(current_level_entered_at, now = Time.now)
+    (current_level_entered_at - now).to_i + self.delay
   end
 end

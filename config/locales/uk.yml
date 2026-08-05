@@ -18,6 +18,10 @@
 uk:
   admin:
     users:
+      granted_notice: "Права адміністратора надано"
+      revoked_notice: "Права адміністратора знято"
+      cannot_revoke_self: "Не можна зняти права із самого себе"
+      cannot_revoke_last: "Не можна зняти права з останнього адміністратора"
       index:
         title: "Гравці"
         nickname: "Нік"
@@ -39,9 +43,34 @@ uk:
         signed_up: "Реєстрація"
         authored_games: "Створені ігри"
         back: "До списку гравців"
+        grant: "Зробити адміністратором"
+        revoke: "Зняти права адміністратора"
+    audit:
+      index:
+        title: "Журнал дій адміністраторів"
+        when: "Коли"
+        who: "Хто"
+        what: "Дія"
+        target: "Об'єкт"
+        details: "Подробиці"
+        unknown_actor: "невідомо"
+        back: "До огляду"
+        action:
+          withdraw: "Зняв з публікації"
+          restore: "Опублікував"
+          lock: "Заморозив редагування"
+          unlock: "Розморозив редагування"
+          update: "Змінив"
+          delete: "Видалив"
+          end_game: "Завершив гру"
+          start_test: "Запустив тестування"
+          finish_test: "Завершив тестування"
+          grant_superadmin: "Надав права адміністратора"
+          revoke_superadmin: "Зняв права адміністратора"
     dashboard:
       show:
         title: "Огляд"
+        audit_log: "Журнал дій"
         games_by_status: "Ігри за статусом"
         editing_locked: "Редагування заморожено"
         totals: "Усього"
@@ -109,6 +138,14 @@ uk:
     game_is_locked: "Редагування гри заморожено адміністратором"
     game_is_withdrawn: "Гру знято з публікації"
     must_be_superadmin: "Доступ лише для адміністратора"
+    game_is_not_live: "Гра зараз не триває"
+  interventions:
+    paused_notice: "Гру призупинено"
+    resumed_notice: "Гра триває"
+    moved_notice: "Команду переведено на інший рівень"
+    reinstated_notice: "Команду повернуто в гру"
+    clock_reset_notice: "Відлік часу на рівні скинуто"
+    refused: "Ця дія зараз неможлива"
   invitations:
     notice_sent: "Користувачеві %{nickname} надіслано запрошення"
     new:
@@ -344,11 +381,19 @@ uk:
   game_passings:
     content_not_translated: "Це завдання ще не перекладено вашою мовою — показано мову оригіналу."
     content_language: "Мова завдань"
+    paused: "Гру призупинено організатором. Залишайтеся на місці й чекайте на продовження."
     index:
       title: 'Гра "%{name}"'
       team: "Команда"
       level: "Рівень"
       time_at_level: "Час на рівні"
+      interventions: "Втручання"
+      move: "Перевести"
+      reinstate: "Повернути в гру"
+      reset_clock: "Скинути відлік"
+      pause: "Призупинити гру"
+      resume: "Продовжити гру"
+      paused_since: "Гру призупинено о %{time}."
       exited: "(Зійшли з дистанції)"
       finished: "(завершили гру)"
       level_log: "(лог по рівню)"

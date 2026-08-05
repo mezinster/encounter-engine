@@ -56,6 +56,46 @@ class Game < ApplicationRecord
     self.editing_locked_at.present?
   end
 
+  def paused?
+    self.paused_at.present?
+  end
+
+  # update_column, not update!, and this is not a style preference: a running
+  # game does not pass its own validations. game_starts_in_the_future adds an
+  # error whenever author_finished_at is nil and starts_at is in the past --
+  # true of every game being played. update! would raise RecordInvalid on
+  # exactly the games pause exists for, and update would fail silently, the
+  # same trap that makes reserve_place_for_team! stop enforcing
+  # max_team_number once a game starts.
+  def pause!
+    raise ArgumentError, "already paused" if self.paused?
+
+    update_column(:paused_at, Time.now)
+  end
+
+  # Shifting current_level_entered_at forward by the held duration is exactly
+  # equivalent to not counting the paused interval, because that column is the
+  # only input to every countdown.
+  #
+  # Transactional deliberately -- and this is the OPPOSITE call from the audit
+  # write in AdminAudit, which is kept out of its action's transaction so a
+  # logging failure cannot block an administrative change. Here the shift IS
+  # the operation: a half-applied resume would hand some teams their countdown
+  # back and silently rob others, and nothing downstream could tell.
+  def resume!
+    raise ArgumentError, "not paused" unless self.paused?
+
+    transaction do
+      held = Time.now - self.paused_at
+      # finished_at excludes both finished and exited teams; neither has a
+      # running clock. update_column because this is a mechanical bulk shift.
+      GamePassing.of_game(self).where(:finished_at => nil).find_each do |gp|
+        gp.update_column(:current_level_entered_at, gp.current_level_entered_at + held)
+      end
+      update_column(:paused_at, nil)
+    end
+  end
+
   def withdrawn?
     self.withdrawn_at.present?
   end

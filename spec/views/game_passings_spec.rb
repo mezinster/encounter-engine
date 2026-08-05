@@ -12,6 +12,9 @@ RSpec.describe "game_passings/index", type: :view do
     level = create_level
     game = level.game
     assign(:game, game)
+    # The move control on each row needs the game's levels (Task 6); the
+    # controller loads this once and hands it to the view the same way.
+    assign(:levels, [level])
 
     in_progress = create_game_passing(level: level)
     finished = create_game_passing(level: level)

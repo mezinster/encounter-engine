@@ -61,6 +61,7 @@ RSpec.configure do |config|
   config.include FixturesHelper
   config.include MailerHelper
   config.include ExceptionsHelper
+  config.include ActiveSupport::Testing::TimeHelpers
 
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [

@@ -1,6 +1,10 @@
 en:
   admin:
     users:
+      granted_notice: "Administrator rights granted"
+      revoked_notice: "Administrator rights revoked"
+      cannot_revoke_self: "You cannot revoke your own rights"
+      cannot_revoke_last: "You cannot revoke the last administrator"
       index:
         title: "Players"
         nickname: "Nickname"
@@ -22,6 +26,30 @@ en:
         signed_up: "Registered"
         authored_games: "Games created"
         back: "Back to players"
+        grant: "Make administrator"
+        revoke: "Revoke administrator rights"
+    audit:
+      index:
+        title: "Administrator action log"
+        when: "When"
+        who: "Who"
+        what: "Action"
+        target: "Target"
+        details: "Details"
+        unknown_actor: "unknown"
+        back: "Back to overview"
+        action:
+          withdraw: "Withdrew"
+          restore: "Published"
+          lock: "Froze editing"
+          unlock: "Unfroze editing"
+          update: "Edited"
+          delete: "Deleted"
+          end_game: "Ended the game"
+          start_test: "Started testing"
+          finish_test: "Finished testing"
+          grant_superadmin: "Granted administrator rights"
+          revoke_superadmin: "Revoked administrator rights"
     dashboard:
       show:
         title: "Overview"
@@ -30,6 +58,7 @@ en:
         totals: "Totals"
         entries_by_status: "Entry requests by status"
         all_games: "All games"
+        audit_log: "Action log"
         status:
           withdrawn: "Withdrawn"
           draft: "Draft"
@@ -92,6 +121,14 @@ en:
     cannot_play_own_game: "You can't play your own games, sorry :-)"
     game_finished_by_author: "The game was ended by its author, you can no longer play it"
     team_exited: "Your team has left the race"
+    game_is_not_live: "This game is not currently running"
+  interventions:
+    paused_notice: "Game paused"
+    resumed_notice: "Game resumed"
+    moved_notice: "Team moved to another level"
+    reinstated_notice: "Team returned to the game"
+    clock_reset_notice: "The level countdown has been reset"
+    refused: "That action is not possible right now"
   invitations:
     notice_sent: "An invitation was sent to %{nickname}"
     new:
@@ -321,6 +358,7 @@ en:
   game_passings:
     content_not_translated: "This task is not translated into your language yet — showing the original."
     content_language: "Task language"
+    paused: "The organiser has paused the game. Stay where you are and wait for it to resume."
     index:
       title: 'Game "%{name}"'
       team: "Team"
@@ -331,6 +369,13 @@ en:
       level_log: "(level log)"
       game_log: "(game log)"
       full_log: "Full answer log"
+      interventions: "Intervene"
+      move: "Move"
+      reinstate: "Return to the game"
+      reset_clock: "Reset countdown"
+      pause: "Pause the game"
+      resume: "Resume the game"
+      paused_since: "Paused at %{time}."
     show_current_level:
       title_prefix: "Game"
       level_label: "Task"

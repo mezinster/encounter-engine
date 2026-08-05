@@ -22,4 +22,12 @@
   <% end %>
 </ul>
 
+<p>
+  <% if @user.superadmin? %>
+    <%= button_to t("admin.users.show.revoke"), revoke_admin_user_path(@user), :method => :post %>
+  <% else %>
+    <%= button_to t("admin.users.show.grant"), grant_admin_user_path(@user), :method => :post %>
+  <% end %>
+</p>
+
 <p><%= link_to t("admin.users.show.back"), admin_users_path %></p>

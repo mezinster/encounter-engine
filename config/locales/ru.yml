@@ -1,6 +1,10 @@
 ru:
   admin:
     users:
+      granted_notice: "Права администратора выданы"
+      revoked_notice: "Права администратора отозваны"
+      cannot_revoke_self: "Нельзя снять права с самого себя"
+      cannot_revoke_last: "Нельзя снять права с последнего администратора"
       index:
         title: "Игроки"
         nickname: "Ник"
@@ -22,6 +26,30 @@ ru:
         signed_up: "Регистрация"
         authored_games: "Созданные игры"
         back: "К списку игроков"
+        grant: "Сделать администратором"
+        revoke: "Снять права администратора"
+    audit:
+      index:
+        title: "Журнал действий администраторов"
+        when: "Когда"
+        who: "Кто"
+        what: "Действие"
+        target: "Объект"
+        details: "Подробности"
+        unknown_actor: "неизвестно"
+        back: "К обзору"
+        action:
+          withdraw: "Снял с публикации"
+          restore: "Опубликовал"
+          lock: "Заморозил редактирование"
+          unlock: "Разморозил редактирование"
+          update: "Изменил"
+          delete: "Удалил"
+          end_game: "Завершил игру"
+          start_test: "Запустил тестирование"
+          finish_test: "Завершил тестирование"
+          grant_superadmin: "Выдал права администратора"
+          revoke_superadmin: "Снял права администратора"
     dashboard:
       show:
         title: "Обзор"
@@ -30,6 +58,7 @@ ru:
         totals: "Всего"
         entries_by_status: "Заявки по статусу"
         all_games: "Все игры"
+        audit_log: "Журнал действий"
         status:
           withdrawn: "Снята с публикации"
           draft: "Черновик"
@@ -92,6 +121,14 @@ ru:
     cannot_play_own_game: "Нельзя играть в собственные игры, сорри :-)"
     game_finished_by_author: "Игра была завершена автором, и вы не можете в нее больше играть"
     team_exited: "Команда сошла с дистанции"
+    game_is_not_live: "Игра сейчас не идёт"
+  interventions:
+    paused_notice: "Игра приостановлена"
+    resumed_notice: "Игра продолжается"
+    moved_notice: "Команда переведена на другой уровень"
+    reinstated_notice: "Команда возвращена в игру"
+    clock_reset_notice: "Отсчёт времени на уровне сброшен"
+    refused: "Это действие сейчас невозможно"
   invitations:
     notice_sent: "Пользователю %{nickname} выслано приглашение"
     new:
@@ -333,6 +370,7 @@ ru:
   game_passings:
     content_not_translated: "Это задание пока не переведено на ваш язык — показан язык оригинала."
     content_language: "Язык заданий"
+    paused: "Игра приостановлена организатором. Оставайтесь на месте и ждите продолжения."
     index:
       title: 'Игра "%{name}"'
       team: "Команда"
@@ -343,6 +381,13 @@ ru:
       level_log: "(лог по уровню)"
       game_log: "(лог по игре)"
       full_log: "Полный лог ответов"
+      interventions: "Вмешательство"
+      move: "Перевести"
+      reinstate: "Вернуть в игру"
+      reset_clock: "Сбросить отсчёт"
+      pause: "Приостановить игру"
+      resume: "Продолжить игру"
+      paused_since: "Игра приостановлена в %{time}."
     show_current_level:
       title_prefix: "Игра"
       level_label: "Задание"

@@ -115,12 +115,25 @@ class GamePassing < ApplicationRecord
     !! finished_at
   end
 
+  # The clock every countdown is measured against. While a game is paused this
+  # is the instant it was paused, so hints_to_show, upcoming_hints and
+  # time_at_level all freeze together -- and get_current_level_tip returns an
+  # unchanging state to every poll without knowing pausing exists.
+  #
+  # One concept instead of a filter on the tip endpoint that every future hint
+  # code path would have to remember.
+  def effective_now
+    self.game&.paused_at || Time.now
+  end
+
   def hints_to_show
-    current_level.hints.select { |hint| hint.ready_to_show?(current_level_entered_at) }
+    now = effective_now
+    current_level.hints.select { |hint| hint.ready_to_show?(current_level_entered_at, now) }
   end
 
   def upcoming_hints
-    current_level.hints.select { |hint| !hint.ready_to_show?(current_level_entered_at) }
+    now = effective_now
+    current_level.hints.select { |hint| !hint.ready_to_show?(current_level_entered_at, now) }
   end
 
   def correct_answer?(answer)
@@ -128,7 +141,7 @@ class GamePassing < ApplicationRecord
   end
 
   def time_at_level
-    difference = Time.now - self.current_level_entered_at
+    difference = effective_now - self.current_level_entered_at
     hours, minutes, seconds = seconds_fraction_to_time(difference)
     "%02d:%02d:%02d" % [hours, minutes, seconds]
   end
@@ -156,6 +169,40 @@ class GamePassing < ApplicationRecord
       self.status = "ended"
       self.save!
     end
+  end
+
+  # Operator interventions. Each leaves the record in a state ordinary
+  # gameplay could also have produced -- that is the constraint the whole
+  # feature is built on, and the reason there is no generic state editor.
+  # Refusals raise ArgumentError; InterventionsController rescues it.
+
+  def move_to_level!(level)
+    raise ArgumentError, "level belongs to another game" unless level.game_id == self.game_id
+
+    self.current_level = level
+    self.answered_questions = []
+    self.current_level_entered_at = effective_now
+    # A team standing on a level is not finished. Clearing these here is what
+    # keeps a moved team from being simultaneously mid-level and finished.
+    self.finished_at = nil
+    self.status = nil
+    save!
+  end
+
+  def reinstate!
+    # exit! leaves the entry clock alone, so without this reset a team that
+    # quit an hour ago returns to a level with every hint already elapsed.
+    self.current_level_entered_at = effective_now
+    self.finished_at = nil
+    self.status = nil
+    save!
+  end
+
+  def reset_level_clock!
+    raise ArgumentError, "team has finished" if self.finished?
+
+    self.current_level_entered_at = effective_now
+    save!
   end
 
 protected

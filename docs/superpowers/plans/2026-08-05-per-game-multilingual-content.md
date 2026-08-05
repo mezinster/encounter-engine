@@ -922,12 +922,15 @@ describe "content locale resolution", type: :request do
     expect(controller_content_locale_for(game, :user => user)).to eq("ru")
   end
 
-  # Helper: exercises the concern through a real controller instance so the
-  # precedence is tested where it actually runs.
+  # A real request runs LocaleSelection#set_locale first, which resolves the
+  # user's stored preference (or ?locale=) into I18n.locale and wraps the action
+  # in I18n.with_locale. This harness reproduces that, rather than testing a
+  # path no request takes.
   def controller_content_locale_for(game, user: nil)
     controller = ApplicationController.new
     controller.define_singleton_method(:current_user) { user }
-    controller.send(:content_locale_for, game)
+    chrome_locale = user&.locale.presence || I18n.default_locale
+    I18n.with_locale(chrome_locale) { controller.send(:content_locale_for, game) }
   end
 end
 ```
@@ -968,7 +971,9 @@ module ContentLocaleSelection
     return nil if game.nil?
 
     @content_locales ||= {}
-    @content_locales[game.id] ||= begin
+    # Keyed on the game, not game.id: an unpersisted Game has a nil id, so two
+    # different unsaved games would share one cache entry.
+    @content_locales[game] ||= begin
       offered = game.available_locale_list
       candidate = per_game_content_locale(game) || current_content_user_locale
       offered.include?(candidate.to_s) ? candidate.to_s : game.primary_locale.to_s
@@ -981,10 +986,14 @@ module ContentLocaleSelection
     GameLocalePreference.find_by(:user_id => current_user.id, :game_id => game.id)&.locale
   end
 
+  # LocaleSelection has already resolved ?locale= -> the user's stored
+  # preference -> the instance default into I18n.locale, and wrapped the action
+  # in I18n.with_locale. Reading current_user.locale directly here would
+  # reimplement half of that and honour ?locale= for anonymous visitors only,
+  # so an organiser previewing with ?locale=en would get English chrome and
+  # Russian tasks while a signed-out visitor got English both.
   def current_content_user_locale
-    return I18n.locale.to_s unless respond_to?(:current_user, true) && current_user
-
-    current_user.locale.presence || I18n.locale.to_s
+    I18n.locale.to_s
   end
 end
 ```

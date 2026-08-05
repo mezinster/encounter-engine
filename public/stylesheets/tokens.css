@@ -32,13 +32,14 @@
   --text:       #1c1917;
   --text-dim:   #6b6259;
 
-  /* Darker than the dark theme's values: the same amber that reads clearly
-     on #12100e fails AA on white. */
-  --go:         #a86a08;
+  /* Darker than the dark theme's amber, which is 1.69:1 on white and
+     unreadable. #966006 clears AA (4.5:1) against both light surfaces and
+     for white text on a filled button -- verified, not assumed. */
+  --go:         #966006;
   --go-ink:     #ffffff;
   --time:       #b45309;
   --danger:     #b42318;
-  --focus:      #a86a08;
+  --focus:      #966006;
 }
 
 :root {

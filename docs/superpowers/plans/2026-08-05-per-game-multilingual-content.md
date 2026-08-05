@@ -761,7 +761,12 @@ and in the private section:
 ```ruby
   def translatable_records
     records = [ self ]
-    self.levels.includes(:hints, :questions, :content_translations).each do |level|
+    # Nested, not sibling: includes(:hints, :questions, :content_translations)
+    # preloads the LEVEL's translations but leaves each hint and question to
+    # lazy-load its own, which is one query per record.
+    self.levels.includes(:content_translations,
+                         :hints => :content_translations,
+                         :questions => :content_translations).each do |level|
       records << level
       records.concat(level.hints)
       records.concat(level.questions)
@@ -787,16 +792,23 @@ Then the gate itself, with the other validations:
 
   # ...in the private section:
 
-  # Runs only on the draft -> published transition, so an author can add a
-  # language and fill it in over several sittings. game_params permits
-  # :is_draft and GamesController#start_test also flips it, so this belongs on
-  # the model where both paths pass through it.
+  # Fires whenever the game is not a draft, not merely on the draft -> published
+  # edge. is_draft_changed?(:from => true, :to => false) misses the two paths
+  # that matter: a game created directly with is_draft false (the new-game form
+  # leaves the checkbox unchecked and the column defaults to false), and a
+  # locale added to an already-published game, where is_draft never changes.
+  # Both would otherwise put a game teams cannot fully read into play.
+  #
+  # Single-locale games short-circuit inside missing_translations, so this
+  # costs nothing for the overwhelmingly common case. An author may still save
+  # an incomplete DRAFT and finish the translation over several sittings.
   def declared_locales_are_translated_before_publication
-    return unless self.is_draft_changed?(:from => true, :to => false)
-    return if self.translations_complete?
+    return if self.draft?
 
-    self.errors.add(:base, I18n.t("games.translations.incomplete",
-                                  :count => self.missing_translations.size))
+    missing = self.missing_translations
+    return if missing.empty?
+
+    self.errors.add(:base, I18n.t("games.translations.incomplete", :count => missing.size))
   end
 ```
 

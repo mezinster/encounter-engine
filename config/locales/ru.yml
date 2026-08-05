@@ -121,6 +121,14 @@ ru:
     cannot_play_own_game: "Нельзя играть в собственные игры, сорри :-)"
     game_finished_by_author: "Игра была завершена автором, и вы не можете в нее больше играть"
     team_exited: "Команда сошла с дистанции"
+    game_is_not_live: "Игра сейчас не идёт"
+  interventions:
+    paused_notice: "Игра приостановлена"
+    resumed_notice: "Игра продолжается"
+    moved_notice: "Команда переведена на другой уровень"
+    reinstated_notice: "Команда возвращена в игру"
+    clock_reset_notice: "Отсчёт времени на уровне сброшен"
+    refused: "Это действие сейчас невозможно"
   invitations:
     notice_sent: "Пользователю %{nickname} выслано приглашение"
     new:

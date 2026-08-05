@@ -121,6 +121,14 @@ ka:
     must_be_superadmin: "Доступ только для администратора"
     game_is_locked: "Редактирование игры заморожено администратором"
     game_is_withdrawn: "Игра снята с публикации"
+    game_is_not_live: "Игра сейчас не идёт"
+  interventions:
+    paused_notice: "Игра приостановлена"
+    resumed_notice: "Игра продолжается"
+    moved_notice: "Команда переведена на другой уровень"
+    reinstated_notice: "Команда возвращена в игру"
+    clock_reset_notice: "Отсчёт времени на уровне сброшен"
+    refused: "Это действие сейчас невозможно"
   activerecord:
     errors:
       messages:

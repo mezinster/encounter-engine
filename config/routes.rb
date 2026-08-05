@@ -103,6 +103,14 @@ Rails.application.routes.draw do
     end
   end
 
+  # Live-game interventions. Team-scoped ones carry both ids because the
+  # operator acts on one team's passing within one game.
+  post "/games/:game_id/pause",  to: "interventions#pause",  as: :pause_game
+  post "/games/:game_id/resume", to: "interventions#resume", as: :resume_game
+  post "/games/:game_id/teams/:team_id/move",        to: "interventions#move",        as: :move_team
+  post "/games/:game_id/teams/:team_id/reinstate",   to: "interventions#reinstate",   as: :reinstate_team
+  post "/games/:game_id/teams/:team_id/reset_clock", to: "interventions#reset_clock", as: :reset_team_clock
+
   # The routes below have no `resources` equivalent: in Merb they were only
   # reachable through the catch-all `default_routes` entry
   # (`match("/:controller(/:action(/:id))(.:format)")`) at the bottom of

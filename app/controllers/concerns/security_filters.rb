@@ -56,4 +56,19 @@ module SecurityFilters
   def ensure_game_was_not_started
     raise Authentication::Unauthorized, t("errors.game_already_started") if @game.started?
   end
+
+  # Interventions only make sense on a game that is actually being played.
+  #
+  # Two exemptions are load-bearing. A PAUSED game is live: treating it
+  # otherwise would put #resume behind a condition only #resume can clear, an
+  # action no request could ever reach. A game in TEST mode is live: is_testing
+  # games skip ensure_game_is_started throughout GamePassingsController, and an
+  # author testing their own game is exactly who wants to move a team between
+  # levels.
+  def ensure_game_is_live
+    return if @game.is_testing?
+
+    live = @game.started? && !@game.draft? && !@game.withdrawn? && !@game.author_finished?
+    raise Authentication::Unauthorized, t("errors.game_is_not_live") unless live
+  end
 end

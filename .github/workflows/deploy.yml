@@ -9,10 +9,21 @@ on:
         options: [deploy, setup]
         default: deploy
 
+# Two deploys at once would race on the just-in-time NSG rule below, and the
+# second would delete the first's access mid-deploy.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      # Required for OIDC federation with Azure. `contents: read` must be stated
+      # explicitly: naming any permission resets all the others to none.
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -52,6 +63,39 @@ jobs:
           echo '23.100.7.86 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBESJGNohuozwA1DTg1Tjlghw/G0krguiE0Enw5BfMew' >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+      # The NSG restricts port 22 to a short allowlist of source addresses, and
+      # GitHub-hosted runners are in none of them — a deploy without the two
+      # steps below dies with Net::SSH::ConnectionTimeout after ~136s, which
+      # reads like a broken key but is a dropped packet.
+      #
+      # Rather than widening the allowlist permanently, each run opens 22 to its
+      # own address and closes it again. Authentication is OIDC federation
+      # against a user-assigned managed identity whose federated credential
+      # trusts exactly one subject —
+      # repo:mezinster/encounter-engine:environment:production — and which holds
+      # Network Contributor on this one NSG and nothing else. No Azure
+      # credential is stored in GitHub.
+      - name: Authenticate to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Open SSH to this runner only
+        run: |
+          RUNNER_IP=$(curl -fsS --max-time 10 https://api.ipify.org || curl -fsS --max-time 10 https://ifconfig.me)
+          if [ -z "$RUNNER_IP" ]; then echo "could not determine runner IP"; exit 1; fi
+          echo "opening 22 for ${RUNNER_IP}/32"
+          az network nsg rule create \
+            --resource-group mezineu --nsg-name webNSG \
+            --name "gha-jit-${{ github.run_id }}" \
+            --priority 900 --direction Inbound --access Allow --protocol Tcp \
+            --source-address-prefixes "${RUNNER_IP}/32" \
+            --destination-port-ranges 22 \
+            --description "JIT SSH for GitHub Actions run ${{ github.run_id }}" \
+            --output none
+
       - name: Deploy
         env:
           SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
@@ -60,3 +104,18 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
         run: bundle exec kamal ${{ inputs.command }}
+
+      # `always()` matters more than it looks: without it a failed deploy leaves
+      # port 22 open to that runner's address indefinitely, and the address is
+      # recycled to other GitHub customers. `|| true` covers the case where the
+      # Azure login itself failed and there is no rule to remove.
+      - name: Close SSH again
+        if: always()
+        run: |
+          az network nsg rule delete \
+            --resource-group mezineu --nsg-name webNSG \
+            --name "gha-jit-${{ github.run_id }}" \
+            --output none 2>/dev/null || true
+          echo "remaining inbound rules:"
+          az network nsg rule list --resource-group mezineu --nsg-name webNSG \
+            --query "[].{name:name,priority:priority,ports:destinationPortRange}" -o table 2>/dev/null || true

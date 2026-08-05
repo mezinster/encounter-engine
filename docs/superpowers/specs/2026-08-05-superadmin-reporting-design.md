@@ -44,7 +44,7 @@ The rest is split deliberately:
 | Screen | Shows |
 |---|---|
 | Users list | nickname, email, team, locale, signed-up date, superadmin flag |
-| User detail | the above plus phone, Jabber, ICQ, date of birth, team history, games authored |
+| User detail | the above plus phone, Jabber, ICQ, date of birth, and the games they authored |
 
 Nothing is hidden from the operator. But reading the whole membership's contact details takes
 deliberate clicks rather than one glance. That costs nothing today and matters the moment
@@ -103,6 +103,11 @@ column predicates rather than as calls to the existing predicate methods.
 `Admin::UsersController#index` — the list above, sorted newest first.
 
 `Admin::UsersController#show` — the detail above.
+
+**There is no team history to show.** `users.team_id` is a single column: a user has one current
+team and the schema keeps no record of previous ones. An earlier draft of this spec said otherwise.
+Participation in games runs through the team, not the user, so "games this person played" is not a
+question this schema can answer directly and is deliberately not attempted here.
 
 Both gated identically to the dashboard. No pagination and no search, for the same reason sub-project
 A's console has none: the instance has a handful of users, and adding filtering before there is

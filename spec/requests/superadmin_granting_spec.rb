@@ -50,8 +50,19 @@ describe "granting the superadmin role", type: :request do
     expect(superadmin.reload.superadmin?).to be true
   end
 
-  # The instance must never reach a state where nobody can administer it.
-  it "refuses to revoke the last superadmin" do
+  # This is the last superadmin attempting to revoke *themselves*, not
+  # someone else revoking the last superadmin. That's the only way this
+  # scenario can be driven through the controller: with require_superadmin!
+  # gating the action, the actor posting to revoke is always a superadmin
+  # too, so if the target is the last superadmin (superadmin_count <= 1)
+  # then actor and target are the same row. The self-revoke guard
+  # (user.id == current_user.id) therefore always fires first, before
+  # user.last_superadmin? is ever evaluated -- there is no request path
+  # where the last-superadmin guard is the one that stops the action. See
+  # spec/models/user/last_superadmin_spec.rb for direct coverage of that
+  # predicate itself. Guard 2 is kept regardless, as defence in depth
+  # against a future change that relaxes the controller's superadmin gate.
+  it "refuses self-revocation even when the actor is the last superadmin" do
     sign_in(superadmin)
     only = create_user
     only.update!(:is_superadmin => true)

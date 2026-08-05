@@ -480,8 +480,11 @@ Expected: FAIL — `uninitialized constant TranslatableContent`.
 module TranslatableContent
   extend ActiveSupport::Concern
 
+  # One `included` block only: ActiveSupport::Concern raises
+  # MultipleIncludedBlocks if a module declares a second one.
   included do
     has_many :content_translations, :as => :translatable, :dependent => :destroy
+    after_save :persist_pending_translations
   end
 
   # Text for `locale`, falling back to the column rather than returning nil.
@@ -507,10 +510,6 @@ module TranslatableContent
   # Applied on save so a validation failure does not write half the languages.
   def translations_attributes=(attributes)
     @pending_translations = attributes || {}
-  end
-
-  included do
-    after_save :persist_pending_translations
   end
 
   private
@@ -610,7 +609,7 @@ export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 bundle exec rspec spec/models/concerns/translatable_content_spec.rb
 ```
 
-Expected: PASS, 13 examples.
+Expected: PASS, 12 examples.
 
 - [ ] **Step 6: Run the full gates**
 
@@ -618,7 +617,7 @@ Expected: PASS, 13 examples.
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: **445 examples**, 0 failures, 6 pending; cucumber unchanged at 234 scenarios / 2362 steps. A cucumber regression here would mean `after_save` broke an existing write path — investigate rather than adjusting the feature.
+Expected: **444 examples**, 0 failures, 6 pending; cucumber unchanged at 234 scenarios / 2362 steps. A cucumber regression here would mean `after_save` broke an existing write path — investigate rather than adjusting the feature.
 
 - [ ] **Step 7: Commit**
 
@@ -842,7 +841,7 @@ Expected: PASS, 8 + i18n examples.
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: **453 examples**, 0 failures, 6 pending; cucumber unchanged. Cucumber exercises publishing single-locale games heavily — the `return [] if non_primary.empty?` short-circuit is what keeps those green.
+Expected: **452 examples**, 0 failures, 6 pending; cucumber unchanged. Cucumber exercises publishing single-locale games heavily — the `return [] if non_primary.empty?` short-circuit is what keeps those green.
 
 - [ ] **Step 7: Commit**
 
@@ -1001,7 +1000,7 @@ Expected: PASS, 5 examples.
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: **458 examples**, 0 failures, 6 pending; cucumber unchanged.
+Expected: **457 examples**, 0 failures, 6 pending; cucumber unchanged.
 
 - [ ] **Step 7: Commit**
 
@@ -1215,7 +1214,7 @@ export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: **460 examples**, 0 failures, 6 pending; cucumber unchanged at 234 scenarios. Cucumber drives `show_current_level` extensively in Russian single-locale games — if it regresses, `translated` is not returning the column for the primary locale.
+Expected: **459 examples**, 0 failures, 6 pending; cucumber unchanged at 234 scenarios. Cucumber drives `show_current_level` extensively in Russian single-locale games — if it regresses, `translated` is not returning the column for the primary locale.
 
 - [ ] **Step 9: Commit**
 
@@ -1399,7 +1398,7 @@ export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: **462 examples**, 0 failures, 6 pending; cucumber unchanged at 234 scenarios. Cucumber fills these forms in Russian throughout — the `if game.multilingual?` guard and the primary-locale branch are what keep those scenarios untouched.
+Expected: **461 examples**, 0 failures, 6 pending; cucumber unchanged at 234 scenarios. Cucumber fills these forms in Russian throughout — the `if game.multilingual?` guard and the primary-locale branch are what keep those scenarios untouched.
 
 - [ ] **Step 9: Commit**
 
@@ -1514,7 +1513,7 @@ export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: **464 examples**, 0 failures, 6 pending; cucumber unchanged.
+Expected: **463 examples**, 0 failures, 6 pending; cucumber unchanged.
 
 - [ ] **Step 8: Commit**
 
@@ -1674,7 +1673,7 @@ export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: **467 examples**, 0 failures, 6 pending; cucumber unchanged at 234 scenarios / 2362 steps.
+Expected: **466 examples**, 0 failures, 6 pending; cucumber unchanged at 234 scenarios / 2362 steps.
 
 - [ ] **Step 8: Run the autoloading check**
 
@@ -1703,4 +1702,4 @@ git commit -m "Show the author exactly which fields block publication"
 
 **Type consistency.** `available_locale_list` (not `available_locales_list` or `locales`) is used in Tasks 1, 3, 4, 5, 6. `TRANSLATABLE_FIELDS` is a constant on each of the four models, referenced in Tasks 3, 5, 6, 7. `MissingTranslation` members are `:record, :field, :locale, :label`, used identically in Tasks 3 and 8. `translations_attributes=` is the writer everywhere; forms post `translations` and controllers rename it, stated in Tasks 6 and 7. `content_locale_for(game)` returns a `String` in Tasks 4 and 5.
 
-**Running example counts.** 426 → 432 (T1) → 445 (T2) → 453 (T3) → 458 (T4) → 460 (T5) → 462 (T6) → 464 (T7) → 467 (T8). Cucumber stays at 234 scenarios / 2362 steps throughout; any change there is a regression, not a new feature.
+**Running example counts.** 426 → 432 (T1) → 444 (T2) → 452 (T3) → 457 (T4) → 459 (T5) → 461 (T6) → 463 (T7) → 466 (T8). Cucumber stays at 234 scenarios / 2362 steps throughout; any change there is a regression, not a new feature.

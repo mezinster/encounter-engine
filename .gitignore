@@ -32,3 +32,5 @@ features/step_definitions
 db/development.sqlite
 CLAUDE.local.md
 .bundle/
+# Superpowers scratch (SDD ledgers, brainstorm mockups)
+.superpowers/

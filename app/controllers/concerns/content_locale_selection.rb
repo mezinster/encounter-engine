@@ -20,7 +20,7 @@ module ContentLocaleSelection
     return nil if game.nil?
 
     @content_locales ||= {}
-    @content_locales[game.id] ||= begin
+    @content_locales[game] ||= begin
       offered = game.available_locale_list
       candidate = per_game_content_locale(game) || current_content_user_locale
       offered.include?(candidate.to_s) ? candidate.to_s : game.primary_locale.to_s
@@ -33,9 +33,13 @@ module ContentLocaleSelection
     GameLocalePreference.find_by(:user_id => current_user.id, :game_id => game.id)&.locale
   end
 
+  # LocaleSelection has already resolved ?locale= -> the user's stored
+  # preference -> the instance default into I18n.locale, and wrapped the action
+  # in I18n.with_locale. Reading current_user.locale directly here would
+  # reimplement half of that and ignore ?locale= for signed-in users only,
+  # so an organiser previewing with ?locale=en would get English chrome and
+  # Russian tasks while a signed-out visitor got English both.
   def current_content_user_locale
-    return I18n.locale.to_s unless respond_to?(:current_user, true) && current_user
-
-    current_user.locale.presence || I18n.locale.to_s
+    I18n.locale.to_s
   end
 end

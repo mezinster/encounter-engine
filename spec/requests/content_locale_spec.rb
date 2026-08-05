@@ -44,11 +44,27 @@ describe "content locale resolution", type: :request do
     expect(controller_content_locale_for(game, :user => user)).to eq("ru")
   end
 
+  it "follows an explicit ?locale= for a signed-in user, as it already does for a guest" do
+    user = create_user
+    user.update!(:locale => "ru")
+    # LocaleSelection resolves ?locale=en into I18n.locale before the action runs.
+    result = I18n.with_locale(:en) do
+      controller = ApplicationController.new
+      controller.define_singleton_method(:current_user) { user }
+      controller.send(:content_locale_for, game)
+    end
+    expect(result).to eq("en")
+  end
+
   # Helper: exercises the concern through a real controller instance so the
-  # precedence is tested where it actually runs.
+  # precedence is tested where it actually runs. A real request runs
+  # LocaleSelection#set_locale first, which resolves the user's stored locale
+  # (or ?locale=) into I18n.locale and wraps the action in I18n.with_locale.
+  # This harness reproduces that, rather than testing a path no request takes.
   def controller_content_locale_for(game, user: nil)
     controller = ApplicationController.new
     controller.define_singleton_method(:current_user) { user }
-    controller.send(:content_locale_for, game)
+    chrome_locale = user&.locale.presence || I18n.default_locale
+    I18n.with_locale(chrome_locale) { controller.send(:content_locale_for, game) }
   end
 end

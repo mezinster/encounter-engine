@@ -82,3 +82,48 @@ describe "the authoring form on an untranslated tab", type: :request do
     expect(level.translation_draft(:name, "en")).to be_nil
   end
 end
+
+describe "starting a test on an incompletely translated game", type: :request do
+  let(:author) { create_user }
+  let(:game) do
+    g = create_game(:author => author, :is_draft => true)
+    g.available_locale_list = %w[ru en]
+    g.save!
+    create_level(:game => g)
+    g
+  end
+
+  def sign_in(user)
+    put login_path, :params => { :email => user.email, :password => "1234" }
+  end
+
+  # Reported from production: this returned a bare 422 that the browser showed
+  # as "page does not exist", sending the author to routes.rb for what is
+  # actually an unfinished translation.
+  it "redirects with the real reason instead of raising" do
+    game
+    sign_in(author)
+
+    expect { get "/games/start_test/#{game.id}" }.not_to raise_error
+    expect(response).to have_http_status(:found)
+    expect(flash[:alert]).to be_present
+    expect(flash[:alert]).to include(I18n.t("games.translations.incomplete", :count => game.missing_translations.size))
+    expect(game.reload).to be_draft
+  end
+
+  it "still starts the test once every declared language is complete" do
+    game
+    game.translations_attributes = { "en" => { "name" => "Quest", "description" => "Desc" } }
+    game.save!
+    level = game.levels.first
+    level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text" } }
+    level.save!
+
+    sign_in(author)
+    get "/games/start_test/#{game.id}"
+
+    expect(response).to have_http_status(:found)
+    expect(game.reload).not_to be_draft
+    expect(game.reload.is_testing).to be true
+  end
+end

@@ -381,6 +381,13 @@ ru:
       level_log: "(лог по уровню)"
       game_log: "(лог по игре)"
       full_log: "Полный лог ответов"
+      interventions: "Вмешательство"
+      move: "Перевести"
+      reinstate: "Вернуть в игру"
+      reset_clock: "Сбросить отсчёт"
+      pause: "Приостановить игру"
+      resume: "Продолжить игру"
+      paused_since: "Игра приостановлена в %{time}."
     show_current_level:
       title_prefix: "Игра"
       level_label: "Задание"

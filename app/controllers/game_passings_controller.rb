@@ -44,6 +44,8 @@ class GamePassingsController < ApplicationController
 
   def index
     @game_passings = GamePassing.of_game(@game)
+    # For the move control on each row. Loaded once here rather than per row.
+    @levels = Level.of_game(@game).order(:position)
   end
 
   # This is the live delivery path: level_hint_updater.js polls this route and

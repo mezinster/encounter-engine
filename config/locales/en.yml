@@ -369,6 +369,13 @@ en:
       level_log: "(level log)"
       game_log: "(game log)"
       full_log: "Full answer log"
+      interventions: "Intervene"
+      move: "Move"
+      reinstate: "Return to the game"
+      reset_clock: "Reset countdown"
+      pause: "Pause the game"
+      resume: "Resume the game"
+      paused_since: "Paused at %{time}."
     show_current_level:
       title_prefix: "Game"
       level_label: "Task"

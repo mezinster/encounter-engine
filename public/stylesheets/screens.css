@@ -1,1 +1,61 @@
 /* screens.css — page/screen-specific styling that doesn't belong in a shared component. */
+
+/* --- Play screen: the pinned bottom bar --------------------------------
+ * Task text and hints accumulate above as the game gets more stressful; the
+ * code field is the thing a player came to use, so it -- along with the
+ * countdown and the newest hint -- is pinned here instead of drifting down
+ * the page. See .page--focused .main's bottom padding in layout.css, which
+ * keeps this bar from covering the last line of task text.
+ */
+.playbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 15;
+  padding: var(--space-3) var(--space-4);
+  /* Keeps the bar clear of the iOS home indicator. */
+  padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.playbar-hint {
+  margin-bottom: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-2);
+  border-left: 2px solid var(--time);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.playbar-hint-label {
+  display: block;
+  color: var(--time);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* Clamped, not truncated-and-lost: the full text is always in the list above. */
+.playbar-hint-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.playbar .countdown { display: block; margin-bottom: var(--space-2); }
+
+.playbar-form { display: flex; gap: var(--space-2); align-items: center; }
+.playbar-form input[type="text"] { flex: 1; }
+/* master.css's global `label { float: left; width: 120px }` (written for the
+   old vertical admin forms) otherwise eats a third of a 390px bar, leaving
+   the code field -- the one thing a player came here to use -- a cramped
+   sliver next to it. */
+.playbar-form label { float: none; width: auto; font-weight: 600; }
+
+.playbar-paused {
+  color: var(--time);
+  font-weight: 600;
+  text-align: center;
+}

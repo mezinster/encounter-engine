@@ -23,7 +23,7 @@ class GamesController < ApplicationController
   end
 
   def create
-    @game = Game.new(game_params.merge(author: current_user))
+    @game = Game.new(game_attributes.merge(author: current_user))
 
     if @game.save
       redirect_to @game
@@ -41,7 +41,7 @@ class GamesController < ApplicationController
   end
 
   def update
-    if @game.update(game_params)
+    if @game.update(game_attributes)
       redirect_to @game
     else
       render :edit, status: :unprocessable_entity
@@ -96,7 +96,23 @@ class GamesController < ApplicationController
   def game_params
     params.fetch(:game, ActionController::Parameters.new)
           .permit(:name, :description, :starts_at, :registration_deadline,
-                   :max_team_number, :is_draft)
+                   :max_team_number, :is_draft, :primary_locale,
+                   :available_locale_list => [],
+                   :translations => translation_params_shape(Game::TRANSLATABLE_FIELDS))
+  end
+
+  # params.permit cannot express "any locale key", so build the shape from the
+  # locales this platform actually knows.
+  def translation_params_shape(fields)
+    I18n.available_locales.map(&:to_s).index_with { fields.map(&:to_sym) }
+  end
+
+  # translations_attributes= is the concern's writer; the form posts
+  # `translations` because that is what reads naturally in the markup.
+  def game_attributes
+    attributes = game_params.to_h
+    translations = attributes.delete("translations")
+    attributes.merge("translations_attributes" => translations)
   end
 
   def find_game

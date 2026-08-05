@@ -7,14 +7,29 @@
 
 <%= error_messages_for @game, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
+<% active_locale = params[:locale].presence || @game.primary_locale %>
+<%= render "shared/language_tabs", :game => @game, :record => @game,
+                                   :fields => Game::TRANSLATABLE_FIELDS,
+                                   :active => active_locale %>
+
 <%= form_with model: @game, url: game_path(@game) do |f| %>
   <p>
     <%= f.label :name, t("games.form.name") %>
-    <%= f.text_field :name %>
+    <% if active_locale == @game.primary_locale %>
+      <%= f.text_field :name %>
+    <% else %>
+      <%= text_field_tag "game[translations][#{active_locale}][name]",
+                         @game.translated(:name, active_locale) %>
+    <% end %>
   </p>
   <p>
     <%= f.label :description, t("games.form.description") %>
-    <%= f.text_area :description %>
+    <% if active_locale == @game.primary_locale %>
+      <%= f.text_area :description %>
+    <% else %>
+      <%= text_area_tag "game[translations][#{active_locale}][description]",
+                        @game.translated(:description, active_locale) %>
+    <% end %>
   </p>
   <p>
     <%= f.label :starts_at, t("games.form.starts_at") %>

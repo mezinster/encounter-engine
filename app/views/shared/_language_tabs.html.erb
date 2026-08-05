@@ -1,0 +1,29 @@
+<%# app/views/shared/_language_tabs.html.erb
+
+    Locals:
+      game    - the Game whose available_locale_list drives the tabs
+      record  - the record being edited (for the per-tab missing count)
+      fields  - the field names this form edits, e.g. Level::TRANSLATABLE_FIELDS
+      active  - the currently selected locale
+
+    Renders nothing for a single-locale game, so monolingual authors see the
+    form exactly as it was before this feature existed.
+%>
+<% if game.multilingual? %>
+  <ul class="language-tabs">
+    <% game.available_locale_list.each do |locale| %>
+      <% missing = record.new_record? ? [] : record.missing_translated_fields(fields, locale) %>
+      <li class="<%= "active" if locale == active %> <%= "incomplete" if missing.any? %>">
+        <%= link_to url_for(request.query_parameters.merge(:locale => locale)) do %>
+          <%# "locales.<code>" is the key the header's language switcher already
+              uses for a language's own name -- there is no separate
+              "locale_name.*" key. %>
+          <%= t("locales.#{locale}") %>
+          <% if missing.any? %>
+            <span class="missing-count"><%= t("games.translations.missing_count", :count => missing.size) %></span>
+          <% end %>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

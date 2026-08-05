@@ -68,7 +68,7 @@ One filter, already shared by six controllers:
 # app/controllers/concerns/security_filters.rb
 def ensure_author
   return if current_user&.superadmin?
-  raise Authentication::Unauthorized, t("errors.not_game_author") unless current_user&.author_of?(@game)
+  raise Authentication::Unauthorized, t("errors.must_be_author") unless current_user&.author_of?(@game)
 end
 ```
 
@@ -89,7 +89,7 @@ operator wants while investigating.
 | Column | Meaning | Enforced at |
 |---|---|---|
 | `editing_locked_at` | The author can no longer modify the game or anything beneath it | `ensure_author` — refuses the author, still admits a superadmin |
-| `withdrawn_at` | Hidden from the public list, refuses new teams | `Game.non_drafts`, the `available_games` selector, and the `show` guard |
+| `withdrawn_at` | Hidden from the public list, refuses new teams | `Game.non_drafts`, `Game.notstarted`, and the `show` guard |
 
 They are independent switches and may be applied together or separately.
 
@@ -116,8 +116,7 @@ subtly different semantics would be worse than reusing the one that exists.
 
 ### Blast radius
 
-Visibility currently funnels through four places: the `Game.non_drafts` scope, the
-`available_games` selector, the `show` page's draft guard, and `ensure_author`. Both locks hook
+Visibility currently funnels through four places: the `Game.non_drafts` scope, `Game.notstarted`, the `show` page's draft guard, and `ensure_author`. Both locks hook
 into those. Nothing else in the codebase needs to learn about them.
 
 ## The console
@@ -139,15 +138,31 @@ in sync with the first.
 
 ## Deletion behaves by history
 
-Deleting a game today cascades into its levels, hints, questions, logs and game passings. Those logs
-and game passings are not the author's content — they are **players'** history: which teams played,
-when they finished, their placements. Deleting a played game erases other people's record of an
-evening they spent, and no confirmation dialog gets that back.
+**Correction, verified against the running app after this spec was first written:** deleting a game
+does *not* cascade. `db/schema.rb` declares **zero** foreign keys and `Game`'s associations carry
+**no `dependent:` option**, so `@game.destroy` removes the game row and leaves every level, hint,
+question, answer, log, game entry and game passing orphaned, still holding a `game_id` that now
+points at nothing. Proven with a probe: the game row disappears, the level remains.
+
+That makes the case for restricting deletion stronger rather than weaker, though for a different
+reason than first assumed. The danger is not that players' history is erased — it is that the
+history becomes unreachable garbage still occupying the tables, and that `Level#game` starts
+returning `nil` for rows that code elsewhere assumes have a game.
+
+It also means the supposedly-safe path is broken today: deleting an untouched draft orphans its
+levels just the same. So permitting deletion at all requires making deletion clean up after itself.
+
+The logs and game passings are, separately, not the author's content — they are **players'**
+history: which teams played, when they finished, their placements.
 
 | Situation | Behaviour |
 |---|---|
-| No `game_passings` at all | Hard delete, behind a confirmation naming the game |
+| No `game_passings` at all | Delete, behind a confirmation naming the game — and delete the levels, hints, questions, answers and game entries with it, rather than orphaning them as today |
 | Any team has played | **Refuse.** Offer withdrawal instead |
+
+Cleaning up on delete is a change to the *existing* author-facing delete too. That is deliberate:
+it is a latent bug this feature would otherwise build on, and leaving it would mean the console's
+"safe" delete quietly creates the same garbage the author's does.
 
 Withdrawal achieves the operator's real goal — nobody can find or join it — without destroying
 player history. So the console's destructive control is withdrawal in every case that matters, and

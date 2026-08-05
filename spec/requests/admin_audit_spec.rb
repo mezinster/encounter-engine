@@ -122,9 +122,10 @@ describe "auditing administrative changes", type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
 
-    it "shows a superadmin the entries, naming a deleted target" do
+    it "shows a superadmin the entries, naming a deleted target, without linking to it" do
       sign_in(superadmin)
       name = game.name
+      id = game.id
       get delete_game_path(game)
 
       get admin_audit_index_path
@@ -132,6 +133,37 @@ describe "auditing administrative changes", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(name)
       expect(response.body).to include(superadmin.nickname)
+      # target_label is a snapshot rendered as plain text once the target is
+      # gone -- proving the label appears is not enough, since a link to the
+      # dead id would render the same visible text. This must not link.
+      expect(response.body).not_to include(%(href="/games/#{id}"))
+    end
+
+    it "links to a target that still exists" do
+      sign_in(superadmin)
+      post withdraw_game_path(game)
+
+      get admin_audit_index_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(%(href="/games/#{game.id}"))
+    end
+
+    # This N+1 has been written into two consecutive plans on this project and
+    # shipped once (see admin_reporting_spec.rb). It gets a test rather than a
+    # comment. target_type/target_id are plain columns, not a polymorphic
+    # association, so `includes` cannot preload the existence check -- this
+    # pins the controller computing the live-id sets once instead.
+    it "keeps the query count flat as the number of entries grows" do
+      sign_in(superadmin)
+
+      2.times { post withdraw_game_path(create_game(:author => author, :is_draft => true)) }
+      small = count_queries { get admin_audit_index_path }
+
+      8.times { post withdraw_game_path(create_game(:author => author, :is_draft => true)) }
+      large = count_queries { get admin_audit_index_path }
+
+      expect(large).to eq(small)
     end
   end
 end

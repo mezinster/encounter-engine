@@ -24,9 +24,9 @@
       <td>
         <%# target_label is a snapshot, so it survives the target's deletion.
             Only link when the target still exists. %>
-        <% if entry.target_type == "Game" && Game.exists?(entry.target_id) %>
+        <% if entry.target_type == "Game" && @live_games.include?(entry.target_id) %>
           <%= link_to entry.target_label, game_path(entry.target_id) %>
-        <% elsif entry.target_type == "User" && User.exists?(entry.target_id) %>
+        <% elsif entry.target_type == "User" && @live_users.include?(entry.target_id) %>
           <%= link_to entry.target_label, admin_user_path(entry.target_id) %>
         <% else %>
           <%= entry.target_label %>

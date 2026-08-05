@@ -593,7 +593,18 @@ In `app/models/question.rb`, after `class Question < ApplicationRecord`:
 ```ruby
   include TranslatableContent
 
-  TRANSLATABLE_FIELDS = %w[questions].freeze
+  # Deliberately empty. The `questions` column is vestigial: nothing in this
+  # application writes it (the form sets correct_answer, which builds Answer
+  # records) and nothing renders it -- every view reference is to the
+  # `questions` association, not this column. Listing it here would make
+  # Game#missing_translations demand a translation for a field no author can
+  # reach, permanently blocking any multilingual game that has questions from
+  # ever leaving draft.
+  #
+  # A question's author-facing content is its answer codes, which are shared
+  # across languages by design. The concern stays included so the
+  # `:questions => :content_translations` preloads remain valid.
+  TRANSLATABLE_FIELDS = [].freeze
 
   def translation_game
     self.level&.game

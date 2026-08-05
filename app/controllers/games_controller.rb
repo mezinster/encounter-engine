@@ -7,6 +7,7 @@ class GamesController < ApplicationController
   before_action :find_team, only: [:show]
   before_action :ensure_author_if_game_is_draft, only: [:show]
   before_action :ensure_author_if_no_start_time, only: [:show]
+  before_action :ensure_author_if_game_is_withdrawn, only: [:show]
   before_action :ensure_author, only: [:edit, :update, :delete, :end_game, :start_test, :finish_test]
   before_action :ensure_editing_not_locked, only: [:edit, :update, :delete]
   before_action :ensure_game_was_not_started, only: [:edit, :update]
@@ -171,5 +172,15 @@ class GamesController < ApplicationController
 
   def ensure_author_if_no_start_time
     ensure_author if no_start_time?
+  end
+
+  # A withdrawn game vanishes from every listing, but the listing is not the
+  # only way in -- a URL survives in chat logs, bookmarks and invitations. Its
+  # author and a superadmin must still reach it; nobody else should.
+  def ensure_author_if_game_is_withdrawn
+    return unless @game.withdrawn?
+    return if logged_in? && (current_user.superadmin? || current_user.author_of?(@game))
+
+    raise Authentication::Unauthorized, t("errors.game_is_withdrawn")
   end
 end

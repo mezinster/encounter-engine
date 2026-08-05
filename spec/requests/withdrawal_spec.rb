@@ -37,6 +37,44 @@ describe "withdrawal", type: :request do
     sign_in(author)
     get game_path(game)
     expect(response).to have_http_status(:ok)
+
+    sign_in(superadmin)
+    get game_path(game)
+    expect(response).to have_http_status(:ok)
+  end
+
+  # A withdrawn game's URL still resolves (it survives in chat logs,
+  # bookmarks, invitations) -- the listing being clean is not enough. Review
+  # finding: this was previously unguarded, and both an anonymous visitor and
+  # a logged-in stranger got 200 with the full page (description, teams).
+  it "refuses an anonymous visitor on the show page" do
+    game.update!(:withdrawn_at => Time.now)
+    get game_path(game)
+    expect(response).to have_http_status(:unauthorized)
+  end
+
+  it "refuses a logged-in stranger on the show page" do
+    game.update!(:withdrawn_at => Time.now)
+    sign_in(create_user)
+    get game_path(game)
+    expect(response).to have_http_status(:unauthorized)
+  end
+
+  # Review finding: GameEntriesController#new was unguarded -- a team could
+  # still register for a withdrawn game (GameEntry count 0 -> 1, 302), because
+  # Game#can_request? is pre-existing dead code (its capacity check computes
+  # a value and discards it, always returning a truthy array) and never
+  # enforced anything.
+  it "refuses a team requesting entry to a withdrawn game" do
+    game.update!(:withdrawn_at => Time.now)
+    captain = create_user
+    team = create_team(:captain => captain)
+    sign_in(captain)
+
+    expect do
+      get new_game_entry_path(:game_id => game.id, :team_id => team.id)
+    end.not_to change(GameEntry, :count)
+    expect(response).to have_http_status(:unauthorized)
   end
 
   it "can be withdrawn and restored by a superadmin" do

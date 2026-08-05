@@ -21,6 +21,7 @@ uk:
   errors:
     must_be_superadmin: "Доступ только для администратора"
     game_is_locked: "Редактирование игры заморожено администратором"
+    game_is_withdrawn: "Игра снята с публикации"
   activerecord:
     errors:
       messages:

@@ -1321,7 +1321,7 @@ Expected: PASS — this pins the contract the forms must post against before the
     <% game.available_locale_list.each do |locale| %>
       <% missing = record.new_record? ? [] : record.missing_translated_fields(fields, locale) %>
       <li class="<%= "active" if locale == active %> <%= "incomplete" if missing.any? %>">
-        <%= link_to url_for(request.query_parameters.merge(:locale => locale)) do %>
+        <%= link_to url_for(request.query_parameters.merge(:tab => locale)) do %>
           <%= t("locale_name.#{locale}") %>
           <% if missing.any? %>
             <span class="missing-count"><%= t("games.translations.missing_count", :count => missing.size) %></span>
@@ -1338,7 +1338,7 @@ Expected: PASS — this pins the contract the forms must post against before the
 In both `app/views/levels/new.html.erb` and `app/views/levels/edit.html.erb`, above the form fields:
 
 ```erb
-<% active_locale = params[:locale].presence || @game.primary_locale %>
+<% active_locale = params[:tab].presence_in(@game.available_locale_list) || @game.primary_locale %>
 <%= render "shared/language_tabs", :game => @game, :record => @level,
                                    :fields => Level::TRANSLATABLE_FIELDS,
                                    :active => active_locale %>
@@ -1478,7 +1478,7 @@ Expected: PASS, 4 examples.
 In `app/views/hints/_form.html.erb`, above the fields:
 
 ```erb
-<% active_locale = params[:locale].presence || @level.game.primary_locale %>
+<% active_locale = params[:tab].presence_in(@level.game.available_locale_list) || @level.game.primary_locale %>
 <%= render "shared/language_tabs", :game => @level.game, :record => @hint,
                                    :fields => Hint::TRANSLATABLE_FIELDS,
                                    :active => active_locale %>
@@ -1649,10 +1649,10 @@ In `app/helpers/application_helper.rb`:
   # goes from "what is missing" to "fixing it" in one click.
   def missing_translation_path_for(entry)
     case entry.record
-    when Game     then edit_game_path(entry.record, :locale => entry.locale)
-    when Level    then edit_game_level_path(entry.record.game, entry.record, :locale => entry.locale)
+    when Game     then edit_game_path(entry.record, :tab => entry.locale)
+    when Level    then edit_game_level_path(entry.record.game, entry.record, :tab => entry.locale)
     when Hint     then edit_game_level_hint_path(entry.record.level.game, entry.record.level,
-                                                 entry.record, :locale => entry.locale)
+                                                 entry.record, :tab => entry.locale)
     when Question then new_game_level_question_path(entry.record.level.game, entry.record.level,
                                                     :locale => entry.locale)
     end

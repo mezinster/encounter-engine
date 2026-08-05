@@ -122,19 +122,33 @@ is the failure mode this project has already been bitten by twice.
 
 ```ruby
 def pause!
-  update!(:paused_at => Time.now)
+  raise ArgumentError, "already paused" if self.paused?
+
+  update_column(:paused_at, Time.now)
 end
 
 def resume!
+  raise ArgumentError, "not paused" unless self.paused?
+
   transaction do
     held = Time.now - self.paused_at
     GamePassing.of_game(self).where(:finished_at => nil).find_each do |gp|
       gp.update_column(:current_level_entered_at, gp.current_level_entered_at + held)
     end
-    update!(:paused_at => nil)
+    update_column(:paused_at, nil)
   end
 end
 ```
+
+**`update_column`, not `update!`, and this is not a style preference.** A running game does not
+pass its own validations: `game_starts_in_the_future` adds an error whenever `author_finished_at`
+is nil and `starts_at` is in the past, which is true of every game currently being played
+(verified against the model — a `Game` with `starts_at` an hour ago and no `author_finished_at`
+reports `["Starts at Вы выбрали дату из прошлого. Так нельзя :-)"]`). `update!` would therefore
+raise `RecordInvalid` on the exact games pause exists for, and `update` would fail silently — the
+same trap that already makes `reserve_place_for_team!` stop enforcing `max_team_number` once a
+game starts. Any future write to a live `Game` row faces this; `finish_game!` escapes it only
+because setting `author_finished_at` disarms the validation in the same save.
 
 `pause!` refuses a game that is already paused or not live. `resume!` refuses one that is not paused.
 

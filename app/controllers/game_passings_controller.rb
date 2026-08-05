@@ -15,6 +15,7 @@ class GamePassingsController < ApplicationController
   before_action :ensure_team_member, except: [:index, :show_results]
   before_action :ensure_not_author_of_the_game, except: [:index, :show_results]
   before_action :ensure_author, only: [:index]
+  before_action :ensure_game_not_paused, only: [ :post_answer, :exit_game ]
 
   # TICKET #83 ("Игрок удачно обновляется при завершении игры"): a team that
   # has finished has no current_level, so rendering show_current_level for one
@@ -195,5 +196,17 @@ class GamePassingsController < ApplicationController
 
   def ensure_team_not_exited
     raise Authentication::Unauthorized, t("errors.team_exited") if @game_passing.exited?
+  end
+
+  # Deliberately NOT an Authentication::Unauthorized like its neighbours here.
+  # A paused game is a normal temporary state, not an authorization failure,
+  # and telling a player they are not allowed to play their own game would be
+  # both confusing and untrue. show_current_level is not in this list: the
+  # player keeps seeing their level with a banner over it.
+  def ensure_game_not_paused
+    return unless @game.paused?
+
+    redirect_to show_current_level_path(:game_id => @game.id),
+                :alert => t("game_passings.paused")
   end
 end

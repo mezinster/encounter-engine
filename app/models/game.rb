@@ -184,26 +184,39 @@ private
   # The columns hold the primary language's text. Repointing primary_locale
   # once translations exist would leave the columns holding one language while
   # the game claims another, and every fallback would then serve the wrong one.
+  #
+  # Checked across the WHOLE aggregate (game, levels, hints, questions), not
+  # just ContentTranslation rows on the Game record itself. An author who has
+  # translated every level and hint but never touched the game's own name/
+  # description would otherwise still be allowed to repoint primary_locale --
+  # after which every level column holds the old primary language while the
+  # game claims a new one, exactly the corruption this guard exists to prevent.
   def primary_locale_is_settled
     return unless self.primary_locale_changed?
     return if self.new_record?
-    return if ContentTranslation.where(:translatable => self).none? && self.draft?
+    return if self.draft? && translatable_records.none? { |record| record.content_translations.any? }
 
     self.errors.add(:primary_locale,
                     I18n.t("activerecord.errors.models.game.attributes.primary_locale.settled"))
   end
 
-  # Fires whenever the game is not a draft, not merely on the draft -> published
-  # edge. is_draft_changed?(:from => true, :to => false) misses the two paths
-  # that matter: a game created directly with is_draft false (the new-game form
-  # leaves the checkbox unchecked and the column defaults to false), and a
-  # locale added to an already-published game, where is_draft never changes.
-  # Both would otherwise put a game teams cannot fully read into play.
+  # Fires only when publication state or the declared locale set changes, NOT on
+  # every save. A state-only check (`return if draft?`) re-runs on every write to
+  # the row, so adding a level to a published game left it permanently invalid --
+  # and the fallout landed on saves that have nothing to do with translation:
+  # reserve_place_for_team! silently stopped enforcing max_team_number, and
+  # finish_game! and start_test raised.
   #
-  # Single-locale games short-circuit inside missing_translations, so this
-  # costs nothing for the overwhelmingly common case.
+  # The three cases that must still be caught:
+  #   - a game created already published (is_draft defaults to false and the
+  #     new-game form leaves the box unchecked, so this is the common path)
+  #   - a draft being published
+  #   - a locale added to a game that is already live
   def declared_locales_are_translated_before_publication
     return if self.draft?
+    return unless self.new_record? ||
+                  self.is_draft_changed?(:from => true, :to => false) ||
+                  self.available_locales_changed?
 
     missing = self.missing_translations
     return if missing.empty?

@@ -378,6 +378,7 @@ ru:
         blank: "не может быть пустым"
         confirmation: "не совпадает с %{attribute}"
         invalid: "имеет неверное значение"
+        record_invalid: "Запись недействительна"
       models:
         answer:
           attributes:

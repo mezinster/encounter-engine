@@ -89,6 +89,40 @@ describe TranslatableContent do
     end
   end
 
+  # Whole-branch review, Finding 3: translations_attributes= only stashes into
+  # @pending_translations; persistence happens after_save. Before this fix, a
+  # failed save re-rendered the form on the SAME instance, but #translated
+  # never looked at @pending_translations at all -- it only read the
+  # (unchanged) content_translations association -- so the author's just-typed
+  # text silently vanished from the re-rendered form.
+  describe "a pending translation that has not been saved yet" do
+    it "is returned by #translated before the record is saved" do
+      level.translations_attributes = { "en" => { "text" => "Find the monument" } }
+
+      expect(level.translated(:text, "en")).to eq("Find the monument")
+    end
+
+    it "is returned by #translated even if the record then fails to save" do
+      level.translations_attributes = { "en" => { "text" => "Find the monument" } }
+      level.name = "" # violates the presence validation, so save fails
+      expect(level.save).to be false
+
+      expect(level.translated(:text, "en")).to eq("Find the monument")
+    end
+
+    # This is the constraint the fix has to hold at the same time: preferring
+    # the pending value in #translated must NOT let #translated? -- and
+    # therefore the publish gate, which is built entirely out of #translated?
+    # -- treat an in-memory-only value as a real translation. Otherwise a
+    # save that never actually persisted a translation could still pass the
+    # completeness check that's supposed to guarantee it exists.
+    it "is NOT reported as translated by #translated?, since nothing was persisted" do
+      level.translations_attributes = { "en" => { "text" => "Find the monument" } }
+
+      expect(level.translated?(:text, "en")).to be false
+    end
+  end
+
   describe "translation_game" do
     it "resolves the owning game from every translatable model" do
       hint     = create_hint(:level => level)

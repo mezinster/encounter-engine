@@ -366,6 +366,7 @@ en:
         blank: "can't be blank"
         confirmation: "doesn't match %{attribute}"
         invalid: "is invalid"
+        record_invalid: "Record is invalid"
       models:
         answer:
           attributes:

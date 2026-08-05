@@ -127,8 +127,13 @@ class GamePassingsController < ApplicationController
   # spec/routing_spec.rb. Every "Сойти с дистанции" click therefore raised
   # RecordNotFound before the action ever ran. Once corrected the two finders
   # were byte-identical, so #exit_game just uses this one.
+  # show_current_level.html.erb (and the identical post_answer render) reads
+  # @game.translated(:name, content_locale) -- see Finding 2 of the
+  # whole-branch review -- so this needs its own content_translations
+  # preloaded too; @game_passing.current_level's preloaded :game (below) is a
+  # different, separately-loaded Game object and does not cover this one.
   def find_game
-    @game = Game.find(params[:game_id])
+    @game = Game.includes(:content_translations).find(params[:game_id])
   end
 
   def find_team

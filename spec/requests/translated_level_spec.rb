@@ -32,37 +32,6 @@ describe "playing a translated game", type: :request do
     expect(level.reload.translated(:text, "en")).to eq("Find the monument")
     expect(level.reload.translated(:text, "ru")).to eq("Найдите памятник")
   end
-
-  # Guards the specific mistake this design invites: forgetting to preload, so
-  # each hint and question issues its own translation query.
-  #
-  # includes(:hints, :questions, :content_translations) -- sibling, not
-  # nested -- looks like the obvious preload but only fetches the LEVEL's own
-  # translations; each hint and question still lazy-loads its own the first
-  # time #translated touches it, one query per record (this is exactly what
-  # Game#translatable_records' own comment warns about). The nested form
-  # below, matching app/controllers/game_passings_controller.rb#preloaded_level,
-  # is what actually keeps the query count flat as hints/questions grow:
-  # levels, games, the level's own content_translations, hints (bulk),
-  # questions (bulk), hints' content_translations (bulk), questions'
-  # content_translations (bulk) -- 7 queries total, independent of how many
-  # hints or questions the level has. Confirmed by hand: still 7 with 10
-  # hints and 6 questions instead of 3 and 1; a bare Level.find with no
-  # preload at all is 11 for the small case and 21 for the large one.
-  it "does not issue a query per translated record" do
-    level.reload
-    baseline = count_queries do
-      Level.includes(:game, :content_translations,
-                     :hints => :content_translations,
-                     :questions => :content_translations).find(level.id).tap do |l|
-        l.translated(:text, "en")
-        l.hints.each { |h| h.translated(:text, "en") }
-        l.questions.each { |q| q.translated(:questions, "en") }
-      end
-    end
-
-    expect(baseline).to be <= 7
-  end
 end
 
 # Full-stack HTTP coverage for the two gaps the initial pass at this task
@@ -134,5 +103,47 @@ describe "translated content over real HTTP", type: :request do
 
     expect(response.body).to include("Translated Level Name")
     expect(response.body).not_to include("Уровень")
+  end
+
+  # Guards the specific mistake this design invites: forgetting to preload, so
+  # each hint and question issues its own translation query. An earlier
+  # version of this guard counted queries around a spec-constructed
+  # `Level.includes(...)` expression rather than the actual request path --
+  # deleting the preload from GamePassingsController entirely would not have
+  # failed it, because it was proving the SPEC's own query efficient, not the
+  # controller's. This counts queries around the real HTTP request instead,
+  # signed in as a player on the game, and proves flatness by comparing a
+  # small level against a much larger one rather than pinning one magic
+  # number.
+  def queries_for_show_current_level(game)
+    user = create_user
+    create_team(:captain => user)
+    GameLocalePreference.create!(:user => user, :game => game, :locale => "en")
+    login(user)
+
+    count_queries { get show_current_level_path(game_id: game.id) }
+  end
+
+  it "keeps the query count flat as the level's hint and question counts grow" do
+    small_game = build_started_multilingual_game do |g|
+      level = create_level(:game => g, :name => "Уровень", :text => "Текст")
+      level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text EN" } }
+      level.save!
+      create_hint(:level => level, :text => "Подсказка", :delay => 0)
+      create_question(:level => level)
+    end
+
+    large_game = build_started_multilingual_game do |g|
+      level = create_level(:game => g, :name => "Уровень", :text => "Текст")
+      level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text EN" } }
+      level.save!
+      10.times { |i| create_hint(:level => level, :text => "Подсказка #{i}", :delay => 0) }
+      6.times { create_question(:level => level) }
+    end
+
+    small_count = queries_for_show_current_level(small_game)
+    large_count = queries_for_show_current_level(large_game)
+
+    expect(large_count).to eq(small_count)
   end
 end

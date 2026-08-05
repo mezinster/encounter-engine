@@ -55,5 +55,29 @@ describe Game do
       expect(game).not_to be_valid
       expect(game.errors[:primary_locale]).to be_present
     end
+
+    # Whole-branch review, Finding 6: the old check only looked at
+    # ContentTranslation rows scoped to the Game record itself
+    # (`ContentTranslation.where(:translatable => self)`), so an author who
+    # had translated every level and hint but never touched the game's own
+    # name/description could still repoint primary_locale -- after which
+    # every level column would hold the OLD primary language while the game
+    # claimed the new one, exactly the corruption this guard exists to
+    # prevent. It must look at the whole aggregate (game, levels, hints,
+    # questions), the same set Game#translatable_records already assembles
+    # for the publish gate.
+    it "refuses to change the primary locale when a LEVEL has translations, even if the game itself has none" do
+      game = create_game(:is_draft => true)
+      game.available_locale_list = %w[ru en]
+      game.save!
+      level = create_level(:game => game, :name => "Уровень", :text => "Текст")
+      ContentTranslation.create!(:translatable => level, :field => "text",
+                                 :locale => "en", :value => "Text EN")
+
+      game.primary_locale = "en"
+
+      expect(game).not_to be_valid
+      expect(game.errors[:primary_locale]).to be_present
+    end
   end
 end

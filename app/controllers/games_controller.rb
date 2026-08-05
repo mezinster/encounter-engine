@@ -115,8 +115,13 @@ class GamesController < ApplicationController
     attributes.merge("translations_attributes" => translations)
   end
 
+  # :show and :edit render @game.translated(...) (see Finding 2 of the
+  # whole-branch review -- players and authors both now read translated
+  # name/description instead of the raw column), which touches
+  # content_translations; preload it so that costs one query per page
+  # instead of a lazy load the first time translated() is called.
   def find_game
-    @game = Game.find(params[:id])
+    @game = Game.includes(:content_translations).find(params[:id])
   end
 
   # No view reads @team today (Task 9 hasn't ported app/views/games/show yet),

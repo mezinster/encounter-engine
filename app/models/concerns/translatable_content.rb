@@ -19,7 +19,16 @@ module TranslatableContent
   end
 
   # Text for `locale`, falling back to the column rather than returning nil.
+  #
+  # Checks the pending (unsaved) value first: a failed save re-renders the
+  # form on the very same instance, and translation_for only sees rows that
+  # made it into content_translations, which persist_pending_translations
+  # writes after_save -- a save that never got there leaves nothing for it to
+  # find. See #pending_translation_for.
   def translated(field, locale)
+    pending = pending_translation_for(field, locale)
+    return pending if pending
+
     return self[field] if primary_locale?(locale)
 
     translation_for(field, locale)&.value.presence || self[field]
@@ -47,6 +56,20 @@ module TranslatableContent
 
   def primary_locale?(locale)
     locale.to_s == self.translation_game&.primary_locale.to_s
+  end
+
+  # A failed save re-renders the form, which re-reads translated(...) from the
+  # database -- where nothing was written, because persistence happens
+  # after_save. Preferring the pending value keeps the author's typing on screen
+  # instead of silently discarding it.
+  #
+  # Deliberately NOT consulted by translated? -- the publish gate (and anything
+  # else asking "is this actually translated") must keep answering only for what
+  # is persisted, or an author could pass the gate on text that a failed save
+  # never wrote to content_translations.
+  def pending_translation_for(field, locale)
+    return nil if @pending_translations.blank?
+    @pending_translations.dig(locale.to_s, field.to_s).presence
   end
 
   # Searches the loaded association rather than querying, so a controller that

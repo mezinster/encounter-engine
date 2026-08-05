@@ -20,6 +20,8 @@ uk:
     ka: "ქართული"
   activerecord:
     errors:
+      messages:
+        record_invalid: "Запись недействительна"
       models:
         game:
           attributes:

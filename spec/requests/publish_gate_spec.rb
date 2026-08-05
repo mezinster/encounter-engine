@@ -94,5 +94,32 @@ describe "the publish gate", type: :request do
 
       expect(response.body).not_to include("missing-translations")
     end
+
+    # Whole-branch review, Finding 4: the block used to be gated behind
+    # `@game.draft? && @game.author == current_user`, so an author whose
+    # PUBLISHED game became incomplete (e.g. a level added after publishing --
+    # see Finding 1, which this now allows without invalidating the game) was
+    # told "the game is missing N fields" nowhere -- games#edit shows the
+    # generic count, but only games#show ever showed WHICH fields. Dropping
+    # the draft? condition means the to-do list is visible for exactly as
+    # long as anything is actually missing, published or not.
+    it "shows the missing-translations block on a PUBLISHED game, not just a draft one" do
+      login(author)
+      level = create_level(:game => game, :name => "Уровень", :text => "Текст")
+      game.translations_attributes = { "en" => { "name" => "Quest", "description" => "Desc" } }
+      game.save!
+      level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text" } }
+      level.save!
+      game.update!(:is_draft => false)
+
+      # Finding 1: this no longer invalidates the (now published) game -- it
+      # just leaves a gap that Finding 4 makes visible.
+      create_level(:game => game, :name => "Уровень 2", :text => "Текст 2")
+
+      get game_path(game)
+
+      block = response.body[/<div class="missing-translations">.*?<\/div>/m]
+      expect(block).to be_present
+    end
   end
 end

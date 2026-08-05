@@ -22,16 +22,26 @@ describe "game deletion", type: :request do
   end
 
   # Today's behaviour orphans them: zero foreign keys, no dependent: options.
-  it "takes the levels, hints and questions with it" do
-    game  = create_game(:author => author, :is_draft => true)
-    level = create_level(:game => game)
-    hint  = create_hint(:level => level)
-    level_id, hint_id = level.id, hint.id
+  it "takes the levels, hints, questions and answers with it" do
+    game     = create_game(:author => author, :is_draft => true)
+    level    = create_level(:game => game)
+    hint     = create_hint(:level => level)
+    question = create_question(:level => level, :correct_answer => "CODE")
+    answer   = question.answers.first
+
+    level_id, hint_id, question_id, answer_id = level.id, hint.id, question.id, answer.id
 
     game.destroy
 
     expect(Level.where(:id => level_id)).to be_empty
     expect(Hint.where(:id => hint_id)).to be_empty
+    expect(Question.where(:id => question_id)).to be_empty
+    # Answers are removed through Level#answers, not Question#answers: every
+    # Answer carries a level_id (Answer#assign_level derives it from
+    # question.level), so the level's own cascade covers them whichever
+    # question they belong to. Question#answers deliberately has no
+    # dependent: option -- adding one would be redundant, not safer.
+    expect(Answer.where(:id => answer_id)).to be_empty
   end
 
   it "refuses over HTTP and leaves the game alone" do

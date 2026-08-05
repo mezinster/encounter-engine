@@ -158,6 +158,40 @@ class GamePassing < ApplicationRecord
     end
   end
 
+  # Operator interventions. Each leaves the record in a state ordinary
+  # gameplay could also have produced -- that is the constraint the whole
+  # feature is built on, and the reason there is no generic state editor.
+  # Refusals raise ArgumentError; InterventionsController rescues it.
+
+  def move_to_level!(level)
+    raise ArgumentError, "level belongs to another game" unless level.game_id == self.game_id
+
+    self.current_level = level
+    self.answered_questions = []
+    self.current_level_entered_at = Time.now
+    # A team standing on a level is not finished. Clearing these here is what
+    # keeps a moved team from being simultaneously mid-level and finished.
+    self.finished_at = nil
+    self.status = nil
+    save!
+  end
+
+  def reinstate!
+    # exit! leaves the entry clock alone, so without this reset a team that
+    # quit an hour ago returns to a level with every hint already elapsed.
+    self.current_level_entered_at = Time.now
+    self.finished_at = nil
+    self.status = nil
+    save!
+  end
+
+  def reset_level_clock!
+    raise ArgumentError, "team has finished" if self.finished?
+
+    self.current_level_entered_at = Time.now
+    save!
+  end
+
 protected
 
   def last_level?

@@ -1,0 +1,39 @@
+<%# app/views/admin/audit/index.html.erb %>
+<h1><%= t("admin.audit.index.title") %></h1>
+
+<table class="admin-audit">
+  <tr>
+    <th><%= t("admin.audit.index.when") %></th>
+    <th><%= t("admin.audit.index.who") %></th>
+    <th><%= t("admin.audit.index.what") %></th>
+    <th><%= t("admin.audit.index.target") %></th>
+  </tr>
+  <% @entries.each do |entry| %>
+    <tr>
+      <td><%= l(entry.created_at, :format => :long) %></td>
+      <td>
+        <% if entry.actor %>
+          <%= link_to entry.actor.nickname, admin_user_path(entry.actor) %>
+        <% else %>
+          <%= t("admin.audit.index.unknown_actor") %>
+        <% end %>
+      </td>
+      <%# The action name is chrome; a value nobody anticipated renders as
+          itself rather than raising under raise_on_missing_translations. %>
+      <td><%= t("admin.audit.index.action.#{entry.action}", :default => entry.action) %></td>
+      <td>
+        <%# target_label is a snapshot, so it survives the target's deletion.
+            Only link when the target still exists. %>
+        <% if entry.target_type == "Game" && Game.exists?(entry.target_id) %>
+          <%= link_to entry.target_label, game_path(entry.target_id) %>
+        <% elsif entry.target_type == "User" && User.exists?(entry.target_id) %>
+          <%= link_to entry.target_label, admin_user_path(entry.target_id) %>
+        <% else %>
+          <%= entry.target_label %>
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+</table>
+
+<p><%= link_to t("admin.audit.index.back"), admin_dashboard_path %></p>

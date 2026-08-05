@@ -28,6 +28,27 @@ en:
         back: "Back to players"
         grant: "Make administrator"
         revoke: "Revoke administrator rights"
+    audit:
+      index:
+        title: "Administrator action log"
+        when: "When"
+        who: "Who"
+        what: "Action"
+        target: "Target"
+        unknown_actor: "unknown"
+        back: "Back to overview"
+        action:
+          withdraw: "Withdrew"
+          restore: "Published"
+          lock: "Froze editing"
+          unlock: "Unfroze editing"
+          update: "Edited"
+          delete: "Deleted"
+          end_game: "Ended the game"
+          start_test: "Started testing"
+          finish_test: "Finished testing"
+          grant_superadmin: "Granted administrator rights"
+          revoke_superadmin: "Revoked administrator rights"
     dashboard:
       show:
         title: "Overview"
@@ -36,6 +57,7 @@ en:
         totals: "Totals"
         entries_by_status: "Entry requests by status"
         all_games: "All games"
+        audit_log: "Action log"
         status:
           withdrawn: "Withdrawn"
           draft: "Draft"

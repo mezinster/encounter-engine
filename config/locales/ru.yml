@@ -28,6 +28,27 @@ ru:
         back: "К списку игроков"
         grant: "Сделать администратором"
         revoke: "Снять права администратора"
+    audit:
+      index:
+        title: "Журнал действий администраторов"
+        when: "Когда"
+        who: "Кто"
+        what: "Действие"
+        target: "Объект"
+        unknown_actor: "неизвестно"
+        back: "К обзору"
+        action:
+          withdraw: "Снял с публикации"
+          restore: "Опубликовал"
+          lock: "Заморозил редактирование"
+          unlock: "Разморозил редактирование"
+          update: "Изменил"
+          delete: "Удалил"
+          end_game: "Завершил игру"
+          start_test: "Запустил тестирование"
+          finish_test: "Завершил тестирование"
+          grant_superadmin: "Выдал права администратора"
+          revoke_superadmin: "Снял права администратора"
     dashboard:
       show:
         title: "Обзор"
@@ -36,6 +57,7 @@ ru:
         totals: "Всего"
         entries_by_status: "Заявки по статусу"
         all_games: "Все игры"
+        audit_log: "Журнал действий"
         status:
           withdrawn: "Снята с публикации"
           draft: "Черновик"

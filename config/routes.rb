@@ -16,6 +16,7 @@ Rails.application.routes.draw do
       post "grant",  on: :member
       post "revoke", on: :member
     end
+    resources :audit, only: [ :index ]
   end
 
   # Session/registration URLs replace merb-auth's merb_auth_slice_password

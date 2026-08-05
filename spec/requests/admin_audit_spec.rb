@@ -108,4 +108,30 @@ describe "auditing administrative changes", type: :request do
       expect(Game.where(:id => played.id)).not_to be_empty
     end
   end
+
+  describe "the audit log screen" do
+    it "refuses an anonymous visitor" do
+      get admin_audit_index_path
+      expect(response).to have_http_status(:found)
+      expect(response).to redirect_to(login_path)
+    end
+
+    it "refuses an ordinary signed-in user" do
+      sign_in(author)
+      get admin_audit_index_path
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "shows a superadmin the entries, naming a deleted target" do
+      sign_in(superadmin)
+      name = game.name
+      get delete_game_path(game)
+
+      get admin_audit_index_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(name)
+      expect(response.body).to include(superadmin.nickname)
+    end
+  end
 end

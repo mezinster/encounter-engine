@@ -36,6 +36,10 @@ en:
       question_field: "Level %{position} — question"
       missing_count: "%{count} missing"
       heading: "Not translated yet (%{count})"
+      fields:
+        name: "name"
+        description: "description"
+        text: "task text"
     list:
       view: "(view)"
       stats: "(statistics)"

@@ -227,9 +227,10 @@ private
   end
 
   def label_for(record, field)
+    field_name = I18n.t("games.translations.fields.#{field}")
     case record
-    when Game     then I18n.t("games.translations.game_field",  :field => field)
-    when Level    then I18n.t("games.translations.level_field", :position => record.position, :field => field)
+    when Game     then I18n.t("games.translations.game_field",  :field => field_name)
+    when Level    then I18n.t("games.translations.level_field", :position => record.position, :field => field_name)
     when Hint     then I18n.t("games.translations.hint_field",  :position => record.level&.position,
                                                                 :minutes => record.delay_in_minutes)
     when Question then I18n.t("games.translations.question_field", :position => record.level&.position)

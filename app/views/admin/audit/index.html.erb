@@ -7,6 +7,7 @@
     <th><%= t("admin.audit.index.who") %></th>
     <th><%= t("admin.audit.index.what") %></th>
     <th><%= t("admin.audit.index.target") %></th>
+    <th><%= t("admin.audit.index.details") %></th>
   </tr>
   <% @entries.each do |entry| %>
     <tr>
@@ -32,6 +33,9 @@
           <%= entry.target_label %>
         <% end %>
       </td>
+      <%# Free text captured at write time -- a team name, typically. Blank
+          for every action that has no second subject. %>
+      <td><%= entry.details %></td>
     </tr>
   <% end %>
 </table>

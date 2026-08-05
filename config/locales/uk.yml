@@ -49,6 +49,7 @@ uk:
         who: "Кто"
         what: "Действие"
         target: "Объект"
+        details: "Подробности"
         unknown_actor: "неизвестно"
         back: "К обзору"
         action:

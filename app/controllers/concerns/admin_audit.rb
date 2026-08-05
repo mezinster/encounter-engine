@@ -24,13 +24,28 @@ module AdminAudit
   # Deliberately not wrapped in a transaction with the action. If this write
   # fails the action still stands -- an operator unable to withdraw a game
   # because the audit table is unavailable is a worse outcome than a missing row.
-  def record_admin_action(action, target = nil)
+  def record_admin_action(action, target = nil, details = nil)
     AdminAction.create!(
       :actor_id     => current_user&.id,
       :action       => action.to_s,
       :target_type  => target&.class&.name,
       :target_id    => target&.id,
-      :target_label => AdminAction.label_for(target)
+      :target_label => AdminAction.label_for(target),
+      :details      => details
     )
+  end
+
+  # Audited only when an operator acts on someone else's game. An author
+  # acting on their own game is ordinary use, not an administrative act, and
+  # recording it would bury the administrative entries under routine ones.
+  #
+  # Compares author_id directly rather than calling User#author_of?, which is
+  # `game.author.id == self.id` and raises on a game whose author is missing.
+  #
+  # Lives here rather than on GamesController because InterventionsController
+  # needs the same test; it takes the game explicitly so neither controller
+  # depends on a particular instance variable being set.
+  def acting_as_operator?(game)
+    logged_in? && current_user.superadmin? && game.author_id != current_user.id
   end
 end

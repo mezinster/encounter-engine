@@ -166,4 +166,25 @@ describe "auditing administrative changes", type: :request do
       expect(large).to eq(small)
     end
   end
+
+  describe "the details column" do
+    it "is nil for an action that records none" do
+      sign_in(superadmin)
+      post withdraw_game_path(game)
+
+      expect(AdminAction.newest_first.first.details).to be_nil
+    end
+
+    it "renders on the log screen when present" do
+      sign_in(superadmin)
+      AdminAction.create!(:actor_id => superadmin.id, :action => "move_team",
+                          :target_type => "Game", :target_id => game.id,
+                          :target_label => game.name, :details => "Команда Кентавры")
+
+      get admin_audit_index_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Команда Кентавры")
+    end
+  end
 end

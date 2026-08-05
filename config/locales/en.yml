@@ -35,6 +35,7 @@ en:
         who: "Who"
         what: "Action"
         target: "Target"
+        details: "Details"
         unknown_actor: "unknown"
         back: "Back to overview"
         action:

@@ -115,6 +115,68 @@ describe "withdrawal", type: :request do
     expect(game.reload.editing_locked?).to be false
   end
 
+  # An operator withdraws or freezes a game BECAUSE it is running badly, so a
+  # started game is the normal case for all four of these -- yet every example
+  # above uses create_game, whose starts_at defaults to 2099. That gap shipped:
+  # a running game does not pass its own validations (game_starts_in_the_future
+  # fires whenever author_finished_at is nil and starts_at is past), so the
+  # update! these actions used raised RecordInvalid and the operator got a bare
+  # 422. Reported from production on a game that had just entered test mode.
+  #
+  # Each example asserts the state actually changed AND that the response is a
+  # redirect rather than 422 -- the state assertion alone would pass if the
+  # action were removed and something else set the column.
+  describe "on a game that has already started" do
+    let(:live) do
+      g = create_game(:author => author, :is_draft => false)
+      g.update_column(:starts_at, 1.hour.ago)
+      g
+    end
+
+    before { sign_in(superadmin) }
+
+    it "can still be withdrawn" do
+      post withdraw_game_path(live)
+
+      expect(response).to have_http_status(:found)
+      expect(live.reload.withdrawn?).to be true
+    end
+
+    it "can still be restored" do
+      live.update_column(:withdrawn_at, Time.now)
+
+      post restore_game_path(live)
+
+      expect(response).to have_http_status(:found)
+      expect(live.reload.withdrawn?).to be false
+    end
+
+    it "can still be locked" do
+      post lock_game_path(live)
+
+      expect(response).to have_http_status(:found)
+      expect(live.reload.editing_locked?).to be true
+    end
+
+    it "can still be unlocked" do
+      live.update_column(:editing_locked_at, Time.now)
+
+      post unlock_game_path(live)
+
+      expect(response).to have_http_status(:found)
+      expect(live.reload.editing_locked?).to be false
+    end
+
+    # The four above would pass on a game whose validations happen to hold.
+    # This pins the precondition that makes them meaningful: the record really
+    # is invalid, so anything routing these writes back through validations
+    # regresses to a 422.
+    it "is a game that does not pass its own validations" do
+      expect(live.valid?).to be false
+      expect(live.errors[:starts_at]).not_to be_empty
+    end
+  end
+
   # Finding 5 of the whole-branch review: Spec A's headline guarantee --
   # "teams already mid-race continue uninterrupted" -- had no test pinning it.
   # GamePassingsController#find_game does a bare Game.find (see that

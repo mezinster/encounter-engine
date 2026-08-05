@@ -100,6 +100,30 @@ class Game < ApplicationRecord
     self.withdrawn_at.present?
   end
 
+  # These four carry the same update_column reasoning as pause! above, and for
+  # a sharper reason: an operator withdraws or freezes a game precisely BECAUSE
+  # it is running badly, so a live game is the normal case here, not the edge
+  # one. They shipped using update!, which meant every one of them raised
+  # RecordInvalid -- a bare 422 in the browser -- on any game that had actually
+  # started. On a draft they worked, which is why the specs stayed green:
+  # create_game defaults starts_at to 2099, so no example had ever exercised a
+  # started game. spec/requests/withdrawal_spec.rb now does.
+  def withdraw!
+    update_column(:withdrawn_at, Time.now)
+  end
+
+  def restore!
+    update_column(:withdrawn_at, nil)
+  end
+
+  def lock_editing!
+    update_column(:editing_locked_at, Time.now)
+  end
+
+  def unlock_editing!
+    update_column(:editing_locked_at, nil)
+  end
+
   # Logs and game passings are players' history, not the author's content, and
   # destroy would orphan them rather than remove them -- there are no foreign
   # keys and no dependent: option on those associations. Withdrawal achieves

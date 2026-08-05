@@ -250,7 +250,7 @@ bundle exec rspec spec/models/admin_action_spec.rb
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: the model spec passes, 6 examples; **555 examples** (549 + 6), 0 failures, 6 pending; cucumber unchanged.
+Expected: the model spec passes, 5 examples; **554 examples** (549 + 5), 0 failures, 6 pending; cucumber unchanged.
 
 - [ ] **Step 7: Commit**
 
@@ -461,7 +461,7 @@ bundle exec rspec spec/requests/admin_audit_spec.rb
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: 8 examples pass; **563 examples** (555 + 8), 0 failures, 6 pending; cucumber unchanged at 234 scenarios. Cucumber drives authors through these actions constantly — if it moves, `acting_as_operator?` is returning true for an author.
+Expected: 8 examples pass; **562 examples** (554 + 8), 0 failures, 6 pending; cucumber unchanged at 234 scenarios. Cucumber drives authors through these actions constantly — if it moves, `acting_as_operator?` is returning true for an author.
 
 - [ ] **Step 7: Commit**
 
@@ -674,7 +674,7 @@ bundle exec rspec spec/requests/superadmin_granting_spec.rb spec/i18n_spec.rb
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: 5 examples pass; **568 examples** (563 + 5), 0 failures, 6 pending; cucumber unchanged.
+Expected: 5 examples pass; **567 examples** (562 + 5), 0 failures, 6 pending; cucumber unchanged.
 
 - [ ] **Step 9: Commit**
 
@@ -891,7 +891,7 @@ bundle exec rspec && bundle exec cucumber
 bin/rails zeitwerk:check
 ```
 
-Expected: **571 examples** (568 + 3), 0 failures, 6 pending; cucumber unchanged at 234 scenarios / 2362 steps; `All is good!`.
+Expected: **570 examples** (567 + 3), 0 failures, 6 pending; cucumber unchanged at 234 scenarios / 2362 steps; `All is good!`.
 
 - [ ] **Step 9: Commit**
 
@@ -914,4 +914,4 @@ git commit -m "Add the administrator action log screen"
 
 **Type consistency.** `record_admin_action(action, target = nil)` is defined in Task 1 and called with that signature in Tasks 2 and 3. `AdminAction.label_for`, `AdminAction.newest_first`, `User.superadmin_count` and `User#last_superadmin?` are each defined once and used with those exact names. Route helpers `grant_admin_user_path`, `revoke_admin_user_path` and `admin_audit_index_path` are introduced in Tasks 3–4 and used consistently.
 
-**Running example counts.** 549 → 555 (T1) → 563 (T2) → 568 (T3) → 571 (T4). Cucumber stays at 234 scenarios / 2362 steps throughout; any change there is a regression, not a new feature.
+**Running example counts.** 549 → 554 (T1) → 562 (T2) → 567 (T3) → 570 (T4). Cucumber stays at 234 scenarios / 2362 steps throughout; any change there is a regression, not a new feature.

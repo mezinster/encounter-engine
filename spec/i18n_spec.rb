@@ -49,15 +49,26 @@ RSpec.describe "internationalization" do
     end
   end
 
-  # uk.yml and ka.yml don't define game.not_started (or almost anything
-  # else yet) -- this is the proof that a key missing from a registered but
-  # still-partial locale doesn't raise or render blank, it silently reads
-  # the Russian copy, which is what makes "register now, translate later"
-  # viable at all.
+  # This is the proof that a key missing from a registered locale doesn't
+  # raise or render blank, it silently reads the Russian copy -- which is what
+  # made "register now, translate later" viable at all, and what still covers
+  # any future key added to ru.yml before the other files catch up.
+  #
+  # It used to point at game.not_started, on the strength of uk.yml and ka.yml
+  # not defining it (or almost anything else). Both files are now fully
+  # translated -- 295 of 295 keys, same as en -- so no real missing key is
+  # left to point at, and asserting that a translated locale still returns the
+  # Russian copy would assert the exact opposite of what we want. The
+  # mechanism under test is unchanged; the probe key is now defined only in
+  # :ru, at test time, so the assertion stays honest no matter how complete
+  # the locale files get. The subset-not-equality rule above is deliberately
+  # left as-is: uk and ka are simply no longer exercising the relaxation.
   %i[uk ka].each do |locale|
     it "falls back to the exact Russian copy for a missing #{locale} key" do
+      I18n.backend.store_translations(:ru, "spec_fallback_probe" => "Откат к русскому")
+
       I18n.with_locale(locale) do
-        expect(I18n.t("game.not_started")).to eq(ru.fetch("game.not_started"))
+        expect(I18n.t("spec_fallback_probe")).to eq("Откат к русскому")
       end
     end
   end

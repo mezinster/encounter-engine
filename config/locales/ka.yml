@@ -1,52 +1,481 @@
 # Georgian.
 #
 # Registered per the project owner's task-12 decision: the platform's target
-# language set is en, ru, uk and ka, and ka is "registered now, translate
-# later" -- available in config.i18n.available_locales (config/application.rb)
-# so it can be selected, with only the keys needed to label it in the
-# language switcher and the profile form's language field filled in so far.
+# language set is en, ru, uk and ka. ka was originally "registered now,
+# translate later" -- present in config.i18n.available_locales
+# (config/application.rb) with only the language-switcher endonyms filled in.
+# It is now fully translated: every key in ru.yml has a Georgian value here,
+# so config.i18n.fallbacks ([:ru], config/application.rb) is no longer
+# exercised for this locale in practice. spec/i18n_spec.rb still permits a
+# partial file (it asserts subset-of-ru, not equality) -- that relaxation is
+# deliberate and stays, it simply no longer bites.
 #
-# Every other key is intentionally absent. config.i18n.fallbacks is [:ru]
-# (config/application.rb), so any key not defined here resolves to the
-# Russian copy rather than raising a translation-missing error or rendering
-# blank -- see spec/i18n_spec.rb for the fallback proof and for why the
-# key-parity spec treats this file as allowed to be a partial subset of
-# ru.yml rather than requiring full coverage.
+# Translated from ru.yml, cross-checked against en.yml. Game jargon follows
+# the Russian consistently: задание -> დავალება (the puzzle a level poses),
+# уровень -> დონე (the numbered position in the game), код -> კოდი (the
+# answer string players find in the city), подсказка -> მინიშნება,
+# команда -> გუნდი, капитан -> კაპიტანი, заявка -> განაცხადი,
+# "сойти с дистанции" -> "დისტანციიდან გასვლა" (quit mid-game).
+#
+# Georgian has no letter case, so ru's all-caps emphasis (games.list.end_game)
+# cannot be reproduced; the string is plain there. Buttons use the masdar
+# (verbal noun: "შენახვა" = "saving" = "Save"), which is the normal Georgian
+# UI imperative.
 ka:
+  answers:
+    must_have_at_least_one_variant: "უნდა იყოს კოდის სულ მცირე ერთი ვარიანტი"
+    index:
+      title: "დავალება"
+      game_prefix: "თამაში"
+      variants_label: "კოდის ვარიანტები:"
+      new_variant_label: "კოდის კიდევ ერთი ვარიანტი"
+      submit: "კოდის ვარიანტის დამატება"
+  errors:
+    unauthenticated: "თქვენ არ ხართ ავტორიზებული ამ გვერდის სანახავად. სცადეთ შესვლა."
+    unauthorized: "თქვენ არ გაქვთ ამ მოქმედების შესრულების უფლება"
+    not_team_member: "თქვენ არ ხართ ავტორიზებული ამ გვერდის სანახავად"
+    must_be_captain: "ამ მოქმედების შესასრულებლად უნდა იყოთ კაპიტანი"
+    must_be_author: "ამ გვერდის სანახავად უნდა იყოთ თამაშის ავტორი"
+    must_be_author_or_finished_player: "პასუხების სრული ლოგი ხელმისაწვდომია მხოლოდ თამაშის ავტორისთვის ან იმ გუნდის მოთამაშისთვის, რომელმაც თამაში დაასრულა"
+    game_already_started: "თამაშის დაწყების შემდეგ მისი რედაქტირება შეუძლებელია"
+    must_be_recipient: "ამ მოქმედების შესასრულებლად უნდა იყოთ მოწვევის მიმღები"
+    cannot_play_own_game: "საკუთარ თამაშებში თამაში არ შეიძლება, ბოდიში :-)"
+    game_finished_by_author: "თამაში ავტორმა დაასრულა და მასში ვეღარ ითამაშებთ"
+    team_exited: "გუნდი გავიდა დისტანციიდან"
+  invitations:
+    notice_sent: "მოწვევა გაეგზავნა მომხმარებელს %{nickname}"
+    new:
+      recipient_label: "ახალი წევრის მოწვევა"
+      submit: "მოწვევა"
+  game:
+    not_started: "თამაშის დაწყებამდე მასში თამაში შეუძლებელია. და საერთოდ, საიდან იშოვეთ ეს ბმული? :-)"
+    already_in_team: "თქვენ უკვე ხართ გუნდის წევრი"
+  games:
+    translations:
+      incomplete: "თამაშს გამოცხადებული აქვს ენები, რომლებზეც ყველაფერი არ არის ნათარგმნი: აკლია %{count} ველი"
+      game_field: "თამაში — %{field}"
+      level_field: "დონე %{position} — %{field}"
+      hint_field: "დონე %{position} — მინიშნება %{minutes} წუთის შემდეგ"
+      question_field: "დონე %{position} — კითხვა"
+      missing_count: "აკლია: %{count}"
+      heading: "არ არის ნათარგმნი (%{count})"
+      fields:
+        name: "დასახელება"
+        description: "აღწერა"
+        text: "დავალების ტექსტი"
+    list:
+      view: "(ნახვა)"
+      stats: "(სტატისტიკა)"
+      live_channel: "(პირდაპირი ეთერი)"
+      full_log: "(პასუხების ლოგი)"
+      end_game: "თამაშის დასრულება"
+      author_finished: "თქვენ დაასრულეთ თამაში"
+    game_entries:
+      legend: "განაცხადები რეგისტრაციაზე:"
+      accept: "(მიღება)"
+      reject: "(უარყოფა)"
+    teams:
+      legend: "მონაწილე გუნდები:"
+    form:
+      name: "დასახელება"
+      description: "აღწერა"
+      starts_at: "თამაშის დაწყება"
+      registration_deadline: "რეგისტრაციის ბოლო ვადა "
+      max_team_number: "გუნდების მაქსიმალური რაოდენობა"
+      is_draft: "მონახაზი?"
+    primary_locale_label: "ძირითადი ენა"
+    available_locales_label: "თამაშის ენები"
+    new:
+      submit: "თამაშის შექმნა"
+    edit:
+      submit: "შენახვა"
+    show:
+      title: "თამაში"
+      draft_label: "მონახაზი"
+      author_label: "ავტორი"
+      starts_at_label: "თამაშის დაწყება"
+      starts_at_not_set: "თამაშის დაწყების თარიღი ჯერ არ არის დანიშნული"
+      registration_deadline_label: "რეგისტრაციის ბოლო ვადა"
+      registration_deadline_not_set: "რეგისტრაციის ბოლო ვადა ჯერ არ არის დანიშნული"
+      description_label: "აღწერა:"
+      max_team_number_label: "გუნდების მაქსიმალური რაოდენობა:"
+      levels_legend: "დავალებები:"
+      add_level: "ახალი დავალების დამატება"
+      edit_link: "ამ თამაშის რედაქტირება"
+      delete_link: "ამ თამაშის წაშლა"
+      countdown_prefix: "დაწყებამდე დარჩა: "
+      start_test: "ტესტირების დაწყება"
+      start: "სტარტი"
+      finish_test: "ტესტირების დასრულება"
+  levels:
+    form:
+      name: "დასახელება"
+      text: "დავალების ტექსტი"
+      correct_answer: "კოდი"
+    edit:
+      title: "დავალება"
+      game_prefix: "თამაში"
+      submit: "შენახვა"
+    new:
+      heading: "ახალი დავალება თამაშისთვის %{name}"
+      hint_more_codes: "შექმნის შემდეგ შეძლებთ დავალებას მეტი კოდი დაამატოთ"
+      submit: "დავალების დამატება"
+    show:
+      title: "დავალება"
+      game_prefix: "თამაში"
+      text_label: "დავალების ტექსტი:"
+      edit_link: "დავალების ტექსტისა და დასახელების რედაქტირება"
+      code_label: "კოდი:"
+      codes_label: "კოდები (%{count}):"
+      add_code: "კიდევ ერთი კოდის დამატება"
+      hints_legend: "მინიშნებები:"
+      add_hint: "მინიშნების დამატება"
+      delete_level: "ამ დონის წაშლა"
+      back_to_game: 'თამაშზე "%{name}" დაბრუნება'
+  hints:
+    # delay_label and minutes_suffix bracket a number input in
+    # app/views/hints/_form.html.erb; hints.list.after and minutes_colon do the
+    # same around a rendered number in _list.html.erb. Georgian puts the
+    # postposition after the numeral, so the pair reads
+    # "გამოჩნდება [5] წუთის შემდეგ" / "მინიშნება 5 წუთის შემდეგ:" rather than
+    # mirroring the Russian "Через [5] минут".
+    form:
+      text_label: "ტექსტი"
+      delay_label: "გამოჩნდება"
+      minutes_suffix: "წუთის შემდეგ"
+    list:
+      empty: "მინიშნებები არ არის"
+      after: "მინიშნება"
+      minutes_colon: "წუთის შემდეგ:"
+    edit:
+      heading_prefix: "მინიშნების რედაქტირება — დავალება"
+      heading_game_prefix: "თამაშიდან"
+      submit: "რედაქტირება"
+    new:
+      heading_prefix: "ახალი მინიშნება დავალებისთვის"
+      heading_game_prefix: "თამაშიდან"
+      submit: "მინიშნების დამატება"
+  questions:
+    new:
+      title: "დავალება"
+      game_prefix: "თამაში"
+      code_label: "კოდი"
+      submit: "კოდის დამატება"
+    answers_are_shared: "პასუხების კოდები საერთოა ყველა ენისთვის. თუ პასუხი სხვადასხვაგვარად იწერება, დაამატეთ თითოეული ვარიანტი ცალკე სწორ პასუხად."
+  users:
+    new:
+      nickname_label: "სახელი"
+      email_label: "Email"
+      password_label: "პაროლი"
+      password_confirmation_label: "დადასტურება"
+      submit: "რეგისტრაცია"
+    edit:
+      title: 'მოთამაშის პროფილის რედაქტირება: %{nickname}'
+      nickname_label: "თქვენი სახელი"
+      date_of_birth_label: "დაბადების თარიღი"
+      icq_label: "ICQ ნომერი"
+      jabber_label: "Jabber ID"
+      phone_label: "საკონტაქტო ტელეფონი"
+      locale_label: "ინტერფეისის ენა"
+      password_label: "ახალი პაროლი"
+      password_confirmation_label: "პაროლის დადასტურება"
+      submit: "ცვლილებების შენახვა"
+    index:
+      title: "მომხმარებლის პროფილი"
+      captain_prefix: "გუნდის კაპიტანი"
+      email_label: "E-mail:"
+      date_of_birth_label: "დაბადების თარიღი:"
+      icq_label: "ICQ ნომერი:"
+      jabber_label: "Jabber ID:"
+      phone_label: "საკონტაქტო ტელეფონი:"
+      edit_link: "პროფილის რედაქტირება..."
+  notification_mailer:
+    # Sent in the recipient's locale, not the sender's -- see
+    # NotificationMailer#mail_in_recipient_locale.
+    welcome_letter:
+      subject: "რეგისტრაცია საიტზე %{host}"
+      body: |-
+        გმადლობთ რეგისტრაციისთვის!
+
+        თქვენ დარეგისტრირდით საიტზე %{host} და ახლა შეგიძლიათ შეხვიდეთ შემდეგი მონაცემებით:
+
+        Email:  %{email}
+        პაროლი: %{password}
+
+        ყოველივე საუკეთესო :)
+    invitation_notification:
+      subject: "თქვენ მოგიწვიეს გუნდში %{team_name}"
+      body: |-
+        თქვენ მოგიწვიეს გუნდში %{team_name}
+        მოწვევის მისაღებად ან უარის სათქმელად შედით თქვენს პირად კაბინეტში
+    reject_notification:
+      subject: "მომხმარებელმა %{nickname} უარი თქვა მოწვევაზე"
+      body: "მომხმარებელმა %{nickname} უარი თქვა თქვენს გუნდში გაწევრიანების მოწვევაზე"
+    accept_notification:
+      subject: "მომხმარებელმა %{nickname} მიიღო თქვენი მოწვევა"
+      body: "მომხმარებელმა %{nickname} მიიღო თქვენი მოწვევა და გაწევრიანდა გუნდში"
+  # Language names for the switcher (app/views/layouts/_header.html.erb) and
+  # the profile form's language field (app/views/users/edit.html.erb).
+  # Deliberately identical across every locale file: each language is named
+  # in its own endonym ("Русский", "English", ...) rather than translated, so
+  # a reader sees their own language's name spelled the way they'd recognise
+  # it no matter which locale currently renders the page. spec/i18n_spec.rb's
+  # untranslated-copy-paste check knows about this key and allows it.
   locales:
     ru: "Русский"
     en: "English"
     uk: "Українська"
     ka: "ქართული"
+  layout:
+    title: "აქტიური ქალაქური თამაშები"
+    header:
+      dashboard: "პირადი კაბინეტი"
+      home: "მთავარი"
+    left_menu:
+      dashboard: "პირადი კაბინეტი"
+      profile: "პროფილი"
+      team_room: "გუნდის ოთახი"
+      create_team: "გუნდის შექმნა"
+      all_games: "დომენის ყველა თამაში"
+      logout: "გასვლა"
+      login_legend: "შესვლა"
+      login: "შესვლა"
+      signup: "რეგისტრაცია"
+  shared:
+    game_entry_controls:
+      applied: "განაცხადი გაგზავნილია"
+      recall: "გამოხმობა"
+      registered: "თქვენ დარეგისტრირებული ხართ"
+      decline: "უარის თქმა"
+      reapply: "რეგისტრაციაზე განაცხადის ხელახლა გაგზავნა"
+      entries_exceeded: "ვერ დარეგისტრირდებით, რადგან მონაწილეთა რაოდენობა ამოწურულია"
+      deadline_passed: "ვერ დარეგისტრირდებით, რადგან თამაშზე დააგვიანეთ"
+      apply: "რეგისტრაციაზე განაცხადის გაგზავნა"
+    current_games:
+      legend: "დომენის მიმდინარე თამაშები"
+      started: "დაიწყო თამაში"
+      view_results: "შედეგების ნახვა"
+      no_levels: "თამაში არ შეიცავს დავალებებს"
+    current_games_status:
+      play: "თამაში!"
+      not_registered: "თქვენ არ ხართ დარეგისტრირებული"
+    countdown:
+      # Still three elements, even though Georgian has only one/other in CLDR:
+      # app/views/shared/_countdown.html.erb hard-codes a Slavic index
+      # function that returns 0, 1 or 2 regardless of locale, so a shorter
+      # array would render "undefined". Georgian keeps a counted noun in the
+      # singular after any numeral ("5 წუთი"), so one form correctly fills all
+      # three slots -- the same trick en.yml uses for its 1/2 duplication.
+      prefix: "დარჩა: "
+      years: ["წელი", "წელი", "წელი"]
+      months: ["თვე", "თვე", "თვე"]
+      days: ["დღე", "დღე", "დღე"]
+      hours: ["საათი", "საათი", "საათი"]
+      minutes: ["წუთი", "წუთი", "წუთი"]
+      seconds: ["წამი", "წამი", "წამი"]
+    cancel: "(გაუქმება)"
+    edit_short: "(რედაქტირება)"
+    delete_short: "(წაშლა)"
+    error_header: "შეცდომა"
+  game_passings:
+    content_not_translated: "ეს დავალება ჯერ არ არის თარგმნილი თქვენს ენაზე — ნაჩვენებია ორიგინალის ენა."
+    content_language: "დავალებების ენა"
+    index:
+      title: 'თამაში "%{name}"'
+      team: "გუნდი"
+      level: "დონე"
+      time_at_level: "დრო დონეზე"
+      exited: "(გავიდნენ დისტანციიდან)"
+      finished: "(დაასრულეს თამაში)"
+      level_log: "(ლოგი დონეზე)"
+      game_log: "(ლოგი თამაშზე)"
+      full_log: "პასუხების სრული ლოგი"
+    show_current_level:
+      title_prefix: "თამაში"
+      level_label: "დავალება"
+      hint_label: "მინიშნება"
+      until_next_hint: "შემდეგ მინიშნებამდე"
+      countdown_placeholder: "3 წუთი"
+      loading: "იტვირთება..."
+      no_more_hints: "მინიშნებები აღარ იქნება"
+      answer_correct: "კოდი '%{answer}' -- სწორია."
+      answer_incorrect: "კოდი არასწორია, თქვენ შეიყვანეთ '%{answer}'."
+      multi_question_progress: "სწორი კოდები შეყვანილია: %{answered} %{total}-დან"
+      answer_label: "კოდი"
+      submit: "გაგზავნა!"
+      exit_game: "დისტანციიდან გასვლა"
+      finish_testing: "ტესტირების დასრულება"
+    show_results:
+      congrats: "გილოცავთ, თქვენ დაასრულეთ თამაში!"
+      place: "ადგილი"
+      team: "გუნდი"
+      finish_time: "ფინიშის დრო"
+      exited: "გავიდნენ დისტანციიდან"
+      not_finished: "არ დაასრულეს"
+      full_log: "პასუხების ლოგი"
+      finish_testing: "ტესტირების დასრულება"
+  logs:
+    index:
+      title: "ინდექსი"
+    show_full_log:
+      # Not a Rails pluralisation group -- app/views/logs/show_full_log.html.erb
+      # picks between these two keys with an if on the question count, so they
+      # are two independent strings, not `one:`/`many:` under a shared parent.
+      title: "პასუხების სრული ლოგი"
+      correct_answer_one: "სწორი კოდი:"
+      correct_answer_many: "სწორი კოდები:"
+    show_game_log:
+      title: 'გუნდის "%{team}" პასუხების ლოგი თამაშში "%{game}"'
+      correct_answer: "სწორი კოდი:"
+    show_level_log:
+      title: 'გუნდის "%{team}" პასუხების ლოგი დონეზე "%{level}" თამაშში "%{game}"'
+      correct_answer: "სწორი კოდი:"
+    show_live_channel:
+      title: 'თამაშის "%{name}" პირდაპირი ეთერი'
+      time: "დრო"
+      team: "გუნდი"
+      level: "დავალება"
+      code: "კოდი"
+  dashboard:
+    index:
+      greeting: "თქვენ ხართ"
+    coming_games:
+      legend: "მოახლოებული თამაშები (%{count})"
+      upcoming: "მოახლოებული თამაში"
+      you_are_author: "თქვენ ხართ თამაშის ავტორი"
+      enter: "შესვლა!"
+    finished_games:
+      legend: "დასრულებული თამაშები"
+      finished: "დასრულებული თამაში"
+    my_games:
+      legend: "ჩემი თამაშები (%{count})"
+      create: "თამაშის შექმნა >> "
+    my_team:
+      legend: "ჩემი გუნდი"
+      no_team: "თქვენ არცერთ გუნდში არ ხართ"
+      create_team: "გუნდის შექმნა"
+      invited: "თქვენ მოგიწვიეს გუნდში %{team}"
+      accept: "(მიღება)"
+      decline: "(უარის თქმა)"
+      captain_of: "თქვენ ხართ კაპიტანი გუნდისა:"
+      member_of: "თქვენ ხართ წევრი გუნდისა:"
+      go_to_team_room: "გუნდის ოთახში გადასვლა"
+  index:
+    index:
+      title: "მთავარი გვერდი"
+      games_list: "თამაშების სია"
+  team_room:
+    index:
+      title: "გუნდი %{name}"
+      composition: "შემადგენლობა"
+      captain_suffix: "- კაპიტანი"
+      invite: "მონაწილეების მოწვევა"
+  teams:
+    new:
+      name_label: "დასახელება"
+      submit: "გუნდის შექმნა"
+  time:
+    formats:
+      short: "%Y-%m-%d %H:%M"
+      long: "%d %B %Y, %H:%M"
+  date:
+    # Nominative -- Georgian month names do not inflect after a day number in
+    # a date like "5 მაისი 2025", so there is no genitive variant to pick as
+    # ru.yml and uk.yml do.
+    month_names:
+      - ~
+      - "იანვარი"
+      - "თებერვალი"
+      - "მარტი"
+      - "აპრილი"
+      - "მაისი"
+      - "ივნისი"
+      - "ივლისი"
+      - "აგვისტო"
+      - "სექტემბერი"
+      - "ოქტომბერი"
+      - "ნოემბერი"
+      - "დეკემბერი"
+  sessions:
+    invalid_credentials: "არასწორი email ან პაროლი"
+    new:
+      title: "შესვლა"
+      email_label: "Email"
+      password_label: "პაროლი"
+      submit: "შესვლა"
   activerecord:
     errors:
       messages:
-        record_invalid: "Запись недействительна"
+        blank: "არ შეიძლება იყოს ცარიელი"
+        confirmation: "არ ემთხვევა ველს %{attribute}"
+        invalid: "აქვს არასწორი მნიშვნელობა"
+        record_invalid: "ჩანაწერი არასწორია"
       models:
+        answer:
+          attributes:
+            value:
+              blank: "თქვენ არ შეიყვანეთ კოდის ვარიანტი"
+              taken: "ასეთი კოდი უკვე არის დავალებაში"
         game:
           attributes:
+            name:
+              blank: "თქვენ არ შეიყვანეთ დასახელება"
+              taken: "ასეთი დასახელების თამაში უკვე არსებობს"
+            description:
+              blank: "თქვენ არ შეიყვანეთ აღწერა"
+            max_team_number:
+              not_a_number: "გუნდების რაოდენობის დიაპაზონია 1-დან 10000-მდე"
+              greater_than: "გუნდების რაოდენობის დიაპაზონია 1-დან 10000-მდე"
+              less_than: "გუნდების რაოდენობის დიაპაზონია 1-დან 10000-მდე"
+              exceeds_requested: "განაცხადის შემტანი გუნდების რაოდენობა აღემატება მითითებულ რიცხვს"
+            starts_at:
+              in_the_past: "თქვენ აირჩიეთ წარსული თარიღი. ასე არ შეიძლება :-)"
+            registration_deadline:
+              in_the_past: "თქვენ მიუთითეთ რეგისტრაციის ბოლო ვადა წარსულში, ასე არ შეიძლება :-)"
+              after_game_start: "თქვენ მიუთითეთ რეგისტრაციის ბოლო ვადა თამაშის დაწყების თარიღზე გვიან, ასე არ შეიძლება :-)"
             available_locales:
-              unknown: "содержит неизвестные языки: %{locales}"
-              missing_primary: "должны включать основной язык игры"
+              unknown: "შეიცავს უცნობ ენებს: %{locales}"
+              missing_primary: "უნდა მოიცავდეს თამაშის ძირითად ენას"
             primary_locale:
-              settled: "нельзя изменить после того, как добавлены переводы"
-  games:
-    translations:
-      incomplete: "Игра объявляет языки, на которые переведено не всё: не хватает %{count} полей"
-      game_field: "Игра — %{field}"
-      level_field: "Уровень %{position} — %{field}"
-      hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
-      question_field: "Уровень %{position} — вопрос"
-      missing_count: "не хватает: %{count}"
-      heading: "Не переведено (%{count})"
-      fields:
-        name: "название"
-        description: "описание"
-        text: "текст задания"
-    primary_locale_label: "Основной язык"
-    available_locales_label: "Языки игры"
-  game_passings:
-    content_not_translated: "Это задание пока не переведено на ваш язык — показан язык оригинала."
-    content_language: "Язык заданий"
-  questions:
-    answers_are_shared: "Коды ответов общие для всех языков. Если ответ пишется по-разному, добавьте каждый вариант как отдельный правильный ответ."
+              settled: "ვერ შეიცვლება მას შემდეგ, რაც თარგმანები დაემატა"
+        game_entry:
+          attributes:
+            game:
+              blank: "თქვენ არ აირჩიეთ თამაში"
+            team_id:
+              blank: "თქვენ არ მიუთითეთ გუნდი"
+        invitation:
+          attributes:
+            for_user:
+              blank: "ასეთი სახელის მომხმარებელი არ არსებობს"
+            recepient_nickname:
+              blank: "თქვენ არ შეიყვანეთ მომხმარებლის სახელი"
+            for_user_id:
+              taken: "თქვენ უკვე გაუგზავნეთ ამ მომხმარებელს მოწვევა და მას ჯერ არ უპასუხია"
+            base:
+              recipient_already_team_member: "მომხმარებელი უკვე არის ერთ-ერთი გუნდის წევრი"
+        level:
+          attributes:
+            name:
+              blank: "თქვენ არ შეიყვანეთ დავალების დასახელება"
+            text:
+              blank: "თქვენ არ შეიყვანეთ დავალების ტექსტი"
+        team:
+          attributes:
+            name:
+              taken: "ასეთი დასახელების გუნდი უკვე არსებობს"
+              blank: "გუნდის დასახელება არ უნდა იყოს ცარიელი"
+        user:
+          attributes:
+            email:
+              blank: "e-mail არ არის შეყვანილი"
+              taken: "ასეთი მისამართის მომხმარებელი უკვე დარეგისტრირებულია"
+              invalid: "e-mail ველის არასწორი ფორმატი"
+            nickname:
+              blank: "თქვენ არ შეიყვანეთ სახელი"
+              taken: "ასეთი სახელის მომხმარებელი უკვე დარეგისტრირებულია"
+            password:
+              too_short: "ძალიან მოკლე პაროლი (მინიმუმ 4 სიმბოლო)"
+            password_confirmation:
+              blank: "თქვენ არ შეიყვანეთ პაროლის დადასტურება"
+              confirmation: "პაროლი და მისი დადასტურება არ ემთხვევა"

@@ -15,24 +15,14 @@
     <%= yield :head %>
   </head>
   <body>
-    <br />
-    <div id="header-container">
-      <div id="header">
-        <%= render "layouts/header" %>
-      </div>
-    </div>
-
-    <% flash.each do |type, message| %>
-      <p class="flash-<%= type %>"><%= message %></p>
-    <% end %>
-    <hr />
-    <br />
-
-    <div id="in_game-container">
-      <div id="in_game">
+    <div class="page page--focused">
+      <header class="topbar"><%= render "layouts/header" %></header>
+      <main class="main">
+        <% flash.each do |type, message| %>
+          <p class="flash flash--<%= type %>"><%= message %></p>
+        <% end %>
         <%= yield %>
-      </div>
+      </main>
     </div>
-
   </body>
 </html>

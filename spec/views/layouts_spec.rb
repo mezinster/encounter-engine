@@ -72,7 +72,7 @@ RSpec.describe "layouts/in_game", type: :view do
 
     expect(rendered).to include(I18n.t("layout.title"))
     expect(rendered).to include(I18n.t("layout.header.home"))
-    expect(rendered).not_to include('id="left-container"')
-    expect(rendered).to include('id="in_game-container"')
+    expect(rendered).not_to include('id="drawer"')
+    expect(rendered).to include('page--focused')
   end
 end

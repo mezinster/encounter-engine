@@ -20,29 +20,29 @@
     <%= yield :head %>
   </head>
   <body>
-    <br />
-    <div id="header-container">
-      <div id="header">
+    <input type="checkbox" id="drawer-state" aria-hidden="true" tabindex="-1">
+
+    <div class="page">
+      <header class="topbar">
+        <label for="drawer-state" id="drawer-toggle" role="button"
+               aria-label="<%= t("layout.header.menu") %>">☰</label>
         <%= render "layouts/header" %>
-      </div>
-    </div>
+      </header>
 
-    <% flash.each do |type, message| %>
-      <p class="flash-<%= type %>"><%= message %></p>
-    <% end %>
-    <hr />
-    <br />
+      <label for="drawer-state" class="drawer-scrim" aria-hidden="true"></label>
 
-    <div id="left-container">
-      <div class="left">
+      <nav id="drawer" aria-label="<%= t("layout.header.menu") %>">
         <%= render "layouts/left_menu" %>
-      </div>
+      </nav>
+
+      <main class="main">
+        <% flash.each do |type, message| %>
+          <p class="flash flash--<%= type %>"><%= message %></p>
+        <% end %>
+        <%= yield %>
+      </main>
     </div>
 
-    <div id="main-container">
-      <div id="main">
-        <%= yield %>
-      </div>
-    </div>
+    <script src="/javascripts/drawer.js" defer></script>
   </body>
 </html>

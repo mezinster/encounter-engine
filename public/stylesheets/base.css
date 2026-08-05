@@ -1,1 +1,38 @@
-/* base.css — element-level resets and defaults (html, body, typography, links). */
+/* public/stylesheets/base.css -- reset and document defaults. */
+*, *::before, *::after { box-sizing: border-box; }
+
+body, h1, h2, h3, h4, p, ul, ol, figure, fieldset, legend {
+  margin: 0;
+  padding: 0;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  /* Scales with the viewport instead of jumping at breakpoints. The floor is
+     16px because iOS zooms a focused input below that. */
+  font-size: clamp(16px, 0.95rem + 0.2vw, 18px);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+h1 { font-size: clamp(1.6rem, 1.3rem + 1.4vw, 2.4rem); line-height: 1.2; font-weight: 650; }
+h2 { font-size: clamp(1.2rem, 1.05rem + 0.7vw, 1.6rem); line-height: 1.25; font-weight: 600; }
+h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+
+a { color: var(--go); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Visible on every focusable element, in both themes. Removing focus rings
+   makes the app unusable by keyboard; this one is deliberately loud. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+ul { list-style: none; }
+img { max-width: 100%; height: auto; }

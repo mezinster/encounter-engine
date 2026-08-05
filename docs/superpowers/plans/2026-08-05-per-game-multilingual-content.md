@@ -1665,7 +1665,7 @@ In `app/helpers/application_helper.rb`:
     when Hint     then edit_game_level_hint_path(entry.record.level.game, entry.record.level,
                                                  entry.record, :tab => entry.locale)
     when Question then new_game_level_question_path(entry.record.level.game, entry.record.level,
-                                                    :locale => entry.locale)
+                                                    :tab => entry.locale)
     end
   end
 ```

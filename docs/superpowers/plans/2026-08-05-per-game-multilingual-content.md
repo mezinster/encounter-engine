@@ -1192,7 +1192,7 @@ Then add the fallback notice near the top of the level block. Because publicatio
   <div class="content-language-switcher">
     <%= t("game_passings.content_language") %>:
     <% game.available_locale_list.each do |locale| %>
-      <%= button_to t("locale_name.#{locale}"),
+      <%= button_to t("locales.#{locale}"),
                     set_content_locale_path(:game_id => game.id, :locale => locale),
                     :method => :post, :class => "language-choice" %>
     <% end %>
@@ -1237,7 +1237,7 @@ In `app/controllers/game_passings_controller.rb`:
     content_language: "Task language"
 ```
 
-Same keys in `uk.yml` and `ka.yml` with the Russian values. `locale_name.*` keys already exist — the language switcher added during the port uses them.
+Same keys in `uk.yml` and `ka.yml` with the Russian values. `locales.*` keys already exist — the language switcher added during the port uses them.
 
 - [ ] **Step 8: Run the full gates**
 
@@ -1333,7 +1333,7 @@ Expected: PASS — this pins the contract the forms must post against before the
       <% missing = record.new_record? ? [] : record.missing_translated_fields(fields, locale) %>
       <li class="<%= "active" if locale == active %> <%= "incomplete" if missing.any? %>">
         <%= link_to url_for(request.query_parameters.merge(:tab => locale)) do %>
-          <%= t("locale_name.#{locale}") %>
+          <%= t("locales.#{locale}") %>
           <% if missing.any? %>
             <span class="missing-count"><%= t("games.translations.missing_count", :count => missing.size) %></span>
           <% end %>
@@ -1642,7 +1642,7 @@ Expected: the first two pass (Task 3 built them); the third fails if `translatio
     <ul>
       <% entries.each do |entry| %>
         <li>
-          <%= link_to "#{entry.label} — #{t("locale_name.#{entry.locale}")}",
+          <%= link_to "#{entry.label} — #{t("locales.#{entry.locale}")}",
                       missing_translation_path_for(entry) %>
         </li>
       <% end %>

@@ -1,5 +1,31 @@
 en:
   admin:
+    dashboard:
+      show:
+        title: "Overview"
+        games_by_status: "Games by status"
+        editing_locked: "Editing frozen"
+        totals: "Totals"
+        entries_by_status: "Entry requests by status"
+        all_games: "All games"
+        status:
+          withdrawn: "Withdrawn"
+          draft: "Draft"
+          finished: "Finished"
+          running: "Running"
+          scheduled: "Scheduled"
+        total:
+          users: "Players"
+          teams: "Teams"
+          games: "Games"
+          passings_finished: "Passings finished"
+          passings_in_progress: "Passings in progress"
+        entry_status:
+          new: "New"
+          accepted: "Accepted"
+          rejected: "Rejected"
+          recalled: "Recalled"
+          canceled: "Canceled"
     games:
       index:
         title: "All games"

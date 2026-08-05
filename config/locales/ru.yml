@@ -1,5 +1,31 @@
 ru:
   admin:
+    dashboard:
+      show:
+        title: "Обзор"
+        games_by_status: "Игры по статусу"
+        editing_locked: "Редактирование заморожено"
+        totals: "Всего"
+        entries_by_status: "Заявки по статусу"
+        all_games: "Все игры"
+        status:
+          withdrawn: "Снята с публикации"
+          draft: "Черновик"
+          finished: "Завершена"
+          running: "Идёт"
+          scheduled: "Запланирована"
+        total:
+          users: "Игроков"
+          teams: "Команд"
+          games: "Игр"
+          passings_finished: "Прохождений завершено"
+          passings_in_progress: "Прохождений идёт"
+        entry_status:
+          new: "Новая"
+          accepted: "Принята"
+          rejected: "Отклонена"
+          recalled: "Отозвана"
+          canceled: "Отменена"
     games:
       index:
         title: "Все игры"

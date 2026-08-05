@@ -10,6 +10,7 @@ Rails.application.routes.draw do
   # instance. Editing rides the author's own forms (ensure_author admits
   # superadmins), so only :index exists here -- there is no second editor.
   namespace :admin do
+    get "/", to: "dashboard#show", as: :dashboard
     resources :games, only: [ :index ]
   end
 

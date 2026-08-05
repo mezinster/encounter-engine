@@ -219,7 +219,9 @@ Expected: FAIL — the body contains none of those strings.
 
 - [ ] **Step 5: Wire it into both layouts**
 
-In `application.html.erb` and `in_game.html.erb`, replace the single stylesheet link with:
+In `application.html.erb` and `in_game.html.erb`, **add these below the existing
+`master.css` link — do not replace it.** `master.css` still styles the whole application
+and is not retired until Task 8:
 
 ```erb
     <link rel="stylesheet" href="/stylesheets/tokens.css">

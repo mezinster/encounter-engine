@@ -74,13 +74,26 @@ class GamesController < ApplicationController
     redirect_to dashboard_path
   end
 
+  # save, not save!. start_test sets is_draft to false, which is exactly the
+  # transition the translation-completeness gate guards, so a game with a
+  # declared-but-untranslated language legitimately fails to save here.
+  #
+  # save! turned that into an unrescued ActiveRecord::RecordInvalid, Rails
+  # answered 422, and because this app ships no public/422.html the browser got
+  # a bare response that reads as "page does not exist" -- pointing the author
+  # at routes.rb for a problem that is actually "you have not finished
+  # translating". The reason was computed, attached as errors[:base], and then
+  # discarded by the exception. Surface it instead.
   def start_test
     @game.is_draft = false
     @game.is_testing = true
     @game.test_date = @game.starts_at
     @game.starts_at = Time.now + 0.1.second
     @game.registration_deadline = nil
-    @game.save!
+
+    unless @game.save
+      redirect_to @game, :alert => @game.errors.full_messages.to_sentence and return
+    end
 
     redirect_to @game
   end
@@ -105,12 +118,18 @@ class GamesController < ApplicationController
     redirect_to admin_games_path, :notice => t("games.unlocked_notice")
   end
 
+  # Same treatment as start_test. This direction sets is_draft back to true so
+  # the gate cannot fire, but another validation still can -- and an author
+  # stuck in test mode with a blank 422 has no way to understand why.
   def finish_test
     @game.is_draft = true
     @game.is_testing = false
     @game.starts_at = @game.test_date
     @game.test_date = Time.now
-    @game.save!
+
+    unless @game.save
+      redirect_to @game, :alert => @game.errors.full_messages.to_sentence and return
+    end
 
     GamePassing.of_game(@game).delete_all
     Log.of_game(@game).delete_all

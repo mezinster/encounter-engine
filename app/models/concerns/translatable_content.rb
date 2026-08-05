@@ -46,6 +46,26 @@ module TranslatableContent
     Array(fields).reject { |field| self.translated?(field, locale) }
   end
 
+  # What an AUTHORING FORM should show. Unlike #translated, this deliberately
+  # does NOT fall back to the primary column.
+  #
+  # Falling back is right for players -- a readable Russian task beats a blank
+  # one mid-race -- and exactly wrong for an author. The form used to bind to
+  # #translated, so opening the English tab of an untranslated level pre-filled
+  # both fields with the Russian text. The author could not tell the translation
+  # was missing, and pressing Save without editing persisted the Russian text AS
+  # the English translation: translated? then returned true, the publish gate
+  # was satisfied, and the game shipped with Russian content labelled English --
+  # the precise outcome that gate exists to prevent, reached through the form
+  # built to prevent it.
+  #
+  # An empty translation must look empty.
+  def translation_draft(field, locale)
+    return self[field] if primary_locale?(locale)
+
+    pending_translation_for(field, locale) || translation_for(field, locale)&.value
+  end
+
   # Accepts { "en" => { "text" => "...", "name" => "..." }, "ka" => { ... } }.
   # Applied on save so a validation failure does not write half the languages.
   def translations_attributes=(attributes)

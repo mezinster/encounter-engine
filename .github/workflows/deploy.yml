@@ -87,14 +87,31 @@ jobs:
           RUNNER_IP=$(curl -fsS --max-time 10 https://api.ipify.org || curl -fsS --max-time 10 https://ifconfig.me)
           if [ -z "$RUNNER_IP" ]; then echo "could not determine runner IP"; exit 1; fi
           echo "opening 22 for ${RUNNER_IP}/32"
-          az network nsg rule create \
-            --resource-group mezineu --nsg-name webNSG \
-            --name "gha-jit-${{ github.run_id }}" \
-            --priority 900 --direction Inbound --access Allow --protocol Tcp \
-            --source-address-prefixes "${RUNNER_IP}/32" \
-            --destination-port-ranges 22 \
-            --description "JIT SSH for GitHub Actions run ${{ github.run_id }}" \
-            --output none
+          # Retried because the Azure CLI itself is flaky here, not because the
+          # command is: under Python 3.14 azure.cli.core loads command modules
+          # across threads, and that concurrent import path deadlocks on
+          # _ModuleLock (Azure/azure-cli#32980). Observed live -- this step died
+          # with _frozen_importlib._DeadlockError while the identical
+          # `az network nsg rule delete` in the cleanup step of the SAME job
+          # succeeded, which is what identifies it as a race rather than a
+          # misconfiguration. Without the retry, an upstream race fails a deploy.
+          for attempt in 1 2 3 4 5; do
+            if az network nsg rule create \
+                 --resource-group mezineu --nsg-name webNSG \
+                 --name "gha-jit-${{ github.run_id }}" \
+                 --priority 900 --direction Inbound --access Allow --protocol Tcp \
+                 --source-address-prefixes "${RUNNER_IP}/32" \
+                 --destination-port-ranges 22 \
+                 --description "JIT SSH for GitHub Actions run ${{ github.run_id }}" \
+                 --output none; then
+              echo "rule created on attempt ${attempt}"
+              exit 0
+            fi
+            echo "attempt ${attempt} failed; retrying in 10s"
+            sleep 10
+          done
+          echo "could not open port 22 after 5 attempts"
+          exit 1
 
       - name: Deploy
         env:
@@ -112,10 +129,30 @@ jobs:
       - name: Close SSH again
         if: always()
         run: |
-          az network nsg rule delete \
-            --resource-group mezineu --nsg-name webNSG \
-            --name "gha-jit-${{ github.run_id }}" \
-            --output none 2>/dev/null || true
+          # Same upstream flakiness applies here, and this one matters more than
+          # opening did: a rule left behind means port 22 stays open to an
+          # address GitHub recycles to other customers.
+          #
+          # Deliberately does NOT fail the job -- that would mark a successful
+          # deploy as failed -- but it does emit a ::error:: annotation, because
+          # a silent cleanup failure is the one outcome nobody would notice.
+          # `az ... delete` also exits 0 when the rule does not exist, so the
+          # case where login failed and nothing was ever created passes cleanly.
+          cleaned=no
+          for attempt in 1 2 3 4 5; do
+            if az network nsg rule delete \
+                 --resource-group mezineu --nsg-name webNSG \
+                 --name "gha-jit-${{ github.run_id }}" \
+                 --output none 2>/dev/null; then
+              cleaned=yes
+              break
+            fi
+            echo "cleanup attempt ${attempt} failed; retrying in 10s"
+            sleep 10
+          done
+          if [ "$cleaned" != "yes" ]; then
+            echo "::error::Failed to remove JIT rule gha-jit-${{ github.run_id }} from webNSG after 5 attempts. Port 22 may still be open to this runner's address. Remove it by hand."
+          fi
           echo "remaining inbound rules:"
           az network nsg rule list --resource-group mezineu --nsg-name webNSG \
             --query "[].{name:name,priority:priority,ports:destinationPortRange}" -o table 2>/dev/null || true

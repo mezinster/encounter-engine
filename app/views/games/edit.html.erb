@@ -24,7 +24,7 @@
       <%= f.text_field :name %>
     <% else %>
       <%= text_field_tag "game[translations][#{active_locale}][name]",
-                         @game.translated(:name, active_locale) %>
+                         @game.translation_draft(:name, active_locale) %>
     <% end %>
   </p>
   <p>
@@ -33,7 +33,7 @@
       <%= f.text_area :description %>
     <% else %>
       <%= text_area_tag "game[translations][#{active_locale}][description]",
-                        @game.translated(:description, active_locale) %>
+                        @game.translation_draft(:description, active_locale) %>
     <% end %>
   </p>
   <p>

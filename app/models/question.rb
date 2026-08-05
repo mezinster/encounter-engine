@@ -1,4 +1,12 @@
 class Question < ApplicationRecord
+  include TranslatableContent
+
+  TRANSLATABLE_FIELDS = %w[questions].freeze
+
+  def translation_game
+    self.level&.game
+  end
+
   belongs_to :level, optional: true
   has_many :answers
 

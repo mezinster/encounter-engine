@@ -1,5 +1,13 @@
 # coding: utf-8
 class Level < ApplicationRecord
+  include TranslatableContent
+
+  TRANSLATABLE_FIELDS = %w[name text].freeze
+
+  def translation_game
+    self.game
+  end
+
   acts_as_list :scope => :game
 
   belongs_to :game, optional: true

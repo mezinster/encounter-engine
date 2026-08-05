@@ -1,5 +1,13 @@
 # -*- encoding : utf-8 -*-
 class Game < ApplicationRecord
+  include TranslatableContent
+
+  TRANSLATABLE_FIELDS = %w[name description].freeze
+
+  def translation_game
+    self
+  end
+
   belongs_to :author, class_name: "User", optional: true
   has_many :levels, -> {  order('position') }
   has_many :logs, -> { order('time') }

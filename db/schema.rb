@@ -10,7 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_05_092031) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_05_134614) do
+  create_table "admin_actions", force: :cascade do |t|
+    t.integer "actor_id", null: false
+    t.string "action", null: false
+    t.string "target_type"
+    t.integer "target_id"
+    t.string "target_label"
+    t.datetime "created_at", null: false
+    t.index ["actor_id"], name: "index_admin_actions_on_actor_id"
+    t.index ["created_at"], name: "index_admin_actions_on_created_at"
+  end
+
   create_table "answers", force: :cascade do |t|
     t.integer "question_id"
     t.integer "level_id"

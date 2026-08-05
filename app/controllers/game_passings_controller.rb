@@ -60,7 +60,7 @@ class GamePassingsController < ApplicationController
 
     render json: { hint_num: @game_passing.hints_to_show.length,
                     hint_text: hint.translated(:text, content_locale),
-                    next_available_in: next_hint&.available_in(@game_passing.current_level_entered_at) }
+                    next_available_in: next_hint&.available_in(@game_passing.current_level_entered_at, @game_passing.effective_now) }
   end
 
   def post_answer

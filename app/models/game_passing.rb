@@ -115,12 +115,25 @@ class GamePassing < ApplicationRecord
     !! finished_at
   end
 
+  # The clock every countdown is measured against. While a game is paused this
+  # is the instant it was paused, so hints_to_show, upcoming_hints and
+  # time_at_level all freeze together -- and get_current_level_tip returns an
+  # unchanging state to every poll without knowing pausing exists.
+  #
+  # One concept instead of a filter on the tip endpoint that every future hint
+  # code path would have to remember.
+  def effective_now
+    self.game&.paused_at || Time.now
+  end
+
   def hints_to_show
-    current_level.hints.select { |hint| hint.ready_to_show?(current_level_entered_at) }
+    now = effective_now
+    current_level.hints.select { |hint| hint.ready_to_show?(current_level_entered_at, now) }
   end
 
   def upcoming_hints
-    current_level.hints.select { |hint| !hint.ready_to_show?(current_level_entered_at) }
+    now = effective_now
+    current_level.hints.select { |hint| !hint.ready_to_show?(current_level_entered_at, now) }
   end
 
   def correct_answer?(answer)
@@ -128,7 +141,7 @@ class GamePassing < ApplicationRecord
   end
 
   def time_at_level
-    difference = Time.now - self.current_level_entered_at
+    difference = effective_now - self.current_level_entered_at
     hours, minutes, seconds = seconds_fraction_to_time(difference)
     "%02d:%02d:%02d" % [hours, minutes, seconds]
   end

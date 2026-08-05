@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_05_153607) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_05_155600) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -85,6 +85,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_05_153607) do
     t.string "available_locales", default: "ru", null: false
     t.datetime "editing_locked_at"
     t.datetime "withdrawn_at"
+    t.datetime "paused_at"
   end
 
   create_table "hints", force: :cascade do |t|

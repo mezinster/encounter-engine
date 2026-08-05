@@ -44,6 +44,10 @@
 
 <% if logged_in? and @current_user.author_of?(@game) %>
 
+  <% if @game.draft? && @game.author == current_user %>
+    <%= render "games/missing_translations", :game => @game %>
+  <% end %>
+
   <fieldset>
     <legend>
       <%= t("games.show.levels_legend") %>

@@ -35,6 +35,7 @@ ru:
       hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
       question_field: "Уровень %{position} — вопрос"
       missing_count: "не хватает: %{count}"
+      heading: "Не переведено (%{count})"
     list:
       view: "(просмотреть)"
       stats: "(статистика)"

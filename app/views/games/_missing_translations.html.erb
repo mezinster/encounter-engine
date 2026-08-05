@@ -1,0 +1,22 @@
+<%# app/views/games/_missing_translations.html.erb
+
+    This is the compensation for choosing language tabs over a whole-game
+    translation matrix: tabs show gaps one level at a time, which alone would
+    make an author with fourteen levels click through fourteen forms to find
+    out what is missing. The gate generates the list instead, at the only
+    moment it matters.
+%>
+<% entries = game.missing_translations %>
+<% if entries.any? %>
+  <div class="missing-translations">
+    <h3><%= t("games.translations.heading", :count => entries.size) %></h3>
+    <ul>
+      <% entries.each do |entry| %>
+        <li>
+          <%= link_to "#{entry.label} — #{t("locales.#{entry.locale}")}",
+                      missing_translation_path_for(entry) %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

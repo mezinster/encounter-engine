@@ -35,6 +35,7 @@ en:
       hint_field: "Level %{position} — hint after %{minutes} min"
       question_field: "Level %{position} — question"
       missing_count: "%{count} missing"
+      heading: "Not translated yet (%{count})"
     list:
       view: "(view)"
       stats: "(statistics)"

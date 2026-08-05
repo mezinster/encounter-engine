@@ -36,6 +36,7 @@ uk:
       hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
       question_field: "Уровень %{position} — вопрос"
       missing_count: "не хватает: %{count}"
+      heading: "Не переведено (%{count})"
     primary_locale_label: "Основной язык"
     available_locales_label: "Языки игры"
   game_passings:

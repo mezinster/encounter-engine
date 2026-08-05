@@ -35,3 +35,6 @@ ka:
       level_field: "Уровень %{position} — %{field}"
       hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
       question_field: "Уровень %{position} — вопрос"
+  game_passings:
+    content_not_translated: "Это задание пока не переведено на ваш язык — показан язык оригинала."
+    content_language: "Язык заданий"

@@ -244,6 +244,8 @@ ru:
     delete_short: "(удалить)"
     error_header: "Ошибка"
   game_passings:
+    content_not_translated: "Это задание пока не переведено на ваш язык — показан язык оригинала."
+    content_language: "Язык заданий"
     index:
       title: 'Игра "%{name}"'
       team: "Команда"

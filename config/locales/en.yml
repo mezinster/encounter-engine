@@ -232,6 +232,8 @@ en:
     delete_short: "(delete)"
     error_header: "Error"
   game_passings:
+    content_not_translated: "This task is not translated into your language yet — showing the original."
+    content_language: "Task language"
     index:
       title: 'Game "%{name}"'
       team: "Team"

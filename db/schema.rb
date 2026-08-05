@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_05_005247) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_05_090555) do
   create_table "answers", force: :cascade do |t|
     t.integer "question_id"
     t.integer "level_id"
@@ -132,5 +132,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_05_005247) do
     t.date "date_of_birth"
     t.string "phone_number"
     t.string "locale"
+    t.boolean "is_superadmin", default: false, null: false
   end
 end

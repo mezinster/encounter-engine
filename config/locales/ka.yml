@@ -18,6 +18,8 @@ ka:
     en: "English"
     uk: "Українська"
     ka: "ქართული"
+  errors:
+    must_be_superadmin: "Доступ только для администратора"
   activerecord:
     errors:
       messages:

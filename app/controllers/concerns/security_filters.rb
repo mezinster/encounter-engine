@@ -23,8 +23,19 @@ module SecurityFilters
   # Unauthorized response. GamesController, which does run
   # require_authentication! first, never reaches the `unless logged_in?`
   # branch -- current_user is already guaranteed there.
+  # SECURITY CHOKEPOINT. Widening this admits superadmins to every action that
+  # gates on it -- levels, hints, questions, game entries -- which is the point:
+  # an operator who can edit a game can already edit its levels, and a parallel
+  # permission system would drift out of sync with this one. The consequence is
+  # that any FUTURE call site of ensure_author silently admits superadmins too.
   def ensure_author
+    return if logged_in? && current_user.superadmin?
+
     raise Authentication::Unauthorized, t("errors.must_be_author") unless logged_in? && current_user.author_of?(@game)
+  end
+
+  def require_superadmin!
+    raise Authentication::Unauthorized, t("errors.must_be_superadmin") unless logged_in? && current_user.superadmin?
   end
 
   def ensure_game_was_not_started

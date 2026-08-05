@@ -154,7 +154,19 @@ Rails.application.routes.draw do
   post "/play/:game_id",     to: "game_passings#post_answer",           as: :post_answer
   post "/play/:game_id/content_locale", to: "game_passings#set_content_locale", as: :set_content_locale
 
-  get "/stats/:action/:game_id", controller: "game_passings", as: :game_stats
+  # Two explicit routes, not the `/stats/:action/:game_id` the Merb app served.
+  #
+  # The dynamic :action segment is deprecated in Rails 8.0 and removed in 8.1,
+  # but the reason to replace it is not the deprecation. It mapped ANY action on
+  # GamePassingsController, so GET /stats/exit_game/7 reached #exit_game and
+  # GET /stats/post_answer/7 reached #post_answer -- state-changing actions over
+  # GET, with no CSRF token. A captain who followed a crafted link, or whose
+  # browser prefetched one, quit their team out of a live game.
+  #
+  # Both URLs below are byte-identical to what Merb served, so bookmarks still
+  # resolve (spec/routing_spec.rb pins both).
+  get "/stats/index/:game_id",        to: "game_passings#index", as: :game_stats
+  get "/stats/show_results/:game_id", to: "game_passings#show_results"
   get "/logs/livechannel/:game_id",     to: "logs#show_live_channel", as: :show_live_channel # прямой эфир
   get "/logs/level/:game_id/:team_id",  to: "logs#show_level_log",    as: :show_level_log    # лог по уровню
   get "/logs/game/:game_id/:team_id",   to: "logs#show_game_log",     as: :show_game_log     # лог по игре

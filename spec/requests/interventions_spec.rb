@@ -220,7 +220,7 @@ describe "live-game interventions", type: :request do
       passing
       sign_in(author)
 
-      get game_stats_path(:index, game)
+      get game_stats_path(game)
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(pause_game_path(game))
@@ -231,7 +231,7 @@ describe "live-game interventions", type: :request do
       game.pause!
       sign_in(author)
 
-      get game_stats_path(:index, game)
+      get game_stats_path(game)
 
       expect(response.body).to include(resume_game_path(game))
       expect(response.body).not_to include(pause_game_path(game))
@@ -241,7 +241,7 @@ describe "live-game interventions", type: :request do
       passing
       sign_in(author)
 
-      get game_stats_path(:index, game)
+      get game_stats_path(game)
 
       expect(response.body).to include(reset_team_clock_path(:game_id => game.id, :team_id => passing.team_id))
     end

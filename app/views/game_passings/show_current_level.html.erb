@@ -42,7 +42,7 @@
 
   <script>
   LevelHintUpdater.setup({
-    initialCountdownValue: <%= @game_passing.upcoming_hints.first.available_in(@game_passing.current_level_entered_at) %>
+    initialCountdownValue: <%= @game_passing.upcoming_hints.first.available_in(@game_passing.current_level_entered_at, @game_passing.effective_now) %>
     ,gameId: <%= @game_passing.game_id %>
   })
   </script>

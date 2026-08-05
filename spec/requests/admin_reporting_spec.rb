@@ -33,4 +33,90 @@ describe "superadmin reporting", type: :request do
       expect(response.body).to include(I18n.t("admin.dashboard.show.status.draft"))
     end
   end
+
+  describe "the users list" do
+    it "refuses an anonymous visitor" do
+      get admin_users_path
+      expect(response).not_to have_http_status(:ok)
+    end
+
+    it "refuses an ordinary signed-in user" do
+      sign_in(ordinary)
+      get admin_users_path
+      expect(response).not_to have_http_status(:ok)
+    end
+
+    it "shows every user's identity and email to a superadmin" do
+      other = create_user
+      sign_in(superadmin)
+
+      get admin_users_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(other.nickname)
+      expect(response.body).to include(other.email)
+    end
+
+    # The contact details a player gave in order to play, not to be browsed.
+    # They exist on the detail page; the point is that reading all of them
+    # takes deliberate clicks.
+    it "does not put contact details in the list" do
+      other = create_user
+      other.update!(:phone_number => "+995555123456")
+      sign_in(superadmin)
+
+      get admin_users_path
+
+      expect(response.body).not_to include("+995555123456")
+    end
+
+    # This N+1 has been written into two consecutive plans on this project and
+    # shipped once. It gets a test rather than a comment.
+    it "keeps the query count flat as the number of users grows" do
+      sign_in(superadmin)
+
+      2.times { u = create_user; u.update!(:team => create_team) }
+      small = count_queries { get admin_users_path }
+
+      8.times { u = create_user; u.update!(:team => create_team) }
+      large = count_queries { get admin_users_path }
+
+      expect(large).to eq(small)
+    end
+  end
+
+  describe "the user detail page" do
+    it "refuses an ordinary signed-in user" do
+      sign_in(ordinary)
+      get admin_user_path(create_user)
+      expect(response).not_to have_http_status(:ok)
+    end
+
+    it "shows contact details to a superadmin" do
+      other = create_user
+      other.update!(:phone_number => "+995555123456", :icq_number => "123456789")
+      sign_in(superadmin)
+
+      get admin_user_path(other)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("+995555123456")
+      expect(response.body).to include("123456789")
+    end
+  end
+
+  # Not because anyone would add them deliberately, but because a future
+  # `<%= user.attributes %>` debugging line would leak them silently.
+  describe "password material" do
+    it "never appears on any reporting screen" do
+      other = create_user
+      sign_in(superadmin)
+
+      [ admin_dashboard_path, admin_users_path, admin_user_path(other) ].each do |path|
+        get path
+        expect(response.body).not_to include(other.crypted_password.to_s) if other.crypted_password.present?
+        expect(response.body).not_to include(other.salt.to_s) if other.salt.present?
+      end
+    end
+  end
 end

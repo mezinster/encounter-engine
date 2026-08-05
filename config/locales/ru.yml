@@ -1,5 +1,27 @@
 ru:
   admin:
+    users:
+      index:
+        title: "Игроки"
+        nickname: "Ник"
+        email: "E-mail"
+        team: "Команда"
+        locale: "Язык"
+        signed_up: "Регистрация"
+        role: "Роль"
+        superadmin: "администратор"
+        back: "К обзору"
+      show:
+        email: "E-mail"
+        phone: "Телефон"
+        jabber: "Jabber"
+        icq: "ICQ"
+        date_of_birth: "Дата рождения"
+        team: "Команда"
+        locale: "Язык"
+        signed_up: "Регистрация"
+        authored_games: "Созданные игры"
+        back: "К списку игроков"
     dashboard:
       show:
         title: "Обзор"

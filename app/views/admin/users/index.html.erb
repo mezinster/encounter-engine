@@ -1,0 +1,26 @@
+<h1><%= t("admin.users.index.title") %></h1>
+
+<table class="admin-users">
+  <tr>
+    <th><%= t("admin.users.index.nickname") %></th>
+    <th><%= t("admin.users.index.email") %></th>
+    <th><%= t("admin.users.index.team") %></th>
+    <th><%= t("admin.users.index.locale") %></th>
+    <th><%= t("admin.users.index.signed_up") %></th>
+    <th><%= t("admin.users.index.role") %></th>
+  </tr>
+  <% @users.each do |user| %>
+    <tr>
+      <%# Nicknames, emails and team names are user-written content and render
+          verbatim; every label around them is chrome through t(). %>
+      <td><%= link_to user.nickname, admin_user_path(user) %></td>
+      <td><%= user.email %></td>
+      <td><%= user.team&.name %></td>
+      <td><%= user.locale %></td>
+      <td><%= l(user.created_at, :format => :long) %></td>
+      <td><%= t("admin.users.index.superadmin") if user.superadmin? %></td>
+    </tr>
+  <% end %>
+</table>
+
+<p><%= link_to t("admin.users.index.back"), admin_dashboard_path %></p>

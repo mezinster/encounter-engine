@@ -1,5 +1,27 @@
 en:
   admin:
+    users:
+      index:
+        title: "Players"
+        nickname: "Nickname"
+        email: "Email"
+        team: "Team"
+        locale: "Language"
+        signed_up: "Registered"
+        role: "Role"
+        superadmin: "administrator"
+        back: "Back to overview"
+      show:
+        email: "Email"
+        phone: "Phone"
+        jabber: "Jabber"
+        icq: "ICQ"
+        date_of_birth: "Date of birth"
+        team: "Team"
+        locale: "Language"
+        signed_up: "Registered"
+        authored_games: "Games created"
+        back: "Back to players"
     dashboard:
       show:
         title: "Overview"

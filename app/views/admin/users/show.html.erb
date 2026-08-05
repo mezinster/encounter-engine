@@ -1,0 +1,25 @@
+<h1><%= @user.nickname %></h1>
+
+<table class="admin-user">
+  <tr><th><%= t("admin.users.show.email") %></th><td><%= @user.email %></td></tr>
+  <tr><th><%= t("admin.users.show.phone") %></th><td><%= @user.phone_number %></td></tr>
+  <tr><th><%= t("admin.users.show.jabber") %></th><td><%= @user.jabber_id %></td></tr>
+  <tr><th><%= t("admin.users.show.icq") %></th><td><%= @user.icq_number %></td></tr>
+  <tr><th><%= t("admin.users.show.date_of_birth") %></th><td><%= @user.date_of_birth %></td></tr>
+  <tr><th><%= t("admin.users.show.team") %></th><td><%= @user.team&.name %></td></tr>
+  <tr><th><%= t("admin.users.show.locale") %></th><td><%= @user.locale %></td></tr>
+  <tr><th><%= t("admin.users.show.signed_up") %></th><td><%= l(@user.created_at, :format => :long) %></td></tr>
+</table>
+
+<h2><%= t("admin.users.show.authored_games") %></h2>
+<%# There is no team history to show: users.team_id is one column, so the schema
+    keeps no record of previous teams. Participation in games runs through the
+    team rather than the user, so "games this person played" is not a question
+    this schema answers directly and is deliberately not attempted. %>
+<ul>
+  <% @user.created_games.each do |game| %>
+    <li><%= link_to game.name, game_path(game) %></li>
+  <% end %>
+</ul>
+
+<p><%= link_to t("admin.users.show.back"), admin_users_path %></p>

@@ -398,7 +398,7 @@ bundle exec rspec spec/models/game_passing/interventions_spec.rb
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: 9 examples pass; **594 examples** (585 + 9), 0 failures, 6 pending; cucumber unchanged.
+Expected: 8 examples pass; **593 examples** (585 + 8), 0 failures, 6 pending; cucumber unchanged.
 
 - [ ] **Step 5: Commit**
 
@@ -662,7 +662,7 @@ bundle exec rspec spec/models/game/pausing_spec.rb
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: 9 examples pass; **603 examples** (594 + 9), 0 failures, 6 pending; cucumber unchanged at 234 scenarios. Cucumber exercises hints heavily — if it moves, the defaulted `now` argument is not defaulting where you think.
+Expected: 8 examples pass; **601 examples** (593 + 8), 0 failures, 6 pending; cucumber unchanged at 234 scenarios. Cucumber exercises hints heavily — if it moves, the defaulted `now` argument is not defaulting where you think.
 
 - [ ] **Step 9: Commit**
 
@@ -1031,7 +1031,7 @@ bundle exec rspec && bundle exec cucumber
 bin/rails zeitwerk:check
 ```
 
-Expected: 15 examples pass; **618 examples** (603 + 15), 0 failures, 6 pending; cucumber unchanged; `All is good!`.
+Expected: 15 examples pass; **616 examples** (601 + 15), 0 failures, 6 pending; cucumber unchanged; `All is good!`.
 
 - [ ] **Step 8: Commit**
 
@@ -1181,7 +1181,7 @@ bundle exec rspec spec/requests/paused_gameplay_spec.rb spec/i18n_spec.rb
 bundle exec rspec && bundle exec cucumber
 ```
 
-Expected: 4 examples pass; **622 examples** (618 + 4), 0 failures, 6 pending; cucumber unchanged at 234 scenarios / 2362 steps. Cucumber plays games constantly — every one of those games has `paused_at` nil, so the filter must be invisible to them.
+Expected: 4 examples pass; **620 examples** (616 + 4), 0 failures, 6 pending; cucumber unchanged at 234 scenarios / 2362 steps. Cucumber plays games constantly — every one of those games has `paused_at` nil, so the filter must be invisible to them.
 
 - [ ] **Step 7: Commit**
 
@@ -1355,7 +1355,7 @@ bundle exec rspec && bundle exec cucumber
 bin/rails zeitwerk:check
 ```
 
-Expected: 18 examples in the interventions spec; **625 examples** (622 + 3), 0 failures, 6 pending; cucumber unchanged at 234 scenarios / 2362 steps; `All is good!`.
+Expected: 18 examples in the interventions spec; **623 examples** (620 + 3), 0 failures, 6 pending; cucumber unchanged at 234 scenarios / 2362 steps; `All is good!`.
 
 - [ ] **Step 8: Commit**
 
@@ -1378,4 +1378,4 @@ git commit -m "Put the intervention controls on the stats page"
 
 **One risk I want the reviewer looking at.** Task 3 changes `Hint#ready_to_show?` and `#available_in`, which the live gameplay path calls on every page load and every poll. The defaulted second argument means no existing caller changes — but "no existing caller changes" is exactly the kind of claim that is true until it isn't. Cucumber is the real check here: it plays games end to end with hints, so any movement in its 234 scenarios means the defaulting is not doing what this plan assumes.
 
-**Running example counts.** 583 → 585 (T1) → 594 (T2) → 603 (T3) → 618 (T4) → 622 (T5) → 625 (T6). Cucumber stays at 234 scenarios / 2362 steps throughout; any change there is a regression, not a new feature.
+**Running example counts.** 583 → 585 (T1) → 593 (T2) → 601 (T3) → 616 (T4) → 620 (T5) → 623 (T6). Cucumber stays at 234 scenarios / 2362 steps throughout; any change there is a regression, not a new feature.

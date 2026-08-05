@@ -22,6 +22,76 @@
 # (verbal noun: "შენახვა" = "saving" = "Save"), which is the normal Georgian
 # UI imperative.
 ka:
+  admin:
+    users:
+      index:
+        title: "მოთამაშეები"
+        nickname: "ნიკი"
+        email: "E-mail"
+        team: "გუნდი"
+        locale: "ენა"
+        signed_up: "რეგისტრაცია"
+        role: "როლი"
+        superadmin: "ადმინისტრატორი"
+        back: "მიმოხილვაზე დაბრუნება"
+      show:
+        email: "E-mail"
+        phone: "ტელეფონი"
+        jabber: "Jabber"
+        icq: "ICQ"
+        date_of_birth: "დაბადების თარიღი"
+        team: "გუნდი"
+        locale: "ენა"
+        signed_up: "რეგისტრაცია"
+        authored_games: "შექმნილი თამაშები"
+        back: "მოთამაშეების სიაზე დაბრუნება"
+    dashboard:
+      show:
+        title: "მიმოხილვა"
+        games_by_status: "თამაშები სტატუსის მიხედვით"
+        editing_locked: "რედაქტირება გაყინულია"
+        totals: "სულ"
+        entries_by_status: "განაცხადები სტატუსის მიხედვით"
+        all_games: "ყველა თამაში"
+        status:
+          withdrawn: "მოხსნილია გამოქვეყნებიდან"
+          draft: "მონახაზი"
+          finished: "დასრულებული"
+          running: "მიმდინარე"
+          scheduled: "დაგეგმილი"
+        total:
+          users: "მოთამაშე"
+          teams: "გუნდი"
+          games: "თამაში"
+          passings_finished: "დასრულებული გავლა"
+          passings_in_progress: "მიმდინარე გავლა"
+        entry_status:
+          new: "ახალი"
+          accepted: "მიღებული"
+          rejected: "უარყოფილი"
+          recalled: "გამოხმობილი"
+          canceled: "გაუქმებული"
+    games:
+      index:
+        title: "ყველა თამაში"
+        name: "დასახელება"
+        author: "ავტორი"
+        locales: "ენები"
+        status: "სტატუსი"
+        teams: "გუნდი"
+        draft: "მონახაზი"
+        scheduled: "დაგეგმილი"
+        running: "მიმდინარე"
+        finished: "დასრულებული"
+        withdrawn: "მოხსნილია გამოქვეყნებიდან"
+        locked: "რედაქტირება გაყინულია"
+        edit: "რედაქტირება"
+        withdraw: "მოხსნა"
+        restore: "გამოქვეყნება"
+        lock: "გაყინვა"
+        unlock: "გაყინვის მოხსნა"
+        delete: "წაშლა"
+        delete_confirm: "წავშალოთ თამაში «%{name}» ყველა დავალებითურთ? ეს შეუქცევადია."
   answers:
     must_have_at_least_one_variant: "უნდა იყოს კოდის სულ მცირე ერთი ვარიანტი"
     index:
@@ -42,6 +112,9 @@ ka:
     cannot_play_own_game: "საკუთარ თამაშებში თამაში არ შეიძლება, ბოდიში :-)"
     game_finished_by_author: "თამაში ავტორმა დაასრულა და მასში ვეღარ ითამაშებთ"
     team_exited: "გუნდი გავიდა დისტანციიდან"
+    game_is_locked: "თამაშის რედაქტირება ადმინისტრატორმა გაყინა"
+    game_is_withdrawn: "თამაში მოხსნილია გამოქვეყნებიდან"
+    must_be_superadmin: "წვდომა მხოლოდ ადმინისტრატორისთვის"
   invitations:
     notice_sent: "მოწვევა გაეგზავნა მომხმარებელს %{nickname}"
     new:
@@ -51,6 +124,11 @@ ka:
     not_started: "თამაშის დაწყებამდე მასში თამაში შეუძლებელია. და საერთოდ, საიდან იშოვეთ ეს ბმული? :-)"
     already_in_team: "თქვენ უკვე ხართ გუნდის წევრი"
   games:
+    withdrawn_notice: "თამაში მოხსნილია გამოქვეყნებიდან"
+    restored_notice: "თამაში ხელახლა გამოქვეყნებულია"
+    locked_notice: "თამაშის რედაქტირება გაყინულია"
+    unlocked_notice: "თამაშის რედაქტირება განყინულია"
+    not_deletable: "თამაშის წაშლა შეუძლებელია: მასში უკვე თამაშობდნენ. მოხსენით იგი გამოქვეყნებიდან."
     translations:
       incomplete: "თამაშს გამოცხადებული აქვს ენები, რომლებზეც ყველაფერი არ არის ნათარგმნი: აკლია %{count} ველი"
       game_field: "თამაში — %{field}"

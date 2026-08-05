@@ -51,4 +51,15 @@ describe "superadmin authorization", type: :request do
     get edit_game_path(game)
     expect(response).to have_http_status(:ok)
   end
+
+  # The editing lock covers content and settings, not read-only views. This is
+  # the regression the ensure_editing_not_locked split (as opposed to putting
+  # the check in ensure_author) exists to prevent: an author under
+  # investigation must still be able to watch their own game's live log.
+  it "still lets the author view their own game's live log when the game is locked" do
+    game.update!(:editing_locked_at => Time.now)
+    sign_in(author)
+    get show_live_channel_path(game)
+    expect(response).to have_http_status(:ok)
+  end
 end

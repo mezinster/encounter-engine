@@ -13,6 +13,7 @@ class HintsController < ApplicationController
   before_action :build_hint, only: [:new, :create]
   before_action :find_hint, only: [:edit, :update, :delete]
   before_action :ensure_author
+  before_action :ensure_editing_not_locked
   before_action :ensure_game_was_not_started, only: [:new, :create, :edit, :update]
 
   def new

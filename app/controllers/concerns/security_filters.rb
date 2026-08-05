@@ -32,11 +32,20 @@ module SecurityFilters
     return if logged_in? && current_user.superadmin?
 
     raise Authentication::Unauthorized, t("errors.must_be_author") unless logged_in? && current_user.author_of?(@game)
-    raise Authentication::Unauthorized, t("errors.game_is_locked") if @game&.editing_locked?
   end
 
   def require_superadmin!
     raise Authentication::Unauthorized, t("errors.must_be_superadmin") unless logged_in? && current_user.superadmin?
+  end
+
+  # Deliberately NOT part of ensure_author. That filter is shared by read-only
+  # views too -- the live log, the level and game logs, the team-passings list --
+  # and an author under investigation should still be able to watch their own
+  # game. The lock covers content and settings, nothing else.
+  def ensure_editing_not_locked
+    return if logged_in? && current_user.superadmin?
+
+    raise Authentication::Unauthorized, t("errors.game_is_locked") if @game&.editing_locked?
   end
 
   def ensure_game_was_not_started

@@ -9,6 +9,7 @@ class LevelsController < ApplicationController
   # redirect would be a behaviour change this task doesn't ask for.
   before_action :find_game
   before_action :ensure_author
+  before_action :ensure_editing_not_locked
   before_action :ensure_game_was_not_started, only: [:new, :create, :edit, :update, :delete]
   before_action :find_level, except: [:new, :create]
 

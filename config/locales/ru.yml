@@ -1,4 +1,74 @@
 ru:
+  admin:
+    users:
+      index:
+        title: "Игроки"
+        nickname: "Ник"
+        email: "E-mail"
+        team: "Команда"
+        locale: "Язык"
+        signed_up: "Регистрация"
+        role: "Роль"
+        superadmin: "администратор"
+        back: "К обзору"
+      show:
+        email: "E-mail"
+        phone: "Телефон"
+        jabber: "Jabber"
+        icq: "ICQ"
+        date_of_birth: "Дата рождения"
+        team: "Команда"
+        locale: "Язык"
+        signed_up: "Регистрация"
+        authored_games: "Созданные игры"
+        back: "К списку игроков"
+    dashboard:
+      show:
+        title: "Обзор"
+        games_by_status: "Игры по статусу"
+        editing_locked: "Редактирование заморожено"
+        totals: "Всего"
+        entries_by_status: "Заявки по статусу"
+        all_games: "Все игры"
+        status:
+          withdrawn: "Снята с публикации"
+          draft: "Черновик"
+          finished: "Завершена"
+          running: "Идёт"
+          scheduled: "Запланирована"
+        total:
+          users: "Игроков"
+          teams: "Команд"
+          games: "Игр"
+          passings_finished: "Прохождений завершено"
+          passings_in_progress: "Прохождений идёт"
+        entry_status:
+          new: "Новая"
+          accepted: "Принята"
+          rejected: "Отклонена"
+          recalled: "Отозвана"
+          canceled: "Отменена"
+    games:
+      index:
+        title: "Все игры"
+        name: "Название"
+        author: "Автор"
+        locales: "Языки"
+        status: "Статус"
+        teams: "Команд"
+        draft: "Черновик"
+        scheduled: "Запланирована"
+        running: "Идёт"
+        finished: "Завершена"
+        withdrawn: "Снята с публикации"
+        locked: "редактирование заморожено"
+        edit: "Редактировать"
+        withdraw: "Снять"
+        restore: "Опубликовать"
+        lock: "Заморозить"
+        unlock: "Разморозить"
+        delete: "Удалить"
+        delete_confirm: "Удалить игру «%{name}» со всеми уровнями? Это необратимо."
   answers:
     must_have_at_least_one_variant: "Должен быть хотя бы один вариант кода"
     index:
@@ -13,8 +83,11 @@ ru:
     not_team_member: "Вы не авторизованы для посещения этой страницы"
     must_be_captain: "Вы должны быть капитаном чтобы выполнить это действие"
     must_be_author: "Вы должны быть автором игры, чтобы видеть эту страницу"
+    must_be_superadmin: "Доступ только для администратора"
     must_be_author_or_finished_player: "Полный лог ответов доступен только автору игры или игроку из команды, закончившей игру"
     game_already_started: "Нельзя редактировать игру после её начала"
+    game_is_locked: "Редактирование игры заморожено администратором"
+    game_is_withdrawn: "Игра снята с публикации"
     must_be_recipient: "Вы должны быть получателем приглашения чтобы выполнить это действие"
     cannot_play_own_game: "Нельзя играть в собственные игры, сорри :-)"
     game_finished_by_author: "Игра была завершена автором, и вы не можете в нее больше играть"
@@ -28,6 +101,11 @@ ru:
     not_started: "Нельзя играть в игру до её начала. И вообще, где вы достали эту ссылку? :-)"
     already_in_team: "Вы уже являетесь членом команды"
   games:
+    withdrawn_notice: "Игра снята с публикации"
+    restored_notice: "Игра снова опубликована"
+    locked_notice: "Редактирование игры заморожено"
+    unlocked_notice: "Редактирование игры разморожено"
+    not_deletable: "Игру нельзя удалить: в неё уже играли. Снимите её с публикации."
     translations:
       incomplete: "Игра объявляет языки, на которые переведено не всё: не хватает %{count} полей"
       game_field: "Игра — %{field}"

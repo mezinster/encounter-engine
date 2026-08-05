@@ -4,6 +4,7 @@ class QuestionsController < ApplicationController
 
   before_action :find_game
   before_action :ensure_author
+  before_action :ensure_editing_not_locked
   before_action :find_level
   before_action :build_question, only: [:new, :create]
 

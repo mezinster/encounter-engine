@@ -23,8 +23,34 @@ module SecurityFilters
   # Unauthorized response. GamesController, which does run
   # require_authentication! first, never reaches the `unless logged_in?`
   # branch -- current_user is already guaranteed there.
+  # SECURITY CHOKEPOINT. Widening this admits superadmins to every action that
+  # gates on it -- levels, hints, questions, game entries -- which is the point:
+  # an operator who can edit a game can already edit its levels, and a parallel
+  # permission system would drift out of sync with this one. The consequence is
+  # that any FUTURE call site of ensure_author silently admits superadmins too.
   def ensure_author
+    return if logged_in? && current_user.superadmin?
+
     raise Authentication::Unauthorized, t("errors.must_be_author") unless logged_in? && current_user.author_of?(@game)
+  end
+
+  def require_superadmin!
+    raise Authentication::Unauthorized, t("errors.must_be_superadmin") unless logged_in? && current_user.superadmin?
+  end
+
+  # Deliberately NOT part of ensure_author. That filter is shared by read-only
+  # views too -- the live log, the level and game logs, the team-passings list --
+  # and an author under investigation should still be able to watch their own
+  # game. The lock covers content, settings AND lifecycle (GamesController
+  # applies this to edit/update/delete as well as end_game/start_test/
+  # finish_test) -- finish_test in particular deletes every game_passing and
+  # log line, which would let a locked author erase the evidence an operator
+  # locked the game to investigate, and then delete the game itself now that
+  # it has no game_passings left. Read-only views stay off this filter.
+  def ensure_editing_not_locked
+    return if logged_in? && current_user.superadmin?
+
+    raise Authentication::Unauthorized, t("errors.game_is_locked") if @game&.editing_locked?
   end
 
   def ensure_game_was_not_started

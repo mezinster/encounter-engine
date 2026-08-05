@@ -1,4 +1,74 @@
 en:
+  admin:
+    users:
+      index:
+        title: "Players"
+        nickname: "Nickname"
+        email: "Email"
+        team: "Team"
+        locale: "Language"
+        signed_up: "Registered"
+        role: "Role"
+        superadmin: "administrator"
+        back: "Back to overview"
+      show:
+        email: "Email"
+        phone: "Phone"
+        jabber: "Jabber"
+        icq: "ICQ"
+        date_of_birth: "Date of birth"
+        team: "Team"
+        locale: "Language"
+        signed_up: "Registered"
+        authored_games: "Games created"
+        back: "Back to players"
+    dashboard:
+      show:
+        title: "Overview"
+        games_by_status: "Games by status"
+        editing_locked: "Editing frozen"
+        totals: "Totals"
+        entries_by_status: "Entry requests by status"
+        all_games: "All games"
+        status:
+          withdrawn: "Withdrawn"
+          draft: "Draft"
+          finished: "Finished"
+          running: "Running"
+          scheduled: "Scheduled"
+        total:
+          users: "Players"
+          teams: "Teams"
+          games: "Games"
+          passings_finished: "Passings finished"
+          passings_in_progress: "Passings in progress"
+        entry_status:
+          new: "New"
+          accepted: "Accepted"
+          rejected: "Rejected"
+          recalled: "Recalled"
+          canceled: "Canceled"
+    games:
+      index:
+        title: "All games"
+        name: "Name"
+        author: "Author"
+        locales: "Languages"
+        status: "Status"
+        teams: "Teams"
+        draft: "Draft"
+        scheduled: "Scheduled"
+        running: "Running"
+        finished: "Finished"
+        withdrawn: "Withdrawn"
+        locked: "editing frozen"
+        edit: "Edit"
+        withdraw: "Withdraw"
+        restore: "Publish"
+        lock: "Lock"
+        unlock: "Unlock"
+        delete: "Delete"
+        delete_confirm: "Delete the game “%{name}” and all its levels? This cannot be undone."
   answers:
     must_have_at_least_one_variant: "There must be at least one answer code"
     index:
@@ -13,8 +83,11 @@ en:
     not_team_member: "You are not authorized to visit this page"
     must_be_captain: "You must be the team captain to perform this action"
     must_be_author: "You must be the game's author to view this page"
+    must_be_superadmin: "Administrator access only"
     must_be_author_or_finished_player: "The full log is only available to the game's author or a player whose team has finished the game"
     game_already_started: "You can't edit a game after it has started"
+    game_is_locked: "Editing this game has been frozen by an administrator"
+    game_is_withdrawn: "This game has been withdrawn"
     must_be_recipient: "You must be the invitation's recipient to perform this action"
     cannot_play_own_game: "You can't play your own games, sorry :-)"
     game_finished_by_author: "The game was ended by its author, you can no longer play it"
@@ -28,6 +101,11 @@ en:
     not_started: "The game has not started yet. Where did you even get this link? :-)"
     already_in_team: "You are already a member of a team"
   games:
+    withdrawn_notice: "Game withdrawn from players"
+    restored_notice: "Game published again"
+    locked_notice: "Game editing locked"
+    unlocked_notice: "Game editing unlocked"
+    not_deletable: "This game cannot be deleted because teams have played it. Withdraw it instead."
     translations:
       incomplete: "This game declares languages it is not fully translated into: %{count} fields are missing"
       game_field: "Game — %{field}"

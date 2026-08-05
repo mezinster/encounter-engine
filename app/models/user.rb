@@ -44,6 +44,10 @@ class User < ApplicationRecord
     game.author.id == self.id
   end
 
+  def superadmin?
+    self.is_superadmin
+  end
+
   def password_required?
     crypted_password.blank? || password.present?
   end

@@ -8,6 +8,7 @@ class GameEntriesController < ApplicationController
   before_action :find_entry, except: :new
   before_action :ensure_author, only: [:accept, :reject]
   before_action :ensure_team_captain, except: [:accept, :reject]
+  before_action :ensure_game_is_not_withdrawn, only: [:new, :reopen]
 
   def new
     if @game.can_request?
@@ -65,5 +66,12 @@ class GameEntriesController < ApplicationController
   def find_entry
     @entry = GameEntry.find(params[:id])
     @game = Game.find(@entry.game.id) if @entry
+  end
+
+  # can_request? cannot be used for this: its capacity check discards its own
+  # result and the method always returns a truthy array -- a pre-existing bug
+  # from the Merb port, out of scope here. This guard stands on its own.
+  def ensure_game_is_not_withdrawn
+    raise Authentication::Unauthorized, t("errors.game_is_withdrawn") if @game&.withdrawn?
   end
 end

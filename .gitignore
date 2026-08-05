@@ -34,3 +34,6 @@ CLAUDE.local.md
 .bundle/
 # Superpowers scratch (SDD ledgers, brainstorm mockups)
 .superpowers/
+
+# git worktrees for parallel hotfixes
+.worktrees/

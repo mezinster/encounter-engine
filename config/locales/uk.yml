@@ -16,6 +16,76 @@
 # answer string players find in the city), подсказка -> підказка,
 # "сойти с дистанции" -> "зійти з дистанції" (quit mid-game).
 uk:
+  admin:
+    users:
+      index:
+        title: "Гравці"
+        nickname: "Нік"
+        email: "E-mail"
+        team: "Команда"
+        locale: "Мова"
+        signed_up: "Реєстрація"
+        role: "Роль"
+        superadmin: "адміністратор"
+        back: "До огляду"
+      show:
+        email: "E-mail"
+        phone: "Телефон"
+        jabber: "Jabber"
+        icq: "ICQ"
+        date_of_birth: "Дата народження"
+        team: "Команда"
+        locale: "Мова"
+        signed_up: "Реєстрація"
+        authored_games: "Створені ігри"
+        back: "До списку гравців"
+    dashboard:
+      show:
+        title: "Огляд"
+        games_by_status: "Ігри за статусом"
+        editing_locked: "Редагування заморожено"
+        totals: "Усього"
+        entries_by_status: "Заявки за статусом"
+        all_games: "Усі ігри"
+        status:
+          withdrawn: "Знята з публікації"
+          draft: "Чернетка"
+          finished: "Завершена"
+          running: "Триває"
+          scheduled: "Запланована"
+        total:
+          users: "Гравців"
+          teams: "Команд"
+          games: "Ігор"
+          passings_finished: "Проходжень завершено"
+          passings_in_progress: "Проходжень триває"
+        entry_status:
+          new: "Нова"
+          accepted: "Прийнята"
+          rejected: "Відхилена"
+          recalled: "Відкликана"
+          canceled: "Скасована"
+    games:
+      index:
+        title: "Усі ігри"
+        name: "Назва"
+        author: "Автор"
+        locales: "Мови"
+        status: "Статус"
+        teams: "Команд"
+        draft: "Чернетка"
+        scheduled: "Запланована"
+        running: "Триває"
+        finished: "Завершена"
+        withdrawn: "Знята з публікації"
+        locked: "редагування заморожено"
+        edit: "Редагувати"
+        withdraw: "Зняти"
+        restore: "Опублікувати"
+        lock: "Заморозити"
+        unlock: "Розморозити"
+        delete: "Видалити"
+        delete_confirm: "Видалити гру «%{name}» з усіма завданнями? Це незворотно."
   answers:
     must_have_at_least_one_variant: "Має бути хоча б один варіант коду"
     index:
@@ -36,6 +106,9 @@ uk:
     cannot_play_own_game: "Не можна грати у власні ігри, сорі :-)"
     game_finished_by_author: "Гру було завершено автором, і ви більше не можете в неї грати"
     team_exited: "Команда зійшла з дистанції"
+    game_is_locked: "Редагування гри заморожено адміністратором"
+    game_is_withdrawn: "Гру знято з публікації"
+    must_be_superadmin: "Доступ лише для адміністратора"
   invitations:
     notice_sent: "Користувачеві %{nickname} надіслано запрошення"
     new:
@@ -45,6 +118,11 @@ uk:
     not_started: "Не можна грати в гру до її початку. І взагалі, де ви взяли це посилання? :-)"
     already_in_team: "Ви вже є членом команди"
   games:
+    withdrawn_notice: "Гру знято з публікації"
+    restored_notice: "Гру знову опубліковано"
+    locked_notice: "Редагування гри заморожено"
+    unlocked_notice: "Редагування гри розморожено"
+    not_deletable: "Гру не можна видалити: у неї вже грали. Зніміть її з публікації."
     translations:
       incomplete: "Гра оголошує мови, якими перекладено не все: бракує %{count} полів"
       game_field: "Гра — %{field}"

@@ -99,6 +99,8 @@ RSpec.describe "internationalization" do
       users.index.jabber_label
       time.formats.short
       sessions.new.email_label
+      admin.users.show.jabber
+      admin.users.show.icq
       locales.ru
       locales.en
       locales.uk

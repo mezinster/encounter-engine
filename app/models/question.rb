@@ -17,6 +17,13 @@ class Question < ApplicationRecord
   end
 
   belongs_to :level, optional: true
+
+  # No dependent: option here, deliberately -- not an oversight. Every Answer
+  # carries its own level_id (Answer#assign_level derives it from
+  # question.level on create), so Level's `has_many :answers, dependent:
+  # :destroy` already removes an answer when its level is destroyed,
+  # regardless of which question it hangs off. Adding dependent: :destroy
+  # here would be redundant, not safer.
   has_many :answers
 
   def correct_answer=(answer)

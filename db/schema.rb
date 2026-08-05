@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_05_005247) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_05_092031) do
   create_table "answers", force: :cascade do |t|
     t.integer "question_id"
     t.integer "level_id"
@@ -71,6 +71,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_05_005247) do
     t.datetime "test_date", precision: nil
     t.string "primary_locale", default: "ru", null: false
     t.string "available_locales", default: "ru", null: false
+    t.datetime "editing_locked_at"
+    t.datetime "withdrawn_at"
   end
 
   create_table "hints", force: :cascade do |t|
@@ -132,5 +134,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_05_005247) do
     t.date "date_of_birth"
     t.string "phone_number"
     t.string "locale"
+    t.boolean "is_superadmin", default: false, null: false
   end
 end

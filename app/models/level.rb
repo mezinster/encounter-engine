@@ -11,9 +11,9 @@ class Level < ApplicationRecord
   acts_as_list :scope => :game
 
   belongs_to :game, optional: true
-  has_many :questions
-  has_many :answers
-  has_many :hints, -> { order('delay ASC') }
+  has_many :questions, :dependent => :destroy
+  has_many :answers, :dependent => :destroy
+  has_many :hints, -> { order('delay ASC') }, :dependent => :destroy
 
   validates :name, presence: true
   validates :text, presence: true

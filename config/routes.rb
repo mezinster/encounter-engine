@@ -6,6 +6,15 @@ Rails.application.routes.draw do
 
   root to: "index#index"
 
+  # The superadmin console: a read-only listing of every game on the
+  # instance. Editing rides the author's own forms (ensure_author admits
+  # superadmins), so only :index exists here -- there is no second editor.
+  namespace :admin do
+    get "/", to: "dashboard#show", as: :dashboard
+    resources :games, only: [ :index ]
+    resources :users, only: [ :index, :show ]
+  end
+
   # Session/registration URLs replace merb-auth's merb_auth_slice_password
   # slice (formerly vendor/merb-auth/merb-auth-slice-password, removed by
   # Task 13 -- see git history before this port's commits), which served:
@@ -61,6 +70,10 @@ Rails.application.routes.draw do
   resources :games do
     member do
       get :delete
+      post :withdraw
+      post :restore
+      post :lock
+      post :unlock
     end
 
     resources :levels do

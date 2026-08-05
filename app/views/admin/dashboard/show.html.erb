@@ -1,0 +1,40 @@
+<h1><%= t("admin.dashboard.show.title") %></h1>
+
+<h2><%= t("admin.dashboard.show.games_by_status") %></h2>
+<table class="admin-stats">
+  <% @games_by_status.each do |status, count| %>
+    <tr>
+      <th><%= t("admin.dashboard.show.status.#{status}") %></th>
+      <td><%= count %></td>
+    </tr>
+  <% end %>
+  <tr>
+    <th><%= t("admin.dashboard.show.editing_locked") %></th>
+    <td><%= @editing_locked %></td>
+  </tr>
+</table>
+
+<h2><%= t("admin.dashboard.show.totals") %></h2>
+<table class="admin-stats">
+  <% @counts.each do |key, count| %>
+    <tr>
+      <th><%= t("admin.dashboard.show.total.#{key}") %></th>
+      <td><%= count %></td>
+    </tr>
+  <% end %>
+</table>
+
+<h2><%= t("admin.dashboard.show.entries_by_status") %></h2>
+<table class="admin-stats">
+  <% @entries_by_status.each do |status, count| %>
+    <tr>
+      <%# GameEntry.status is a free string column, so a value nobody
+          anticipated must render as itself rather than raise under
+          raise_on_missing_translations. %>
+      <th><%= t("admin.dashboard.show.entry_status.#{status}", :default => status.to_s) %></th>
+      <td><%= count %></td>
+    </tr>
+  <% end %>
+</table>
+
+<p><%= link_to t("admin.dashboard.show.all_games"), admin_games_path %></p>

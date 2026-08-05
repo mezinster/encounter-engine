@@ -119,5 +119,39 @@ describe "authoring translations", type: :request do
       expect(response.body).not_to include("game[translations]")
       expect(response.body).not_to include("language-tabs")
     end
+
+    # Same reproduction as the level examples above, for the hint form: ?tab=
+    # picks the translation tab on a multilingual game...
+    it "binds the hint form to the English translation when ?tab=en is present (multilingual game)" do
+      login(author)
+      multi_game = create_game(:author => author, :is_draft => true)
+      multi_game.available_locale_list = %w[ru en]
+      multi_game.save!
+      level = create_level(:game => multi_game, :name => "Уровень", :text => "Текст")
+      hint = create_hint(:level => level, :text => "Подсказка")
+
+      get "#{edit_game_level_hint_path(multi_game, level, hint)}?tab=en"
+
+      expect(response.body).to include("hint[translations][en][text]")
+    end
+
+    # ...and ?locale=en, the platform's pre-existing chrome switcher, must not
+    # be read for that purpose: the same Critical bug Task 6 hit for the level
+    # and game forms (an author's menu-language click silently rebinding the
+    # form to a translation hash) is possible here too, since the hint form
+    # reaches its game through @level.game the same way.
+    it "still binds the hint form to the primary columns when ?locale=en is present (single-locale game)" do
+      login(author)
+      solo_game = create_game(:author => author, :is_draft => true)
+      level = create_level(:game => solo_game, :name => "Уровень", :text => "Текст")
+      hint = create_hint(:level => level, :text => "Подсказка")
+      expect(solo_game.multilingual?).to eq(false)
+
+      get "#{edit_game_level_hint_path(solo_game, level, hint)}?locale=en"
+
+      expect(response.body).to include("hint[text]")
+      expect(response.body).not_to include("hint[translations]")
+      expect(response.body).not_to include("language-tabs")
+    end
   end
 end

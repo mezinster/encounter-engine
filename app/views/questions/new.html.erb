@@ -10,17 +10,12 @@
 
 <%= error_messages_for @answer, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
-<% active_locale = params[:tab].presence_in(@level.game.available_locale_list) || @level.game.primary_locale %>
-<%= render "shared/language_tabs", :game => @level.game, :record => @question,
-                                   :fields => Question::TRANSLATABLE_FIELDS,
-                                   :active => active_locale %>
-
+<%# No language-tab strip here: Question::TRANSLATABLE_FIELDS is empty (see
+    app/models/question.rb) -- a question has no per-locale content to switch
+    between. Answer codes are shared across every locale by design; the help
+    text below is the only thing an author needs. %>
 <%= form_with model: @question, url: game_level_questions_path(@game, @level) do |f| %>
   <p>
-    <%# The answers field is not branched by locale: answer codes are shared
-        across languages by design (see the help text below), unlike
-        Question::TRANSLATABLE_FIELDS' :questions field, which has no editing
-        UI on this form. %>
     <%= f.label :correct_answer, t("questions.new.code_label") %>
     <%= f.text_field :correct_answer %>
   </p>

@@ -105,25 +105,25 @@ class GamesController < ApplicationController
   end
 
   def withdraw
-    @game.update!(:withdrawn_at => Time.now)
+    @game.withdraw!
     record_admin_action("withdraw", @game)
     redirect_to admin_games_path, :notice => t("games.withdrawn_notice")
   end
 
   def restore
-    @game.update!(:withdrawn_at => nil)
+    @game.restore!
     record_admin_action("restore", @game)
     redirect_to admin_games_path, :notice => t("games.restored_notice")
   end
 
   def lock
-    @game.update!(:editing_locked_at => Time.now)
+    @game.lock_editing!
     record_admin_action("lock", @game)
     redirect_to admin_games_path, :notice => t("games.locked_notice")
   end
 
   def unlock
-    @game.update!(:editing_locked_at => nil)
+    @game.unlock_editing!
     record_admin_action("unlock", @game)
     redirect_to admin_games_path, :notice => t("games.unlocked_notice")
   end

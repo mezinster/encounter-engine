@@ -43,6 +43,65 @@ RSpec.describe GamesController, "#start_test", type: :controller do
     end
   end
 
+  # Whole-branch review, Finding 1's fallout: start_test's @game.save! was
+  # named as a 500-raising site. It sets is_draft = false, so it runs
+  # through the exact save the old, state-only guard (`return if draft?`)
+  # broke on. Two cases worth telling apart:
+  #   - a game that is ALREADY published and has since acquired a gap (the
+  #     fallout case) -- is_draft is false->false here, not a real
+  #     transition, so start_test must still succeed
+  #   - a DRAFT game with a gap being published through start_test (the
+  #     legitimate case) -- is_draft genuinely transitions true->false, so
+  #     the gate must still refuse
+  describe "when the game has a translation gap" do
+    describe "and the game is already published (fallout: must still start)" do
+      before :each do
+        @user = create_user
+        @game = create_game(:author => @user, :is_draft => true)
+        @game.available_locale_list = %w[ru en]
+        @game.translations_attributes = { "en" => { "name" => "#{@game.name} (EN)",
+                                                     "description" => "#{@game.description} (EN)" } }
+        @game.save!
+        level = create_level(:game => @game, :name => "Уровень", :text => "Текст")
+        level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text" } }
+        level.save!
+        @game.update!(:is_draft => false)
+
+        # Untranslated level added AFTER a clean publication -- the fallout gap.
+        create_level(:game => @game, :name => "Уровень 2", :text => "Текст 2")
+        @game.reload
+      end
+
+      it "still puts the game into testing mode and redirects" do
+        perform_request(:as_user => @user)
+        @game.reload
+        expect(@game.is_testing?).to be true
+        expect(response).to redirect_to(@game)
+      end
+    end
+
+    describe "and the game is still a draft being published through start_test (legitimate refusal)" do
+      before :each do
+        @user = create_user
+        @game = create_game(:author => @user, :is_draft => true)
+        @game.available_locale_list = %w[ru en]
+        @game.translations_attributes = { "en" => { "name" => "#{@game.name} (EN)",
+                                                     "description" => "#{@game.description} (EN)" } }
+        @game.save!
+        # Never translated -- legitimate while draft, but start_test's
+        # is_draft: true -> false transition must still catch it.
+        create_level(:game => @game, :name => "Уровень", :text => "Текст")
+      end
+
+      it "refuses to start the test and leaves the game a draft" do
+        expect { perform_request(:as_user => @user) }.to raise_error(ActiveRecord::RecordInvalid)
+        @game.reload
+        expect(@game.is_draft?).to be true
+        expect(@game.is_testing?).to be false
+      end
+    end
+  end
+
   def perform_request(opts={})
     session[:user_id] = opts[:as_user]&.id
     get :start_test, params: { id: @game.id }

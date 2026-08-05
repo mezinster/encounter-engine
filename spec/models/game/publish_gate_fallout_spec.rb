@@ -5,11 +5,16 @@
 # publication-relevant changes. That made a published multilingual game
 # permanently invalid the moment anything else about it was saved --
 # including changes that have nothing to do with translation. These specs
-# pin the three call sites the reviewer found broken:
+# pin the three call sites the reviewer found broken. Each one arranges a
+# genuine translation gap (an untranslated level added AFTER the game
+# published cleanly) before exercising the method, because the old guard
+# was only ever wrong when a gap actually existed at save time -- a fixture
+# with no gap can't tell the old guard from the new one:
 #   - adding a level to an already-published, already-translated game
 #   - reserve_place_for_team!, which uses a bare `save` and silently
 #     swallowed the failure, so requested_teams_number stopped moving and
 #     max_team_number became unenforceable
+#   - free_place_of_team!, the same bare-`save` failure mode in reverse
 #   - finish_game!, which uses `save!` and would 500 the author trying to
 #     end their own game
 require "rails_helper"
@@ -40,14 +45,18 @@ describe Game do
       expect(reloaded.update(:max_team_number => reloaded.max_team_number + 1)).to be true
     end
 
-    it "still lets reserve_place_for_team! increment requested_teams_number on a published multilingual game" do
+    it "still lets reserve_place_for_team! increment requested_teams_number on a published multilingual game with a translation gap" do
+      create_level(:game => game, :name => "Уровень 2", :text => "Текст 2")
+      game.reload
+
       expect do
         game.reserve_place_for_team!
       end.to change { game.reload.requested_teams_number }.by(1)
     end
 
-    it "still lets free_place_of_team! decrement requested_teams_number on a published multilingual game" do
+    it "still lets free_place_of_team! decrement requested_teams_number on a published multilingual game with a translation gap" do
       game.reserve_place_for_team!
+      create_level(:game => game, :name => "Уровень 2", :text => "Текст 2")
       game.reload
 
       expect do
@@ -55,7 +64,10 @@ describe Game do
       end.to change { game.reload.requested_teams_number }.by(-1)
     end
 
-    it "does not raise when finish_game! is called on a published multilingual game" do
+    it "does not raise when finish_game! is called on a published multilingual game with a translation gap" do
+      create_level(:game => game, :name => "Уровень 2", :text => "Текст 2")
+      game.reload
+
       expect { game.finish_game! }.not_to raise_error
       expect(game.reload.author_finished?).to be true
     end

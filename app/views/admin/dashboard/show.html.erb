@@ -1,41 +1,41 @@
 <h1><%= t("admin.dashboard.show.title") %></h1>
 
 <h2><%= t("admin.dashboard.show.games_by_status") %></h2>
-<table class="admin-stats">
+<div class="stat-grid">
   <% @games_by_status.each do |status, count| %>
-    <tr>
-      <th><%= t("admin.dashboard.show.status.#{status}") %></th>
-      <td><%= count %></td>
-    </tr>
+    <div class="stat">
+      <div class="stat-value"><%= count %></div>
+      <div class="stat-label"><%= t("admin.dashboard.show.status.#{status}") %></div>
+    </div>
   <% end %>
-  <tr>
-    <th><%= t("admin.dashboard.show.editing_locked") %></th>
-    <td><%= @editing_locked %></td>
-  </tr>
-</table>
+  <div class="stat">
+    <div class="stat-value"><%= @editing_locked %></div>
+    <div class="stat-label"><%= t("admin.dashboard.show.editing_locked") %></div>
+  </div>
+</div>
 
 <h2><%= t("admin.dashboard.show.totals") %></h2>
-<table class="admin-stats">
+<div class="stat-grid">
   <% @counts.each do |key, count| %>
-    <tr>
-      <th><%= t("admin.dashboard.show.total.#{key}") %></th>
-      <td><%= count %></td>
-    </tr>
+    <div class="stat">
+      <div class="stat-value"><%= count %></div>
+      <div class="stat-label"><%= t("admin.dashboard.show.total.#{key}") %></div>
+    </div>
   <% end %>
-</table>
+</div>
 
 <h2><%= t("admin.dashboard.show.entries_by_status") %></h2>
-<table class="admin-stats">
+<div class="stat-grid">
   <% @entries_by_status.each do |status, count| %>
-    <tr>
+    <div class="stat">
       <%# GameEntry.status is a free string column, so a value nobody
           anticipated must render as itself rather than raise under
           raise_on_missing_translations. %>
-      <th><%= t("admin.dashboard.show.entry_status.#{status}", :default => status.to_s) %></th>
-      <td><%= count %></td>
-    </tr>
+      <div class="stat-value"><%= count %></div>
+      <div class="stat-label"><%= t("admin.dashboard.show.entry_status.#{status}", :default => status.to_s) %></div>
+    </div>
   <% end %>
-</table>
+</div>
 
 <p><%= link_to t("admin.dashboard.show.all_games"), admin_games_path %></p>
 <p><%= link_to t("admin.dashboard.show.audit_log"), admin_audit_index_path %></p>

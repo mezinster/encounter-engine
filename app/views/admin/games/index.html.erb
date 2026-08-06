@@ -1,47 +1,62 @@
 <%# app/views/admin/games/index.html.erb %>
 <h1><%= t("admin.games.index.title") %></h1>
 
-<table class="admin-games">
-  <tr>
-    <th><%= t("admin.games.index.name") %></th>
-    <th><%= t("admin.games.index.author") %></th>
-    <th><%= t("admin.games.index.locales") %></th>
-    <th><%= t("admin.games.index.status") %></th>
-    <th><%= t("admin.games.index.teams") %></th>
-    <th></th>
-  </tr>
+<div class="table-wrap">
+<table class="table--cards">
+  <thead>
+    <tr>
+      <th><%= t("admin.games.index.name") %></th>
+      <th><%= t("admin.games.index.author") %></th>
+      <th><%= t("admin.games.index.locales") %></th>
+      <th><%= t("admin.games.index.status") %></th>
+      <th><%= t("admin.games.index.teams") %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
   <% @games.each do |game| %>
     <tr>
-      <td><%= link_to game.name, game_path(game) %></td>
-      <td><%= game.author&.nickname %></td>
-      <td><%= game.available_locale_list.join(", ") %></td>
-      <td>
-        <% if game.withdrawn? %><%= t("admin.games.index.withdrawn") %>
-        <% elsif game.draft? %><%= t("admin.games.index.draft") %>
-        <% elsif game.author_finished? %><%= t("admin.games.index.finished") %>
-        <% elsif game.started? %><%= t("admin.games.index.running") %>
-        <% else %><%= t("admin.games.index.scheduled") %>
+      <td data-label="<%= t("admin.games.index.name") %>"><%= link_to game.name, game_path(game) %></td>
+      <td data-label="<%= t("admin.games.index.author") %>"><%= game.author&.nickname %></td>
+      <td data-label="<%= t("admin.games.index.locales") %>"><%= game.available_locale_list.join(", ") %></td>
+      <td data-label="<%= t("admin.games.index.status") %>">
+        <% if game.withdrawn? %>
+          <span class="tag tag--danger"><%= t("admin.games.index.withdrawn") %></span>
+        <% elsif game.draft? %>
+          <span class="tag"><%= t("admin.games.index.draft") %></span>
+        <% elsif game.author_finished? %>
+          <span class="tag"><%= t("admin.games.index.finished") %></span>
+        <% elsif game.started? %>
+          <span class="tag tag--live"><%= t("admin.games.index.running") %></span>
+        <% else %>
+          <span class="tag"><%= t("admin.games.index.scheduled") %></span>
         <% end %>
         <% if game.editing_locked? %> &middot; <%= t("admin.games.index.locked") %><% end %>
       </td>
-      <td><%= game.game_passings.size %></td>
-      <td>
-        <%= link_to t("admin.games.index.edit"), edit_game_path(game) unless game.started? %>
-        <% if game.withdrawn? %>
-          <%= button_to t("admin.games.index.restore"), restore_game_path(game), :method => :post %>
-        <% else %>
-          <%= button_to t("admin.games.index.withdraw"), withdraw_game_path(game), :method => :post %>
-        <% end %>
-        <% if game.editing_locked? %>
-          <%= button_to t("admin.games.index.unlock"), unlock_game_path(game), :method => :post %>
-        <% else %>
-          <%= button_to t("admin.games.index.lock"), lock_game_path(game), :method => :post %>
-        <% end %>
+      <td data-label="<%= t("admin.games.index.teams") %>"><%= game.game_passings.size %></td>
+      <td data-label="">
+        <div class="game-control">
+          <%= link_to t("admin.games.index.edit"), edit_game_path(game), class: "btn" unless game.started? %>
+          <% if game.withdrawn? %>
+            <%= button_to t("admin.games.index.restore"), restore_game_path(game), :method => :post, :class => "btn" %>
+          <% else %>
+            <%= button_to t("admin.games.index.withdraw"), withdraw_game_path(game), :method => :post, :class => "btn" %>
+          <% end %>
+          <% if game.editing_locked? %>
+            <%= button_to t("admin.games.index.unlock"), unlock_game_path(game), :method => :post, :class => "btn" %>
+          <% else %>
+            <%= button_to t("admin.games.index.lock"), lock_game_path(game), :method => :post, :class => "btn" %>
+          <% end %>
+        </div>
         <% if game.deletable? %>
-          <%= link_to t("admin.games.index.delete"), delete_game_path(game),
-                      :data => { :confirm => t("admin.games.index.delete_confirm", :name => game.name) } %>
+          <div class="game-control">
+            <%= link_to t("admin.games.index.delete"), delete_game_path(game), class: "btn btn--danger",
+                        :data => { :confirm => t("admin.games.index.delete_confirm", :name => game.name) } %>
+          </div>
         <% end %>
       </td>
     </tr>
   <% end %>
+  </tbody>
 </table>
+</div>

@@ -1,6 +1,12 @@
 <h1><%= @user.nickname %></h1>
 
-<table class="admin-user">
+<%# A key/value table -- each row's <th> IS its own label, so this is not
+    one of "the three list screens" Step 2 collapses into .table--cards
+    (that component assumes column headers in a <thead>, hidden below
+    48rem while <td> grows a data-label; a row-label table has no <thead>
+    to hide). It still gets the plain table/th/td treatment from
+    components.css -- borders, padding, spacing -- for free. %>
+<table>
   <tr><th><%= t("admin.users.show.email") %></th><td><%= @user.email %></td></tr>
   <tr><th><%= t("admin.users.show.phone") %></th><td><%= @user.phone_number %></td></tr>
   <tr><th><%= t("admin.users.show.jabber") %></th><td><%= @user.jabber_id %></td></tr>
@@ -16,18 +22,18 @@
     keeps no record of previous teams. Participation in games runs through the
     team rather than the user, so "games this person played" is not a question
     this schema answers directly and is deliberately not attempted. %>
-<ul>
+<ul class="game-list">
   <% @user.created_games.each do |game| %>
     <li><%= link_to game.name, game_path(game) %></li>
   <% end %>
 </ul>
 
-<p>
+<div class="game-control">
   <% if @user.superadmin? %>
-    <%= button_to t("admin.users.show.revoke"), revoke_admin_user_path(@user), :method => :post %>
+    <%= button_to t("admin.users.show.revoke"), revoke_admin_user_path(@user), :method => :post, :class => "btn btn--danger" %>
   <% else %>
-    <%= button_to t("admin.users.show.grant"), grant_admin_user_path(@user), :method => :post %>
+    <%= button_to t("admin.users.show.grant"), grant_admin_user_path(@user), :method => :post, :class => "btn btn--go" %>
   <% end %>
-</p>
+</div>
 
 <p><%= link_to t("admin.users.show.back"), admin_users_path %></p>

@@ -63,8 +63,14 @@ class Level < ApplicationRecord
   # called directly. See Question#matches_any_answer for why plain
   # String#upcase (rather than the old upcase_utf8_cyr monkey patch) is
   # correct here.
+  #
+  # Skips quiz questions for the same reason GamePassing#correct_answer? does:
+  # a question keeps its Answer rows after options turn it into a quiz
+  # question. These two must filter identically -- correct_answer? decides
+  # WHETHER a typed answer counts and this decides WHICH question it credits,
+  # so a disagreement would mark the wrong question answered.
   def find_question_by_answer(answer_value)
-    self.questions.detect do |question|
+    self.questions.reject(&:quiz?).detect do |question|
       question.answers.any? { |answer| answer.value.to_s.strip.upcase == answer_value.to_s.strip.upcase }
     end
   end

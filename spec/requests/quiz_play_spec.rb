@@ -35,6 +35,26 @@ describe "playing a quiz level", type: :request do
     expect(response.body).not_to include('name="answer"')
   end
 
+  # A question keeps its Answer rows when an author adds options to turn it
+  # into a quiz question -- AnswersController#delete refuses to remove the last
+  # variant, so the pre-quiz code cannot be stripped even deliberately. Once
+  # post_options learned to accept a typed answer (the fix for the mixed-level
+  # defect), that stale code became a working answer to a question the screen
+  # never asks a code for: submit it with no selection at all and the level
+  # completes. Guarded in BOTH GamePassing#correct_answer? and
+  # Level#find_question_by_answer, so both are pinned here.
+  it "refuses the code a quiz question carried before it became a quiz question" do
+    stale_code = question.correct_answer
+    expect(stale_code).to be_present
+
+    post post_answer_path(:game_id => game.id), :params => { :answer => stale_code }
+
+    passing.reload
+    expect(passing.answered_questions).to be_empty
+    expect(passing.current_level).to eq(level)
+    expect(passing.finished_at).to be_nil
+  end
+
   # The name promised advancement but the original assertion only checked
   # that the question was recorded as answered -- deleting `pass_level! if
   # all_questions_answered?` from GamePassing#answer_options! left it green.

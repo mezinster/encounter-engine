@@ -179,8 +179,14 @@ class GamePassing < ApplicationRecord
     current_level.hints.select { |hint| !hint.ready_to_show?(current_level_entered_at, now) }
   end
 
+  # Only questions that are still answered by TYPING a code. A question keeps
+  # its Answer rows after an author turns it into a quiz question by adding
+  # options -- AnswersController#delete refuses to remove the last variant, so
+  # there is no way to strip them even deliberately. Without this filter the
+  # pre-quiz code stays a working answer to a quiz question, letting a team
+  # finish a quiz level by typing a string the screen never asks for.
   def correct_answer?(answer)
-    unanswered_questions.any? { |question| question.matches_any_answer(answer) }
+    unanswered_questions.reject(&:quiz?).any? { |question| question.matches_any_answer(answer) }
   end
 
   def time_at_level

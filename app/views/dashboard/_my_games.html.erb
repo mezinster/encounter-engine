@@ -1,5 +1,5 @@
 <% @my_games = Game.by(current_user) %>
-<fieldset id="mygames">
+<fieldset id="mygames" class="card">
   <legend>
     <%= t("dashboard.my_games.legend", count: @my_games.count) %>
   </legend>

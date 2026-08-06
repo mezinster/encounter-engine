@@ -1,5 +1,67 @@
 /* screens.css — page/screen-specific styling that doesn't belong in a shared component. */
 
+/* --- Dashboard: each section is a card, two-up from tablet width up ----- */
+.dash-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 60rem) {
+  .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* A game row inside a card's list (dashboard "my games", games/index) --
+   base.css strips the ul/li default spacing, so give rows back a readable
+   rhythm without touching the markup's semantics. */
+.game-list li {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+.game-list li:last-child { border-bottom: 0; }
+
+/* master.css's global `a { background-color: #fff }` and `p { color: #000;
+   background-color: #fff }` (both left from the pre-dark-theme app, invisible
+   on the old all-white page) turn into a glaring white box behind every
+   plain link or paragraph now that dashboard/game-page content sits on a
+   card/panel surface -- base.css never touches `a`/`p` background or `p`
+   color, so nothing upstream of this task already cancels them. Scoped to
+   the containers this task adds, not a blanket `a{}`/`p{}` override -- other
+   pages this task doesn't touch are left exactly as they were.
+   `:not(.btn)` matters on the anchor rule: add_level and similar controls
+   in these same cards ARE `.btn`, and `.card a` alone outranks a bare
+   `.btn` on specificity (class+element beats one class), which would
+   silently blank out the button's own background. */
+.card a:not(.btn),
+.panel a:not(.btn),
+.game-list a:not(.btn) {
+  background-color: transparent;
+}
+
+.card p,
+.panel p {
+  background-color: transparent;
+  color: inherit;
+}
+
+/* The two spots on the game page where a lone <p> sits directly in .main,
+   outside any .card/.panel -- same master.css interference, same fix. */
+.dash-greeting,
+.danger-row {
+  background-color: transparent;
+  color: inherit;
+}
+
+/* master.css's `h1`/`h2` also carry `background-color: #fff`, and neither
+   color nor background is something base.css's h1/h2 rules touch, so the
+   game page's title inherits a stray grey-on-white box. Scoped to this
+   page's title rather than every h1/h2 app-wide -- that sweep belongs to
+   whichever task finally unplugs master.css. */
+.page-title {
+  background-color: transparent;
+  color: var(--text);
+}
+
 /* --- Play screen: the pinned bottom bar --------------------------------
  * Task text and hints accumulate above as the game gets more stressful; the
  * code field is the thing a player came to use, so it -- along with the

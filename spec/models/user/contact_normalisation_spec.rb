@@ -7,12 +7,17 @@ describe User, "contact handle normalisation" do
   # players who typed the same handle differently are stored identically.
   describe "#instagram" do
     {
-      "@player"                      => "player",
-      "https://instagram.com/player" => "player",
-      "http://instagram.com/player"  => "player",
-      "www.instagram.com/player/"    => "player",
-      "instagram.com/player"         => "player",
-      "  player  "                   => "player"
+      "@player"                       => "player",
+      "https://instagram.com/player"  => "player",
+      "http://instagram.com/player"   => "player",
+      "www.instagram.com/player/"     => "player",
+      "instagram.com/player"          => "player",
+      "  player  "                    => "player",
+      # Instagram's own profile URLs put the "@" after the host
+      # (instagram.com/@player), not before it. Host must strip before "@",
+      # or this would normalise to "@player" instead of "player".
+      "instagram.com/@player"         => "player",
+      "https://instagram.com/@player" => "player"
     }.each do |typed, stored|
       it "stores #{typed.inspect} as #{stored.inspect}" do
         user.update!(:instagram => typed)
@@ -30,11 +35,15 @@ describe User, "contact handle normalisation" do
 
   describe "#telegram_id" do
     {
-      "@player"              => "player",
-      "https://t.me/player"  => "player",
-      "t.me/player"          => "player",
-      "telegram.me/player/"  => "player",
-      "  player  "           => "player"
+      "@player"               => "player",
+      "https://t.me/player"   => "player",
+      "t.me/player"           => "player",
+      "telegram.me/player/"   => "player",
+      "  player  "            => "player",
+      # Same host-before-"@" hazard as Instagram, on both of Telegram's
+      # recognised hosts.
+      "t.me/@player"          => "player",
+      "telegram.me/@player"   => "player"
     }.each do |typed, stored|
       it "stores #{typed.inspect} as #{stored.inspect}" do
         user.update!(:telegram_id => typed)

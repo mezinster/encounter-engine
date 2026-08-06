@@ -26,6 +26,27 @@ class Question < ApplicationRecord
   # here would be redundant, not safer.
   has_many :answers
 
+  # dependent: :destroy here, unlike :answers -- an Option hangs off nothing
+  # but its question, so nothing else would clean it up. (An Answer carries its
+  # own level_id and is already removed by Level's has_many :answers.)
+  has_many :options, :dependent => :destroy
+
+  # No mode flag: having options IS being a quiz question. Nothing can
+  # disagree with reality about what kind of question this is.
+  def quiz?
+    self.options.any?
+  end
+
+  # Decides radio vs checkbox at render time, so an author marks what is true
+  # rather than picking a control.
+  def single_choice?
+    self.options.correct.count == 1
+  end
+
+  def correct_option_ids
+    self.options.correct.pluck(:id).sort
+  end
+
   def correct_answer=(answer)
     self.answers.build(:value => answer)
   end

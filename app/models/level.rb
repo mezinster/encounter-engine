@@ -39,6 +39,13 @@ class Level < ApplicationRecord
     self.questions.count > 1
   end
 
+  # A level presents options rather than asking for a typed code. Derived, not
+  # stored: a level with no options behaves exactly as it always has, through
+  # exactly the same code.
+  def quiz?
+    self.questions.any?(&:quiz?)
+  end
+
   # Made consistent with Question#matches_any_answer, which strips both sides
   # before comparing. This path used to skip the strip, relying on
   # GamePassing#check_answer! to strip the submitted value first — that

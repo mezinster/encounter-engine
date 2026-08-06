@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_05_155600) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_06_072515) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -118,6 +118,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_05_155600) do
     t.string "level"
     t.string "answer"
     t.datetime "time", precision: nil
+  end
+
+  create_table "options", force: :cascade do |t|
+    t.integer "question_id", null: false
+    t.string "text", null: false
+    t.boolean "is_correct", default: false, null: false
+    t.integer "position"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["question_id"], name: "index_options_on_question_id"
   end
 
   create_table "questions", force: :cascade do |t|

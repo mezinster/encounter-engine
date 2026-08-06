@@ -93,6 +93,15 @@ module FixturesHelper
     GamePassing.create! creation_params
   end
 
+  def create_option(options={})
+    creation_params = {
+      :text => random_string,
+      :is_correct => false
+    }.merge(options)
+
+    Option.create! creation_params
+  end
+
   def create_hint(options={})
     creation_params = {
       :level => create_level,

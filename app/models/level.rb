@@ -46,6 +46,16 @@ class Level < ApplicationRecord
     self.questions.any?(&:quiz?)
   end
 
+  # Stored in seconds, authored in minutes -- mirroring Hint#delay_in_minutes,
+  # which authors already use for hint delays on this same form.
+  def wrong_answer_penalty_in_minutes
+    self.wrong_answer_penalty.to_i / 60
+  end
+
+  def wrong_answer_penalty_in_minutes=(value)
+    self.wrong_answer_penalty = value.to_i * 60
+  end
+
   # Made consistent with Question#matches_any_answer, which strips both sides
   # before comparing. This path used to skip the strip, relying on
   # GamePassing#check_answer! to strip the submitted value first — that

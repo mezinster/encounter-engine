@@ -93,6 +93,33 @@ class GamePassing < ApplicationRecord
     end
   end
 
+  # The quiz counterpart of check_answer!, which takes a typed string and is
+  # left completely untouched -- a level with no options never reaches here.
+  #
+  # Set equality, not overlap: every correct option and no incorrect one.
+  # Partial credit was considered and rejected -- this product ranks teams by
+  # elapsed time and has no concept of a score, so "partly right" has nowhere
+  # to go.
+  def answer_options!(question, option_ids)
+    chosen = Array(option_ids).map(&:to_i).uniq.sort
+
+    if chosen.any? && chosen == question.correct_option_ids
+      pass_question!(question)
+      pass_level! if all_questions_answered?
+      true
+    else
+      # Charged on every wrong submission, including a repeat of one already
+      # tried: forgiving repeats would let a team walk the whole option space
+      # for the price of a single mistake.
+      #
+      # update_column, and deliberately NOT touching current_level_entered_at:
+      # that column is the sole input to every hint countdown, so charging a
+      # penalty against it would bring the next hint CLOSER on a wrong answer.
+      update_column(:penalty_seconds, penalty_seconds.to_i + question.level.wrong_answer_penalty.to_i)
+      false
+    end
+  end
+
   def pass_question!(question)
 		answered_questions << question
 		save!

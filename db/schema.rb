@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_06_072515) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_06_073240) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -65,6 +65,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_06_072515) do
     t.datetime "current_level_entered_at", precision: nil
     t.text "answered_questions"
     t.string "status"
+    t.integer "penalty_seconds", default: 0, null: false
   end
 
   create_table "games", force: :cascade do |t|
@@ -110,6 +111,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_06_072515) do
     t.datetime "updated_at", precision: nil, null: false
     t.integer "position"
     t.string "name"
+    t.integer "wrong_answer_penalty", default: 0, null: false
   end
 
   create_table "logs", force: :cascade do |t|

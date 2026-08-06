@@ -200,8 +200,21 @@ ru:
       start_test: "Начать тестирование"
       start: "Старт"
       finish_test: "Завершить тестирование"
+  options:
+    index:
+      title: "Варианты ответа для задания"
+      game_prefix: "игра"
+      explain: "Если у вопроса есть варианты, игроки выбирают из них, а не вводят код."
+      text_label: "Вариант"
+      correct_label: "Верный"
+      correct_yes: "верный"
+      new_option_label: "Новый вариант"
+      is_correct_label: "Это верный ответ"
+      submit: "Добавить вариант"
+      back: "К заданию"
   levels:
     form:
+      wrong_answer_penalty: "Штраф за неверный ответ (минут)"
       name: "Название"
       text: "Текст задания"
       correct_answer: "Код"
@@ -221,6 +234,7 @@ ru:
       code_label: "Код:"
       codes_label: "Коды (%{count}):"
       add_code: "Добавить ещё один код"
+      options_link: "Варианты ответа"
       hints_legend: "Подсказки:"
       add_hint: "Добавить подсказку"
       delete_level: "Удалить этот уровень"

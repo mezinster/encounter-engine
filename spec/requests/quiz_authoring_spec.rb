@@ -49,4 +49,53 @@ describe "quiz options and the publish gate", type: :request do
 
     expect(game.valid?).to be true
   end
+
+  describe "the options page" do
+    let(:game)     { create_game(:author => author, :is_draft => true) }
+    let(:level)    { create_level(:game => game) }
+    let(:question) { create_question(:level => level) }
+
+    def sign_in(u)
+      put login_path, :params => { :email => u.email, :password => "1234" }
+    end
+
+    it "refuses a stranger" do
+      sign_in(create_user)
+
+      get game_level_question_options_path(game, level, question)
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "lets the author add a correct option" do
+      sign_in(author)
+
+      expect {
+        post game_level_question_options_path(game, level, question),
+             :params => { :option => { :text => "Париж", :is_correct => "1" } }
+      }.to change { Option.count }.by(1)
+
+      expect(Option.last.is_correct).to be true
+      expect(Option.last.question).to eq(question)
+    end
+
+    it "lets the author delete one" do
+      option = create_option(:question => question, :text => "Лион")
+      sign_in(author)
+
+      expect {
+        get delete_game_level_question_option_path(game, level, question, option)
+      }.to change { Option.count }.by(-1)
+    end
+
+    it "stores the penalty in seconds from a value given in minutes" do
+      sign_in(author)
+
+      put game_level_path(game, level),
+          :params => { :level => { :name => level.name, :text => level.text,
+                                   :wrong_answer_penalty_in_minutes => "5" } }
+
+      expect(level.reload.wrong_answer_penalty).to eq(300)
+    end
+  end
 end

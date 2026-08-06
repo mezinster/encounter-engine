@@ -99,6 +99,14 @@ Rails.application.routes.draw do
             get :delete
           end
         end
+
+        # Quiz options, mirroring :answers exactly -- including the GET delete,
+        # which is the established (if unfashionable) shape here.
+        resources :options, only: [ :index, :create ] do
+          member do
+            get :delete
+          end
+        end
       end
     end
   end

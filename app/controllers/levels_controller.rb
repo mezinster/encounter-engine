@@ -71,7 +71,7 @@ class LevelsController < ApplicationController
   # "new level" form, not by "edit", but it's harmless to permit on both.
   def level_params
     params.fetch(:level, ActionController::Parameters.new)
-          .permit(:name, :text, :correct_answer,
+          .permit(:name, :text, :correct_answer, :wrong_answer_penalty_in_minutes,
                   :translations => translation_params_shape(Level::TRANSLATABLE_FIELDS))
   end
 

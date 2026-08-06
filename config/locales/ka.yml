@@ -223,8 +223,21 @@ ka:
       start_test: "ტესტირების დაწყება"
       start: "სტარტი"
       finish_test: "ტესტირების დასრულება"
+  options:
+    index:
+      title: "პასუხის ვარიანტები დავალებისთვის"
+      game_prefix: "თამაში"
+      explain: "თუ კითხვას აქვს ვარიანტები, მოთამაშეები ირჩევენ მათგან და კოდს არ შეიყვანენ."
+      text_label: "ვარიანტი"
+      correct_label: "სწორი"
+      correct_yes: "სწორი"
+      new_option_label: "ახალი ვარიანტი"
+      is_correct_label: "ეს სწორი პასუხია"
+      submit: "ვარიანტის დამატება"
+      back: "დავალებაზე დაბრუნება"
   levels:
     form:
+      wrong_answer_penalty: "ჯარიმა არასწორი პასუხისთვის (წუთი)"
       name: "დასახელება"
       text: "დავალების ტექსტი"
       correct_answer: "კოდი"
@@ -244,6 +257,7 @@ ka:
       code_label: "კოდი:"
       codes_label: "კოდები (%{count}):"
       add_code: "კიდევ ერთი კოდის დამატება"
+      options_link: "პასუხის ვარიანტები"
       hints_legend: "მინიშნებები:"
       add_hint: "მინიშნების დამატება"
       delete_level: "ამ დონის წაშლა"

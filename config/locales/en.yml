@@ -149,6 +149,7 @@ en:
       level_field: "Level %{position} — %{field}"
       hint_field: "Level %{position} — hint after %{minutes} min"
       question_field: "Level %{position} — question"
+      option_field: "Level %{position} — option “%{text}”"
       missing_count: "%{count} missing"
       heading: "Not translated yet (%{count})"
       fields:

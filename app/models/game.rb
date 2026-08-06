@@ -368,10 +368,14 @@ private
     # lazy-load its own, which is one query per record.
     self.levels.includes(:content_translations,
                          :hints => :content_translations,
-                         :questions => :content_translations).each do |level|
+                         :questions => [ :content_translations,
+                                         { :options => :content_translations } ]).each do |level|
       records << level
       records.concat(level.hints)
-      records.concat(level.questions)
+      level.questions.each do |question|
+        records << question
+        records.concat(question.options)
+      end
     end
     records
   end
@@ -384,6 +388,11 @@ private
     when Hint     then I18n.t("games.translations.hint_field",  :position => record.level&.position,
                                                                 :minutes => record.delay_in_minutes)
     when Question then I18n.t("games.translations.question_field", :position => record.level&.position)
+    # Without a branch here the case returns nil, putting a blank entry in the
+    # author's to-do list -- an instruction to translate something unnamed.
+    when Option   then I18n.t("games.translations.option_field",
+                              :position => record.question&.level&.position,
+                              :text => record.text)
     end
   end
 end

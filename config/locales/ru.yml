@@ -149,6 +149,7 @@ ru:
       level_field: "Уровень %{position} — %{field}"
       hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
       question_field: "Уровень %{position} — вопрос"
+      option_field: "Уровень %{position} — вариант «%{text}»"
       missing_count: "не хватает: %{count}"
       heading: "Не переведено (%{count})"
       fields:

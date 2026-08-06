@@ -166,6 +166,7 @@ uk:
       level_field: "Рівень %{position} — %{field}"
       hint_field: "Рівень %{position} — підказка через %{minutes} хв"
       question_field: "Рівень %{position} — питання"
+      option_field: "Рівень %{position} — варіант «%{text}»"
       missing_count: "бракує: %{count}"
       heading: "Не перекладено (%{count})"
       fields:

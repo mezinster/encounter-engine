@@ -172,6 +172,7 @@ ka:
       level_field: "დონე %{position} — %{field}"
       hint_field: "დონე %{position} — მინიშნება %{minutes} წუთის შემდეგ"
       question_field: "დონე %{position} — კითხვა"
+      option_field: "დონე %{position} — ვარიანტი «%{text}»"
       missing_count: "აკლია: %{count}"
       heading: "არ არის ნათარგმნი (%{count})"
       fields:

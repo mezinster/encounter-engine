@@ -63,3 +63,28 @@
   font-weight: 600;
   text-align: center;
 }
+
+/* --- Operator screen: live stats + the per-team intervention panel ------
+ * The stats table stays a real <table id="stats"> (see .table--cards in
+ * components.css for the responsive behaviour); each row's controls live
+ * behind a <details> disclosure rather than inline, so nothing is armed
+ * until the operator deliberately opens that team's panel.
+ */
+.team-panel {
+  margin-top: var(--space-3);
+  background: var(--surface-2);
+}
+
+.team-panel-actions { display: grid; gap: var(--space-2); }
+
+/* Danger sits apart from the rest, so "return to the game" is never the
+   button next to the one you meant to press. */
+.team-panel-actions .btn--danger { margin-top: var(--space-3); }
+
+.game-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}

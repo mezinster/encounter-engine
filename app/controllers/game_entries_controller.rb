@@ -7,7 +7,9 @@ class GameEntriesController < ApplicationController
   before_action :find_team, only: :new
   before_action :find_entry, except: :new
   before_action :ensure_author, only: [:accept, :reject]
-  before_action :ensure_team_captain, except: [:accept, :reject]
+  # Deliberately NOT SecurityFilters#ensure_team_captain -- see the method below
+  # for why "a captain" is not a sufficient check in this controller.
+  before_action :ensure_captain_of_target_team, except: [:accept, :reject]
   before_action :ensure_game_is_not_withdrawn, only: [:new, :reopen]
 
   def new
@@ -66,6 +68,31 @@ class GameEntriesController < ApplicationController
   def find_entry
     @entry = GameEntry.find(params[:id])
     @game = Game.find(@entry.game.id) if @entry
+  end
+
+  # SecurityFilters#ensure_team_captain asks "is this user *a* captain" and
+  # stops there. That is enough for its other two callers, because neither
+  # takes a team from the request: InvitationsController#create hardcodes
+  # `to_team: current_user.team`, and GamePassingsController#exit_game resolves
+  # its passing through `GamePassing.of(@team, @game)`.
+  #
+  # This controller is the exception -- its target team comes from the URL,
+  # either params[:team_id] (#new) or the entry's own team (everything else) --
+  # and both are looked up unscoped. Pairing an unscoped lookup with a check
+  # that never names the record being acted on is the same shape as the
+  # cross-tenant hole fixed in the level/question/answer/option/hint
+  # controllers.
+  #
+  # Reachable before this existed, both ways: any captain could recall, cancel
+  # or reopen another team's entry, and could register a DIFFERENT team for a
+  # game -- reserve_place_for_team! then consumed one of that game's limited
+  # slots on their behalf. spec/requests/game_entry_authorization_spec.rb pins
+  # both.
+  def ensure_captain_of_target_team
+    team = @entry ? @entry.team : @team
+
+    raise Authentication::Unauthorized, t("errors.must_be_captain") unless
+      team && team.captain&.id == current_user.id
   end
 
   # can_request? cannot be used for this: its capacity check discards its own

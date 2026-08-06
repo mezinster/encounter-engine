@@ -79,6 +79,19 @@ describe Game, "#status" do
     expect(game.status).to eq(:running)
   end
 
+  # The predicates overlap here too, and this is the pair the two `return`s
+  # actually distinguish: SQL's count_by_status derives `live` (not
+  # withdrawn) before it ever looks at is_draft, so a withdrawn draft can
+  # only land in the :withdrawn bucket there -- but Ruby's #status is purely
+  # positional, so swapping these two `return`s would make a withdrawn draft
+  # report :draft while count_by_status still counts it as :withdrawn.
+  it "reports :withdrawn for a draft that has also been withdrawn" do
+    game = create_game(:is_draft => true)
+    game.withdraw!
+
+    expect(game.status).to eq(:withdrawn)
+  end
+
   # THE guard the comment on count_by_status was standing in for. Two screens
   # disagreeing about what a game IS would be worse than either being wrong.
   it "agrees with count_by_status across every state" do
@@ -88,6 +101,7 @@ describe Game, "#status" do
     finished = running_game
     finished.update_column(:author_finished_at, Time.now)
     create_game(:is_draft => false).withdraw!
+    create_game(:is_draft => true).withdraw!
 
     tallied = Game.all.group_by(&:status).transform_values(&:size)
     tallied.default = 0

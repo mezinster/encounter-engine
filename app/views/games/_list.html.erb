@@ -44,12 +44,10 @@
       </td>
       <td data-label="<%= t("games.list.participants") %>">
         <%= counts[:registered].fetch(game.id, 0) %> / <%= game.max_team_number %>
-        <% playing = game.status == :finished ? counts[:played].fetch(game.id, 0)
-                                              : counts[:playing].fetch(game.id, 0) %>
-        <% if playing > 0 %>
+        <% participation = game_participation_text(game, counts) %>
+        <% if participation %>
           &middot;
-          <%= game.status == :finished ? t("games.list.played", :count => playing)
-                                       : t("games.list.playing", :count => playing) %>
+          <%= participation %>
         <% end %>
       </td>
       <%# Every link below keeps its exact text, order and visibility

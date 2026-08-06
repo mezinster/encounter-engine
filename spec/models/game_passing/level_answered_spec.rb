@@ -15,6 +15,12 @@ describe GamePassing, "#level_answered?" do
   describe "when all codes are required" do
     before { level.update_column(:any_code_passes, false) }
 
+    it "is false with nothing answered" do
+      add_question("два"); add_question("три")
+
+      expect(passing.level_answered?).to be false
+    end
+
     it "is false with one of three answered" do
       add_question("два"); add_question("три")
       passing.pass_question!(level.questions.first)

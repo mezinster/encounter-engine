@@ -128,7 +128,7 @@ class GamePassingsController < ApplicationController
   #
   # Each question is judged independently: getting one right and one wrong
   # marks the first answered and charges one penalty, rather than discarding
-  # both. That falls out of the existing model -- all_questions_answered? is
+  # both. That falls out of the existing model -- level_answered? is
   # already what advances a level.
   #
   # The log records the chosen option texts, so the author's answer log stays a

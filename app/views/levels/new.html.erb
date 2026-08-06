@@ -33,6 +33,10 @@
     <%= f.text_field :correct_answer %>
     <em><%= t("levels.new.hint_more_codes") %></em>
   </div>
+  <div class="field">
+    <%= f.label :wrong_answer_penalty_in_minutes, t("levels.form.wrong_answer_penalty") %>
+    <%= f.number_field :wrong_answer_penalty_in_minutes, :min => 0 %>
+  </div>
 
   <%= f.submit t("levels.new.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), game_path(@level.game) %></em>

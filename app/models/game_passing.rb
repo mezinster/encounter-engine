@@ -93,6 +93,41 @@ class GamePassing < ApplicationRecord
     end
   end
 
+  # The quiz counterpart of check_answer!, which takes a typed string and is
+  # left completely untouched -- a level with no options never reaches here.
+  #
+  # Set equality, not overlap: every correct option and no incorrect one.
+  # Partial credit was considered and rejected -- this product ranks teams by
+  # elapsed time and has no concept of a score, so "partly right" has nowhere
+  # to go.
+  def answer_options!(question, option_ids)
+    chosen = Array(option_ids).map(&:to_i).uniq.sort
+
+    if chosen.any? && chosen == question.correct_option_ids
+      pass_question!(question)
+      pass_level! if all_questions_answered?
+      true
+    else
+      # Charged on every wrong submission, including a repeat of one already
+      # tried: forgiving repeats would let a team walk the whole option space
+      # for the price of a single mistake.
+      #
+      # An atomic UPDATE ... SET penalty_seconds = penalty_seconds + amount,
+      # not read-modify-write: two teammates submitting a wrong answer at the
+      # same instant each read the same starting value under update_column, so
+      # one charge is lost. increment! issues the increment as SQL (via
+      # update_counters under the hood) rather than writing back a value
+      # computed from this process's possibly-stale in-memory copy, and, like
+      # update_column, runs no validations or callbacks (save! would rewrite
+      # answered_questions as a side effect). Deliberately NOT touching
+      # current_level_entered_at: that column is the sole input to every hint
+      # countdown, so charging a penalty against it would bring the next hint
+      # CLOSER on a wrong answer.
+      increment!(:penalty_seconds, question.level.wrong_answer_penalty.to_i)
+      false
+    end
+  end
+
   def pass_question!(question)
 		answered_questions << question
 		save!
@@ -113,6 +148,14 @@ class GamePassing < ApplicationRecord
 
   def finished?
     !! finished_at
+  end
+
+  # What ranking compares. For every game that predates quiz levels
+  # penalty_seconds is 0, so this is finished_at unchanged.
+  def effective_finished_at
+    return nil unless self.finished_at
+
+    self.finished_at + self.penalty_seconds.to_i
   end
 
   # The clock every countdown is measured against. While a game is paused this
@@ -136,8 +179,14 @@ class GamePassing < ApplicationRecord
     current_level.hints.select { |hint| !hint.ready_to_show?(current_level_entered_at, now) }
   end
 
+  # Only questions that are still answered by TYPING a code. A question keeps
+  # its Answer rows after an author turns it into a quiz question by adding
+  # options -- AnswersController#delete refuses to remove the last variant, so
+  # there is no way to strip them even deliberately. Without this filter the
+  # pre-quiz code stays a working answer to a quiz question, letting a team
+  # finish a quiz level by typing a string the screen never asks for.
   def correct_answer?(answer)
-    unanswered_questions.any? { |question| question.matches_any_answer(answer) }
+    unanswered_questions.reject(&:quiz?).any? { |question| question.matches_any_answer(answer) }
   end
 
   def time_at_level

@@ -42,6 +42,15 @@
   <p>
     <%= link_to t("levels.show.add_code"), new_game_level_question_path(@game, @level), class: "btn" %>
   </p>
+
+  <%# Options turn a code question into a quiz question. Linked per question,
+      because that is the record they hang off. %>
+  <p>
+    <% @level.questions.each do |question| %>
+      <%= link_to t("levels.show.options_link"),
+                  game_level_question_options_path(@game, @level, question), class: "btn" %>
+    <% end %>
+  </p>
 </div>
 
 <fieldset class="card">

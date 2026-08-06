@@ -166,6 +166,7 @@ uk:
       level_field: "Рівень %{position} — %{field}"
       hint_field: "Рівень %{position} — підказка через %{minutes} хв"
       question_field: "Рівень %{position} — питання"
+      option_field: "Рівень %{position} — варіант «%{text}»"
       missing_count: "бракує: %{count}"
       heading: "Не перекладено (%{count})"
       fields:
@@ -216,8 +217,21 @@ uk:
       start_test: "Почати тестування"
       start: "Старт"
       finish_test: "Завершити тестування"
+  options:
+    index:
+      title: "Варіанти відповіді для завдання"
+      game_prefix: "гра"
+      explain: "Якщо у питання є варіанти, гравці обирають із них, а не вводять код."
+      text_label: "Варіант"
+      correct_label: "Правильний"
+      correct_yes: "правильний"
+      new_option_label: "Новий варіант"
+      is_correct_label: "Це правильна відповідь"
+      submit: "Додати варіант"
+      back: "До завдання"
   levels:
     form:
+      wrong_answer_penalty: "Штраф за неправильну відповідь (хвилин)"
       name: "Назва"
       text: "Текст завдання"
       correct_answer: "Код"
@@ -237,6 +251,7 @@ uk:
       code_label: "Код:"
       codes_label: "Коди (%{count}):"
       add_code: "Додати ще один код"
+      options_link: "Варіанти відповіді"
       hints_legend: "Підказки:"
       add_hint: "Додати підказку"
       delete_level: "Видалити цей рівень"
@@ -403,6 +418,8 @@ uk:
       game_log: "(лог по грі)"
       full_log: "Повний лог відповідей"
     show_current_level:
+      choose: "Оберіть відповідь"
+      penalty_label: "Штраф, хвилин:"
       title_prefix: "Гра"
       level_label: "Завдання"
       hint_label: "Підказка"
@@ -422,6 +439,8 @@ uk:
       place: "Місце"
       team: "Команда"
       finish_time: "Час фінішу"
+      penalty: "Штраф"
+      total: "Разом"
       exited: "Зійшли з дистанції"
       not_finished: "Не фінішували"
       full_log: "Лог відповідей"

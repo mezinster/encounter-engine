@@ -26,6 +26,47 @@ class Question < ApplicationRecord
   # here would be redundant, not safer.
   has_many :answers
 
+  # dependent: :destroy here, unlike :answers -- an Option hangs off nothing
+  # but its question, so nothing else would clean it up. (An Answer carries its
+  # own level_id and is already removed by Level's has_many :answers.)
+  has_many :options, :dependent => :destroy
+
+  # At least one CORRECT option, not merely any option. An author who adds a
+  # distractor first, or who never ticks a correct one, would otherwise create
+  # a question nobody can answer -- the level would render as a quiz and accept
+  # no selection, bricking the game. Failing back to the code question is the
+  # safe direction.
+  #
+  # any?(&:is_correct) over the loaded association, deliberately NOT
+  # options.correct.any? -- a scope re-queries even when preloaded, which is
+  # one of the N+1s already fixed on this branch.
+  def quiz?
+    self.options.any?(&:is_correct)
+  end
+
+  # Decides radio vs checkbox at render time, so an author marks what is true
+  # rather than picking a control.
+  #
+  # Counted in Ruby over the loaded association, NOT `options.correct.count`.
+  # A scope-plus-count issues a fresh query even when options are already
+  # preloaded, so the play view would fire one per question -- which is exactly
+  # what the query-count guard in spec/requests/translated_level_spec.rb caught.
+  def single_choice?
+    self.options.count(&:is_correct) == 1
+  end
+
+  # Same reasoning: select over the loaded association rather than a pluck,
+  # which would always hit the database.
+  def correct_option_ids
+    self.options.select(&:is_correct).map(&:id).sort
+  end
+
+  # Author-defined display order, sorted in Ruby so a preloaded association is
+  # actually used. `options.order(...)` would re-query.
+  def ordered_options
+    self.options.sort_by { |option| [ option.position || 0, option.id ] }
+  end
+
   def correct_answer=(answer)
     self.answers.build(:value => answer)
   end

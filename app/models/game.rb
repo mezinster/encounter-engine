@@ -140,12 +140,26 @@ class Game < ApplicationRecord
     GamePassing.of_game(self).finished.map(&:team)
   end
 
+  # Ranks on finish time PLUS accrued penalty, so a team that guessed its way
+  # to an early finish places behind one that took longer and did not. Without
+  # this, quiz penalties would be recorded and never cost anyone a place.
+  #
+  # Compared in Ruby rather than SQL: expressing "finished_at + penalty_seconds"
+  # as a portable interval across SQLite and PostgreSQL is more trouble than it
+  # is worth for a listing of tens of teams. The finished_before scope stays for
+  # its other callers.
+  #
+  # For every game that predates quiz levels penalty_seconds is 0, so the
+  # ordering is unchanged.
   def place_of(team)
     game_passing = GamePassing.of(team, self)
     return nil unless game_passing and game_passing.finished?
 
-    count_of_finished_before = GamePassing.of_game(self).finished_before(game_passing.finished_at).count
-    count_of_finished_before + 1
+    mine = game_passing.effective_finished_at
+    earlier = GamePassing.of_game(self).finished.count do |other|
+      other.effective_finished_at < mine
+    end
+    earlier + 1
   end
 
   def self.notstarted
@@ -354,10 +368,14 @@ private
     # lazy-load its own, which is one query per record.
     self.levels.includes(:content_translations,
                          :hints => :content_translations,
-                         :questions => :content_translations).each do |level|
+                         :questions => [ :content_translations,
+                                         { :options => :content_translations } ]).each do |level|
       records << level
       records.concat(level.hints)
-      records.concat(level.questions)
+      level.questions.each do |question|
+        records << question
+        records.concat(question.options)
+      end
     end
     records
   end
@@ -370,6 +388,11 @@ private
     when Hint     then I18n.t("games.translations.hint_field",  :position => record.level&.position,
                                                                 :minutes => record.delay_in_minutes)
     when Question then I18n.t("games.translations.question_field", :position => record.level&.position)
+    # Without a branch here the case returns nil, putting a blank entry in the
+    # author's to-do list -- an instruction to translate something unnamed.
+    when Option   then I18n.t("games.translations.option_field",
+                              :position => record.question&.level&.position,
+                              :text => record.text)
     end
   end
 end

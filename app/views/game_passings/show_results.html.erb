@@ -1,5 +1,11 @@
 <p><%= t("game_passings.show_results.congrats") %></p>
 
+<% game_passings = GamePassing.of_game(@game) %>
+<%# The penalty columns appear only when some team actually accrued one, so a
+    game with no quiz levels shows exactly the table it always did rather than
+    two permanently empty columns. %>
+<% show_penalties = game_passings.any? { |gp| gp.penalty_seconds.to_i > 0 } %>
+
 <div class="table-wrap">
 <table id="results" class="table--cards">
   <thead>
@@ -7,10 +13,13 @@
       <th><%= t("game_passings.show_results.place") %></th>
       <th><%= t("game_passings.show_results.team") %></th>
       <th><%= t("game_passings.show_results.finish_time") %></th>
+      <% if show_penalties %>
+        <th><%= t("game_passings.show_results.penalty") %></th>
+        <th><%= t("game_passings.show_results.total") %></th>
+      <% end %>
     </tr>
   </thead>
   <tbody>
-    <% game_passings = GamePassing.of_game(@game) %>
     <% game_passings.finished.each do |game_passing| %>
       <tr>
         <td data-label="<%= t("game_passings.show_results.place") %>"><%= @game.place_of(game_passing.team) %></td>
@@ -22,6 +31,14 @@
             <%= game_passing.finished_at.strftime('%H:%M:%S') %> <%= game_passing.finished_at.strftime('(%d.%m)') if game_passing.finished_at.day != @game.starts_at.day %>
           <% end %>
         </td>
+        <% if show_penalties %>
+          <td data-label="<%= t("game_passings.show_results.penalty") %>">
+            <%= game_passing.penalty_seconds / 60 %>
+          </td>
+          <td data-label="<%= t("game_passings.show_results.total") %>">
+            <%= game_passing.effective_finished_at.strftime('%H:%M:%S') %>
+          </td>
+        <% end %>
       </tr>
     <% end %>
     <% (game_passings.ended_by_author - game_passings.finished).each do |game_passing| %>
@@ -31,6 +48,10 @@
           <td data-label="<%= t("game_passings.show_results.finish_time") %>">
             <%= t("game_passings.show_results.not_finished") %>
           </td>
+          <% if show_penalties %>
+            <td data-label="<%= t("game_passings.show_results.penalty") %>"><%= game_passing.penalty_seconds / 60 %></td>
+            <td data-label="<%= t("game_passings.show_results.total") %>">—</td>
+          <% end %>
         </tr>
       <% end %>
   </tbody>

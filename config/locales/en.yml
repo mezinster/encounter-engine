@@ -149,6 +149,7 @@ en:
       level_field: "Level %{position} — %{field}"
       hint_field: "Level %{position} — hint after %{minutes} min"
       question_field: "Level %{position} — question"
+      option_field: "Level %{position} — option “%{text}”"
       missing_count: "%{count} missing"
       heading: "Not translated yet (%{count})"
       fields:
@@ -199,8 +200,21 @@ en:
       start_test: "Start testing"
       start: "Start"
       finish_test: "Finish testing"
+  options:
+    index:
+      title: "Answer options for task"
+      game_prefix: "game"
+      explain: "If a question has options, players choose from them instead of entering a code."
+      text_label: "Option"
+      correct_label: "Correct"
+      correct_yes: "correct"
+      new_option_label: "New option"
+      is_correct_label: "This is a correct answer"
+      submit: "Add option"
+      back: "Back to the task"
   levels:
     form:
+      wrong_answer_penalty: "Penalty for a wrong answer (minutes)"
       name: "Title"
       text: "Task text"
       correct_answer: "Code"
@@ -220,6 +234,7 @@ en:
       code_label: "Code:"
       codes_label: "Codes (%{count}):"
       add_code: "Add another code"
+      options_link: "Answer options"
       hints_legend: "Hints:"
       add_hint: "Add a hint"
       delete_level: "Delete this level"
@@ -380,6 +395,8 @@ en:
       resume: "Resume the game"
       paused_since: "Paused at %{time}."
     show_current_level:
+      choose: "Choose an answer"
+      penalty_label: "Penalty, minutes:"
       title_prefix: "Game"
       level_label: "Task"
       hint_label: "Hint"
@@ -399,6 +416,8 @@ en:
       place: "Place"
       team: "Team"
       finish_time: "Finish time"
+      penalty: "Penalty"
+      total: "Total"
       exited: "Left the race"
       not_finished: "Did not finish"
       full_log: "Answer log"

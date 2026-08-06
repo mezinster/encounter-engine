@@ -39,6 +39,23 @@ class Level < ApplicationRecord
     self.questions.count > 1
   end
 
+  # A level presents options rather than asking for a typed code. Derived, not
+  # stored: a level with no options behaves exactly as it always has, through
+  # exactly the same code.
+  def quiz?
+    self.questions.any?(&:quiz?)
+  end
+
+  # Stored in seconds, authored in minutes -- mirroring Hint#delay_in_minutes,
+  # which authors already use for hint delays on this same form.
+  def wrong_answer_penalty_in_minutes
+    self.wrong_answer_penalty.to_i / 60
+  end
+
+  def wrong_answer_penalty_in_minutes=(value)
+    self.wrong_answer_penalty = value.to_i * 60
+  end
+
   # Made consistent with Question#matches_any_answer, which strips both sides
   # before comparing. This path used to skip the strip, relying on
   # GamePassing#check_answer! to strip the submitted value first — that
@@ -46,8 +63,14 @@ class Level < ApplicationRecord
   # called directly. See Question#matches_any_answer for why plain
   # String#upcase (rather than the old upcase_utf8_cyr monkey patch) is
   # correct here.
+  #
+  # Skips quiz questions for the same reason GamePassing#correct_answer? does:
+  # a question keeps its Answer rows after options turn it into a quiz
+  # question. These two must filter identically -- correct_answer? decides
+  # WHETHER a typed answer counts and this decides WHICH question it credits,
+  # so a disagreement would mark the wrong question answered.
   def find_question_by_answer(answer_value)
-    self.questions.detect do |question|
+    self.questions.reject(&:quiz?).detect do |question|
       question.answers.any? { |answer| answer.value.to_s.strip.upcase == answer_value.to_s.strip.upcase }
     end
   end

@@ -124,13 +124,18 @@ describe "translated content over real HTTP", type: :request do
     count_queries { get show_current_level_path(game_id: game.id) }
   end
 
-  it "keeps the query count flat as the level's hint and question counts grow" do
+  # Options grow this guard too, not only hints and questions: the play view
+  # asks every question whether it has options (Level#quiz?) and renders each
+  # option's text through translated(). Both are per-record reads, so both are
+  # N+1 candidates -- and this guard is the only thing that would notice.
+  it "keeps the query count flat as the level's hint, question and option counts grow" do
     small_game = build_started_multilingual_game do |g|
       level = create_level(:game => g, :name => "Уровень", :text => "Текст")
       level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text EN" } }
       level.save!
       create_hint(:level => level, :text => "Подсказка", :delay => 0)
-      create_question(:level => level)
+      question = create_question(:level => level)
+      create_option(:question => question, :text => "Вариант", :is_correct => true)
     end
 
     large_game = build_started_multilingual_game do |g|
@@ -138,7 +143,10 @@ describe "translated content over real HTTP", type: :request do
       level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text EN" } }
       level.save!
       10.times { |i| create_hint(:level => level, :text => "Подсказка #{i}", :delay => 0) }
-      6.times { create_question(:level => level) }
+      6.times do
+        question = create_question(:level => level)
+        4.times { |i| create_option(:question => question, :text => "Вариант #{i}", :is_correct => i.zero?) }
+      end
     end
 
     small_count = queries_for_show_current_level(small_game)

@@ -149,6 +149,7 @@ ru:
       level_field: "Уровень %{position} — %{field}"
       hint_field: "Уровень %{position} — подсказка через %{minutes} мин"
       question_field: "Уровень %{position} — вопрос"
+      option_field: "Уровень %{position} — вариант «%{text}»"
       missing_count: "не хватает: %{count}"
       heading: "Не переведено (%{count})"
       fields:
@@ -199,8 +200,21 @@ ru:
       start_test: "Начать тестирование"
       start: "Старт"
       finish_test: "Завершить тестирование"
+  options:
+    index:
+      title: "Варианты ответа для задания"
+      game_prefix: "игра"
+      explain: "Если у вопроса есть варианты, игроки выбирают из них, а не вводят код."
+      text_label: "Вариант"
+      correct_label: "Верный"
+      correct_yes: "верный"
+      new_option_label: "Новый вариант"
+      is_correct_label: "Это верный ответ"
+      submit: "Добавить вариант"
+      back: "К заданию"
   levels:
     form:
+      wrong_answer_penalty: "Штраф за неверный ответ (минут)"
       name: "Название"
       text: "Текст задания"
       correct_answer: "Код"
@@ -220,6 +234,7 @@ ru:
       code_label: "Код:"
       codes_label: "Коды (%{count}):"
       add_code: "Добавить ещё один код"
+      options_link: "Варианты ответа"
       hints_legend: "Подсказки:"
       add_hint: "Добавить подсказку"
       delete_level: "Удалить этот уровень"
@@ -392,6 +407,8 @@ ru:
       resume: "Продолжить игру"
       paused_since: "Игра приостановлена в %{time}."
     show_current_level:
+      choose: "Выберите ответ"
+      penalty_label: "Штраф, минут:"
       title_prefix: "Игра"
       level_label: "Задание"
       hint_label: "Подсказка"
@@ -411,6 +428,8 @@ ru:
       place: "Место"
       team: "Команда"
       finish_time: "Время финиша"
+      penalty: "Штраф"
+      total: "Итого"
       exited: "Сошли с дистанции"
       not_finished: "Не финишировали"
       full_log: "Лог ответов"

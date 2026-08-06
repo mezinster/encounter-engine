@@ -1,0 +1,59 @@
+<h2>
+  <%= t("options.index.title") %> "<strong><%= @level.name %></strong>"
+</h2>
+
+<p>
+  <em>(<%= t("options.index.game_prefix") %> "<%= link_to @game.name, game_path(@game) %>")</em>
+</p>
+
+<%= error_messages_for @option, header: "<h2>#{t("shared.error_header")}</h2>" %>
+
+<p>
+  <em><%= t("options.index.explain") %></em>
+</p>
+
+<div class="table-wrap">
+<table class="table--cards">
+  <thead>
+    <tr>
+      <th><%= t("options.index.text_label") %></th>
+      <th><%= t("options.index.correct_label") %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @options.each do |option| %>
+      <tr id="option-<%= option.id %>">
+        <%# Author content -- rendered verbatim, never through t(). %>
+        <td data-label="<%= t("options.index.text_label") %>"><%= option.text %></td>
+        <td data-label="<%= t("options.index.correct_label") %>">
+          <% if option.is_correct %>
+            <span class="tag tag--live"><%= t("options.index.correct_yes") %></span>
+          <% end %>
+        </td>
+        <td>
+          <%= link_to t("shared.delete_short"),
+                      delete_game_level_question_option_path(@game, @level, @question, option),
+                      class: "btn btn--danger" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+</div>
+
+<%= form_with model: @option, url: game_level_question_options_path(@game, @level, @question) do |f| %>
+  <div class="field">
+    <%= f.label :text, t("options.index.new_option_label") %>
+    <%= f.text_field :text %>
+  </div>
+  <div class="field">
+    <%= f.label :is_correct, t("options.index.is_correct_label") %>
+    <%= f.check_box :is_correct %>
+  </div>
+  <%= f.submit t("options.index.submit"), class: "btn btn--go" %>
+<% end %>
+
+<p>
+  <%= link_to t("options.index.back"), game_level_path(@game, @level), class: "btn" %>
+</p>

@@ -20,16 +20,12 @@
       <td data-label="<%= t("admin.games.index.author") %>"><%= game.author&.nickname %></td>
       <td data-label="<%= t("admin.games.index.locales") %>"><%= game.available_locale_list.join(", ") %></td>
       <td data-label="<%= t("admin.games.index.status") %>">
-        <% if game.withdrawn? %>
-          <span class="tag tag--danger"><%= t("admin.games.index.withdrawn") %></span>
-        <% elsif game.draft? %>
-          <span class="tag"><%= t("admin.games.index.draft") %></span>
-        <% elsif game.author_finished? %>
-          <span class="tag"><%= t("admin.games.index.finished") %></span>
-        <% elsif game.started? %>
-          <span class="tag tag--live"><%= t("admin.games.index.running") %></span>
-        <% else %>
-          <span class="tag"><%= t("admin.games.index.scheduled") %></span>
+        <% case game.status
+           when :withdrawn %><span class="tag tag--danger"><%= t("admin.games.index.withdrawn") %></span>
+        <% when :draft     %><span class="tag"><%= t("admin.games.index.draft") %></span>
+        <% when :finished  %><span class="tag"><%= t("admin.games.index.finished") %></span>
+        <% when :running   %><span class="tag tag--live"><%= t("admin.games.index.running") %></span>
+        <% else            %><span class="tag"><%= t("admin.games.index.scheduled") %></span>
         <% end %>
         <% if game.editing_locked? %> &middot; <%= t("admin.games.index.locked") %><% end %>
       </td>

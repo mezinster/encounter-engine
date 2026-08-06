@@ -5,9 +5,27 @@ servers:
   web:
     - 23.100.7.86
 
+# kamal-proxy rebuilds its whole route table from this block on every deploy.
+# A host registered by hand on the server (`kamal proxy ...`) is NOT preserved --
+# it disappears at the next deploy, and nothing in the deploy output says so.
+# Any hostname this app should answer on has to be listed here.
+#
+# Both A-records point at the server above. kamal-proxy provisions a Let's
+# Encrypt certificate per host automatically: no certbot, no cert files in CI,
+# no extra secrets.
+#
+# DO NOT add mezin.by, www.mezin.by, mezin.eu or www.mezin.eu here. Those four
+# belong to a separate parked service on this same host (static nginx holding
+# the dormant WordPress site). Claiming one here would take the blog's domain
+# away from the parked page, and would then collide with WordPress when that
+# site is restored.
+#
+# That parked nginx runs with `--health-check-path /`: kamal-proxy defaults to
+# /up, which Rails serves but a plain nginx container does not. Any future
+# non-Rails sidecar behind this proxy needs the same.
 proxy:
   ssl: true
-  host: game.mezin.eu
+  host: game.mezin.eu,game.mezin.by
   app_port: 3000
   healthcheck:
     path: /up
@@ -32,6 +50,9 @@ env:
     RAILS_ENV: production
     TZ: Europe/Vienna
     DEFAULT_LOCALE: ru
+    # Deliberately ONE host, not the pair in `proxy.host` above. This is what
+    # mailers build absolute URLs from, so it is the canonical domain: the app
+    # answers on both, every emailed link points at game.mezin.eu.
     APP_HOST: game.mezin.eu
     MAIL_FROM: noreply@mezin.eu
     SMTP_ADDRESS: smtp.gmail.com

@@ -1,5 +1,6 @@
 class Question < ApplicationRecord
   include TranslatableContent
+  include ChildErrorPromotion
 
   # Deliberately empty. The `questions` column is vestigial: nothing in this
   # application writes it (the form sets correct_answer, which builds Answer
@@ -18,18 +19,30 @@ class Question < ApplicationRecord
 
   belongs_to :level, optional: true
 
-  # No dependent: option here, deliberately -- not an oversight. Every Answer
-  # carries its own level_id (Answer#assign_level derives it from
-  # question.level on create), so Level's `has_many :answers, dependent:
-  # :destroy` already removes an answer when its level is destroyed,
-  # regardless of which question it hangs off. Adding dependent: :destroy
-  # here would be redundant, not safer.
-  has_many :answers
+  # This used to carry no dependent: option, and the reasoning was sound at the
+  # time: every Answer carries its own level_id (Answer#assign_level derives it
+  # from question.level on create), so Level's `has_many :answers, dependent:
+  # :destroy` already removed an answer whenever its level was destroyed --
+  # regardless of which question it hung off -- which made a dependent: here
+  # redundant.
+  #
+  # Destroying a single QUESTION is a newer operation (QuestionsController
+  # #delete), and it breaks that argument: the level survives, so nothing
+  # cleans up the orphans. They are not merely untidy. Answer validates
+  # uniqueness scoped to :level_id, so an orphan left behind by a deleted code
+  # permanently blocks re-adding that same code to the level -- rejected as
+  # "Такой код уже есть в задании" by a row the author can no longer see.
+  has_many :answers, :dependent => :destroy
 
   # dependent: :destroy here, unlike :answers -- an Option hangs off nothing
   # but its question, so nothing else would clean it up. (An Answer carries its
   # own level_id and is already removed by Level's has_many :answers.)
   has_many :options, :dependent => :destroy
+
+  # An empty code on the "Добавить ещё один код" form used to surface as
+  # "Answers имеет неверное значение". Declared after has_many :answers so it
+  # runs after the autosave validation it replaces.
+  promotes_errors_from :answers
 
   # At least one CORRECT option, not merely any option. An author who adds a
   # distractor first, or who never ticks a correct one, would otherwise create

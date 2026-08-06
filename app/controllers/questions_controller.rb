@@ -6,6 +6,14 @@ class QuestionsController < ApplicationController
   before_action :ensure_author
   before_action :ensure_editing_not_locked
   before_action :find_level
+  # Deleting a code mid-game would silently rewrite every team's progress:
+  # answered_questions stores question ids, and AnsweredQuestionsCoder drops
+  # ids it can no longer resolve, so removing a question retroactively
+  # un-answers it for teams that had already found it. Adding a code is left
+  # unguarded, as it always has been -- it can only make a level harder, never
+  # invalidate work already done.
+  before_action :ensure_game_was_not_started, only: [:delete]
+  before_action :find_question, only: [:delete]
   before_action :build_question, only: [:new, :create]
 
   def new
@@ -27,10 +35,30 @@ class QuestionsController < ApplicationController
     end
   end
 
+  # A level with no codes at all cannot be answered or completed, so the last
+  # one is refused -- the same rule AnswersController#delete applies one level
+  # down for the last variant of a code.
+  def delete
+    if @level.questions.count > 1
+      @question.destroy
+      flash[:notice] = t("questions.code_deleted")
+    else
+      flash[:error] = t("questions.must_have_at_least_one_code")
+    end
+
+    redirect_to [@game, @level]
+  end
+
   private
 
   def find_game
     @game = Game.find(params[:game_id])
+  end
+
+  # Scoped through the level, so a crafted question_id belonging to another
+  # level (or another game) 404s instead of being deleted.
+  def find_question
+    @question = @level.questions.find(params[:id])
   end
 
   def find_level

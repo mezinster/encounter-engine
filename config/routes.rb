@@ -94,6 +94,14 @@ Rails.application.routes.draw do
       end
 
       resources :questions do
+        # Deleting a code, mirroring the GET delete used by :answers and
+        # :options below -- the established (if unfashionable) shape here.
+        # The action itself refuses on a started game and on a level's last
+        # remaining code; see QuestionsController#delete.
+        member do
+          get :delete
+        end
+
         resources :answers do
           member do
             get :delete

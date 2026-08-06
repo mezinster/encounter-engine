@@ -235,6 +235,9 @@ en:
       codes_label: "Codes (%{count}):"
       add_code: "Add another code"
       options_link: "Answer options"
+      delete_code: "Delete code"
+      delete_code_confirm: "Delete the code “%{code}” from this task? This cannot be undone."
+      options_for_code: "(for the code “%{code}”)"
       hints_legend: "Hints:"
       add_hint: "Add a hint"
       delete_level: "Delete this level"
@@ -257,6 +260,8 @@ en:
       heading_game_prefix: "of game"
       submit: "Add hint"
   questions:
+    must_have_at_least_one_code: "A task must keep at least one code"
+    code_deleted: "The code was deleted from the task"
     new:
       title: "Task"
       game_prefix: "game"

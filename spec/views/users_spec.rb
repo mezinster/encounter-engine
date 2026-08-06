@@ -51,6 +51,35 @@ RSpec.describe "users/edit", type: :view do
     expect(rendered).to include('name="user[on_max]"')
   end
 
+  # The name= assertions above pin SUBMISSION wiring but not checked-state
+  # fidelity: a `check_box_tag "user[on_signal]", "1", false` posts under the
+  # right key and passes every one of them, while always rendering unchecked.
+  # A player with the flag set would open this form, see the box empty, save,
+  # and silently turn the setting off. Only `f.check_box` reads the stored
+  # value back, and this is what proves it does.
+  it "renders each messenger checkbox checked to match the stored value" do
+    user = create_user
+    user.update!(:on_signal => true, :on_viber => false)
+
+    assign(:current_user, user)
+    assign(:user, user)
+
+    render
+
+    # type="checkbox" is load-bearing in these patterns: f.check_box emits a
+    # hidden input with the SAME name first, so an unchecked box still submits
+    # "0". Matching on the name alone finds that hidden field, which never
+    # carries `checked`, and the example would fail against correct code.
+    signal = rendered[/<input[^>]*type="checkbox"[^>]*name="user\[on_signal\]"[^>]*>/]
+    viber  = rendered[/<input[^>]*type="checkbox"[^>]*name="user\[on_viber\]"[^>]*>/]
+
+    expect(signal).to be_present, "no checkbox input found for on_signal"
+    expect(viber).to be_present,  "no checkbox input found for on_viber"
+
+    expect(signal).to include("checked")
+    expect(viber).not_to include("checked")
+  end
+
   it "shows the phone number field only for a captain" do
     captain_user = create_user
     create_team(captain: captain_user)

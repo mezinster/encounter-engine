@@ -44,7 +44,8 @@
       </td>
       <td data-label="<%= t("games.list.participants") %>">
         <%= counts[:registered].fetch(game.id, 0) %> / <%= game.max_team_number %>
-        <% playing = counts[:playing].fetch(game.id, 0) %>
+        <% playing = game.status == :finished ? counts[:played].fetch(game.id, 0)
+                                              : counts[:playing].fetch(game.id, 0) %>
         <% if playing > 0 %>
           &middot;
           <%= game.status == :finished ? t("games.list.played", :count => playing)

@@ -14,14 +14,37 @@ module GamesHelper
   def game_team_counts(games)
     ids = games.map(&:id).sort
     @game_team_counts ||= {}
-    @game_team_counts[ids] ||= {
-      # Deliberately NOT game.game_entries.with_status("accepted").count --
-      # with_status is a scope, and a scope builds a new relation, so it
-      # re-queries even when the association is already loaded. That exact
-      # mistake shipped to review on the quiz branch.
-      :registered => GameEntry.where(:game_id => ids, :status => "accepted").group(:game_id).count,
-      :playing    => GamePassing.where(:game_id => ids).group(:game_id).count
-    }
+    @game_team_counts[ids] ||= begin
+      # "playing" (games.list.playing, shown on a running game) means
+      # *currently* playing: finished_at nil excludes teams that finished
+      # normally or exited (exit! always sets finished_at), and the status
+      # exclusion additionally excludes teams an operator ended (end! sets
+      # status "ended" without touching finished_at, so finished_at alone
+      # would not catch it).
+      #
+      # status is nullable and nil is the ordinary in-progress value (nothing
+      # sets it on creation), so a plain `.where.not(:status => %w[exited
+      # ended])` would generate `status NOT IN (...)`, which under SQL's
+      # three-valued logic is NULL -- and therefore excluded -- for every
+      # nil-status row. That would have zeroed out the common case. The
+      # explicit `.where(:status => nil).or(...)` keeps nil rows in.
+      still_playing = GamePassing.where(:game_id => ids, :finished_at => nil)
+
+      {
+        # Deliberately NOT game.game_entries.with_status("accepted").count --
+        # with_status is a scope, and a scope builds a new relation, so it
+        # re-queries even when the association is already loaded. That exact
+        # mistake shipped to review on the quiz branch.
+        :registered => GameEntry.where(:game_id => ids, :status => "accepted").group(:game_id).count,
+        :playing    => still_playing.where(:status => nil)
+                                     .or(still_playing.where.not(:status => %w[exited ended]))
+                                     .group(:game_id).count,
+        # "played" (games.list.played, shown on a finished game) means *took
+        # part at all* -- every passing ever created for the game, regardless
+        # of how it ended.
+        :played     => GamePassing.where(:game_id => ids).group(:game_id).count
+      }
+    end
   end
 
   # The status tag. Withdrawn is the only danger state; running is the only
@@ -35,7 +58,11 @@ module GamesHelper
                end
 
     tag = content_tag(:span, t("games.list.status_#{game.status}"), :class => "tag#{modifier}")
-    tag += " ".html_safe + content_tag(:em, t("games.list.paused")) if game.paused?
+    # Pausing only means something on a game that is actually running --
+    # finish_game! never clears paused_at, so a game paused and then ended
+    # without being resumed would otherwise still read game.paused? true and
+    # render "Завершена · на паузе", a status that contradicts itself.
+    tag += " ".html_safe + content_tag(:em, t("games.list.paused")) if game.status == :running && game.paused?
     tag
   end
 

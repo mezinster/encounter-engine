@@ -50,6 +50,19 @@ describe "the games listing", type: :request do
     expect(response.body).to include(I18n.t("games.list.paused"))
   end
 
+  it "shows no paused marker on a game that was paused and then finished" do
+    game = running_game("Пауза-Финиш")
+    game.pause!
+    # finish_game! never clears paused_at, and a running game fails its own
+    # validations, so this is update_column, not finish_game!/update!.
+    game.update_column(:author_finished_at, Time.now)
+
+    get games_path
+
+    expect(response.body).to include(I18n.t("games.list.status_finished"))
+    expect(response.body).not_to include(I18n.t("games.list.paused"))
+  end
+
   it "shows a finished game's end time and how long it ran" do
     game = running_game("Всё")
     game.update_column(:author_finished_at, game.starts_at + 3725)
@@ -58,6 +71,32 @@ describe "the games listing", type: :request do
 
     expect(response.body).to include(I18n.t("games.list.status_finished"))
     expect(response.body).to include(I18n.t("games.list.duration", :hours => 1, :minutes => 2))
+  end
+
+  it "counts only passings still in progress towards a running game's playing total" do
+    game = running_game("Микс")
+    level = create_level(:game => game)
+    create_game_passing(:level => level, :game => game) # in progress
+    create_game_passing(:level => level, :game => game, :finished_at => Time.now) # finished normally
+    create_game_passing(:level => level, :game => game, :status => "exited", :finished_at => Time.now)
+    create_game_passing(:level => level, :game => game, :status => "ended") # operator-ended, finished_at nil
+
+    get games_path
+
+    expect(response.body).to include(I18n.t("games.list.playing", :count => 1))
+  end
+
+  it "shows every team that took part on a finished game, not just those mid-level when it ended" do
+    game = running_game("Итог")
+    level = create_level(:game => game)
+    create_game_passing(:level => level, :game => game) # mid-level when the author ended it
+    create_game_passing(:level => level, :game => game, :finished_at => Time.now) # finished normally
+    create_game_passing(:level => level, :game => game, :status => "exited", :finished_at => Time.now)
+    game.update_column(:author_finished_at, Time.now)
+
+    get games_path
+
+    expect(response.body).to include(I18n.t("games.list.played", :count => 3))
   end
 
   it "shows no duration for a game with no start time" do

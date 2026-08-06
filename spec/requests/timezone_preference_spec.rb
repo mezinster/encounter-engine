@@ -14,6 +14,10 @@ describe "choosing a timezone in the profile", type: :request do
 
     expect(response.body).to include(I18n.t("users.edit.timezone_label"))
     expect(response.body).to include(%{value="Berlin"})
+    # include_blank is the only route back to NULL -- without it, the <select>
+    # has no empty option and a user who has picked a zone can never return
+    # to "use the instance default" through this form again.
+    expect(response.body).to match(%r{<option value="">})
   end
 
   it "saves the choice" do
@@ -46,5 +50,18 @@ describe "choosing a timezone in the profile", type: :request do
     get users_path
 
     expect(response.body).to include(I18n.t("users.edit.timezone_default"))
+  end
+
+  # Only reachable via a raw PATCH (the form never offers an unrecognised
+  # value), but TimeZoneSelection already falls back to the instance default
+  # for a value it can't resolve -- the page must say so too, not print the
+  # raw stored string as though it were an active choice.
+  it "shows the instance default on the profile page for an unrecognised stored zone" do
+    user.update_column(:timezone, "Not_A_Real_Zone")
+
+    get users_path
+
+    expect(response.body).to include(I18n.t("users.edit.timezone_default"))
+    expect(response.body).not_to include("Not_A_Real_Zone")
   end
 end

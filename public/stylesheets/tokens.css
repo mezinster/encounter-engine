@@ -20,9 +20,13 @@
   --go:         #fbbf24;
   --go-ink:     #1a1205;   /* text on a filled go button */
   --time:       #fb923c;
-  --danger:     #dc5555;
+  /* #dc5555 was 4.25:1 on --surface-2 (.team-panel), below AA -- checked only
+     against --bg (4.95) and --surface (4.56) originally. #e56a6a clears AA on
+     all three dark surfaces: 5.97 / 5.50 / 5.13. */
+  --danger:     #e56a6a;
   --focus:      #fbbf24;
   --scrim:      rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 
 :root[data-theme="light"] {
@@ -38,11 +42,15 @@
      for white text on a filled button -- verified, not assumed. */
   --go:         #966006;
   --go-ink:     #ffffff;
-  --time:       #b45309;
+  /* #b45309 was 4.39:1 on --surface-2 (.playbar-hint), below AA -- checked
+     only against --bg originally. #a94d08 clears AA on all three light
+     surfaces: 5.28 / 5.60 / 4.90. */
+  --time:       #a94d08;
   --danger:     #b42318;
   --focus:      #966006;
   /* A light UI needs less dimming to read as dimmed. */
   --scrim:      rgba(0, 0, 0, 0.35);
+  color-scheme: light;
 }
 
 :root {

@@ -7,6 +7,11 @@
      switcher did exactly that, forcing 454px of scroll on a 390px viewport. */
   grid-template-columns: minmax(0, 1fr);
   min-height: 100vh;
+  /* Rows size to content. Without this, align-content defaults to `normal`
+     (= stretch for grid), so on any page shorter than the viewport the
+     min-height:100vh free space inflates the topbar into a slab -- 386px, half
+     the screen, on the landing page at 390px. */
+  align-content: start;
 }
 
 .topbar {
@@ -31,6 +36,18 @@
   width: 100%;
   margin: 0 auto;
   min-width: 0;
+}
+
+/* Tap-target floor for the primary navigation. These were plain inline text
+   links -- 19-20px tall, well under the 44px minimum the spec requires for
+   interactive elements. min-height does nothing on an inline box, so each
+   also needs display: inline-flex to make it take effect. */
+.home-link,
+.locale-switcher-link,
+#drawer .game-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
 }
 
 /* The drawer is driven by a hidden checkbox so it opens with CSS alone.
@@ -124,6 +141,13 @@
 /* 12rem clears space for the pinned answer bar Task 4 adds at the bottom of
    the play screen -- not a colour, so no token. */
 .page--focused .main { max-width: 44rem; padding-bottom: 12rem; }
+
+/* The bar's height varies with its contents -- 222px with a pinned hint,
+   255px paused -- so a fixed 12rem reserve leaves the last control partly
+   underneath it at phone width. */
+@media (max-width: 30rem) {
+  .page--focused .main { padding-bottom: 17rem; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   #drawer, .drawer-scrim { transition: none; }

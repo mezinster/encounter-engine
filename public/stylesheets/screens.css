@@ -191,11 +191,9 @@ ul.language-tabs .missing-count {
 
 .playbar-form { display: flex; gap: var(--space-2); align-items: center; }
 .playbar-form input[type="text"] { flex: 1; }
-/* master.css's global `label { float: left; width: 120px }` (written for the
-   old vertical admin forms) otherwise eats a third of a 390px bar, leaving
-   the code field -- the one thing a player came here to use -- a cramped
-   sliver next to it. */
-.playbar-form label { float: none; width: auto; font-weight: 600; }
+/* Labels have no other styling in this system; this is what marks the code
+   field's label as a label rather than plain text in the bar. */
+.playbar-form label { font-weight: 600; }
 
 .playbar-paused {
   color: var(--time);

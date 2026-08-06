@@ -39,12 +39,9 @@ img { max-width: 100%; height: auto; }
 
 h1, h2, h3 { color: var(--text); }
 
-/* Vertical rhythm for the top-level flow inside .main -- master.css used to
-   zero every element's margin (`* { margin: 0 }`), which is why so many
-   older views spaced their sections with ad hoc <br>/<hr> tags. Those are
-   gone now (Task 8); this replaces them with one consistent gap. Scoped to
-   DIRECT children only, so it doesn't reach inside .dash-grid or .stat-grid
-   -- those already space their own cards via `gap`, and doubling that here
+/* Vertical rhythm for the top-level flow inside .main. Scoped to DIRECT
+   children only, so it doesn't reach inside .dash-grid or .stat-grid --
+   those already space their own cards via `gap`, and doubling that here
    would open a bigger vertical gap between grid rows than between columns. */
 .main > * + * { margin-top: var(--space-4); }
 /* The pinned play-screen bar is position: fixed -- out of flow, and always

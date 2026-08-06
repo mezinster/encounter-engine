@@ -68,6 +68,12 @@ input[type="date"], textarea, select {
   font: inherit;   /* 16px floor from base.css -- stops iOS zooming on focus */
 }
 
+/* Rails emits no `rows`, so without this a textarea falls back to the
+   browser default of 2 -- ~45px more than min-height above, but still only
+   two lines for level text and game descriptions, the core authoring
+   content. */
+textarea { min-height: 8em; }
+
 /* --- Tables --------------------------------------------------------------
  * Real table at width; stacked cards below. The wrapper also lets a wide
  * table scroll rather than forcing the page to scroll sideways. */
@@ -114,7 +120,9 @@ th {
   background: var(--surface);
   margin-bottom: var(--space-4);
 }
-.flash--alert { border-left-color: var(--danger); }
+/* :error is the only flash key this app ever sets (sessions_controller.rb);
+   :alert is kept for anything that sets Rails' own conventional key. */
+.flash--alert, .flash--error { border-left-color: var(--danger); }
 
 .card {
   background: var(--surface);
@@ -131,8 +139,7 @@ th {
 }
 
 /* error_messages_for (app/helpers/application_helper.rb) and flash[:error]
-   both render class="error" -- a validation/login-failure box. Previously
-   backed only by master.css's `.error { border: solid red 1px }`. */
+   both render class="error" -- a validation/login-failure box. */
 .error {
   padding: var(--space-3) var(--space-4);
   margin-bottom: var(--space-4);

@@ -88,3 +88,18 @@
   align-items: center;
   margin-bottom: var(--space-4);
 }
+
+/* .btn sets display:inline-flex, which suppresses the native <summary>
+   marker (browsers only draw it at display:list-item). Supply our own, so a
+   control that expands looks like one -- this screen is read at a glance, at
+   night, at 390px. */
+.team-disclosure::after {
+  content: "▾";
+  margin-left: var(--space-2);
+}
+
+details[open] > .team-disclosure::after { content: "▴"; }
+
+/* Safari draws its own marker through a pseudo-element that display alone
+   does not suppress. */
+.team-disclosure::-webkit-details-marker { display: none; }

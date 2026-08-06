@@ -23,6 +23,11 @@ RSpec.describe "game_passings/index", type: :view do
     exited.update!(finished_at: Time.current, status: "exited")
 
     assign(:game_passings, [in_progress, finished, exited])
+    # The superadmin-only level-codes fieldset (Task 3) reads logged_in? and
+    # current_user, same as the guest-vs-player specs below already stub for
+    # game_passings/show_results.
+    view.define_singleton_method(:logged_in?) { false }
+    view.define_singleton_method(:current_user) { nil }
 
     render
 

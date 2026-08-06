@@ -50,6 +50,8 @@ ru:
           finish_test: "Завершил тестирование"
           grant_superadmin: "Выдал права администратора"
           revoke_superadmin: "Снял права администратора"
+          allow_any_code: "Разрешил любой код на уровне"
+          require_all_codes: "Потребовал все коды на уровне"
     dashboard:
       show:
         title: "Обзор"
@@ -128,6 +130,8 @@ ru:
     moved_notice: "Команда переведена на другой уровень"
     reinstated_notice: "Команда возвращена в игру"
     clock_reset_notice: "Отсчёт времени на уровне сброшен"
+    any_code_notice: "На уровне «%{name}» теперь достаточно любого кода"
+    all_codes_notice: "На уровне «%{name}» теперь нужны все коды"
     refused: "Это действие сейчас невозможно"
   invitations:
     notice_sent: "Пользователю %{nickname} выслано приглашение"
@@ -414,6 +418,9 @@ ru:
       pause: "Приостановить игру"
       resume: "Продолжить игру"
       paused_since: "Игра приостановлена в %{time}."
+      level_codes_legend: "Коды на уровнях"
+      allow_any_code: "Достаточно любого"
+      require_all_codes: "Нужны все"
     show_current_level:
       choose: "Выберите ответ"
       penalty_label: "Штраф, минут:"

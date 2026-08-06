@@ -230,11 +230,14 @@ uk:
       submit: "Додати варіант"
       back: "До завдання"
   levels:
+    codes_rule_any: "Достатньо будь-якого з кодів"
+    codes_rule_all: "Потрібно знайти всі коди"
     form:
       wrong_answer_penalty: "Штраф за неправильну відповідь (хвилин)"
       name: "Назва"
       text: "Текст завдання"
       correct_answer: "Код"
+      codes_rule: "Як зараховувати коди"
     edit:
       title: "Завдання"
       game_prefix: "гра"

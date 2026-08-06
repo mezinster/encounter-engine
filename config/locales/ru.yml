@@ -213,11 +213,14 @@ ru:
       submit: "Добавить вариант"
       back: "К заданию"
   levels:
+    codes_rule_any: "Достаточно любого из кодов"
+    codes_rule_all: "Нужно найти все коды"
     form:
       wrong_answer_penalty: "Штраф за неверный ответ (минут)"
       name: "Название"
       text: "Текст задания"
       correct_answer: "Код"
+      codes_rule: "Как засчитывать коды"
     edit:
       title: "Задание"
       game_prefix: "игра"

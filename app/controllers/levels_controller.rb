@@ -72,6 +72,7 @@ class LevelsController < ApplicationController
   def level_params
     params.fetch(:level, ActionController::Parameters.new)
           .permit(:name, :text, :correct_answer, :wrong_answer_penalty_in_minutes,
+                  :any_code_passes,
                   :translations => translation_params_shape(Level::TRANSLATABLE_FIELDS))
   end
 

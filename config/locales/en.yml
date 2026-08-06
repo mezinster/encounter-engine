@@ -213,11 +213,14 @@ en:
       submit: "Add option"
       back: "Back to the task"
   levels:
+    codes_rule_any: "Any one code passes"
+    codes_rule_all: "All codes must be found"
     form:
       wrong_answer_penalty: "Penalty for a wrong answer (minutes)"
       name: "Title"
       text: "Task text"
       correct_answer: "Code"
+      codes_rule: "How codes count"
     edit:
       title: "Task"
       game_prefix: "game"

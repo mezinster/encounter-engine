@@ -1,10 +1,11 @@
 <h1><%= t("logs.show_full_log.title") %></h1>
 
-<table id="stats" border="1">
+<div class="table-wrap">
+<table id="stats">
   <tbody>
     <% @levels.each do |level| %>
-      <tr align="center">
-        <td colspan="0">
+      <tr>
+        <td colspan="<%= @teams.size %>">
           <h2><%= level.name %></h2>
           <% if level.questions.count == 1 %>
             <strong><%= t("logs.show_full_log.correct_answer_one") %></strong><%= level.questions.first.correct_answer %>
@@ -16,7 +17,7 @@
           <% end %>
         </td>
       </tr>
-      <tr valign="top">
+      <tr>
         <% @teams.each do |team| %>
         <td>
           <%= team.name %>
@@ -32,3 +33,4 @@
     <% end %>
   </tbody>
 </table>
+</div>

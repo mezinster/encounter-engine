@@ -334,6 +334,8 @@ uk:
     header:
       dashboard: "Особистий кабінет"
       home: "Головна"
+      menu: "Меню"
+      theme: "Тема"
     left_menu:
       administration: "Адміністрування"
       dashboard: "Особистий кабінет"

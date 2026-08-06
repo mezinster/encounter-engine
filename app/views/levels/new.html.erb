@@ -1,5 +1,4 @@
-<%= t("levels.new.heading", name: @level.game.name) %><br />
-<br />
+<h2><%= t("levels.new.heading", name: @level.game.name) %></h2>
 
 <%= error_messages_for @level, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
@@ -9,7 +8,7 @@
                                    :active => active_locale %>
 
 <%= form_with model: @level, url: game_levels_path(@game) do |f| %>
-  <p>
+  <div class="field">
     <%= f.label :name, t("levels.form.name") %>
     <% if active_locale == @game.primary_locale %>
       <%= f.text_field :name %>
@@ -17,9 +16,9 @@
       <%= text_field_tag "level[translations][#{active_locale}][name]",
                          @level.translation_draft(:name, active_locale) %>
     <% end %>
-  </p>
+  </div>
 
-  <p>
+  <div class="field">
     <%= f.label :text, t("levels.form.text") %>
     <% if active_locale == @game.primary_locale %>
       <%= f.text_area :text %>
@@ -27,14 +26,14 @@
       <%= text_area_tag "level[translations][#{active_locale}][text]",
                         @level.translation_draft(:text, active_locale) %>
     <% end %>
-  </p>
+  </div>
 
-  <p>
+  <div class="field">
     <%= f.label :correct_answer, t("levels.form.correct_answer") %>
     <%= f.text_field :correct_answer %>
     <em><%= t("levels.new.hint_more_codes") %></em>
-  </p>
+  </div>
 
-  <%= f.submit t("levels.new.submit") %>
+  <%= f.submit t("levels.new.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), game_path(@level.game) %></em>
 <% end %>

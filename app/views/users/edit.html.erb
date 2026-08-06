@@ -1,44 +1,42 @@
 <h2><%= t("users.edit.title", nickname: @current_user.nickname) %></h2>
-<br>
 
 <%= error_messages_for @user, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
 <%= form_with model: @user, url: user_path(@user) do |f| %>
-  <p>
+  <div class="field">
     <%= f.label :nickname, t("users.edit.nickname_label") %>
     <%= f.text_field :nickname %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :date_of_birth, t("users.edit.date_of_birth_label") %>
     <%= f.text_field :date_of_birth %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :icq_number, t("users.edit.icq_label") %>
     <%= f.text_field :icq_number %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :jabber_id, t("users.edit.jabber_label") %>
     <%= f.text_field :jabber_id %>
-  </p>
-  <p>
-    <% if @user.captain? %>
+  </div>
+  <% if @user.captain? %>
+    <div class="field">
       <%= f.label :phone_number, t("users.edit.phone_label") %>
       <%= f.text_field :phone_number %>
-    <% end %>
-  </p>
-  <p>
+    </div>
+  <% end %>
+  <div class="field">
     <%= f.label :locale, t("users.edit.locale_label") %>
     <%= f.select :locale, I18n.available_locales.map { |l| [t("locales.#{l}"), l] } %>
-  </p>
-  <br/>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :password, t("users.edit.password_label") %>
     <%= f.text_field :password %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :password_confirmation, t("users.edit.password_confirmation_label") %>
     <%= f.text_field :password_confirmation %>
-  </p>
-  <%= f.submit t("users.edit.submit") %>
+  </div>
+  <%= f.submit t("users.edit.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), users_path %></em>
 <% end %>

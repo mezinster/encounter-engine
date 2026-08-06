@@ -5,15 +5,13 @@
 <% end %>
 
 <%= form_with url: login_path, method: :post do %>
-  <p>
+  <div class="field">
     <%= label_tag :email, t("sessions.new.email_label") %>
     <%= email_field_tag :email %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= label_tag :password, t("sessions.new.password_label") %>
     <%= password_field_tag :password %>
-  </p>
-  <p>
-    <%= submit_tag t("sessions.new.submit") %>
-  </p>
+  </div>
+  <%= submit_tag t("sessions.new.submit"), class: "btn btn--go" %>
 <% end %>

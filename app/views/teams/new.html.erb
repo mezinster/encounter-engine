@@ -1,9 +1,9 @@
 <%= error_messages_for @team, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
 <%= form_with model: @team, url: teams_path do |f| %>
-  <p>
+  <div class="field">
     <%= f.label :name, t("teams.new.name_label") %>
     <%= f.text_field :name %>
-  </p>
-  <%= f.submit t("teams.new.submit") %>
+  </div>
+  <%= f.submit t("teams.new.submit"), class: "btn btn--go" %>
 <% end %>

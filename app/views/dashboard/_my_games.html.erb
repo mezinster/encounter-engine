@@ -1,18 +1,12 @@
 <% @my_games = Game.by(current_user) %>
-<fieldset id="mygames">
+<fieldset id="mygames" class="card">
   <legend>
     <%= t("dashboard.my_games.legend", count: @my_games.count) %>
   </legend>
 
-  <p>
-    <%= render "games/list", games: @my_games %>
-  </p>
-
-  <br />
-
-  <hr class="short-line" />
+  <%= render "games/list", games: @my_games %>
 
   <p>
-    <%= link_to t("dashboard.my_games.create"), new_game_path %>
+    <%= link_to t("dashboard.my_games.create"), new_game_path, class: "btn" %>
   </p>
 </fieldset>

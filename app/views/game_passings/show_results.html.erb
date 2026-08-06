@@ -1,6 +1,7 @@
-<%= t("game_passings.show_results.congrats") %>
+<p><%= t("game_passings.show_results.congrats") %></p>
 
-<table id="results">
+<div class="table-wrap">
+<table id="results" class="table--cards">
   <thead>
     <tr>
       <th><%= t("game_passings.show_results.place") %></th>
@@ -12,9 +13,9 @@
     <% game_passings = GamePassing.of_game(@game) %>
     <% game_passings.finished.each do |game_passing| %>
       <tr>
-        <td><%= @game.place_of(game_passing.team) %></td>
-        <td><%= game_passing.team.name %></td>
-        <td>
+        <td data-label="<%= t("game_passings.show_results.place") %>"><%= @game.place_of(game_passing.team) %></td>
+        <td data-label="<%= t("game_passings.show_results.team") %>"><%= game_passing.team.name %></td>
+        <td data-label="<%= t("game_passings.show_results.finish_time") %>">
           <% if game_passing.exited? %>
             <b><%= t("game_passings.show_results.exited") %></b>(<%= game_passing.finished_at.strftime('%H:%M:%S') %><%= ' ' + game_passing.finished_at.strftime('(%d.%m)') if game_passing.finished_at.day != @game.starts_at.day %>)
           <% else %>
@@ -25,23 +26,21 @@
     <% end %>
     <% (game_passings.ended_by_author - game_passings.finished).each do |game_passing| %>
         <tr>
-          <td>#</td>
-          <td><%= game_passing.team.name %></td>
-          <td>
+          <td data-label="<%= t("game_passings.show_results.place") %>">#</td>
+          <td data-label="<%= t("game_passings.show_results.team") %>"><%= game_passing.team.name %></td>
+          <td data-label="<%= t("game_passings.show_results.finish_time") %>">
             <%= t("game_passings.show_results.not_finished") %>
           </td>
         </tr>
       <% end %>
   </tbody>
 </table>
-
-<br />
+</div>
 
 <% if full_log_visible?(@game) %>
-  <%= link_to t("game_passings.show_results.full_log"), show_full_log_path(@game) %>
+  <p><%= link_to t("game_passings.show_results.full_log"), show_full_log_path(@game) %></p>
 <% end %>
 
 <% if @game.is_testing? %>
-  <br/>
-  <%= link_to t("game_passings.show_results.finish_testing"), "/games/finish_test/#{@game.id}" %>
+  <p><%= link_to t("game_passings.show_results.finish_testing"), "/games/finish_test/#{@game.id}" %></p>
 <% end %>

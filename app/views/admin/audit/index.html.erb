@@ -1,18 +1,22 @@
 <%# app/views/admin/audit/index.html.erb %>
 <h1><%= t("admin.audit.index.title") %></h1>
 
-<table class="admin-audit">
-  <tr>
-    <th><%= t("admin.audit.index.when") %></th>
-    <th><%= t("admin.audit.index.who") %></th>
-    <th><%= t("admin.audit.index.what") %></th>
-    <th><%= t("admin.audit.index.target") %></th>
-    <th><%= t("admin.audit.index.details") %></th>
-  </tr>
+<div class="table-wrap">
+<table class="table--cards">
+  <thead>
+    <tr>
+      <th><%= t("admin.audit.index.when") %></th>
+      <th><%= t("admin.audit.index.who") %></th>
+      <th><%= t("admin.audit.index.what") %></th>
+      <th><%= t("admin.audit.index.target") %></th>
+      <th><%= t("admin.audit.index.details") %></th>
+    </tr>
+  </thead>
+  <tbody>
   <% @entries.each do |entry| %>
     <tr>
-      <td><%= l(entry.created_at, :format => :long) %></td>
-      <td>
+      <td data-label="<%= t("admin.audit.index.when") %>"><%= l(entry.created_at, :format => :long) %></td>
+      <td data-label="<%= t("admin.audit.index.who") %>">
         <% if entry.actor %>
           <%= link_to entry.actor.nickname, admin_user_path(entry.actor) %>
         <% else %>
@@ -21,8 +25,8 @@
       </td>
       <%# The action name is chrome; a value nobody anticipated renders as
           itself rather than raising under raise_on_missing_translations. %>
-      <td><%= t("admin.audit.index.action.#{entry.action}", :default => entry.action) %></td>
-      <td>
+      <td data-label="<%= t("admin.audit.index.what") %>"><%= t("admin.audit.index.action.#{entry.action}", :default => entry.action) %></td>
+      <td data-label="<%= t("admin.audit.index.target") %>">
         <%# target_label is a snapshot, so it survives the target's deletion.
             Only link when the target still exists. %>
         <% if entry.target_type == "Game" && @live_games.include?(entry.target_id) %>
@@ -35,9 +39,11 @@
       </td>
       <%# Free text captured at write time -- a team name, typically. Blank
           for every action that has no second subject. %>
-      <td><%= entry.details %></td>
+      <td data-label="<%= t("admin.audit.index.details") %>"><%= entry.details %></td>
     </tr>
   <% end %>
+  </tbody>
 </table>
+</div>
 
 <p><%= link_to t("admin.audit.index.back"), admin_dashboard_path %></p>

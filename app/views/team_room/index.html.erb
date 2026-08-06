@@ -1,33 +1,25 @@
-<%= t("team_room.index.title", name: @team.name) %> <br />
-<br />
+<h2><%= t("team_room.index.title", name: @team.name) %></h2>
 
-<fieldset>
+<fieldset class="card">
   <legend>
     <%= t("team_room.index.composition") %>
   </legend>
 
+  <ul class="game-list">
   <% @team.members.each do |member| %>
-    <p>
+    <li>
       <%= member.nickname %> <%= t("team_room.index.captain_suffix") if member.captain? %>
-    </p>
+    </li>
   <% end %>
-
-  <br />
-  <hr class="short-line" />
+  </ul>
 
   <p>
-    <%= link_to t("team_room.index.invite"), new_invitation_path if @current_user.captain? %>
+    <%= link_to t("team_room.index.invite"), new_invitation_path, class: "btn" if @current_user.captain? %>
   </p>
 </fieldset>
 
-<br />
-
 <%= render "shared/current_games" %>
 
-<b />
-
 <%= render "dashboard/coming_games" %>
-
-<b />
 
 <%= render "dashboard/finished_games" %>

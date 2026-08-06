@@ -1,0 +1,164 @@
+/* public/stylesheets/components.css
+ *
+ * Shared vocabulary. Views compose these; they do not write their own CSS.
+ * If a view needs something not here, add it here rather than inline -- a
+ * one-off style is a sign the system is missing a component.
+ */
+
+/* --- Buttons -------------------------------------------------------------
+ * go / time / danger are neighbouring hues in this palette, so they are
+ * separated by TREATMENT as well:
+ *   .btn--go     filled, the only filled warm control on a screen
+ *   .btn--danger outlined, never filled, always behind a confirm
+ *   .countdown   not a button at all -- see below
+ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:hover { border-color: var(--text-dim); text-decoration: none; }
+
+.btn--go {
+  background: var(--go);
+  border-color: var(--go);
+  color: var(--go-ink);
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn--danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+
+/* A countdown is information, not an action. Never filled, never bordered --
+   if it looks pressable, someone will press it. */
+.countdown {
+  color: var(--time);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* --- Forms --------------------------------------------------------------- */
+.field { display: block; margin-bottom: var(--space-4); }
+.field > label { display: block; margin-bottom: var(--space-1); color: var(--text-dim); font-size: 0.9rem; }
+
+input[type="text"], input[type="email"], input[type="password"],
+input[type="date"], textarea, select {
+  width: 100%;
+  min-height: var(--tap);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font: inherit;   /* 16px floor from base.css -- stops iOS zooming on focus */
+}
+
+/* Rails emits no `rows`, so without this a textarea falls back to the
+   browser default of 2 -- ~45px more than min-height above, but still only
+   two lines for level text and game descriptions, the core authoring
+   content. */
+textarea { min-height: 8em; }
+
+/* --- Tables --------------------------------------------------------------
+ * Real table at width; stacked cards below. The wrapper also lets a wide
+ * table scroll rather than forcing the page to scroll sideways. */
+.table-wrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: var(--space-3); text-align: left; border-bottom: 1px solid var(--border); }
+th {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 600;
+}
+
+@media (max-width: 47.99rem) {
+  .table--cards thead { display: none; }
+  .table--cards tr {
+    display: block;
+    margin-bottom: var(--space-3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-2);
+  }
+  .table--cards td { display: block; border: 0; padding: var(--space-1) var(--space-2); }
+  /* Views set data-label on each cell so the column name survives the
+     collapse -- without it a stacked row is a list of unlabelled values. */
+  .table--cards td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+}
+
+/* --- Flash, cards, panels, tags ------------------------------------------ */
+.flash {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--go);
+  background: var(--surface);
+  margin-bottom: var(--space-4);
+}
+/* :error is the only flash key this app ever sets (sessions_controller.rb);
+   :alert is kept for anything that sets Rails' own conventional key. */
+.flash--alert, .flash--error { border-left-color: var(--danger); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+}
+
+/* error_messages_for (app/helpers/application_helper.rb) and flash[:error]
+   both render class="error" -- a validation/login-failure box. */
+.error {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+.error h2 { margin-bottom: var(--space-2); }
+.error ul { margin-left: var(--space-4); list-style: disc; }
+
+.tag {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.tag--live { color: var(--go); border-color: var(--go); }
+.tag--danger { color: var(--danger); border-color: var(--danger); }

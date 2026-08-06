@@ -1,71 +1,74 @@
-<fieldset>
 <% if logged_in? %>
-  <legend>
+  <h3>
     <%= link_to current_user.nickname, dashboard_path %>
     <% if current_user.member_of_any_team? %>
       (<%= link_to current_user.team.name, team_room_path %>)
     <% end %>
-  </legend>
+  </h3>
 
-  <p>
-    <%= link_to t("layout.left_menu.dashboard"), dashboard_path %>
-  </p>
+  <ul class="game-list">
+    <li>
+      <%= link_to t("layout.left_menu.dashboard"), dashboard_path %>
+    </li>
 
-  <p>
-    <%= link_to t("layout.left_menu.profile"), users_path %>
-  </p>
+    <li>
+      <%= link_to t("layout.left_menu.profile"), users_path %>
+    </li>
 
-  <p>
-    <% if current_user.member_of_any_team? %>
-      <%= link_to t("layout.left_menu.team_room"), team_room_path %>
-    <% else %>
-      <%= link_to t("layout.left_menu.create_team"), new_team_path %>
+    <li>
+      <% if current_user.member_of_any_team? %>
+        <%= link_to t("layout.left_menu.team_room"), team_room_path %>
+      <% else %>
+        <%= link_to t("layout.left_menu.create_team"), new_team_path %>
+      <% end %>
+    </li>
+
+    <li>
+      <%= link_to t("layout.left_menu.all_games"), games_path %>
+    </li>
+
+    <%# Inside the logged_in? branch, so current_user is guaranteed. The admin
+        screens are scattered across four paths that are easy to forget and are
+        linked from nowhere else -- the console links onward to the others, but
+        only once you have found the console. %>
+    <% if current_user.superadmin? %>
+      <li>
+        <strong><%= t("layout.left_menu.administration") %></strong>
+      </li>
+
+      <li>
+        <%= link_to t("admin.dashboard.show.title"), admin_dashboard_path %>
+      </li>
+
+      <li>
+        <%= link_to t("admin.games.index.title"), admin_games_path %>
+      </li>
+
+      <li>
+        <%= link_to t("admin.users.index.title"), admin_users_path %>
+      </li>
+
+      <li>
+        <%= link_to t("admin.dashboard.show.audit_log"), admin_audit_index_path %>
+      </li>
     <% end %>
-  </p>
 
-  <p>
-    <%= link_to t("layout.left_menu.all_games"), games_path %>
-  </p>
-
-  <%# Inside the logged_in? branch, so current_user is guaranteed. The admin
-      screens are scattered across four paths that are easy to forget and are
-      linked from nowhere else -- the console links onward to the others, but
-      only once you have found the console. %>
-  <% if current_user.superadmin? %>
-    <p>
-      <strong><%= t("layout.left_menu.administration") %></strong>
-    </p>
-
-    <p>
-      <%= link_to t("admin.dashboard.show.title"), admin_dashboard_path %>
-    </p>
-
-    <p>
-      <%= link_to t("admin.games.index.title"), admin_games_path %>
-    </p>
-
-    <p>
-      <%= link_to t("admin.users.index.title"), admin_users_path %>
-    </p>
-
-    <p>
-      <%= link_to t("admin.dashboard.show.audit_log"), admin_audit_index_path %>
-    </p>
-  <% end %>
-
-  <p>
-    <%= link_to t("layout.left_menu.logout"), logout_path %>
-  </p>
+    <li>
+      <%= link_to t("layout.left_menu.logout"), logout_path %>
+    </li>
+  </ul>
 <% else %>
-  <legend>
-    &nbsp;<%= t("layout.left_menu.login_legend") %>&nbsp;
-  </legend>
+  <h3>
+    <%= t("layout.left_menu.login_legend") %>
+  </h3>
 
-  <p>
-    <%= link_to t("layout.left_menu.login"), login_path %>
-  </p>
+  <ul class="game-list">
+    <li>
+      <%= link_to t("layout.left_menu.login"), login_path %>
+    </li>
 
-  <p>
-    <%= link_to t("layout.left_menu.signup"), signup_path %> <br />
-  </p>
+    <li>
+      <%= link_to t("layout.left_menu.signup"), signup_path %>
+    </li>
+  </ul>
 <% end %>

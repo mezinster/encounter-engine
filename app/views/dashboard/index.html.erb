@@ -1,31 +1,19 @@
-<p>
+<p class="dash-greeting">
   <%= t("dashboard.index.greeting") %> <%= @current_user.nickname %>
 </p>
 
-<br />
+<div class="dash-grid">
+  <%= render "my_team" %>
 
-<%= render "my_team" %>
+  <%= render "my_games" %>
 
-<br />
+  <%= render "shared/current_games" %>
 
-<%= render "my_games" %>
+  <%= render "dashboard/coming_games" %>
 
-<br />
+  <%= render "dashboard/finished_games" %>
 
-<%= render "shared/current_games" %>
+  <%= render "games/game_entries", game_entries: @game_entries %>
 
-<br />
-
-<%= render "dashboard/coming_games" %>
-
-<br />
-
-<%= render "dashboard/finished_games" %>
-
-<br />
-
-<%= render "games/game_entries", game_entries: @game_entries %>
-
-<br />
-
-<%= render "games/teams", teams: @teams %>
+  <%= render "games/teams", teams: @teams %>
+</div>

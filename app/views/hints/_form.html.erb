@@ -3,7 +3,7 @@
                                    :fields => Hint::TRANSLATABLE_FIELDS,
                                    :active => active_locale %>
 
-<p>
+<div class="field">
   <%= f.label :text, t("hints.form.text_label") %>
   <% if active_locale == @level.game.primary_locale %>
     <%= f.text_field :text %>
@@ -11,9 +11,9 @@
     <%= text_field_tag "hint[translations][#{active_locale}][text]",
                        @hint.translation_draft(:text, active_locale) %>
   <% end %>
-</p>
+</div>
 
-<p>
+<div class="field">
   <%= f.label :delay_in_minutes, t("hints.form.delay_label") %>
   <%= f.text_field :delay_in_minutes %> <%= t("hints.form.minutes_suffix") %>
-</p>
+</div>

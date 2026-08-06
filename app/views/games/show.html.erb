@@ -1,6 +1,6 @@
 <% content_locale = content_locale_for(@game) %>
 
-<h2>
+<h2 class="page-title">
   <%= t("games.show.title") %> "<strong><%= @game.translated(:name, content_locale) %></strong>"
 </h2>
 
@@ -9,40 +9,40 @@
 <% end %>
 
 
-<p>
-  <em><%= t("games.show.author_label") %></em> - <strong><%= @game.author.nickname %></strong>
-</p>
+<div class="panel">
+  <p>
+    <em><%= t("games.show.author_label") %></em> - <strong><%= @game.author.nickname %></strong>
+  </p>
 
-<p>
-  <% unless @game.starts_at.nil? %>
-    <em><%= t("games.show.starts_at_label") %></em>: <%= l(@game.starts_at, format: :short) %>
-  <% else %>
-    <%= t("games.show.starts_at_not_set") %>
-  <% end %>
-</p>
-<p>
-  <% unless @game.registration_deadline.nil? %>
-    <em><%= t("games.show.registration_deadline_label") %></em>: <%= l(@game.registration_deadline, format: :short) %>
-  <% else %>
-    <%= t("games.show.registration_deadline_not_set") %>
-  <% end %>
-</p>
+  <p>
+    <% unless @game.starts_at.nil? %>
+      <em><%= t("games.show.starts_at_label") %></em>: <%= l(@game.starts_at, format: :short) %>
+    <% else %>
+      <%= t("games.show.starts_at_not_set") %>
+    <% end %>
+  </p>
+  <p>
+    <% unless @game.registration_deadline.nil? %>
+      <em><%= t("games.show.registration_deadline_label") %></em>: <%= l(@game.registration_deadline, format: :short) %>
+    <% else %>
+      <%= t("games.show.registration_deadline_not_set") %>
+    <% end %>
+  </p>
 
-<p>
-  <em><%= t("games.show.description_label") %></em>
-</p>
+  <p>
+    <em><%= t("games.show.description_label") %></em>
+  </p>
 
-<p>
-  <%= @game.translated(:description, content_locale) %>
-</p>
-<p>
-  <em><%= t("games.show.max_team_number_label") %></em>
-</p>
-<p>
-  <%= @game.max_team_number %>
-</p>
-
-<br />
+  <p>
+    <%= @game.translated(:description, content_locale) %>
+  </p>
+  <p>
+    <em><%= t("games.show.max_team_number_label") %></em>
+  </p>
+  <p>
+    <%= @game.max_team_number %>
+  </p>
+</div>
 
 <% if logged_in? and @current_user.author_of?(@game) %>
 
@@ -50,32 +50,32 @@
     <%= render "games/missing_translations", :game => @game %>
   <% end %>
 
-  <fieldset>
+  <fieldset class="card">
     <legend>
       <%= t("games.show.levels_legend") %>
     </legend>
 
-    <p>
-      <%= render "levels/list", levels: @game.levels %>
-    </p>
+    <%= render "levels/list", levels: @game.levels %>
 
     <p>
-      <%= link_to t("games.show.add_level"), new_game_level_path(@game) if ! @game.started? %>
+      <%= link_to t("games.show.add_level"), new_game_level_path(@game), class: "btn" if ! @game.started? %>
     </p>
   </fieldset>
-  <br/>
-      <%= render "games/game_entries", game_entries: @game_entries %>
 
-    <br/>
+  <%= render "games/game_entries", game_entries: @game_entries %>
 
-    <%= render "games/teams", teams: @teams %>
-  <br />
-  <p>
-    <%= link_to t("games.show.edit_link"), edit_game_path(@game) if ! @game.started? %>
-  </p>
+  <%= render "games/teams", teams: @teams %>
 
-  <p>
-    <%= link_to t("games.show.delete_link"), delete_game_path(@game) %> <br />
+  <%# The author's own actions get a row of their own, separate from the
+      entries/teams management above -- and the destructive one (delete)
+      gets a second row of its own again, so it is never the button next to
+      the one the author meant to press. %>
+  <div class="game-control">
+    <%= link_to t("games.show.edit_link"), edit_game_path(@game), class: "btn" if ! @game.started? %>
+  </div>
+
+  <p class="danger-row">
+    <%= link_to t("games.show.delete_link"), delete_game_path(@game), class: "btn btn--danger" %>
   </p>
 
 <% end %>
@@ -94,15 +94,15 @@
   });
 </script>
 
-<br />
 <%= render "teams", teams: @teams if (!logged_in?) || (logged_in? && !@current_user.author_of?(@game)) %>
 
 <% if @game.draft? and !@game.started? and @game.levels and @game.levels.count > 0 %>
-   <%= link_to t("games.show.start_test"), "/games/start_test/#{@game.id}" %>
+   <p><%= link_to t("games.show.start_test"), "/games/start_test/#{@game.id}", class: "btn" %></p>
 <% end %>
 
 <% if @game.is_testing? %>
-   <%= link_to t("games.show.start"), show_current_level_path(game_id: @game.id) %>
-   <br />
-   <%= link_to t("games.show.finish_test"), "/games/finish_test/#{@game.id}" %>
+   <div class="game-control">
+     <%= link_to t("games.show.start"), show_current_level_path(game_id: @game.id), class: "btn" %>
+     <%= link_to t("games.show.finish_test"), "/games/finish_test/#{@game.id}", class: "btn" %>
+   </div>
 <% end %>

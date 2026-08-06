@@ -18,7 +18,7 @@
 <% primary_locale_locked = @game.content_translations.any? || !@game.draft? %>
 
 <%= form_with model: @game, url: game_path(@game) do |f| %>
-  <p>
+  <div class="field">
     <%= f.label :name, t("games.form.name") %>
     <% if active_locale == @game.primary_locale %>
       <%= f.text_field :name %>
@@ -26,8 +26,8 @@
       <%= text_field_tag "game[translations][#{active_locale}][name]",
                          @game.translation_draft(:name, active_locale) %>
     <% end %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :description, t("games.form.description") %>
     <% if active_locale == @game.primary_locale %>
       <%= f.text_area :description %>
@@ -35,16 +35,16 @@
       <%= text_area_tag "game[translations][#{active_locale}][description]",
                         @game.translation_draft(:description, active_locale) %>
     <% end %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :primary_locale, t("games.primary_locale_label") %>
     <% if primary_locale_locked %>
       <%= t("locales.#{@game.primary_locale}") %>
     <% else %>
       <%= f.select :primary_locale, I18n.available_locales.map { |l| [t("locales.#{l}"), l] } %>
     <% end %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :available_locale_list, t("games.available_locales_label") %>
     <% I18n.available_locales.each do |locale| %>
       <% is_primary = locale.to_s == @game.primary_locale.to_s %>
@@ -59,29 +59,24 @@
         <%= t("locales.#{locale}") %>
       </label>
     <% end %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :starts_at, t("games.form.starts_at") %>
-    <%= f.text_field :starts_at %> <input id="calendar-switch" type="button" value="..." />
-  </p>
-  <br/>
-  <p>
+    <%= f.text_field :starts_at %> <input id="calendar-switch" type="button" value="..." class="btn" />
+  </div>
+  <div class="field">
     <%= f.label :registration_deadline, t("games.form.registration_deadline") %>
-    <%= f.text_field :registration_deadline %> <input id="calendar-switch2" type="button" value="..." />
-  </p>
-  <br/>
-  <p>
+    <%= f.text_field :registration_deadline %> <input id="calendar-switch2" type="button" value="..." class="btn" />
+  </div>
+  <div class="field">
     <%= f.label :max_team_number, t("games.form.max_team_number") %>
     <%= f.text_field :max_team_number %>
-  </p>
-  <br/>
-  <p>
-    <br/>
+  </div>
+  <div class="field">
     <%= f.label :is_draft, t("games.form.is_draft") %>
     <%= f.check_box :is_draft %>
-  </p>
-  <br/>
-  <%= f.submit t("games.edit.submit") %>
+  </div>
+  <%= f.submit t("games.edit.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), game_path(@game) %></em>
 <% end %>
 

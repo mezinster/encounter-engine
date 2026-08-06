@@ -1,0 +1,71 @@
+/* public/stylesheets/tokens.css
+ *
+ * Every colour in the application resolves through these. Dark is the
+ * default; light is the same token names with different values, so no
+ * component is ever authored twice.
+ *
+ * Ember palette. go / time / danger are neighbours on the colour wheel, so
+ * they are ALSO separated by treatment -- see components.css. Never rely on
+ * hue alone to tell a countdown from a destructive button.
+ */
+:root,
+:root[data-theme="dark"] {
+  --bg:         #12100e;
+  --surface:    #1c1917;
+  --surface-2:  #241f1c;
+  --border:     #332e29;
+  --text:       #f5f1ed;
+  --text-dim:   #9a8f85;
+
+  --go:         #fbbf24;
+  --go-ink:     #1a1205;   /* text on a filled go button */
+  --time:       #fb923c;
+  /* #dc5555 was 4.25:1 on --surface-2 (.team-panel), below AA -- checked only
+     against --bg (4.95) and --surface (4.56) originally. #e56a6a clears AA on
+     all three dark surfaces: 5.97 / 5.50 / 5.13. */
+  --danger:     #e56a6a;
+  --focus:      #fbbf24;
+  --scrim:      rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg:         #faf8f6;
+  --surface:    #ffffff;
+  --surface-2:  #f3efec;
+  --border:     #ddd5cd;
+  --text:       #1c1917;
+  --text-dim:   #6b6259;
+
+  /* Darker than the dark theme's amber, which is 1.69:1 on white and
+     unreadable. #966006 clears AA (4.5:1) against both light surfaces and
+     for white text on a filled button -- verified, not assumed. */
+  --go:         #966006;
+  --go-ink:     #ffffff;
+  /* #b45309 was 4.39:1 on --surface-2 (.playbar-hint), below AA -- checked
+     only against --bg originally. #a94d08 clears AA on all three light
+     surfaces: 5.28 / 5.60 / 4.90. */
+  --time:       #a94d08;
+  --danger:     #b42318;
+  --focus:      #966006;
+  /* A light UI needs less dimming to read as dimmed. */
+  --scrim:      rgba(0, 0, 0, 0.35);
+  color-scheme: light;
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 40px;
+
+  --radius:    8px;
+  --radius-sm: 6px;
+
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --tap: 44px;
+}

@@ -5,7 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%= csrf_meta_tags %>
-    <link rel="stylesheet" href="/stylesheets/master.css">
+    <link rel="stylesheet" href="/stylesheets/tokens.css">
+    <link rel="stylesheet" href="/stylesheets/base.css">
+    <link rel="stylesheet" href="/stylesheets/layout.css">
+    <link rel="stylesheet" href="/stylesheets/components.css">
+    <link rel="stylesheet" href="/stylesheets/screens.css">
+    <script src="/javascripts/theme.js"></script>
     <%# Individual templates hook additional <script>/<link> tags in here via
         `content_for(:head) { ... }` -- the Rails replacement for Merb's
         require_js/require_css + include_required_js/include_required_css
@@ -14,29 +19,32 @@
     <%= yield :head %>
   </head>
   <body>
-    <br />
-    <div id="header-container">
-      <div id="header">
+    <%# The checkbox IS the control: focusable, named, and toggled by Space
+        natively. The label below is only its visual presentation, so it is
+        hidden from assistive tech to avoid announcing the same thing twice. %>
+    <input type="checkbox" id="drawer-state"
+           aria-label="<%= t("layout.header.menu") %>">
+
+    <div class="page">
+      <header class="topbar">
+        <label for="drawer-state" id="drawer-toggle" aria-hidden="true">☰</label>
         <%= render "layouts/header" %>
-      </div>
-    </div>
+      </header>
 
-    <% flash.each do |type, message| %>
-      <p class="flash-<%= type %>"><%= message %></p>
-    <% end %>
-    <hr />
-    <br />
+      <label for="drawer-state" class="drawer-scrim" aria-hidden="true"></label>
 
-    <div id="left-container">
-      <div class="left">
+      <nav id="drawer" aria-label="<%= t("layout.header.menu") %>">
         <%= render "layouts/left_menu" %>
-      </div>
+      </nav>
+
+      <main class="main">
+        <% flash.each do |type, message| %>
+          <p class="flash flash--<%= type %>"><%= message %></p>
+        <% end %>
+        <%= yield %>
+      </main>
     </div>
 
-    <div id="main-container">
-      <div id="main">
-        <%= yield %>
-      </div>
-    </div>
+    <script src="/javascripts/drawer.js" defer></script>
   </body>
 </html>

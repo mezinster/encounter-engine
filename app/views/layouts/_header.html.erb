@@ -14,6 +14,11 @@
     never translated (see features/i18n/switch-language.feature). Persisting
     a choice across visits is done separately, on the profile form
     (app/views/users/edit.html.erb). %>
+<%# aria-pressed is not used: the control does not have an on/off meaning so
+    much as a "switch to the other one" meaning, and the label says which. %>
+<button type="button" id="theme-toggle" class="btn" onclick="toggleTheme()">
+  <%= t("layout.header.theme") %>
+</button>
 <div id="locale-switcher">
   <% I18n.available_locales.each do |available_locale| %>
     <% if available_locale == I18n.locale %>

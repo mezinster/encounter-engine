@@ -1,18 +1,21 @@
-<fieldset id="coming">
+<fieldset id="coming" class="card">
   <legend>
     <%= t("dashboard.coming_games.legend", count: Game.notstarted.count) %>
   </legend>
+  <ul class="game-list">
   <% Game.notstarted.each do |game | %>
-    <%= t("dashboard.coming_games.upcoming") %> <b><%= link_to game.name, game_path(game) %></b> |
-    <% if game.created_by?(current_user) %>
-      <b><%= t("dashboard.coming_games.you_are_author") %></b>
-    <% else %>
-      <% if @current_user.captain? %>
-        <% @game_entry = GameEntry.of(@team,game)%>
-        <%= render "shared/game_entry_controls", game_entry: @game_entry, game: game, team: @team %>
+    <li>
+      <%= t("dashboard.coming_games.upcoming") %> <b><%= link_to game.name, game_path(game) %></b> |
+      <% if game.created_by?(current_user) %>
+        <b><%= t("dashboard.coming_games.you_are_author") %></b>
+      <% else %>
+        <% if @current_user.captain? %>
+          <% @game_entry = GameEntry.of(@team,game)%>
+          <%= render "shared/game_entry_controls", game_entry: @game_entry, game: game, team: @team %>
+        <% end %>
+        <%= link_to t("dashboard.coming_games.enter"), game_path(game) %>
       <% end %>
-      <%= link_to t("dashboard.coming_games.enter"), game_path(game) %>
-    <% end %>
-    <br/>
+    </li>
   <% end %>
+  </ul>
 </fieldset>

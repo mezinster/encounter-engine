@@ -1,0 +1,154 @@
+/* public/stylesheets/layout.css -- page shells and the drawer. */
+
+.page {
+  display: grid;
+  /* minmax(0, 1fr), not 1fr: a bare 1fr is minmax(auto, 1fr), whose auto floor
+     lets an unshrinkable child set the track's width. The header's locale
+     switcher did exactly that, forcing 454px of scroll on a 390px viewport. */
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+  /* Rows size to content. Without this, align-content defaults to `normal`
+     (= stretch for grid), so on any page shorter than the viewport the
+     min-height:100vh free space inflates the topbar into a slab -- 386px, half
+     the screen, on the landing page at 390px. */
+  align-content: start;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  /* Same reason as .page above: without this, the grid item refuses to
+     shrink below its content's intrinsic width. */
+  min-width: 0;
+}
+
+.main {
+  padding: var(--space-5) var(--space-4);
+  max-width: 72rem;
+  width: 100%;
+  margin: 0 auto;
+  min-width: 0;
+}
+
+/* Tap-target floor for the primary navigation. These were plain inline text
+   links -- 19-20px tall, well under the 44px minimum the spec requires for
+   interactive elements. min-height does nothing on an inline box, so each
+   also needs display: inline-flex to make it take effect. */
+.home-link,
+.locale-switcher-link,
+#drawer .game-list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+}
+
+/* The drawer is driven by a hidden checkbox so it opens with CSS alone.
+   drawer.js only adds Escape-to-close and focus handling -- without it the
+   navigation still works, which matters because this markup is on the login
+   page too.
+
+   Visually hidden but still focusable. NOT display:none and NOT
+   visibility:hidden -- either removes it from the tab order, and it is the
+   only keyboard-operable way to open the drawer. */
+#drawer-state {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+}
+
+/* The focus ring has to appear on the thing the user can see. */
+#drawer-state:focus-visible ~ .page #drawer-toggle {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+#drawer-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+#drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(82vw, 20rem);
+  padding: var(--space-4);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  transform: translateX(-100%);
+  transition: transform 0.18s ease;
+  z-index: 30;
+  overflow-y: auto;
+}
+
+#drawer-state:checked ~ .page #drawer { transform: translateX(0); }
+
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  z-index: 25;
+}
+
+#drawer-state:checked ~ .page .drawer-scrim { opacity: 1; pointer-events: auto; }
+
+/* From tablet up the menu is simply always there and the toggle disappears. */
+@media (min-width: 60rem) {
+  .page { grid-template-columns: 16rem minmax(0, 1fr); grid-template-areas: "top top" "nav main"; }
+  .topbar { grid-area: top; }
+  #drawer-toggle, .drawer-scrim { display: none; }
+  #drawer {
+    grid-area: nav;
+    position: static;
+    transform: none;
+    width: auto;
+    border-right: 1px solid var(--border);
+  }
+  .main { grid-area: main; }
+}
+
+/* The play shell: no menu, no max-width, room for a pinned bar.
+   Both properties must be overridden together. grid-template-areas from the
+   60rem block above still declares two columns, and the explicit grid takes
+   the MAX of the two definitions -- so overriding only the columns leaves a
+   phantom second track and pushes .main into it. */
+.page--focused {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "top" "main";
+}
+/* 12rem clears space for the pinned answer bar Task 4 adds at the bottom of
+   the play screen -- not a colour, so no token. */
+.page--focused .main { max-width: 44rem; padding-bottom: 12rem; }
+
+/* The bar's height varies with its contents -- 222px with a pinned hint,
+   255px paused -- so a fixed 12rem reserve leaves the last control partly
+   underneath it at phone width. */
+@media (max-width: 30rem) {
+  .page--focused .main { padding-bottom: 17rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #drawer, .drawer-scrim { transition: none; }
+}

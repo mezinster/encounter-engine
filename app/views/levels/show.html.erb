@@ -6,69 +6,59 @@
   <em>(<%= t("levels.show.game_prefix") %> "<%= link_to @game.name, game_path(@game) %>")</em>
 </p>
 
-<br />
-
-<p>
-  <em><%= t("levels.show.text_label") %></em>
-</p>
-
-<p>
-  <%= @level.text %>
-</p>
-
-<p>
-  <%= link_to t("levels.show.edit_link"), edit_game_level_path(@game, @level) unless @level.game.started? %>
-</p>
-
-<br />
-
-<% unless @level.multi_question? %>
+<div class="panel">
   <p>
-    <em><%= t("levels.show.code_label") %></em>
-    <div id="question-<%= @level.questions.first.id %>">
-      <%= @level.correct_answer %>
-      <%= link_to t("shared.edit_short"), game_level_question_answers_path(@game, @level, @level.questions.first) %>
-    </div>
+    <em><%= t("levels.show.text_label") %></em>
   </p>
-<% else %>
+
   <p>
-    <em><%= t("levels.show.codes_label", count: @level.questions.count) %></em>
+    <%= @level.text %>
   </p>
-  <% @level.questions.each do |question| %>
-    <div id="question-<%=  question.id %>">
-      <p><%= question.correct_answer %></p>
-      <%= link_to t("shared.edit_short"), game_level_question_answers_path(@game, @level, question) %>
-    </div>
+
+  <p>
+    <%= link_to t("levels.show.edit_link"), edit_game_level_path(@game, @level), class: "btn" unless @level.game.started? %>
+  </p>
+
+  <% unless @level.multi_question? %>
+    <p>
+      <em><%= t("levels.show.code_label") %></em>
+      <div id="question-<%= @level.questions.first.id %>">
+        <%= @level.correct_answer %>
+        <%= link_to t("shared.edit_short"), game_level_question_answers_path(@game, @level, @level.questions.first) %>
+      </div>
+    </p>
+  <% else %>
+    <p>
+      <em><%= t("levels.show.codes_label", count: @level.questions.count) %></em>
+    </p>
+    <% @level.questions.each do |question| %>
+      <div id="question-<%=  question.id %>">
+        <p><%= question.correct_answer %></p>
+        <%= link_to t("shared.edit_short"), game_level_question_answers_path(@game, @level, question) %>
+      </div>
+    <% end %>
   <% end %>
-<% end %>
 
-<p>
-  <%= link_to t("levels.show.add_code"), new_game_level_question_path(@game, @level) %>
-</p>
+  <p>
+    <%= link_to t("levels.show.add_code"), new_game_level_question_path(@game, @level), class: "btn" %>
+  </p>
+</div>
 
-<br />
-
-<fieldset>
+<fieldset class="card">
   <legend>
     <%= t("levels.show.hints_legend") %>
   </legend>
 
-  <p>
-    <%= render "hints/list", hints: @level.hints %>
-  </p>
+  <%= render "hints/list", hints: @level.hints %>
 
   <p>
-    <%= link_to t("levels.show.add_hint"), new_game_level_hint_path(@game, @level) %>
+    <%= link_to t("levels.show.add_hint"), new_game_level_hint_path(@game, @level), class: "btn" %>
   </p>
 </fieldset>
 
-<br />
-
-<p>
-  <%= link_to t("levels.show.delete_level"), delete_game_level_path(@game, @level) %> <br />
+<p class="danger-row">
+  <%= link_to t("levels.show.delete_level"), delete_game_level_path(@game, @level), class: "btn btn--danger" %>
 </p>
-
-<br />
 
 <p>
   <%= link_to t("levels.show.back_to_game", name: @level.game.name), game_path(@level.game) %>

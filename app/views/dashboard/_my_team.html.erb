@@ -1,4 +1,4 @@
-<fieldset>
+<fieldset class="card">
   <legend>
     <%= t("dashboard.my_team.legend") %>
   </legend>
@@ -10,10 +10,8 @@
     </p>
 
     <p>
-      <%= link_to t("dashboard.my_team.create_team"), new_team_path %>
+      <%= link_to t("dashboard.my_team.create_team"), new_team_path, class: "btn" %>
     </p>
-
-    <br />
 
     <% @invitations.each do |invitation| %>
       <p><%= t("dashboard.my_team.invited", team: invitation.to_team.name) %>

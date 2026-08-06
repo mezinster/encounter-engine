@@ -1,0 +1,242 @@
+/* screens.css — page/screen-specific styling that doesn't belong in a shared component. */
+
+/* --- Dashboard: each section is a card, two-up from tablet width up ----- */
+.dash-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 60rem) {
+  .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* A game row inside a card's list (dashboard "my games", games/index) --
+   base.css strips the ul/li default spacing, so give rows back a readable
+   rhythm without touching the markup's semantics. */
+.game-list li {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+.game-list li:last-child { border-bottom: 0; }
+
+/* --- Admin: the stats screen's figure grid ------------------------------
+ * Each count is a labelled figure rather than a table row. */
+.stat-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+}
+
+.stat-value { font-size: 1.8rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+
+.stat-label {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* --- Authoring: language tabs, translation gaps, draft/notice banners ----
+ * These class names (language-tabs, missing-translations) are asserted on
+ * literally by spec/requests/language_tabs_spec.rb and
+ * spec/requests/publish_gate_spec.rb -- the markup that carries them
+ * (app/views/shared/_language_tabs.html.erb, games/_missing_translations
+ * .html.erb) is untouched by Task 8; only the CSS backing them, previously
+ * master.css-only, moves here.
+ */
+ul.language-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+ul.language-tabs li a,
+ul.language-tabs li .current {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+
+ul.language-tabs li a:hover { color: var(--text); }
+
+/* The tab currently being edited -- rendered as text, not a link (see the
+   partial's own comment on why). */
+ul.language-tabs li .current {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* A locale with fields still to fill in. */
+ul.language-tabs li.incomplete a { color: var(--danger); border-color: var(--danger); }
+
+ul.language-tabs .missing-count {
+  margin-left: var(--space-1);
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+
+.missing-translations {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--danger);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+.missing-translations h3 { margin-bottom: var(--space-2); color: var(--danger); }
+.missing-translations ul { margin-left: var(--space-4); list-style: disc; }
+
+.is-draft-message {
+  display: inline-block;
+  margin-bottom: var(--space-4);
+  color: var(--danger);
+  font-weight: 650;
+}
+
+/* Informational asides: "this content isn't translated yet" on the play
+   screen, "answers are shared across locales" on the question form. Neither
+   is an error -- .flash's go/danger treatment would overstate them. */
+.notice, .hint-text {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+/* In-game locale switcher (shared/_content_language_switcher.html.erb) --
+   distinct from the platform chrome switcher in the header (#locale-switcher). */
+.content-language-switcher { margin-bottom: var(--space-4); }
+.language-choice {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-3);
+  margin-right: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.language-choice:hover { border-color: var(--text-dim); }
+
+/* The author's delete action sits apart from the benign controls above it,
+   so it is never the button next to the one meant to be pressed. */
+.danger-row { margin-top: var(--space-4); }
+
+/* --- Play screen: the pinned bottom bar --------------------------------
+ * Task text and hints accumulate above as the game gets more stressful; the
+ * code field is the thing a player came to use, so it -- along with the
+ * countdown and the newest hint -- is pinned here instead of drifting down
+ * the page. See .page--focused .main's bottom padding in layout.css, which
+ * keeps this bar from covering the last line of task text.
+ */
+.playbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 15;
+  padding: var(--space-3) var(--space-4);
+  /* Keeps the bar clear of the iOS home indicator. */
+  padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.playbar-hint {
+  margin-bottom: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-2);
+  border-left: 2px solid var(--time);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* Explicit rather than relying on the [hidden] UA default -- belt and
+   suspenders, since some resets override it. */
+.playbar-hint[hidden] { display: none; }
+
+.playbar-hint-label {
+  display: block;
+  color: var(--time);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* Clamped, not truncated-and-lost: the full text is always in the list above. */
+.playbar-hint-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.playbar .countdown { display: block; margin-bottom: var(--space-2); }
+
+.playbar-form { display: flex; gap: var(--space-2); align-items: center; }
+.playbar-form input[type="text"] { flex: 1; }
+/* Labels have no other styling in this system; this is what marks the code
+   field's label as a label rather than plain text in the bar. */
+.playbar-form label { font-weight: 600; }
+
+.playbar-paused {
+  color: var(--time);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* --- Operator screen: live stats + the per-team intervention panel ------
+ * The stats table stays a real <table id="stats"> (see .table--cards in
+ * components.css for the responsive behaviour); each row's controls live
+ * behind a <details> disclosure rather than inline, so nothing is armed
+ * until the operator deliberately opens that team's panel.
+ */
+.team-panel {
+  margin-top: var(--space-3);
+  background: var(--surface-2);
+}
+
+.team-panel-actions { display: grid; gap: var(--space-2); }
+
+/* Danger sits apart from the rest, so "return to the game" is never the
+   button next to the one you meant to press. */
+.team-panel-actions .btn--danger { margin-top: var(--space-3); }
+
+.game-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+/* .btn sets display:inline-flex, which suppresses the native <summary>
+   marker (browsers only draw it at display:list-item). Supply our own, so a
+   control that expands looks like one -- this screen is read at a glance, at
+   night, at 390px. */
+.team-disclosure::after {
+  content: "▾";
+  margin-left: var(--space-2);
+}
+
+details[open] > .team-disclosure::after { content: "▴"; }
+
+/* Safari draws its own marker through a pseudo-element that display alone
+   does not suppress. */
+.team-disclosure::-webkit-details-marker { display: none; }

@@ -1,8 +1,9 @@
+<ul class="game-list">
 <% levels.each do |level| %>
-  <p>
+  <li>
     <%= level.position %>. <%= link_to level.name, game_level_path(level.game, level) %>
     <%= link_to "↑", move_up_game_level_path(level.game, level) unless level.first? %>
     <%= link_to "↓", move_down_game_level_path(level.game, level) unless level.last? %>
-  </p>
-  <br />
+  </li>
 <% end %>
+</ul>

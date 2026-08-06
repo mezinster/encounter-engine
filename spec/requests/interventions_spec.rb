@@ -246,4 +246,27 @@ describe "live-game interventions", type: :request do
       expect(response.body).to include(reset_team_clock_path(:game_id => game.id, :team_id => passing.team_id))
     end
   end
+
+  describe "the operator layout" do
+    it "keeps the stats table a real table and labels its cells for stacking" do
+      passing
+      sign_in(author)
+
+      get game_stats_path(game)
+
+      expect(response.body).to match(/<table[^>]*id="stats"/)
+      # Without data-label a stacked row on a phone is a column of unlabelled
+      # values -- see the .table--cards rule in components.css.
+      expect(response.body).to include("data-label")
+    end
+
+    it "puts each team's actions in a panel rather than inline on the row" do
+      passing
+      sign_in(author)
+
+      get game_stats_path(game)
+
+      expect(response.body).to include("team-panel")
+    end
+  end
 end

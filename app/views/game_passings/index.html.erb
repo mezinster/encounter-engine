@@ -3,13 +3,14 @@
 <p class="game-control">
   <% if @game.paused? %>
     <%= t("game_passings.index.paused_since", :time => l(@game.paused_at, :format => :long)) %>
-    <%= button_to t("game_passings.index.resume"), resume_game_path(@game), :method => :post %>
+    <%= button_to t("game_passings.index.resume"), resume_game_path(@game), :method => :post, :class => "btn" %>
   <% else %>
-    <%= button_to t("game_passings.index.pause"), pause_game_path(@game), :method => :post %>
+    <%= button_to t("game_passings.index.pause"), pause_game_path(@game), :method => :post, :class => "btn" %>
   <% end %>
 </p>
 
-<table id="stats">
+<div class="table-wrap">
+<table id="stats" class="table--cards">
   <thead>
     <tr>
       <th><%= t("game_passings.index.team") %></th>
@@ -34,19 +35,19 @@
     %>
     <% game_passings_sorted_by_current_level_position.each do |game_passing| %>
       <tr>
-        <td><%= game_passing.team.name %></td>
+        <td data-label="<%= t("game_passings.index.team") %>"><%= game_passing.team.name %></td>
         <% if game_passing.exited? %>
-          <td><%= t("game_passings.index.exited") %></td>
-          <td><%= Level.find(game_passing.current_level_id).name %></td>
+          <td data-label="<%= t("game_passings.index.level") %>"><%= t("game_passings.index.exited") %></td>
+          <td data-label="<%= t("game_passings.index.time_at_level") %>"><%= Level.find(game_passing.current_level_id).name %></td>
         <% elsif game_passing.finished? %>
-          <td><%= t("game_passings.index.finished") %></td>
-          <td>--:--:--</td>
+          <td data-label="<%= t("game_passings.index.level") %>"><%= t("game_passings.index.finished") %></td>
+          <td data-label="<%= t("game_passings.index.time_at_level") %>">--:--:--</td>
         <% else %>
-          <td><%= game_passing.current_level.name %></td>
-          <td><%= game_passing.time_at_level %></td>
+          <td data-label="<%= t("game_passings.index.level") %>"><%= game_passing.current_level.name %></td>
+          <td data-label="<%= t("game_passings.index.time_at_level") %>"><%= game_passing.time_at_level %></td>
         <% end %>
 
-        <td>
+        <td data-label="#">
           <em>
             <%=
                unless game_passing.finished?
@@ -58,19 +59,23 @@
           </em>
         </td>
 
-        <td>
+        <td data-label="#">
           <em>
             <%= link_to t("game_passings.index.game_log"), show_game_log_path(game_id: game_passing.game_id, team_id: game_passing.team_id) %>
           </em>
         </td>
 
-        <%= render "intervention_controls", :game_passing => game_passing, :levels => @levels %>
+        <td data-label="<%= t("game_passings.index.interventions") %>">
+          <details>
+            <summary class="btn team-disclosure"><%= t("game_passings.index.interventions") %></summary>
+            <%= render "intervention_controls", :game_passing => game_passing, :levels => @levels %>
+          </details>
+        </td>
 
       </tr>
     <% end %>
   </tbody>
 </table>
+</div>
 
-<br />
-
-<%= link_to t("game_passings.index.full_log"), show_full_log_path(@game) %>
+<p><%= link_to t("game_passings.index.full_log"), show_full_log_path(@game), class: "btn" %></p>

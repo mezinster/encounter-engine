@@ -6,14 +6,14 @@
   <% when "accepted"%> <%= t("shared.game_entry_controls.registered") %>
     <%= link_to t("shared.game_entry_controls.decline"), "/game_entries/cancel/#{game_entry.id}" %>
   <% when "recalled", "rejected", "canceled", nil %>
-    <% if game.requested_teams_number < game.max_team_number %>
+    <% if game.can_request? %>
       <%= link_to t("shared.game_entry_controls.reapply"), "/game_entries/reopen/#{game_entry.id}" %>
     <% else %>
       <%= t("shared.game_entry_controls.entries_exceeded") %>
     <% end %>
   <% end %>
 <% else %>
-  <% if game.requested_teams_number >= game.max_team_number %>
+  <% if !game.can_request? %>
     <%= t("shared.game_entry_controls.entries_exceeded") %>
   <% elsif game.registration_deadline and game.registration_deadline <= Time.now %>
     <%= t("shared.game_entry_controls.deadline_passed") %>

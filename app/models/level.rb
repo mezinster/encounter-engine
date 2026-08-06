@@ -1,6 +1,7 @@
 # coding: utf-8
 class Level < ApplicationRecord
   include TranslatableContent
+  include ChildErrorPromotion
 
   TRANSLATABLE_FIELDS = %w[name text].freeze
 
@@ -18,6 +19,11 @@ class Level < ApplicationRecord
   validates :name, presence: true
   validates :text, presence: true
   validates :game, presence: true
+
+  # An empty code on the new-level form used to surface as
+  # "Questions имеет неверное значение". Declared after has_many :questions so
+  # it runs after the autosave validation it replaces.
+  promotes_errors_from :questions
 
   scope :of_game, ->(game) { where(game_id: game) }
 

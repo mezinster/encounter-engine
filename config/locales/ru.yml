@@ -235,6 +235,9 @@ ru:
       codes_label: "Коды (%{count}):"
       add_code: "Добавить ещё один код"
       options_link: "Варианты ответа"
+      delete_code: "Удалить код"
+      delete_code_confirm: "Удалить код «%{code}» из задания? Это необратимо."
+      options_for_code: "(для кода «%{code}»)"
       hints_legend: "Подсказки:"
       add_hint: "Добавить подсказку"
       delete_level: "Удалить этот уровень"
@@ -257,6 +260,8 @@ ru:
       heading_game_prefix: "игры"
       submit: "Добавить подсказку"
   questions:
+    must_have_at_least_one_code: "В задании должен остаться хотя бы один код"
+    code_deleted: "Код удалён из задания"
     new:
       title: "Задание"
       game_prefix: "игра"

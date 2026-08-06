@@ -252,6 +252,9 @@ uk:
       codes_label: "Коди (%{count}):"
       add_code: "Додати ще один код"
       options_link: "Варіанти відповіді"
+      delete_code: "Видалити код"
+      delete_code_confirm: "Видалити код «%{code}» із завдання? Це незворотно."
+      options_for_code: "(для коду «%{code}»)"
       hints_legend: "Підказки:"
       add_hint: "Додати підказку"
       delete_level: "Видалити цей рівень"
@@ -274,6 +277,8 @@ uk:
       heading_game_prefix: "гри"
       submit: "Додати підказку"
   questions:
+    must_have_at_least_one_code: "У завданні має залишитися хоча б один код"
+    code_deleted: "Код видалено із завдання"
     new:
       title: "Завдання"
       game_prefix: "гра"

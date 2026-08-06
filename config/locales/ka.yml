@@ -258,6 +258,9 @@ ka:
       codes_label: "კოდები (%{count}):"
       add_code: "კიდევ ერთი კოდის დამატება"
       options_link: "პასუხის ვარიანტები"
+      delete_code: "კოდის წაშლა"
+      delete_code_confirm: "წაიშალოს კოდი „%{code}“ დავალებიდან? ეს შეუქცევადია."
+      options_for_code: "(კოდისთვის „%{code}“)"
       hints_legend: "მინიშნებები:"
       add_hint: "მინიშნების დამატება"
       delete_level: "ამ დონის წაშლა"
@@ -286,6 +289,8 @@ ka:
       heading_game_prefix: "თამაშიდან"
       submit: "მინიშნების დამატება"
   questions:
+    must_have_at_least_one_code: "დავალებას სულ მცირე ერთი კოდი უნდა დარჩეს"
+    code_deleted: "კოდი წაიშალა დავალებიდან"
     new:
       title: "დავალება"
       game_prefix: "თამაში"

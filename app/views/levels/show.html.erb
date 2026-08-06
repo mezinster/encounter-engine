@@ -35,6 +35,18 @@
       <div id="question-<%=  question.id %>">
         <p><%= question.correct_answer %></p>
         <%= link_to t("shared.edit_short"), game_level_question_answers_path(@game, @level, question) %>
+        <%# Only once there is more than one code -- the last one cannot be
+            deleted anyway (QuestionsController#delete refuses it), so offering
+            the link on a single-code level would be a button that only ever
+            produces an error. Hidden on a started game for the same reason the
+            action refuses one: removing a code retroactively un-answers it for
+            teams that already found it. %>
+        <% unless @level.game.started? %>
+          <%= link_to t("levels.show.delete_code"),
+                      delete_game_level_question_path(@game, @level, question),
+                      class: "btn btn--danger",
+                      :data => { :confirm => t("levels.show.delete_code_confirm", :code => question.correct_answer) } %>
+        <% end %>
       </div>
     <% end %>
   <% end %>
@@ -43,14 +55,25 @@
     <%= link_to t("levels.show.add_code"), new_game_level_question_path(@game, @level), class: "btn" %>
   </p>
 
-  <%# Options turn a code question into a quiz question. Linked per question,
-      because that is the record they hang off. %>
-  <p>
-    <% @level.questions.each do |question| %>
+  <%# Options turn a code question into a quiz question. ONE button per level,
+      not one per code: a quiz level holds a single question by design ("each
+      level is just a question"), and a row of identical buttons gave the
+      author no way to tell which code each belonged to.
+
+      Options hang off a Question, so this manages the FIRST code. On the rare
+      multi-code level that choice is named in the link's suffix rather than
+      left silent -- an author who genuinely wants options on a second code
+      would otherwise have no way to see that this button does not reach it. %>
+  <% first_question = @level.questions.first %>
+  <% if first_question %>
+    <p>
       <%= link_to t("levels.show.options_link"),
-                  game_level_question_options_path(@game, @level, question), class: "btn" %>
-    <% end %>
-  </p>
+                  game_level_question_options_path(@game, @level, first_question), class: "btn" %>
+      <% if @level.multi_question? %>
+        <em><%= t("levels.show.options_for_code", :code => first_question.correct_answer) %></em>
+      <% end %>
+    </p>
+  <% end %>
 </div>
 
 <fieldset class="card">

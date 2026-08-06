@@ -142,6 +142,14 @@ class GamePassing < ApplicationRecord
     !! finished_at
   end
 
+  # What ranking compares. For every game that predates quiz levels
+  # penalty_seconds is 0, so this is finished_at unchanged.
+  def effective_finished_at
+    return nil unless self.finished_at
+
+    self.finished_at + self.penalty_seconds.to_i
+  end
+
   # The clock every countdown is measured against. While a game is paused this
   # is the instant it was paused, so hints_to_show, upcoming_hints and
   # time_at_level all freeze together -- and get_current_level_tip returns an

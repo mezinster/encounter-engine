@@ -34,7 +34,7 @@
         <% if game.editing_locked? %> &middot; <%= t("admin.games.index.locked") %><% end %>
       </td>
       <td data-label="<%= t("admin.games.index.teams") %>"><%= game.game_passings.size %></td>
-      <td data-label="">
+      <td>
         <div class="game-control">
           <%= link_to t("admin.games.index.edit"), edit_game_path(game), class: "btn" unless game.started? %>
           <% if game.withdrawn? %>

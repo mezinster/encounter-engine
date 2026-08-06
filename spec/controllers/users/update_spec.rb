@@ -32,8 +32,9 @@ RSpec.describe UsersController, "#update", type: :controller do
 
   describe "strong parameters" do
     # profile_params permits nickname/date_of_birth/icq_number/jabber_id/
-    # phone_number/password/password_confirmation (see
-    # app/views/users/edit.html.erb) -- editing a profile must not let a
+    # instagram/telegram_id/on_telegram/on_whatsapp/on_viber/on_signal/
+    # on_max/phone_number/locale/timezone/password/password_confirmation
+    # (see app/views/users/edit.html.erb) -- editing a profile must not let a
     # request move the account to a different team.
     it "ignores an attempted team_id" do
       team = create_team
@@ -41,6 +42,26 @@ RSpec.describe UsersController, "#update", type: :controller do
                        :params => { user: { nickname: @user.nickname, team_id: team.id } })
 
       expect(@user.reload.team_id).to be_nil
+    end
+
+    # A missing `permit` entry silently drops the value rather than raising,
+    # so this has to be an end-to-end PATCH-and-reload assertion, not just a
+    # check that the params list mentions the key.
+    it "persists an attempted Instagram handle" do
+      perform_request(:as_user => @user,
+                       :params => { user: { nickname: @user.nickname, instagram: "newhandle" } })
+
+      expect(@user.reload.instagram).to eq("newhandle")
+    end
+
+    # Booleans arrive from an HTML checkbox as the strings "1"/"0", not a
+    # real true/false -- a second, independent way for this to quietly fail
+    # even once the key is permitted.
+    it "persists an attempted on_signal flag sent as the string \"1\"" do
+      perform_request(:as_user => @user,
+                       :params => { user: { nickname: @user.nickname, on_signal: "1" } })
+
+      expect(@user.reload.on_signal).to eq(true)
     end
   end
 

@@ -33,6 +33,26 @@ RSpec.describe "users/edit", type: :view do
     expect(rendered).to include('type="text" value="1234" name="user[password]"')
   end
 
+  # Label text alone doesn't prove the input is wired to the attribute --
+  # a disconnected check_box_tag would render the same label and still
+  # never submit user[on_signal] at all.
+  it "submits the new fields under the attribute names profile_params expects" do
+    user = create_user
+
+    assign(:current_user, user)
+    assign(:user, user)
+
+    render
+
+    expect(rendered).to include('name="user[instagram]"')
+    expect(rendered).to include('name="user[telegram_id]"')
+    expect(rendered).to include('name="user[on_telegram]"')
+    expect(rendered).to include('name="user[on_whatsapp]"')
+    expect(rendered).to include('name="user[on_viber]"')
+    expect(rendered).to include('name="user[on_signal]"')
+    expect(rendered).to include('name="user[on_max]"')
+  end
+
   it "shows the phone number field only for a captain" do
     captain_user = create_user
     create_team(captain: captain_user)

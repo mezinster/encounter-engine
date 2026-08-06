@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_06_155817) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_06_220524) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -161,5 +161,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_06_155817) do
     t.string "locale"
     t.boolean "is_superadmin", default: false, null: false
     t.string "timezone"
+    t.string "instagram"
+    t.string "telegram_id"
+    t.boolean "on_telegram", default: false, null: false
+    t.boolean "on_whatsapp", default: false, null: false
+    t.boolean "on_viber", default: false, null: false
+    t.boolean "on_signal", default: false, null: false
+    t.boolean "on_max", default: false, null: false
   end
 end

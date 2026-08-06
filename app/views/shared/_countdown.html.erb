@@ -62,24 +62,27 @@
       if (end < begin) {
         return false;
       }
-      var
-      days   = end.getDate()  - begin.getDate(),
-      months = end.getMonth() - begin.getMonth(),
-      years  = end.getYear()  - begin.getYear(),
-      hms    = (end / 1000 - begin / 1000) % 86400,
-      seconds = Math.floor(hms % 60),
-      minutes = Math.floor(hms/60) % 60,
-      hours   = Math.floor(hms/3600) % 60,
-      date = new Date();
-      if (days < 0) {
-        date.setFullYear(begin.getYear(), begin.getMonth(), 32);
-        days += 31 - date.getDate();
-        months--;
-      }
-      if (months < 0) {
-        months += 12;
-        years--;
-      }
+      // Every component is derived from the SAME interval. The previous version
+      // took days from a calendar day-of-month subtraction -- comparing
+      // getDate() on end and on begin -- while taking hours/minutes/seconds
+      // from the elapsed seconds. Two different measurements printed together,
+      // so a gap of 22h47m rendered as "1 day 22 hours 46 minutes": the date
+      // rolled over once AND the remainder was nearly a full day.
+      //
+      // years and months are no longer computed. Calendar months have no fixed
+      // length, so mixing them with an interval either approximates (30-day
+      // months) or double-counts again; a countdown in days is exact and is
+      // what this product needs. They stay in countdown_settings.lang above
+      // because features/games/enter-game-before-start.feature:23,42 assert
+      // that whole plural table, and the loop below skips any zero value, so
+      // they simply never render.
+      var total   = Math.floor((end - begin) / 1000),
+          years   = 0,
+          months  = 0,
+          days    = Math.floor(total / 86400),
+          hours   = Math.floor(total / 3600) % 24,
+          minutes = Math.floor(total / 60) % 60,
+          seconds = total % 60;
       var diff = {years: years, months: months, days: days, hours: hours, minutes: minutes, seconds: seconds};
       var result = new Array();
       for (i in diff) {

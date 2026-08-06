@@ -101,10 +101,36 @@
   <% end %>
 
   <% unless @game.paused? %>
-    <%= form_with url: post_answer_path(game_id: @game.id), method: :post, html: { class: "playbar-form" } do %>
-      <%= label_tag :answer, t("game_passings.show_current_level.answer_label") %>
-      <%= text_field_tag :answer, nil, autocapitalize: "off", autocorrect: "off", spellcheck: "false" %>
-      <%= submit_tag t("game_passings.show_current_level.submit"), class: "btn btn--go" %>
+    <% if @game_passing.current_level.quiz? %>
+      <%= form_with url: post_answer_path(game_id: @game.id), method: :post, html: { class: "playbar-form playbar-form--quiz" } do %>
+        <% @game_passing.current_level.questions.select(&:quiz?).each do |quiz_question| %>
+          <fieldset class="quiz-question">
+            <legend><%= t("game_passings.show_current_level.choose") %></legend>
+            <% quiz_question.ordered_options.each do |option| %>
+              <label class="quiz-option">
+                <%# Both controls use the [] name so the params shape is
+                    identical either way: radios sharing a name submit only the
+                    selected one, giving the same { question_id => [option_id] }
+                    the controller expects. %>
+                <% if quiz_question.single_choice? %>
+                  <%= radio_button_tag "option_ids[#{quiz_question.id}][]", option.id %>
+                <% else %>
+                  <%= check_box_tag "option_ids[#{quiz_question.id}][]", option.id, false %>
+                <% end %>
+                <%# Author content -- rendered verbatim, never through t(). %>
+                <%= option.translated(:text, content_locale) %>
+              </label>
+            <% end %>
+          </fieldset>
+        <% end %>
+        <%= submit_tag t("game_passings.show_current_level.submit"), class: "btn btn--go" %>
+      <% end %>
+    <% else %>
+      <%= form_with url: post_answer_path(game_id: @game.id), method: :post, html: { class: "playbar-form" } do %>
+        <%= label_tag :answer, t("game_passings.show_current_level.answer_label") %>
+        <%= text_field_tag :answer, nil, autocapitalize: "off", autocorrect: "off", spellcheck: "false" %>
+        <%= submit_tag t("game_passings.show_current_level.submit"), class: "btn btn--go" %>
+      <% end %>
     <% end %>
   <% end %>
 </div>

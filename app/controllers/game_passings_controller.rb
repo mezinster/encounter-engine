@@ -72,6 +72,11 @@ class GamePassingsController < ApplicationController
       return
     end
 
+    # A quiz level submits picked options, not a typed string. Everything below
+    # is the code path exactly as it was, and a level with no options never
+    # reaches the branch.
+    return post_options if @game_passing.current_level.quiz?
+
     # params[:answer] is a bare string. Guard the type: a crafted request
     # sending answer[value]=... made the Merb app raise on String#strip.
     # Stripped up front (matching the Merb original) rather than relying on
@@ -119,6 +124,42 @@ class GamePassingsController < ApplicationController
 
   private
 
+  # Quiz levels submit option_ids as { question_id => [option_id, ...] }.
+  #
+  # Each question is judged independently: getting one right and one wrong
+  # marks the first answered and charges one penalty, rather than discarding
+  # both. That falls out of the existing model -- all_questions_answered? is
+  # already what advances a level.
+  #
+  # The log records the chosen option texts, so the author's answer log stays a
+  # complete account of what teams did, exactly as it is for typed codes.
+  def post_options
+    selections = params.fetch(:option_ids, {})
+    chosen_texts = []
+    results = []
+
+    selections.each do |question_id, option_ids|
+      question = @game_passing.current_level.questions.find_by(:id => question_id)
+      next unless question
+
+      chosen_texts.concat(Option.where(:id => Array(option_ids)).pluck(:text))
+      results << @game_passing.answer_options!(question, option_ids)
+    end
+
+    @answer = chosen_texts.join(", ")
+    @answer_was_correct = results.any? && results.all?
+    save_log
+
+    if @game_passing.finished?
+      render :show_results
+    else
+      # answer_options! may have advanced current_level, so preload after it --
+      # same reasoning as the code path above.
+      @game_passing.current_level = preloaded_level(@game_passing.current_level)
+      render :show_current_level, layout: "in_game"
+    end
+  end
+
   # PORT DEFECT, now fixed (found by
   # features/game-passing/throw_in_the_towel.feature): there used to be a second
   # finder, #find_game_by_id, used only by #exit_game and reading params[:id].
@@ -153,9 +194,15 @@ class GamePassingsController < ApplicationController
   # automatic inverse_of means each preloaded hint/question's `level` is this
   # same object, so this one row covers all of them.
   def preloaded_level(level)
+    # :options is nested under :questions, not a sibling -- Level#quiz? asks
+    # every question whether it has options, and each option's text is rendered
+    # through translated(). Without this the play view fires one query per
+    # question and another per option, which is exactly what
+    # spec/requests/translated_level_spec.rb's query-count guard exists to catch.
     Level.includes(:game, :content_translations,
                    :hints => :content_translations,
-                   :questions => :content_translations).find(level.id)
+                   :questions => [ :content_translations,
+                                   { :options => :content_translations } ]).find(level.id)
   end
 
   # Same reasoning as preloaded_level, deliberately narrower: every playing

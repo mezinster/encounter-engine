@@ -417,6 +417,7 @@ ka:
       game_log: "(ლოგი თამაშზე)"
       full_log: "პასუხების სრული ლოგი"
     show_current_level:
+      choose: "აირჩიეთ პასუხი"
       title_prefix: "თამაში"
       level_label: "დავალება"
       hint_label: "მინიშნება"

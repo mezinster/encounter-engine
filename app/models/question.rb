@@ -39,12 +39,25 @@ class Question < ApplicationRecord
 
   # Decides radio vs checkbox at render time, so an author marks what is true
   # rather than picking a control.
+  #
+  # Counted in Ruby over the loaded association, NOT `options.correct.count`.
+  # A scope-plus-count issues a fresh query even when options are already
+  # preloaded, so the play view would fire one per question -- which is exactly
+  # what the query-count guard in spec/requests/translated_level_spec.rb caught.
   def single_choice?
-    self.options.correct.count == 1
+    self.options.count(&:is_correct) == 1
   end
 
+  # Same reasoning: select over the loaded association rather than a pluck,
+  # which would always hit the database.
   def correct_option_ids
-    self.options.correct.pluck(:id).sort
+    self.options.select(&:is_correct).map(&:id).sort
+  end
+
+  # Author-defined display order, sorted in Ruby so a preloaded association is
+  # actually used. `options.order(...)` would re-query.
+  def ordered_options
+    self.options.sort_by { |option| [ option.position || 0, option.id ] }
   end
 
   def correct_answer=(answer)

@@ -403,6 +403,7 @@ uk:
       game_log: "(лог по грі)"
       full_log: "Повний лог відповідей"
     show_current_level:
+      choose: "Оберіть відповідь"
       title_prefix: "Гра"
       level_label: "Завдання"
       hint_label: "Підказка"

@@ -392,6 +392,7 @@ ru:
       resume: "Продолжить игру"
       paused_since: "Игра приостановлена в %{time}."
     show_current_level:
+      choose: "Выберите ответ"
       title_prefix: "Игра"
       level_label: "Задание"
       hint_label: "Подсказка"

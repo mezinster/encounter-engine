@@ -380,6 +380,7 @@ en:
       resume: "Resume the game"
       paused_since: "Paused at %{time}."
     show_current_level:
+      choose: "Choose an answer"
       title_prefix: "Game"
       level_label: "Task"
       hint_label: "Hint"

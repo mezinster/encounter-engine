@@ -1269,6 +1269,51 @@ git commit -m "Lay out the admin console"
 
 ### Task 8: Sweep the remaining views and retire master.css
 
+- [ ] **Step 0: Fix the page-level horizontal scroll at 390px**
+
+Found during Task 7 and then **diagnosed empirically** by a reviewer who started the server and
+toggled candidates off one at a time — so start from this, do not re-investigate.
+
+At 390px on `/login` (no auth, so this is header-only): `document.body.scrollWidth` is **454**
+against a 390 viewport. Every page is affected.
+
+**It is not the drawer**, which was the obvious suspect and is a red herring. `#drawer` sits
+entirely at `left: -320, right: 0` — fully off-canvas to the left, and an LTR document does not
+scroll into negative x, so it cannot create rightward overflow. Setting `#drawer { display: none }`
+changes `scrollWidth` not at all; setting `.topbar { display: none }` drops it to 390.
+
+The real cause is two things together:
+
+1. `.topbar` is `display: flex` with no `flex-wrap`, and `#locale-switcher`'s four locale links
+   plus the home link, timestamp and theme toggle refuse to shrink below their content width.
+2. `.page`'s `grid-template-columns: 1fr` behaves as `minmax(auto, 1fr)`, so that intrinsic
+   min-content width propagates up through the track to `body` and drags every sibling with it —
+   including `.main` and the login form's own inputs, which show the identical 454px overflow.
+
+**Fix it at the source, not with `overflow-x: hidden` on the page** — that would clip content
+rather than lay it out:
+
+```css
+/* minmax(0, 1fr), not 1fr: a bare 1fr is minmax(auto, 1fr), whose auto floor
+   lets an unshrinkable child set the track's width. The header's locale
+   switcher did exactly that, forcing 454px of scroll on a 390px viewport. */
+.page { grid-template-columns: minmax(0, 1fr); }
+
+/* Same reason, for the grid items themselves. */
+.topbar, .main { min-width: 0; }
+
+/* Four locale links, a home link, a timestamp and a theme toggle do not fit
+   on one 390px row, and should stack rather than widen the page. */
+.topbar { flex-wrap: wrap; }
+```
+
+Apply the same `minmax(0, …)` floor to the two-column desktop template inside the 60rem media
+query, for the same reason.
+
+**Verify at 390px that `document.body.scrollWidth` equals `window.innerWidth`** on `/login`, the
+dashboard and the play screen, in both themes. Report the numbers.
+
+
 **Files:**
 - Modify: every remaining template under `app/views/` that carries legacy markup; delete `public/stylesheets/master.css`; remove its `<link>` from both layouts
 

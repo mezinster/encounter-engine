@@ -1155,6 +1155,51 @@ git commit -m "Lay out the dashboard and game page on the component system"
 
 ### Task 7: The admin console
 
+- [ ] **Step 0: Neutralise `master.css`'s legacy colour rules — once, globally**
+
+Task 6 discovered this the expensive way. `master.css` is still linked until Task 8, and it
+hardcodes light-theme colours on bare element selectors:
+
+```css
+body { background-color: #fff; }
+h1   { color: #c55; background-color: #fff; }
+h2   { color: #999; }
+h3   { color: #4d9b12; }
+p    { color: #000; background-color: #fff; }
+a    { background-color: #fff; }
+```
+
+Every one bleeds into every page. In the dark theme a `<p>` renders as a solid white block on a
+dark surface. Task 6 patched around it with eight scoped overrides for **two** pages; this task has
+five screens and Task 8 has about fifty, so patching per screen is the wrong shape — and every
+such patch becomes dead weight the moment `master.css` is deleted.
+
+Fix it once. `base.css` is linked **after** `master.css`, so a short block there neutralises the
+lot without touching the legacy file:
+
+```css
+/* master.css (still linked until Task 8) hardcodes light-theme colours on bare
+   element selectors -- p, a, h1, h2, h3 and body all carry #fff backgrounds or
+   fixed colours. In the dark theme those render as white blocks on a dark
+   surface. Neutralise them here rather than overriding per screen: base.css
+   loads after master.css, and these lines disappear with it in Task 8.
+   Colour is inherited from the token-driven cascade instead. */
+body, p, a, h1, h2, h3, li, td, th, div, fieldset, legend {
+  background-color: transparent;
+}
+
+p, li, td, th, div, fieldset, legend { color: inherit; }
+h1, h2, h3 { color: var(--text); }
+```
+
+Then **remove the now-redundant scoped overrides Task 6 added to `screens.css`** — anything that
+exists only to undo a `master.css` colour. Keep overrides that do real layout work, such as the
+`label { float: none }` rule from Task 4, which fixes geometry rather than colour.
+
+Verify at 390px and 1280px in both themes that the dashboard, game page and play screen still look
+right after the swap — this touches every page, so a regression here is broad.
+
+
 **Files:**
 - Modify: `app/views/admin/dashboard/show.html.erb`, `app/views/admin/games/index.html.erb`, `app/views/admin/users/index.html.erb`, `app/views/admin/users/show.html.erb`, `app/views/admin/audit/index.html.erb`, `public/stylesheets/screens.css`
 

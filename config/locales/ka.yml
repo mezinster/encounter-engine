@@ -41,8 +41,6 @@ ka:
       show:
         email: "E-mail"
         phone: "ტელეფონი"
-        jabber: "Jabber"
-        icq: "ICQ"
         instagram: "Instagram"
         telegram: "Telegram"
         messengers: "მესენჯერები"
@@ -317,8 +315,6 @@ ka:
       title: 'მოთამაშის პროფილის რედაქტირება: %{nickname}'
       nickname_label: "თქვენი სახელი"
       date_of_birth_label: "დაბადების თარიღი"
-      icq_label: "ICQ ნომერი"
-      jabber_label: "Jabber ID"
       instagram_label: "Instagram"
       telegram_label: "Telegram"
       messengers_label: "ხელმისაწვდომია მესენჯერებში"
@@ -335,8 +331,6 @@ ka:
       email_label: "E-mail:"
       date_of_birth_label: "დაბადების თარიღი:"
       timezone_label: "დროის სარტყელი:"
-      icq_label: "ICQ ნომერი:"
-      jabber_label: "Jabber ID:"
       instagram_label: "Instagram:"
       telegram_label: "Telegram:"
       messengers_label: "მესენჯერები:"

@@ -18,8 +18,6 @@ ru:
       show:
         email: "E-mail"
         phone: "Телефон"
-        jabber: "Jabber"
-        icq: "ICQ"
         instagram: "Instagram"
         telegram: "Telegram"
         messengers: "Мессенджеры"
@@ -288,8 +286,6 @@ ru:
       title: 'Редактирование профиля игрока %{nickname}'
       nickname_label: "Ваше имя"
       date_of_birth_label: "Дата рождения"
-      icq_label: "Номер ICQ"
-      jabber_label: "Jabber ID"
       instagram_label: "Instagram"
       telegram_label: "Telegram"
       messengers_label: "Доступен в мессенджерах"
@@ -306,8 +302,6 @@ ru:
       email_label: "E-mail:"
       date_of_birth_label: "Дата рождения:"
       timezone_label: "Часовой пояс:"
-      icq_label: "Номер ICQ:"
-      jabber_label: "Jabber ID:"
       instagram_label: "Instagram:"
       telegram_label: "Telegram:"
       messengers_label: "Мессенджеры:"

@@ -8,8 +8,8 @@ RSpec.describe UsersController, "#update", type: :controller do
 
   describe "with valid data" do
     it "updates the user's profile fields" do
-      perform_request(:as_user => @user, :params => { user: { nickname: @user.nickname, icq_number: "123456" } })
-      expect(@user.reload.icq_number).to eq("123456")
+      perform_request(:as_user => @user, :params => { user: { nickname: @user.nickname, instagram: "player" } })
+      expect(@user.reload.instagram).to eq("player")
     end
 
     it "redirects to the users list" do
@@ -31,7 +31,7 @@ RSpec.describe UsersController, "#update", type: :controller do
   end
 
   describe "strong parameters" do
-    # profile_params permits nickname/date_of_birth/icq_number/jabber_id/
+    # profile_params permits nickname/date_of_birth/
     # instagram/telegram_id/on_telegram/on_whatsapp/on_viber/on_signal/
     # on_max/phone_number/locale/timezone/password/password_confirmation
     # (see app/views/users/edit.html.erb) -- editing a profile must not let a

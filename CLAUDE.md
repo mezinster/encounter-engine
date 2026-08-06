@@ -50,6 +50,18 @@ a signal to look harder at the implementation, or to raise it as a separate, exp
 not to "fix" the spec. Step definitions (`features/*/steps/*_steps.rb`, `features/support/env.rb`)
 are fair game.
 
+**One authorised exception exists.** On 2026-08-06 the repository owner explicitly authorised
+amending `features/games/user-profile-view-and-edit.feature` to drop the ICQ and Jabber fields,
+which were retired from the product along with their database columns (see
+`docs/superpowers/specs/2026-08-06-profiles-and-games-list-design.md` §2.3). Four scenarios lost
+their ICQ/Jabber steps and table rows; the two step definitions that carried those arguments were
+narrowed to match. The scenario count did not change — 234 before and after — and the step total
+fell by 4, which is exactly the four `ввожу ... в поле` lines removed.
+
+This is recorded so the amendment is traceable, **not** to soften the rule. The rule stands exactly
+as written above: a feature file is changed only on an explicit, recorded decision by the
+repository owner, never as a convenience and never to make a failing test pass.
+
 Cucumber features are written in **Russian Gherkin** (`# language: ru`). Step defs live beside
 their features and are loaded by `features/support/env.rb` via `-r features/support` (see
 `config/cucumber.yml`) — `features/step_definitions/` is deliberately gitignored and unused; don't

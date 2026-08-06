@@ -35,8 +35,6 @@ uk:
       show:
         email: "E-mail"
         phone: "Телефон"
-        jabber: "Jabber"
-        icq: "ICQ"
         instagram: "Instagram"
         telegram: "Telegram"
         messengers: "Месенджери"
@@ -305,8 +303,6 @@ uk:
       title: 'Редагування профілю гравця %{nickname}'
       nickname_label: "Ваше ім'я"
       date_of_birth_label: "Дата народження"
-      icq_label: "Номер ICQ"
-      jabber_label: "Jabber ID"
       instagram_label: "Instagram"
       telegram_label: "Telegram"
       messengers_label: "Доступний у месенджерах"
@@ -323,8 +319,6 @@ uk:
       email_label: "E-mail:"
       date_of_birth_label: "Дата народження:"
       timezone_label: "Часовий пояс:"
-      icq_label: "Номер ICQ:"
-      jabber_label: "Jabber ID:"
       instagram_label: "Instagram:"
       telegram_label: "Telegram:"
       messengers_label: "Месенджери:"

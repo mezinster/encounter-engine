@@ -18,8 +18,6 @@ en:
       show:
         email: "Email"
         phone: "Phone"
-        jabber: "Jabber"
-        icq: "ICQ"
         instagram: "Instagram"
         telegram: "Telegram"
         messengers: "Messengers"
@@ -288,8 +286,6 @@ en:
       title: 'Editing player profile %{nickname}'
       nickname_label: "Your name"
       date_of_birth_label: "Date of birth"
-      icq_label: "ICQ number"
-      jabber_label: "Jabber ID"
       instagram_label: "Instagram"
       telegram_label: "Telegram"
       messengers_label: "Available on"
@@ -306,8 +302,6 @@ en:
       email_label: "E-mail:"
       date_of_birth_label: "Date of birth:"
       timezone_label: "Time zone:"
-      icq_label: "ICQ number:"
-      jabber_label: "Jabber ID:"
       instagram_label: "Instagram:"
       telegram_label: "Telegram:"
       messengers_label: "Messengers:"

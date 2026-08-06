@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_06_220524) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_06_225826) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -154,8 +154,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_06_220524) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.integer "team_id"
-    t.string "jabber_id"
-    t.string "icq_number"
     t.date "date_of_birth"
     t.string "phone_number"
     t.string "locale"

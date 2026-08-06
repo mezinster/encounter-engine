@@ -312,6 +312,8 @@ ka:
       jabber_label: "Jabber ID"
       phone_label: "საკონტაქტო ტელეფონი"
       locale_label: "ინტერფეისის ენა"
+      timezone_label: "დროის სარტყელი"
+      timezone_default: "სერვერის ნაგულისხმევი"
       password_label: "ახალი პაროლი"
       password_confirmation_label: "პაროლის დადასტურება"
       submit: "ცვლილებების შენახვა"
@@ -320,6 +322,7 @@ ka:
       captain_prefix: "გუნდის კაპიტანი"
       email_label: "E-mail:"
       date_of_birth_label: "დაბადების თარიღი:"
+      timezone_label: "დროის სარტყელი:"
       icq_label: "ICQ ნომერი:"
       jabber_label: "Jabber ID:"
       phone_label: "საკონტაქტო ტელეფონი:"
@@ -464,6 +467,7 @@ ka:
       not_finished: "არ დაასრულეს"
       full_log: "პასუხების ლოგი"
       finish_testing: "ტესტირების დასრულება"
+      times_in_zone: "დრო ნაჩვენებია სარტყელში %{zone}"
   logs:
     index:
       title: "ინდექსი"

@@ -283,6 +283,8 @@ en:
       jabber_label: "Jabber ID"
       phone_label: "Contact phone number"
       locale_label: "Interface language"
+      timezone_label: "Time zone"
+      timezone_default: "Server default"
       password_label: "New password"
       password_confirmation_label: "Password confirmation"
       submit: "Save changes"
@@ -291,6 +293,7 @@ en:
       captain_prefix: "captain of team"
       email_label: "E-mail:"
       date_of_birth_label: "Date of birth:"
+      timezone_label: "Time zone:"
       icq_label: "ICQ number:"
       jabber_label: "Jabber ID:"
       phone_label: "Contact phone number:"
@@ -427,6 +430,7 @@ en:
       not_finished: "Did not finish"
       full_log: "Answer log"
       finish_testing: "Finish testing"
+      times_in_zone: "Times shown in %{zone}"
   logs:
     index:
       title: "Index"

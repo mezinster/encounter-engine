@@ -215,9 +215,13 @@ class Game < ApplicationRecord
     self.save
   end
 
+  # Returned an Array -- always truthy -- because the capacity comparison's
+  # result was computed and discarded, and a stray `Game.all.select` was the
+  # method's real last expression. So the cap was enforced only by the view
+  # that hides the registration link; requesting the URL directly registered
+  # past it.
   def can_request?
     self.requested_teams_number < self.max_team_number
-    Game.all.select {|game| !game.started?}
   end
 
   def finish_game!

@@ -77,4 +77,20 @@ module ApplicationHelper
                                                     :tab => entry.locale)
     end
   end
+
+  # "2099-01-01 13:00 (+01:00)". Only for the timestamps a user acts on --
+  # game start, registration deadline, and the results screen's heading. A zone
+  # marker on every line of an answer log is noise that makes the few that
+  # matter harder to notice, not easier.
+  #
+  # The numeric offset rather than the zone's abbreviation, deliberately:
+  # abbreviations are ambiguous across regions -- IST is three different zones
+  # -- while an offset is unambiguous to anyone comparing two times, which is
+  # the only thing this label is for.
+  def l_with_zone(time, format:)
+    return nil if time.nil?
+
+    zoned_time = time.in_time_zone(Time.zone)
+    "#{l(zoned_time, :format => format)} (#{zoned_time.formatted_offset})"
+  end
 end

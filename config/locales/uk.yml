@@ -300,6 +300,8 @@ uk:
       jabber_label: "Jabber ID"
       phone_label: "Контактний телефон"
       locale_label: "Мова інтерфейсу"
+      timezone_label: "Часовий пояс"
+      timezone_default: "За замовчуванням для сервера"
       password_label: "Новий пароль"
       password_confirmation_label: "Підтвердження пароля"
       submit: "Прийняти зміни"
@@ -308,6 +310,7 @@ uk:
       captain_prefix: "капітан команди"
       email_label: "E-mail:"
       date_of_birth_label: "Дата народження:"
+      timezone_label: "Часовий пояс:"
       icq_label: "Номер ICQ:"
       jabber_label: "Jabber ID:"
       phone_label: "Контактний телефон:"
@@ -450,6 +453,7 @@ uk:
       not_finished: "Не фінішували"
       full_log: "Лог відповідей"
       finish_testing: "Завершити тестування"
+      times_in_zone: "Час показано в поясі %{zone}"
   logs:
     index:
       title: "Індекс"

@@ -113,7 +113,11 @@
   <% unless @game.paused? %>
     <% if @game_passing.current_level.quiz? %>
       <%= form_with url: post_answer_path(game_id: @game.id), method: :post, html: { class: "playbar-form playbar-form--quiz" } do %>
-        <% @game_passing.current_level.questions.select(&:quiz?).each do |quiz_question| %>
+        <%# unanswered_questions, not questions: an answered question that is
+            still on the form can be submitted again, and a wrong pick charges
+            the penalty a second time for a question the team already got
+            right. %>
+        <% @game_passing.unanswered_questions.select(&:quiz?).each do |quiz_question| %>
           <fieldset class="quiz-question">
             <legend><%= t("game_passings.show_current_level.choose") %></legend>
             <% quiz_question.ordered_options.each do |option| %>

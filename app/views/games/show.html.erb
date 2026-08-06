@@ -16,14 +16,14 @@
 
   <p>
     <% unless @game.starts_at.nil? %>
-      <em><%= t("games.show.starts_at_label") %></em>: <%= l(@game.starts_at, format: :short) %>
+      <em><%= t("games.show.starts_at_label") %></em>: <%= l_with_zone(@game.starts_at, format: :short) %>
     <% else %>
       <%= t("games.show.starts_at_not_set") %>
     <% end %>
   </p>
   <p>
     <% unless @game.registration_deadline.nil? %>
-      <em><%= t("games.show.registration_deadline_label") %></em>: <%= l(@game.registration_deadline, format: :short) %>
+      <em><%= t("games.show.registration_deadline_label") %></em>: <%= l_with_zone(@game.registration_deadline, format: :short) %>
     <% else %>
       <%= t("games.show.registration_deadline_not_set") %>
     <% end %>
@@ -86,7 +86,13 @@
 
 <script type="text/javascript">
   <% unless @game.starts_at.nil? %>
-    var date = new Date(<%= (@game.starts_at + 1).strftime("%Y,%m-1,%d,%H,%M,%S") %>);
+    <%# Milliseconds since the epoch, not a local-time tuple. The old form
+        emitted bare numbers that new Date(y,m,d,...) reads in the BROWSER's
+        zone while the server wrote them in its own -- so the countdown was
+        already wrong for every user whose browser zone differed from the
+        instance's, and per-user timezones would have put that error directly
+        under a correctly-labelled start time on the same page. %>
+    var date = new Date(<%= (@game.starts_at + 1).to_i * 1000 %>);
   <% end %>
 
   $("#countdown-example").countdown(date,{

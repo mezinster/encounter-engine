@@ -95,9 +95,8 @@ class GameEntriesController < ApplicationController
       team && team.captain&.id == current_user.id
   end
 
-  # can_request? cannot be used for this: its capacity check discards its own
-  # result and the method always returns a truthy array -- a pre-existing bug
-  # from the Merb port, out of scope here. This guard stands on its own.
+  # can_request? cannot be used for this: it answers a capacity question, not
+  # a withdrawal one. This guard stands on its own.
   def ensure_game_is_not_withdrawn
     raise Authentication::Unauthorized, t("errors.game_is_withdrawn") if @game&.withdrawn?
   end

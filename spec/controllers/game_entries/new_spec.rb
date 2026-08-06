@@ -47,17 +47,11 @@ RSpec.describe GameEntriesController, "#new", type: :controller do
   end
 
   # There is no equivalent "game has no room left" example here: Game#can_request?
-  # (app/models/game.rb) computes `requested_teams_number < max_team_number`
-  # but never returns it -- the method's actual return value is the trailing
-  # `Game.all.select { |game| !game.started? }`, so it evaluates truthy
-  # (a non-empty array) as long as any not-yet-started game exists in the
-  # database, regardless of how full @game itself is. That's a pre-existing
-  # bug carried over byte-for-byte from the Merb original (verified via `git
-  # show master:app/models/game.rb`) -- out of this controller-porting
-  # task's scope to fix (app/models belongs to an already-completed task),
-  # but flagged here and in task-8b-report.md because it means capacity is
-  # not actually enforced today. A test asserting "no entry is created when
-  # full" would fail against the real app, not just against a hypothetical.
+  # (app/models/game.rb) now correctly returns
+  # `requested_teams_number < max_team_number`, and the server-side cap it
+  # backs is exercised at the request level, not here -- see
+  # spec/requests/game_capacity_spec.rb:15 ("refuses a registration once the
+  # cap is reached"), which asserts exactly that and passes.
 
   def perform_request(opts = {})
     session[:user_id] = opts[:as_user]&.id

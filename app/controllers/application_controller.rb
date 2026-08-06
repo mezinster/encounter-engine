@@ -2,6 +2,7 @@
 class ApplicationController < ActionController::Base
   include Authentication
   include LocaleSelection
+  include TimeZoneSelection
   include ContentLocaleSelection
 
   rescue_from Authentication::Unauthenticated, with: :deny_unauthenticated

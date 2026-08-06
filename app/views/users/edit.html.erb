@@ -30,6 +30,13 @@
     <%= f.select :locale, I18n.available_locales.map { |l| [t("locales.#{l}"), l] } %>
   </div>
   <div class="field">
+    <%= f.label :timezone, t("users.edit.timezone_label") %>
+    <%# include_blank is load-bearing: it is the only way back to NULL, and
+        NULL is what "use the instance default" means. Without it the setting
+        is one-way. %>
+    <%= f.time_zone_select :timezone, nil, :include_blank => t("users.edit.timezone_default") %>
+  </div>
+  <div class="field">
     <%= f.label :password, t("users.edit.password_label") %>
     <%= f.text_field :password %>
   </div>

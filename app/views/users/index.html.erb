@@ -11,6 +11,8 @@
       <td><%= current_user.email %></td></tr>
   <tr><th><%= t("users.index.date_of_birth_label") %></th>
       <td><%= current_user.date_of_birth %></td></tr>
+  <tr><th><%= t("users.index.timezone_label") %></th>
+      <td><%= ActiveSupport::TimeZone[current_user.timezone.to_s]&.name || t("users.edit.timezone_default") %></td></tr>
   <tr><th><%= t("users.index.icq_label") %></th>
       <td><%= current_user.icq_number %></td></tr>
   <tr><th><%= t("users.index.jabber_label") %></th>

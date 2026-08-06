@@ -213,3 +213,59 @@ describe "playing a quiz level", type: :request do
     end
   end
 end
+
+# A top-level, standalone describe -- deliberately NOT nested inside "playing
+# a quiz level" above. That outer group's `let!(:right)` / `let!(:wrong)`
+# create an option on `question`, which itself depends on `level`; nesting in
+# here and overriding `let(:level)` would make those inherited `let!`s
+# silently attach a THIRD, always-unanswered question (with its own "Париж"
+# option) to this describe's level, which would make
+# "stops offering a question once it has been answered" fail for a reason
+# that has nothing to do with the bug under test.
+describe "a quiz level whose questions are answered one at a time", type: :request do
+  let(:author)  { create_user }
+  let(:game)    { g = create_game(:author => author, :is_draft => false); g.update_column(:starts_at, 1.hour.ago); g }
+  let(:level)   { create_quiz_level(:game => game) }
+  let(:first)   { create_question(:level => level) }
+  let(:second)  { create_question(:level => level) }
+  let(:passing) { create_game_passing(:level => level) }
+  let(:player) do
+    u = create_user
+    u.update!(:team => passing.team)
+    passing.team.update!(:captain => u)
+    u
+  end
+
+  let!(:first_right)  { create_option(:question => first,  :text => "Париж", :is_correct => true) }
+  let!(:first_wrong)  { create_option(:question => first,  :text => "Лион") }
+  let!(:second_right) { create_option(:question => second, :text => "Да", :is_correct => true) }
+  let!(:second_wrong) { create_option(:question => second, :text => "Нет") }
+
+  before do
+    level.update_column(:wrong_answer_penalty, 300)
+    passing
+    put login_path, :params => { :email => player.email, :password => "1234" }
+  end
+
+  it "stops offering a question once it has been answered" do
+    passing.answer_options!(first, [ first_right.id ])
+
+    get show_current_level_path(:game_id => game.id)
+
+    expect(response.body).to include("Да")
+    expect(response.body).not_to include("Париж")
+  end
+
+  # The reason it matters: an answered question that is still on the form can
+  # be submitted again, and a wrong pick charges the penalty a second time for
+  # a question the team already got right.
+  it "does not charge again for a question already answered" do
+    passing.answer_options!(first, [ first_right.id ])
+    charged = passing.reload.penalty_seconds
+
+    post post_answer_path(:game_id => game.id),
+         :params => { :option_ids => { first.id.to_s => [ first_wrong.id.to_s ] } }
+
+    expect(passing.reload.penalty_seconds).to eq(charged)
+  end
+end

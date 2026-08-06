@@ -38,8 +38,17 @@ class User < ApplicationRecord
     !! team
   end
 
+  # Safe navigation on captain, not decoration: Team declares
+  # `belongs_to :captain, optional: true`, captain_id is a nullable column and
+  # nothing validates its presence, so a captain-less team is a state the model
+  # permits -- even though TeamsController#create always sets one today.
+  # `team.captain.id` raised NoMethodError on such a team, and this is called
+  # from eight places including SecurityFilters#ensure_team_captain, which
+  # gates quitting a game, requesting entry and inviting members. Those would
+  # have 500'd rather than refused. A team with no captain has no captain, so
+  # false is the right answer.
   def captain?
-    member_of_any_team? && team.captain.id == id
+    member_of_any_team? && team.captain&.id == id
   end
 
   def author_of?(game)

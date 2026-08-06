@@ -161,7 +161,13 @@ class GamePassingsController < ApplicationController
 
     results = []
     selections.each do |question_id, option_ids|
-      question = @game_passing.current_level.questions.find_by(:id => question_id)
+      # Restricted to unanswered_questions, not current_level.questions: the
+      # view only offers unanswered questions (see
+      # show_current_level.html.erb), but a crafted request can still submit
+      # option_ids for one already answered. Without this guard, a wrong pick
+      # on an already-answered question would charge wrong_answer_penalty a
+      # second time for a question the team already got right.
+      question = @game_passing.unanswered_questions.detect { |q| q.id.to_s == question_id.to_s }
       next unless question
 
       results << @game_passing.answer_options!(question, option_ids)

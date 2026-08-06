@@ -1,5 +1,10 @@
 <p><%= t("game_passings.show_results.congrats") %></p>
 
+<%# One statement for the whole table rather than an offset on every row: the
+    times here are all in the same zone, and repeating it per row would bury
+    the information it is meant to convey. %>
+<p><em><%= t("game_passings.show_results.times_in_zone", :zone => Time.zone.formatted_offset) %></em></p>
+
 <% game_passings = GamePassing.of_game(@game) %>
 <%# The penalty columns appear only when some team actually accrued one, so a
     game with no quiz levels shows exactly the table it always did rather than

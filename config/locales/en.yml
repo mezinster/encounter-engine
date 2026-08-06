@@ -430,6 +430,7 @@ en:
       not_finished: "Did not finish"
       full_log: "Answer log"
       finish_testing: "Finish testing"
+      times_in_zone: "Times shown in %{zone}"
   logs:
     index:
       title: "Index"

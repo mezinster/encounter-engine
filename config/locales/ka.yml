@@ -467,6 +467,7 @@ ka:
       not_finished: "არ დაასრულეს"
       full_log: "პასუხების ლოგი"
       finish_testing: "ტესტირების დასრულება"
+      times_in_zone: "დრო ნაჩვენებია სარტყელში %{zone}"
   logs:
     index:
       title: "ინდექსი"

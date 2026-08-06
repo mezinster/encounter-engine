@@ -453,6 +453,7 @@ uk:
       not_finished: "Не фінішували"
       full_log: "Лог відповідей"
       finish_testing: "Завершити тестування"
+      times_in_zone: "Час показано в поясі %{zone}"
   logs:
     index:
       title: "Індекс"

@@ -442,6 +442,7 @@ ru:
       not_finished: "Не финишировали"
       full_log: "Лог ответов"
       finish_testing: "Завершить тестирование"
+      times_in_zone: "Время показано в поясе %{zone}"
   logs:
     index:
       title: "Индекс"

@@ -2,9 +2,12 @@
   <legend>
     <%= t("dashboard.finished_games.legend") %>
   </legend>
+  <ul class="game-list">
   <% Game.finished.each do |game | %>
-    <%= t("dashboard.finished_games.finished") %> <b><%= link_to game.name, game_path(game) %></b> |
+    <li>
+      <%= t("dashboard.finished_games.finished") %> <b><%= link_to game.name, game_path(game) %></b> |
       <%= link_to t("shared.current_games.view_results"), game_passings_show_results_path(game_id: game.id) %>
-    <br/>
+    </li>
   <% end %>
+  </ul>
 </fieldset>

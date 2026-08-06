@@ -1,6 +1,7 @@
-<%= t("logs.show_live_channel.title", name: @game.name) %>
+<h2><%= t("logs.show_live_channel.title", name: @game.name) %></h2>
 
-<table id="livechannel">
+<div class="table-wrap">
+<table id="livechannel" class="table--cards">
   <thead>
     <tr>
       <th><%= t("logs.show_live_channel.time") %></th>
@@ -21,11 +22,12 @@
     %>
     <% logs_sorted_by_date.each do |log| %>
       <tr>
-        <td><%= log.time.strftime("%H:%M:%S") %></td>
-        <td><%= log.team %></td>
-        <td><%= log.level %></td>
-        <td><%= log.answer %></td>
+        <td data-label="<%= t("logs.show_live_channel.time") %>"><%= log.time.strftime("%H:%M:%S") %></td>
+        <td data-label="<%= t("logs.show_live_channel.team") %>"><%= log.team %></td>
+        <td data-label="<%= t("logs.show_live_channel.level") %>"><%= log.level %></td>
+        <td data-label="<%= t("logs.show_live_channel.code") %>"><%= log.answer %></td>
         </tr>
     <% end %>
   </tbody>
 </table>
+</div>

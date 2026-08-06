@@ -6,8 +6,6 @@
   <em>(<%= t("questions.new.game_prefix") %> "<%= link_to @game.name, game_path(@game) %>")</em>
 </p>
 
-<br />
-
 <%= error_messages_for @answer, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
 <%# No language-tab strip here: Question::TRANSLATABLE_FIELDS is empty (see
@@ -15,11 +13,11 @@
     between. Answer codes are shared across every locale by design; the help
     text below is the only thing an author needs. %>
 <%= form_with model: @question, url: game_level_questions_path(@game, @level) do |f| %>
-  <p>
+  <div class="field">
     <%= f.label :correct_answer, t("questions.new.code_label") %>
     <%= f.text_field :correct_answer %>
-  </p>
+  </div>
   <p class="hint-text"><%= t("questions.answers_are_shared") %></p>
-  <%= f.submit t("questions.new.submit") %>
+  <%= f.submit t("questions.new.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), game_level_path(@game, @level) %></em>
 <% end %>

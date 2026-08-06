@@ -2,14 +2,12 @@
     <%= t("hints.new.heading_prefix") %> "<%= link_to @level.name, game_level_path(@game, @level) %>" <%= t("hints.new.heading_game_prefix") %> "<%= link_to @game.name, game_path(@game) %>"
 </p>
 
-<br />
-
 <%= error_messages_for @hint, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
 <%= form_with model: [@game, @level, @hint], url: game_level_hints_path(@game, @level) do |f| %>
 
   <%= render "form", f: f %>
 
-  <%= f.submit t("hints.new.submit"), style: "width:170px" %>
+  <%= f.submit t("hints.new.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), game_level_path(@hint.level.game, @hint.level) %></em>
 <% end %>

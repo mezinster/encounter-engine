@@ -9,8 +9,7 @@
 
 <%= render "shared/content_language_switcher", :game => @game_passing.game %>
 
-<br />
-<fieldset>
+<fieldset class="card">
   <legend>
     <%= @game_passing.current_level.translated(:name, content_locale) %>
   </legend>
@@ -22,27 +21,24 @@
   <%= @game_passing.current_level.translated(:text, content_locale) %>
 </fieldset>
 
-<br />
-
 <div id="LevelHintsContainer">
   <% @game_passing.hints_to_show.each_with_index do |hint, index| %>
-    <fieldset>
+    <fieldset class="card">
       <legend>
         <%= t("game_passings.show_current_level.hint_label") %> #<%= index + 1 %>
       </legend>
       <%= hint.translated(:text, content_locale) %>
     </fieldset>
-    <br />
   <% end %>
 </div>
 
 <% if answer_posted? %>
   <% if answer_was_correct? %>
-    <div>
+    <div class="flash">
       <%= t("game_passings.show_current_level.answer_correct", answer: @answer) %>
     </div>
   <% else %>
-    <p>
+    <p class="flash flash--alert">
       <%= t("game_passings.show_current_level.answer_incorrect", answer: @answer) %>
     </p>
   <% end %>
@@ -54,15 +50,14 @@
   </div>
 <% end %>
 
-<br/>
-
-<% if current_user.captain? %>
-    <%= link_to t("game_passings.show_current_level.exit_game"), exit_game_path(game_id: @game_passing.game_id) %>
-<% end %>
-<% if @game.is_testing? %>
-  <br/>
-  <%= link_to t("game_passings.show_current_level.finish_testing"), "/games/finish_test/#{@game.id}" %>
-<% end %>
+<p>
+  <% if current_user.captain? %>
+      <%= link_to t("game_passings.show_current_level.exit_game"), exit_game_path(game_id: @game_passing.game_id), class: "btn" %>
+  <% end %>
+  <% if @game.is_testing? %>
+    <%= link_to t("game_passings.show_current_level.finish_testing"), "/games/finish_test/#{@game.id}", class: "btn" %>
+  <% end %>
+</p>
 
 <%# The pinned bar: the code field, the countdown to the next hint and the
     newest hint text, so the distance from "stuck" to "trying again" never

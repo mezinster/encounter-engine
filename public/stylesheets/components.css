@@ -130,6 +130,19 @@ th {
   padding: var(--space-4);
 }
 
+/* error_messages_for (app/helpers/application_helper.rb) and flash[:error]
+   both render class="error" -- a validation/login-failure box. Previously
+   backed only by master.css's `.error { border: solid red 1px }`. */
+.error {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+.error h2 { margin-bottom: var(--space-2); }
+.error ul { margin-left: var(--space-4); list-style: disc; }
+
 .tag {
   display: inline-block;
   padding: 2px var(--space-2);

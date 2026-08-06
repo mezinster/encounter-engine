@@ -3,11 +3,11 @@
     <%= t("games.teams.legend") %>
   </legend>
 
-  <p>
+  <ul class="game-list">
     <% teams.each do |team| %>
-      <p>
+      <li>
         <strong><%= team.name %></strong>
-      </p>
+      </li>
     <% end %>
-  </p>
+  </ul>
 </fieldset>

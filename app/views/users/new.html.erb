@@ -1,21 +1,21 @@
 <%= error_messages_for @user, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
 <%= form_with model: @user, url: users_path do |f| %>
-  <p>
+  <div class="field">
     <%= f.label :nickname, t("users.new.nickname_label") %>
     <%= f.text_field :nickname %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :email, t("users.new.email_label") %>
     <%= f.text_field :email %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :password, t("users.new.password_label") %>
     <%= f.password_field :password %>
-  </p>
-  <p>
+  </div>
+  <div class="field">
     <%= f.label :password_confirmation, t("users.new.password_confirmation_label") %>
     <%= f.password_field :password_confirmation %>
-  </p>
-  <%= f.submit t("users.new.submit") %>
+  </div>
+  <%= f.submit t("users.new.submit"), class: "btn btn--go" %>
 <% end %>

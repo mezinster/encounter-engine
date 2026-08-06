@@ -37,21 +37,17 @@ a:hover { text-decoration: underline; }
 ul { list-style: none; }
 img { max-width: 100%; height: auto; }
 
-/* master.css (still linked until Task 8) hardcodes light-theme colours on bare
-   element selectors -- p, a, h1, h2, h3 and body all carry #fff backgrounds or
-   fixed colours. In the dark theme those render as white blocks on a dark
-   surface. Neutralise them here rather than overriding per screen: base.css
-   loads after master.css, and these lines disappear with it in Task 8.
-   Colour is inherited from the token-driven cascade instead.
-   `body` is deliberately NOT in this list: the `body { background: var(--bg) }`
-   rule above (Task 2) already beats master.css's `body { background-color:
-   #fff }` on load order, at equal (0,0,1) specificity. Adding a second, later
-   `body` selector here that sets background-color: transparent would itself
-   win over that rule and blank the page back to the browser's white default
-   in dark theme -- exactly the bug this block exists to prevent. */
-p, a, h1, h2, h3, li, td, th, div, fieldset, legend {
-  background-color: transparent;
-}
-
-p, li, td, th, div, fieldset, legend { color: inherit; }
 h1, h2, h3 { color: var(--text); }
+
+/* Vertical rhythm for the top-level flow inside .main -- master.css used to
+   zero every element's margin (`* { margin: 0 }`), which is why so many
+   older views spaced their sections with ad hoc <br>/<hr> tags. Those are
+   gone now (Task 8); this replaces them with one consistent gap. Scoped to
+   DIRECT children only, so it doesn't reach inside .dash-grid or .stat-grid
+   -- those already space their own cards via `gap`, and doubling that here
+   would open a bigger vertical gap between grid rows than between columns. */
+.main > * + * { margin-top: var(--space-4); }
+/* The pinned play-screen bar is position: fixed -- out of flow, and always
+   the last element in .main -- so a margin here would only shift its own
+   box, never the layout above it. Zeroed for clarity, not correctness. */
+.main > .playbar { margin-top: 0; }

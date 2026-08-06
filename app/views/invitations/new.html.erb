@@ -36,7 +36,9 @@
 <%= error_messages_for @invitation %>
 
 <%= form_with model: @invitation, url: invitations_path do |f| %>
+  <div class="field">
     <%= f.label :recepient_nickname, t("invitations.new.recipient_label") %>
     <%= f.text_field :recepient_nickname %>
-    <%= f.submit t("invitations.new.submit") %>
+  </div>
+  <%= f.submit t("invitations.new.submit"), class: "btn btn--go" %>
 <% end %>

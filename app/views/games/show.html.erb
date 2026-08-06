@@ -44,8 +44,6 @@
   </p>
 </div>
 
-<br />
-
 <% if logged_in? and @current_user.author_of?(@game) %>
 
   <% if @game.author == current_user %>
@@ -57,21 +55,16 @@
       <%= t("games.show.levels_legend") %>
     </legend>
 
-    <p>
-      <%= render "levels/list", levels: @game.levels %>
-    </p>
+    <%= render "levels/list", levels: @game.levels %>
 
     <p>
       <%= link_to t("games.show.add_level"), new_game_level_path(@game), class: "btn" if ! @game.started? %>
     </p>
   </fieldset>
-  <br/>
-      <%= render "games/game_entries", game_entries: @game_entries %>
 
-    <br/>
+  <%= render "games/game_entries", game_entries: @game_entries %>
 
-    <%= render "games/teams", teams: @teams %>
-  <br />
+  <%= render "games/teams", teams: @teams %>
 
   <%# The author's own actions get a row of their own, separate from the
       entries/teams management above -- and the destructive one (delete)
@@ -101,15 +94,15 @@
   });
 </script>
 
-<br />
 <%= render "teams", teams: @teams if (!logged_in?) || (logged_in? && !@current_user.author_of?(@game)) %>
 
 <% if @game.draft? and !@game.started? and @game.levels and @game.levels.count > 0 %>
-   <%= link_to t("games.show.start_test"), "/games/start_test/#{@game.id}", class: "btn" %>
+   <p><%= link_to t("games.show.start_test"), "/games/start_test/#{@game.id}", class: "btn" %></p>
 <% end %>
 
 <% if @game.is_testing? %>
-   <%= link_to t("games.show.start"), show_current_level_path(game_id: @game.id), class: "btn" %>
-   <br />
-   <%= link_to t("games.show.finish_test"), "/games/finish_test/#{@game.id}", class: "btn" %>
+   <div class="game-control">
+     <%= link_to t("games.show.start"), show_current_level_path(game_id: @game.id), class: "btn" %>
+     <%= link_to t("games.show.finish_test"), "/games/finish_test/#{@game.id}", class: "btn" %>
+   </div>
 <% end %>

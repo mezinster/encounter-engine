@@ -3,9 +3,9 @@
 <p class="game-control">
   <% if @game.paused? %>
     <%= t("game_passings.index.paused_since", :time => l(@game.paused_at, :format => :long)) %>
-    <%= button_to t("game_passings.index.resume"), resume_game_path(@game), :method => :post %>
+    <%= button_to t("game_passings.index.resume"), resume_game_path(@game), :method => :post, :class => "btn" %>
   <% else %>
-    <%= button_to t("game_passings.index.pause"), pause_game_path(@game), :method => :post %>
+    <%= button_to t("game_passings.index.pause"), pause_game_path(@game), :method => :post, :class => "btn" %>
   <% end %>
 </p>
 
@@ -78,6 +78,4 @@
 </table>
 </div>
 
-<br />
-
-<%= link_to t("game_passings.index.full_log"), show_full_log_path(@game) %>
+<p><%= link_to t("game_passings.index.full_log"), show_full_log_path(@game), class: "btn" %></p>

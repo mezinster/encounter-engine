@@ -3,17 +3,17 @@
     <%= t("games.game_entries.legend") %>
   </legend>
 
-  <p>
+  <ul class="game-list">
 <% game_entries.each do |entry| %>
 <%
   @team = Team.find(entry.team_id)
   @game = Game.find(entry.game_id)
 %>
-  <p>
+  <li>
     <strong><%= @team.name %> <%= @game.name %></strong>
     <em><%= link_to t("games.game_entries.accept"), "/game_entries/accept/#{entry.id}" %></em>
     <em><%= link_to t("games.game_entries.reject"), "/game_entries/reject/#{entry.id}" %></em>
-  </p>
+  </li>
 <% end %>
-</p>
+</ul>
 </fieldset>

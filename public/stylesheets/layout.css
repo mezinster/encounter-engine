@@ -2,13 +2,17 @@
 
 .page {
   display: grid;
-  grid-template-columns: 1fr;
+  /* minmax(0, 1fr), not 1fr: a bare 1fr is minmax(auto, 1fr), whose auto floor
+     lets an unshrinkable child set the track's width. The header's locale
+     switcher did exactly that, forcing 454px of scroll on a 390px viewport. */
+  grid-template-columns: minmax(0, 1fr);
   min-height: 100vh;
 }
 
 .topbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   background: var(--surface);
@@ -16,6 +20,9 @@
   position: sticky;
   top: 0;
   z-index: 20;
+  /* Same reason as .page above: without this, the grid item refuses to
+     shrink below its content's intrinsic width. */
+  min-width: 0;
 }
 
 .main {
@@ -23,6 +30,7 @@
   max-width: 72rem;
   width: 100%;
   margin: 0 auto;
+  min-width: 0;
 }
 
 /* The drawer is driven by a hidden checkbox so it opens with CSS alone.
@@ -91,7 +99,7 @@
 
 /* From tablet up the menu is simply always there and the toggle disappears. */
 @media (min-width: 60rem) {
-  .page { grid-template-columns: 16rem 1fr; grid-template-areas: "top top" "nav main"; }
+  .page { grid-template-columns: 16rem minmax(0, 1fr); grid-template-areas: "top top" "nav main"; }
   .topbar { grid-area: top; }
   #drawer-toggle, .drawer-scrim { display: none; }
   #drawer {
@@ -110,7 +118,7 @@
    the MAX of the two definitions -- so overriding only the columns leaves a
    phantom second track and pushes .main into it. */
 .page--focused {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas: "top" "main";
 }
 /* 12rem clears space for the pinned answer bar Task 4 adds at the bottom of

@@ -854,11 +854,193 @@ through this listing."
 
 ---
 
+### Task 4: The countdown over-reports by about a day
+
+**Files:**
+- Modify: `app/views/shared/_countdown.html.erb:60-88` (`timeDifference` only)
+- Test: `spec/views/countdown_spec.rb`
+
+**Interfaces:**
+- Consumes: nothing.
+- Produces: nothing. This task is self-contained and unrelated to Tasks 1-3; it was added mid-run at the repository owner's request after being reported from production.
+
+**The bug, reported live.** With the clock at `2026-08-06 23:13` and a game starting `2026-08-07 22:00` — a real gap of **22h 47m** — the page rendered **"До начала осталось: 1 день 22 часа 46 минут 50 секунд"**, roughly 24 hours too many.
+
+Two defects, stacked, in `timeDifference`:
+
+```js
+days   = end.getDate()  - begin.getDate(),   // a CALENDAR day-of-month difference
+hms    = (end / 1000 - begin / 1000) % 86400,
+hours   = Math.floor(hms/3600) % 60,          // and this should be % 24
+```
+
+`days` counts how many times the **date rolls over**; `hours`/`minutes`/`seconds` come from `hms`, the **true remaining interval** reduced mod one day. The two are computed from different things and then printed together, so they double-count: `7 - 6 = 1` day, plus an independently-correct `22:46:50`.
+
+The `% 60` on `hours` is a second bug that cannot currently fire — `hms` is already mod-86400 so `Math.floor(hms/3600)` never exceeds 23 — but it is wrong and shows the same confusion.
+
+**Not related to the epoch fix in PR #22.** That corrected *which instant* the countdown counts to. This is how the interval to that instant is decomposed.
+
+**The binding constraint.** `features/games/enter-game-before-start.feature:23` and `:42` assert the whole year/month/day plural table, and those strings live inside this partial's inline `<script>` (`features/steps/result_steps.rb` uses `have_text(:all, ...)`, which reaches into script tags — there is a comment there explaining exactly this). **The `countdown_settings.lang` object must keep rendering all six keys.** Only the arithmetic may change.
+
+- [ ] **Step 1: Write the failing spec**
+
+Create `spec/views/countdown_spec.rb`:
+
+```ruby
+require "rails_helper"
+
+# The countdown is JavaScript, so this asserts on the emitted source rather than
+# on a rendered number: the arithmetic that was wrong is right here in the
+# template, and the frozen features that touch this partial assert the plural
+# table's presence in that same source.
+RSpec.describe "shared/_countdown", type: :view do
+  let(:author) { create_user }
+  let(:game)   { create_game(:author => author) }
+
+  before do
+    assign(:game, game)
+    assign(:team, nil)
+    assign(:current_user, author)
+    view.define_singleton_method(:current_user) { author }
+    view.define_singleton_method(:logged_in?)   { true }
+  end
+
+  # THE bug: days came from a calendar date subtraction while hours/minutes/
+  # seconds came from the true interval, so "1 day" and "22 hours" were counted
+  # from different things and printed together.
+  it "derives every component from the interval, not from calendar fields" do
+    render :partial => "shared/countdown"
+
+    expect(rendered).not_to include("end.getDate()")
+    expect(rendered).not_to include("end.getMonth()")
+    expect(rendered).not_to include("end.getYear()")
+  end
+
+  it "reduces hours modulo 24, not 60" do
+    render :partial => "shared/countdown"
+
+    expect(rendered).not_to match(%r{hours\s*=\s*Math\.floor\([^)]*\)\s*%\s*60})
+  end
+
+  # features/games/enter-game-before-start.feature:23,42 assert this whole table
+  # via have_text(:all, ...), which reaches inside the <script>. It must keep
+  # rendering even though years and months are no longer computed.
+  it "still renders the full plural table the frozen features assert" do
+    render :partial => "shared/countdown"
+
+    %w[years months days hours minutes seconds].each do |unit|
+      expect(rendered).to include("#{unit}:")
+    end
+    expect(rendered).to include(I18n.t("shared.countdown.years").first)
+    expect(rendered).to include(I18n.t("shared.countdown.months").first)
+  end
+end
+```
+
+- [ ] **Step 2: Run it and watch it fail**
+
+```bash
+export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
+bundle exec rspec spec/views/countdown_spec.rb
+```
+
+Expected: the first two fail — the template still contains `end.getDate()` and the `% 60`. The third should already pass; if it does not, the partial is not rendering as assumed and you should report that before changing anything.
+
+- [ ] **Step 3: Replace the arithmetic**
+
+In `app/views/shared/_countdown.html.erb`, replace the whole `var timeDifference = function(begin, end) { ... };` body down to and including the `if (months < 0) { ... }` block, leaving the `var diff = {...}` line and everything after it intact:
+
+```js
+    var timeDifference = function(begin, end) {
+      if (end < begin) {
+        return false;
+      }
+      // Every component is derived from the SAME interval. The previous version
+      // took days from a calendar day-of-month subtraction (end.getDate() -
+      // begin.getDate()) while taking hours/minutes/seconds from the elapsed
+      // seconds -- two different measurements printed together, so a gap of
+      // 22h47m rendered as "1 day 22 hours 46 minutes": the date rolled over
+      // once AND the remainder was nearly a full day.
+      //
+      // years and months are no longer computed. Calendar months have no fixed
+      // length, so mixing them with an interval either approximates (30-day
+      // months) or double-counts again; a countdown in days is exact and is
+      // what this product needs. They stay in countdown_settings.lang above
+      // because features/games/enter-game-before-start.feature:23,42 assert
+      // that whole plural table, and the loop below skips any zero value, so
+      // they simply never render.
+      var total   = Math.floor((end - begin) / 1000),
+          years   = 0,
+          months  = 0,
+          days    = Math.floor(total / 86400),
+          hours   = Math.floor(total / 3600) % 24,
+          minutes = Math.floor(total / 60) % 60,
+          seconds = total % 60;
+```
+
+Leave `var diff = {years: years, months: months, days: days, hours: hours, minutes: minutes, seconds: seconds};` and the loop below it exactly as they are — that loop's `if(!diff[i]) continue;` is what makes the zeroed years and months disappear from the output.
+
+- [ ] **Step 4: Run the spec**
+
+```bash
+bundle exec rspec spec/views/countdown_spec.rb
+```
+
+Expected: PASS, 3 examples.
+
+- [ ] **Step 5: Check the arithmetic against the reported case**
+
+Verify by hand, and put the numbers in your report. For `begin = 2026-08-06 23:13:10` and `end = 2026-08-07 22:00:00`:
+
+- `total` = 82,010 s
+- `days` = `floor(82010 / 86400)` = **0**
+- `hours` = `floor(82010 / 3600) % 24` = 22
+- `minutes` = `floor(82010 / 60) % 60` = 46
+- `seconds` = 82,010 % 60 = 50
+
+Rendered: **"22 часа 46 минут 50 секунд"** — no phantom day. Confirm this with `node -e` or equivalent rather than asserting it from reading.
+
+- [ ] **Step 6: Run everything**
+
+```bash
+bundle exec rspec
+bundle exec cucumber
+```
+
+Expected: the full suite is the previous total plus 3, 0 failures, 6 pending; cucumber is **234 scenarios (2 undefined) / 2362 steps**.
+
+**`features/games/enter-game-before-start.feature` is the one to watch** — it asserts the plural table inside this partial's script. If it fails, the `lang` object stopped rendering; restore it rather than editing the feature.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add app/views/shared/_countdown.html.erb spec/views/countdown_spec.rb
+git commit -m "Fix the countdown over-reporting by about a day
+
+timeDifference took days from a calendar day-of-month subtraction while taking
+hours, minutes and seconds from the elapsed interval -- two different
+measurements printed together. A real gap of 22h47m rendered as \"1 day 22
+hours 46 minutes\": the date had rolled over once, and the remainder was
+independently almost a full day.
+
+Every component now comes from the same interval. hours also reduced modulo 24
+rather than 60, which was wrong but could not fire while hms was already
+reduced modulo one day.
+
+years and months are no longer computed -- calendar months have no fixed
+length, so mixing them with an interval either approximates or double-counts
+again. They stay in the lang table, which enter-game-before-start.feature
+asserts, and the render loop skips zero values so they never appear."
+```
+
+---
+
 ## Definition of done
 
-- `bundle exec rspec` — 791 examples, 0 failures, 6 pending (762 baseline + 29 new).
+- `bundle exec rspec` — 794 examples, 0 failures, 6 pending (762 baseline + 29 from Tasks 1-3 + 3 from Task 4).
 - `bundle exec cucumber` — 234 scenarios (2 undefined), 2362 steps, **with no feature file modified**.
 - `bin/rails zeitwerk:check` — `All is good!`.
 - `git diff --stat master -- features/` is empty.
 - `/games` renders status, start, end and participant counts, verified in a browser at 390px and 1280px in both themes.
 - The admin games index still labels every game exactly as before, now via `Game#status`.
+- The countdown on a game page agrees with the start time printed above it, with no phantom extra day.

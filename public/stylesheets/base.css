@@ -36,3 +36,16 @@ a:hover { text-decoration: underline; }
 
 ul { list-style: none; }
 img { max-width: 100%; height: auto; }
+
+/* master.css (still linked until Task 8) hardcodes light-theme colours on bare
+   element selectors -- p, a, h1, h2, h3 and body all carry #fff backgrounds or
+   fixed colours. In the dark theme those render as white blocks on a dark
+   surface. Neutralise them here rather than overriding per screen: base.css
+   loads after master.css, and these lines disappear with it in Task 8.
+   Colour is inherited from the token-driven cascade instead. */
+body, p, a, h1, h2, h3, li, td, th, div, fieldset, legend {
+  background-color: transparent;
+}
+
+p, li, td, th, div, fieldset, legend { color: inherit; }
+h1, h2, h3 { color: var(--text); }

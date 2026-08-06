@@ -62,8 +62,13 @@ class LevelsController < ApplicationController
     @game = Game.find(params[:game_id])
   end
 
+  # Scoped through the game, not Level.find: ensure_author and
+  # ensure_game_was_not_started both authorize against @game, which comes from
+  # params[:game_id]. An unscoped lookup lets a request pair its own game_id
+  # with someone else's level_id and pass every filter -- verified reachable
+  # before this was fixed.
   def find_level
-    @level = Level.find(params[:id])
+    @level = @game.levels.find(params[:id])
   end
 
   # correct_answer is Level's virtual setter (see app/models/level.rb) that

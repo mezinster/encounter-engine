@@ -291,9 +291,23 @@ reader sees why a step sets a flag the feature never mentions.
 
 **RSpec — new:**
 
-- `Level#any_code_passes` defaults to `true` for a newly created level, and
-  existing rows migrated to `false` (asserted against the migration's behaviour
-  by creating a row with the column explicitly false).
+- `Level#any_code_passes` defaults to `true` for a newly created level (`Level.new`
+  and every controller path that builds one).
+- The migration's backfill of existing rows to `false` is **not** covered by the
+  test suite and cannot be: the suite loads `db/schema.rb` rather than running
+  migrations (`rails_helper.rb`'s `maintain_test_schema!`), so no spec ever
+  executes `db/migrate/20260806131121_add_any_code_passes_to_levels.rb`. What a
+  spec asserting "a row with the column explicitly set to `false` reads back as
+  `false`" proves is that `false` round-trips through ActiveRecord -- a
+  tautology, not a test of the migration. The backfill is instead verified by
+  inspection (the migration runs `add_column ... default: false`, which
+  backfills every existing row to `false`, and only then a separate
+  `change_column_default` flips the default to `true` for rows created
+  afterwards -- a single statement cannot express "existing rows false, new
+  rows true") and by a real-database check (two pre-migration rows in
+  `db/development.sqlite3` both read `any_code_passes = 0` after `db:migrate`).
+  See finding 4/5 of the whole-branch review
+  (`.superpowers/sdd/2026-08-06-redundant-codes/whole-branch-review.md`).
 - `GamePassing#level_answered?` — true after one answer under `any_code_passes`,
   false after one of three under the old rule, true after all three.
 - The typed-code path passes the level on the first correct code under

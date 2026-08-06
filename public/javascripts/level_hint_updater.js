@@ -60,6 +60,16 @@ var LevelHintUpdater = function() {
 
     ,appendHint = function(hintNum, hintText) {
         $hintsContainer.append('<fieldset><legend>Подсказка #' + hintNum + '</legend>' + hintText + '</br></fieldset>');
+
+        // The playbar shows the newest hint so a stuck player does not have to
+        // scroll for it. Guarded: this element only exists on the play screen,
+        // and the poller must keep working if it is ever absent.
+        var pinnedText = document.getElementById("PlaybarHintText");
+        if (pinnedText) {
+            pinnedText.textContent = hintText;
+            var pinnedWrap = document.getElementById("PlaybarHint");
+            if (pinnedWrap) { pinnedWrap.removeAttribute("hidden"); }
+        }
     }
 
     ,loadHint = function() {

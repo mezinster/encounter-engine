@@ -81,12 +81,13 @@
   <% end %>
 
   <% newest = @game_passing.hints_to_show.last %>
-  <% if newest %>
-    <div class="playbar-hint">
-      <span class="playbar-hint-label"><%= t("game_passings.show_current_level.hint_label") %></span>
-      <span class="playbar-hint-text"><%= newest.translated(:text, content_locale) %></span>
-    </div>
-  <% end %>
+  <%# Rendered even when empty: the poller needs an element to write into when
+      the first hint fires, and a team that loaded the page before any hint
+      would otherwise never get a pinned one. %>
+  <div class="playbar-hint" id="PlaybarHint"<%= " hidden".html_safe if newest.nil? %>>
+    <span class="playbar-hint-label"><%= t("game_passings.show_current_level.hint_label") %></span>
+    <span class="playbar-hint-text" id="PlaybarHintText"><%= newest&.translated(:text, content_locale) %></span>
+  </div>
 
   <% unless @game_passing.upcoming_hints.empty?  %>
     <div id="LevelHintCountdownContainer" class="countdown"><%= t("game_passings.show_current_level.until_next_hint") %> <span id="LevelHintCountdownTimerText"><%= t("game_passings.show_current_level.countdown_placeholder") %></span></div>

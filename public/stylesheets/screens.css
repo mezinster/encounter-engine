@@ -28,6 +28,10 @@
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
+/* Explicit rather than relying on the [hidden] UA default -- belt and
+   suspenders, since some resets override it. */
+.playbar-hint[hidden] { display: none; }
+
 .playbar-hint-label {
   display: block;
   color: var(--time);

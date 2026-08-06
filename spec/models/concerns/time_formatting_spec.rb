@@ -27,6 +27,23 @@ describe TimeFormatting do
     it "renders zero" do
       expect(subject.seconds_to_hms(0)).to eq("00:00:00")
     end
+
+    # Boundary inputs, one second below each hour rollover. An off-by-one in
+    # the `% 3600` modulus (e.g. `% 3599`) agrees with the correct formula
+    # everywhere except right at these points, so values like 7, 125, 3725
+    # and 90_000 above cannot tell a correct modulus from a mutated one --
+    # only a case that actually sits on the boundary can.
+    it "renders the second just before the first hour rolls over" do
+      expect(subject.seconds_to_hms(3599)).to eq("00:59:59")
+    end
+
+    it "renders the second just before the second hour rolls over" do
+      expect(subject.seconds_to_hms(7199)).to eq("01:59:59")
+    end
+
+    it "renders the second just before 24 hours, still unwrapped" do
+      expect(subject.seconds_to_hms(86_399)).to eq("23:59:59")
+    end
   end
 
   describe "#hours_and_minutes" do
@@ -40,6 +57,17 @@ describe TimeFormatting do
 
     it "returns zeroes for an interval under a minute" do
       expect(subject.hours_and_minutes(30)).to eq([0, 0])
+    end
+
+    # Same `% 3600` structure as seconds_to_hms, and the same boundary blind
+    # spot: an off-by-one modulus only disagrees with the correct formula at
+    # the second just before an hour rolls over.
+    it "returns 59 minutes at the boundary just before the first hour rolls over" do
+      expect(subject.hours_and_minutes(3599)).to eq([0, 59])
+    end
+
+    it "returns 59 minutes at the boundary just before the second hour rolls over" do
+      expect(subject.hours_and_minutes(7199)).to eq([1, 59])
     end
   end
 end

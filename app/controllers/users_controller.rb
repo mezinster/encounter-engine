@@ -70,7 +70,8 @@ class UsersController < ApplicationController
   end
 
   # app/views/users/edit.html.erb (profile form) submits nickname,
-  # date_of_birth, icq_number, jabber_id, phone_number, locale, timezone,
+  # date_of_birth, icq_number, jabber_id, instagram, telegram_id, on_telegram,
+  # on_whatsapp, on_viber, on_signal, on_max, phone_number, locale, timezone,
   # password, password_confirmation. No email, and no team_id or any field
   # that could let a user attach themself to a different team through this
   # form.
@@ -82,6 +83,8 @@ class UsersController < ApplicationController
   def profile_params
     params.fetch(:user, ActionController::Parameters.new)
           .permit(:nickname, :date_of_birth, :icq_number, :jabber_id,
+                   :instagram, :telegram_id,
+                   :on_telegram, :on_whatsapp, :on_viber, :on_signal, :on_max,
                    :phone_number, :locale, :timezone, :password, :password_confirmation)
   end
 

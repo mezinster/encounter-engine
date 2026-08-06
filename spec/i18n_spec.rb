@@ -101,6 +101,17 @@ RSpec.describe "internationalization" do
       sessions.new.email_label
       admin.users.show.jabber
       admin.users.show.icq
+      messengers.telegram
+      messengers.whatsapp
+      messengers.viber
+      messengers.signal
+      messengers.max
+      users.edit.instagram_label
+      users.edit.telegram_label
+      users.index.instagram_label
+      users.index.telegram_label
+      admin.users.show.instagram
+      admin.users.show.telegram
       locales.ru
       locales.en
       locales.uk

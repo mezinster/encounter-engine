@@ -93,4 +93,19 @@ module ApplicationHelper
     zoned_time = time.in_time_zone(Time.zone)
     "#{l(zoned_time, :format => format)} (#{zoned_time.formatted_offset})"
   end
+
+  # The messengers a user has ticked, as one comma-joined string, or nil when
+  # none are. Three views render this; a row per messenger would triple the
+  # height of a two-column table to show five booleans.
+  #
+  # Ordered by the flag order on the form, not alphabetically, so the reading
+  # order matches the order the user ticked them in.
+  MESSENGER_FLAGS = %w[telegram whatsapp viber signal max].freeze
+
+  def messenger_list_for(user)
+    ticked = MESSENGER_FLAGS.select { |name| user.public_send("on_#{name}") }
+    return nil if ticked.empty?
+
+    ticked.map { |name| t("messengers.#{name}") }.join(", ")
+  end
 end

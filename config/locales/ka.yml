@@ -43,6 +43,9 @@ ka:
         phone: "ტელეფონი"
         jabber: "Jabber"
         icq: "ICQ"
+        instagram: "Instagram"
+        telegram: "Telegram"
+        messengers: "მესენჯერები"
         date_of_birth: "დაბადების თარიღი"
         team: "გუნდი"
         locale: "ენა"
@@ -297,6 +300,12 @@ ka:
       code_label: "კოდი"
       submit: "კოდის დამატება"
     answers_are_shared: "პასუხების კოდები საერთოა ყველა ენისთვის. თუ პასუხი სხვადასხვაგვარად იწერება, დაამატეთ თითოეული ვარიანტი ცალკე სწორ პასუხად."
+  messengers:
+    telegram: "Telegram"
+    whatsapp: "WhatsApp"
+    viber: "Viber"
+    signal: "Signal"
+    max: "MAX"
   users:
     new:
       nickname_label: "სახელი"
@@ -310,6 +319,9 @@ ka:
       date_of_birth_label: "დაბადების თარიღი"
       icq_label: "ICQ ნომერი"
       jabber_label: "Jabber ID"
+      instagram_label: "Instagram"
+      telegram_label: "Telegram"
+      messengers_label: "ხელმისაწვდომია მესენჯერებში"
       phone_label: "საკონტაქტო ტელეფონი"
       locale_label: "ინტერფეისის ენა"
       timezone_label: "დროის სარტყელი"
@@ -325,6 +337,9 @@ ka:
       timezone_label: "დროის სარტყელი:"
       icq_label: "ICQ ნომერი:"
       jabber_label: "Jabber ID:"
+      instagram_label: "Instagram:"
+      telegram_label: "Telegram:"
+      messengers_label: "მესენჯერები:"
       phone_label: "საკონტაქტო ტელეფონი:"
       edit_link: "პროფილის რედაქტირება..."
   notification_mailer:

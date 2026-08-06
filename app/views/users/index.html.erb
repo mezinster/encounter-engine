@@ -17,6 +17,18 @@
       <td><%= current_user.icq_number %></td></tr>
   <tr><th><%= t("users.index.jabber_label") %></th>
       <td><%= current_user.jabber_id %></td></tr>
+  <% if current_user.instagram.present? %>
+    <tr><th><%= t("users.index.instagram_label") %></th>
+        <td><%= link_to current_user.instagram, "https://instagram.com/#{current_user.instagram}" %></td></tr>
+  <% end %>
+  <% if current_user.telegram_id.present? %>
+    <tr><th><%= t("users.index.telegram_label") %></th>
+        <td><%= link_to current_user.telegram_id, "https://t.me/#{current_user.telegram_id}" %></td></tr>
+  <% end %>
+  <% if messenger_list_for(current_user) %>
+    <tr><th><%= t("users.index.messengers_label") %></th>
+        <td><%= messenger_list_for(current_user) %></td></tr>
+  <% end %>
   <% if current_user.captain? %>
     <tr><th><%= t("users.index.phone_label") %></th>
         <td><%= current_user.phone_number %></td></tr>

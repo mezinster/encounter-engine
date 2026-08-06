@@ -18,6 +18,10 @@ RSpec.describe "users/edit", type: :view do
     expect(rendered).to include(I18n.t("users.edit.date_of_birth_label"))
     expect(rendered).to include(I18n.t("users.edit.icq_label"))
     expect(rendered).to include(I18n.t("users.edit.jabber_label"))
+    expect(rendered).to include(I18n.t("users.edit.instagram_label"))
+    expect(rendered).to include(I18n.t("users.edit.telegram_label"))
+    expect(rendered).to include(I18n.t("users.edit.messengers_label"))
+    expect(rendered).to include(I18n.t("messengers.signal"))
     expect(rendered).to include(I18n.t("users.edit.password_label"))
     expect(rendered).to include(I18n.t("users.edit.password_confirmation_label"))
     expect(rendered).to include(I18n.t("users.edit.submit"))
@@ -78,6 +82,36 @@ RSpec.describe "users/index", type: :view do
     expect(rendered).to include(team.name)
     expect(rendered).to include(team_room_path)
     expect(rendered).to include(I18n.t("users.index.phone_label"))
+  end
+
+  it "renders contact handles as links and lists only the ticked messengers" do
+    user = create_user
+    user.update!(:instagram => "@player", :telegram_id => "player",
+                 :on_signal => true, :on_viber => true)
+
+    assign(:current_user, user)
+    view.define_singleton_method(:current_user) { user }
+
+    render
+
+    # Normalised on save, so the link is built from a bare handle.
+    expect(rendered).to include("https://instagram.com/player")
+    expect(rendered).to include("https://t.me/player")
+    expect(rendered).to include(I18n.t("messengers.signal"))
+    expect(rendered).to include(I18n.t("messengers.viber"))
+    expect(rendered).not_to include(I18n.t("messengers.whatsapp"))
+  end
+
+  it "omits the contact rows entirely when nothing is filled in" do
+    user = create_user
+
+    assign(:current_user, user)
+    view.define_singleton_method(:current_user) { user }
+
+    render
+
+    expect(rendered).not_to include(I18n.t("users.index.instagram_label"))
+    expect(rendered).not_to include(I18n.t("users.index.messengers_label"))
   end
 end
 

@@ -82,6 +82,9 @@ RSpec.describe "game_passings/show_current_level", type: :view do
     level = Level.create!(name: "Test level", text: "Some text", game: game)
     create_question(level: level, correct_answer: "AAA")
     create_question(level: level, correct_answer: "BBB")
+    # The progress line only renders when all codes are required; any_code_passes
+    # defaults to true for newly created levels.
+    level.update_column(:any_code_passes, false)
     hint = create_hint(level: level, text: "Look closer", delay: 0)
     game_passing = create_game_passing(level: level, team: team)
     game_passing.answered_questions << level.questions.first

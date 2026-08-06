@@ -90,9 +90,12 @@ describe GamePassing, "answering a quiz question" do
     end
   end
 
-  # A quiz level with two questions needs no new rule: all_questions_answered?
-  # already advances a level only when every question is answered.
+  # A quiz level with two questions needs no new rule: level_answered? already
+  # advances a level only when every question is answered -- but only when
+  # any_code_passes is false, which newly created levels no longer default to.
   describe "a level with two quiz questions" do
+    before { level.update_column(:any_code_passes, false) }
+
     let!(:second)   { create_question(:level => level) }
     let!(:s_right)  { create_option(:question => second, :text => "Да", :is_correct => true) }
     let!(:s_wrong)  { create_option(:question => second, :text => "Нет") }

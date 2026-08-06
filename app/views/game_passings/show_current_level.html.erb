@@ -44,7 +44,9 @@
   <% end %>
 <% end %>
 
-<% if @game_passing.current_level.multi_question? %>
+<%# Counting toward a total is meaningless when any single code suffices --
+    showing "0 из 3" to a team that needs only one is actively misleading. %>
+<% if @game_passing.current_level.multi_question? && !@game_passing.current_level.any_code_passes? %>
   <div>
     <%= t("game_passings.show_current_level.multi_question_progress", answered: @game_passing.answered_questions.size, total: @game_passing.current_level.questions.count) %>
   </div>

@@ -181,7 +181,14 @@ describe "playing a quiz level", type: :request do
     let!(:mixed_wrong)    { create_option(:question => mixed_question, :text => "Мюнхен") }
     let!(:next_level)     { create_level(:game => game) }
 
-    before { passing.update!(:current_level => mixed_level) }
+    before do
+      passing.update!(:current_level => mixed_level)
+      # These examples pin the all-codes-required rule; any_code_passes
+      # defaults to true for newly created levels. update_column because the
+      # game here has already started (starts_at is 1.hour.ago above), so an
+      # ordinary save would fail game_starts_in_the_future.
+      mixed_level.update_column(:any_code_passes, false)
+    end
 
     it "renders both the quiz options and the code field" do
       get show_current_level_path(:game_id => game.id)

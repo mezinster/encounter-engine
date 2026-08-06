@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_06_073240) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_06_131121) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -112,6 +112,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_06_073240) do
     t.integer "position"
     t.string "name"
     t.integer "wrong_answer_penalty", default: 0, null: false
+    t.boolean "any_code_passes", default: true, null: false
   end
 
   create_table "logs", force: :cascade do |t|

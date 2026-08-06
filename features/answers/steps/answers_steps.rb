@@ -39,4 +39,10 @@ Given /^для уровня "([^\"]*)" есть следующие коды:$/ d
       step %{добавляю вариант "#{hash['Вариант_2']}" для кода "#{hash['Вариант_1']}"}
     end
   end
+
+  # Same reason as the multi-code step in levels_steps.rb: this builds a level
+  # whose scenarios assert "Правильных кодов введено: X из 2", which is the
+  # all-codes-required rule. See
+  # docs/superpowers/specs/2026-08-06-redundant-codes-design.md §6.
+  Level.where(:name => level_name).first.update_column(:any_code_passes, false)
 end

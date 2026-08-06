@@ -37,6 +37,9 @@ describe GamePassing, "correct_answer?" do
 			@correct_answers.each do |correct_answer|
 				@level.questions.create! :correct_answer => correct_answer
 			end
+			# This spec pins the all-codes-required rule; any_code_passes
+			# defaults to true for newly created levels.
+			@level.update_column(:any_code_passes, false)
 
 		  GamePassing.create! :current_level => @level
 		end

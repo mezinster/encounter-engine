@@ -2,8 +2,17 @@
 
 <%# One statement for the whole table rather than an offset on every row: the
     times here are all in the same zone, and repeating it per row would bury
-    the information it is meant to convey. %>
-<p><em><%= t("game_passings.show_results.times_in_zone", :zone => Time.zone.formatted_offset) %></em></p>
+    the information it is meant to convey.
+
+    Time.zone.formatted_offset (a plain ActiveSupport::TimeZone) reports the
+    zone's base, standard-time offset -- it has no notion of what is in
+    effect on any given date. The times in the table below are rendered via
+    TimeWithZone#strftime, which does apply DST, so during DST the two would
+    disagree. Deriving the offset from an actual instant -- the game's start,
+    falling back to now when absent -- keeps this statement in agreement with
+    the table under it. %>
+<% zone_reference = (@game.starts_at || Time.current).in_time_zone(Time.zone) %>
+<p><em><%= t("game_passings.show_results.times_in_zone", :zone => zone_reference.formatted_offset) %></em></p>
 
 <% game_passings = GamePassing.of_game(@game) %>
 <%# The penalty columns appear only when some team actually accrued one, so a

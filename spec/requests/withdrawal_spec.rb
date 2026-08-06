@@ -61,10 +61,11 @@ describe "withdrawal", type: :request do
   end
 
   # Review finding: GameEntriesController#new was unguarded -- a team could
-  # still register for a withdrawn game (GameEntry count 0 -> 1, 302), because
-  # Game#can_request? is pre-existing dead code (its capacity check computes
-  # a value and discards it, always returning a truthy array) and never
-  # enforced anything.
+  # still register for a withdrawn game (GameEntry count 0 -> 1, 302).
+  # Game#can_request? answers a capacity question, not a withdrawal one (see
+  # ensure_game_is_not_withdrawn's comment in game_entries_controller.rb), so
+  # it would not have caught this even after its own bug was fixed -- this
+  # guard has to stand on its own.
   it "refuses a team requesting entry to a withdrawn game" do
     game.update!(:withdrawn_at => Time.now)
     captain = create_user

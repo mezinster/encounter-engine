@@ -123,9 +123,9 @@
                     selected one, giving the same { question_id => [option_id] }
                     the controller expects. %>
                 <% if quiz_question.single_choice? %>
-                  <%= radio_button_tag "option_ids[#{quiz_question.id}][]", option.id %>
+                  <%= radio_button_tag "option_ids[#{quiz_question.id}][]", option.id, false, id: "option_#{option.id}" %>
                 <% else %>
-                  <%= check_box_tag "option_ids[#{quiz_question.id}][]", option.id, false %>
+                  <%= check_box_tag "option_ids[#{quiz_question.id}][]", option.id, false, id: "option_#{option.id}" %>
                 <% end %>
                 <%# Author content -- rendered verbatim, never through t(). %>
                 <%= option.translated(:text, content_locale) %>
@@ -133,6 +133,16 @@
             <% end %>
           </fieldset>
         <% end %>
+
+        <%# A level may mix a quiz question with a code question. Without this
+            the code field simply never renders on such a level and it becomes
+            unwinnable -- see finding 1 of the whole-branch review. Same
+            markup as the code branch below: same name, same attributes. %>
+        <% if @game_passing.current_level.questions.any? { |q| !q.quiz? } %>
+          <%= label_tag :answer, t("game_passings.show_current_level.answer_label") %>
+          <%= text_field_tag :answer, nil, autocapitalize: "off", autocorrect: "off", spellcheck: "false" %>
+        <% end %>
+
         <%= submit_tag t("game_passings.show_current_level.submit"), class: "btn btn--go" %>
       <% end %>
     <% else %>

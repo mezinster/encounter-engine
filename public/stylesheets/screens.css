@@ -157,6 +157,13 @@ ul.language-tabs .missing-count {
   padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
   background: var(--surface);
   border-top: 1px solid var(--border);
+  /* A quiz question can carry many options; without a cap the fixed bar grows
+     taller than the viewport and buries the task text, the countdown, and
+     even some of its own options above the fold with no way to scroll to
+     them (the page itself does not scroll past a fixed element). Scrolling
+     inside the bar instead keeps every control reachable. */
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .playbar-hint {
@@ -195,10 +202,50 @@ ul.language-tabs .missing-count {
    field's label as a label rather than plain text in the bar. */
 .playbar-form label { font-weight: 600; }
 
+/* A quiz form can hold several fieldsets plus, on a mixed level, the code
+   field too -- side by side (the plain .playbar-form layout) they squeeze
+   into narrow columns, wrap option text to several lines, and push controls
+   below the 44px tap target this project requires everywhere else. Stacked
+   instead, each question gets the full width of the bar. */
+.playbar-form--quiz {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.quiz-question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+}
+
+/* Control first, sized as a real tap target -- not the browser default
+   ~13px box -- and flex: none so the label text next to it cannot shrink it. */
+.quiz-option input[type="radio"],
+.quiz-option input[type="checkbox"] {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
 .playbar-paused {
   color: var(--time);
   font-weight: 600;
   text-align: center;
+}
+
+/* Information, not an action -- same treatment as the hint countdown it sits
+   next to, not the go/danger buttons either could be mistaken for. */
+.playbar-penalty {
+  margin-bottom: var(--space-2);
+  color: var(--time);
+  font-weight: 600;
 }
 
 /* --- Operator screen: live stats + the per-team intervention panel ------

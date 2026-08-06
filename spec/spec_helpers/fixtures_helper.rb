@@ -70,6 +70,15 @@ module FixturesHelper
     level
   end
 
+  # create_level always builds a code question via correct_answer. A quiz level
+  # has none, so drop it -- otherwise every "quiz" spec silently tests a MIXED
+  # level, which is a different thing.
+  def create_quiz_level(options={})
+    level = create_level(options)
+    level.questions.destroy_all
+    level.reload
+  end
+
   def create_question(options={})
     creation_params = {
       :correct_answer => random_string

@@ -134,21 +134,41 @@ class GamePassingsController < ApplicationController
   # The log records the chosen option texts, so the author's answer log stays a
   # complete account of what teams did, exactly as it is for typed codes.
   def post_options
+    # A crafted request can send option_ids as a bare scalar (option_ids=boom),
+    # which has no #each. Only a real params Hash behaves as a selection;
+    # anything else is treated as no selection at all.
     selections = params.fetch(:option_ids, {})
-    chosen_texts = []
-    results = []
+    selections = {} unless selections.is_a?(ActionController::Parameters) || selections.is_a?(Hash)
 
+    chosen_texts = []
+    selections.each do |question_id, option_ids|
+      chosen_texts.concat(Option.where(:id => Array(option_ids)).pluck(:text))
+    end
+
+    # A level may hold both kinds of question. Without this the typed answer is
+    # silently discarded and a mixed level can never be completed.
+    typed = params[:answer]
+    typed = typed.is_a?(String) ? typed.strip : ""
+    chosen_texts << typed if typed.present?
+
+    # Logged, and against the level the answer was actually submitted on --
+    # before any of the calls below can advance current_level via pass_level!,
+    # which save_log's current_level read would otherwise see already moved.
+    # Matches the code path in #post_answer, which calls save_log before
+    # check_answer! for the same reason.
+    @answer = chosen_texts.join(", ")
+    save_log
+
+    results = []
     selections.each do |question_id, option_ids|
       question = @game_passing.current_level.questions.find_by(:id => question_id)
       next unless question
 
-      chosen_texts.concat(Option.where(:id => Array(option_ids)).pluck(:text))
       results << @game_passing.answer_options!(question, option_ids)
     end
+    results << @game_passing.check_answer!(typed) if typed.present?
 
-    @answer = chosen_texts.join(", ")
     @answer_was_correct = results.any? && results.all?
-    save_log
 
     if @game_passing.finished?
       render :show_results

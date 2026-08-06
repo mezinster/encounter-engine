@@ -31,10 +31,17 @@ class Question < ApplicationRecord
   # own level_id and is already removed by Level's has_many :answers.)
   has_many :options, :dependent => :destroy
 
-  # No mode flag: having options IS being a quiz question. Nothing can
-  # disagree with reality about what kind of question this is.
+  # At least one CORRECT option, not merely any option. An author who adds a
+  # distractor first, or who never ticks a correct one, would otherwise create
+  # a question nobody can answer -- the level would render as a quiz and accept
+  # no selection, bricking the game. Failing back to the code question is the
+  # safe direction.
+  #
+  # any?(&:is_correct) over the loaded association, deliberately NOT
+  # options.correct.any? -- a scope re-queries even when preloaded, which is
+  # one of the N+1s already fixed on this branch.
   def quiz?
-    self.options.any?
+    self.options.any?(&:is_correct)
   end
 
   # Decides radio vs checkbox at render time, so an author marks what is true

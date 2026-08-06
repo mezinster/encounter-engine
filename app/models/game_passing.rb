@@ -112,10 +112,18 @@ class GamePassing < ApplicationRecord
       # tried: forgiving repeats would let a team walk the whole option space
       # for the price of a single mistake.
       #
-      # update_column, and deliberately NOT touching current_level_entered_at:
-      # that column is the sole input to every hint countdown, so charging a
-      # penalty against it would bring the next hint CLOSER on a wrong answer.
-      update_column(:penalty_seconds, penalty_seconds.to_i + question.level.wrong_answer_penalty.to_i)
+      # An atomic UPDATE ... SET penalty_seconds = penalty_seconds + amount,
+      # not read-modify-write: two teammates submitting a wrong answer at the
+      # same instant each read the same starting value under update_column, so
+      # one charge is lost. increment! issues the increment as SQL (via
+      # update_counters under the hood) rather than writing back a value
+      # computed from this process's possibly-stale in-memory copy, and, like
+      # update_column, runs no validations or callbacks (save! would rewrite
+      # answered_questions as a side effect). Deliberately NOT touching
+      # current_level_entered_at: that column is the sole input to every hint
+      # countdown, so charging a penalty against it would bring the next hint
+      # CLOSER on a wrong answer.
+      increment!(:penalty_seconds, question.level.wrong_answer_penalty.to_i)
       false
     end
   end

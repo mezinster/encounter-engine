@@ -1,7 +1,10 @@
 require "rails_helper"
 
 describe GamePassing, "answering a quiz question" do
-  let(:level)    { create_level }
+  # A pure quiz level -- create_level always builds a code question via
+  # correct_answer, which would make every example here silently exercise a
+  # MIXED level instead (see finding 2 of the whole-branch review).
+  let(:level)    { create_quiz_level }
   let(:question) { create_question(:level => level) }
   let(:passing)  { create_game_passing(:level => level) }
 
@@ -12,9 +15,12 @@ describe GamePassing, "answering a quiz question" do
   before { level.update_column(:wrong_answer_penalty, 300) }
 
   describe "correctness is set equality" do
+    # This level has exactly one question, so a correct answer completes it
+    # immediately and pass_level! resets answered_questions right back to
+    # empty in the same call -- see the "advancing and finishing" examples
+    # below for that transition. This example only pins the return value.
     it "accepts exactly the correct set" do
       expect(passing.answer_options!(question, [ paris.id ])).to be true
-      expect(passing.answered_questions).to include(question)
     end
 
     it "rejects a superset that includes a wrong option" do
@@ -51,6 +57,20 @@ describe GamePassing, "answering a quiz question" do
     it "charges nothing for a correct answer" do
       expect { passing.answer_options!(question, [ paris.id ]) }
         .not_to change { passing.reload.penalty_seconds }
+    end
+
+    # Two teammates submitting a wrong answer at the same instant is normal
+    # here. A read-modify-write (update_column against the in-memory value)
+    # loses one of the two charges: both processes read penalty_seconds as 0
+    # before either writes, so the second write clobbers the first instead of
+    # adding to it. See finding 6 of the whole-branch review.
+    it "does not lose a charge when two separately-loaded copies charge concurrently" do
+      other = GamePassing.find(passing.id)
+
+      passing.answer_options!(question, [ lyon.id ])
+      other.answer_options!(question, [ lyon.id ])
+
+      expect(passing.reload.penalty_seconds).to eq(600)
     end
 
     # THE property the whole penalty design turns on. current_level_entered_at
@@ -90,6 +110,28 @@ describe GamePassing, "answering a quiz question" do
       passing.reload
       expect(passing.answered_questions).to eq([ question ])
       expect(passing.penalty_seconds).to eq(300)
+    end
+  end
+
+  # No example above ever asserts the level actually advances or the game
+  # actually finishes -- deleting `pass_level! if all_questions_answered?`
+  # from answer_options! left 82 examples green across the whole suite (see
+  # finding 2 of the whole-branch review). These pin the state transition the
+  # feature exists for; each was confirmed to fail with that line removed and
+  # to pass with it restored.
+  describe "advancing and finishing" do
+    it "moves current_level to the next level on a correct answer" do
+      next_level = create_level(:game => level.game)
+
+      expect { passing.answer_options!(question, [ paris.id ]) }
+        .to change { passing.reload.current_level }.from(level).to(next_level)
+    end
+
+    it "sets finished_at when the correct answer completes the last level" do
+      expect(level.next).to be_nil
+
+      expect { passing.answer_options!(question, [ paris.id ]) }
+        .to change { passing.reload.finished_at }.from(nil)
     end
   end
 end

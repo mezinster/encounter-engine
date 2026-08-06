@@ -16,15 +16,26 @@ describe Option do
   end
 
   # The whole design rests on this: no mode flag exists, so nothing can
-  # disagree with reality about what kind of question this is.
-  describe "a question is a quiz question iff it has options" do
+  # disagree with reality about what kind of question this is. It takes a
+  # CORRECT option specifically, not merely any option -- a question with only
+  # distractors (or none ticked correct yet) would otherwise render as a quiz
+  # that accepts no possible selection, bricking the level. See finding 1 of
+  # the whole-branch review.
+  describe "a question is a quiz question iff it has a correct option" do
     it "is not a quiz question with no options" do
       expect(question.quiz?).to be false
       expect(level.quiz?).to be false
     end
 
-    it "is a quiz question as soon as one option exists" do
+    it "is not a quiz question when every option is incorrect" do
       create_option(:question => question, :text => "Париж")
+
+      expect(question.reload.quiz?).to be false
+      expect(level.reload.quiz?).to be false
+    end
+
+    it "is a quiz question as soon as one CORRECT option exists" do
+      create_option(:question => question, :text => "Париж", :is_correct => true)
 
       expect(question.reload.quiz?).to be true
       expect(level.reload.quiz?).to be true

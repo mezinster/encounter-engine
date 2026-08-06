@@ -396,6 +396,7 @@ en:
       paused_since: "Paused at %{time}."
     show_current_level:
       choose: "Choose an answer"
+      penalty_label: "Penalty, minutes:"
       title_prefix: "Game"
       level_label: "Task"
       hint_label: "Hint"
@@ -415,6 +416,8 @@ en:
       place: "Place"
       team: "Team"
       finish_time: "Finish time"
+      penalty: "Penalty"
+      total: "Total"
       exited: "Left the race"
       not_finished: "Did not finish"
       full_log: "Answer log"

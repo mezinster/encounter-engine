@@ -75,6 +75,16 @@
     <p class="playbar-paused"><%= t("game_passings.paused") %></p>
   <% end %>
 
+  <%# Only once something has been charged. .countdown is the right class: a
+      penalty is information, not an action, and that class is deliberately
+      never filled or bordered so nothing that looks pressable appears here. %>
+  <% if @game_passing.penalty_seconds.to_i > 0 %>
+    <p class="playbar-penalty">
+      <%= t("game_passings.show_current_level.penalty_label") %>
+      <span class="countdown"><%= @game_passing.penalty_seconds / 60 %></span>
+    </p>
+  <% end %>
+
   <% newest = @game_passing.hints_to_show.last %>
   <%# Rendered even when empty: the poller needs an element to write into when
       the first hint fires, and a team that loaded the page before any hint

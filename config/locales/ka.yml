@@ -433,6 +433,7 @@ ka:
       full_log: "პასუხების სრული ლოგი"
     show_current_level:
       choose: "აირჩიეთ პასუხი"
+      penalty_label: "ჯარიმა, წუთი:"
       title_prefix: "თამაში"
       level_label: "დავალება"
       hint_label: "მინიშნება"
@@ -452,6 +453,8 @@ ka:
       place: "ადგილი"
       team: "გუნდი"
       finish_time: "ფინიშის დრო"
+      penalty: "ჯარიმა"
+      total: "სულ"
       exited: "გავიდნენ დისტანციიდან"
       not_finished: "არ დაასრულეს"
       full_log: "პასუხების ლოგი"

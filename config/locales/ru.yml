@@ -408,6 +408,7 @@ ru:
       paused_since: "Игра приостановлена в %{time}."
     show_current_level:
       choose: "Выберите ответ"
+      penalty_label: "Штраф, минут:"
       title_prefix: "Игра"
       level_label: "Задание"
       hint_label: "Подсказка"
@@ -427,6 +428,8 @@ ru:
       place: "Место"
       team: "Команда"
       finish_time: "Время финиша"
+      penalty: "Штраф"
+      total: "Итого"
       exited: "Сошли с дистанции"
       not_finished: "Не финишировали"
       full_log: "Лог ответов"

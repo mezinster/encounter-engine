@@ -419,6 +419,7 @@ uk:
       full_log: "Повний лог відповідей"
     show_current_level:
       choose: "Оберіть відповідь"
+      penalty_label: "Штраф, хвилин:"
       title_prefix: "Гра"
       level_label: "Завдання"
       hint_label: "Підказка"
@@ -438,6 +439,8 @@ uk:
       place: "Місце"
       team: "Команда"
       finish_time: "Час фінішу"
+      penalty: "Штраф"
+      total: "Разом"
       exited: "Зійшли з дистанції"
       not_finished: "Не фінішували"
       full_log: "Лог відповідей"

@@ -67,4 +67,23 @@ describe "playing a quiz level", type: :request do
 
     expect(response.body).to include('name="answer"')
   end
+
+  # A penalty nobody can see is a penalty nobody believes, and an author
+  # fielding "why did we lose?" needs to be able to point at it.
+  describe "the running penalty" do
+    it "shows the accrued total on the play screen once it is non-zero" do
+      post post_answer_path(:game_id => game.id),
+           :params => { :option_ids => { question.id.to_s => [ wrong.id.to_s ] } }
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response.body).to include(I18n.t("game_passings.show_current_level.penalty_label"))
+    end
+
+    it "does not show it before anything has been charged" do
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response.body).not_to include(I18n.t("game_passings.show_current_level.penalty_label"))
+    end
+  end
 end

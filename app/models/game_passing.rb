@@ -59,6 +59,8 @@ class GamePassing < ApplicationRecord
 
   serialize :answered_questions, coder: AnsweredQuestionsCoder, type: Array
 
+  include TimeFormatting
+
   belongs_to :team, optional: true
   belongs_to :game, optional: true
   belongs_to :current_level, :class_name => "Level", optional: true
@@ -190,9 +192,7 @@ class GamePassing < ApplicationRecord
   end
 
   def time_at_level
-    difference = effective_now - self.current_level_entered_at
-    hours, minutes, seconds = seconds_fraction_to_time(difference)
-    "%02d:%02d:%02d" % [hours, minutes, seconds]
+    seconds_to_hms(effective_now - self.current_level_entered_at)
   end
 
   def unanswered_questions
@@ -288,21 +288,6 @@ protected
       "GamePassing##{id}: answered_questions column holds an unreadable " \
       "(pre-coder legacy format?) value; treating it as no questions answered."
     )
-  end
-
-  # TODO: keep SRP, extract this to a separate helper
-  def seconds_fraction_to_time(seconds)
-    hours = minutes = 0
-    if seconds >=  60 then
-      minutes = (seconds / 60).to_i
-      seconds = (seconds % 60 ).to_i
-
-      if minutes >= 60 then
-        hours = (minutes / 60).to_i
-        minutes = (minutes % 60).to_i
-      end
-    end
-    [hours, minutes, seconds]
   end
 
 end

@@ -19,6 +19,11 @@
 # every view spec (rspec-rails' own convention), with no explicit `helper`
 # call or spec-side stub required anywhere.
 module ApplicationHelper
+  # Shared with GamePassing rather than reimplemented: the listing renders how
+  # long a game ran, which is the same arithmetic the play screen uses for
+  # time at a level.
+  include TimeFormatting
+
   # helpers defined here available to all views.
 
   # Ports merb-helpers' Errorifier#error_messages_for

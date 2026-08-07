@@ -98,7 +98,7 @@
 </fieldset>
 
 <p class="danger-row">
-  <%= link_to t("levels.show.delete_level"), delete_game_level_path(@game, @level), class: "btn btn--danger" %>
+  <%= button_to t("levels.show.delete_level"), delete_game_level_path(@game, @level), :method => :delete, :class => "btn btn--danger" %>
 </p>
 
 <p>

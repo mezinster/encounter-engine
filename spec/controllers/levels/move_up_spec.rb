@@ -45,7 +45,7 @@ RSpec.describe LevelsController, "#move_up", type: :controller do
 
   def perform_request(opts={}, params={})
     session[:user_id] = opts[:as_user]&.id
-    get :move_up, params: params.merge(:id => @level.id, :game_id => @level.game.id)
+    post :move_up, params: params.merge(:id => @level.id, :game_id => @level.game.id)
     response
   end
 end

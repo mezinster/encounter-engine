@@ -148,8 +148,16 @@ RSpec.describe "routing" do
     to: { controller: "games", action: "delete", id: "7" }
 
   it_recognizes "keeps /games/:game_id/levels/:id/delete",
-    method: :get, path: "/games/7/levels/9/delete",
+    method: :delete, path: "/games/7/levels/9/delete",
     to: { controller: "levels", action: "delete", game_id: "7", id: "9" }
+
+  it_recognizes "keeps /games/:game_id/levels/:id/move_up",
+    method: :post, path: "/games/7/levels/9/move_up",
+    to: { controller: "levels", action: "move_up", game_id: "7", id: "9" }
+
+  it_recognizes "keeps /games/:game_id/levels/:id/move_down",
+    method: :post, path: "/games/7/levels/9/move_down",
+    to: { controller: "levels", action: "move_down", game_id: "7", id: "9" }
 
   it_recognizes "keeps /games/:game_id/levels/:level_id/hints/:id/delete",
     method: :get, path: "/games/7/levels/9/hints/3/delete",

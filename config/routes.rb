@@ -82,9 +82,9 @@ Rails.application.routes.draw do
 
     resources :levels do
       member do
-        get :delete
-        get :move_up
-        get :move_down
+        delete :delete
+        post :move_up
+        post :move_down
       end
 
       resources :hints do

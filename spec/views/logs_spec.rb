@@ -22,6 +22,11 @@ RSpec.describe "logs/show_full_log", type: :view do
 
     assign(:levels, [level])
     assign(:teams, [team])
+    # The view scopes team_logs off @logs (see the security fix under
+    # .superpowers/sdd/2026-08-07-security-data-exposure) instead of
+    # re-querying by team/level name alone -- assign it the way
+    # LogsController#show_full_log does: Log.of_game(@game).
+    assign(:logs, Log.of_game(level.game))
 
     render
 
@@ -39,6 +44,7 @@ RSpec.describe "logs/show_full_log", type: :view do
 
     assign(:levels, [level])
     assign(:teams, [])
+    assign(:logs, Log.of_game(level.game))
 
     render
 

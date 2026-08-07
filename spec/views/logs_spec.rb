@@ -52,17 +52,16 @@ RSpec.describe "logs/show_game_log", type: :view do
     level = create_level
     game = level.game
     create_question(level: level, correct_answer: "enone")
-    # NB: preserved from the Merb original -- show_game_log's action builds
-    # `Log.of_game(level)`, not `Log.of_game(@game)` (app/controllers/logs.rb
-    # in the original, ported unchanged to LogsController#show_game_log).
-    # ActiveRecord's predicate builder resolves an AR object passed as any
-    # column's value via its #id, so this scopes by level.id, not game.id --
-    # a pre-existing oddity, not introduced by this port. Matching it here so
-    # this spec exercises the template's actual runtime behaviour.
-    Log.create!(game_id: level.id, team: team.name, level: level.name, answer: "enone", time: Time.current)
+    # The view no longer re-queries Log.of_game(level) itself (see the
+    # security fix under .superpowers/sdd/2026-08-07-security-data-exposure) --
+    # it now scopes the controller-supplied @logs down to the current level
+    # via Log.of_level, so the view local test must assign :logs the same way
+    # LogsController#show_game_log does: Log.of_game(@game).of_team(@team).
+    Log.create!(game_id: game.id, team: team.name, level: level.name, answer: "enone", time: Time.current)
 
     assign(:game, game)
     assign(:team, team)
+    assign(:logs, Log.of_game(game).of_team(team))
 
     render
 

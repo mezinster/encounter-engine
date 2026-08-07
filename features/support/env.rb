@@ -70,11 +70,13 @@ end
 #
 # The identity counters have to go too, not just the rows: Rails declares
 # SQLite primary keys AUTOINCREMENT, so a leftover counter would stop the first
-# game of a scenario from getting id 1 -- and features/logs/log.feature:53-82
-# passes only because game id 1 and level id 1 coincide there
-# (app/views/logs/show_game_log.html.erb:7 passes a level to Log.of_game, which
-# resolves to `where(game_id: level.id)`). That is load-bearing, so this must
-# not fail quietly.
+# game of a scenario from getting id 1, and the first-link behaviour above
+# depends on a clean, predictable ordering. (This block used to carry a second
+# reason: features/logs/log.feature:53-82 passed only because game id 1 and
+# level id 1 coincided, because app/views/logs/show_game_log.html.erb passed a
+# Level to Log.of_game. That scoping bug is fixed -- the view now uses the
+# controller's @logs scoped by level -- so the scenario no longer depends on an
+# id collision.)
 BeforeAll do
   connection = ActiveRecord::Base.connection
   keep = %w[schema_migrations ar_internal_metadata]

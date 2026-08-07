@@ -59,7 +59,23 @@ var LevelHintUpdater = function() {
     }
 
     ,appendHint = function(hintNum, hintText) {
-        $hintsContainer.append('<fieldset><legend>Подсказка #' + hintNum + '</legend>' + hintText + '</br></fieldset>');
+        // Nodes, not an HTML string: hint text is author-written and reaches
+        // this function raw from /play/:game_id/tip. jQuery .append() with a
+        // string parses it as markup, so concatenating here made every hint a
+        // stored-XSS vector against every playing team. The server-rendered
+        // path (show_current_level.html.erb) escapes, so text is the correct
+        // and matching behaviour. "card" matches the class that view puts on
+        // its own fieldset.
+        var fieldset = document.createElement("fieldset");
+        fieldset.className = "card";
+
+        var legend = document.createElement("legend");
+        legend.textContent = "Подсказка #" + hintNum;
+
+        fieldset.appendChild(legend);
+        fieldset.appendChild(document.createTextNode(hintText));
+
+        $hintsContainer.append(fieldset);
 
         // The playbar shows the newest hint so a stuck player does not have to
         // scroll for it. Guarded: this element only exists on the play screen,

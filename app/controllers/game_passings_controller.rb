@@ -7,10 +7,29 @@ class GamePassingsController < ApplicationController
   # before this filter turned a guest's request into a 500.
   before_action :require_authentication!, except: [:index, :show_results]
   before_action :find_team, except: [:show_results, :index]
-  before_action :find_or_create_game_passing, except: [:show_results, :index]
+  # find_or_create_game_passing moved below ensure_game_is_started and
+  # ensure_game_not_finished_by_author (both check only @game, set by
+  # find_game above) -- it depends on nothing before it except @team, and
+  # every filter that depends on @game_passing (ensure_team_not_exited
+  # onward) already sits after it.
+  #
+  # It used to run right after find_team, ahead of ensure_game_is_started.
+  # An accepted team could GET /play/:game_id before starts_at: the row got
+  # created, before_create :update_current_level_entered_at (GamePassing)
+  # stamped the hint clock at that early moment, and only then did
+  # ensure_game_is_started 401. Nothing restamps the clock at the real start
+  # -- Game#resume! is the only other writer of that column -- so at kickoff
+  # the early-loader's hints_to_show already read every level-1 hint whose
+  # delay had "elapsed" against the wrong start time, handing them out
+  # instantly while honest teams waited. The same root cause produced a
+  # phantom, still-ticking level-1 row if an accepted team hit /play after
+  # end_game. Pinned by
+  # spec/requests/game_registration_enforcement_spec.rb ("creates no passing
+  # when an accepted team plays before the game starts").
   before_action :ensure_game_is_started
   before_action :ensure_team_captain, only: [:exit_game]
   before_action :ensure_game_not_finished_by_author, except: [:index, :show_results]
+  before_action :find_or_create_game_passing, except: [:show_results, :index]
   before_action :ensure_team_not_exited, except: [:index, :show_results]
   before_action :ensure_team_member, except: [:index, :show_results]
   before_action :ensure_not_author_of_the_game, except: [:index, :show_results]

@@ -60,6 +60,48 @@ describe "playing a game your team is not registered for", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  # GameEntry.of used to return the lowest-id row unconditionally. Nothing
+  # stops a team from holding two entries for one game (no unique index, and
+  # GameEntriesController#new creates a fresh row on every hit) -- so a team
+  # that applied twice, got the first (lower id) rejected and the second
+  # (higher id) accepted, was hard-401'd out of a game it was legitimately
+  # admitted to.
+  it "admits a team whose earlier entry was rejected and later entry accepted" do
+    player = player_on_a_fresh_team
+    create_game_entry(:game => game, :team => player.team, :status => "rejected")
+    create_game_entry(:game => game, :team => player.team, :status => "accepted")
+    sign_in(player)
+
+    expect {
+      get show_current_level_path(:game_id => game.id)
+    }.to change { GamePassing.count }.by(1)
+
+    expect(response).to have_http_status(:ok)
+  end
+
+  # find_or_create_game_passing used to run before ensure_game_is_started, so
+  # an accepted team GETting /play/:game_id before starts_at got its
+  # GamePassing created -- and current_level_entered_at stamped -- before the
+  # 401 fired. Nothing restamps that clock at the real start, so the early
+  # loader's level-1 hints all read as already elapsed once the game goes
+  # live, while honest teams wait. The passing must not exist at all until
+  # the game has actually started.
+  it "creates no passing when an accepted team plays before the game starts" do
+    early_game = create_game(:author => author, :is_draft => false)
+    early_game.update_column(:starts_at, 1.hour.from_now)
+    create_level(:game => early_game)
+
+    player = player_on_a_fresh_team
+    create_game_entry(:game => early_game, :team => player.team)
+    sign_in(player)
+
+    expect {
+      get show_current_level_path(:game_id => early_game.id)
+    }.not_to change { GamePassing.count }
+
+    expect(response).to have_http_status(:unauthorized)
+  end
+
   # The orphan-row defect: find_or_create_game_passing ran at filter position 4
   # while ensure_team_member ran at position 8, so a team-less user's 401 still
   # left a GamePassing with team_id NULL. game_passings/index.html.erb:65 and

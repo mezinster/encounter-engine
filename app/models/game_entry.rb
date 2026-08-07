@@ -10,8 +10,17 @@ class GameEntry < ApplicationRecord
   scope :of_team, ->(team) { where(team_id: team.id) }
   scope :with_status, ->(status) { where(status: status) }
 
+  # Nothing enforces one entry per team per game (no unique index in
+  # db/schema.rb, and GameEntriesController#new creates a fresh row on every
+  # hit -- see the controller). A team can end up holding two entries for the
+  # same game: an earlier one the author rejected and a later one accepted.
+  # Returning `.first` unscoped picked the lowest id -- the rejected row --
+  # and locked a legitimately accepted team out of a live game via the
+  # find_or_create_game_passing guard. Prefer the accepted entry if one
+  # exists; otherwise fall back to whatever is there, unchanged.
   def self.of(team, game)
-    self.of_team(team).of_game(game).first
+    scope = of_team(team).of_game(game)
+    scope.with_status("accepted").first || scope.first
   end
 
   def reopen!

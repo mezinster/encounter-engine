@@ -176,27 +176,27 @@ RSpec.describe "routing" do
     to: { controller: "invitations", action: "reject", id: "5" }
 
   it_recognizes "keeps /game_entries/new/:game_id/:team_id",
-    method: :get, path: "/game_entries/new/7/2",
+    method: :post, path: "/game_entries/new/7/2",
     to: { controller: "game_entries", action: "new", game_id: "7", team_id: "2" }
 
   it_recognizes "keeps /game_entries/reopen/:id",
-    method: :get, path: "/game_entries/reopen/5",
+    method: :post, path: "/game_entries/reopen/5",
     to: { controller: "game_entries", action: "reopen", id: "5" }
 
   it_recognizes "keeps /game_entries/accept/:id",
-    method: :get, path: "/game_entries/accept/5",
+    method: :post, path: "/game_entries/accept/5",
     to: { controller: "game_entries", action: "accept", id: "5" }
 
   it_recognizes "keeps /game_entries/reject/:id",
-    method: :get, path: "/game_entries/reject/5",
+    method: :post, path: "/game_entries/reject/5",
     to: { controller: "game_entries", action: "reject", id: "5" }
 
   it_recognizes "keeps /game_entries/recall/:id",
-    method: :get, path: "/game_entries/recall/5",
+    method: :post, path: "/game_entries/recall/5",
     to: { controller: "game_entries", action: "recall", id: "5" }
 
   it_recognizes "keeps /game_entries/cancel/:id",
-    method: :get, path: "/game_entries/cancel/5",
+    method: :post, path: "/game_entries/cancel/5",
     to: { controller: "game_entries", action: "cancel", id: "5" }
 
   # Negative checks: prove the router is not over-permissive. A route file

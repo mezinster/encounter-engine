@@ -36,7 +36,7 @@ describe "acting on another team's game entry", type: :request do
       victim_entry
       sign_in(attacker)
 
-      get "/game_entries/recall/#{victim_entry.id}"
+      post "/game_entries/recall/#{victim_entry.id}"
 
       expect(response).to have_http_status(:unauthorized)
       expect(victim_entry.reload.status).to eq("new")
@@ -46,7 +46,7 @@ describe "acting on another team's game entry", type: :request do
       victim_entry.accept!
       sign_in(attacker)
 
-      get "/game_entries/cancel/#{victim_entry.id}"
+      post "/game_entries/cancel/#{victim_entry.id}"
 
       expect(response).to have_http_status(:unauthorized)
       expect(victim_entry.reload.status).to eq("accepted")
@@ -56,7 +56,7 @@ describe "acting on another team's game entry", type: :request do
       victim_entry.reject!
       sign_in(attacker)
 
-      get "/game_entries/reopen/#{victim_entry.id}"
+      post "/game_entries/reopen/#{victim_entry.id}"
 
       expect(response).to have_http_status(:unauthorized)
       expect(victim_entry.reload.status).to eq("rejected")
@@ -70,7 +70,7 @@ describe "acting on another team's game entry", type: :request do
       sign_in(attacker)
 
       expect {
-        get "/game_entries/new/#{game.id}/#{victim.team_id}"
+        post new_game_entry_path(:game_id => game.id, :team_id => victim.team_id)
       }.not_to change { GameEntry.where(:team_id => victim.team_id).count }
 
       expect(response).to have_http_status(:unauthorized)
@@ -83,7 +83,7 @@ describe "acting on another team's game entry", type: :request do
       own = GameEntry.create!(:game => game, :team => attacker.team, :status => "new")
       sign_in(attacker)
 
-      get "/game_entries/recall/#{own.id}"
+      post "/game_entries/recall/#{own.id}"
 
       expect(response).to redirect_to(dashboard_path)
       expect(own.reload.status).to eq("recalled")
@@ -93,7 +93,7 @@ describe "acting on another team's game entry", type: :request do
       sign_in(attacker)
 
       expect {
-        get "/game_entries/new/#{game.id}/#{attacker.team_id}"
+        post new_game_entry_path(:game_id => game.id, :team_id => attacker.team_id)
       }.to change { GameEntry.where(:team_id => attacker.team_id).count }.by(1)
 
       expect(response).to redirect_to(dashboard_path)
@@ -108,7 +108,7 @@ describe "acting on another team's game entry", type: :request do
       victim_entry
       sign_in(author)
 
-      get "/game_entries/accept/#{victim_entry.id}"
+      post "/game_entries/accept/#{victim_entry.id}"
 
       expect(response).to redirect_to(dashboard_path)
       expect(victim_entry.reload.status).to eq("accepted")

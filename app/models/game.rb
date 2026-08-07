@@ -166,15 +166,36 @@ class Game < ApplicationRecord
     Game.visible.reject(&:started?)
   end
 
+  # The single source of truth for what a game IS. The predicates overlap by
+  # construction -- a withdrawn game may also be finished, a draft may have a
+  # start time in the past -- so the ORDER is load-bearing, not stylistic.
+  #
+  # paused? and editing_locked? are deliberately NOT here: a game can be
+  # paused AND running, and folding either in would hide one fact in order to
+  # show the other. Both are reported alongside the status, never instead of
+  # it -- the same reasoning count_by_status below documents for locking.
+  #
+  # count_by_status below applies this same precedence in SQL, because
+  # counting must not load every row. The two are pinned to each other by
+  # spec/models/game/status_spec.rb rather than by a comment asking future
+  # readers to keep them in step.
+  def status
+    return :withdrawn if withdrawn?
+    return :draft     if draft?
+    return :finished  if author_finished?
+    return :running   if started?
+    :scheduled
+  end
+
   # Each game counts once, under the first status that matches, in this order:
   # withdrawn, draft, finished, running, scheduled. The predicates overlap by
   # construction -- a draft has no start time in the past, a withdrawn game may
   # also be finished -- so without a precedence the columns would not sum to
   # the total and nobody would notice.
   #
-  # The order matches how the admin console labels a game in its status column,
-  # deliberately: two admin screens disagreeing about what a game IS would be
-  # worse than either being wrong on its own.
+  # The order matches Game#status above, which is what every screen uses to
+  # label an individual game. Counting is done in SQL rather than through
+  # that method because a counter must not load every row.
   #
   # Counted in SQL. Game.started and Game.notstarted just above load every row
   # and filter in memory, which is fine for a listing of two and wrong for a

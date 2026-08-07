@@ -79,6 +79,15 @@ textarea { min-height: 8em; }
  * table scroll rather than forcing the page to scroll sideways. */
 .table-wrap { overflow-x: auto; }
 
+/* The UA stylesheet gives <fieldset> min-inline-size: min-content, which
+   overrides a grid track's `minmax(0, 1fr)` (.dash-grid, screens.css) --
+   the fieldset refuses to shrink below its content's min-content width and
+   drags the whole grid item wider instead of letting .table-wrap above
+   scroll internally as designed. Reset it on every fieldset (not just
+   #mygames) since any future .table--cards inside a fieldset.card would hit
+   the same trap. */
+fieldset { min-inline-size: 0; }
+
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: var(--space-3); text-align: left; border-bottom: 1px solid var(--border); }
 th {

@@ -51,8 +51,13 @@ class User < ApplicationRecord
     member_of_any_team? && team.captain&.id == id
   end
 
+  # game.author_id, not game.author.id -- the latter loads the author
+  # association per call, and this is called once per game in games/_list.html.erb
+  # with no preload, which was an N+1 on every logged-in author's listing
+  # (spec/requests/games_listing_spec.rb, "issues the same number of queries...").
+  # author_id is already on the loaded Game row, so this needs no query at all.
   def author_of?(game)
-    game.author.id == self.id
+    game.author_id == self.id
   end
 
   def superadmin?

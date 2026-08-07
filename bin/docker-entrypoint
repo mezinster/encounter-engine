@@ -1,0 +1,30 @@
+#!/bin/bash -e
+
+# Migrations run here, on the way up, rather than in a Kamal `pre-deploy` hook.
+#
+# Kamal 2's deploy order is:
+#
+#   build:deliver → pre-deploy hook → proxy:boot → accessory:boot → app:boot
+#
+# and the role's env file is uploaded inside app:boot (lib/kamal/cli/app/boot.rb,
+# `ensure_env_directory` + `upload!`). So at pre-deploy time on a first deploy
+# there is no env file on the host AND no database container yet — `kamal app
+# exec ... db:prepare` fails with "--env-file: no such file or directory". It
+# would appear to work on every *later* deploy, because the env file survives
+# from the previous boot, and then break again on any fresh host.
+#
+# Migrating in the entrypoint is Rails 8's own default. The usual objection is
+# that it races when several replicas boot at once; this deployment runs a
+# single web container on a single host, so there is nothing to race with. If
+# replicas are ever added, move this back out to a hook that runs after the
+# accessory is up.
+#
+# Guarded on the command so that `kamal app exec` containers — which run
+# one-off commands with the same image and env — do not each try to migrate.
+case "$*" in
+  *puma*)
+    ./bin/rails db:prepare
+    ;;
+esac
+
+exec "$@"

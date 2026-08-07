@@ -14,6 +14,10 @@ RUN bundle config set --local without 'development test' && \
     bundle install && \
     rm -rf ~/.bundle /usr/local/bundle/ruby/*/cache
 COPY . .
+# git preserves the mode bit, but a checkout on a filesystem that does not
+# (or a `COPY` from a context where it was lost) would produce an image that
+# cannot start at all.
+RUN chmod +x bin/docker-entrypoint
 
 FROM ruby:${RUBY_VERSION}-slim
 RUN apt-get update -qq && \
@@ -33,4 +37,7 @@ USER rails:rails
 
 ENV RAILS_ENV=production BUNDLE_WITHOUT="development test"
 EXPOSE 3000
+# Prepares the database before puma binds. See the comment in the script for why
+# this is not a Kamal pre-deploy hook.
+ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 CMD ["bundle", "exec", "puma", "-b", "tcp://0.0.0.0:3000"]

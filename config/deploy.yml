@@ -54,7 +54,6 @@ env:
     # mailers build absolute URLs from, so it is the canonical domain: the app
     # answers on both, every emailed link points at game.mezin.eu.
     APP_HOST: game.mezin.eu
-    MAIL_FROM: noreply@mezin.eu
     SMTP_ADDRESS: smtp.gmail.com
     SMTP_PORT: "587"
   secret:
@@ -62,6 +61,8 @@ env:
     - DATABASE_URL
     - SMTP_USERNAME
     - SMTP_PASSWORD
+    # Derived from SMTP_USERNAME rather than set here — see .kamal/secrets.
+    - MAIL_FROM
 
 accessories:
   db:

@@ -112,12 +112,15 @@ describe "the invitation autocomplete payload", type: :request do
 
     get new_invitation_path
 
-    expect(response.body).to include("escapeHtml")
-    # "formatItem:" (with the colon), not the bare word -- the surrounding
-    # comment also says "formatItem", so a bare substring match would still
-    # pass even with the function itself deleted. Verified by deletion: see
-    # task-2-report.md.
-    expect(response.body).to include("formatItem:")
+    # A single assertion binding formatItem's body to escapeHtml, not two
+    # independent substring checks -- "escapeHtml" alone matches the helper's
+    # declaration regardless of whether formatItem calls it, and
+    # "formatItem:" alone matches the declaration line regardless of what the
+    # body does (e.g. a regression that quietly changes the body to
+    # `return row[0];` while leaving the declaration, helper and comment
+    # untouched passes both). This regex only matches if the call is actually
+    # inside formatItem's body. Verified by mutation: see task-2-report.md.
+    expect(response.body).to match(/formatItem:\s*function\(row\)\s*\{\s*return escapeHtml\(row\[0\]\)/)
     # The raw nickname reaches the browser inside the JSON island (correct --
     # JSON.parse yields a string, not markup), but must never appear as live
     # markup outside it.

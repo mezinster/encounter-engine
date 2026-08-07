@@ -81,6 +81,21 @@ validation message interpolates a persisted value.
 - `CLAUDE.md:109,112` documents 2362 Cucumber steps and 498 RSpec examples against an actual 2358
   and 891. Doc drift predating this work.
 
+**A mutating GET the CSRF plan never inventoried.** The whole-plan review designed its own
+completeness check — parsing `bin/rails routes` by verb column, locating each action body via the
+Ruby AST, then scanning the `before_action` chains reachable on GET, because an action body is not
+the whole request. That last step found `find_or_create_game_passing`
+(`app/controllers/game_passings_controller.rb`), a `before_action` on `GET /play/:game_id` and
+`GET /play/:game_id/tip` that calls `GamePassing.create!` and starts the team's clock. A crafted
+link a captain follows enrols their team and starts their timer; `SameSite=Lax` sends the session
+cookie on top-level GET navigation.
+
+Impact is low and partly addressed by the gameplay plan already in PR #32, which requires an
+accepted `GameEntry` and moves the filter below `ensure_game_is_started`. It is **not** fixable by
+the CSRF plan's method: `config/routes.rb` deliberately preserves the bookmarked `/play/` URLs, and
+this is lazy initialisation rather than a state transition. Note the pre-existing
+`# TODO: must be a critical section` immediately above it.
+
 ## Findings deliberately NOT planned
 
 Three candidates were refuted or downgraded during verification. They are recorded here so nobody

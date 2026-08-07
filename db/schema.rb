@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_06_155817) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_06_225826) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -112,6 +112,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_06_155817) do
     t.integer "position"
     t.string "name"
     t.integer "wrong_answer_penalty", default: 0, null: false
+    t.boolean "any_code_passes", default: true, null: false
   end
 
   create_table "logs", force: :cascade do |t|
@@ -154,12 +155,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_06_155817) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.integer "team_id"
-    t.string "jabber_id"
-    t.string "icq_number"
     t.date "date_of_birth"
     t.string "phone_number"
     t.string "locale"
     t.boolean "is_superadmin", default: false, null: false
     t.string "timezone"
+    t.string "instagram"
+    t.string "telegram_id"
+    t.boolean "on_telegram", default: false, null: false
+    t.boolean "on_whatsapp", default: false, null: false
+    t.boolean "on_viber", default: false, null: false
+    t.boolean "on_signal", default: false, null: false
+    t.boolean "on_max", default: false, null: false
   end
 end

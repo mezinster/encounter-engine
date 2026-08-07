@@ -51,6 +51,15 @@
     <% end %>
   <% end %>
 
+  <%# Stated for one-code levels too. Both rules behave identically there, and
+      "Достаточно любого из кодов" stays true -- whereas showing the line only
+      once a second code exists would mean it first appears after the author
+      has already made the decision blind. That silence is the trap this
+      closes. %>
+  <p>
+    <em><%= @level.any_code_passes? ? t("levels.codes_rule_any") : t("levels.codes_rule_all") %></em>
+  </p>
+
   <p>
     <%= link_to t("levels.show.add_code"), new_game_level_question_path(@game, @level), class: "btn" %>
   </p>

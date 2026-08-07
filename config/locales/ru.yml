@@ -18,8 +18,9 @@ ru:
       show:
         email: "E-mail"
         phone: "Телефон"
-        jabber: "Jabber"
-        icq: "ICQ"
+        instagram: "Instagram"
+        telegram: "Telegram"
+        messengers: "Мессенджеры"
         date_of_birth: "Дата рождения"
         team: "Команда"
         locale: "Язык"
@@ -50,6 +51,8 @@ ru:
           finish_test: "Завершил тестирование"
           grant_superadmin: "Выдал права администратора"
           revoke_superadmin: "Снял права администратора"
+          allow_any_code: "Разрешил любой код на уровне"
+          require_all_codes: "Потребовал все коды на уровне"
     dashboard:
       show:
         title: "Обзор"
@@ -128,6 +131,8 @@ ru:
     moved_notice: "Команда переведена на другой уровень"
     reinstated_notice: "Команда возвращена в игру"
     clock_reset_notice: "Отсчёт времени на уровне сброшен"
+    any_code_notice: "На уровне «%{name}» теперь достаточно любого кода"
+    all_codes_notice: "На уровне «%{name}» теперь нужны все коды"
     refused: "Это действие сейчас невозможно"
   invitations:
     notice_sent: "Пользователю %{nickname} выслано приглашение"
@@ -157,6 +162,20 @@ ru:
         description: "описание"
         text: "текст задания"
     list:
+      name: "Игра"
+      status: "Статус"
+      starts_at: "Начало"
+      ends_at: "Окончание"
+      participants: "Команды"
+      status_withdrawn: "Снята с публикации"
+      status_draft: "Черновик"
+      status_finished: "Завершена"
+      status_running: "Идёт"
+      status_scheduled: "Запланирована"
+      paused: "на паузе"
+      duration: "%{hours} ч %{minutes} мин"
+      playing: "играют: %{count}"
+      played: "играли: %{count}"
       view: "(просмотреть)"
       stats: "(статистика)"
       live_channel: "(прямой эфир)"
@@ -217,11 +236,14 @@ ru:
       original_label: "Оригинал"
       save_translations: "Сохранить переводы"
   levels:
+    codes_rule_any: "Достаточно любого из кодов"
+    codes_rule_all: "Нужно найти все коды"
     form:
       wrong_answer_penalty: "Штраф за неверный ответ (минут)"
       name: "Название"
       text: "Текст задания"
       correct_answer: "Код"
+      codes_rule: "Как засчитывать коды"
     edit:
       title: "Задание"
       game_prefix: "игра"
@@ -272,6 +294,12 @@ ru:
       code_label: "Код"
       submit: "Добавить код"
     answers_are_shared: "Коды ответов общие для всех языков. Если ответ пишется по-разному, добавьте каждый вариант как отдельный правильный ответ."
+  messengers:
+    telegram: "Telegram"
+    whatsapp: "WhatsApp"
+    viber: "Viber"
+    signal: "Signal"
+    max: "MAX"
   users:
     new:
       nickname_label: "Имя"
@@ -283,8 +311,9 @@ ru:
       title: 'Редактирование профиля игрока %{nickname}'
       nickname_label: "Ваше имя"
       date_of_birth_label: "Дата рождения"
-      icq_label: "Номер ICQ"
-      jabber_label: "Jabber ID"
+      instagram_label: "Instagram"
+      telegram_label: "Telegram"
+      messengers_label: "Доступен в мессенджерах"
       phone_label: "Контактный телефон"
       locale_label: "Язык интерфейса"
       timezone_label: "Часовой пояс"
@@ -298,8 +327,9 @@ ru:
       email_label: "E-mail:"
       date_of_birth_label: "Дата рождения:"
       timezone_label: "Часовой пояс:"
-      icq_label: "Номер ICQ:"
-      jabber_label: "Jabber ID:"
+      instagram_label: "Instagram:"
+      telegram_label: "Telegram:"
+      messengers_label: "Мессенджеры:"
       phone_label: "Контактный телефон:"
       edit_link: "Редактировать профиль..."
   notification_mailer:
@@ -418,6 +448,9 @@ ru:
       pause: "Приостановить игру"
       resume: "Продолжить игру"
       paused_since: "Игра приостановлена в %{time}."
+      level_codes_legend: "Коды на уровнях"
+      allow_any_code: "Достаточно любого"
+      require_all_codes: "Нужны все"
     show_current_level:
       choose: "Выберите ответ"
       penalty_label: "Штраф, минут:"

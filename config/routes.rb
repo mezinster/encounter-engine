@@ -135,6 +135,11 @@ Rails.application.routes.draw do
   post "/games/:game_id/teams/:team_id/reinstate",   to: "interventions#reinstate",   as: :reinstate_team
   post "/games/:game_id/teams/:team_id/reset_clock", to: "interventions#reset_clock", as: :reset_team_clock
 
+  # Level-scoped, unlike the team-scoped interventions above: how a level's
+  # codes count is a property of the level, not of one team's passing.
+  post "/games/:game_id/levels/:id/allow_any_code",    to: "interventions#allow_any_code",    as: :allow_any_code_level
+  post "/games/:game_id/levels/:id/require_all_codes", to: "interventions#require_all_codes", as: :require_all_codes_level
+
   # The routes below have no `resources` equivalent: in Merb they were only
   # reachable through the catch-all `default_routes` entry
   # (`match("/:controller(/:action(/:id))(.:format)")`) at the bottom of

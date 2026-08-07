@@ -34,6 +34,17 @@ class User < ApplicationRecord
 
   validate :last_superadmin_keeps_the_role
 
+  # Handles are stored bare -- no leading "@", no host, no scheme -- so the
+  # profile can render a working link, and two players who typed the same
+  # handle differently are stored identically. Each key is a column; each
+  # value is the hosts to strip for that column.
+  CONTACT_HANDLE_HOSTS = {
+    :instagram   => %w[instagram.com],
+    :telegram_id => %w[t.me telegram.me]
+  }.freeze
+
+  before_validation :normalise_contact_handles
+
   def member_of_any_team?
     !! team
   end
@@ -51,8 +62,13 @@ class User < ApplicationRecord
     member_of_any_team? && team.captain&.id == id
   end
 
+  # game.author_id, not game.author.id -- the latter loads the author
+  # association per call, and this is called once per game in games/_list.html.erb
+  # with no preload, which was an N+1 on every logged-in author's listing
+  # (spec/requests/games_listing_spec.rb, "issues the same number of queries...").
+  # author_id is already on the loaded Game row, so this needs no query at all.
   def author_of?(game)
-    game.author.id == self.id
+    game.author_id == self.id
   end
 
   def superadmin?
@@ -130,5 +146,24 @@ class User < ApplicationRecord
     # change here, to a cryptographically strong SecureRandom.hex(20).
     self.salt ||= SecureRandom.hex(20)
     self.crypted_password = self.class.encrypt(password, salt)
+  end
+
+  # Order matters: scheme, then "www.", then the host, then a leading "@",
+  # then a trailing slash. Stripping "@" first would leave "@" embedded in a
+  # pasted URL untouched.
+  def normalise_contact_handles
+    CONTACT_HANDLE_HOSTS.each do |field, hosts|
+      value = self[field].to_s.strip
+
+      value = value.sub(%r{\Ahttps?://}i, "")
+      value = value.sub(%r{\Awww\.}i, "")
+      hosts.each { |host| value = value.sub(%r{\A#{Regexp.escape(host)}/}i, "") }
+      value = value.sub(/\A@/, "")
+      value = value.sub(%r{/\z}, "")
+
+      # presence, not the raw value: an emptied field must land as NULL so the
+      # views can test presence to decide whether to render a row at all.
+      self[field] = value.presence
+    end
   end
 end

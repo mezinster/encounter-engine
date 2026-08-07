@@ -58,8 +58,15 @@ class HintsController < ApplicationController
     @game = @level.game
   end
 
+  # Scoped through @level (same shape/fix as LevelsController#find_level):
+  # @level is looked up first (from params[:level_id]) and @game is derived
+  # from it, so ensure_author/ensure_editing_not_locked/
+  # ensure_game_was_not_started all authorize against the level's real game --
+  # but an unscoped Hint.find(params[:id]) here would still let a request
+  # attach its own (authorized) level_id to someone else's hint id and edit or
+  # delete it regardless of which level actually owns it.
   def find_hint
-    @hint = Hint.find(params[:id])
+    @hint = @level.hints.find(params[:id])
   end
 
   # app/views/hints/_form.html.erb submits :text and :delay_in_minutes (a

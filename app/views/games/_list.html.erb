@@ -1,16 +1,73 @@
-<ul class="game-list">
+<%# Rendered from games/index.html.erb and dashboard/_my_games.html.erb.
+    Counts come from a helper rather than a controller ivar for that reason.
+
+    .table--cards collapses to stacked cards below 48rem, using each cell's
+    data-label to keep the column name; .table-wrap contains a long game name
+    rather than letting it scroll the whole page sideways. %>
+<% counts = game_team_counts(games) %>
+
+<div class="table-wrap">
+<%# Deliberately NOT class="game-list". That class is used by nine other views
+    (levels/_list, hints/_list, games/_teams, games/_game_entries,
+    dashboard/_coming_games, dashboard/_finished_games, team_room/index,
+    admin/users/show, layouts/_left_menu) and its only rules are
+    `.game-list li` (screens.css:17) and `#drawer .game-list a`
+    (layout.css:47) -- descendant selectors for <ul> markup that a <table>
+    has no children to match. Carrying the class here would style nothing and
+    mislead the next person into thinking it does. %>
+<table class="table--cards">
+  <thead>
+    <tr>
+      <th><%= t("games.list.name") %></th>
+      <th><%= t("games.list.status") %></th>
+      <th><%= t("games.list.starts_at") %></th>
+      <th><%= t("games.list.ends_at") %></th>
+      <th><%= t("games.list.participants") %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
   <% games.each do |game| %>
-    <li>
-      <strong><%= link_to game.name, game_path(game) %></strong>
-      <em><%= link_to t("games.list.view"), game_path(game) %></em>
-      <% if logged_in? and current_user.author_of?(game) %>
-          <em><%= link_to t("shared.edit_short"), edit_game_path(game) %></em>
-          <em><%= link_to t("games.list.stats"), game_stats_path(game) if game.started? %></em>
-          <em><%= link_to t("games.list.live_channel"), show_live_channel_path(game.id) if game.started? %></em>
-          <em><%= link_to t("games.list.full_log"), show_full_log_path(game.id) if game.started? %></em>
-          <b><%= link_to t("games.list.end_game"), "/games/end_game/#{game.id}" if (game.started? and !game.author_finished?) %></b>
-          <em><%= t("games.list.author_finished") if (game.started? and game.author_finished?) %></em>
-      <% end %>
-    </li>
+    <tr>
+      <td data-label="<%= t("games.list.name") %>">
+        <strong><%= link_to game.name, game_path(game) %></strong>
+      </td>
+      <td data-label="<%= t("games.list.status") %>"><%= game_status_tag(game) %></td>
+      <td data-label="<%= t("games.list.starts_at") %>">
+        <%= l(game.starts_at, :format => :long) if game.starts_at %>
+      </td>
+      <td data-label="<%= t("games.list.ends_at") %>">
+        <% if game.status == :finished && game.author_finished_at %>
+          <%= l(game.author_finished_at, :format => :long) %><br>
+        <% end %>
+        <%= game_duration_text(game) %>
+      </td>
+      <td data-label="<%= t("games.list.participants") %>">
+        <%= counts[:registered].fetch(game.id, 0) %> / <%= game.max_team_number %>
+        <% participation = game_participation_text(game, counts) %>
+        <% if participation %>
+          &middot;
+          <%= participation %>
+        <% end %>
+      </td>
+      <%# Every link below keeps its exact text, order and visibility
+          condition: features/games/confirmed-teams-preview.feature,
+          features/logs/live-channel.feature and features/logs/log.feature all
+          reach this listing and click through by link text. New information
+          is added AROUND these, never in place of them. %>
+      <td>
+        <em><%= link_to t("games.list.view"), game_path(game) %></em>
+        <% if logged_in? and current_user.author_of?(game) %>
+            <em><%= link_to t("shared.edit_short"), edit_game_path(game) %></em>
+            <em><%= link_to t("games.list.stats"), game_stats_path(game) if game.started? %></em>
+            <em><%= link_to t("games.list.live_channel"), show_live_channel_path(game.id) if game.started? %></em>
+            <em><%= link_to t("games.list.full_log"), show_full_log_path(game.id) if game.started? %></em>
+            <b><%= link_to t("games.list.end_game"), "/games/end_game/#{game.id}" if (game.started? and !game.author_finished?) %></b>
+            <em><%= t("games.list.author_finished") if (game.started? and game.author_finished?) %></em>
+        <% end %>
+      </td>
+    </tr>
   <% end %>
-</ul>
+  </tbody>
+</table>
+</div>

@@ -78,16 +78,26 @@ class OptionsController < ApplicationController
     @game = Game.find(params[:game_id])
   end
 
+  # Scoped through the game (same shape/fix as LevelsController#find_level):
+  # ensure_author and ensure_editing_not_locked authorize against @game from
+  # params[:game_id]. An unscoped lookup here would let a request pair its own
+  # game_id with someone else's level_id.
   def find_level
-    @level = Level.find(params[:level_id])
+    @level = @game.levels.find(params[:level_id])
   end
 
+  # Scoped through @level, which is itself scoped through @game above -- a
+  # question_id belonging to another level (or game) 404s instead of being
+  # editable.
   def find_question
-    @question = Question.find(params[:question_id])
+    @question = @level.questions.find(params[:question_id])
   end
 
+  # Scoped through @options (find_options, above in the filter chain), which
+  # is itself scoped through @question -- an option id belonging to another
+  # question 404s instead of being deletable.
   def find_option
-    @option = Option.find(params[:id])
+    @option = @options.find(params[:id])
   end
 
   def find_options

@@ -65,6 +65,58 @@ RSpec.describe "games/_list", type: :view do
     expect(rendered).to include(I18n.t("games.list.author_finished"))
     expect(rendered).not_to include("/games/end_game/#{game.id}")
   end
+
+  # Whole-branch review, mutant M7: `game.paused_at || Time.now` mutated to
+  # plain `Time.now`. Nothing noticed, because no example paused a game and
+  # then let more real time pass before rendering. The freeze-at-pause
+  # behaviour is deliberate (games_helper.rb mirrors GamePassing#effective_now)
+  # -- a running game's duration must stop growing the moment it is paused.
+  it "freezes a running game's duration at pause time, not the current clock" do
+    author = create_user
+    # A literal, whole-second starts_at rather than N.from_now -- hours_and_minutes
+    # truncates its float diff with #to_i, and a Time.now-derived starts_at
+    # carries sub-microsecond noise that survives a datetime column round-trip
+    # unevenly, landing the diff a hair under a whole second and flaking this
+    # example between "1 ч 0 мин" and "0 ч 59 мин" for reasons with nothing to
+    # do with what it is meant to test.
+    started_at = Time.utc(2026, 3, 10, 9, 0, 0)
+    allow(Time).to receive(:now).and_return(started_at - 1.day) # so creation's "must start in the future" validation passes
+    game = create_game(author: author, starts_at: started_at)
+
+    allow(Time).to receive(:now).and_return(started_at + 1.hour)
+    game.pause! # paused_at = started_at + 1h
+
+    allow(Time).to receive(:now).and_return(started_at + 3.hours) # clock keeps moving
+
+    view.define_singleton_method(:logged_in?) { false }
+
+    render partial: "games/list", locals: { games: [game] }
+
+    expect(rendered).to include(I18n.t("games.list.duration", :hours => 1, :minutes => 0))
+    expect(rendered).not_to include(I18n.t("games.list.duration", :hours => 3, :minutes => 0))
+  end
+
+  # Whole-branch review, mutant M12: dropping `game.status == :finished &&`
+  # from the end-time condition (games/_list.html.erb). Nothing noticed
+  # because no example covers a game that is BOTH finished and withdrawn --
+  # :withdrawn wins Game#status's precedence, so the shipped condition
+  # correctly hides the end time (arguably a defect worth revisiting on its
+  # own, per the review, but not in this wave's scope). Withdrawn games are
+  # excluded from /games but not from the dashboard, so this state does
+  # render somewhere in production.
+  it "shows no end time for a game that was finished and later withdrawn" do
+    game = create_game
+    game.update_column(:starts_at, 2.hours.ago)
+    game.update_column(:author_finished_at, 1.hour.ago)
+    game.withdraw!
+
+    view.define_singleton_method(:logged_in?) { false }
+
+    render partial: "games/list", locals: { games: [game] }
+
+    expect(rendered).to include(I18n.t("games.list.status_withdrawn"))
+    expect(rendered).not_to include(I18n.l(game.author_finished_at, :format => :long))
+  end
 end
 
 RSpec.describe "games/_game_entries", type: :view do

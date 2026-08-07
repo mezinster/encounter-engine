@@ -100,4 +100,10 @@ obvious "migration first" ordering leaves the suite red for two tasks.
   requiring a third frozen-feature exception.
 - **Branch protection on `master`** — several PRs have merged with an empty
   `reviewDecision`.
-- **No restore runbook and no WAL retention policy** for the production database.
+- ~~No restore runbook and no WAL retention policy~~ — done 2026-08-07.
+  `docs/runbooks/restore.md`, the `Database` workflow, and `wal-g delete retain FULL 7`
+  in the nightly script. Both a `latest` and a point-in-time restore were rehearsed
+  into a scratch container and verified.
+- **Nothing alerts if the nightly backup stops.** The systemd timer failing, or the
+  script exiting non-zero, is silent — you would find out when you needed a restore.
+  `journalctl -u encounter-engine-backup.service` is the only signal today.

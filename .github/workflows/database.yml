@@ -1,0 +1,142 @@
+name: Database
+
+# Query what can be restored, and rehearse a restore into a throwaway
+# container. Nothing here can write to the production database -- see
+# docs/runbooks/restore.md for that path, which is deliberately manual.
+#
+# Two-step by design. GitHub Actions cannot populate a dropdown from live data:
+# `choice` options are fixed in this file. So run `list` first, read the window
+# it prints, then paste a value back into `restore-to-scratch`.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "list = what can I restore? | restore-to-scratch = rehearse it"
+        type: choice
+        options: [list, restore-to-scratch]
+        default: list
+      restore_point:
+        description: "restore-to-scratch only: which point"
+        type: choice
+        options: [latest, point_in_time, named_backup]
+        default: latest
+      target_time:
+        description: "point_in_time only, e.g. 2026-08-07 03:30:00+00 (the list action prints the format)"
+        type: string
+      backup_name:
+        description: "named_backup only, e.g. base_000000010000000000000041"
+        type: string
+      keep_scratch:
+        description: "leave the scratch container running afterwards to poke at"
+        type: boolean
+        default: false
+
+# Shares the deploy's group on purpose. Both open a just-in-time NSG rule on
+# the same network security group, and two runs doing that at once race: the
+# second can delete the first's access mid-run.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    # Required, not merely cautious: the Azure federated credential trusts
+    # exactly one subject --
+    # repo:mezinster/encounter-engine:environment:production -- so OIDC fails
+    # outside this environment and the NSG rule can never be opened. It also
+    # means the read-only `list` needs an approval click, which is the price of
+    # not holding a second long-lived Azure credential.
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Pin the host key
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          # Read from the host over an already-trusted session, never
+          # ssh-keyscan'd: keyscan trusts whatever answers. If this stops
+          # matching, the host was rebuilt — re-read
+          # /etc/ssh/ssh_host_ed25519_key.pub over a known-good connection
+          # rather than "fixing" it here.
+          echo '23.100.7.86 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBESJGNohuozwA1DTg1Tjlghw/G0krguiE0Enw5BfMew' >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Authenticate to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Open SSH to this runner only
+        run: |
+          RUNNER_IP=$(curl -fsS --max-time 10 https://api.ipify.org || curl -fsS --max-time 10 https://ifconfig.me)
+          if [ -z "$RUNNER_IP" ]; then echo "could not determine runner IP"; exit 1; fi
+          echo "opening 22 for ${RUNNER_IP}/32"
+          # Retried for the same reason the deploy workflow retries: azure-cli
+          # under Python 3.14 can deadlock importing command modules
+          # (Azure/azure-cli#32980). An upstream race should not fail this.
+          for attempt in 1 2 3 4 5; do
+            if az network nsg rule create \
+                 --resource-group mezineu --nsg-name webNSG \
+                 --name "gha-db-${{ github.run_id }}" \
+                 --priority 901 --direction Inbound --access Allow --protocol Tcp \
+                 --source-address-prefixes "${RUNNER_IP}/32" \
+                 --destination-port-ranges 22 \
+                 --description "JIT SSH for Database run ${{ github.run_id }}" \
+                 --output none; then
+              echo "rule created on attempt ${attempt}"
+              exit 0
+            fi
+            echo "attempt ${attempt} failed; retrying in 10s"
+            sleep 10
+          done
+          echo "could not open port 22 after 5 attempts"
+          exit 1
+
+      - name: What can be restored
+        if: inputs.action == 'list'
+        run: ssh -o BatchMode=yes mezinster@23.100.7.86 'bash -s' < ops/db-list.sh
+
+      - name: Restore into a scratch container
+        if: inputs.action == 'restore-to-scratch'
+        run: |
+          # Passed through the environment rather than interpolated into the
+          # command line, so a value containing spaces or quotes cannot break
+          # out of the shell invocation.
+          ssh -o BatchMode=yes mezinster@23.100.7.86 \
+            "RESTORE_POINT='${{ inputs.restore_point }}' \
+             TARGET_TIME='${{ inputs.target_time }}' \
+             BACKUP_NAME='${{ inputs.backup_name }}' \
+             KEEP_SCRATCH='${{ inputs.keep_scratch && 'yes' || 'no' }}' \
+             bash -s" < ops/db-restore-scratch.sh
+
+      # `always()` matters: without it, a failed run leaves port 22 open to a
+      # runner address that GitHub recycles to other customers.
+      - name: Close SSH again
+        if: always()
+        run: |
+          cleaned=no
+          for attempt in 1 2 3 4 5; do
+            if az network nsg rule delete \
+                 --resource-group mezineu --nsg-name webNSG \
+                 --name "gha-db-${{ github.run_id }}" \
+                 --output none 2>/dev/null; then
+              cleaned=yes
+              break
+            fi
+            echo "cleanup attempt ${attempt} failed; retrying in 10s"
+            sleep 10
+          done
+          if [ "$cleaned" != "yes" ]; then
+            echo "::error::Failed to remove JIT rule gha-db-${{ github.run_id }} from webNSG after 5 attempts. Port 22 may still be open to this runner's address. Remove it by hand."
+          fi

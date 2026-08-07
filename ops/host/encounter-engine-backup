@@ -1,0 +1,47 @@
+#!/bin/bash
+# Nightly PostgreSQL base backup for encounter-engine, pushed to Azure Blob.
+#
+# This lives on the HOST, deliberately, not inside the database container.
+# Kamal recreates that container on every deploy, so a crontab installed inside
+# it would disappear silently at the next release -- and a backup schedule that
+# stops without telling you is worse than none.
+#
+# PGUSER and PGDATABASE are not optional. `docker exec` runs as root, so libpq
+# would default PGUSER to "root" and wal-g dies with `role "root" does not
+# exist`. WAL archiving keeps working regardless, because `wal-g wal-push`
+# needs no database connection -- which is exactly how this system looked
+# healthy for hours while being unable to restore anything.
+set -euo pipefail
+
+CONTAINER=encounter-engine-db
+
+if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
+  echo "FATAL: container ${CONTAINER} is not running; no backup taken" >&2
+  exit 1
+fi
+
+echo "starting base backup"
+docker exec \
+  -e PGUSER=encounter \
+  -e PGDATABASE=encounter_production \
+  "$CONTAINER" wal-g backup-push /var/lib/postgresql/data
+
+# Retention. Without this, base backups and every WAL segment behind them
+# accumulate in Azure Blob forever -- the design promised 7 dailies and nothing
+# ever enforced it.
+#
+# `retain FULL 7` keeps the seven most recent FULL backups and deletes older
+# ones together with the WAL that only they needed. It never deletes WAL still
+# required by a retained backup, so the point-in-time window always reaches
+# back to the oldest kept backup.
+#
+# --confirm is what makes it delete; without it wal-g only prints a plan. Run
+# it without --confirm by hand first if you ever change the number.
+echo "applying retention (keep 7 full backups)"
+docker exec \
+  -e PGUSER=encounter \
+  -e PGDATABASE=encounter_production \
+  "$CONTAINER" wal-g delete retain FULL 7 --confirm
+
+echo "archive now holds:"
+docker exec -e PGUSER=encounter "$CONTAINER" wal-g backup-list

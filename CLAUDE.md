@@ -162,3 +162,24 @@ Historical note: the Merb app read a variable named `SESSION_SECRET_KEY` from
 `config/init.rb`, which Task 1 deleted when the Rails skeleton replaced it. `create-heroku-instance`
 now sets `SECRET_KEY_BASE`, the name Rails 8 actually reads; nothing in this codebase reads
 `SESSION_SECRET_KEY` any more, so don't reintroduce that name expecting it to do anything.
+
+**Developer-machine credentials: never a literal in a config file.** The same rule as
+`SECRET_KEY_BASE` above, extended to the tokens a working session touches. On 2026-08-06 a GitHub
+PAT and a GitLab PAT were found sitting as plaintext strings in `~/.claude/settings.json`, read
+aloud into a transcript by an ordinary `cat` of that file, and had to be revoked. Both were
+`repo`-scoped classic tokens, and neither was load-bearing: `gh` keeps its own OAuth token in
+`~/.config/gh/hosts.yml`, `origin` is SSH, and every PR that day was created through `gh`. Full
+credentials, zero benefit.
+
+So:
+
+- **Prefer SSH and the `gh`/`glab` CLIs.** They hold their own credentials outside any file that
+  gets pasted, quoted or summarised. Nothing in this repository's normal workflow needs a PAT.
+- **If a token is genuinely required**, put the value in the environment (a `chmod 600` file your
+  shell sources) and let the config reference only the variable *name*. Never the value.
+- **Prefer fine-grained, single-repository, expiring tokens** over classic `repo` scope, so a leak
+  is bounded in blast radius and in time.
+- **When reading a config file, read the line you need** — `grep`, not `cat`. A whole-file dump of
+  something under `~/.claude/`, `~/.config/` or `~/.ssh/` is how a secret reaches a transcript.
+- A revoked credential left in place is not harmless: it is an invitation to "fix" the broken
+  integration later by pasting a fresh one into the same slot. Remove the block, don't blank it.

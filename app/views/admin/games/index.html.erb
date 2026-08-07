@@ -14,6 +14,8 @@
     </tr>
   </thead>
   <tbody>
+  <%# One grouped query pair for the whole page, not one per row. %>
+  <% counts = game_team_counts(@games) %>
   <% @games.each do |game| %>
     <tr>
       <td data-label="<%= t("admin.games.index.name") %>"><%= link_to game.name, game_path(game) %></td>
@@ -29,7 +31,19 @@
         <% end %>
         <% if game.editing_locked? %> &middot; <%= t("admin.games.index.locked") %><% end %>
       </td>
-      <td data-label="<%= t("admin.games.index.teams") %>"><%= game.game_passings.size %></td>
+      <%# Registered against capacity, plus how many are actually playing --
+          matching the public listing rather than disagreeing with it. This used
+          to render game_passings.size alone, which is only ever the teams that
+          have ENTERED the game: a draft or scheduled game with confirmed
+          registrations showed 0, and an operator checking who had signed up saw
+          nothing. %>
+      <td data-label="<%= t("admin.games.index.teams") %>">
+        <%= counts[:registered].fetch(game.id, 0) %> / <%= game.max_team_number %>
+        <% playing = counts[:playing].fetch(game.id, 0) %>
+        <% if playing > 0 %>
+          &middot; <%= t("games.list.playing", :count => playing) %>
+        <% end %>
+      </td>
       <td>
         <div class="game-control">
           <%= link_to t("admin.games.index.edit"), edit_game_path(game), class: "btn" unless game.started? %>

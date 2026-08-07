@@ -87,7 +87,7 @@ ru:
         author: "Автор"
         locales: "Языки"
         status: "Статус"
-        teams: "Всего команд"
+        teams: "Команд"
         draft: "Черновик"
         scheduled: "Запланирована"
         running: "Идёт"

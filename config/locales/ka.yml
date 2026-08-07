@@ -110,7 +110,7 @@ ka:
         author: "ავტორი"
         locales: "ენები"
         status: "სტატუსი"
-        teams: "სულ გუნდები"
+        teams: "გუნდები"
         draft: "მონახაზი"
         scheduled: "დაგეგმილი"
         running: "მიმდინარე"

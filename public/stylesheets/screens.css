@@ -287,3 +287,14 @@ details[open] > .team-disclosure::after { content: "▴"; }
 /* Safari draws its own marker through a pseudo-element that display alone
    does not suppress. */
 .team-disclosure::-webkit-details-marker { display: none; }
+
+/* Rails' button_to renders a <form class="button_to"> around its submit
+   button (actionview .../url_helper.rb), and <form> is block-level by
+   default, so every button_to control -- the ↑/↓ level-order arrows, the
+   dashboard game-entry accept/reject/recall/decline/reapply/apply controls,
+   and others -- stacks onto its own line instead of sitting inline with its
+   neighbors. This is not dead weight: it is the fix for every one of those
+   sites at once. Do not remove it as unused just because no selector in this
+   file matches ".button_to" by name -- Rails emits the class at render time,
+   not anywhere grep can find it in app/views. */
+form.button_to { display: inline-block; }

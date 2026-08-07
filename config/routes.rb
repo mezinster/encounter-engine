@@ -151,7 +151,7 @@ Rails.application.routes.draw do
   post "/games/finish_test/:id", to: "games#finish_test", as: :finish_test_game
   post "/games/end_game/:id",    to: "games#end_game",    as: :end_game_game
 
-  get "/game_passings/exit_game/:game_id", to: "game_passings#exit_game", as: :exit_game
+  post "/game_passings/exit_game/:game_id", to: "game_passings#exit_game", as: :exit_game
 
   # app/views/dashboard/_finished_games.html.erb:7 and
   # app/views/shared/_current_games.html.erb:13 build this URL with

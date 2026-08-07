@@ -136,7 +136,7 @@ RSpec.describe "routing" do
     to: { controller: "games", action: "end_game", id: "7" }
 
   it_recognizes "keeps /game_passings/exit_game/:game_id",
-    method: :get, path: "/game_passings/exit_game/7",
+    method: :post, path: "/game_passings/exit_game/7",
     to: { controller: "game_passings", action: "exit_game", game_id: "7" }
 
   it_recognizes "keeps /game_passings/show_results (Merb's :default route for a Hash url(), game_id arrives via query string)",

@@ -54,7 +54,7 @@
 
 <p>
   <% if current_user.captain? %>
-      <%= link_to t("game_passings.show_current_level.exit_game"), exit_game_path(game_id: @game_passing.game_id), class: "btn" %>
+      <%= button_to t("game_passings.show_current_level.exit_game"), exit_game_path(:game_id => @game_passing.game_id), :class => "btn" %>
   <% end %>
   <% if @game.is_testing? %>
     <%= button_to t("game_passings.show_current_level.finish_testing"), finish_test_game_path(@game), :class => "btn" %>

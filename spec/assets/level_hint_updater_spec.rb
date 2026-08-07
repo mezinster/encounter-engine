@@ -11,16 +11,33 @@ describe "the level hint updater", type: :model do
   let(:source) { Rails.root.join("public/javascripts/level_hint_updater.js").read }
 
   it "does not concatenate hint text into an HTML string" do
-    expect(source).not_to match(/append\([^)]*\+\s*hintText/)
+    # Bounded by the statement terminator, not the first ")" -- a naive
+    # [^)]*  gives up as soon as it meets any nested call's own closing paren,
+    # e.g. append(wrapper() + hintText) would slip straight past it.
+    expect(source).not_to match(/append\([^;]*\+\s*hintText/)
     expect(source).not_to include("</legend>' + hintText")
+    # These three catch sinks an ADDED line could introduce without touching
+    # createTextNode/textContent at all: a raw innerHTML assignment, any
+    # other jQuery markup-mutating method (.html/.prepend/.after/.before) fed
+    # a concatenated string, or a bare jQuery-constructor concatenation like
+    # $('<p>' + hintText + '</p>'). A guard that only inspects append() and
+    # one exact legend literal would wave all of these through even with the
+    # safe createTextNode/textContent lines left in place.
+    expect(source).not_to match(/innerHTML\s*=[^;]*hintText/)
+    expect(source).not_to match(/\.(?:html|prepend|after|before)\([^;]*\+\s*hintText/)
+    expect(source).not_to match(/\$\(\s*["'][^"']*["']\s*\+\s*hintText/)
   end
 
   it "builds the hint node as text" do
-    expect(source).to include("createTextNode(hintText)")
+    # Anchored to the whole statement, not a bare substring: "createTextNode
+    # (hintText)" alone would still match if this line were deleted and only
+    # a comment mentioning it survived -- see the class comment above, which
+    # narrates this exact code for seven lines.
+    expect(source).to match(/^\s*fieldset\.appendChild\(document\.createTextNode\(hintText\)\);\s*$/)
   end
 
   it "keeps the pinned playbar hint on textContent" do
-    expect(source).to include("pinnedText.textContent = hintText")
+    expect(source).to match(/^\s*pinnedText\.textContent = hintText;\s*$/)
   end
 end
 
@@ -30,9 +47,13 @@ end
 # so that step is skipped here and left to a human with one. What follows
 # instead is what a request spec CAN prove without a JS runner: the play
 # screen still wires in the fixed script, and the JSON contract the fix
-# depends on -- the server keeps sending raw, unescaped hint text; escaping
-# now happens only at the DOM sink in level_hint_updater.js -- has not moved.
-# Setup mirrors spec/requests/play_screen_spec.rb.
+# depends on has not moved. With config.load_defaults 8.0,
+# escape_html_entities_in_json is on, so the wire body itself may carry an
+# escaped "<" -- but JSON.parse restores the literal character before the
+# value reaches application code, which is what the assertion below checks.
+# No HTML-escaping happens at this layer either before or after the fix;
+# that responsibility now belongs solely to the DOM sink in
+# level_hint_updater.js. Setup mirrors spec/requests/play_screen_spec.rb.
 describe "the live hint poller's server-side contract", type: :request do
   let(:author)  { create_user }
   let(:game)    { g = create_game(:author => author, :is_draft => false); g.update_column(:starts_at, 1.hour.ago); g }
@@ -72,10 +93,10 @@ describe "the live hint poller's server-side contract", type: :request do
     expect(body).to have_key("hint_num")
     expect(body).to have_key("hint_text")
     expect(body).to have_key("next_available_in")
-    # Unescaped on the wire is correct and must stay that way: escaping moves
-    # to the DOM sink in level_hint_updater.js, not the JSON payload. If the
-    # controller ever escaped this, the ERB-rendered path (which already
-    # escapes) would double-escape.
+    # The parsed value must equal the raw author text, with no HTML-escaping
+    # applied at this layer: escaping belongs solely to the DOM sink in
+    # level_hint_updater.js. If the controller ever escaped this, the
+    # ERB-rendered path (which already escapes) would double-escape.
     expect(body["hint_text"]).to eq(hint_text)
   end
 end

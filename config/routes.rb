@@ -146,10 +146,13 @@ Rails.application.routes.draw do
   # The routes below have no `resources` equivalent: in Merb they were only
   # reachable through the catch-all `default_routes` entry
   # (`match("/:controller(/:action(/:id))(.:format)")`) at the bottom of
-  # config/router.rb, which Rails has no equivalent of. Every path here is
-  # exercised today via a plain (GET) link_to in app/views -- see the grep
-  # evidence in task-7-report.md -- so each is added as a `get` route in the
+  # config/router.rb, which Rails has no equivalent of. Each is added in the
   # same /:controller/:action/:id segment order Merb used (action before id).
+  # All three below mutate state (start_test/finish_test/end_game all change
+  # a game's lifecycle, and finish_test also deletes every passing and log
+  # line for it), so they are POST, driven by button_to in app/views -- this
+  # app has no Turbo and no rails-ujs, so a plain GET link_to would have left
+  # them reachable, unprotected by CSRF, from any crafted or prefetched link.
   post "/games/start_test/:id",  to: "games#start_test",  as: :start_test_game
   post "/games/finish_test/:id", to: "games#finish_test", as: :finish_test_game
   post "/games/end_game/:id",    to: "games#end_game",    as: :end_game_game

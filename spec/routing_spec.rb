@@ -215,4 +215,26 @@ RSpec.describe "routing" do
     expect(recognized_params(method: :put, path: "/logout")).to be_nil
     expect(recognized_params(method: :post, path: "/logout")).to be_nil
   end
+
+  # Every `it_recognizes` example above was flipped from :get to its new verb
+  # (:post or :delete) when the mutating-GET remediation landed, which proves
+  # the new verb works. It proves nothing about GET having stopped working --
+  # re-adding e.g. `get :delete` next to `delete :delete` in config/routes.rb
+  # would leave every one of those examples green. This guards the actual
+  # security property: GET must be gone, not just POST/DELETE present.
+  it "no longer recognizes GET on any of the mutating actions this plan moved off it" do
+    [
+      "/games/7/delete",
+      "/games/start_test/7",
+      "/games/finish_test/7",
+      "/games/end_game/7",
+      "/game_passings/exit_game/7",
+      "/invitations/accept/5",
+      "/game_entries/accept/5",
+      "/games/7/levels/9/delete",
+      "/games/7/levels/9/move_up",
+    ].each do |path|
+      expect(recognized_params(method: :get, path: path)).to be_nil, "expected GET #{path} to be unrecognized, but it still routed"
+    end
+  end
 end

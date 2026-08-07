@@ -74,6 +74,8 @@ ka:
           finish_test: "დაასრულა ტესტირება"
           grant_superadmin: "მიანიჭა ადმინისტრატორის უფლებები"
           revoke_superadmin: "ჩამოართვა ადმინისტრატორის უფლებები"
+          allow_any_code: "დაუშვა ნებისმიერი კოდი დონეზე"
+          require_all_codes: "მოითხოვა ყველა კოდი დონეზე"
     dashboard:
       show:
         title: "მიმოხილვა"
@@ -152,6 +154,8 @@ ka:
     moved_notice: "გუნდი გადაყვანილია სხვა დონეზე"
     reinstated_notice: "გუნდი დაბრუნებულია თამაშში"
     clock_reset_notice: "დონეზე დროის ათვლა განულებულია"
+    any_code_notice: "დონეზე „%{name}“ ახლა საკმარისია ნებისმიერი კოდი"
+    all_codes_notice: "დონეზე „%{name}“ ახლა ყველა კოდია საჭირო"
     refused: "ეს მოქმედება ამჟამად შეუძლებელია"
   invitations:
     notice_sent: "მოწვევა გაეგზავნა მომხმარებელს %{nickname}"
@@ -251,11 +255,14 @@ ka:
       submit: "ვარიანტის დამატება"
       back: "დავალებაზე დაბრუნება"
   levels:
+    codes_rule_any: "საკმარისია ნებისმიერი კოდი"
+    codes_rule_all: "საჭიროა ყველა კოდის პოვნა"
     form:
       wrong_answer_penalty: "ჯარიმა არასწორი პასუხისთვის (წუთი)"
       name: "დასახელება"
       text: "დავალების ტექსტი"
       correct_answer: "კოდი"
+      codes_rule: "როგორ ითვლება კოდები"
     edit:
       title: "დავალება"
       game_prefix: "თამაში"
@@ -457,6 +464,9 @@ ka:
       pause: "თამაშის შეჩერება"
       resume: "თამაშის გაგრძელება"
       paused_since: "თამაში შეჩერდა %{time}-ზე."
+      level_codes_legend: "კოდები დონეებზე"
+      allow_any_code: "საკმარისია ნებისმიერი"
+      require_all_codes: "საჭიროა ყველა"
       exited: "(გავიდნენ დისტანციიდან)"
       finished: "(დაასრულეს თამაში)"
       level_log: "(ლოგი დონეზე)"

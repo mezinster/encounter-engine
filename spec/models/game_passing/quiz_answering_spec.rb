@@ -90,9 +90,12 @@ describe GamePassing, "answering a quiz question" do
     end
   end
 
-  # A quiz level with two questions needs no new rule: all_questions_answered?
-  # already advances a level only when every question is answered.
+  # A quiz level with two questions needs no new rule: level_answered? already
+  # advances a level only when every question is answered -- but only when
+  # any_code_passes is false, which newly created levels no longer default to.
   describe "a level with two quiz questions" do
+    before { level.update_column(:any_code_passes, false) }
+
     let!(:second)   { create_question(:level => level) }
     let!(:s_right)  { create_option(:question => second, :text => "Да", :is_correct => true) }
     let!(:s_wrong)  { create_option(:question => second, :text => "Нет") }
@@ -110,6 +113,31 @@ describe GamePassing, "answering a quiz question" do
       passing.reload
       expect(passing.answered_questions).to eq([ question ])
       expect(passing.penalty_seconds).to eq(300)
+    end
+  end
+
+  # Companion to the "does not advance until both are answered" example above:
+  # any_code_passes = true is the default for newly created levels (this
+  # branch), so a two-quiz-question level advances on ONE correct answer
+  # unless an author or superadmin explicitly opts it into "require all". Both
+  # rules need coverage on the quiz path -- this one was previously untested,
+  # verified reachable over HTTP by the whole-branch review (finding 3).
+  describe "a level with two quiz questions and any_code_passes true (the default)" do
+    let!(:second)   { create_question(:level => level) }
+    let!(:s_right)  { create_option(:question => second, :text => "Да", :is_correct => true) }
+    let!(:s_wrong)  { create_option(:question => second, :text => "Нет") }
+
+    it "advances after only one of the two questions is answered correctly" do
+      next_level = create_level(:game => level.game)
+
+      expect { passing.answer_options!(question, [ paris.id ]) }
+        .to change { passing.reload.current_level }.from(level).to(next_level)
+    end
+
+    it "does not advance on a wrong answer to either question" do
+      passing.answer_options!(question, [ lyon.id ])
+
+      expect(passing.reload.current_level).to eq(level)
     end
   end
 

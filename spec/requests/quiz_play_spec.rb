@@ -181,7 +181,14 @@ describe "playing a quiz level", type: :request do
     let!(:mixed_wrong)    { create_option(:question => mixed_question, :text => "Мюнхен") }
     let!(:next_level)     { create_level(:game => game) }
 
-    before { passing.update!(:current_level => mixed_level) }
+    before do
+      passing.update!(:current_level => mixed_level)
+      # These examples pin the all-codes-required rule; any_code_passes
+      # defaults to true for newly created levels. update_column because the
+      # game here has already started (starts_at is 1.hour.ago above), so an
+      # ordinary save would fail game_starts_in_the_future.
+      mixed_level.update_column(:any_code_passes, false)
+    end
 
     it "renders both the quiz options and the code field" do
       get show_current_level_path(:game_id => game.id)
@@ -243,6 +250,15 @@ describe "a quiz level whose questions are answered one at a time", type: :reque
 
   before do
     level.update_column(:wrong_answer_penalty, 300)
+    # This whole block is about a level answered ONE QUESTION AT A TIME, which
+    # is the all-codes-required rule. create_quiz_level now produces
+    # any_code_passes = true (the default for new levels), under which
+    # answering the first question passes the level immediately and the team
+    # advances off it -- correct behaviour, but not the behaviour these
+    # examples exist to describe. Without this pin the first example fails and
+    # the second passes for the wrong reason: the team has already left, so of
+    # course it is not charged again.
+    level.update_column(:any_code_passes, false)
     passing
     put login_path, :params => { :email => player.email, :password => "1234" }
   end

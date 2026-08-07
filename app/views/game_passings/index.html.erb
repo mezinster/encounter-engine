@@ -9,6 +9,33 @@
   <% end %>
 </p>
 
+<%# Superadmins only, matching InterventionsController's filter. Only
+    multi-code levels appear: on a one-code level both rules behave
+    identically, so a control there would be a button that changes nothing. %>
+<% if logged_in? && current_user.superadmin? %>
+  <% adjustable = @game.levels.select(&:multi_question?) %>
+  <% if adjustable.any? %>
+    <fieldset class="card">
+      <legend><%= t("game_passings.index.level_codes_legend") %></legend>
+      <% adjustable.each do |level| %>
+        <p class="game-control">
+          <strong><%= level.name %></strong>
+          <em><%= level.any_code_passes? ? t("levels.codes_rule_any") : t("levels.codes_rule_all") %></em>
+          <% if level.any_code_passes? %>
+            <%= button_to t("game_passings.index.require_all_codes"),
+                          require_all_codes_level_path(:game_id => @game.id, :id => level.id),
+                          :method => :post, :class => "btn" %>
+          <% else %>
+            <%= button_to t("game_passings.index.allow_any_code"),
+                          allow_any_code_level_path(:game_id => @game.id, :id => level.id),
+                          :method => :post, :class => "btn" %>
+          <% end %>
+        </p>
+      <% end %>
+    </fieldset>
+  <% end %>
+<% end %>
+
 <div class="table-wrap">
 <table id="stats" class="table--cards">
   <thead>

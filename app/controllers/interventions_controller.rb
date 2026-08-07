@@ -18,6 +18,15 @@ class InterventionsController < ApplicationController
   before_action :ensure_game_is_live
   before_action :find_game_passing, only: [ :move, :reinstate, :reset_clock ]
 
+  # Deliberately narrower than ensure_author, which every other action here
+  # uses and which means "the author, or any superadmin". Changing how codes
+  # count alters the difficulty of a race already in progress, for every team
+  # at once, after some have committed effort to the harder rule. An operator
+  # doing that leaves an audited entry and is answerable for it; an author
+  # doing it to their own live game is the same act with none of that.
+  before_action :require_superadmin!, only: [ :allow_any_code, :require_all_codes ]
+  before_action :find_level,          only: [ :allow_any_code, :require_all_codes ]
+
   # The model methods raise ArgumentError when they refuse. One rescue covers
   # every refusal, so no action has to duplicate the check its model already does.
   rescue_from ArgumentError, with: :refused
@@ -53,6 +62,18 @@ class InterventionsController < ApplicationController
     back_to_stats(t("interventions.clock_reset_notice"))
   end
 
+  def allow_any_code
+    @level.allow_any_code!
+    audit_level("allow_any_code")
+    back_to_stats(t("interventions.any_code_notice", :name => @level.name))
+  end
+
+  def require_all_codes
+    @level.require_all_codes!
+    audit_level("require_all_codes")
+    back_to_stats(t("interventions.all_codes_notice", :name => @level.name))
+  end
+
   private
 
   def find_game
@@ -64,11 +85,29 @@ class InterventionsController < ApplicationController
     raise ActiveRecord::RecordNotFound unless @game_passing
   end
 
+  # Scoped through the game, so a level id belonging to another game 404s.
+  def find_level
+    @level = @game.levels.find(params[:id])
+  end
+
   # Recorded after the change lands, and only for an operator acting on someone
   # else's game -- sub-project B's rule. The target is the game; `details`
   # carries the team, which a single-target row could not otherwise hold.
   def audit(action, details = nil)
     record_admin_action(action, @game, details) if acting_as_operator?(@game)
+  end
+
+  # record_admin_action directly, NOT through audit() above. That helper is
+  # gated by acting_as_operator?, which is false when the superadmin owns the
+  # game -- correct for pause and move, which an author may also perform, but
+  # wrong here. These two actions are reachable only by a superadmin, so going
+  # through audit() would record nothing in precisely the case an audit trail
+  # exists for: actor and beneficiary being the same person.
+  #
+  # The target is the LEVEL, not the game, so the entry names which level
+  # changed.
+  def audit_level(action)
+    record_admin_action(action, @level)
   end
 
   def back_to_stats(notice)

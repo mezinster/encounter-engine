@@ -68,6 +68,9 @@ describe GamePassing, "#check_answer!" do
 				Question.create!(:level => @second_level, :correct_answer => 'encode1'),
 				Question.create!(:level => @second_level, :correct_answer => 'encode2')
 			]
+			# These examples pin the all-codes-required rule; any_code_passes
+			# defaults to true for newly created levels.
+			@second_level.update_column(:any_code_passes, false)
 
 			@game_passing = GamePassing.create! :game => @game, :team => @team, :current_level => @second_level
 		end

@@ -62,6 +62,25 @@ class Level < ApplicationRecord
     self.wrong_answer_penalty = value.to_i * 60
   end
 
+  # Operator entry points, called by InterventionsController. That controller
+  # keeps a standing rule -- "every action calls a named model method ...
+  # nothing here writes a column directly" -- and these exist to honour it.
+  #
+  # update_column, not update!: a level belonging to a running game cannot pass
+  # its game's validations (game_starts_in_the_future fires once starts_at is
+  # past and author_finished_at is nil), so an ordinary write would 422.
+  def allow_any_code!
+    update_column(:any_code_passes, true)
+  end
+
+  def require_all_codes!
+    # "All of nothing" is not a rule a team could satisfy. ArgumentError is the
+    # refusal channel InterventionsController already rescues.
+    raise ArgumentError, "level has no codes" if questions.empty?
+
+    update_column(:any_code_passes, false)
+  end
+
   # Made consistent with Question#matches_any_answer, which strips both sides
   # before comparing. This path used to skip the strip, relying on
   # GamePassing#check_answer! to strip the submitted value first — that

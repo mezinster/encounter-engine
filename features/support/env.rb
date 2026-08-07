@@ -52,8 +52,10 @@ Before { I18n.locale = :ru }
 #
 # A rollback per scenario is equivalent to the old drop-and-recreate for these
 # features and much faster. It also rewinds SQLite's AUTOINCREMENT counters,
-# which recreate_database! did too -- several features rely on the first game
-# created in a scenario having id 1.
+# matching what recreate_database! did too. That parity is not load-bearing --
+# a grep of all of features/ turns up no scenario that hardcodes an id-1
+# assumption (the suite's only bare "1" hit is a team-count assertion in
+# max-team-number.feature:58, unrelated) -- but it is harmless, so it stays.
 Around do |_scenario, block|
   ActiveRecord::Base.transaction do
     block.call
@@ -68,15 +70,18 @@ end
 # then belongs to a stranger's game. So start the run from an empty database,
 # exactly as recreate_database! used to guarantee.
 #
-# The identity counters have to go too, not just the rows: Rails declares
-# SQLite primary keys AUTOINCREMENT, so a leftover counter would stop the first
-# game of a scenario from getting id 1, and the first-link behaviour above
-# depends on a clean, predictable ordering. (This block used to carry a second
-# reason: features/logs/log.feature:53-82 passed only because game id 1 and
-# level id 1 coincided, because app/views/logs/show_game_log.html.erb passed a
-# Level to Log.of_game. That scoping bug is fixed -- the view now uses the
-# controller's @logs scoped by level -- so the scenario no longer depends on an
-# id collision.)
+# The identity counters are reset here too, not just the rows. This is NOT
+# what fixes the first-link problem above -- that problem is caused by
+# leftover ROWS on the dashboard, and the DELETE FROM loop already handles
+# that on its own; the counter reset contributes nothing to it. (An earlier
+# version of this comment also claimed the reset was load-bearing for
+# features/logs/log.feature:53-82, which used to pass only because game id 1
+# and level id 1 coincided under a since-fixed scoping bug in
+# app/views/logs/show_game_log.html.erb. That claim was equally
+# unsubstantiated -- a grep of all of features/ finds no scenario that
+# hardcodes an id-1 dependency.) Kept anyway, matching what recreate_database!
+# used to guarantee: harmless, and removing it is a separate risk not worth
+# taking here.
 BeforeAll do
   connection = ActiveRecord::Base.connection
   keep = %w[schema_migrations ar_internal_metadata]

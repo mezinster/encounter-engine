@@ -49,6 +49,17 @@ class UsersController < ApplicationController
   def update
     @user = current_user
 
+    # A new password requires proof of the current one. Without this, momentary
+    # access to a logged-in browser was a permanent account takeover: the
+    # profile form re-hashes on any save where password is present, and this
+    # app has no recovery flow, so the victim could not get back in at all.
+    if params.dig(:user, :password).present? &&
+       !@user.authenticate(params.dig(:user, :current_password).to_s)
+      @user.errors.add(:base, t("users.edit.current_password_wrong"))
+      render :edit, status: :unprocessable_entity
+      return
+    end
+
     if @user.update(profile_params)
       redirect_to users_path
     else

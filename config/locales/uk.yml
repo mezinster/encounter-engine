@@ -342,6 +342,8 @@ uk:
       timezone_default: "За замовчуванням для сервера"
       password_label: "Новий пароль"
       password_confirmation_label: "Підтвердження пароля"
+      current_password: "Поточний пароль"
+      current_password_wrong: "Невірний поточний пароль."
       submit: "Прийняти зміни"
     index:
       title: "Профіль користувача"

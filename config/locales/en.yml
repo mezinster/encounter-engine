@@ -325,6 +325,8 @@ en:
       timezone_default: "Server default"
       password_label: "New password"
       password_confirmation_label: "Password confirmation"
+      current_password: "Current password"
+      current_password_wrong: "Current password is incorrect."
       submit: "Save changes"
     index:
       title: "User profile"

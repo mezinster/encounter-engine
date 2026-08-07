@@ -354,6 +354,8 @@ ka:
       timezone_default: "სერვერის ნაგულისხმევი"
       password_label: "ახალი პაროლი"
       password_confirmation_label: "პაროლის დადასტურება"
+      current_password: "მიმდინარე პაროლი"
+      current_password_wrong: "მიმდინარე პაროლი არასწორია."
       submit: "ცვლილებების შენახვა"
     index:
       title: "მომხმარებლის პროფილი"

@@ -325,6 +325,8 @@ ru:
       timezone_default: "По умолчанию для сервера"
       password_label: "Новый пароль"
       password_confirmation_label: "Подтверждение пароля"
+      current_password: "Текущий пароль"
+      current_password_wrong: "Неверный текущий пароль."
       submit: "Принять изменения"
     index:
       title: "Профиль пользователя"

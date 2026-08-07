@@ -5,7 +5,7 @@ require "rails_helper"
 # (users/show.html.erb is out of scope -- it's an unrouted debug leftover
 # with no Merb helper calls, see task-9c-report.md).
 RSpec.describe "users/edit", type: :view do
-  it "renders the profile-edit form, preserving the pre-existing text_field (not password_field) quirk" do
+  it "renders the profile-edit form" do
     user = create_user
 
     assign(:current_user, user)
@@ -20,6 +20,7 @@ RSpec.describe "users/edit", type: :view do
     expect(rendered).to include(I18n.t("users.edit.telegram_label"))
     expect(rendered).to include(I18n.t("users.edit.messengers_label"))
     expect(rendered).to include(I18n.t("messengers.signal"))
+    expect(rendered).to include(I18n.t("users.edit.current_password"))
     expect(rendered).to include(I18n.t("users.edit.password_label"))
     expect(rendered).to include(I18n.t("users.edit.password_confirmation_label"))
     expect(rendered).to include(I18n.t("users.edit.submit"))
@@ -27,8 +28,13 @@ RSpec.describe "users/edit", type: :view do
     expect(rendered).to include(users_path)
     # The Merb original used text_field (not password_field) for both
     # password inputs on this form -- a pre-existing quirk (plaintext
-    # visible password), preserved exactly rather than "fixed" by this port.
-    expect(rendered).to include('type="text" value="1234" name="user[password]"')
+    # visible password). CWE-620 remediation (task 2,
+    # 2026-08-07-security-account-protection) switched both to password_field
+    # and added a current_password field, none of which round-trip a value,
+    # so the rendered inputs are empty regardless of the user's stored password.
+    expect(rendered).to include('type="password" name="user[current_password]"')
+    expect(rendered).to include('type="password" name="user[password]"')
+    expect(rendered).to include('type="password" name="user[password_confirmation]"')
   end
 
   # Label text alone doesn't prove the input is wired to the attribute --

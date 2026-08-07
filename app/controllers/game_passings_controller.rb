@@ -273,14 +273,19 @@ class GamePassingsController < ApplicationController
                                         current_level: @game.levels.first)
   end
 
-  # is_testing? is exempt and that exemption is load-bearing: a game in test
-  # mode is played by the author's own team, which by construction has no
-  # GameEntry (features/games/test-game-1.feature and test-game-2.feature both
-  # fail without this). GameEntry.of dereferences team.id, so the nil check
-  # must come first.
+  # is_testing? is exempt, but ONLY for the author's own team, and that
+  # exemption is load-bearing: the author's team plays test mode with no
+  # GameEntry by construction (features/games/test-game-1.feature and
+  # test-game-2.feature both fail without this). It must not extend to any
+  # other team: ensure_game_is_started and ensure_not_author_of_the_game both
+  # also return early on is_testing?, so an unscoped exemption here would let
+  # any authenticated user self-register a team and read every level and
+  # answer code of an unstarted, unregistered game -- including one whose
+  # entry the author had rejected -- before the game ever goes live.
+  # GameEntry.of dereferences team.id, so the nil check must come first.
   def may_start_passing?
     return false if @team.nil?
-    return true if @game.is_testing?
+    return true if @game.is_testing? && @game.created_by?(current_user)
 
     GameEntry.of(@team, @game)&.status == "accepted"
   end

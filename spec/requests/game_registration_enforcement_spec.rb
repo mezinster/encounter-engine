@@ -89,4 +89,41 @@ describe "playing a game your team is not registered for", type: :request do
 
     expect(response).to have_http_status(:ok)
   end
+
+  # The is_testing? exemption in may_start_passing? must be scoped to the
+  # author's own team. It is not enough for the game to be in test mode --
+  # ensure_game_is_started and ensure_not_author_of_the_game both also return
+  # early on is_testing?, so an unscoped exemption would let ANY authenticated
+  # user self-register a team and read every level and answer code of an
+  # unstarted, unregistered game before it goes live. Previously pinned only
+  # by features/games/test-game-1.feature and test-game-2.feature, which
+  # never exercise a non-author team in test mode -- nothing in RSpec would
+  # have caught a regression here.
+  describe "test mode" do
+    before do
+      game.update_column(:is_testing, true)
+    end
+
+    it "admits the author's own team with no entry" do
+      team = create_team(:captain => author)
+      author.update!(:team => team)
+      sign_in(author)
+
+      expect {
+        get show_current_level_path(:game_id => game.id)
+      }.to change { GamePassing.count }.by(1)
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "refuses a non-author team with no entry" do
+      sign_in(player_on_a_fresh_team)
+
+      expect {
+        get show_current_level_path(:game_id => game.id)
+      }.not_to change { GamePassing.count }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
 end

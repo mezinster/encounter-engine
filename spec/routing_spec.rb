@@ -168,11 +168,11 @@ RSpec.describe "routing" do
     to: { controller: "answers", action: "delete", game_id: "7", level_id: "9", question_id: "2", id: "1" }
 
   it_recognizes "keeps /invitations/accept/:id",
-    method: :get, path: "/invitations/accept/5",
+    method: :post, path: "/invitations/accept/5",
     to: { controller: "invitations", action: "accept", id: "5" }
 
   it_recognizes "keeps /invitations/reject/:id",
-    method: :get, path: "/invitations/reject/5",
+    method: :post, path: "/invitations/reject/5",
     to: { controller: "invitations", action: "reject", id: "5" }
 
   it_recognizes "keeps /game_entries/new/:game_id/:team_id",

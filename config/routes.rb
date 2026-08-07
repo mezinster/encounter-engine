@@ -166,8 +166,8 @@ Rails.application.routes.draw do
   # string, so it isn't declared as a path segment here.
   get "/game_passings/show_results", to: "game_passings#show_results"
 
-  get "/invitations/accept/:id", to: "invitations#accept"
-  get "/invitations/reject/:id", to: "invitations#reject"
+  post "/invitations/accept/:id", to: "invitations#accept", as: :accept_invitation
+  post "/invitations/reject/:id", to: "invitations#reject", as: :reject_invitation
 
   get "/game_entries/new/:game_id/:team_id", to: "game_entries#new", as: :new_game_entry
   get "/game_entries/reopen/:id", to: "game_entries#reopen"

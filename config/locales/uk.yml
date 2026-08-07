@@ -68,6 +68,8 @@ uk:
           finish_test: "Завершив тестування"
           grant_superadmin: "Надав права адміністратора"
           revoke_superadmin: "Зняв права адміністратора"
+          allow_any_code: "Дозволив будь-який код на рівні"
+          require_all_codes: "Зажадав усі коди на рівні"
     dashboard:
       show:
         title: "Огляд"
@@ -146,6 +148,8 @@ uk:
     moved_notice: "Команду переведено на інший рівень"
     reinstated_notice: "Команду повернуто в гру"
     clock_reset_notice: "Відлік часу на рівні скинуто"
+    any_code_notice: "На рівні «%{name}» тепер достатньо будь-якого коду"
+    all_codes_notice: "На рівні «%{name}» тепер потрібні всі коди"
     refused: "Ця дія зараз неможлива"
   invitations:
     notice_sent: "Користувачеві %{nickname} надіслано запрошення"
@@ -245,11 +249,14 @@ uk:
       submit: "Додати варіант"
       back: "До завдання"
   levels:
+    codes_rule_any: "Достатньо будь-якого з кодів"
+    codes_rule_all: "Потрібно знайти всі коди"
     form:
       wrong_answer_penalty: "Штраф за неправильну відповідь (хвилин)"
       name: "Назва"
       text: "Текст завдання"
       correct_answer: "Код"
+      codes_rule: "Як зараховувати коди"
     edit:
       title: "Завдання"
       game_prefix: "гра"
@@ -443,6 +450,9 @@ uk:
       pause: "Призупинити гру"
       resume: "Продовжити гру"
       paused_since: "Гру призупинено о %{time}."
+      level_codes_legend: "Коди на рівнях"
+      allow_any_code: "Достатньо будь-якого"
+      require_all_codes: "Потрібні всі"
       exited: "(Зійшли з дистанції)"
       finished: "(завершили гру)"
       level_log: "(лог по рівню)"

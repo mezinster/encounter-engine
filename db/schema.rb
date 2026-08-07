@@ -112,6 +112,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_06_225826) do
     t.integer "position"
     t.string "name"
     t.integer "wrong_answer_penalty", default: 0, null: false
+    t.boolean "any_code_passes", default: true, null: false
   end
 
   create_table "logs", force: :cascade do |t|

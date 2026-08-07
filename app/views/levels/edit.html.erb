@@ -36,6 +36,14 @@
     <%= f.label :wrong_answer_penalty_in_minutes, t("levels.form.wrong_answer_penalty") %>
     <%= f.number_field :wrong_answer_penalty_in_minutes, :min => 0 %>
   </div>
+  <%# A radio pair rather than a checkbox: both rules are affirmative
+      statements about the level, and a checkbox would force one of them to be
+      phrased as the absence of the other. %>
+  <fieldset class="field">
+    <legend><%= t("levels.form.codes_rule") %></legend>
+    <label><%= f.radio_button :any_code_passes, true %> <%= t("levels.codes_rule_any") %></label>
+    <label><%= f.radio_button :any_code_passes, false %> <%= t("levels.codes_rule_all") %></label>
+  </fieldset>
   <%= f.submit t("levels.edit.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), game_level_path(@level.game, @level) %></em>
 <% end %>

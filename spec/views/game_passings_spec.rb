@@ -23,6 +23,11 @@ RSpec.describe "game_passings/index", type: :view do
     exited.update!(finished_at: Time.current, status: "exited")
 
     assign(:game_passings, [in_progress, finished, exited])
+    # The superadmin-only level-codes fieldset (Task 3) reads logged_in? and
+    # current_user, same as the guest-vs-player specs below already stub for
+    # game_passings/show_results.
+    view.define_singleton_method(:logged_in?) { false }
+    view.define_singleton_method(:current_user) { nil }
 
     render
 
@@ -35,6 +40,34 @@ RSpec.describe "game_passings/index", type: :view do
     expect(rendered).to include(show_level_log_path(game_id: in_progress.game_id, team_id: in_progress.team_id))
     expect(rendered).to include(I18n.t("game_passings.index.full_log"))
     expect(rendered).to include(show_full_log_path(game))
+  end
+
+  # Every other GET here signs in as a plain author, and the example above
+  # stubs logged_in? => false -- so the `logged_in? && current_user.superadmin?`
+  # fieldset (index.html.erb:15-38) was previously rendered by nothing in the
+  # suite. A renamed path helper or locale key inside it would 500 the
+  # operator's only route to the mid-game code-mode intervention with rspec
+  # still green -- verified by the whole-branch review (finding 4/5).
+  it "shows the level-codes fieldset to a superadmin" do
+    superadmin = create_user
+    superadmin.update!(:is_superadmin => true)
+
+    level = Level.create!(name: "Two codes", text: "Some text", game: create_game)
+    create_question(level: level, correct_answer: "AAA")
+    create_question(level: level, correct_answer: "BBB")
+    game = level.game
+
+    assign(:game, game)
+    assign(:levels, [level])
+    assign(:game_passings, [])
+    view.define_singleton_method(:logged_in?) { true }
+    view.define_singleton_method(:current_user) { superadmin }
+
+    render
+
+    expect(rendered).to include(I18n.t("game_passings.index.level_codes_legend"))
+    expect(rendered).to include(level.any_code_passes? ? I18n.t("levels.codes_rule_any") : I18n.t("levels.codes_rule_all"))
+    expect(rendered).to include(require_all_codes_level_path(game_id: game.id, id: level.id))
   end
 end
 
@@ -82,6 +115,9 @@ RSpec.describe "game_passings/show_current_level", type: :view do
     level = Level.create!(name: "Test level", text: "Some text", game: game)
     create_question(level: level, correct_answer: "AAA")
     create_question(level: level, correct_answer: "BBB")
+    # The progress line only renders when all codes are required; any_code_passes
+    # defaults to true for newly created levels.
+    level.update_column(:any_code_passes, false)
     hint = create_hint(level: level, text: "Look closer", delay: 0)
     game_passing = create_game_passing(level: level, team: team)
     game_passing.answered_questions << level.questions.first
@@ -100,6 +136,30 @@ RSpec.describe "game_passings/show_current_level", type: :view do
     expect(rendered).to include(hint.text)
     expect(rendered).to include(ERB::Util.html_escape(I18n.t("game_passings.show_current_level.answer_incorrect", answer: "WRONG")))
     expect(rendered).to include(I18n.t("game_passings.show_current_level.multi_question_progress", answered: 1, total: 2))
+  end
+
+  it "hides the progress line on a multi-question level where any code passes" do
+    captain = create_user
+    team = create_team(captain: captain)
+    captain.reload
+
+    game = create_game
+    level = Level.create!(name: "Test level", text: "Some text", game: game)
+    create_question(level: level, correct_answer: "AAA")
+    create_question(level: level, correct_answer: "BBB")
+    # any_code_passes defaults to true for newly created levels -- this is the
+    # counterpart to the "any_code_passes = false" example above, and the one
+    # that proves the progress line's suppression can actually go red.
+    game_passing = create_game_passing(level: level, team: team)
+
+    assign(:game, game)
+    assign(:game_passing, game_passing)
+    view.define_singleton_method(:current_user) { captain }
+    view.define_singleton_method(:content_locale_for) { |g| g.primary_locale }
+
+    render
+
+    expect(rendered).not_to include(I18n.t("game_passings.show_current_level.multi_question_progress", answered: 0, total: 2))
   end
 end
 

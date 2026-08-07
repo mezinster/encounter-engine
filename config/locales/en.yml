@@ -51,6 +51,8 @@ en:
           finish_test: "Finished testing"
           grant_superadmin: "Granted administrator rights"
           revoke_superadmin: "Revoked administrator rights"
+          allow_any_code: "Allowed any one code on a level"
+          require_all_codes: "Required all codes on a level"
     dashboard:
       show:
         title: "Overview"
@@ -129,6 +131,8 @@ en:
     moved_notice: "Team moved to another level"
     reinstated_notice: "Team returned to the game"
     clock_reset_notice: "The level countdown has been reset"
+    any_code_notice: "Any one code now passes the level “%{name}”"
+    all_codes_notice: "All codes are now required on the level “%{name}”"
     refused: "That action is not possible right now"
   invitations:
     notice_sent: "An invitation was sent to %{nickname}"
@@ -228,11 +232,14 @@ en:
       submit: "Add option"
       back: "Back to the task"
   levels:
+    codes_rule_any: "Any one code passes"
+    codes_rule_all: "All codes must be found"
     form:
       wrong_answer_penalty: "Penalty for a wrong answer (minutes)"
       name: "Title"
       text: "Task text"
       correct_answer: "Code"
+      codes_rule: "How codes count"
     edit:
       title: "Task"
       game_prefix: "game"
@@ -425,6 +432,9 @@ en:
       pause: "Pause the game"
       resume: "Resume the game"
       paused_since: "Paused at %{time}."
+      level_codes_legend: "Codes on levels"
+      allow_any_code: "Any one passes"
+      require_all_codes: "Require all"
     show_current_level:
       choose: "Choose an answer"
       penalty_label: "Penalty, minutes:"

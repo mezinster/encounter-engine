@@ -61,8 +61,12 @@ class QuestionsController < ApplicationController
     @question = @level.questions.find(params[:id])
   end
 
+  # Scoped through the game (same shape/fix as LevelsController#find_level):
+  # ensure_author, ensure_editing_not_locked and ensure_game_was_not_started
+  # all authorize against @game from params[:game_id]. An unscoped lookup here
+  # would let a request pair its own game_id with someone else's level_id.
   def find_level
-    @level = Level.find(params[:level_id])
+    @level = @game.levels.find(params[:level_id])
   end
 
   # app/views/questions/new.html.erb submits :correct_answer, Question's

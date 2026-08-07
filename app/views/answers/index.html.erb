@@ -16,7 +16,7 @@
   <% @answers.each do |answer| %>
   <tr id="answer-<%=  answer.id%>">
     <td><%= answer.value %></td>
-    <td><%= link_to t("shared.delete_short"), delete_game_level_question_answer_path(@game, @level, @question, answer), class: "btn btn--danger" %></td>
+    <td><%= button_to t("shared.delete_short"), delete_game_level_question_answer_path(@game, @level, @question, answer), :method => :delete, :class => "btn btn--danger" %></td>
   </tr>
 <% end %>
 </table>

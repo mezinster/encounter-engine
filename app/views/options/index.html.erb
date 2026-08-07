@@ -49,9 +49,10 @@
             <% end %>
           </td>
           <td>
-            <%= link_to t("shared.delete_short"),
+            <%= button_to t("shared.delete_short"),
                         delete_game_level_question_option_path(@game, @level, @question, option),
-                        class: "btn btn--danger" %>
+                        :method => :delete,
+                        :class => "btn btn--danger" %>
           </td>
         </tr>
       <% end %>

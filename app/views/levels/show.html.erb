@@ -42,9 +42,10 @@
             action refuses one: removing a code retroactively un-answers it for
             teams that already found it. %>
         <% unless @level.game.started? %>
-          <%= link_to t("levels.show.delete_code"),
+          <%= button_to t("levels.show.delete_code"),
                       delete_game_level_question_path(@game, @level, question),
-                      class: "btn btn--danger",
+                      :method => :delete,
+                      :class => "btn btn--danger",
                       :data => { :confirm => t("levels.show.delete_code_confirm", :code => question.correct_answer) } %>
         <% end %>
       </div>

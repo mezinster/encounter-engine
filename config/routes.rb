@@ -89,30 +89,30 @@ Rails.application.routes.draw do
 
       resources :hints do
         member do
-          get :delete
+          delete :delete
         end
       end
 
       resources :questions do
-        # Deleting a code, mirroring the GET delete used by :answers and
-        # :options below -- the established (if unfashionable) shape here.
-        # The action itself refuses on a started game and on a level's last
-        # remaining code; see QuestionsController#delete.
+        # Deleting a code, mirroring the DELETE :delete used by :answers and
+        # :options below -- the established (if unfashionable) route-name
+        # shape here. The action itself refuses on a started game and on a
+        # level's last remaining code; see QuestionsController#delete.
         member do
-          get :delete
+          delete :delete
         end
 
         resources :answers do
           member do
-            get :delete
+            delete :delete
           end
         end
 
-        # Quiz options, mirroring :answers exactly -- including the GET delete,
-        # which is the established (if unfashionable) shape here.
+        # Quiz options, mirroring :answers exactly -- including the :delete
+        # route name, which is the established (if unfashionable) shape here.
         resources :options, only: [ :index, :create ] do
           member do
-            get :delete
+            delete :delete
           end
 
           # Translating options is a bulk edit of the whole list for one

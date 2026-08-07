@@ -35,8 +35,9 @@ uk:
       show:
         email: "E-mail"
         phone: "Телефон"
-        jabber: "Jabber"
-        icq: "ICQ"
+        instagram: "Instagram"
+        telegram: "Telegram"
+        messengers: "Месенджери"
         date_of_birth: "Дата народження"
         team: "Команда"
         locale: "Мова"
@@ -299,6 +300,12 @@ uk:
       code_label: "Код"
       submit: "Додати код"
     answers_are_shared: "Коди відповідей спільні для всіх мов. Якщо відповідь пишеться по-різному, додайте кожен варіант як окрему правильну відповідь."
+  messengers:
+    telegram: "Telegram"
+    whatsapp: "WhatsApp"
+    viber: "Viber"
+    signal: "Signal"
+    max: "MAX"
   users:
     new:
       nickname_label: "Ім'я"
@@ -310,8 +317,9 @@ uk:
       title: 'Редагування профілю гравця %{nickname}'
       nickname_label: "Ваше ім'я"
       date_of_birth_label: "Дата народження"
-      icq_label: "Номер ICQ"
-      jabber_label: "Jabber ID"
+      instagram_label: "Instagram"
+      telegram_label: "Telegram"
+      messengers_label: "Доступний у месенджерах"
       phone_label: "Контактний телефон"
       locale_label: "Мова інтерфейсу"
       timezone_label: "Часовий пояс"
@@ -325,8 +333,9 @@ uk:
       email_label: "E-mail:"
       date_of_birth_label: "Дата народження:"
       timezone_label: "Часовий пояс:"
-      icq_label: "Номер ICQ:"
-      jabber_label: "Jabber ID:"
+      instagram_label: "Instagram:"
+      telegram_label: "Telegram:"
+      messengers_label: "Месенджери:"
       phone_label: "Контактний телефон:"
       edit_link: "Редагувати профіль..."
   notification_mailer:

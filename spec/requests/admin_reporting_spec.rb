@@ -104,14 +104,17 @@ describe "superadmin reporting", type: :request do
 
     it "shows contact details to a superadmin" do
       other = create_user
-      other.update!(:phone_number => "+995555123456", :icq_number => "123456789")
+      other.update!(:phone_number => "+995555123456",
+                    :instagram => "@someone", :telegram_id => "@somebody", :on_signal => true)
       sign_in(superadmin)
 
       get admin_user_path(other)
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("+995555123456")
-      expect(response.body).to include("123456789")
+      expect(response.body).to include("someone")
+      expect(response.body).to include("somebody")
+      expect(response.body).to include(I18n.t("messengers.signal"))
     end
   end
 

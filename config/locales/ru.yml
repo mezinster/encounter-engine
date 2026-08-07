@@ -18,8 +18,9 @@ ru:
       show:
         email: "E-mail"
         phone: "Телефон"
-        jabber: "Jabber"
-        icq: "ICQ"
+        instagram: "Instagram"
+        telegram: "Telegram"
+        messengers: "Мессенджеры"
         date_of_birth: "Дата рождения"
         team: "Команда"
         locale: "Язык"
@@ -282,6 +283,12 @@ ru:
       code_label: "Код"
       submit: "Добавить код"
     answers_are_shared: "Коды ответов общие для всех языков. Если ответ пишется по-разному, добавьте каждый вариант как отдельный правильный ответ."
+  messengers:
+    telegram: "Telegram"
+    whatsapp: "WhatsApp"
+    viber: "Viber"
+    signal: "Signal"
+    max: "MAX"
   users:
     new:
       nickname_label: "Имя"
@@ -293,8 +300,9 @@ ru:
       title: 'Редактирование профиля игрока %{nickname}'
       nickname_label: "Ваше имя"
       date_of_birth_label: "Дата рождения"
-      icq_label: "Номер ICQ"
-      jabber_label: "Jabber ID"
+      instagram_label: "Instagram"
+      telegram_label: "Telegram"
+      messengers_label: "Доступен в мессенджерах"
       phone_label: "Контактный телефон"
       locale_label: "Язык интерфейса"
       timezone_label: "Часовой пояс"
@@ -308,8 +316,9 @@ ru:
       email_label: "E-mail:"
       date_of_birth_label: "Дата рождения:"
       timezone_label: "Часовой пояс:"
-      icq_label: "Номер ICQ:"
-      jabber_label: "Jabber ID:"
+      instagram_label: "Instagram:"
+      telegram_label: "Telegram:"
+      messengers_label: "Мессенджеры:"
       phone_label: "Контактный телефон:"
       edit_link: "Редактировать профиль..."
   notification_mailer:

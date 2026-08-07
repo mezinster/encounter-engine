@@ -231,6 +231,10 @@ en:
       is_correct_label: "This is a correct answer"
       submit: "Add option"
       back: "Back to the task"
+      translations_saved: "Option translations saved"
+      translate_explain: "On the left is the option in %{language}. Enter the translation on the right."
+      original_label: "Original"
+      save_translations: "Save translations"
   levels:
     codes_rule_any: "Any one code passes"
     codes_rule_all: "All codes must be found"

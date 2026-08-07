@@ -248,6 +248,10 @@ uk:
       is_correct_label: "Це правильна відповідь"
       submit: "Додати варіант"
       back: "До завдання"
+      translations_saved: "Переклади варіантів збережено"
+      translate_explain: "Ліворуч — варіант мовою «%{language}». Праворуч введіть переклад."
+      original_label: "Оригінал"
+      save_translations: "Зберегти переклади"
   levels:
     codes_rule_any: "Достатньо будь-якого з кодів"
     codes_rule_all: "Потрібно знайти всі коди"

@@ -231,6 +231,10 @@ ru:
       is_correct_label: "Это верный ответ"
       submit: "Добавить вариант"
       back: "К заданию"
+      translations_saved: "Переводы вариантов сохранены"
+      translate_explain: "Слева — вариант на языке «%{language}». Справа введите перевод."
+      original_label: "Оригинал"
+      save_translations: "Сохранить переводы"
   levels:
     codes_rule_any: "Достаточно любого из кодов"
     codes_rule_all: "Нужно найти все коды"

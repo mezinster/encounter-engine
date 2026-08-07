@@ -80,6 +80,16 @@ module ApplicationHelper
                                                  entry.record, :tab => entry.locale)
     when Question then new_game_level_question_path(entry.record.level.game, entry.record.level,
                                                     :tab => entry.locale)
+    # Options have no edit screen of their own -- they live on their question's
+    # index page, which is where the translation tabs are. Without this branch
+    # the helper returned nil for an Option entry, so the missing-translations
+    # panel listed the field and offered a link that went nowhere: the one
+    # record type whose translation actually blocked publication was also the
+    # one you could not click through to.
+    when Option   then game_level_question_options_path(entry.record.question.level.game,
+                                                        entry.record.question.level,
+                                                        entry.record.question,
+                                                        :tab => entry.locale)
     end
   end
 

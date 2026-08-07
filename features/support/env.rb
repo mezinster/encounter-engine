@@ -94,47 +94,6 @@ end
 # expected state on a virgin database and is the ONLY tolerated failure. Any
 # other error, and any non-SQLite adapter, raises loudly rather than silently
 # leaving the counters where they were.
-# --- Reloading the current page -----------------------------------------
-#
-# Two step definitions mean "the user reloads the page in their browser":
-# "страница перегружается" (features/games/steps/games_steps.rb) and
-# "я обновляю страницу" (features/game-passing/steps/game-passing_steps.rb).
-# Both used to just `visit page.current_url`, which reproduces a *GET*
-# reload -- correct for a page reached by following a link, which is what
-# every one of their ~13 call sites did until task 4 of the
-# 2026-08-07-security-csrf-verbs plan started moving destructive controls
-# off GET and onto `button_to ..., method: :delete/:post`.
-#
-# A real browser reload re-issues the *last* request as-is: for a page
-# reached by submitting a form it resubmits that form, verb and all
-# (usually behind a "resubmit this form?" prompt a human clicks through --
-# rack_test has no such prompt to bypass). `visit page.current_url` cannot
-# reproduce that: it always issues a fresh GET, so once a route only
-# accepts DELETE/POST it 404s/405s outright. Worse, for an action whose
-# *response* differs from what a fresh GET would show -- e.g.
-# AnswersController#delete, which refuses deleting a level's last answer by
-# re-rendering :index with 422 on that same DELETE request, so the error
-# text lives only in that response, never in a flash or the database -- a
-# fresh GET would show a *different* page (the answer still there, no
-# error), silently breaking any scenario asserting on the refusal. Do not
-# "simplify" this back to a bare `visit page.current_url`.
-#
-# So: resubmit the last request's actual verb (with no params -- CSRF
-# protection is off in test, see config/environments/test.rb, and none of
-# today's non-GET call sites need to resend form data to reproduce their
-# assertions) when it wasn't a GET; otherwise just visit, which is what
-# most of these ~13 call sites still do today and must keep working
-# unchanged.
-def reload_last_page
-  last_request = page.driver.request
-
-  if last_request.request_method == "GET"
-    visit page.current_url
-  else
-    page.driver.submit(last_request.request_method, last_request.url, {})
-  end
-end
-
 def reset_primary_key_sequences!(connection)
   adapter = connection.adapter_name.downcase
   unless adapter.include?('sqlite')
@@ -146,6 +105,62 @@ def reset_primary_key_sequences!(connection)
   connection.execute('DELETE FROM sqlite_sequence')
 rescue ActiveRecord::StatementInvalid => e
   raise unless e.message.include?('no such table: sqlite_sequence')
+end
+
+# --- Reloading the current page ----------------------------------------------
+#
+# "страница перегружается" (features/games/steps/games_steps.rb) means "the
+# user reloads the page in their browser". It used to just `visit
+# page.current_url`, which reproduces a *GET* reload -- correct for a page
+# reached by following a link, which is what every one of this step's usages
+# did until task 4 of the 2026-08-07-security-csrf-verbs plan moved answer
+# deletion off GET and onto `button_to ..., method: :delete`.
+#
+# A real browser reload re-issues the *last* request as-is: for a page
+# reached by submitting a form it resubmits that form, verb and all (usually
+# behind a "resubmit this form?" prompt a human clicks through -- rack_test
+# has no such prompt to bypass). `visit page.current_url` cannot reproduce
+# that: it always issues a fresh GET, so once a route only accepts DELETE it
+# 404s outright. Worse, for an action whose *response* differs from what a
+# fresh GET would show -- e.g. AnswersController#delete, which refuses
+# deleting a level's last answer by re-rendering :index with 422 on that same
+# DELETE request, so the error text lives only in that response, never in a
+# flash or the database -- a fresh GET would show a *different* page (the
+# answer still there, no error), silently breaking the scenario asserting on
+# the refusal (features/answers/managing-answers.feature:59). Do not
+# "simplify" this back to a bare `visit page.current_url`.
+#
+# Scoped to this one step deliberately, NOT to its near-twin "я обновляю
+# страницу" (features/game-passing/steps/game-passing_steps.rb), which stays
+# a bare `visit page.current_url`. That step's own call sites
+# (features/tickets/ticket-83(5).feature) reach the play screen only by GET
+# in the first place, so resubmitting "the last request's verb" there would
+# not replay a GET refresh at all -- GamePassingsController#post_answer
+# renders (never redirects) after a plain POST with no _method override, so
+# the last request there is that POST, and resubmitting it would exercise
+# #post_answer's own finished? guard instead of #show_current_level's. Both
+# guards happen to produce the same visible page, so a scenario relying on
+# that would still pass -- while silently testing the wrong code path and
+# leaving #show_current_level's GET guard uncovered. See
+# spec/requests/play_screen_spec.rb ("shows the results, not a 500, on GET
+# after the game has finished") for that guard's real regression test.
+#
+# Submits with an empty params hash -- not a replay of whatever the original
+# form actually sent. Harmless for today's one non-GET caller
+# (AnswersController#delete reads the id from the path, not from params), but
+# worth knowing before reusing this for a future non-GET call site whose
+# action re-renders differently depending on submitted params (e.g. a create
+# action re-rendering its form on a validation failure): resubmitting empty
+# params there would exercise a different validation outcome than the
+# original submit, not reproduce it.
+def reload_last_page
+  last_request = page.driver.request
+
+  if last_request.request_method == "GET"
+    visit page.current_url
+  else
+    page.driver.submit(last_request.request_method, last_request.url, {})
+  end
 end
 
 # --- Time travel -------------------------------------------------------------

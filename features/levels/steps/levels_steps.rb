@@ -57,6 +57,17 @@ Given /^в игру "([^\"]*)" добавлено задание "([^\"]*)" со
     step %{#{author_name} добавляет код "#{code}" в задание "#{level_name}"}
   end
 
+  # This step exists to build the #88 mechanic -- several markers at one
+  # location, ALL of which must be found -- which is what every scenario using
+  # it asserts. New levels now default to any_code_passes, so the old rule is
+  # stated here rather than relied upon. See
+  # docs/superpowers/specs/2026-08-06-redundant-codes-design.md §6.
+  #
+  # update_column because the surrounding scenario may already have moved the
+  # clock past the game's start time, which makes the game fail its own
+  # validations and any ordinary save raise.
+  Level.where(:name => level_name).first.update_column(:any_code_passes, false)
+
   step %{я захожу в профиль задания "#{level_name}"}
   step %{должен увидеть "Коды (#{code_count})"}
 end

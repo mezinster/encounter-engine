@@ -94,13 +94,20 @@ RSpec.describe "internationalization" do
   it "does not have en values that are an untranslated copy of their ru value" do
     known_legitimate_duplicates = %w[
       users.new.email_label
-      users.edit.jabber_label
       users.index.email_label
-      users.index.jabber_label
       time.formats.short
       sessions.new.email_label
-      admin.users.show.jabber
-      admin.users.show.icq
+      messengers.telegram
+      messengers.whatsapp
+      messengers.viber
+      messengers.signal
+      messengers.max
+      users.edit.instagram_label
+      users.edit.telegram_label
+      users.index.instagram_label
+      users.index.telegram_label
+      admin.users.show.instagram
+      admin.users.show.telegram
       locales.ru
       locales.en
       locales.uk

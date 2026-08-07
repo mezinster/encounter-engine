@@ -18,8 +18,9 @@ en:
       show:
         email: "Email"
         phone: "Phone"
-        jabber: "Jabber"
-        icq: "ICQ"
+        instagram: "Instagram"
+        telegram: "Telegram"
+        messengers: "Messengers"
         date_of_birth: "Date of birth"
         team: "Team"
         locale: "Language"
@@ -50,6 +51,8 @@ en:
           finish_test: "Finished testing"
           grant_superadmin: "Granted administrator rights"
           revoke_superadmin: "Revoked administrator rights"
+          allow_any_code: "Allowed any one code on a level"
+          require_all_codes: "Required all codes on a level"
     dashboard:
       show:
         title: "Overview"
@@ -128,6 +131,8 @@ en:
     moved_notice: "Team moved to another level"
     reinstated_notice: "Team returned to the game"
     clock_reset_notice: "The level countdown has been reset"
+    any_code_notice: "Any one code now passes the level “%{name}”"
+    all_codes_notice: "All codes are now required on the level “%{name}”"
     refused: "That action is not possible right now"
   invitations:
     notice_sent: "An invitation was sent to %{nickname}"
@@ -157,6 +162,20 @@ en:
         description: "description"
         text: "task text"
     list:
+      name: "Game"
+      status: "Status"
+      starts_at: "Start"
+      ends_at: "End"
+      participants: "Teams"
+      status_withdrawn: "Withdrawn"
+      status_draft: "Draft"
+      status_finished: "Finished"
+      status_running: "Running"
+      status_scheduled: "Scheduled"
+      paused: "paused"
+      duration: "%{hours}h %{minutes}m"
+      playing: "playing: %{count}"
+      played: "played: %{count}"
       view: "(view)"
       stats: "(statistics)"
       live_channel: "(live feed)"
@@ -212,12 +231,19 @@ en:
       is_correct_label: "This is a correct answer"
       submit: "Add option"
       back: "Back to the task"
+      translations_saved: "Option translations saved"
+      translate_explain: "On the left is the option in %{language}. Enter the translation on the right."
+      original_label: "Original"
+      save_translations: "Save translations"
   levels:
+    codes_rule_any: "Any one code passes"
+    codes_rule_all: "All codes must be found"
     form:
       wrong_answer_penalty: "Penalty for a wrong answer (minutes)"
       name: "Title"
       text: "Task text"
       correct_answer: "Code"
+      codes_rule: "How codes count"
     edit:
       title: "Task"
       game_prefix: "game"
@@ -268,6 +294,12 @@ en:
       code_label: "Code"
       submit: "Add code"
     answers_are_shared: "Answer codes are shared across languages. If the answer is written differently in each, add every spelling as a separate correct answer."
+  messengers:
+    telegram: "Telegram"
+    whatsapp: "WhatsApp"
+    viber: "Viber"
+    signal: "Signal"
+    max: "MAX"
   users:
     new:
       nickname_label: "Name"
@@ -279,8 +311,9 @@ en:
       title: 'Editing player profile %{nickname}'
       nickname_label: "Your name"
       date_of_birth_label: "Date of birth"
-      icq_label: "ICQ number"
-      jabber_label: "Jabber ID"
+      instagram_label: "Instagram"
+      telegram_label: "Telegram"
+      messengers_label: "Available on"
       phone_label: "Contact phone number"
       locale_label: "Interface language"
       timezone_label: "Time zone"
@@ -294,8 +327,9 @@ en:
       email_label: "E-mail:"
       date_of_birth_label: "Date of birth:"
       timezone_label: "Time zone:"
-      icq_label: "ICQ number:"
-      jabber_label: "Jabber ID:"
+      instagram_label: "Instagram:"
+      telegram_label: "Telegram:"
+      messengers_label: "Messengers:"
       phone_label: "Contact phone number:"
       edit_link: "Edit profile..."
   notification_mailer:
@@ -402,6 +436,9 @@ en:
       pause: "Pause the game"
       resume: "Resume the game"
       paused_since: "Paused at %{time}."
+      level_codes_legend: "Codes on levels"
+      allow_any_code: "Any one passes"
+      require_all_codes: "Require all"
     show_current_level:
       choose: "Choose an answer"
       penalty_label: "Penalty, minutes:"

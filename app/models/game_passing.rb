@@ -59,6 +59,8 @@ class GamePassing < ApplicationRecord
 
   serialize :answered_questions, coder: AnsweredQuestionsCoder, type: Array
 
+  include TimeFormatting
+
   belongs_to :team, optional: true
   belongs_to :game, optional: true
   belongs_to :current_level, :class_name => "Level", optional: true
@@ -86,7 +88,7 @@ class GamePassing < ApplicationRecord
     if correct_answer?(answer)
     	answered_question = current_level.find_question_by_answer(answer)
     	pass_question!(answered_question)
-    	pass_level! if all_questions_answered?
+    	pass_level! if level_answered?
     	true
    	else
     	false
@@ -105,7 +107,7 @@ class GamePassing < ApplicationRecord
 
     if chosen.any? && chosen == question.correct_option_ids
       pass_question!(question)
-      pass_level! if all_questions_answered?
+      pass_level! if level_answered?
       true
     else
       # Charged on every wrong submission, including a repeat of one already
@@ -190,17 +192,29 @@ class GamePassing < ApplicationRecord
   end
 
   def time_at_level
-    difference = effective_now - self.current_level_entered_at
-    hours, minutes, seconds = seconds_fraction_to_time(difference)
-    "%02d:%02d:%02d" % [hours, minutes, seconds]
+    seconds_to_hms(effective_now - self.current_level_entered_at)
   end
 
   def unanswered_questions
 		current_level.questions - answered_questions
 	end
 
-  def all_questions_answered?
-    (current_level.questions - self.answered_questions).empty?
+  # Whether the team has done enough to pass this level.
+  #
+  # Renamed from all_questions_answered?: under any_code_passes that name would
+  # state something false, and this is the only question either caller asks.
+  #
+  # Deliberately evaluated only when a team SUBMITS. Flipping a level's mode
+  # does not re-evaluate existing passings -- see
+  # docs/superpowers/specs/2026-08-06-redundant-codes-design.md §2. A team
+  # holding one of three codes when an operator flips to "any" passes on their
+  # next correct code, rather than being teleported forward by somebody else's
+  # click (which would also restamp current_level_entered_at and rewrite every
+  # hint countdown mid-level).
+  def level_answered?
+    return answered_questions.any? if current_level.any_code_passes?
+
+    (current_level.questions - answered_questions).empty?
   end
 
   def exit!
@@ -288,21 +302,6 @@ protected
       "GamePassing##{id}: answered_questions column holds an unreadable " \
       "(pre-coder legacy format?) value; treating it as no questions answered."
     )
-  end
-
-  # TODO: keep SRP, extract this to a separate helper
-  def seconds_fraction_to_time(seconds)
-    hours = minutes = 0
-    if seconds >=  60 then
-      minutes = (seconds / 60).to_i
-      seconds = (seconds % 60 ).to_i
-
-      if minutes >= 60 then
-        hours = (minutes / 60).to_i
-        minutes = (minutes % 60).to_i
-      end
-    end
-    [hours, minutes, seconds]
   end
 
 end

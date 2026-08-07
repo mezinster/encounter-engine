@@ -12,13 +12,24 @@
     <%= f.text_field :date_of_birth %>
   </div>
   <div class="field">
-    <%= f.label :icq_number, t("users.edit.icq_label") %>
-    <%= f.text_field :icq_number %>
+    <%= f.label :instagram, t("users.edit.instagram_label") %>
+    <%= f.text_field :instagram, autocapitalize: "off", autocorrect: "off", spellcheck: "false" %>
   </div>
   <div class="field">
-    <%= f.label :jabber_id, t("users.edit.jabber_label") %>
-    <%= f.text_field :jabber_id %>
+    <%= f.label :telegram_id, t("users.edit.telegram_label") %>
+    <%= f.text_field :telegram_id, autocapitalize: "off", autocorrect: "off", spellcheck: "false" %>
   </div>
+  <%# One fieldset rather than five separate .field rows: these are one
+      question ("where can we reach you?"), and five stacked label/input
+      pairs would read as five unrelated settings. %>
+  <fieldset class="field">
+    <legend><%= t("users.edit.messengers_label") %></legend>
+    <label><%= f.check_box :on_telegram %> <%= t("messengers.telegram") %></label>
+    <label><%= f.check_box :on_whatsapp %> <%= t("messengers.whatsapp") %></label>
+    <label><%= f.check_box :on_viber %> <%= t("messengers.viber") %></label>
+    <label><%= f.check_box :on_signal %> <%= t("messengers.signal") %></label>
+    <label><%= f.check_box :on_max %> <%= t("messengers.max") %></label>
+  </fieldset>
   <% if @user.captain? %>
     <div class="field">
       <%= f.label :phone_number, t("users.edit.phone_label") %>

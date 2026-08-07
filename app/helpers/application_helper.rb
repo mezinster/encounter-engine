@@ -19,6 +19,11 @@
 # every view spec (rspec-rails' own convention), with no explicit `helper`
 # call or spec-side stub required anywhere.
 module ApplicationHelper
+  # Shared with GamePassing rather than reimplemented: the listing renders how
+  # long a game ran, which is the same arithmetic the play screen uses for
+  # time at a level.
+  include TimeFormatting
+
   # helpers defined here available to all views.
 
   # Ports merb-helpers' Errorifier#error_messages_for
@@ -75,6 +80,16 @@ module ApplicationHelper
                                                  entry.record, :tab => entry.locale)
     when Question then new_game_level_question_path(entry.record.level.game, entry.record.level,
                                                     :tab => entry.locale)
+    # Options have no edit screen of their own -- they live on their question's
+    # index page, which is where the translation tabs are. Without this branch
+    # the helper returned nil for an Option entry, so the missing-translations
+    # panel listed the field and offered a link that went nowhere: the one
+    # record type whose translation actually blocked publication was also the
+    # one you could not click through to.
+    when Option   then game_level_question_options_path(entry.record.question.level.game,
+                                                        entry.record.question.level,
+                                                        entry.record.question,
+                                                        :tab => entry.locale)
     end
   end
 
@@ -92,5 +107,20 @@ module ApplicationHelper
 
     zoned_time = time.in_time_zone(Time.zone)
     "#{l(zoned_time, :format => format)} (#{zoned_time.formatted_offset})"
+  end
+
+  # The messengers a user has ticked, as one comma-joined string, or nil when
+  # none are. Three views render this; a row per messenger would triple the
+  # height of a two-column table to show five booleans.
+  #
+  # Ordered by the flag order on the form, not alphabetically, so the reading
+  # order matches the order the user ticked them in.
+  MESSENGER_FLAGS = %w[telegram whatsapp viber signal max].freeze
+
+  def messenger_list_for(user)
+    ticked = MESSENGER_FLAGS.select { |name| user.public_send("on_#{name}") }
+    return nil if ticked.empty?
+
+    ticked.map { |name| t("messengers.#{name}") }.join(", ")
   end
 end

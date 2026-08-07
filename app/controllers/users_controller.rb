@@ -69,7 +69,12 @@ class UsersController < ApplicationController
 
   private
 
+  # reset_session before writing :user_id, matching SessionsController#create
+  # (sessions_controller.rb:20). Registration is the same anonymous ->
+  # authenticated transition, and the session cookie also carries the CSRF
+  # token, so the two entry points must look identical.
   def authenticate_user
+    reset_session
     session[:user_id] = @user.id
   end
 

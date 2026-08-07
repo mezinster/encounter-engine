@@ -51,6 +51,10 @@ RSpec.describe GamePassingsController, "#show_current_level", type: :controller 
   end
 
   describe "when a team member enters game passing" do
+    before :each do
+      create_game_entry :game => @started_game, :team => @team
+    end
+
     it "responds successfully" do
       @response = perform_request :as_user => @team_member, :game => @started_game
       expect(@response).to have_http_status(:success)

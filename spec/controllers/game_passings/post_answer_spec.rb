@@ -17,6 +17,7 @@ RSpec.describe GamePassingsController, "#post_answer", type: :controller do
 
     @team_member = create_user
     @team = create_team :captain => @team_member
+    create_game_entry :game => @game, :team => @team
   end
 
   describe "when a team member enters game passing" do

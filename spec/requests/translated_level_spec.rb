@@ -76,7 +76,8 @@ describe "translated content over real HTTP", type: :request do
     end
 
     user = create_user
-    create_team(:captain => user)
+    team = create_team(:captain => user)
+    create_game_entry(:game => game, :team => team)
     GameLocalePreference.create!(:user => user, :game => game, :locale => "en")
     login(user)
 
@@ -95,7 +96,8 @@ describe "translated content over real HTTP", type: :request do
     end
 
     user = create_user
-    create_team(:captain => user)
+    team = create_team(:captain => user)
+    create_game_entry(:game => game, :team => team)
     GameLocalePreference.create!(:user => user, :game => game, :locale => "en")
     login(user)
 
@@ -117,7 +119,8 @@ describe "translated content over real HTTP", type: :request do
   # number.
   def queries_for_show_current_level(game)
     user = create_user
-    create_team(:captain => user)
+    team = create_team(:captain => user)
+    create_game_entry(:game => game, :team => team)
     GameLocalePreference.create!(:user => user, :game => game, :locale => "en")
     login(user)
 

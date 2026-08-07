@@ -235,6 +235,10 @@ ka:
       is_correct_label: "ეს სწორი პასუხია"
       submit: "ვარიანტის დამატება"
       back: "დავალებაზე დაბრუნება"
+      translations_saved: "ვარიანტების თარგმანები შენახულია"
+      translate_explain: "მარცხნივ არის ვარიანტი ენაზე „%{language}“. მარჯვნივ შეიყვანეთ თარგმანი."
+      original_label: "ორიგინალი"
+      save_translations: "თარგმანების შენახვა"
   levels:
     form:
       wrong_answer_penalty: "ჯარიმა არასწორი პასუხისთვის (წუთი)"

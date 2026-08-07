@@ -212,6 +212,10 @@ en:
       is_correct_label: "This is a correct answer"
       submit: "Add option"
       back: "Back to the task"
+      translations_saved: "Option translations saved"
+      translate_explain: "On the left is the option in %{language}. Enter the translation on the right."
+      original_label: "Original"
+      save_translations: "Save translations"
   levels:
     form:
       wrong_answer_penalty: "Penalty for a wrong answer (minutes)"

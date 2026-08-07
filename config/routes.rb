@@ -114,6 +114,14 @@ Rails.application.routes.draw do
           member do
             get :delete
           end
+
+          # Translating options is a bulk edit of the whole list for one
+          # locale, not an edit of one record, so it hangs off the collection.
+          # Options are the only translatable record with no edit screen of
+          # its own -- they live entirely on their question's index page.
+          collection do
+            patch :translations
+          end
         end
       end
     end

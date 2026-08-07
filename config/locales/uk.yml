@@ -229,6 +229,10 @@ uk:
       is_correct_label: "Це правильна відповідь"
       submit: "Додати варіант"
       back: "До завдання"
+      translations_saved: "Переклади варіантів збережено"
+      translate_explain: "Ліворуч — варіант мовою «%{language}». Праворуч введіть переклад."
+      original_label: "Оригінал"
+      save_translations: "Зберегти переклади"
   levels:
     form:
       wrong_answer_penalty: "Штраф за неправильну відповідь (хвилин)"

@@ -8,50 +8,105 @@
 
 <%= error_messages_for @option, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
+<%# Options carry a translatable `text`, so a multilingual game cannot leave
+    draft until every option has one per declared locale. Unlike games, levels
+    and hints there is no edit screen per option -- they live only on this
+    page -- so the tabs drive this whole list rather than a single record.
+
+    @options.first stands in as the tab strip's record: the strip only reads it
+    for the per-tab missing count, and any option of the set is as good an
+    indicator as another for "is this language done". With no options yet there
+    is nothing to translate, so a new Option is passed and the strip renders no
+    counts. %>
+<% if @options.any? %>
+  <%= render "shared/language_tabs", :game => @game, :record => @options.first,
+                                     :fields => Option::TRANSLATABLE_FIELDS,
+                                     :active => @active_locale %>
+<% end %>
+
 <p>
   <em><%= t("options.index.explain") %></em>
 </p>
 
-<div class="table-wrap">
-<table class="table--cards">
-  <thead>
-    <tr>
-      <th><%= t("options.index.text_label") %></th>
-      <th><%= t("options.index.correct_label") %></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @options.each do |option| %>
-      <tr id="option-<%= option.id %>">
-        <%# Author content -- rendered verbatim, never through t(). %>
-        <td data-label="<%= t("options.index.text_label") %>"><%= option.text %></td>
-        <td data-label="<%= t("options.index.correct_label") %>">
-          <% if option.is_correct %>
-            <span class="tag tag--live"><%= t("options.index.correct_yes") %></span>
-          <% end %>
-        </td>
-        <td>
-          <%= link_to t("shared.delete_short"),
-                      delete_game_level_question_option_path(@game, @level, @question, option),
-                      class: "btn btn--danger" %>
-        </td>
+<% if @active_locale == @game.primary_locale %>
+  <div class="table-wrap">
+  <table class="table--cards">
+    <thead>
+      <tr>
+        <th><%= t("options.index.text_label") %></th>
+        <th><%= t("options.index.correct_label") %></th>
+        <th></th>
       </tr>
-    <% end %>
-  </tbody>
-</table>
-</div>
+    </thead>
+    <tbody>
+      <% @options.each do |option| %>
+        <tr id="option-<%= option.id %>">
+          <%# Author content -- rendered verbatim, never through t(). %>
+          <td data-label="<%= t("options.index.text_label") %>"><%= option.text %></td>
+          <td data-label="<%= t("options.index.correct_label") %>">
+            <% if option.is_correct %>
+              <span class="tag tag--live"><%= t("options.index.correct_yes") %></span>
+            <% end %>
+          </td>
+          <td>
+            <%= link_to t("shared.delete_short"),
+                        delete_game_level_question_option_path(@game, @level, @question, option),
+                        class: "btn btn--danger" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  </div>
 
-<%= form_with model: @option, url: game_level_question_options_path(@game, @level, @question) do |f| %>
-  <div class="field">
-    <%= f.label :text, t("options.index.new_option_label") %>
-    <%= f.text_field :text %>
-  </div>
-  <div class="field">
-    <%= f.label :is_correct, t("options.index.is_correct_label") %>
-    <%= f.check_box :is_correct %>
-  </div>
-  <%= f.submit t("options.index.submit"), class: "btn btn--go" %>
+  <%= form_with model: @option, url: game_level_question_options_path(@game, @level, @question) do |f| %>
+    <div class="field">
+      <%= f.label :text, t("options.index.new_option_label") %>
+      <%= f.text_field :text %>
+    </div>
+    <div class="field">
+      <%= f.label :is_correct, t("options.index.is_correct_label") %>
+      <%= f.check_box :is_correct %>
+    </div>
+    <%= f.submit t("options.index.submit"), class: "btn btn--go" %>
+  <% end %>
+<% else %>
+  <%# A translation tab. Adding and deleting options happen only on the primary
+      language: an option that exists in one language and not another is a
+      shape the publish gate would reject anyway, and offering "add" here would
+      invite exactly that. The primary text is shown beside each input so the
+      author can see what they are translating. %>
+  <p><em><%= t("options.index.translate_explain", :language => t("locales.#{@game.primary_locale}")) %></em></p>
+
+  <%= form_with url: translations_game_level_question_options_path(@game, @level, @question),
+                method: :patch do %>
+    <%= hidden_field_tag :locale, @active_locale %>
+
+    <div class="table-wrap">
+    <table class="table--cards">
+      <thead>
+        <tr>
+          <th><%= t("options.index.original_label") %></th>
+          <th><%= t("locales.#{@active_locale}") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @options.each do |option| %>
+          <tr id="option-<%= option.id %>">
+            <%# Author content -- rendered verbatim, never through t(). %>
+            <td data-label="<%= t("options.index.original_label") %>"><%= option.text %></td>
+            <td data-label="<%= t("locales.#{@active_locale}") %>">
+              <%= text_field_tag "option_translations[#{option.id}]",
+                                 option.translation_draft(:text, @active_locale) %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    </div>
+
+    <%= submit_tag t("options.index.save_translations"), class: "btn btn--go" %>
+  <% end %>
 <% end %>
 
 <p>

@@ -15,8 +15,39 @@ class OptionsController < ApplicationController
   before_action :find_options
   before_action :find_option, only: [:delete]
   before_action :build_option, only: [:index, :create]
+  before_action :set_active_locale, only: [:index]
 
   def index
+  end
+
+  # Options carry a translatable `text`, so Game#missing_translations demands
+  # one per declared locale before a multilingual game may leave draft -- but
+  # until this existed there was no screen on which to provide it. A bilingual
+  # game with a quiz level could not be published by any sequence of author
+  # actions.
+  #
+  # A bulk write rather than one form per option: an author translating a
+  # question's choices is doing one task, and three round-trips for three
+  # options is three chances to leave the set half-translated.
+  def translations
+    locale = params[:locale].to_s
+    unless @game.available_locale_list.include?(locale)
+      redirect_to game_level_question_options_path(@game, @level, @question) and return
+    end
+
+    submitted = params.fetch(:option_translations, {})
+    submitted = {} unless submitted.respond_to?(:each_pair)
+
+    @options.each do |option|
+      value = submitted[option.id.to_s]
+      next if value.nil?
+
+      option.translations_attributes = { locale => { "text" => value.to_s } }
+      option.save!
+    end
+
+    redirect_to game_level_question_options_path(@game, @level, @question, :tab => locale),
+                :notice => t("options.index.translations_saved")
   end
 
   def create
@@ -36,6 +67,12 @@ class OptionsController < ApplicationController
   end
 
   private
+
+  # Mirrors hints/levels: ?tab= selects the language being edited, deliberately
+  # distinct from the header's ?locale= chrome switcher.
+  def set_active_locale
+    @active_locale = params[:tab].presence_in(@game.available_locale_list) || @game.primary_locale
+  end
 
   def find_game
     @game = Game.find(params[:game_id])

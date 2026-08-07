@@ -142,7 +142,15 @@ class GamePassingsController < ApplicationController
 
     chosen_texts = []
     selections.each do |question_id, option_ids|
-      chosen_texts.concat(Option.where(:id => Array(option_ids)).pluck(:text))
+      # Scoped to this level's questions. Unscoped, this was a read oracle over
+      # the whole options table: a crafted question_id matches nothing in the
+      # scoring loop below, so no penalty was charged and nothing changed -- but
+      # the plucked text still reached the player through @answer and the
+      # answer_incorrect message, and was written to the author's log. Ids for
+      # levels the team had not reached, and for other games, all resolved.
+      chosen_texts.concat(
+        Option.where(:id => Array(option_ids),
+                     :question_id => @game_passing.current_level.questions.select(:id)).pluck(:text))
     end
 
     # A level may hold both kinds of question. Without this the typed answer is

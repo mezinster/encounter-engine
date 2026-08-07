@@ -85,7 +85,7 @@ en:
         author: "Author"
         locales: "Languages"
         status: "Status"
-        teams: "Teams total"
+        teams: "Teams"
         draft: "Draft"
         scheduled: "Scheduled"
         running: "Running"

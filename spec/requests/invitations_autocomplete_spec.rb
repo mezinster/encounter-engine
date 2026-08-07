@@ -102,4 +102,25 @@ describe "the invitation autocomplete payload", type: :request do
     expect(response.body).to include('id="invitation-nicknames"')
     expect(response.body).to include(other.nickname)
   end
+
+  # jquery.autocomplete.js:671 renders each suggestion with .html(). Correct
+  # JSON encoding (Task 1) delivers a real "<" to that sink, so formatItem
+  # must escape. Before the JSON island, ERB's entity-encoding happened to
+  # neutralise this -- an accident, not a control.
+  it "escapes suggestion markup before the plugin renders it" do
+    create_user.update!(:nickname => "<img src=x onerror=alert(1)>")
+
+    get new_invitation_path
+
+    expect(response.body).to include("escapeHtml")
+    # "formatItem:" (with the colon), not the bare word -- the surrounding
+    # comment also says "formatItem", so a bare substring match would still
+    # pass even with the function itself deleted. Verified by deletion: see
+    # task-2-report.md.
+    expect(response.body).to include("formatItem:")
+    # The raw nickname reaches the browser inside the JSON island (correct --
+    # JSON.parse yields a string, not markup), but must never appear as live
+    # markup outside it.
+    expect(response.body).not_to include("<img src=x onerror=alert(1)>")
+  end
 end

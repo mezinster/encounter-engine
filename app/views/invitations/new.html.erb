@@ -8,11 +8,12 @@
     JS string literal. ERB's html_escape does not escape "\", so a nickname
     ending in a backslash used to escape the closing quote here and put the
     next value in executable position. to_json escapes the backslash, and
-    escape_html_entities_in_json turns "<" into < so this block cannot be
-    terminated early either. Emails are deliberately absent: this page is
-    reachable by any team captain, and captaincy is self-service, so shipping
-    the whole user table's email addresses here handed out the instance's
-    complete login-identifier list. %>
+    escape_html_entities_in_json (on by default) turns "<" into the six
+    characters backslash-u-0-0-3-c, so a nickname containing "</script>"
+    cannot terminate this block early either. Emails are deliberately absent:
+    this page is reachable by any team captain, and captaincy is self-service,
+    so shipping the whole user table's email addresses here handed out the
+    instance's complete login-identifier list. %>
 <script type="application/json" id="invitation-nicknames">
   <%= raw @all_users.reject { |user| user == @current_user }.map(&:nickname).to_json %>
 </script>

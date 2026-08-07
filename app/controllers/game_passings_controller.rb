@@ -241,10 +241,48 @@ class GamePassingsController < ApplicationController
   end
 
   # TODO: must be a critical section, double creation is possible!
+  #
+  # Registration is checked HERE, at creation, and deliberately not in a
+  # before_action. Two consequences, both wanted:
+  #
+  # 1. An existing passing is served unchanged. A team that is already playing
+  #    must not be locked out because their entry status changed underneath
+  #    them -- the gate is on starting a game, not on continuing one.
+  # 2. The nil-team case is refused before anything is written. This filter
+  #    used to run at chain position 4 while ensure_team_member ran at position
+  #    8, so a team-less user's 401 still left a GamePassing with team_id NULL
+  #    behind it -- and game_passings/index.html.erb:65 and
+  #    show_results.html.erb:61 both dereference game_passing.team.name, so
+  #    that row permanently 500'd the author's stats page and the public
+  #    results page, with no UI able to delete it.
+  #
+  # Before this, registration was enforced only in
+  # shared/_current_games_status.html.erb, which hides the "Играть!" link for a
+  # non-accepted entry but stops nothing: any user could create a team and GET
+  # /play/:game_id for any started game, including one the author had
+  # explicitly rejected.
   def find_or_create_game_passing
-    @game_passing = GamePassing.of(@team, @game) ||
-                    GamePassing.create!(team: @team, game: @game,
-                                         current_level: @game.levels.first)
+    @game_passing = GamePassing.of(@team, @game)
+    return @game_passing if @game_passing
+
+    unless may_start_passing?
+      raise Authentication::Unauthorized, t("errors.not_registered_for_game")
+    end
+
+    @game_passing = GamePassing.create!(team: @team, game: @game,
+                                        current_level: @game.levels.first)
+  end
+
+  # is_testing? is exempt and that exemption is load-bearing: a game in test
+  # mode is played by the author's own team, which by construction has no
+  # GameEntry (features/games/test-game-1.feature and test-game-2.feature both
+  # fail without this). GameEntry.of dereferences team.id, so the nil check
+  # must come first.
+  def may_start_passing?
+    return false if @team.nil?
+    return true if @game.is_testing?
+
+    GameEntry.of(@team, @game)&.status == "accepted"
   end
 
   def save_log

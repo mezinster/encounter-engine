@@ -37,7 +37,12 @@ IMAGE=$(docker inspect "$PROD" --format '{{.Config.Image}}')
 env_of() { docker inspect "$PROD" --format '{{range .Config.Env}}{{println .}}{{end}}' | grep "^$1=" | head -1 | cut -d= -f2-; }
 WALG_AZ_PREFIX=$(env_of WALG_AZ_PREFIX)
 AZURE_STORAGE_ACCOUNT=$(env_of AZURE_STORAGE_ACCOUNT)
-POSTGRES_PASSWORD=$(env_of POSTGRES_PASSWORD)
+# POSTGRES_PASSWORD is deliberately NOT read or passed: --entrypoint sleep below
+# skips initdb, which is its only consumer, and the psql calls later go over the
+# local socket as unix user postgres. Passing it on the docker run command line
+# published the production password to every local UID via /proc/<pid>/cmdline
+# for the life of the call, on a host we share with other tenants
+# (ansible/playbook.yml:2-4).
 
 [ -n "$WALG_AZ_PREFIX" ] || { echo "FATAL: WALG_AZ_PREFIX not set on ${PROD}" >&2; exit 1; }
 
@@ -71,7 +76,6 @@ trap cleanup EXIT
 docker run -d --name "$SCRATCH" \
   -v "${SCRATCH_VOL}:${PGDATA}" \
   -e PGUSER=encounter -e PGDATABASE=encounter_production \
-  -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
   -e "WALG_AZ_PREFIX=${WALG_AZ_PREFIX}" \
   -e "AZURE_STORAGE_ACCOUNT=${AZURE_STORAGE_ACCOUNT}" \
   --entrypoint sleep "$IMAGE" infinity >/dev/null

@@ -1,9 +1,12 @@
 class DeleteOrphanGamePassings < ActiveRecord::Migration[8.0]
-  # GamePassing rows with team_id NULL are legacy. The only code path that
-  # could ever write one -- find_or_create_game_passing running ahead of
-  # ensure_team_member in GamePassingsController's filter chain -- was closed
-  # during the 2026-08-07 gameplay access-control remediation (see
-  # find_or_create_game_passing's comment in
+  # GamePassing rows with team_id NULL are legacy. find_or_create_game_passing
+  # still runs ahead of ensure_team_member in GamePassingsController's filter
+  # chain -- that ordering never changed and is not what guards this. The
+  # code path that could write one was closed by the `return false if
+  # @team.nil?` guard in may_start_passing?, added during the 2026-08-07
+  # gameplay access-control remediation, which refuses before
+  # GamePassing.create! is ever reached (see find_or_create_game_passing's
+  # and may_start_passing?'s comments in
   # app/controllers/game_passings_controller.rb). No migration since then
   # re-opens it, and no UI can delete an orphan once it exists.
   #

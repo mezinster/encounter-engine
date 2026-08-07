@@ -11,12 +11,14 @@ Deletes every row in `game_passings` where `team_id IS NULL`, and logs the count
 
 ## Why these rows exist
 
-Before the 2026-08-07 gameplay access-control remediation,
-`GamePassingsController#find_or_create_game_passing` ran at an earlier point in the filter chain
-than `ensure_team_member`. A request from a logged-in user who was on no team still created a
-`GamePassing` — with `team_id` NULL — before the 401 fired. That code path is now closed (see the
-comment on `find_or_create_game_passing` in `app/controllers/game_passings_controller.rb`); no
-running code can produce a new orphan row.
+`GamePassingsController#find_or_create_game_passing` runs ahead of `ensure_team_member` in the
+filter chain, and always has — that ordering was never the guard against this. Before the
+2026-08-07 gameplay access-control remediation, a request from a logged-in user who was on no team
+could still reach `GamePassing.create!` and get a row with `team_id` NULL before `ensure_team_member`
+ever ran. That path is now closed by an explicit nil check: `may_start_passing?` (also in
+`app/controllers/game_passings_controller.rb`) starts with `return false if @team.nil?`, so
+`find_or_create_game_passing` raises `Authentication::Unauthorized` instead of reaching
+`GamePassing.create!`. No running code can produce a new orphan row.
 
 ## Why they need to go, not just sit there
 

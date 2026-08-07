@@ -116,7 +116,7 @@ RSpec.describe GamesController, "#start_test", type: :controller do
 
   def perform_request(opts={})
     session[:user_id] = opts[:as_user]&.id
-    get :start_test, params: { id: @game.id }
+    post :start_test, params: { id: @game.id }
     response
   end
 end

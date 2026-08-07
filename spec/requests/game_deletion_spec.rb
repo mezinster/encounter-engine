@@ -57,6 +57,6 @@ describe "game deletion", type: :request do
   # The delete route in this app is GamesController#delete, not #destroy.
   # Confirm its verb and helper in config/routes.rb before running.
   def delete_game_request(game)
-    get delete_game_path(game)
+    delete delete_game_path(game)
   end
 end

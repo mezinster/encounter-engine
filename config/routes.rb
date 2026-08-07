@@ -73,7 +73,7 @@ Rails.application.routes.draw do
   # route for the four resources actually linked that way.
   resources :games do
     member do
-      get :delete
+      delete :delete
       post :withdraw
       post :restore
       post :lock
@@ -147,9 +147,9 @@ Rails.application.routes.draw do
   # exercised today via a plain (GET) link_to in app/views -- see the grep
   # evidence in task-7-report.md -- so each is added as a `get` route in the
   # same /:controller/:action/:id segment order Merb used (action before id).
-  get "/games/start_test/:id",  to: "games#start_test"
-  get "/games/finish_test/:id", to: "games#finish_test"
-  get "/games/end_game/:id",    to: "games#end_game"
+  post "/games/start_test/:id",  to: "games#start_test",  as: :start_test_game
+  post "/games/finish_test/:id", to: "games#finish_test", as: :finish_test_game
+  post "/games/end_game/:id",    to: "games#end_game",    as: :end_game_game
 
   get "/game_passings/exit_game/:game_id", to: "game_passings#exit_game", as: :exit_game
 

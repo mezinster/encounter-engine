@@ -44,7 +44,7 @@ RSpec.describe GamesController, "#delete", type: :controller do
 
   def perform_request(opts={})
     session[:user_id] = opts[:as_user]&.id
-    get :delete, params: { id: @game.id }
+    delete :delete, params: { id: @game.id }
     response
   end
 end

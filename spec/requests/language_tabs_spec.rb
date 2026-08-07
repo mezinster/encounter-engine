@@ -104,7 +104,7 @@ describe "starting a test on an incompletely translated game", type: :request do
     game
     sign_in(author)
 
-    expect { get "/games/start_test/#{game.id}" }.not_to raise_error
+    expect { post start_test_game_path(game) }.not_to raise_error
     expect(response).to have_http_status(:found)
     expect(flash[:alert]).to be_present
     expect(flash[:alert]).to include(I18n.t("games.translations.incomplete", :count => game.missing_translations.size))
@@ -120,7 +120,7 @@ describe "starting a test on an incompletely translated game", type: :request do
     level.save!
 
     sign_in(author)
-    get "/games/start_test/#{game.id}"
+    post start_test_game_path(game)
 
     expect(response).to have_http_status(:found)
     expect(game.reload).not_to be_draft

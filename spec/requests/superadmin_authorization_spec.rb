@@ -82,7 +82,7 @@ describe "superadmin authorization", type: :request do
     sign_in(author)
 
     expect do
-      get "/games/finish_test/#{game.id}"
+      post finish_test_game_path(game)
     end.not_to change(GamePassing, :count)
 
     expect(response).to have_http_status(:unauthorized)
@@ -94,7 +94,7 @@ describe "superadmin authorization", type: :request do
     game.update!(:editing_locked_at => Time.now)
     sign_in(superadmin)
 
-    get "/games/finish_test/#{game.id}"
+    post finish_test_game_path(game)
 
     expect(response).to redirect_to(game_path(game))
   end

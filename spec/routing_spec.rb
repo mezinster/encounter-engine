@@ -124,15 +124,15 @@ RSpec.describe "routing" do
     to: { controller: "games", action: "index", user_id: "4" }
 
   it_recognizes "keeps /games/start_test/:id",
-    method: :get, path: "/games/start_test/7",
+    method: :post, path: "/games/start_test/7",
     to: { controller: "games", action: "start_test", id: "7" }
 
   it_recognizes "keeps /games/finish_test/:id",
-    method: :get, path: "/games/finish_test/7",
+    method: :post, path: "/games/finish_test/7",
     to: { controller: "games", action: "finish_test", id: "7" }
 
   it_recognizes "keeps /games/end_game/:id",
-    method: :get, path: "/games/end_game/7",
+    method: :post, path: "/games/end_game/7",
     to: { controller: "games", action: "end_game", id: "7" }
 
   it_recognizes "keeps /game_passings/exit_game/:game_id",
@@ -144,7 +144,7 @@ RSpec.describe "routing" do
     to: { controller: "game_passings", action: "show_results" }
 
   it_recognizes "keeps /games/:id/delete (Merb resources' auto member :delete)",
-    method: :get, path: "/games/7/delete",
+    method: :delete, path: "/games/7/delete",
     to: { controller: "games", action: "delete", id: "7" }
 
   it_recognizes "keeps /games/:game_id/levels/:id/delete",

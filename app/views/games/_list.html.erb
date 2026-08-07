@@ -62,7 +62,7 @@
             <em><%= link_to t("games.list.stats"), game_stats_path(game) if game.started? %></em>
             <em><%= link_to t("games.list.live_channel"), show_live_channel_path(game.id) if game.started? %></em>
             <em><%= link_to t("games.list.full_log"), show_full_log_path(game.id) if game.started? %></em>
-            <b><%= link_to t("games.list.end_game"), "/games/end_game/#{game.id}" if (game.started? and !game.author_finished? and !game.is_testing?) %></b>
+            <b><%= button_to t("games.list.end_game"), end_game_game_path(game) if (game.started? and !game.author_finished? and !game.is_testing?) %></b>
             <em><%= t("games.list.author_finished") if (game.started? and game.author_finished?) %></em>
         <% end %>
       </td>

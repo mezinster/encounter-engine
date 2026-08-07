@@ -74,8 +74,19 @@ jobs:
       - name: PostgreSQL must still start with the tuning file
         run: |
           docker run -d --name pg-smoke -e POSTGRES_PASSWORD=smoke ee-postgres:test
-          for i in $(seq 1 30); do
-            docker exec pg-smoke pg_isready -U postgres >/dev/null 2>&1 && break
+          # pg_isready alone is not enough. The official entrypoint runs initdb
+          # against a TEMPORARY server on a private socket, then shuts it down
+          # before starting the real one -- so pg_isready can answer "ready",
+          # the loop breaks, and the psql calls below land exactly in the
+          # shutdown window with "FATAL: the database system is shutting down".
+          # Observed twice on 2026-08-07, on branches touching no Postgres file.
+          #
+          # Waiting for the entrypoint's own "ready for start up" banner first
+          # means initdb has finished and the real server is the one answering.
+          for i in $(seq 1 60); do
+            docker logs pg-smoke 2>&1 | grep -q "database system is ready to accept connections" \
+              && docker exec pg-smoke pg_isready -U postgres >/dev/null 2>&1 \
+              && break
             sleep 1
           done
           docker exec pg-smoke psql -U postgres -tAc "SHOW max_connections;"      | grep -qx 20

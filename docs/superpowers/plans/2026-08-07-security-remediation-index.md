@@ -45,6 +45,42 @@ violated by someone new to this repo:
 - Object factories are plain helpers in `spec/spec_helpers/fixtures_helper.rb`. Do not introduce
   FactoryBot.
 
+## Found during implementation — not covered by any plan above
+
+**`error_messages_for` renders validation messages as unescaped HTML — and one of them does carry
+attacker-supplied text.** `app/helpers/application_helper.rb:60,63` builds `"<li>%s</li>" % message`
+from `errors.full_messages` and returns `markup.html_safe`, escaping nothing. The original security
+review examined this helper and cleared it, on the reasoning that no validation message in the app
+interpolates a user-supplied *value* — only `%{attribute}`, a humanized column name. **That
+reasoning was wrong.** `app/models/game.rb:334-335` adds `available_locales.unknown`, whose
+`%{locales}` is filled from `unknown.join(", ")`, and `app/controllers/games_controller.rb:165`
+permits `:available_locale_list => []` as arbitrary strings. Demonstrated end to end during the
+XSS plan's final review:
+
+```
+Available locales содержит неизвестные языки: <img src=x onerror=alert(1)>
+HTML_SAFE?: true
+```
+
+Rendered by `app/views/games/new.html.erb:8` and `games/edit.html.erb:8`, plus 11 other
+`error_messages_for` call sites.
+
+Practical severity is **low**: the value comes from the submitter's own parameters and CSRF
+protection is on, so this is self-XSS rather than stored or cross-site-triggerable. It is worth its
+own change anyway — it is a one-line fix (`build_li % ERB::Util.html_escape(message)`), it is
+exactly the bug shape the XSS plan was chartered against, and it becomes a stored XSS the day any
+validation message interpolates a persisted value.
+
+**Two lower-priority items from the same sweep:**
+
+- `app/views/shared/_countdown.html.erb:15` and `app/views/games/show.html.erb:99` interpolate
+  `t()` results directly into JS string literals, and `_countdown.html.erb:98` feeds that value to
+  `elem.html(prefix + s)`. The source is a locale file, not a user, so it is not a vulnerability —
+  but it is the identical construct the XSS plan just removed, and it is inconsistent with lines
+  5-10 of that same file, which correctly use `.to_json.html_safe`.
+- `CLAUDE.md:109,112` documents 2362 Cucumber steps and 498 RSpec examples against an actual 2358
+  and 891. Doc drift predating this work.
+
 ## Findings deliberately NOT planned
 
 Three candidates were refuted or downgraded during verification. They are recorded here so nobody

@@ -111,10 +111,12 @@ Then /должен увидеть следующюю таблицу:/ do |string
 end
 
 # Was an empty no-op, like "страница перегружается" in games_steps.rb. Both are
-# implemented now: re-issuing a GET for the current URL is what a browser
-# refresh does, and it is the entire subject of ticket #83
-# (features/tickets/ticket-83(5).feature). Implementing it exposed a real 500
-# on refresh at game end -- see GamePassingsController#show_current_level.
+# implemented now, delegating to reload_last_page (features/support/env.rb),
+# which resubmits the last request's actual verb rather than always issuing a
+# fresh GET -- see the comment there for why. Implementing this originally
+# (as a bare GET reload) exposed a real 500 on refresh at game end -- see
+# GamePassingsController#show_current_level -- and that case still goes
+# through the GET branch of reload_last_page unchanged.
 Given /^я обновляю страницу$/ do
-  visit page.current_url
+  reload_last_page
 end

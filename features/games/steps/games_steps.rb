@@ -153,9 +153,12 @@ Given /^должен видеть ссылку "([^\"]*)"$/ do |link|
 end
 
 # Was an empty no-op; see the twin step "я обновляю страницу" in
-# features/game-passing/steps/game-passing_steps.rb.
+# features/game-passing/steps/game-passing_steps.rb. Both now delegate to
+# reload_last_page (features/support/env.rb), which reproduces a real
+# browser reload's resubmit-on-non-GET behaviour -- see the comment there
+# for why a bare `visit page.current_url` is not enough.
 Given /^страница перегружается$/ do
-  visit page.current_url
+  reload_last_page
 end
 
 When /^нажимаю на "([^\"]*)"$/ do |link|

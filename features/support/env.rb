@@ -94,6 +94,47 @@ end
 # expected state on a virgin database and is the ONLY tolerated failure. Any
 # other error, and any non-SQLite adapter, raises loudly rather than silently
 # leaving the counters where they were.
+# --- Reloading the current page -----------------------------------------
+#
+# Two step definitions mean "the user reloads the page in their browser":
+# "страница перегружается" (features/games/steps/games_steps.rb) and
+# "я обновляю страницу" (features/game-passing/steps/game-passing_steps.rb).
+# Both used to just `visit page.current_url`, which reproduces a *GET*
+# reload -- correct for a page reached by following a link, which is what
+# every one of their ~13 call sites did until task 4 of the
+# 2026-08-07-security-csrf-verbs plan started moving destructive controls
+# off GET and onto `button_to ..., method: :delete/:post`.
+#
+# A real browser reload re-issues the *last* request as-is: for a page
+# reached by submitting a form it resubmits that form, verb and all
+# (usually behind a "resubmit this form?" prompt a human clicks through --
+# rack_test has no such prompt to bypass). `visit page.current_url` cannot
+# reproduce that: it always issues a fresh GET, so once a route only
+# accepts DELETE/POST it 404s/405s outright. Worse, for an action whose
+# *response* differs from what a fresh GET would show -- e.g.
+# AnswersController#delete, which refuses deleting a level's last answer by
+# re-rendering :index with 422 on that same DELETE request, so the error
+# text lives only in that response, never in a flash or the database -- a
+# fresh GET would show a *different* page (the answer still there, no
+# error), silently breaking any scenario asserting on the refusal. Do not
+# "simplify" this back to a bare `visit page.current_url`.
+#
+# So: resubmit the last request's actual verb (with no params -- CSRF
+# protection is off in test, see config/environments/test.rb, and none of
+# today's non-GET call sites need to resend form data to reproduce their
+# assertions) when it wasn't a GET; otherwise just visit, which is what
+# most of these ~13 call sites still do today and must keep working
+# unchanged.
+def reload_last_page
+  last_request = page.driver.request
+
+  if last_request.request_method == "GET"
+    visit page.current_url
+  else
+    page.driver.submit(last_request.request_method, last_request.url, {})
+  end
+end
+
 def reset_primary_key_sequences!(connection)
   adapter = connection.adapter_name.downcase
   unless adapter.include?('sqlite')

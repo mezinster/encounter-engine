@@ -105,8 +105,8 @@ depends on the one before, as noted.
 
 | # | Phase | Plan | Depends on |
 |---|---|---|---|
-| 1 | **Foundations** — `Team#set_captain!`, refuse a captain owned by another team, guard the captainless-team mailer crash, plus the missing `TeamsController#create` spec | `docs/superpowers/plans/2026-08-08-team-membership-phase-1-foundations.md` — **5 tasks**. **Built: PR [#43](https://github.com/mezinster/encounter-engine/pull/43)**, in review | — |
-| 2 | **Reassign captaincy** — net-new `Admin::TeamsController` (the admin console has no team management at all today) plus captain self-service handover | not yet written | 1 |
+| 1 | **Foundations** — `Team#set_captain!`, refuse a captain owned by another team, guard the captainless-team mailer crash, plus the missing `TeamsController#create` spec | `docs/superpowers/plans/2026-08-08-team-membership-phase-1-foundations.md` — **5 tasks**. **Merged: PR [#43](https://github.com/mezinster/encounter-engine/pull/43)** | — |
+| 2 | **Reassign captaincy** — net-new `Admin::TeamsController` (the admin console had no team management at all) plus captain self-service handover | `docs/superpowers/plans/2026-08-08-team-membership-phase-2-captaincy-surfaces.md` — **5 tasks** (PR [#45](https://github.com/mezinster/encounter-engine/pull/45)). **Built: PR [#49](https://github.com/mezinster/encounter-engine/pull/49)** | 1 |
 | 3 | **Superadmin moves a user between teams**, audited, refused for captains | not yet written | 2 |
 | 4 | **Leaving a team** — `POST /teams/leave`; a solo captain may leave, emptying the team | not yet written | 2 |
 | 5 | **Join requests** — new `TeamJoinRequest` model; cannot reuse `Invitation`, whose frozen validation points the wrong way | not yet written | 4 |
@@ -114,6 +114,13 @@ depends on the one before, as noted.
 
 Plans are written **just before each phase is built**, not all up front: phase 1's
 foundations shape everything after them.
+
+**A rule worth carrying into every remaining phase**, learned the same way twice: an
+assertion placed after a `raise_error` or `assert_unauthorized` expectation **in the same
+example** can never fail on its own, because RSpec stops at the first failure. Both phases
+found one of their own security assertions decorative that way — the refusal fired, the
+data damage went unexamined. Put the refusal signal and the property it protects in
+**separate examples**, and mutate to prove the second one can fail.
 
 **Descope point if the week is short:** phases 1–3 alone already unbrick every abandoned
 team, which was the original problem. Phases 4–5 carry the largest UI surface and the only

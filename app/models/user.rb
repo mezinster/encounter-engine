@@ -5,7 +5,24 @@ require "digest/sha2"
 class User < ApplicationRecord
   belongs_to :team, optional: true
 
+  # Deliberately NO dependent: option. Games are content other people played,
+  # so deleting a user must not take them -- Admin::UsersController#destroy
+  # refuses a user who authored any, and anonymisation exists precisely so
+  # such a user can still be removed from view without destroying their games.
   has_many :created_games, :class_name => "Game", :foreign_key => "author_id"
+
+  # These three DO travel with the user. Nothing could delete a user before
+  # this phase, so nothing had noticed that all three would be left dangling:
+  # User declared no dependent: option at all.
+  #
+  # team_join_requests is the one that bites rather than merely litters. The
+  # captain's inbox renders join_request.user.nickname, so an orphan row
+  # would 500 the team room for a captain who has nothing to do with the
+  # deleted user.
+  has_many :invitations, :class_name => "Invitation", :foreign_key => "for_user_id",
+                         :dependent => :destroy
+  has_many :team_join_requests, :dependent => :destroy
+  has_many :game_locale_preferences, :dependent => :destroy
 
   # password/password_confirmation are virtual attributes backed by the
   # crypted_password + salt columns. The Merb app got these, plus

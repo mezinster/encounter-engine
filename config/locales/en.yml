@@ -59,6 +59,7 @@ en:
           restore: "Published"
           unfinish: "Resumed the game"
           set_captain: "Set the team captain"
+          delete_team: "Deleted a team"
           move_user: "Moved a player to another team"
           delete_user: "Deleted an account"
           anonymise_user: "Anonymised an account"
@@ -126,6 +127,8 @@ en:
     teams:
       captain_set: "%{nickname} is now the team captain"
       not_a_member: "That user is not a member of this team"
+      deleted_notice: "Team “%{name}” has been deleted"
+      not_deletable: "This team cannot be deleted: it still has members, or it has already played"
       index:
         title: "Teams"
         name: "Name"
@@ -134,6 +137,7 @@ en:
         no_captain: "no captain"
         actions: "Actions"
         set_captain: "Make captain"
+        delete: "Delete team"
   answers:
     must_have_at_least_one_variant: "There must be at least one answer code"
     index:

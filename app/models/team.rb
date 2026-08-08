@@ -5,6 +5,18 @@ class Team < ApplicationRecord
   has_many :members, :class_name => "User"
   belongs_to :captain, :class_name => "User", optional: true
 
+  # These two are meaningless once the team is gone, so they travel with it
+  # rather than blocking deletion. A dangling invitation is not merely untidy:
+  # the dashboard renders invitation.to_team.name, so it would break a screen
+  # belonging to whoever was invited.
+  #
+  # game_entries, game_passings and logs deliberately have NO dependent:
+  # option -- they are records of races other people ran, and #deletable?
+  # refuses instead.
+  has_many :invitations, :class_name => "Invitation", :foreign_key => "to_team_id",
+                         :dependent => :destroy
+  has_many :team_join_requests, :dependent => :destroy
+
   validates :name, presence: true, uniqueness: true
   validate :captain_is_not_another_teams_member
 
@@ -42,6 +54,27 @@ class Team < ApplicationRecord
     raise ArgumentError, "user is not a member of this team" unless members.include?(member)
 
     update!(:captain => member)
+  end
+
+  # Whether this team can be removed outright, rather than left as the inert
+  # tombstone D5 produces when a solo captain leaves. Named after
+  # Game#deletable?, which asks the same kind of question one level up.
+  #
+  # Narrow on purpose. Six tables carry a team_id; three of them --
+  # game_entries, game_passings and logs -- record races other people ran, and
+  # deleting those is the same objection that rules out deleting authored
+  # games. So a team that ever entered a game is never deletable, however
+  # empty it is now. Only a team that never played and now holds nobody can
+  # go, which is exactly the tombstone case and nothing else.
+  #
+  # Logs are checked by team_id rather than by the legacy name column: the
+  # id-based scope is the one Log's own scopes use since the foreign-key work.
+  def deletable?
+    members.empty? &&
+      captain.nil? &&
+      game_entries.empty? &&
+      game_passings.empty? &&
+      Log.where(:team_id => id).empty?
   end
 
   # True while the team is in a race that is still running for them.

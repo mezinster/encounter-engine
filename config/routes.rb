@@ -14,6 +14,7 @@ Rails.application.routes.draw do
     resources :games, only: [ :index ]
     resources :teams, only: [ :index ] do
       post "set_captain", on: :member
+      delete "destroy", on: :member, as: :destroy
     end
     resources :users, only: [ :index, :show ] do
       post "grant",  on: :member

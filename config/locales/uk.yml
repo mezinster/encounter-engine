@@ -76,6 +76,7 @@ uk:
           restore: "Опублікував"
           unfinish: "Відновив гру"
           set_captain: "Призначив капітана команди"
+          delete_team: "Видалив команду"
           move_user: "Перевів гравця до іншої команди"
           delete_user: "Видалив обліковий запис"
           anonymise_user: "Знеособив обліковий запис"
@@ -143,6 +144,8 @@ uk:
     teams:
       captain_set: "Капітаном команди призначено %{nickname}"
       not_a_member: "Цей користувач не входить до складу команди"
+      deleted_notice: "Команду «%{name}» видалено"
+      not_deletable: "Цю команду не можна видалити: у ній є учасники або вона вже грала"
       index:
         title: "Команди"
         name: "Назва"
@@ -151,6 +154,7 @@ uk:
         no_captain: "немає капітана"
         actions: "Дії"
         set_captain: "Призначити капітаном"
+        delete: "Видалити команду"
   answers:
     must_have_at_least_one_variant: "Має бути хоча б один варіант коду"
     index:

@@ -29,6 +29,30 @@ class Admin::TeamsController < ApplicationController
   # exactly when it is needed would be the wrong trade. D1 of the design;
   # both sides of the asymmetry are pinned by specs so it is not "fixed" into
   # consistency later.
+  # Reclaims the inert tombstone D5 leaves behind when a solo captain leaves,
+  # and with it the team name, which Team validates unique and which would
+  # otherwise stay reserved forever.
+  #
+  # Team#deletable? is deliberately narrow -- see its comment. Everything the
+  # predicate refuses is refused here too, before anything changes, so no
+  # audit entry is written for a deletion that did not happen.
+  def destroy
+    team = Team.find(params[:id])
+
+    unless team.deletable?
+      redirect_to admin_teams_path, :alert => t("admin.teams.not_deletable") and return
+    end
+
+    team.destroy
+
+    # Recorded with the destroyed record: it is frozen but still readable, so
+    # target_label snapshots the name while target_id keeps the id that now
+    # points at nothing.
+    record_admin_action("delete_team", team)
+    redirect_to admin_teams_path,
+                :notice => t("admin.teams.deleted_notice", :name => team.name)
+  end
+
   def set_captain
     team = Team.find(params[:id])
     # Looked up THROUGH team.members rather than User.find: a crafted

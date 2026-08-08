@@ -82,6 +82,7 @@ ka:
           restore: "გამოაქვეყნა"
           unfinish: "აღადგინა თამაში"
           set_captain: "დანიშნა გუნდის კაპიტანი"
+          delete_team: "წაშალა გუნდი"
           move_user: "გადაიყვანა მოთამაშე სხვა გუნდში"
           delete_user: "წაშალა ანგარიში"
           anonymise_user: "გააუპიროვნა ანგარიში"
@@ -149,6 +150,8 @@ ka:
     teams:
       captain_set: "გუნდის კაპიტნად დაინიშნა %{nickname}"
       not_a_member: "ეს მომხმარებელი გუნდის წევრი არ არის"
+      deleted_notice: "გუნდი «%{name}» წაშლილია"
+      not_deletable: "ამ გუნდის წაშლა შეუძლებელია: მას ჰყავს წევრები ან უკვე თამაშობდა"
       index:
         title: "გუნდები"
         name: "სახელი"
@@ -157,6 +160,7 @@ ka:
         no_captain: "კაპიტანი არ არის"
         actions: "მოქმედებები"
         set_captain: "კაპიტნად დანიშვნა"
+        delete: "გუნდის წაშლა"
   answers:
     must_have_at_least_one_variant: "უნდა იყოს კოდის სულ მცირე ერთი ვარიანტი"
     index:

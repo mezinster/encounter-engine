@@ -29,6 +29,17 @@
           why this is form_with rather than the button_to used elsewhere on
           the admin screens. %>
       <td>
+        <%# Offered only where #destroy would accept -- an empty, captainless
+            team that never played. Everything else keeps its name, because
+            deleting it would take records of races other people ran.
+
+            No confirmation attribute: this app ships neither Turbo nor
+            rails-ujs, so data-confirm is inert here. The predicate is the
+            protection. %>
+        <% if team.deletable? %>
+          <%= button_to t("admin.teams.index.delete"), destroy_admin_team_path(team),
+                        :method => :delete, :class => "btn btn--danger" %>
+        <% end %>
         <% if team.members.any? %>
           <%= form_with url: set_captain_admin_team_path(team), method: :post do %>
             <%= select_tag :member_id,

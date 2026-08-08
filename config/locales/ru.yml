@@ -59,6 +59,7 @@ ru:
           restore: "Опубликовал"
           unfinish: "Возобновил игру"
           set_captain: "Назначил капитана команды"
+          delete_team: "Удалил команду"
           move_user: "Перевёл игрока в другую команду"
           delete_user: "Удалил аккаунт"
           anonymise_user: "Обезличил аккаунт"
@@ -126,6 +127,8 @@ ru:
     teams:
       captain_set: "Капитаном команды назначен %{nickname}"
       not_a_member: "Этот пользователь не состоит в команде"
+      deleted_notice: "Команда «%{name}» удалена"
+      not_deletable: "Эту команду нельзя удалить: в ней есть участники или она уже играла"
       index:
         title: "Команды"
         name: "Название"
@@ -134,6 +137,7 @@ ru:
         no_captain: "нет капитана"
         actions: "Действия"
         set_captain: "Назначить капитаном"
+        delete: "Удалить команду"
   answers:
     must_have_at_least_one_variant: "Должен быть хотя бы один вариант кода"
     index:

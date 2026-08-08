@@ -36,6 +36,21 @@
       <% end %>
     <% end %>
   <% end %>
+
+  <%# Hidden exactly where TeamsController#leave refuses, so it is never a
+      promise that cannot be kept: mid-race (D1), and for a captain who still
+      has teammates -- they see the handover control above instead, and once
+      they have handed over, this appears. A solo captain may leave (D5),
+      taking the role with them.
+
+      button_to rather than form_with: there is nothing to select. %>
+  <% unless @team.in_live_race? %>
+    <% if !@current_user.captain? || @team.members.count == 1 %>
+      <p>
+        <%= button_to t("team_room.index.leave"), leave_teams_path, :method => :post, :class => "btn" %>
+      </p>
+    <% end %>
+  <% end %>
 </fieldset>
 
 <%= render "shared/current_games" %>

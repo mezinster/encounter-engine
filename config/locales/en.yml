@@ -576,6 +576,7 @@ en:
       captain_suffix: "- captain"
       invite: "Invite members"
       hand_over: "Hand over captaincy"
+      leave: "Leave the team"
   teams:
     handed_over: "Captaincy handed over to %{nickname}"
     cannot_hand_over_mid_race: "Captaincy cannot be handed over while the team is racing"

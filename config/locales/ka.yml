@@ -617,6 +617,7 @@ ka:
       captain_suffix: "- კაპიტანი"
       invite: "მონაწილეების მოწვევა"
       hand_over: "კაპიტნობის გადაცემა"
+      leave: "გუნდის დატოვება"
   teams:
     handed_over: "კაპიტნობა გადაეცა: %{nickname}"
     cannot_hand_over_mid_race: "კაპიტნობის გადაცემა შეუძლებელია, სანამ გუნდი დისტანციაზეა"

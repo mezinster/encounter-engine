@@ -588,6 +588,7 @@ ru:
       captain_suffix: "- капитан"
       invite: "Пригласить участников"
       hand_over: "Передать капитанство"
+      leave: "Покинуть команду"
   teams:
     handed_over: "Капитанство передано: %{nickname}"
     cannot_hand_over_mid_race: "Нельзя передать капитанство, пока команда на дистанции"

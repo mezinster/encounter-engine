@@ -43,6 +43,7 @@ ru:
           withdraw: "Снял с публикации"
           restore: "Опубликовал"
           unfinish: "Возобновил игру"
+          set_captain: "Назначил капитана команды"
           lock: "Заморозил редактирование"
           unlock: "Разморозил редактирование"
           update: "Изменил"
@@ -105,12 +106,16 @@ ru:
         delete: "Удалить"
         delete_confirm: "Удалить игру «%{name}» со всеми уровнями? Это необратимо."
     teams:
+      captain_set: "Капитаном команды назначен %{nickname}"
+      not_a_member: "Этот пользователь не состоит в команде"
       index:
         title: "Команды"
         name: "Название"
         captain: "Капитан"
         members: "Состав"
         no_captain: "нет капитана"
+        actions: "Действия"
+        set_captain: "Назначить капитаном"
   answers:
     must_have_at_least_one_variant: "Должен быть хотя бы один вариант кода"
     index:

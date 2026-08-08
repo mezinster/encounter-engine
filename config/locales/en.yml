@@ -43,6 +43,7 @@ en:
           withdraw: "Withdrew"
           restore: "Published"
           unfinish: "Resumed the game"
+          set_captain: "Set the team captain"
           lock: "Froze editing"
           unlock: "Unfroze editing"
           update: "Edited"
@@ -105,12 +106,16 @@ en:
         delete: "Delete"
         delete_confirm: "Delete the game “%{name}” and all its levels? This cannot be undone."
     teams:
+      captain_set: "%{nickname} is now the team captain"
+      not_a_member: "That user is not a member of this team"
       index:
         title: "Teams"
         name: "Name"
         captain: "Captain"
         members: "Members"
         no_captain: "no captain"
+        actions: "Actions"
+        set_captain: "Make captain"
   answers:
     must_have_at_least_one_variant: "There must be at least one answer code"
     index:

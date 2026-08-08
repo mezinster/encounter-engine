@@ -60,6 +60,7 @@ uk:
           withdraw: "Зняв з публікації"
           restore: "Опублікував"
           unfinish: "Відновив гру"
+          set_captain: "Призначив капітана команди"
           lock: "Заморозив редагування"
           unlock: "Розморозив редагування"
           update: "Змінив"
@@ -122,12 +123,16 @@ uk:
         delete: "Видалити"
         delete_confirm: "Видалити гру «%{name}» з усіма завданнями? Це незворотно."
     teams:
+      captain_set: "Капітаном команди призначено %{nickname}"
+      not_a_member: "Цей користувач не входить до складу команди"
       index:
         title: "Команди"
         name: "Назва"
         captain: "Капітан"
         members: "Склад"
         no_captain: "немає капітана"
+        actions: "Дії"
+        set_captain: "Призначити капітаном"
   answers:
     must_have_at_least_one_variant: "Має бути хоча б один варіант коду"
     index:

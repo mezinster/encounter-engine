@@ -12,7 +12,9 @@ Rails.application.routes.draw do
   namespace :admin do
     get "/", to: "dashboard#show", as: :dashboard
     resources :games, only: [ :index ]
-    resources :teams, only: [ :index ]
+    resources :teams, only: [ :index ] do
+      post "set_captain", on: :member
+    end
     resources :users, only: [ :index, :show ] do
       post "grant",  on: :member
       post "revoke", on: :member

@@ -66,6 +66,7 @@ ka:
           withdraw: "მოხსნა გამოქვეყნებიდან"
           restore: "გამოაქვეყნა"
           unfinish: "აღადგინა თამაში"
+          set_captain: "დანიშნა გუნდის კაპიტანი"
           lock: "გააყინა რედაქტირება"
           unlock: "მოხსნა რედაქტირების გაყინვა"
           update: "შეცვალა"
@@ -128,12 +129,16 @@ ka:
         delete: "წაშლა"
         delete_confirm: "წავშალოთ თამაში «%{name}» ყველა დავალებითურთ? ეს შეუქცევადია."
     teams:
+      captain_set: "გუნდის კაპიტნად დაინიშნა %{nickname}"
+      not_a_member: "ეს მომხმარებელი გუნდის წევრი არ არის"
       index:
         title: "გუნდები"
         name: "სახელი"
         captain: "კაპიტანი"
         members: "შემადგენლობა"
         no_captain: "კაპიტანი არ არის"
+        actions: "მოქმედებები"
+        set_captain: "კაპიტნად დანიშვნა"
   answers:
     must_have_at_least_one_variant: "უნდა იყოს კოდის სულ მცირე ერთი ვარიანტი"
     index:

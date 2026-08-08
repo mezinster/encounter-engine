@@ -8,6 +8,7 @@
       <th><%= t("admin.teams.index.name") %></th>
       <th><%= t("admin.teams.index.captain") %></th>
       <th><%= t("admin.teams.index.members") %></th>
+      <th><%= t("admin.teams.index.actions") %></th>
     </tr>
   </thead>
   <tbody>
@@ -21,6 +22,20 @@
       </td>
       <td data-label="<%= t("admin.teams.index.members") %>">
         <%= team.members.map(&:nickname).join(", ") %>
+      </td>
+      <%# A real form, not a link: this app ships no Turbo and no rails-ujs,
+          so link_to ..., method: :post would silently issue a GET against a
+          POST-only route. A select cannot ride button_to either, which is
+          why this is form_with rather than the button_to used elsewhere on
+          the admin screens. %>
+      <td>
+        <% if team.members.any? %>
+          <%= form_with url: set_captain_admin_team_path(team), method: :post do %>
+            <%= select_tag :member_id,
+                           options_from_collection_for_select(team.members, :id, :nickname, team.captain_id) %>
+            <%= submit_tag t("admin.teams.index.set_captain"), :class => "btn" %>
+          <% end %>
+        <% end %>
       </td>
     </tr>
   <% end %>

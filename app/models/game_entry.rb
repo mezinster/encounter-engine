@@ -10,12 +10,16 @@ class GameEntry < ApplicationRecord
   scope :of_team, ->(team) { where(team_id: team.id) }
   scope :with_status, ->(status) { where(status: status) }
 
-  # Nothing enforces one entry per team per game (no unique index in
-  # db/schema.rb, and GameEntriesController#new creates a fresh row on every
-  # hit -- see the controller). A team can end up holding two entries for the
-  # same game: an earlier one the author rejected and a later one accepted.
-  # Returning `.first` unscoped picked the lowest id -- the rejected row --
-  # and locked a legitimately accepted team out of a live game via the
+  # db/migrate/20260808070000_add_unique_index_to_game_entries_on_team_and_game.rb
+  # stops a team from holding two SIMULTANEOUSLY LIVE ("new"/"accepted")
+  # entries for one game, and GameEntriesController#new/#reopen now check for
+  # an existing entry before creating or reviving one. That index is
+  # deliberately scoped to the live statuses, not a blanket constraint, so
+  # this historical shape can still exist and this method still has to
+  # handle it: a team can hold an earlier entry the author rejected AND a
+  # later one that was accepted -- both on record, only one ever live at a
+  # time. Returning `.first` unscoped picked the lowest id -- the rejected
+  # row -- and locked a legitimately accepted team out of a live game via the
   # find_or_create_game_passing guard. Prefer the accepted entry if one
   # exists; otherwise fall back to whatever is there, unchanged.
   def self.of(team, game)

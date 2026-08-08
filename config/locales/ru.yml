@@ -591,6 +591,9 @@ ru:
       hand_over: "Передать капитанство"
       leave: "Покинуть команду"
       browse_teams: "Все команды"
+      join_requests: "Заявки на вступление"
+      accept_request: "Принять"
+      reject_request: "Отклонить"
   team_join_requests:
     sent: "Заявка на вступление в команду «%{team}» отправлена"
     already_applied: "Вы уже подали заявку в эту команду"

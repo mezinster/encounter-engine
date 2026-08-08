@@ -605,6 +605,9 @@ uk:
       hand_over: "Передати капітанство"
       leave: "Покинути команду"
       browse_teams: "Усі команди"
+      join_requests: "Заявки на вступ"
+      accept_request: "Прийняти"
+      reject_request: "Відхилити"
   team_join_requests:
     sent: "Заявку на вступ до команди «%{team}» надіслано"
     already_applied: "Ви вже подали заявку до цієї команди"

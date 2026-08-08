@@ -579,6 +579,9 @@ en:
       hand_over: "Hand over captaincy"
       leave: "Leave the team"
       browse_teams: "All teams"
+      join_requests: "Applications to join"
+      accept_request: "Accept"
+      reject_request: "Decline"
   team_join_requests:
     sent: "Your application to join “%{team}” has been sent"
     already_applied: "You have already applied to this team"

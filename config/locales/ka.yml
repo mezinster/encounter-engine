@@ -620,6 +620,9 @@ ka:
       hand_over: "კაპიტნობის გადაცემა"
       leave: "გუნდის დატოვება"
       browse_teams: "ყველა გუნდი"
+      join_requests: "გაწევრიანების განაცხადები"
+      accept_request: "მიღება"
+      reject_request: "უარყოფა"
   team_join_requests:
     sent: "განაცხადი გუნდში «%{team}» გასაწევრიანებლად გაიგზავნა"
     already_applied: "თქვენ უკვე გაქვთ შეტანილი განაცხადი ამ გუნდში"

@@ -146,6 +146,108 @@ describe "the admin teams console", type: :request do
     end
   end
 
+  describe "deleting an empty team" do
+    # The tombstone D5 produces: a solo captain left, so nobody is in it and
+    # nothing was ever played.
+    def tombstone
+      team = create_team(:captain => create_user)
+      team.update!(:captain => nil)
+      team.members.each { |member| member.update!(:team => nil) }
+      team.reload
+    end
+
+    it "deletes it and records who did it" do
+      team = tombstone
+      sign_in(superadmin)
+
+      expect do
+        delete destroy_admin_team_path(team)
+      end.to change(Team, :count).by(-1)
+
+      expect(response).to redirect_to(admin_teams_path)
+      entry = AdminAction.newest_first.first
+      expect(entry.action).to eq("delete_team")
+      # target_id now points at nothing, so the label is the only record of
+      # which team went.
+      expect(entry.target_label).to eq(team.name)
+    end
+
+    it "frees the name for reuse" do
+      team = tombstone
+      name = team.name
+      sign_in(superadmin)
+
+      delete destroy_admin_team_path(team)
+
+      expect(Team.new(:name => name, :captain => create_user)).to be_valid
+    end
+
+    it "refuses a team that still has members" do
+      team = create_team(:captain => create_user)
+      team.update!(:captain => nil)
+      sign_in(superadmin)
+
+      expect do
+        delete destroy_admin_team_path(team)
+      end.not_to change(Team, :count)
+
+      expect(flash[:alert]).to eq(I18n.t("admin.teams.not_deletable"))
+    end
+
+    it "refuses a team that has played, however empty it is now" do
+      team = tombstone
+      create_game_passing(:team => team, :level => create_level)
+      sign_in(superadmin)
+
+      expect do
+        delete destroy_admin_team_path(team)
+      end.not_to change(Team, :count)
+    end
+
+    it "refuses an ordinary signed-in user" do
+      team = tombstone
+      sign_in(create_user)
+
+      expect do
+        delete destroy_admin_team_path(team)
+      end.not_to change(Team, :count)
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "refuses an anonymous visitor" do
+      team = tombstone
+
+      expect do
+        delete destroy_admin_team_path(team)
+      end.not_to change(Team, :count)
+
+      expect(response).to redirect_to(login_path)
+    end
+
+    it "offers the control for a deletable team, as a DELETE form" do
+      team = tombstone
+      sign_in(superadmin)
+
+      get admin_teams_path
+
+      form_tag = response.body[
+        %r{<form[^>]*action="#{Regexp.escape(destroy_admin_team_path(team))}"[^>]*>}
+      ]
+      expect(form_tag).not_to be_nil
+      expect(response.body).to include('name="_method" value="delete"')
+    end
+
+    it "does not offer it for a team that is not deletable" do
+      team = create_team(:captain => create_user)
+      sign_in(superadmin)
+
+      get admin_teams_path
+
+      expect(response.body).not_to include(destroy_admin_team_path(team))
+    end
+  end
+
   # N+1 guard, mirroring the one in admin_console_spec: the view renders the
   # captain and the member list per row, which without preloading is two
   # extra queries per team. Compares a small fixture against a larger one so

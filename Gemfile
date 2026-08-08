@@ -7,6 +7,7 @@ gem "sqlite3", "~> 2.0", group: [:development, :test]
 gem "pg", group: :production
 gem "puma"
 gem "acts_as_list"
+gem "bcrypt", "~> 3.1"
 
 group :development, :test do
   gem "rspec-rails", "~> 7.0"

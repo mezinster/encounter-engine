@@ -37,4 +37,18 @@ describe "changing a password", type: :request do
 
     expect(user.reload.phone_number).to eq("+995 555 000000")
   end
+
+  # Product decision 2026-08-08: unlike signup (which mails the
+  # server-generated password) and the reset flow (whose own mail is what
+  # initiates it), an in-profile password change sends no mail at all. Using
+  # `not_to change` rather than asserting `.deliveries` ends up empty: the
+  # login above and this whole file don't clear the outbox, so a bare
+  # emptiness check would be coupled to example/run ordering.
+  it "does not send any mail when the password is changed" do
+    expect {
+      patch user_path(user), :params => { :user => { :current_password => "1234",
+                                                     :password => "newpass",
+                                                     :password_confirmation => "newpass" } }
+    }.not_to change(ActionMailer::Base.deliveries, :size)
+  end
 end

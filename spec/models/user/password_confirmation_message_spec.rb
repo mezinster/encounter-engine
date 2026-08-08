@@ -9,9 +9,11 @@ require "rails_helper"
 # HOLDS the right string can't catch that, because they don't go through the
 # validator's own lookup path. Asserting on Model#errors here does.
 #
-# features/signup/signup.feature:37 and spec/requests/users/create_spec.rb:77
-# both assert this exact Russian string; this is the earliest point that
-# would have caught the miss.
+# Signup no longer collects a password (product decision 2026-08-08 -- see
+# CLAUDE.md, "The acceptance-suite rule", third authorised exception), so this
+# message can no longer surface at /signup; the profile-edit path
+# (UsersController#update, profile_params) is the only place a mismatched
+# confirmation still reaches a real form today.
 describe User, "password confirmation validation messages" do
   it "renders the real Russian mismatch message, not a translation-missing placeholder" do
     user = User.new(

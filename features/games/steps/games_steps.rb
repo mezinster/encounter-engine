@@ -304,9 +304,15 @@ When %r{пытаюсь зарегистрироваться с данными "(
   step %{я захожу по адресу /signup}
   step %{я ввожу "#{nickname}" в поле "Имя"}
   step %{ввожу "#{e_mail}" в поле "Email"}
-  step %{ввожу "#{password}" в поле "Пароль"}
-  step %{ввожу "#{password}" в поле "Подтверждение"}
   step %{нажимаю "Зарегистрироваться"}
+
+  # Signup no longer collects a password -- the server generates one (2026-08-08
+  # product decision). These scenarios name the password they will later log in
+  # with, so set it through the model, the only path that does not demand the
+  # current password. Guarded: this step is also driven with a duplicate
+  # address, where no account is created and none should be touched.
+  user = User.find_by(:email => e_mail)
+  user.update!(:password => password, :password_confirmation => password) if user
 end
 
 Then /^данные пользователя "([^"]+)" с паролем "([^"]+)" такие "([^"]+)"$/ do |nickname, password, date_of_birth|

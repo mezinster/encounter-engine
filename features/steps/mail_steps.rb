@@ -47,6 +47,15 @@ Then %r{одно письмо с текстом "(.*)" должно быть в�
   expect(delivery_text(deliveries.last)).to match(/#{text}/)
 end
 
+# Added 2026-08-08 for features/signup/signup.feature's "Удачная регистрация"
+# scenario (see CLAUDE.md, "The acceptance-suite rule", third authorised
+# exception): signup no longer collects a password, so the scenario can't
+# name a fixed value the welcome letter is expected to carry -- it can only
+# assert that a letter was sent at all.
+Then %r{одно письмо должно быть выслано на ([^/\s]+)$}i do |email|
+  expect(deliveries_for(email).size).to eq(1)
+end
+
 Then %r{никакие письма не должны быть высланы$}i do
   expect(ActionMailer::Base.deliveries).to be_empty
 end

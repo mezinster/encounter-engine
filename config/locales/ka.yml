@@ -397,6 +397,8 @@ ka:
         Email:  %{email}
         პაროლი: %{password}
 
+        გთხოვთ, შეცვალოთ ეს პაროლი შესვლისთანავე.
+
         ყოველივე საუკეთესო :)
     invitation_notification:
       subject: "თქვენ მოგიწვიეს გუნდში %{team_name}"

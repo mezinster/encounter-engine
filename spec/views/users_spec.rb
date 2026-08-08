@@ -174,10 +174,21 @@ RSpec.describe "users/new", type: :view do
 
     expect(rendered).to include(I18n.t("users.new.nickname_label"))
     expect(rendered).to include(I18n.t("users.new.email_label"))
-    expect(rendered).to include(I18n.t("users.new.password_label"))
-    expect(rendered).to include(I18n.t("users.new.password_confirmation_label"))
     expect(rendered).to include(I18n.t("users.new.submit"))
     expect(rendered).to include(users_path)
+  end
+
+  # Product decision 2026-08-08 (see CLAUDE.md, "The acceptance-suite rule"):
+  # signup collects nickname and email only -- the server generates the first
+  # password (UsersController#create) -- so the form must not offer fields
+  # that could never do anything but be silently dropped by signup_params.
+  it "does not offer password fields" do
+    assign(:user, User.new)
+
+    render
+
+    expect(rendered).not_to include('name="user[password]"')
+    expect(rendered).not_to include('name="user[password_confirmation]"')
   end
 
   it "renders validation errors with the shared error header" do

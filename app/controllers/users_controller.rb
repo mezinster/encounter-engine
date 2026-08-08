@@ -33,6 +33,20 @@ class UsersController < ApplicationController
   def create
     @user = User.new(signup_params)
 
+    # Registration no longer collects a password -- the server generates the
+    # first one (product decision, 2026-08-08: see the third authorised
+    # feature-file exception in CLAUDE.md). Generated here, not on the model,
+    # so a console- or fixture-created User (create_user, User.create! in
+    # specs, etc.) is unaffected and still takes whatever password it's
+    # given -- a model-level default would silently apply there too. Set on
+    # both password and password_confirmation: User validates
+    # password_confirmation's presence whenever password_required? is true
+    # (both hash columns are blank on a new record), so leaving it unset
+    # would make every signup invalid.
+    generated_password = SecureRandom.alphanumeric(12)
+    @user.password = generated_password
+    @user.password_confirmation = generated_password
+
     if @user.save
       authenticate_user
       send_welcome_letter_to(@user)
@@ -84,11 +98,13 @@ class UsersController < ApplicationController
     session[:session_token] = @user.session_token
   end
 
-  # app/views/users/new.html.erb (signup form) submits nickname, email,
-  # password, password_confirmation.
+  # app/views/users/new.html.erb (signup form) submits nickname, email only --
+  # :password/:password_confirmation are deliberately NOT permitted here. The
+  # server generates the first password in #create; permitting either of
+  # these would let a signup request choose its own account's credential.
   def signup_params
     params.fetch(:user, ActionController::Parameters.new)
-          .permit(:nickname, :email, :password, :password_confirmation)
+          .permit(:nickname, :email)
   end
 
   # app/views/users/edit.html.erb (profile form) submits nickname,

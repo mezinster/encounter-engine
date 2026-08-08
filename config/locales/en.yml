@@ -366,6 +366,8 @@ en:
         Email:  %{email}
         Password: %{password}
 
+        Please change this password as soon as you log in.
+
         All the best :)
     invitation_notification:
       subject: "You have been invited to join the team %{team_name}"

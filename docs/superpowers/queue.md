@@ -107,7 +107,7 @@ depends on the one before, as noted.
 |---|---|---|---|
 | 1 | **Foundations** — `Team#set_captain!`, refuse a captain owned by another team, guard the captainless-team mailer crash, plus the missing `TeamsController#create` spec | `docs/superpowers/plans/2026-08-08-team-membership-phase-1-foundations.md` — **5 tasks**. **Merged: PR [#43](https://github.com/mezinster/encounter-engine/pull/43)** | — |
 | 2 | **Reassign captaincy** — net-new `Admin::TeamsController` (the admin console had no team management at all) plus captain self-service handover | `docs/superpowers/plans/2026-08-08-team-membership-phase-2-captaincy-surfaces.md` — **5 tasks** (PR [#45](https://github.com/mezinster/encounter-engine/pull/45)). **Built: PR [#49](https://github.com/mezinster/encounter-engine/pull/49)** | 1 |
-| 3 | **Superadmin moves a user between teams**, audited, refused for captains | not yet written | 2 |
+| 3 | **Superadmin moves a user between teams**, audited, refused for captains and mid-race at either end | `docs/superpowers/plans/2026-08-08-team-membership-phase-3-superadmin-moves.md` — **3 tasks**. **Built: PR [#50](https://github.com/mezinster/encounter-engine/pull/50)** | 2 |
 | 4 | **Leaving a team** — `POST /teams/leave`; a solo captain may leave, emptying the team | not yet written | 2 |
 | 5 | **Join requests** — new `TeamJoinRequest` model; cannot reuse `Invitation`, whose frozen validation points the wrong way | not yet written | 4 |
 | 6 | **`actor_label` on `AdminAction`, then user deletion and anonymise** | not yet written | 2 |
@@ -122,8 +122,14 @@ found one of their own security assertions decorative that way — the refusal f
 data damage went unexamined. Put the refusal signal and the property it protects in
 **separate examples**, and mutate to prove the second one can fail.
 
+**A second rule, from phase 3:** a mutation has to fail for the reason you predicted, not
+merely fail. A malformed mutation produces red from a render or syntax error and proves
+nothing while feeling like confirmation. And a *negative* assertion ("does not offer X")
+written before the positive case exists passes vacuously — only its mutation gives it
+meaning.
+
 **Descope point if the week is short:** phases 1–3 alone already unbrick every abandoned
-team, which was the original problem. Phases 4–5 carry the largest UI surface and the only
+team, which was the original problem — as of phase 3 that point has been reached. Phases 4–5 carry the largest UI surface and the only
 real risk to the frozen acceptance suite.
 
 **Constraints every phase inherits** (§6 of the spec): eight frozen scenarios bound this

@@ -42,6 +42,21 @@
   <% else %>
     <%= button_to t("admin.users.show.grant"), grant_admin_user_path(@user), :method => :post, :class => "btn btn--go" %>
   <% end %>
+
+  <%# The move action refuses a captain, so offering the control here would be
+      a promise it cannot keep -- the remedy is captaincy reassignment on the
+      admin teams screen. A form rather than a link: this app ships no Turbo
+      and no rails-ujs, so link_to with method: :post would silently issue a
+      GET, and a select cannot ride button_to. %>
+  <% unless @user.captain? %>
+    <% destinations = Team.where.not(:id => @user.team_id).order(:name) %>
+    <% if destinations.any? %>
+      <%= form_with url: move_admin_user_path(@user), method: :post do %>
+        <%= select_tag :team_id, options_from_collection_for_select(destinations, :id, :name) %>
+        <%= submit_tag t("admin.users.show.move"), :class => "btn" %>
+      <% end %>
+    <% end %>
+  <% end %>
 </div>
 
 <p><%= link_to t("admin.users.show.back"), admin_users_path %></p>

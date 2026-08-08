@@ -5,6 +5,10 @@ en:
       revoked_notice: "Administrator rights revoked"
       cannot_revoke_self: "You cannot revoke your own rights"
       cannot_revoke_last: "You cannot revoke the last administrator"
+      moved_notice: "The player has been moved to “%{team}”"
+      cannot_move_captain: "A captain cannot be moved. Give their team another captain first."
+      cannot_move_mid_race: "Players cannot be moved while the team is racing"
+      move_needs_another_team: "Choose a different team"
       index:
         title: "Players"
         nickname: "Nickname"
@@ -29,6 +33,7 @@ en:
         back: "Back to players"
         grant: "Make administrator"
         revoke: "Revoke administrator rights"
+        move: "Move to team"
     audit:
       index:
         title: "Administrator action log"
@@ -44,6 +49,7 @@ en:
           restore: "Published"
           unfinish: "Resumed the game"
           set_captain: "Set the team captain"
+          move_user: "Moved a player to another team"
           lock: "Froze editing"
           unlock: "Unfroze editing"
           update: "Edited"

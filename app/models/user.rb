@@ -173,9 +173,18 @@ class User < ApplicationRecord
     # silently re-activate it as a working credential. Weak hashes of real
     # passwords are supposed to leave the database once bcrypt has them;
     # this is the only place that actually removes one.
+    # persisted? guards a record with no row to update -- a new (unsaved)
+    # instance or one that has already been destroyed. update_columns raises
+    # ActiveRecordError on either (Rails: "cannot update a new/destroyed
+    # record"), which would turn a *correct* password into an exception
+    # instead of `true`. No current caller passes such a record (every
+    # #authenticate call site loads a persisted row first), but a console
+    # session or a future caller reasonably could, and the password was
+    # genuinely right -- skipping the on-disk hash upgrade is the correct
+    # response, not a 500.
     update_columns(:password_digest => BCrypt::Password.create(candidate),
                     :crypted_password => nil,
-                    :salt => nil)
+                    :salt => nil) if persisted?
     true
   end
 

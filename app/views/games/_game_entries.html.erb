@@ -6,11 +6,11 @@
   <ul class="game-list">
 <% game_entries.each do |entry| %>
 <%
-  @team = Team.find(entry.team_id)
-  @game = Game.find(entry.game_id)
+  team = Team.find(entry.team_id)
+  game = Game.find(entry.game_id)
 %>
   <li>
-    <strong><%= @team.name %> <%= @game.name %></strong>
+    <strong><%= team.name %> <%= game.name %></strong>
     <em><%= button_to t("games.game_entries.accept"), accept_game_entry_path(entry) %></em>
     <em><%= button_to t("games.game_entries.reject"), reject_game_entry_path(entry) %></em>
   </li>

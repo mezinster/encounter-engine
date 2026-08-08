@@ -76,4 +76,39 @@ describe User, "authenticating against merb-auth-produced hashes" do
 
     user.authenticate("demo1234").should be_falsey
   end
+
+  # Regression for the bcrypt-upgrade path calling update_columns, which
+  # raises ActiveRecordError on a record with no row to update -- turning a
+  # *correct* password into a 500 instead of `true`. No current caller
+  # reaches #authenticate on a non-persisted/destroyed record, but a console
+  # session or a future caller reasonably could.
+  it "authenticates a legacy record that is not persisted, without raising or upgrading its hash" do
+    user = User.new(
+      nickname: "golden#{random_string}",
+      email: "golden#{random_string}@diesel.kg"
+    )
+    user.salt = golden_vectors.first[:salt]
+    user.crypted_password = golden_vectors.first[:crypted_password]
+
+    result = nil
+    expect { result = user.authenticate("demo1234") }.not_to raise_error
+    expect(result).to be_truthy
+    expect(user.password_digest).to be_blank
+  end
+
+  it "authenticates a legacy record that has since been destroyed, without raising or upgrading its hash" do
+    user = User.new(
+      nickname: "golden#{random_string}",
+      email: "golden#{random_string}@diesel.kg"
+    )
+    user.salt = golden_vectors.first[:salt]
+    user.crypted_password = golden_vectors.first[:crypted_password]
+    user.save!(validate: false)
+    user.destroy
+
+    result = nil
+    expect { result = user.authenticate("demo1234") }.not_to raise_error
+    expect(result).to be_truthy
+    expect(user.password_digest).to be_blank
+  end
 end

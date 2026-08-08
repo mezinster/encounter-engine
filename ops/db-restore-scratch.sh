@@ -79,7 +79,10 @@ docker run -d --name "$SCRATCH" \
   -e "WALG_AZ_PREFIX=${WALG_AZ_PREFIX}" \
   -e "AZURE_STORAGE_ACCOUNT=${AZURE_STORAGE_ACCOUNT}" \
   --entrypoint sleep "$IMAGE" infinity >/dev/null
-  # deliberately no -e POSTGRES_PASSWORD -- see the note at line 40
+  # deliberately no -e POSTGRES_PASSWORD -- see the comment above the
+  # POSTGRES_PASSWORD note near the top of this script, next to where
+  # WALG_AZ_PREFIX and AZURE_STORAGE_ACCOUNT are read off the running
+  # production container.
 
 echo "--- fetching base backup ---"
 case "$RESTORE_POINT" in

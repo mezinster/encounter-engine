@@ -6,7 +6,7 @@ class Log < ApplicationRecord
   belongs_to :team_record,  :class_name => "Team",  :foreign_key => "team_id",  :optional => true
   belongs_to :level_record, :class_name => "Level", :foreign_key => "level_id", :optional => true
 
-  scope :of_game,  ->(game)  { where(game_id: game) }
+  scope :of_game,  ->(game)  { where(game_id: game.id) }
 
   # Plain id matching. This used to fall back to a name match
   # (logs.team_id IS NULL AND logs.team = :name) for rows the backfill

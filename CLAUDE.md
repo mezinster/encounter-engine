@@ -111,12 +111,12 @@ add steps there or Cucumber will auto-require them a second time.
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and all four registered locales (`config.i18n.available_locales`
   in `config/application.rb`) are now fully translated: `ru`, `en`, `uk` and `ka` each carry the
-  same 295 leaf keys. `config.i18n.fallbacks` still sends anything missing to `:ru`, which is what
+  same 488 leaf keys. `config.i18n.fallbacks` still sends anything missing to `:ru`, which is what
   makes it safe to add a key to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces
   exact `ru`↔`en` parity but only requires `uk`/`ka` to be a subset, so they can lag without a red
   build. Translations live in `config/locales/{en,ru,uk,ka}.yml`.
 - **The Ukrainian and Georgian were machine-produced without a native reviewer.** They are
-  complete and structurally verified — every interpolation variable matches and all 295 keys
+  complete and structurally verified — every interpolation variable matches and all 488 keys
   resolve at runtime — but the wording has not been checked by a speaker. Georgian needed
   restructuring rather than word-for-word translation in a few places where the template's fixed
   word order fights the language (the hint delay labels, which bracket a number Georgian
@@ -140,10 +140,10 @@ deliberately; this is documented in `config/routes.rb` too.
 
 ## Testing
 
-- **Cucumber** — `features/**/*.feature`, Russian Gherkin. 234 scenarios, 2362 steps (2 scenarios
-  are pre-existing empty placeholders reported as "undefined" — not a regression). Profiles live in
-  `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 498 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+- **Cucumber** — `features/**/*.feature`, Russian Gherkin. 232 scenarios (230 passed, 2 undefined),
+  2342 steps (the 2 undefined scenarios are pre-existing empty placeholders — not a regression).
+  Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
+- **RSpec** — 967 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
   `spec/rails_helper.rb` enables the legacy `should` syntax
   (`config.expect_with :rspec do |c| c.syntax = [:should, :expect] end`) because roughly 140
   assertions ported from the Merb-era RSpec 1.x suite still use `x.should == y`; new specs may use
@@ -178,9 +178,20 @@ reasoning and proof.
 
 ## Deployment
 
-Heroku. `Procfile` runs `puma`. `create-heroku-instance <app-name> <TZ> [DEFAULT_LOCALE]`
-provisions a new instance, sets `RAILS_ENV=production`, `TZ`, `DEFAULT_LOCALE` (defaults to `ru`),
-and generates a per-instance `SECRET_KEY_BASE`.
+Kamal 2, to a single Ubuntu VM on Azure — one instance serves every community, not one Heroku app
+per instance as before. `config/deploy.yml` is the deploy config (service, proxy/TLS host, GHCR
+registry, the `db` accessory running Postgres with wal-g/Azure Blob backups); `.kamal/secrets`
+composes the secret env vars (`SECRET_KEY_BASE`, `DATABASE_URL`, SMTP credentials) from the
+environment, never a literal. `.github/workflows/deploy.yml` (`workflow_dispatch`, `deploy` or
+`setup`) runs `bundle exec kamal <command>` from CI, authenticating to Azure via OIDC to punch a
+just-in-time hole in the NSG for the runner's IP and closing it again afterward. See
+`docs/superpowers/specs/2026-08-05-kamal-deployment-design.md` for the design and
+`docs/runbooks/restore.md` for restoring the production database.
+
+`create-heroku-instance <app-name> <TZ> [DEFAULT_LOCALE]` is the old per-instance Heroku
+provisioning script (sets `RAILS_ENV=production`, `TZ`, `DEFAULT_LOCALE`, generates a
+`SECRET_KEY_BASE`). It is no longer how production is deployed — kept for now as history, not as a
+live tool.
 
 **Session secret:** this app has no `config/credentials.yml.enc`/`master.key` and no
 `config/initializers/`, so `secret_key_base` (which the cookie session store, and everything else
@@ -190,12 +201,15 @@ auto-generates one per checkout** (`tmp/local_secret.txt`, gitignored, created o
 fresh clone runs with no setup. **In `production` there is no fallback**: boot raises
 `ArgumentError: Missing 'secret_key_base' for 'production' environment` if `SECRET_KEY_BASE` is
 unset — verified by booting with `RAILS_ENV=production` both with and without it set. Never
-introduce a committed default or fallback for production — this repository is public.
+introduce a committed default or fallback for production — this repository is public. In the Kamal
+deploy, `SECRET_KEY_BASE` is a GitHub Actions secret, read into `.kamal/secrets`, and never
+committed.
 
 Historical note: the Merb app read a variable named `SESSION_SECRET_KEY` from
-`config/init.rb`, which Task 1 deleted when the Rails skeleton replaced it. `create-heroku-instance`
-now sets `SECRET_KEY_BASE`, the name Rails 8 actually reads; nothing in this codebase reads
-`SESSION_SECRET_KEY` any more, so don't reintroduce that name expecting it to do anything.
+`config/init.rb`, which Task 1 deleted when the Rails skeleton replaced it. Both the Heroku script
+and the current Kamal secrets set `SECRET_KEY_BASE`, the name Rails 8 actually reads; nothing in
+this codebase reads `SESSION_SECRET_KEY` any more, so don't reintroduce that name expecting it to
+do anything.
 
 **Developer-machine credentials: never a literal in a config file.** The same rule as
 `SECRET_KEY_BASE` above, extended to the tokens a working session touches. On 2026-08-06 a GitHub

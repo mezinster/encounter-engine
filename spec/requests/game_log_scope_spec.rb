@@ -64,8 +64,10 @@ describe "the per-game answer log", type: :request do
     expect(response.body).not_to include("ЧУЖАЯ-КОМАНДА")
   end
 
-  # The case the old, name-only of_level/of_team scopes could not distinguish:
-  # id-scoping holds even when names collide.
+  # of_game excludes this row on game id alone, before name ever enters into
+  # it -- the level and its name are identical to the ones in `game`, only
+  # the owning game differs. Pins that of_game does not accidentally admit a
+  # row via a name/level match once the game itself is wrong.
   it "does not show a same-named level's rows from another game" do
     other_game  = create_game
     other_level = create_level(:game => other_game, :name => level.name)

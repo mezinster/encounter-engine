@@ -120,15 +120,30 @@ describe "superadmin reporting", type: :request do
 
   # Not because anyone would add them deliberately, but because a future
   # `<%= user.attributes %>` debugging line would leak them silently.
+  #
+  # The two `if ...present?` guards this used to wrap crypted_password/salt
+  # in were vacuous: create_user (Task 4) leaves both nil on every user it
+  # creates, so those assertions never ran and this spec asserted nothing.
+  # Rather than drop the guarded checks -- with both columns genuinely nil,
+  # `not_to include(nil.to_s)` would mean `not_to include("")`, which fails
+  # unconditionally, since every string "contains" the empty string -- this
+  # forces `other` to actually carry legacy-shaped crypted_password/salt
+  # values, same as a not-yet-upgraded production row, so those two checks
+  # have real material to assert against. password_digest is added
+  # unconditionally: create_user always populates it, and it is the actual
+  # password material every current and future user has.
   describe "password material" do
     it "never appears on any reporting screen" do
       other = create_user
+      other.update_columns(:crypted_password => User.encrypt("legacypass", "deadbeef"),
+                            :salt => "deadbeef")
       sign_in(superadmin)
 
       [ admin_dashboard_path, admin_users_path, admin_user_path(other) ].each do |path|
         get path
-        expect(response.body).not_to include(other.crypted_password.to_s) if other.crypted_password.present?
-        expect(response.body).not_to include(other.salt.to_s) if other.salt.present?
+        expect(response.body).not_to include(other.crypted_password)
+        expect(response.body).not_to include(other.salt)
+        expect(response.body).not_to include(other.password_digest)
       end
     end
   end

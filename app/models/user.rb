@@ -124,7 +124,7 @@ class User < ApplicationRecord
   # stop rotating the session on every real password change once encrypt_password
   # stopped touching that column, which is exactly the regression
   # session_eviction_spec.rb exists to catch. The lazy legacy-row upgrade in
-  # #authenticate below writes password_digest via update_column, which
+  # #authenticate below writes password_digest via update_columns, which
   # bypasses callbacks entirely (including this one) by design -- upgrading
   # the on-disk hash format for an already-authenticated request is not a
   # credential change and must not evict the session that is mid-request.
@@ -162,7 +162,19 @@ class User < ApplicationRecord
     return false if crypted_password.blank? || salt.blank?
     return false unless self.class.encrypt(candidate, salt) == crypted_password
 
-    update_column(:password_digest, BCrypt::Password.create(candidate))
+    # update_columns (plural), not update_column: the SHA-1 hash of the
+    # password just verified must not survive the upgrade. Leaving
+    # crypted_password/salt in place after a successful bcrypt upgrade means
+    # the database still holds a valid, unsalted-work-factor hash of a real
+    # password indefinitely -- not reachable today (this method only reaches
+    # this branch when password_digest is blank), but a future backfill, a
+    # restore from a pre-migration dump, or a botched column cleanup would
+    # silently re-activate it as a working credential. Weak hashes of real
+    # passwords are supposed to leave the database once bcrypt has them;
+    # this is the only place that actually removes one.
+    update_columns(:password_digest => BCrypt::Password.create(candidate),
+                    :crypted_password => nil,
+                    :salt => nil)
     true
   end
 
@@ -196,26 +208,48 @@ class User < ApplicationRecord
   # .superpowers/sdd/2026-08-04-merb-to-rails-i18n/task-6-password-vectors.txt,
   # which no longer applies to any password set through this callback.
   #
-  # Guarded to be a no-op when `password` already matches the stored digest.
-  # `password` is a sticky attr_accessor (line 15, never cleared after save --
-  # see the comment on rotate_session_token above) and this callback is
-  # `before_save ... if: -> { password.present? }` (unconditional on whether
-  # the value actually changed), so *every* later save of an AR instance that
-  # was ever assigned a password -- e.g. `let(:user) { create_user }` reused
-  # for an unrelated `user.update!(:timezone => ...)` -- re-runs this method.
-  # SHA-1-with-a-stored-salt was deterministic, so a legacy re-hash of the
-  # same password produced byte-identical output and crypted_password_changed?
-  # stayed false. BCrypt::Password.create salts every call, so re-hashing an
-  # unchanged password produces a *different* digest string every time --
-  # marking password_digest dirty, rotating the session token, and evicting
-  # the very session that just made the request. Checking the plaintext
-  # against the existing digest first restores the old idempotence: a genuine
-  # change (digest doesn't verify) still re-hashes and rotates; a re-save of
-  # the same password does neither.
+  # Guarded to be a no-op when `password` already matches the stored
+  # credential -- bcrypt digest or, for a not-yet-upgraded row, the legacy
+  # SHA-1 pair. `password` is a sticky attr_accessor (line 15, never cleared
+  # after save -- see the comment on rotate_session_token above) and this
+  # callback is `before_save ... if: -> { password.present? }` (unconditional
+  # on whether the value actually changed), so *every* later save of an AR
+  # instance that was ever assigned a password -- e.g. `let(:user) {
+  # create_user }` reused for an unrelated `user.update!(:timezone => ...)`
+  # -- re-runs this method. SHA-1-with-a-stored-salt was deterministic, so a
+  # legacy re-hash of the same password produced byte-identical output and
+  # crypted_password_changed? stayed false. BCrypt::Password.create salts
+  # every call, so re-hashing an unchanged password produces a *different*
+  # digest string every time -- marking password_digest dirty, rotating the
+  # session token, and evicting the very session that just made the request.
+  # Checking the plaintext against the existing credential first restores the
+  # old idempotence: a genuine change (neither guard matches) still re-hashes
+  # and rotates; a re-save of the same password does neither.
+  #
+  # The second guard also matters for a legacy row specifically: without it,
+  # any save of a not-yet-upgraded user with a sticky `password` -- reachable
+  # in-process (e.g. a spec holding such a user), though not over HTTP today,
+  # since #update in the controller gates a real password change on
+  # current_password -- would silently replace the real credential with a
+  # bcrypt hash of whatever `password` happened to hold, with no proof that
+  # value was ever the account's actual password.
   def encrypt_password
     return if password_digest.present? && BCrypt::Password.new(password_digest).is_password?(password)
+    return if crypted_password.present? && salt.present? &&
+              self.class.encrypt(password, salt) == crypted_password
 
+    # Nil the legacy columns whenever this callback actually produces a new
+    # bcrypt digest -- including the very first time a not-yet-upgraded row's
+    # password is changed through this path. Leaving a stale SHA-1 hash of a
+    # now-superseded password sitting in crypted_password/salt is the same
+    # problem the comment on the update_columns call in #authenticate
+    # describes: it is not reachable today (authenticate only reads those
+    # columns when password_digest is blank, and this callback just set it),
+    # but nothing should leave a weak hash of a real, no-longer-current
+    # password in the database indefinitely.
     self.password_digest = BCrypt::Password.create(password)
+    self.crypted_password = nil
+    self.salt = nil
   end
 
   def rotate_session_token

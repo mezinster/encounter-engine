@@ -40,4 +40,23 @@ describe "the full answer log", type: :request do
     expect(response.body).to include("СВОЙ-КОД")
     expect(response.body).not_to include("ЧУЖАЯ-ИГРА")
   end
+
+  # Same-game name collision: two levels sharing a name is the case
+  # of_level's id fallback exists for -- Log.backfill_ids! calls a level name
+  # "ambiguous" precisely when Level.where(game_id:, name:) resolves more than
+  # one row (see app/models/log.rb). A name-only scope cannot tell these two
+  # rows' levels apart; an id-scoped one can. show_full_log prints one row per
+  # (level, team) heading, so a name collision would print the same answer
+  # twice -- once under each level's heading -- under the old scope.
+  it "does not show a level's rows under a same-named level's heading in the same game" do
+    other_level_same_game = create_level(:game => game, :name => level.name)
+
+    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+                :team => team.name, :team_id => team.id,
+                :time => Time.now, :answer => "ОДНОЗНАЧНЫЙ-КОД")
+
+    get show_full_log_path(:game_id => game.id)
+
+    expect(response.body.scan("ОДНОЗНАЧНЫЙ-КОД").length).to eq(1)
+  end
 end

@@ -23,8 +23,8 @@
     <% logs_sorted_by_date.each do |log| %>
       <tr>
         <td data-label="<%= t("logs.show_live_channel.time") %>"><%= log.time.strftime("%H:%M:%S") %></td>
-        <td data-label="<%= t("logs.show_live_channel.team") %>"><%= log.team %></td>
-        <td data-label="<%= t("logs.show_live_channel.level") %>"><%= log.level %></td>
+        <td data-label="<%= t("logs.show_live_channel.team") %>"><%= log.team_record&.name || log.team %></td>
+        <td data-label="<%= t("logs.show_live_channel.level") %>"><%= log.level_record&.name || log.level %></td>
         <td data-label="<%= t("logs.show_live_channel.code") %>"><%= log.answer %></td>
         </tr>
     <% end %>

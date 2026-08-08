@@ -6,9 +6,21 @@ class Log < ApplicationRecord
   belongs_to :team_record,  :class_name => "Team",  :foreign_key => "team_id",  :optional => true
   belongs_to :level_record, :class_name => "Level", :foreign_key => "level_id", :optional => true
 
-  scope :of_game, ->(game) { where(game_id: game) }
-  scope :of_team, ->(team) { where(team: team.name) }
-  scope :of_level, ->(level) { where(level: level.name) }
+  scope :of_game,  ->(game)  { where(game_id: game) }
+
+  # id-scoped, with a fallback for rows the backfill could not resolve (a level
+  # name that is ambiguous within its own game). Every caller chains of_game
+  # first, so the fallback is bounded to one game and cannot reach across games
+  # the way the bare name match did. Task 4 removes it once production is
+  # confirmed clean.
+  scope :of_team,  ->(team) {
+    where("logs.team_id = :id OR (logs.team_id IS NULL AND logs.team = :name)",
+          :id => team.id, :name => team.name)
+  }
+  scope :of_level, ->(level) {
+    where("logs.level_id = :id OR (logs.level_id IS NULL AND logs.level = :name)",
+          :id => level.id, :name => level.name)
+  }
 
   # Idempotent and safe to re-run: only touches rows whose id is still NULL.
   # Returns the counts, which the migration logs -- a silent backfill that

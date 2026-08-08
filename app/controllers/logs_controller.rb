@@ -29,10 +29,25 @@ class LogsController < ApplicationController
   # :ensure_author, which allows exactly those two cases and blocks a team
   # that is still mid-game.
   def show_live_channel
-    @logs = Log.of_game(@game)
+    @logs = Log.of_game(@game).includes(:team_record, :level_record)
   end
 
   def show_level_log
+    # find_level (before_action) resolves @level via Team#current_level_in,
+    # which returns nil once GamePassing#pass_level! finishes a team's game
+    # (current_level is niled on the final level -- see GamePassing#pass_level!).
+    # Reachable only by a finished team hitting this URL directly; no UI link
+    # does it. Guard explicitly rather than calling of_level(nil): the id-scoped
+    # fallback above still resolves `level.id`/`level.name` on its argument, so
+    # a nil @level would raise the same NoMethodError the old name-only scope
+    # did -- but relying on that as the safety net is an accident waiting to
+    # break the next time this scope changes shape. Render an empty log instead.
+    if @level.nil?
+      @logs = Log.none
+      render plain: "", :status => :ok
+      return
+    end
+
     @logs = Log.of_game(@game).of_team(@team).of_level(@level)
   end
 

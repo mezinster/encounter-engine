@@ -20,6 +20,23 @@ RSpec.describe GamesController, "#finish_test", type: :controller do
     end
   end
 
+  # The second half of the end-game-during-test trap (see end_game_spec):
+  # even with end_game now refusing test-mode games, a stray
+  # author_finished_at must not survive the test teardown, which already
+  # deletes every other trace of the run (passings, logs).
+  describe "when the author finishes a test of a game carrying an author finish" do
+    before :each do
+      @user = create_user
+      @game = create_game :author => @user, :is_testing => true, :test_date => "2099-02-02 00:00",
+                          :author_finished_at => Time.now
+    end
+
+    it "clears the author finish along with the rest of the test's traces" do
+      perform_request(:as_user => @user)
+      expect(@game.reload.author_finished?).to be false
+    end
+  end
+
   describe "when any other logged-in user attempts to finish the test" do
     before :each do
       @user = create_user

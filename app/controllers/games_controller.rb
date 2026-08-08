@@ -72,7 +72,17 @@ class GamesController < ApplicationController
     redirect_to dashboard_path
   end
 
+  # A test run makes the game "started", so without this guard the end-game
+  # link (games/_list) sat one click away from "finish testing" and set
+  # author_finished_at permanently -- a timestamp finish_test's cleanup never
+  # touched. The status damage stayed invisible while the game was a draft
+  # (Game#status checks draft before finished) and surfaced only on
+  # publication, as a scheduled game labelled "Завершена".
   def end_game
+    if @game.is_testing?
+      redirect_to @game, :alert => t("games.not_endable_in_test") and return
+    end
+
     @game.finish_game!
     GamePassing.of_game(@game).each(&:end!)
     record_admin_action("end_game", @game) if acting_as_operator?(@game)
@@ -136,6 +146,10 @@ class GamesController < ApplicationController
     @game.is_testing = false
     @game.starts_at = @game.test_date
     @game.test_date = Time.now
+    # An author finish acquired during the test is as much a trace of the run
+    # as the passings and logs deleted below -- left in place it outlives the
+    # test and marks the real game "Завершена" once it leaves draft.
+    @game.author_finished_at = nil
 
     unless @game.save
       redirect_to @game, :alert => @game.errors.full_messages.to_sentence and return

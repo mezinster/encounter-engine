@@ -66,6 +66,20 @@ RSpec.describe "games/_list", type: :view do
     expect(rendered).not_to include("/games/end_game/#{game.id}")
   end
 
+  it "does not offer the end-game link while the game is in test mode" do
+    author = create_user
+    game = create_game(author: author, starts_at: 1.minute.from_now,
+                       is_testing: true, test_date: 1.day.from_now)
+    allow(Time).to receive(:now).and_return(1.hour.from_now)
+
+    view.define_singleton_method(:logged_in?) { true }
+    view.define_singleton_method(:current_user) { author }
+
+    render partial: "games/list", locals: { games: [game] }
+
+    expect(rendered).not_to include("/games/end_game/#{game.id}")
+  end
+
   # Whole-branch review, mutant M7: `game.paused_at || Time.now` mutated to
   # plain `Time.now`. Nothing noticed, because no example paused a game and
   # then let more real time pass before rendering. The freeze-at-pause

@@ -1,6 +1,8 @@
-<h1><%= t("logs.show_level_log.title", team: @team.name, level: @level.name, game: @game.name) %></h1>
+<h1><%= t("logs.show_level_log.title", team: @team.name, level: @level&.name || "", game: @game.name) %></h1>
 
+<% if @level %>
 <strong><%= t("logs.show_level_log.correct_answer") %></strong>&nbsp;<%= @level.questions.first.correct_answer %>
+<% end %>
 <ul>
 <% @logs.each do |log| %>
   <li><%= log.time.strftime("%H:%M:%S") %>&nbsp;<%= log.answer %></li>

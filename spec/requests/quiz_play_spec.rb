@@ -124,6 +124,7 @@ describe "playing a quiz level", type: :request do
       }.to change { Log.count }.by(1)
 
       expect(Log.last.level).to eq(level.name)
+      expect(Log.last.level_id).to eq(level.id)
       expect(passing.reload.current_level).to eq(next_level)
     end
 
@@ -136,6 +137,7 @@ describe "playing a quiz level", type: :request do
       }.to change { Log.count }.by(1)
 
       expect(Log.last.level).to eq(level.name)
+      expect(Log.last.level_id).to eq(level.id)
     end
   end
 

@@ -321,7 +321,9 @@ class GamePassingsController < ApplicationController
     return unless @game_passing.current_level&.id
 
     level = Level.find(@game_passing.current_level.id)
-    Log.create!(game_id: @game.id, level: level.name, team: @team.name,
+    Log.create!(game_id: @game.id,
+                level: level.name, level_id: level.id,
+                team: @team.name,  team_id: @team.id,
                 time: Time.now, answer: @answer)
   end
 

@@ -60,6 +60,7 @@ RSpec.describe LevelsController, "#update", type: :controller do
 
   def perform_request(opts={}, params={})
     session[:user_id] = opts[:as_user]&.id
+    session[:session_token] = opts[:as_user]&.session_token
     patch :update, params: params.merge(:id => @level.id, :game_id => @level.game.id)
     response
   end

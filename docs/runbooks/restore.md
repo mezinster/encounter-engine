@@ -8,6 +8,22 @@ to `2026-08-06 09:00:00+00` were performed into a scratch container and
 verified. The point-in-time restore correctly omitted a game created at
 `2026-08-06 10:02:54`.
 
+**Re-rehearsed 2026-08-08, after `ops/db-restore-scratch.sh` changed.** The
+script stopped passing `POSTGRES_PASSWORD` on the `docker run` command line
+(it was readable by any local process via `/proc/<pid>/cmdline`, on a host we
+share with other tenants). The argument that it was safe to remove — `initdb`
+never runs because `--entrypoint sleep` replaces the entrypoint, and the later
+`psql` calls use the local socket, where libpq reads `PGPASSWORD` and never
+`POSTGRES_PASSWORD` — was reasoning, not evidence, until this run. A `latest`
+restore now completes end to end: WAL replayed through
+`000000010000000000000060`, promotion reached `still in recovery: f`, and the
+row counts printed as **integers rather than `?`**, which is the signal that
+proves the psql calls authenticated without it. The cleanup trap removed both
+the container and its volume.
+
+Restored state at that moment, for reference: 8 users, 6 teams, 3 games,
+75 levels, 0 game_passings, no log rows.
+
 ---
 
 ## 0. Before you restore anything

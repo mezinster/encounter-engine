@@ -528,12 +528,16 @@ git commit -m "Refuse a captain who already belongs to another team"
 - [ ] **Step 1: Full RSpec suite**
 
 Run: `bundle exec rspec`
-Expected: 0 failures. Baseline on master is **889 examples / 6 pending**; this phase adds 13 examples → **902**. Any *other* example that turns red is a real find, not noise — most likely a fixture somewhere assigning a captain who already has a team. Investigate rather than adjusting the new validation.
+Expected: 0 failures. **Re-measure the baseline on your own branch rather than trusting a number here** — master moved twice while this plan was being written (#36, then #40). As built on 2026-08-08 the baseline was **955 examples / 6 pending** and this phase added 15 → **970**.
+
+Any *other* example that turns red is a real find, not noise — most likely a fixture somewhere assigning a captain who already has a team. Investigate rather than adjusting the new validation. (As built, nothing did: no fixture in 970 examples relied on captain theft, which is reasonable evidence the behaviour was never intentional.)
 
 - [ ] **Step 2: Full Cucumber suite**
 
 Run: `bundle exec cucumber` (foreground, raised timeout — it takes ~170s).
-Expected: **234 scenarios, 0 failures** (232 passed + 2 pre-existing undefined placeholders). Confirm no feature file was touched: `git diff origin/master --stat -- features/` must print nothing.
+Expected: **232 scenarios, 0 failures** (230 passed + 2 pre-existing undefined placeholders), 2342 steps. Confirm no feature file was touched: `git diff origin/master --stat -- features/` must print nothing.
+
+**Do not read 232 as a regression against CLAUDE.md's 234.** Commit `ae1ecf8` is the repository owner's authorised amendment (registration now generates the first password server-side and mails it), which removed two scenarios. It is already in master; CLAUDE.md's 234/2362 is stale and belongs to the doc-drift follow-up.
 
 - [ ] **Step 3: Push and open the PR**
 
@@ -549,3 +553,17 @@ The PR body must contain, in this order:
 3. **Explicitly: no user-facing surface is added.** No controller, route, view or UI string. Phase 2 adds those.
 4. **Verification** — the RSpec and Cucumber numbers from Steps 1–2, and the three mutation checks performed (Task 2 Step 6, Task 3 Step 5) stated as done with their observed failures.
 5. Footer: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+
+---
+
+## Post-implementation notes
+
+Built on 2026-08-08 as PR [#43](https://github.com/mezinster/encounter-engine/pull/43). Recorded here because two findings change how later phases should be written, and one is a correction to this plan.
+
+**The plan under-specified Task 3 by one example.** Mutation testing showed the "does not steal them" assertion inside the refusal example was **unreachable**: RSpec fails fast, so once `expect { }.to raise_error(ArgumentError)` failed, the theft assertion never ran. It read like coverage and proved nothing. The property was split into a separate example that swallows the `ArgumentError` and asserts only the side effects; that one fails on the stolen user directly. **Later phases should apply the same test:** an assertion sitting after a `raise_error` expectation in the same example can never fail independently.
+
+**Guard-before-write is not stylistic here, and this is the finding to carry forward.** Moving `set_captain!`'s membership check to *after* `update!` makes it self-defeating: the save fires `adopt_captain`, which adds the outsider to `members`, so the post-write check finds them present and never raises. The callback silently legitimises the theft the guard exists to catch. Any later phase that writes to `Team` and then validates will hit the same trap.
+
+**Master moves under this programme.** Phase 1 was rebased mid-flight after #40 merged `has_many :game_passings` into `app/models/team.rb` — the same file phases 1–4 all touch. Rebase before the full-suite run, not after, or the "any other red example is a real find" check reports stale noise.
+
+**What phase 2 inherits:** `Team#set_captain!(member)` raising `ArgumentError` for non-members, a `Team` validation refusing a captain owned by another team, mailers safe against a captainless team, and `spec/controllers/teams/create_spec.rb` pinning the creation path.

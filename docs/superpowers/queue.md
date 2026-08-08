@@ -105,7 +105,7 @@ depends on the one before, as noted.
 
 | # | Phase | Plan | Depends on |
 |---|---|---|---|
-| 1 | **Foundations** — `Team#set_captain!`, refuse a captain owned by another team, guard the captainless-team mailer crash, plus the missing `TeamsController#create` spec | `docs/superpowers/plans/2026-08-08-team-membership-phase-1-foundations.md` — **5 tasks** | — |
+| 1 | **Foundations** — `Team#set_captain!`, refuse a captain owned by another team, guard the captainless-team mailer crash, plus the missing `TeamsController#create` spec | `docs/superpowers/plans/2026-08-08-team-membership-phase-1-foundations.md` — **5 tasks**. **Built: PR [#43](https://github.com/mezinster/encounter-engine/pull/43)**, in review | — |
 | 2 | **Reassign captaincy** — net-new `Admin::TeamsController` (the admin console has no team management at all today) plus captain self-service handover | not yet written | 1 |
 | 3 | **Superadmin moves a user between teams**, audited, refused for captains | not yet written | 2 |
 | 4 | **Leaving a team** — `POST /teams/leave`; a solo captain may leave, emptying the team | not yet written | 2 |

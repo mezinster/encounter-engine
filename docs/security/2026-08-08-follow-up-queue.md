@@ -12,7 +12,14 @@ worth planning properly; the rest are individually small.
 
 ## Tier 1 — deserves its own plan
 
-### 1. `logs` stores team and level as name strings, not foreign keys
+### 1. `logs` stores team and level as name strings, not foreign keys — DONE, PR #40
+
+Shipped and merged: `team_id`/`level_id` columns added, backfilled, `of_team`/`of_level` switched
+to id-based scopes. The section below is left as the original write-up for context. One gap
+surfaced afterward: `Log.of_game` itself was left as `where(game_id: game)` — an AR object, not
+`.id` like its siblings — the exact permissiveness that let a `Level` be passed where a `Game` was
+meant (see `spec/requests/game_log_scope_spec.rb`). Closed in the `chore/follow-up-cleanup` batch:
+`where(game_id: game.id)`, all callers confirmed to pass a `Game`.
 
 `db/schema.rb` — `logs.team` and `logs.level` are `varchar`, written by
 `GamePassingsController#save_log` as `team.name` and `level.name`. Only `Log.of_game` matches on an
@@ -49,7 +56,7 @@ is the single change that would most improve confidence in this suite.
 
 ## Tier 2 — real defects, small fixes
 
-### 3. `error_messages_for` renders validation messages as unescaped HTML
+### 3. `error_messages_for` renders validation messages as unescaped HTML — DONE, PR #41
 
 `app/helpers/application_helper.rb` builds `"<li>%s</li>" % message` from `errors.full_messages` and
 returns `markup.html_safe`. The original review cleared this on the reasoning that no message
@@ -67,7 +74,7 @@ on), hence Tier 2 — but it is one line (`build_li % ERB::Util.html_escape(mess
 by 13 call sites, and it becomes stored XSS the day any validation message interpolates a persisted
 value.
 
-### 4. `GameEntry` has no uniqueness constraint, and `#new` creates a row per request
+### 4. `GameEntry` has no uniqueness constraint, and `#new` creates a row per request — DONE, PR #42
 
 No unique index on `(team_id, game_id)`; `GameEntriesController#new` creates an entry on every hit
 with no existence check. A team can therefore hold several entries for one game and consume several
@@ -84,25 +91,36 @@ check — parsing routes by verb, locating action bodies via the Ruby AST, then 
 plan's method: `config/routes.rb` deliberately preserves those bookmarked URLs, and this is lazy
 initialisation rather than a state transition.
 
-### 6. A partial clobbers controller instance variables mid-render
+### 6. A partial clobbers controller instance variables mid-render — DONE, `chore/follow-up-cleanup`
 
 `app/views/games/_game_entries.html.erb` assigns `@team` and `@game` *inside its loop*, overwriting
 the controller's ivars for everything rendered afterwards. Both call sites were traced and neither is
 currently exploitable — on one, `@game` is overwritten with itself; on the other, the affected branch
 is dead code after an early return. Benign today, one partial-reorder away from not being.
 
-### 7. `t()` results interpolated into JavaScript string literals
+Fixed by switching the loop to local variables (`team`/`game`, not `@team`/`@game`). Both call sites
+(`app/views/games/show.html.erb`, `app/views/dashboard/index.html.erb`) still render correctly —
+neither reads `@team`/`@game` set by the partial.
+
+### 7. `t()` results interpolated into JavaScript string literals — DONE, `chore/follow-up-cleanup`
 
 `app/views/shared/_countdown.html.erb` and `app/views/games/show.html.erb`, with
 `_countdown.html.erb` feeding the value to `elem.html(prefix + s)`. The source is a locale file, not a
 user, so it is not a vulnerability — but it is the identical construct PR #32 removed, and it is
 inconsistent with lines 5-10 of that same file, which correctly use `.to_json.html_safe`.
 
+Both call sites now use `.to_json.html_safe`, consistent with lines 5-10 of `_countdown.html.erb`.
+The `elem.html(prefix + s)` sink itself is untouched — the value it now receives is JSON-escaped at
+the source, and changing the sink was not asked for and not needed for this specific construct.
+
 ### 8. `data: { confirm: ... }` attributes are inert
 
 Two call sites carry them. This app has no Turbo and no rails-ujs, so nothing reads them and no
 confirmation dialog ever fires. Either wire up a confirm mechanism or drop the attributes and their
 i18n keys — but not silently, because they read as protection that does not exist.
+
+Still open. Explicitly left alone by the `chore/follow-up-cleanup` batch: removing a confirmation
+affordance, or wiring one up, is a product decision, not a cleanup — deferred, not forgotten.
 
 ---
 
@@ -123,10 +141,14 @@ Successful login proves mailbox ownership, but nothing records that it happened 
 on it. If verification is ever meant to protect something, it needs a column and a decision about
 what it blocks.
 
-### 12. `authenticate` raises on a non-persisted record
+### 12. `authenticate` raises on a non-persisted record — DONE, `chore/follow-up-cleanup`
 The lazy bcrypt upgrade calls `update_columns`, which raises on a new or destroyed record where the
 method previously returned a boolean. No current caller passes one; a console session or a future
 caller would 500 on a *correct* password.
+
+Fixed: the `update_columns` upgrade is now guarded with `if persisted?`, so a non-persisted or
+destroyed record returns `true` on a correct password instead of raising. Two specs added in
+`spec/models/user/authenticate_spec.rb` (a new, unsaved record and a destroyed record).
 
 ### 13. Level partitioning in `show_game_log` is untested
 Dropping `.of_level` leaves every example green, and Cucumber cannot catch it either — its
@@ -146,21 +168,42 @@ app's request budget.
 
 ## Tier 4 — hygiene
 
-16. **`CLAUDE.md` doc drift.** The i18n section's leaf-key count, the RSpec and Cucumber counts, and
-    the "Deployment: Heroku" section are all stale — production is Kamal. Worth one pass now that the
-    queue has drained and the numbers have stopped moving.
+16. **`CLAUDE.md` doc drift. — DONE, `chore/follow-up-cleanup`** The i18n section's leaf-key count,
+    the RSpec and Cucumber counts, and the "Deployment: Heroku" section are all stale — production is
+    Kamal. Worth one pass now that the queue has drained and the numbers have stopped moving.
+
+    Every number re-verified rather than copied from any prior doc: leaf keys are **488** per locale
+    (counted directly from `config/locales/{ru,en,uk,ka}.yml`, up from the 295 previously recorded —
+    the file grew since that count was taken); RSpec is **967 examples, 0 failures, 6 pending** (run
+    directly, `bundle exec rspec`); Cucumber is **232 scenarios (230 passed, 2 undefined), 2342
+    steps** — matches the count already derived in `CLAUDE.md`'s own acceptance-suite-rule change log
+    (not independently re-run here — Cucumber takes longer than this pass's tooling allows per-command,
+    left for the next full suite run to reconfirm). The Deployment section now describes Kamal
+    (`config/deploy.yml`, `.kamal/secrets`, `.github/workflows/deploy.yml`) and keeps the still-accurate
+    `SECRET_KEY_BASE`-from-environment explanation; `create-heroku-instance` is noted as retained history,
+    not the live deploy path.
 17. **`features/support/env.rb`'s identity-counter reset may be justified by nothing.** Its stated
     reason was corrected during PR #33 after the original justification proved false; a grep found no
     remaining hardcoded id-1 dependency. Either substantiate it or drop it.
-18. **`ops/db-restore-scratch.sh` breadcrumb placement.** The comment explaining the deliberately
-    absent `POSTGRES_PASSWORD` sits at the old assignment site, not in the `docker run` block where
-    someone would re-add it, and it hardcodes a line number that will drift.
-19. **The restore rehearsal is still an open ops gate.** `ops/db-restore-scratch.sh` changed and the
-    plan's mandated rehearsal was never run — no Docker, no Azure credentials, no production host
-    available to automation. Run the **Database** workflow's `restore-to-scratch` action and watch:
-    the base-backup fetch completing; the promotion check ending in ` f` not ` t`; and the row-count
-    block printing integers, not `?`.
+18. **`ops/db-restore-scratch.sh` breadcrumb placement. — DONE, `chore/follow-up-cleanup`** The
+    comment explaining the deliberately absent `POSTGRES_PASSWORD` sits at the old assignment site,
+    not in the `docker run` block where someone would re-add it, and it hardcodes a line number that
+    will drift.
+
+    Fixed: the breadcrumb next to `docker run` now references the explanation by description
+    ("the comment above the `POSTGRES_PASSWORD` note near the top of this script, next to where
+    `WALG_AZ_PREFIX` and `AZURE_STORAGE_ACCOUNT` are read off the running production container")
+    instead of a line number.
+19. **The restore rehearsal is still an open ops gate. — DONE, PR #31 (and #41)** `ops/db-restore-scratch.sh`
+    changed and the plan's mandated rehearsal was never run — no Docker, no Azure credentials, no
+    production host available to automation. Run the **Database** workflow's `restore-to-scratch`
+    action and watch: the base-backup fetch completing; the promotion check ending in ` f` not ` t`;
+    and the row-count block printing integers, not `?`.
 
     **If it prints `?`, do not restore the `-e POSTGRES_PASSWORD` line.** That would not have fixed
     it — libpq reads `PGPASSWORD` and never `POSTGRES_PASSWORD`. The correct fallback is an
     `--env-file` on a `mktemp`ed 0600 file removed by the script's existing cleanup trap.
+
+    Rehearsed and recorded: PR #31 ("Add a rehearsed restore runbook, a Database workflow, and WAL
+    retention") added the runbook and the Database workflow; PR #41 includes "Record the post-change
+    restore rehearsal" confirming the rehearsal ran clean after the escaping fix landed.

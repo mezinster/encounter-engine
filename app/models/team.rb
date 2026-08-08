@@ -44,6 +44,32 @@ class Team < ApplicationRecord
     update!(:captain => member)
   end
 
+  # True while the team is in a race that is still running for them.
+  #
+  # Guards captain self-service handover (TeamsController#hand_over): "Сойти
+  # с дистанции" is captain-only, so moving the role mid-race moves that
+  # button from one player's screen to another's while the run is live, and a
+  # new captain who does not understand the state can burn a limited
+  # registration slot through Game#reserve_place_for_team! /
+  # free_place_of_team!.
+  #
+  # Deliberately NOT consulted by the superadmin path. The abandoned-captain
+  # case is most acute mid-race, because quitting is itself captain-only, so
+  # refusing rescue exactly when it is needed would be the wrong trade -- D1
+  # of docs/superpowers/specs/2026-08-08-team-membership-programme-design.md.
+  #
+  # Both clauses are load-bearing, because GamePassing's terminal states are
+  # not symmetrical: end! writes status and leaves finished_at nil, while
+  # finishing the last level writes finished_at and leaves status nil. Either
+  # check alone would call one of those states a live race. exit! writes both.
+  #
+  # any? over the loaded association rather than a where(...) scope: a team
+  # holds a handful of passings at most, the callers already have the team in
+  # memory, and a scope would re-query even when preloaded.
+  def in_live_race?
+    game_passings.any? { |passing| passing.status.nil? && passing.finished_at.nil? }
+  end
+
   protected
 
   # adopt_captain (below) overwrites users.team_id, so without this a team

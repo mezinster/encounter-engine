@@ -113,6 +113,7 @@ RSpec.describe UsersController, "#update", type: :controller do
 
   def perform_request(opts = {})
     session[:user_id] = opts[:as_user]&.id
+    session[:session_token] = opts[:as_user]&.session_token
     patch :update, params: (opts[:params] || {}).merge(id: opts[:id] || @user.id)
     response
   end

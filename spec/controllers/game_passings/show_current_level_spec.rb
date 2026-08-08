@@ -89,6 +89,7 @@ RSpec.describe GamePassingsController, "#show_current_level", type: :controller 
 
   def perform_request(opts={})
     session[:user_id] = opts[:as_user]&.id
+    session[:session_token] = opts[:as_user]&.session_token
     get :show_current_level, params: { game_id: opts[:game].id }
     response
   end

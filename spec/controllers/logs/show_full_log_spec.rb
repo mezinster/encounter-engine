@@ -78,6 +78,7 @@ RSpec.describe LogsController, "#show_full_log", type: :controller do
 
   def perform_request(opts = {})
     session[:user_id] = opts[:as_user]&.id
+    session[:session_token] = opts[:as_user]&.session_token
     get :show_full_log, params: { game_id: @game.id }
     response
   end

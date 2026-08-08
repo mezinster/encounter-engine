@@ -90,6 +90,26 @@ class User < ApplicationRecord
 
   before_save :encrypt_password, if: -> { password.present? }
 
+  # Rotated whenever the password changes, and compared in
+  # Authentication#current_user. CookieStore keeps no server-side session
+  # record, so this column is the only thing that can invalidate a cookie held
+  # by someone else -- reset_session rotates the requesting browser only.
+  #
+  # Deliberately keyed on crypted_password_changed?, not password.present?.
+  # `password` is a plain attr_accessor (line 15): it is never cleared after
+  # save, so on an AR instance that was ever assigned a password (e.g. the one
+  # `create_user` returns), every later unrelated #update/#save would see
+  # password.present? still true and re-rotate the token -- silently
+  # invalidating a session that was just established, with no password change
+  # involved. crypted_password_changed? only fires when encrypt_password (the
+  # callback above) actually produced a new hash, i.e. a genuine password
+  # change; re-saving the same password onto the same salt is idempotent and
+  # correctly does not rotate. Order matters: this must run after
+  # encrypt_password, which it does since before_save callbacks run in
+  # definition order.
+  before_save :rotate_session_token, if: -> { crypted_password_changed? }
+  before_create :ensure_session_token
+
   # Digest::SHA1.hexdigest("--" + salt + "--" + password + "--") -- this is
   # merb-auth's SaltedUser#encrypt (merb-auth-more/lib/
   # merb-auth-more/mixins/salted_user.rb:53, removed by Task 13; see git
@@ -146,6 +166,14 @@ class User < ApplicationRecord
     # change here, to a cryptographically strong SecureRandom.hex(20).
     self.salt ||= SecureRandom.hex(20)
     self.crypted_password = self.class.encrypt(password, salt)
+  end
+
+  def rotate_session_token
+    self.session_token = SecureRandom.hex(20)
+  end
+
+  def ensure_session_token
+    self.session_token ||= SecureRandom.hex(20)
   end
 
   # Order matters: scheme, then "www.", then the host, then a leading "@",

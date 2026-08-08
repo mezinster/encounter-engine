@@ -116,6 +116,7 @@ RSpec.describe LevelsController, "#create", type: :controller do
 
   def perform_request(opts={}, params={})
     session[:user_id] = opts[:as_user]&.id
+    session[:session_token] = opts[:as_user]&.session_token
     post :create, params: params.merge(:game_id => @game.id)
     response
   end

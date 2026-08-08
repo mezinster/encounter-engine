@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_07_103000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_07_235918) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -167,5 +167,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_07_103000) do
     t.boolean "on_viber", default: false, null: false
     t.boolean "on_signal", default: false, null: false
     t.boolean "on_max", default: false, null: false
+    t.string "session_token"
   end
 end

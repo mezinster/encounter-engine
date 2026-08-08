@@ -55,6 +55,7 @@ RSpec.describe GameEntriesController, "#new", type: :controller do
 
   def perform_request(opts = {})
     session[:user_id] = opts[:as_user]&.id
+    session[:session_token] = opts[:as_user]&.session_token
     get :new, params: { game_id: @game.id, team_id: @team.id }
     response
   end

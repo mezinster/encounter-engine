@@ -61,6 +61,11 @@ class UsersController < ApplicationController
     end
 
     if @user.update(profile_params)
+      if params.dig(:user, :password).present?
+        reset_session
+        session[:user_id] = @user.id
+        session[:session_token] = @user.reload.session_token
+      end
       redirect_to users_path
     else
       render :edit, status: :unprocessable_entity
@@ -76,6 +81,7 @@ class UsersController < ApplicationController
   def authenticate_user
     reset_session
     session[:user_id] = @user.id
+    session[:session_token] = @user.session_token
   end
 
   # app/views/users/new.html.erb (signup form) submits nickname, email,

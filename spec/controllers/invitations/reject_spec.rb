@@ -67,6 +67,7 @@ RSpec.describe InvitationsController, "#reject", type: :controller do
 
   def perform_request(opts={})
     session[:user_id] = opts[:as_user]&.id
+    session[:session_token] = opts[:as_user]&.session_token
     post :reject, params: { id: @invitation.id }
     response
   end

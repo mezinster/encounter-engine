@@ -19,6 +19,7 @@ class SessionsController < ApplicationController
       # a fresh session id and empties the session before we write to it.
       reset_session
       session[:user_id] = user.id
+      session[:session_token] = user.session_token
       redirect_to dashboard_path
     else
       flash.now[:error] = t("sessions.invalid_credentials")

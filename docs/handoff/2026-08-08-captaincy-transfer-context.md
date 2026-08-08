@@ -146,6 +146,105 @@ column, no join table, and no team-scoped role of any kind. (`is_superadmin` is 
 
 ---
 
+## 4b. Owner's expanded scope, 2026-08-08 — and what it collides with
+
+The repository owner added four requirements after the first draft. They are stated verbatim, then
+what each collides with. **The collisions are the point of this section**; three of them change the
+build order.
+
+> 1. User transfer between teams must exist — a user applies to join another team, and that team's
+>    captain approves.
+> 2. A superadmin can move users between teams without their consent, **but not captains**.
+> 3. Revoking captaincy must exist, so a superadmin can reassign the role to another team member.
+> 4. Superadmins must be able to delete user accounts, for housekeeping.
+
+### (1) The join-request flow cannot reuse `Invitation`
+
+`Invitation` validates `recepient_is_not_member_of_any_team` (`app/models/invitation.rb:26-28`), and
+**three frozen scenarios pin that refusal** — `features/invitations/send-invitations.feature:52`
+(member of another team), `:64` (member of own team) and `:75` (oneself), all asserting
+«Пользователь уже является членом одной из команд». Reusing `Invitation` for transfer means relaxing
+exactly the rule those scenarios freeze.
+
+It also points the wrong way: `Invitation` is captain → user; a join request is user → captain.
+
+**So: a new model.** Something like `TeamJoinRequest(user, team, status)`, mirroring `GameEntry`'s
+shape (`new`/`accepted`/`rejected`), approved by the target team's captain via the strict
+`ensure_captain_of_target_team` pattern rather than the weak `ensure_team_captain`.
+
+**And it requires leaving to exist**, which today it does not (§1). Accepting a join request must
+detach the user from their current team. Decide whether "leave without joining anywhere" is also
+allowed — if it is, `TeamsController#ensure_not_member_of_any_team` (`:27-29`) stops being a
+permanent trap and the "one team forever" invariant goes away, which is probably desirable but is a
+product change with its own frozen-scenario surface (`create-team.feature:42,48`).
+
+### (2) "Move anyone except captains" is coherent, and depends on (3)
+
+It works precisely because a captain must first be replaced via (3). Keep that ordering explicit in
+the UI, or an operator will hit "cannot move: this user is a captain" with no hint at the remedy.
+
+Note `Team#adopt_captain` will *add* the moved user to the destination team automatically, but
+**nothing removes them from the source team** — `members << user` overwrites `users.team_id`, which
+happens to be the whole move. Verify that is what you want rather than relying on the side effect.
+
+These moves are consent-free, so **audit them**. `AdminAction` already handles a `Team` target
+(`label_for` accepts anything responding to `name`), and a migration has already added a details
+column "to hold the team alongside a Game target".
+
+### (3) Make it *reassign*, never *revoke*
+
+A bare "revoke" produces `captain_id = nil`, which is the bricked-team state this whole document is
+about — plus it makes `NotificationMailer#accept_notification` 500 (§3), *after* the invitee has been
+joined and their invitation deleted.
+
+**Recommendation: the only operation is "set captain to member X", atomic.** No intermediate
+captainless state, nothing to recover from. If a genuine "no captain" state is ever wanted, the
+mailer must be fixed first.
+
+### (4) User deletion is the largest item here, and it is not a housekeeping tweak
+
+Nothing in the schema has a foreign key or a `dependent:` option, so deletion silently orphans. Four
+consequences, in descending order of seriousness:
+
+**It breaks the audit trail, which is the one thing that must survive.** `admin_actions.actor_id` is
+`null: false` in the schema (`db/schema.rb:15`) but `belongs_to :actor, optional: true` in the model,
+and `app/views/admin/audit/index.html.erb:20-23` already renders «неизвестный» when the actor is
+missing. So deleting a superadmin turns every action they ever took into an unattributable row. The
+model anticipated exactly this hazard for *targets* — `target_label` snapshots the name, with a
+comment explaining that "a number nobody can resolve" is the worst possible audit outcome — but
+**there is no equivalent `actor_label`**. Add one, and backfill it, *before* enabling deletion.
+`AdminAction` is documented as append-only ("a log its own subject can edit is not a log"), and
+deleting the subject is a way to edit it.
+
+**It can leave the instance with no administrator.** `last_superadmin_keeps_the_role`
+(`app/models/user.rb:235-240`) guards *revoking the role*, not deleting the user, so deleting the
+last superadmin walks straight past it. Mirror that guard on destroy.
+
+**It bricks a team if the user is a captain** — the dangling `captain_id` case from §3. Refuse, and
+point the operator at (3). This is the same rule as (2), which is a good sign the model is coherent.
+
+**It orphans authored games, and one view will 500.** `Game belongs_to :author, optional: true`
+with no `dependent:` on `User#created_games` (`user.rb:8`), so the games survive with a dangling
+`author_id` — and `app/views/games/show.html.erb:14` does `@game.author.nickname` unguarded. Decide
+between three options: refuse deletion while the user has games; nullify and guard the view; or
+reassign authorship. **Note games are content other people played**, so deleting them is almost
+certainly wrong.
+
+Also worth deciding: delete versus anonymise. "Housekeeping" usually means spam or test accounts,
+where a hard delete is right. It is a different operation from a user asking to be forgotten, where
+the audit trail and authored content should survive with the identity scrubbed.
+
+### Build order implied by the above
+
+1. `actor_label` on `AdminAction`, backfilled. Nothing else that deletes users should land first.
+2. Fix the captainless-team 500 in `NotificationMailer` — needed by (3) and by anything that can
+   transiently clear a captain.
+3. Reassign-captaincy (3). It is the precondition for both (2) and (4).
+4. Superadmin move-between-teams (2), audited.
+5. Leaving a team, then the join-request flow (1) — the largest UI surface and the only one that
+   touches the frozen invitation scenarios.
+6. User deletion (4), last, with the captain and last-superadmin guards and a decision on games.
+
 ## 5. Landmines
 
 **`adopt_captain` will steal a user from another team.** `app/models/team.rb:23-26` does

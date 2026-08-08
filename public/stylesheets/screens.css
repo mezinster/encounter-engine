@@ -143,24 +143,41 @@ ul.language-tabs .missing-count {
  * Task text and hints accumulate above as the game gets more stressful; the
  * code field is the thing a player came to use, so it -- along with the
  * countdown and the newest hint -- is pinned here instead of drifting down
- * the page. See .page--focused .main's bottom padding in layout.css, which
- * keeps this bar from covering the last line of task text.
+ * the page.
+ *
+ * STICKY, NOT FIXED, and that is the whole point. Fixed lifts the bar out of
+ * flow, so the space it needs has to be reserved by hand somewhere else --
+ * which is what .page--focused .main's bottom padding used to do, with a
+ * constant measured against a bar holding a code field (222px, 255px paused).
+ * A quiz bar carries a whole fieldset of options and measures 390px, past
+ * even the 272px phone reserve, so it buried the last thing in flow: the
+ * captain's "Сойти с дистанции" button. Measured at 390x844 scrolled fully
+ * to the bottom, the button sat under 102px of bar and elementFromPoint at
+ * its centre returned a quiz option -- unreachable at any scroll position,
+ * not merely awkward. All three teams in game 4 played a phone through it.
+ *
+ * Sticky pins the bar to the viewport bottom exactly as fixed did, but it
+ * keeps its box in flow, so it reserves its own space at whatever height its
+ * contents happen to be. There is no constant to keep in step with the
+ * markup, and no content shape that can reintroduce the bug.
  */
 .playbar {
-  position: fixed;
-  left: 0;
-  right: 0;
+  position: sticky;
   bottom: 0;
   z-index: 15;
   padding: var(--space-3) var(--space-4);
   /* Keeps the bar clear of the iOS home indicator. */
   padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  /* In flow the bar is only as wide as .main's content box; these cancel
+     .main's own horizontal padding so it still reaches both edges, the way
+     the full-bleed fixed bar did. */
+  margin-left: calc(-1 * var(--space-4));
+  margin-right: calc(-1 * var(--space-4));
   background: var(--surface);
   border-top: 1px solid var(--border);
-  /* A quiz question can carry many options; without a cap the fixed bar grows
-     taller than the viewport and buries the task text, the countdown, and
-     even some of its own options above the fold with no way to scroll to
-     them (the page itself does not scroll past a fixed element). Scrolling
+  /* A quiz question can carry many options; without a cap a bar pinned to the
+     bottom grows taller than the viewport and buries the task text, the
+     countdown, and even some of its own options above the fold. Scrolling
      inside the bar instead keeps every control reachable. */
   max-height: 70vh;
   overflow-y: auto;

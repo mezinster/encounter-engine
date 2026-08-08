@@ -44,7 +44,7 @@ h1, h2, h3 { color: var(--text); }
    those already space their own cards via `gap`, and doubling that here
    would open a bigger vertical gap between grid rows than between columns. */
 .main > * + * { margin-top: var(--space-4); }
-/* The pinned play-screen bar is position: fixed -- out of flow, and always
-   the last element in .main -- so a margin here would only shift its own
-   box, never the layout above it. Zeroed for clarity, not correctness. */
-.main > .playbar { margin-top: 0; }
+/* The pinned play-screen bar is position: sticky, so unlike the fixed bar
+   this rule used to zero out, its margin is now real layout: it is the gap
+   between the bar and the last control above it -- the captain's exit
+   button. Left to the rhythm above deliberately. */

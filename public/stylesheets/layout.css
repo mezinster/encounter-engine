@@ -138,16 +138,13 @@
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas: "top" "main";
 }
-/* 12rem clears space for the pinned answer bar Task 4 adds at the bottom of
-   the play screen -- not a colour, so no token. */
-.page--focused .main { max-width: 44rem; padding-bottom: 12rem; }
-
-/* The bar's height varies with its contents -- 222px with a pinned hint,
-   255px paused -- so a fixed 12rem reserve leaves the last control partly
-   underneath it at phone width. */
-@media (max-width: 30rem) {
-  .page--focused .main { padding-bottom: 17rem; }
-}
+/* No bottom reserve for the pinned answer bar: it is position: sticky, so it
+   holds its own space in flow at whatever height its contents come to. The
+   12rem/17rem constants that used to live here were measured against a bar
+   holding a code field and were 118px short of a quiz bar, which is how the
+   captain's exit button ended up unreachable underneath it. See the .playbar
+   comment in screens.css. */
+.page--focused .main { max-width: 44rem; }
 
 @media (prefers-reduced-motion: reduce) {
   #drawer, .drawer-scrim { transition: none; }

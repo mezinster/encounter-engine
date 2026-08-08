@@ -9,6 +9,38 @@ describe "auditing administrative changes", type: :request do
     put login_path, :params => { :email => user.email, :password => "1234" }
   end
 
+  # admin_actions.actor_id is null: false in the schema but optional: true in
+  # the model, and the audit view already renders «неизвестно» when the actor
+  # is missing. Deleting an operator therefore turned every action they ever
+  # took into an unattributable row -- in a log this codebase documents as
+  # append-only. target_label exists for exactly that hazard on the TARGET
+  # side, with a comment calling "a number nobody can resolve" the worst
+  # possible audit outcome; there was no actor equivalent. Phase 6 needs one
+  # before it can delete anybody.
+  describe "surviving the deletion of the actor" do
+    before { sign_in(superadmin) }
+
+    it "snapshots the actor's nickname when the action is recorded" do
+      post withdraw_game_path(game)
+
+      expect(AdminAction.newest_first.first.actor_label).to eq(superadmin.nickname)
+    end
+
+    it "still names the actor on screen after their row is gone" do
+      post withdraw_game_path(game)
+      remembered = superadmin.nickname
+      AdminAction.update_all(:actor_id => 0)
+
+      operator = create_user
+      operator.update!(:is_superadmin => true)
+      sign_in(operator)
+      get admin_audit_index_path
+
+      expect(response.body).to include(remembered)
+      expect(response.body).not_to include(I18n.t("admin.audit.index.unknown_actor"))
+    end
+  end
+
   describe "the explicitly superadmin actions" do
     before { sign_in(superadmin) }
 

@@ -17,8 +17,14 @@
     <tr>
       <td data-label="<%= t("admin.audit.index.when") %>"><%= l(entry.created_at, :format => :long) %></td>
       <td data-label="<%= t("admin.audit.index.who") %>">
+        <%# Live actor first, so the entry stays clickable while they exist.
+            The snapshot is the fallback: once the row is gone the label is
+            the only thing that still says who did it. «неизвестно» remains
+            for rows predating the snapshot whose actor has already left. %>
         <% if entry.actor %>
           <%= link_to entry.actor.nickname, admin_user_path(entry.actor) %>
+        <% elsif entry.actor_label.present? %>
+          <%= entry.actor_label %>
         <% else %>
           <%= t("admin.audit.index.unknown_actor") %>
         <% end %>

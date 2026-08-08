@@ -27,6 +27,10 @@ module AdminAudit
   def record_admin_action(action, target = nil, details = nil)
     AdminAction.create!(
       :actor_id     => current_user&.id,
+      # Snapshotted for the same reason as target_label below: an actor row
+      # can go away, and an entry naming a number nobody can resolve is the
+      # worst thing an audit trail can hold.
+      :actor_label  => current_user&.nickname,
       :action       => action.to_s,
       :target_type  => target&.class&.name,
       :target_id    => target&.id,

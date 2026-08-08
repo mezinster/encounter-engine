@@ -109,7 +109,7 @@ depends on the one before, as noted.
 | 2 | **Reassign captaincy** — net-new `Admin::TeamsController` (the admin console had no team management at all) plus captain self-service handover | `docs/superpowers/plans/2026-08-08-team-membership-phase-2-captaincy-surfaces.md` — **5 tasks** (PR [#45](https://github.com/mezinster/encounter-engine/pull/45)). **Built: PR [#49](https://github.com/mezinster/encounter-engine/pull/49)** | 1 |
 | 3 | **Superadmin moves a user between teams**, audited, refused for captains and mid-race at either end | `docs/superpowers/plans/2026-08-08-team-membership-phase-3-superadmin-moves.md` — **3 tasks**. **Built: PR [#50](https://github.com/mezinster/encounter-engine/pull/50)** | 2 |
 | 4 | **Leaving a team** — `POST /teams/leave`; a solo captain may leave, emptying the team | `docs/superpowers/plans/2026-08-08-team-membership-phase-4-leaving.md` — **3 tasks**. **Built: PR [#51](https://github.com/mezinster/encounter-engine/pull/51)** | 2 |
-| 5 | **Join requests** — new `TeamJoinRequest` model; cannot reuse `Invitation`, whose frozen validation points the wrong way | not yet written | 4 |
+| 5 | **Join requests** — new `TeamJoinRequest` model; cannot reuse `Invitation`, whose frozen validation points the wrong way | `docs/superpowers/plans/2026-08-08-team-membership-phase-5-join-requests.md` — **6 tasks**. **Built: PR [#52](https://github.com/mezinster/encounter-engine/pull/52)** | 4 |
 | 6 | **`actor_label` on `AdminAction`, then user deletion and anonymise** | not yet written | 2 |
 
 Plans are written **just before each phase is built**, not all up front: phase 1's
@@ -134,6 +134,13 @@ system **reaches** it. Phase 4's first attempt at proving the captainless-team c
 dangling captain behind — coverage of one link, wearing the label of the chain. Rewritten
 as a request spec walking invite → leave → accept, it fails under two independent
 mutations. When the claim is "A makes B reachable", the test has to travel from A to B.
+
+**Two more from phase 5.** A mutation that does not *take effect* is indistinguishable from
+a property that holds — editing a migration file proves nothing in this app, because
+`db:create` loads `db/schema.rb` and the migration never runs. Check the mutation landed
+before believing its silence. And a visibility rule enforced only in a controller leaks the
+moment another action renders the same template: the team room's controls each guard
+themselves, and the join-request inbox now does too.
 
 **Descope point if the week is short:** phases 1–3 alone already unbrick every abandoned
 team, which was the original problem — as of phase 3 that point has been reached. Phase 4

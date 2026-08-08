@@ -1,0 +1,44 @@
+<%# app/views/teams/index.html.erb %>
+<h1><%= t("teams.index.title") %></h1>
+
+<div class="table-wrap">
+<table class="table--cards">
+  <thead>
+    <tr>
+      <th><%= t("teams.index.name") %></th>
+      <th><%= t("teams.index.captain") %></th>
+      <th><%= t("teams.index.members") %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  <% @teams.each do |team| %>
+    <tr>
+      <td data-label="<%= t("teams.index.name") %>"><%= team.name %></td>
+      <%# A captainless team is a valid state (a solo captain may leave), so
+          the nil case is a label rather than a dereference. %>
+      <td data-label="<%= t("teams.index.captain") %>">
+        <%= team.captain&.nickname || t("teams.index.no_captain") %>
+      </td>
+      <td data-label="<%= t("teams.index.members") %>"><%= team.members.size %></td>
+      <%# Hidden exactly where TeamJoinRequestsController#create refuses, so
+          it is never a promise that cannot be kept: the viewer's own team, a
+          viewer who captains a team (they must hand over or leave first),
+          and a team they have already applied to.
+
+          A form, not a link: no Turbo and no rails-ujs here, so link_to with
+          method: :post would silently issue a GET. %>
+      <td>
+        <% unless @current_user.captain? ||
+                  @current_user.team == team ||
+                  @pending_team_ids.include?(team.id) %>
+          <%= form_with url: team_join_requests_path(:team_id => team.id), method: :post do %>
+            <%= submit_tag t("teams.index.apply"), :class => "btn" %>
+          <% end %>
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+</div>

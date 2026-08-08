@@ -51,6 +51,44 @@
       </p>
     <% end %>
   <% end %>
+
+  <%# The captain's queue of people asking to join. Rendered only when the
+      captain has something to decide -- @join_requests is empty for everyone
+      else, which is what keeps this clear of the frozen "Не капитан"
+      scenario asserting a non-captain sees neither "Подать заявку на
+      регистрацию" nor a link "Отозвать" in this region. These labels match
+      neither string.
+
+      Real forms, not links: no Turbo and no rails-ujs here.
+
+      The captain? check is deliberately duplicated here rather than left to
+      TeamRoomController#index's decision to assign an empty list. Every other
+      control in this fieldset guards itself the same way, and a visibility
+      rule that lives only in the controller leaks the moment a different
+      caller renders this template. %>
+  <% if @current_user.captain? && @join_requests.any? %>
+    <h3><%= t("team_room.index.join_requests") %></h3>
+    <ul class="game-list">
+      <% @join_requests.each do |join_request| %>
+        <li>
+          <%= join_request.user.nickname %>
+          <%= button_to t("team_room.index.accept_request"),
+                        accept_join_request_path(join_request),
+                        :method => :post, :class => "btn" %>
+          <%= button_to t("team_room.index.reject_request"),
+                        reject_join_request_path(join_request),
+                        :method => :post, :class => "btn" %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%# Where a member goes to move somewhere else. Link text is deliberately
+      unrelated to the game-registration strings the two frozen "Не капитан"
+      scenarios assert are absent from this region. %>
+  <p>
+    <%= link_to t("team_room.index.browse_teams"), teams_path, class: "btn" %>
+  </p>
 </fieldset>
 
 <%= render "shared/current_games" %>

@@ -3,6 +3,22 @@ class TeamsController < ApplicationController
   before_action :require_authentication!
   before_action :ensure_not_member_of_any_team, only: [:new, :create]
 
+  # Discovery for join requests. `resources :teams` already routed index and
+  # it 404'd via ActionNotFound, so this fills an existing slot rather than
+  # adding a route.
+  #
+  # No frozen scenario visits a teams list -- create-team.feature only visits
+  # /teams/new -- so this page carries no acceptance assertions.
+  def index
+    # captain and members are both read per row, so both are preloaded:
+    # without them this issues two extra queries per team. Pinned by the
+    # slope guard in spec/requests/teams_index_spec.rb.
+    @teams = Team.includes(:captain, :members).order(:name)
+    # One query for the viewer's pending applications rather than one per
+    # row, for the same reason.
+    @pending_team_ids = TeamJoinRequest.pending.of_user(current_user).pluck(:team_id)
+  end
+
   def new
     @team = Team.new
   end

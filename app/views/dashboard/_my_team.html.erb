@@ -11,6 +11,10 @@
 
     <p>
       <%= link_to t("dashboard.my_team.create_team"), new_team_path, class: "btn" %>
+      <%# The other way in: apply to an existing team rather than starting
+          one. Plain link text, deliberately unrelated to the game-registration
+          strings the frozen "Не капитан" scenarios assert are absent here. %>
+      <%= link_to t("dashboard.my_team.browse_teams"), teams_path, class: "btn" %>
     </p>
 
     <% @invitations.each do |invitation| %>

@@ -76,6 +76,12 @@ Rails.application.routes.draw do
     # is no id here to forge.
     post "leave", on: :collection
   end
+  # Applying to join a team. Separate controller from deciding, because the
+  # two halves have different actors and therefore different guards.
+  post "/teams/:team_id/join_requests", to: "team_join_requests#create",
+                                        as: :team_join_requests
+  post "/join_requests/:id/accept", to: "team_join_decisions#accept", as: :accept_join_request
+  post "/join_requests/:id/reject", to: "team_join_decisions#reject", as: :reject_join_request
   resources :invitations
 
   # Merb's `resources` auto-added `GET /<resource>/:id/edit` AND

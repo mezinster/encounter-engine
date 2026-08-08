@@ -102,6 +102,18 @@ module FixturesHelper
     GamePassing.create! creation_params
   end
 
+  # A team plays a game only if its entry was accepted -- enforced in
+  # GamePassingsController#find_or_create_game_passing. Specs that let the
+  # controller create the passing (rather than pre-creating one with
+  # create_game_passing) need the entry that authorises it.
+  def create_game_entry(options={})
+    creation_params = {
+      :status => "accepted"
+    }.merge(options)
+
+    GameEntry.create! creation_params
+  end
+
   def create_option(options={})
     creation_params = {
       :text => random_string,

@@ -7,10 +7,29 @@ class GamePassingsController < ApplicationController
   # before this filter turned a guest's request into a 500.
   before_action :require_authentication!, except: [:index, :show_results]
   before_action :find_team, except: [:show_results, :index]
-  before_action :find_or_create_game_passing, except: [:show_results, :index]
+  # find_or_create_game_passing moved below ensure_game_is_started and
+  # ensure_game_not_finished_by_author (both check only @game, set by
+  # find_game above) -- it depends on nothing before it except @team, and
+  # every filter that depends on @game_passing (ensure_team_not_exited
+  # onward) already sits after it.
+  #
+  # It used to run right after find_team, ahead of ensure_game_is_started.
+  # An accepted team could GET /play/:game_id before starts_at: the row got
+  # created, before_create :update_current_level_entered_at (GamePassing)
+  # stamped the hint clock at that early moment, and only then did
+  # ensure_game_is_started 401. Nothing restamps the clock at the real start
+  # -- Game#resume! is the only other writer of that column -- so at kickoff
+  # the early-loader's hints_to_show already read every level-1 hint whose
+  # delay had "elapsed" against the wrong start time, handing them out
+  # instantly while honest teams waited. The same root cause produced a
+  # phantom, still-ticking level-1 row if an accepted team hit /play after
+  # end_game. Pinned by
+  # spec/requests/game_registration_enforcement_spec.rb ("creates no passing
+  # when an accepted team plays before the game starts").
   before_action :ensure_game_is_started
   before_action :ensure_team_captain, only: [:exit_game]
   before_action :ensure_game_not_finished_by_author, except: [:index, :show_results]
+  before_action :find_or_create_game_passing, except: [:show_results, :index]
   before_action :ensure_team_not_exited, except: [:index, :show_results]
   before_action :ensure_team_member, except: [:index, :show_results]
   before_action :ensure_not_author_of_the_game, except: [:index, :show_results]
@@ -142,7 +161,15 @@ class GamePassingsController < ApplicationController
 
     chosen_texts = []
     selections.each do |question_id, option_ids|
-      chosen_texts.concat(Option.where(:id => Array(option_ids)).pluck(:text))
+      # Scoped to this level's questions. Unscoped, this was a read oracle over
+      # the whole options table: a crafted question_id matches nothing in the
+      # scoring loop below, so no penalty was charged and nothing changed -- but
+      # the plucked text still reached the player through @answer and the
+      # answer_incorrect message, and was written to the author's log. Ids for
+      # levels the team had not reached, and for other games, all resolved.
+      chosen_texts.concat(
+        Option.where(:id => Array(option_ids),
+                     :question_id => @game_passing.current_level.questions.select(:id)).pluck(:text))
     end
 
     # A level may hold both kinds of question. Without this the typed answer is
@@ -241,10 +268,53 @@ class GamePassingsController < ApplicationController
   end
 
   # TODO: must be a critical section, double creation is possible!
+  #
+  # Registration is checked HERE, at creation, and deliberately not in a
+  # before_action. Two consequences, both wanted:
+  #
+  # 1. An existing passing is served unchanged. A team that is already playing
+  #    must not be locked out because their entry status changed underneath
+  #    them -- the gate is on starting a game, not on continuing one.
+  # 2. The nil-team case is refused before anything is written. This filter
+  #    used to run at chain position 4 while ensure_team_member ran at position
+  #    8, so a team-less user's 401 still left a GamePassing with team_id NULL
+  #    behind it -- and game_passings/index.html.erb:65 and
+  #    show_results.html.erb:61 both dereference game_passing.team.name, so
+  #    that row permanently 500'd the author's stats page and the public
+  #    results page, with no UI able to delete it.
+  #
+  # Before this, registration was enforced only in
+  # shared/_current_games_status.html.erb, which hides the "Играть!" link for a
+  # non-accepted entry but stops nothing: any user could create a team and GET
+  # /play/:game_id for any started game, including one the author had
+  # explicitly rejected.
   def find_or_create_game_passing
-    @game_passing = GamePassing.of(@team, @game) ||
-                    GamePassing.create!(team: @team, game: @game,
-                                         current_level: @game.levels.first)
+    @game_passing = GamePassing.of(@team, @game)
+    return @game_passing if @game_passing
+
+    unless may_start_passing?
+      raise Authentication::Unauthorized, t("errors.not_registered_for_game")
+    end
+
+    @game_passing = GamePassing.create!(team: @team, game: @game,
+                                        current_level: @game.levels.first)
+  end
+
+  # is_testing? is exempt, but ONLY for the author's own team, and that
+  # exemption is load-bearing: the author's team plays test mode with no
+  # GameEntry by construction (features/games/test-game-1.feature and
+  # test-game-2.feature both fail without this). It must not extend to any
+  # other team: ensure_game_is_started and ensure_not_author_of_the_game both
+  # also return early on is_testing?, so an unscoped exemption here would let
+  # any authenticated user self-register a team and read every level and
+  # answer code of an unstarted, unregistered game -- including one whose
+  # entry the author had rejected -- before the game ever goes live.
+  # GameEntry.of dereferences team.id, so the nil check must come first.
+  def may_start_passing?
+    return false if @team.nil?
+    return true if @game.is_testing? && @game.created_by?(current_user)
+
+    GameEntry.of(@team, @game)&.status == "accepted"
   end
 
   def save_log

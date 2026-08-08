@@ -84,8 +84,9 @@ run against it. Recording the result here so the implementer does not have to re
 **Why this task is first:** these three files create no `GamePassing` via the fixture helper — they
 rely on the controller creating it on first request, with no `GameEntry` anywhere. Adding the entry
 now is a no-op against current behaviour (they stay green), and it means the guard in Task 2 can
-land without a red commit in between. Two of these examples currently pass *vacuously* and will
-start proving something for the first time — see Step 4.
+land without a red commit in between. Two of these examples pass for real today, but would start
+passing *vacuously* — against a 401 instead of the behaviour they name — the moment Task 2's guard
+lands, if the entry were not added here first. See Step 4.
 
 - [ ] **Step 1: Add the fixture helper**
 
@@ -145,14 +146,22 @@ bundle exec rspec spec/controllers/game_passings/show_current_level_spec.rb \
 Expected: all green, same counts as your baseline. If anything fails now, the entry is malformed
 (most likely a missing `:game` or `:team`) — fix it before continuing.
 
-**Two examples in these files currently pass vacuously.** Confirm they now prove something:
+**Two examples in these files pass for real today — this task exists to keep it that way.** Nothing
+in the current codebase gates on `GameEntry` presence (`find_or_create_game_passing` creates
+unconditionally; `ensure_team_member` only checks `member_of_any_team?`), so both already exercise
+real rendering, not a 401:
 
-- `spec/requests/translated_level_spec.rb:131` — the N+1 query-count guard. Before registration it
-  compared the query counts of two requests that both 401'd, so `expect(large_count).to eq(small_count)`
-  held while proving nothing. After Step 3 it exercises real rendering. If it now **fails**, you
-  have found a genuine N+1 that was hidden — report it, do not delete the assertion.
-- `spec/controllers/game_passings/post_answer_spec.rb:42` — `@answer_was_correct` was `nil` (falsey)
-  because the action never ran. It should now assert against a real `false`.
+- `spec/requests/translated_level_spec.rb:131` — the N+1 query-count guard. Both the small-game and
+  large-game requests already return `200` and count `19` queries each; `expect(large_count).to
+  eq(small_count)` is a genuine flatness check today. Once Task 2's guard lands, a team with no
+  accepted entry would get a 401 on both requests instead — at which point the same equality would
+  hold *vacuously*, proving nothing while looking green. Adding the entry now is what keeps this a
+  real guard after Task 2 ships. If this example ever **fails** — before or after Task 2 — that
+  indicates a genuine N+1; report it, do not delete the assertion.
+- `spec/controllers/game_passings/post_answer_spec.rb:42` — `@answer_was_correct` is already a real
+  `false` (the controller runs and compares the wrong answer) today. The same vacuity risk applies:
+  without the entry, Task 2's guard would turn this into an unauthenticated/unauthorized short-
+  circuit where the assertion passes for the wrong reason.
 
 - [ ] **Step 5: Commit**
 

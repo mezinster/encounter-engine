@@ -648,6 +648,8 @@ en:
             name:
               taken: "A team with that name already exists"
               blank: "Team name cannot be empty"
+            captain:
+              belongs_to_another_team: "already belongs to another team"
         user:
           attributes:
             email:

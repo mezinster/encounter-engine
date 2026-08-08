@@ -47,6 +47,16 @@ class NotificationMailer < ActionMailer::Base
   # mirroring the (user, team) shape #invitation_notification already uses.
   def reject_notification(user, team)
     @user = user
+    # A captainless team has nobody to notify. captain_id is nullable and
+    # Team declares `belongs_to :captain, optional: true`, so this is a valid
+    # state rather than a corrupt one -- and returning before `mail` yields
+    # ActionMailer's NullMail, which makes the caller's deliver_now a no-op
+    # without the caller having to know. Deliberately NOT fixed by reordering
+    # InvitationsController#accept: that ordering is itself deliberate and
+    # commented, and the defect is the unguarded dereference, not the
+    # sequence.
+    return if team.captain.nil?
+
     mail_in_recipient_locale(team.captain, :reject_notification)
   end
 
@@ -55,6 +65,10 @@ class NotificationMailer < ActionMailer::Base
   # is invitation.to_team.captain.
   def accept_notification(user, team)
     @user = user
+    # See #reject_notification above for why this returns rather than
+    # reordering the caller.
+    return if team.captain.nil?
+
     mail_in_recipient_locale(team.captain, :accept_notification)
   end
 

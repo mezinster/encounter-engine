@@ -676,6 +676,8 @@ uk:
             name:
               taken: "Команда з такою назвою вже існує"
               blank: "Назва команди має бути непорожньою"
+            captain:
+              belongs_to_another_team: "вже перебуває в іншій команді"
         user:
           attributes:
             email:

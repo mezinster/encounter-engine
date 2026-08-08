@@ -148,4 +148,46 @@ RSpec.describe "internationalization" do
 
     expect(mismatches).to eq([])
   end
+
+  # Every other guard in this file runs against the PARSED hash, and a
+  # duplicate YAML key is already gone by then: YAML resolves duplicates by
+  # letting the last one win, so the earlier block is discarded at parse
+  # time, silently. Nothing above can see that, and because a duplicate is
+  # typically introduced identically in all four files, even the parity and
+  # subset checks stay green.
+  #
+  # This bit us for real: a `team:` block added under
+  # activerecord.errors.models in all four locales was swallowed whole by
+  # the pre-existing `team:` block further down the same mapping. The keys
+  # were in the files, absent from I18n, and the leaf count did not move --
+  # which is the only reason anyone noticed.
+  #
+  # Checked against the Psych node tree rather than the loaded hash,
+  # because that is the only representation in which the duplicate still
+  # exists.
+  it "defines no key twice within the same mapping" do
+    duplicates_in = lambda do |node, trail, found|
+      case node
+      when Psych::Nodes::Mapping
+        seen = {}
+        node.children.each_slice(2) do |key_node, value_node|
+          key = key_node.respond_to?(:value) ? key_node.value : key_node.to_s
+          path = (trail + [key]).join(".")
+          found << path if seen.key?(key)
+          seen[key] = true
+          duplicates_in.call(value_node, trail + [key], found)
+        end
+      when Psych::Nodes::Sequence, Psych::Nodes::Document
+        node.children.each { |child| duplicates_in.call(child, trail, found) }
+      end
+      found
+    end
+
+    offenders = %i[ru en uk ka].to_h do |locale|
+      path = Rails.root.join("config/locales/#{locale}.yml")
+      [locale, duplicates_in.call(YAML.parse_file(path), [], [])]
+    end.reject { |_, found| found.empty? }
+
+    expect(offenders).to eq({})
+  end
 end

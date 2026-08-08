@@ -107,6 +107,22 @@ RSpec.describe NotificationMailer do
       expect(mail.to).to eq(["noel@diesel.kg"])
       expect(mail.subject).to match(/Пользователь Alisa принял Ваше приглашение/)
     end
+
+    # A captainless team is a valid model state -- captain_id is nullable and
+    # Team declares `belongs_to :captain, optional: true` -- and the team
+    # membership programme makes it reachable. This dereferenced
+    # team.captain.locale and .email, and InvitationsController#accept calls
+    # it AFTER joining the invitee and deleting the invitation, so the crash
+    # left a partial commit plus an error page.
+    it "delivers nothing, rather than raising, when the team has no captain" do
+      team = Team.create!(:name => "Безголовые")
+      alisa = User.create!(:nickname => "Alisa3", :email => "alisa3@diesel.kg",
+                           :password => "1234", :password_confirmation => "1234")
+
+      expect do
+        described_class.accept_notification(alisa, team).deliver_now
+      end.not_to change { ActionMailer::Base.deliveries.count }
+    end
   end
 
   describe "#reject_notification" do
@@ -121,6 +137,18 @@ RSpec.describe NotificationMailer do
 
       expect(mail.to).to eq(["iv@diesel.kg"])
       expect(mail.subject).to match(/Пользователь Alisa отказался от приглашения/)
+    end
+
+    # See the captainless case in #accept_notification above -- #reject has
+    # the same shape and the same crash.
+    it "delivers nothing, rather than raising, when the team has no captain" do
+      team = Team.create!(:name => "Безголовые-2")
+      alisa = User.create!(:nickname => "Alisa4", :email => "alisa4@diesel.kg",
+                           :password => "1234", :password_confirmation => "1234")
+
+      expect do
+        described_class.reject_notification(alisa, team).deliver_now
+      end.not_to change { ActionMailer::Base.deliveries.count }
     end
   end
 

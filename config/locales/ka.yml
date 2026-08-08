@@ -692,6 +692,8 @@ ka:
             name:
               taken: "ასეთი დასახელების გუნდი უკვე არსებობს"
               blank: "გუნდის დასახელება არ უნდა იყოს ცარიელი"
+            captain:
+              belongs_to_another_team: "უკვე სხვა გუნდის წევრია"
         user:
           attributes:
             email:

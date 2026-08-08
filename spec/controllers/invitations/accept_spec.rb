@@ -24,6 +24,28 @@ RSpec.describe InvitationsController, "#accept", type: :controller do
     end
   end
 
+  # The reachable form of the captainless-team crash: #accept is gated on
+  # being the RECIPIENT, not on the team having a captain, and the mailer
+  # fires after the join and after the invitation row is deleted. Before the
+  # guard in NotificationMailer this raised NoMethodError with the user
+  # already joined and the invitation already gone -- a partial commit plus
+  # an error page, with reject_rest_of_invitations never reaching.
+  describe "when the invitation's team has no captain" do
+    before :each do
+      @recepient = create_user
+      @team = create_team
+      @invitation = create_invitation :for => @recepient, :from => @team
+    end
+
+    it "joins the user and completes without raising" do
+      expect { perform_request :as_user => @recepient }.not_to raise_error
+
+      expect(@recepient.reload.team).to eq(@team)
+      expect(Invitation.find_by(:id => @invitation.id)).to be_nil
+      expect(response).to redirect_to(dashboard_path)
+    end
+  end
+
   describe "when captain (sender) attempts to accept the invitation" do
     before :each do
       @captain = create_user

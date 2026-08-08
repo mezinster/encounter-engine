@@ -85,9 +85,6 @@ class Admin::UsersController < ApplicationController
     # Games are content other people played. Orphaning them also 500s
     # games/show.html.erb, which dereferences @game.author.nickname
     # unguarded. Anonymisation exists for exactly this user.
-    # Games are content other people played. Orphaning them also 500s
-    # games/show.html.erb, which dereferences @game.author.nickname
-    # unguarded. Anonymisation exists for exactly this user.
     if user.created_games.any?
       redirect_to admin_user_path(user),
                   :alert => t("admin.users.cannot_delete_author") and return
@@ -104,6 +101,51 @@ class Admin::UsersController < ApplicationController
     record_admin_action("delete_user", user)
     redirect_to admin_users_path,
                 :notice => t("admin.users.deleted_notice", :nickname => nickname)
+  end
+
+  # The other half of D4: identity goes, the row stays. This is how a game
+  # author is removed at all -- #destroy refuses one, because orphaning games
+  # 500s games/show.html.erb, while here the row survives and the games keep a
+  # valid author who simply has no name any more.
+  #
+  # Deliberately NOT guarded on created_games for that exact reason.
+  def anonymise
+    user = User.find(params[:id])
+
+    if user.id == current_user.id
+      redirect_to admin_user_path(user),
+                  :alert => t("admin.users.cannot_anonymise_self") and return
+    end
+
+    # Their team would be left with a captain who has no name and cannot log
+    # in -- bricked in all but the column. Reassign first.
+    if user.captain?
+      redirect_to admin_user_path(user),
+                  :alert => t("admin.users.cannot_anonymise_captain") and return
+    end
+
+    # Placeholders are keyed on the id because both columns are validated
+    # unique: two anonymised accounts must not collide.
+    user.update!(
+      :nickname      => "удалённый-#{user.id}",
+      :email         => "deleted-#{user.id}@example.invalid",
+      :phone_number  => nil,
+      :instagram     => nil,
+      :telegram_id   => nil,
+      :date_of_birth => nil,
+      :on_telegram   => false,
+      :on_whatsapp   => false,
+      :on_viber      => false,
+      :on_signal     => false,
+      :on_max        => false,
+      # The person is gone, so they neither play nor administer. Detaching
+      # also stops a nameless ghost sitting in someone's team roster.
+      :team          => nil,
+      :is_superadmin => false
+    )
+
+    record_admin_action("anonymise_user", user)
+    redirect_to admin_user_path(user), :notice => t("admin.users.anonymised_notice")
   end
 
   # Consent-free, so the refusals matter more than the move. See

@@ -46,6 +46,7 @@ RSpec.describe GamesController, "#create", type: :controller do
 
   def perform_request(opts={}, params={})
     session[:user_id] = opts[:as_user]&.id
+    session[:session_token] = opts[:as_user]&.session_token
     post :create, params: params
     response
   end

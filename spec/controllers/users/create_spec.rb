@@ -37,9 +37,9 @@ RSpec.describe UsersController, "#create", type: :controller do
   end
 
   describe "strong parameters" do
-    # user_params permits only nickname/email/password/password_confirmation
-    # (see app/views/users/new.html.erb) -- signup must not let a request
-    # attach the new account to a team.
+    # signup_params permits only nickname/email (see app/views/users/new.html.erb
+    # -- the signup form no longer collects a password at all, see below) --
+    # signup must not let a request attach the new account to a team.
     it "ignores an attempted team_id" do
       team = create_team
       params = { user: { nickname: "valid#{rand(100000)}", email: "valid#{rand(100000)}@diesel.kg",
@@ -48,6 +48,20 @@ RSpec.describe UsersController, "#create", type: :controller do
       perform_request(params)
 
       expect(User.last.team_id).to be_nil
+    end
+
+    # The signup form collects nickname and email only; the server generates
+    # the first password (UsersController#create). A request that posts
+    # user[password] anyway must not be able to choose the account's
+    # credential -- signup_params does not permit :password/:password_confirmation,
+    # so whatever the server generated is what actually got hashed.
+    it "does not let a posted password override the server-generated one" do
+      params = { user: { nickname: "valid#{rand(100000)}", email: "valid#{rand(100000)}@diesel.kg",
+                          password: "attacker-chosen", password_confirmation: "attacker-chosen" } }
+
+      perform_request(params)
+
+      expect(User.last.authenticate("attacker-chosen")).to be_falsey
     end
   end
 

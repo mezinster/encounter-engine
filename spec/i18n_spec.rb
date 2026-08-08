@@ -97,6 +97,7 @@ RSpec.describe "internationalization" do
       users.index.email_label
       time.formats.short
       sessions.new.email_label
+      password_resets.new.email
       messengers.telegram
       messengers.whatsapp
       messengers.viber

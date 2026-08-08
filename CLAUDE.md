@@ -50,7 +50,7 @@ a signal to look harder at the implementation, or to raise it as a separate, exp
 not to "fix" the spec. Step definitions (`features/*/steps/*_steps.rb`, `features/support/env.rb`)
 are fair game.
 
-**One authorised exception exists.** On 2026-08-06 the repository owner explicitly authorised
+**Three authorised exceptions exist so far.** On 2026-08-06 the repository owner explicitly authorised
 amending `features/games/user-profile-view-and-edit.feature` to drop the ICQ and Jabber fields,
 which were retired from the product along with their database columns (see
 `docs/superpowers/specs/2026-08-06-profiles-and-games-list-design.md` §2.3). Four scenarios lost
@@ -58,7 +58,41 @@ their ICQ/Jabber steps and table rows; the two step definitions that carried tho
 narrowed to match. The scenario count did not change — 234 before and after — and the step total
 fell by 4, which is exactly the four `ввожу ... в поле` lines removed.
 
-This is recorded so the amendment is traceable, **not** to soften the rule. The rule stands exactly
+On 2026-08-07 the repository owner explicitly authorised a second amendment, to the same file:
+the "Изменение пароля пользователя" scenario in `user-profile-view-and-edit.feature` gained one
+step, `Если ввожу "testpass" в поле "Текущий пароль"`, immediately before the existing
+new-password steps. This is because the profile form now requires the current password before
+accepting a new one (CWE-620, task 2 of the 2026-08-07 security-account-protection plan): the
+form previously let anyone with a logged-in browser set a new password with no verification of
+the old one, and this app has no password-reset flow — a later task in that same plan (task 5)
+adds one — so an unverified change was a permanent, unrecoverable takeover for the legitimate
+owner. The scenario count did not change — 234 before and after — and the step total rose by 1,
+from 2358 to 2359, which is exactly the one step added.
+
+On 2026-08-08 the repository owner explicitly authorised a third amendment, a product redesign of
+signup rather than a fix from a security review: registration no longer collects a password at
+all (nickname and email only) — the server generates the first one, the welcome letter keeps
+carrying it and gains a line urging the user to change it promptly, and a successful login is
+treated as the email verification (no verification column, no gating — implicit by design). Three
+changes follow, all in the signup surface:
+  * `features/signup/signup.feature`, "Удачная регистрация" — the two `ввожу ... в поле "Пароль"`/
+    `"Подтверждение"` steps are gone (there is nothing left to fill), and the final assertion
+    changed from `И одно письмо с текстом "1234" должно быть выслано на aldor@diesel.kg` to
+    `И одно письмо должно быть выслано на aldor@diesel.kg` — the scenario can no longer know the
+    generated value, only that a letter went out. The new step shape had no existing definition;
+    one was added to `features/steps/mail_steps.rb`.
+  * `features/signup/signup.feature`, "Подтверждение пароля не совпадает" — deleted outright. With
+    no confirmation field at signup there is nothing left for it to assert.
+  * `features/games/signup-password.feature` — deleted outright. Its one scenario asserted that
+    the signup form's `Пароль`/`Подтверждение` fields were `type="password"`; both fields are gone.
+  * "Повторная регистрации с тем же именем и адресом" (yes, that's the scenario's real title, typo
+    and all — not something this task touched) is unchanged: nickname is still a signup field and
+    its duplicate-name assertion still holds.
+  The scenario count went from 234 to 232 (the two deleted scenarios); the step total went from
+  2359 to 2342 (-2 for the removed password/confirmation fills, -11 for the deleted
+  "Подтверждение пароля не совпадает" scenario, -4 for the deleted signup-password.feature file).
+
+This is recorded so the amendments are traceable, **not** to soften the rule. The rule stands exactly
 as written above: a feature file is changed only on an explicit, recorded decision by the
 repository owner, never as a convenience and never to make a failing test pass.
 

@@ -66,6 +66,7 @@ RSpec.describe GamePassingsController, "#post_answer", type: :controller do
 
   def perform_request(opts={})
     session[:user_id] = @team_member.id
+    session[:session_token] = @team_member.session_token
     post :post_answer, params: { game_id: @game.id, answer: opts[:answer] }
     response
   end

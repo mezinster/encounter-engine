@@ -33,6 +33,20 @@ class UsersController < ApplicationController
   def create
     @user = User.new(signup_params)
 
+    # Registration no longer collects a password -- the server generates the
+    # first one (product decision, 2026-08-08: see the third authorised
+    # feature-file exception in CLAUDE.md). Generated here, not on the model,
+    # so a console- or fixture-created User (create_user, User.create! in
+    # specs, etc.) is unaffected and still takes whatever password it's
+    # given -- a model-level default would silently apply there too. Set on
+    # both password and password_confirmation: User validates
+    # password_confirmation's presence whenever password_required? is true
+    # (both hash columns are blank on a new record), so leaving it unset
+    # would make every signup invalid.
+    generated_password = SecureRandom.alphanumeric(12)
+    @user.password = generated_password
+    @user.password_confirmation = generated_password
+
     if @user.save
       authenticate_user
       send_welcome_letter_to(@user)
@@ -49,7 +63,23 @@ class UsersController < ApplicationController
   def update
     @user = current_user
 
+    # A new password requires proof of the current one. Without this, momentary
+    # access to a logged-in browser was a permanent account takeover: the
+    # profile form re-hashes on any save where password is present, and this
+    # app has no recovery flow, so the victim could not get back in at all.
+    if params.dig(:user, :password).present? &&
+       !@user.authenticate(params.dig(:user, :current_password).to_s)
+      @user.errors.add(:base, t("users.edit.current_password_wrong"))
+      render :edit, status: :unprocessable_entity
+      return
+    end
+
     if @user.update(profile_params)
+      if params.dig(:user, :password).present?
+        reset_session
+        session[:user_id] = @user.id
+        session[:session_token] = @user.reload.session_token
+      end
       redirect_to users_path
     else
       render :edit, status: :unprocessable_entity
@@ -58,15 +88,23 @@ class UsersController < ApplicationController
 
   private
 
+  # reset_session before writing :user_id, matching SessionsController#create
+  # (sessions_controller.rb:20). Registration is the same anonymous ->
+  # authenticated transition, and the session cookie also carries the CSRF
+  # token, so the two entry points must look identical.
   def authenticate_user
+    reset_session
     session[:user_id] = @user.id
+    session[:session_token] = @user.session_token
   end
 
-  # app/views/users/new.html.erb (signup form) submits nickname, email,
-  # password, password_confirmation.
+  # app/views/users/new.html.erb (signup form) submits nickname, email only --
+  # :password/:password_confirmation are deliberately NOT permitted here. The
+  # server generates the first password in #create; permitting either of
+  # these would let a signup request choose its own account's credential.
   def signup_params
     params.fetch(:user, ActionController::Parameters.new)
-          .permit(:nickname, :email, :password, :password_confirmation)
+          .permit(:nickname, :email)
   end
 
   # app/views/users/edit.html.erb (profile form) submits nickname,
@@ -91,8 +129,8 @@ class UsersController < ApplicationController
   # Merb original: app/controllers/users.rb#send_welcome_letter_to, which
   # passed user.email and user.password to NotificationMailer#welcome_letter.
   # user.password is the plaintext virtual attribute set earlier in #create
-  # (before_save hashes it into crypted_password), so it's still readable
-  # here.
+  # (before_save hashes it into password_digest -- see User#encrypt_password),
+  # so it's still readable here.
   def send_welcome_letter_to(user)
     NotificationMailer.welcome_letter(user, user.password).deliver_now
   end

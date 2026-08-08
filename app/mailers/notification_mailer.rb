@@ -19,6 +19,13 @@ class NotificationMailer < ActionMailer::Base
     mail_in_recipient_locale(user, :welcome_letter)
   end
 
+  def password_reset(user, token)
+    @user = user
+    @host = app_host
+    @token = token
+    mail_in_recipient_locale(user, :password_reset)
+  end
+
   # Recipient is the invited user (invitation.for_user); @team is the team
   # they were invited to (invitation.to_team), used for both subject and
   # body.

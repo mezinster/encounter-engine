@@ -13,6 +13,12 @@ Given %r{залогинен как (.*)$}i do |nickname|
   step %{То я должен быть перенаправлен в личный кабинет}
   step %{должен увидеть "#{nickname}"}
   step %{все отосланные к этому моменту письма прочитаны}
+  # Resetting to @the_password rotates session_token (a password change evicts
+  # every session, including this one), so the registration session is dead
+  # from here. Log back in to honour what this step promises -- that we end up
+  # signed in as this user.
+  step %{аккаунт "#{nickname}" получает тестовый пароль}
+  step %{я логинюсь как #{nickname}}
 end
 
 Given %r{зарегистрирован как (.*)$}i do |nickname|

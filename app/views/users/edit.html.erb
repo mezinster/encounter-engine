@@ -48,12 +48,16 @@
     <%= f.time_zone_select :timezone, nil, :include_blank => t("users.edit.timezone_default") %>
   </div>
   <div class="field">
+    <%= f.label :current_password, t("users.edit.current_password") %>
+    <%= f.password_field :current_password %>
+  </div>
+  <div class="field">
     <%= f.label :password, t("users.edit.password_label") %>
-    <%= f.text_field :password %>
+    <%= f.password_field :password %>
   </div>
   <div class="field">
     <%= f.label :password_confirmation, t("users.edit.password_confirmation_label") %>
-    <%= f.text_field :password_confirmation %>
+    <%= f.password_field :password_confirmation %>
   </div>
   <%= f.submit t("users.edit.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), users_path %></em>

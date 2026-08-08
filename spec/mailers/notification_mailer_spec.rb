@@ -27,6 +27,15 @@ RSpec.describe NotificationMailer do
       expect(mail.body.encoded).to match(/1234/)
     end
 
+    # Product decision 2026-08-08: with signup no longer collecting a
+    # password (the server generates it), the welcome letter is the only
+    # place the user ever sees it -- so it must also tell them to change it.
+    # `user` here has locale: "en" (see the let above).
+    it "urges the user to change the generated password promptly" do
+      mail = described_class.welcome_letter(user, "1234")
+      expect(mail.body.encoded).to match(/change this password/i)
+    end
+
     # The Merb-era spec.mailers.notification_mailer/welcome_letter_spec.rb
     # asserted this too ("contains email"); restoring it here so the
     # coverage isn't lost in the port.

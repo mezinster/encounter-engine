@@ -1,0 +1,9 @@
+<h1><%= t("password_resets.new.title") %></h1>
+
+<%= form_with url: password_resets_path, method: :post do |f| %>
+  <div class="field">
+    <%= label_tag :email, t("password_resets.new.email") %>
+    <%= email_field_tag :email %>
+  </div>
+  <%= submit_tag t("password_resets.new.submit"), class: "btn btn--go" %>
+<% end %>

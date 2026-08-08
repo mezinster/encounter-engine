@@ -74,6 +74,22 @@ describe "the admin console", type: :request do
     expect(response.body).not_to include(delete_game_path(played))
   end
 
+  # The unfinish button is the only UI door out of the "Завершена" state
+  # (everything else about that state is one-way -- see
+  # docs/superpowers/specs/2026-08-08-superadmin-unfinish-design.md), so its
+  # visibility is part of the feature: present exactly on finished games.
+  it "offers revival for a finished game and not for a running one" do
+    finished = create_game(:author => author, :is_draft => false)
+    finished.finish_game!
+    running = create_game(:author => author, :is_draft => false)
+    sign_in(superadmin)
+
+    get admin_games_path
+
+    expect(response.body).to include(unfinish_game_path(finished))
+    expect(response.body).not_to include(unfinish_game_path(running))
+  end
+
   # N+1 guard: the view renders game.game_passings.size per row. Without
   # game_passings preloaded, that is one extra COUNT query per game -- the
   # query count would climb with the number of games shown, exactly the

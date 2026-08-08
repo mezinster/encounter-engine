@@ -121,6 +121,7 @@ ka:
         edit: "რედაქტირება"
         withdraw: "მოხსნა"
         restore: "გამოქვეყნება"
+        unfinish: "აღდგენა"
         lock: "გაყინვა"
         unlock: "გაყინვის მოხსნა"
         delete: "წაშლა"

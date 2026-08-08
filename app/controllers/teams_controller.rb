@@ -54,6 +54,52 @@ class TeamsController < ApplicationController
                 :notice => t("teams.handed_over", :nickname => successor.nickname)
   end
 
+  # Leaving exists so ensure_not_member_of_any_team stops being a trap: until
+  # now nothing in the app set users.team_id back to nil, so a user belonged
+  # to one team permanently -- and if its captain stopped logging in, every
+  # member was stuck there with it.
+  #
+  # The team comes from current_user, never from a parameter: there is no id
+  # here to forge.
+  def leave
+    team = current_user.team
+
+    if team.nil?
+      redirect_to dashboard_path, :alert => t("teams.not_in_a_team") and return
+    end
+
+    # D1: member-initiated changes wait for the race to end.
+    if team.in_live_race?
+      redirect_to team_room_path, :alert => t("teams.cannot_leave_mid_race") and return
+    end
+
+    # A captain with teammates must hand over first, or the team is left
+    # bricked -- no invitations, no registration, no way to quit a race. The
+    # handover control sits in the same fieldset of the team room, so this
+    # refusal is a signpost rather than a dead end.
+    solo = team.members.count == 1
+
+    if current_user.captain? && !solo
+      redirect_to team_room_path, :alert => t("teams.hand_over_before_leaving") and return
+    end
+
+    Team.transaction do
+      # D5: a solo captain takes the role with them. Clearing captain_id is
+      # not optional -- a dangling one would point team.captain at a
+      # non-member while User#captain?, which reads through user.team, says
+      # false. That divergence is what makes the weak
+      # SecurityFilters#ensure_team_captain guard exploitable.
+      #
+      # This is the first thing in the app that can produce captain_id IS
+      # NULL, which is what turns NotificationMailer's captainless guard from
+      # precautionary into load-bearing.
+            team.update!(:captain => nil) if current_user.captain?
+      current_user.update!(:team => nil)
+    end
+
+    redirect_to dashboard_path, :notice => t("teams.left_notice", :team => team.name)
+  end
+
   private
 
   def team_params

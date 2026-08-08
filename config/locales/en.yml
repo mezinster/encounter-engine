@@ -580,6 +580,10 @@ en:
     handed_over: "Captaincy handed over to %{nickname}"
     cannot_hand_over_mid_race: "Captaincy cannot be handed over while the team is racing"
     hand_over_needs_another_member: "Choose another member of the team"
+    left_notice: "You have left “%{team}”"
+    not_in_a_team: "You are not in a team"
+    cannot_leave_mid_race: "You cannot leave while the team is racing"
+    hand_over_before_leaving: "Hand captaincy over to another member first"
     new:
       name_label: "Title"
       submit: "Create team"

@@ -72,6 +72,9 @@ Rails.application.routes.draw do
   # member route below is added.
   resources :teams do
     post "hand_over", on: :member
+    # Collection, not member: the team is derived from current_user, so there
+    # is no id here to forge.
+    post "leave", on: :collection
   end
   resources :invitations
 

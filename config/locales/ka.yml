@@ -621,6 +621,10 @@ ka:
     handed_over: "კაპიტნობა გადაეცა: %{nickname}"
     cannot_hand_over_mid_race: "კაპიტნობის გადაცემა შეუძლებელია, სანამ გუნდი დისტანციაზეა"
     hand_over_needs_another_member: "აირჩიეთ გუნდის სხვა წევრი"
+    left_notice: "თქვენ დატოვეთ გუნდი «%{team}»"
+    not_in_a_team: "თქვენ არ ხართ გუნდის წევრი"
+    cannot_leave_mid_race: "გუნდის დატოვება შეუძლებელია, სანამ ის დისტანციაზეა"
+    hand_over_before_leaving: "ჯერ გადააბარეთ კაპიტნობა სხვა წევრს"
     new:
       name_label: "დასახელება"
       submit: "გუნდის შექმნა"

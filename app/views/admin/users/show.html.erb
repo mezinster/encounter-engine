@@ -43,11 +43,36 @@
     <%= button_to t("admin.users.show.grant"), grant_admin_user_path(@user), :method => :post, :class => "btn btn--go" %>
   <% end %>
 
+  <%# Offered only where Admin::UsersController#destroy would accept: not
+      yourself, not a captain (reassign first), not an author (their games are
+      other people's content -- anonymise instead). The last-superadmin case
+      needs no clause here: only you can be the last one and still be looking
+      at this page, so the self check already covers it.
+
+      Deliberately NO confirmation attribute. This app ships neither Turbo nor
+      rails-ujs, so data-confirm and data-turbo-confirm are both inert -- two
+      such attributes already sit elsewhere in this codebase firing no dialog
+      at all. An attribute implying a safety net nobody gets is worse than
+      none; the controller's guards are the protection. %>
+  <% if @user.id != @current_user.id && !@user.captain? && @user.created_games.empty? %>
+    <%= button_to t("admin.users.show.delete"), destroy_admin_user_path(@user),
+                  :method => :delete, :class => "btn btn--danger" %>
+  <% end %>
+
+  <%# Offered wherever #anonymise would accept -- which, unlike delete above,
+      INCLUDES an author. That difference is the whole reason both operations
+      exist: their games survive with a scrubbed author rather than being
+      orphaned. %>
+  <% if @user.id != @current_user.id && !@user.captain? %>
+    <%= button_to t("admin.users.show.anonymise"), anonymise_admin_user_path(@user),
+                  :method => :post, :class => "btn" %>
+  <% end %>
+
   <%# The move action refuses a captain, so offering the control here would be
       a promise it cannot keep -- the remedy is captaincy reassignment on the
-      admin teams screen. A form rather than a link: this app ships no Turbo
-      and no rails-ujs, so link_to with method: :post would silently issue a
-      GET, and a select cannot ride button_to. %>
+      admin teams screen. A form rather than a link: no Turbo and no
+      rails-ujs, so link_to with method: :post would silently issue a GET, and
+      a select cannot ride button_to. %>
   <% unless @user.captain? %>
     <% destinations = Team.where.not(:id => @user.team_id).order(:name) %>
     <% if destinations.any? %>

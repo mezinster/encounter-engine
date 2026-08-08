@@ -9,6 +9,14 @@ en:
       cannot_move_captain: "A captain cannot be moved. Give their team another captain first."
       cannot_move_mid_race: "Players cannot be moved while the team is racing"
       move_needs_another_team: "Choose a different team"
+      deleted_notice: "%{nickname}'s account has been deleted"
+      cannot_delete_self: "You cannot delete your own account"
+      cannot_delete_captain: "A captain cannot be deleted. Give their team another captain first."
+      cannot_delete_last_superadmin: "You cannot delete the last administrator"
+      cannot_delete_author: "A game author cannot be deleted. Anonymise the account to keep their games."
+      anonymised_notice: "The account has been anonymised"
+      cannot_anonymise_self: "You cannot anonymise your own account"
+      cannot_anonymise_captain: "A captain cannot be anonymised. Give their team another captain first."
       index:
         title: "Players"
         nickname: "Nickname"
@@ -34,6 +42,8 @@ en:
         grant: "Make administrator"
         revoke: "Revoke administrator rights"
         move: "Move to team"
+        delete: "Delete account"
+        anonymise: "Anonymise account"
     audit:
       index:
         title: "Administrator action log"
@@ -50,6 +60,8 @@ en:
           unfinish: "Resumed the game"
           set_captain: "Set the team captain"
           move_user: "Moved a player to another team"
+          delete_user: "Deleted an account"
+          anonymise_user: "Anonymised an account"
           lock: "Froze editing"
           unlock: "Unfroze editing"
           update: "Edited"

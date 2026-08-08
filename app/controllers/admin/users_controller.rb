@@ -50,6 +50,104 @@ class Admin::UsersController < ApplicationController
     redirect_to admin_user_path(user), :notice => t("admin.users.revoked_notice")
   end
 
+  # Housekeeping -- spam and test accounts. Every refusal exists because the
+  # alternative damages something the deleted user does not own. See
+  # docs/superpowers/specs/2026-08-08-team-membership-programme-design.md, S5.
+  #
+  # Refused before anything changes, matching #revoke, so no audit entry is
+  # written for a deletion that did not happen.
+  def destroy
+    user = User.find(params[:id])
+
+    if user.id == current_user.id
+      redirect_to admin_user_path(user), :alert => t("admin.users.cannot_delete_self") and return
+    end
+
+    # Their team would be left captainless WITH members -- the bricked state
+    # this whole programme exists to remove. Reassign the captaincy first.
+    if user.captain?
+      redirect_to admin_user_path(user),
+                  :alert => t("admin.users.cannot_delete_captain") and return
+    end
+
+    # last_superadmin_keeps_the_role guards REVOKING the role; destroy walks
+    # straight past it. Unreachable through this controller today -- see the
+    # note in spec/requests/admin_user_deletion_spec.rb -- because
+    # require_superadmin! plus the self guard above already make it
+    # impossible to empty the role. Kept because it costs one comparison and
+    # is the only thing between a future removal of the self guard and an
+    # instance nobody can administer.
+    if user.last_superadmin?
+      redirect_to admin_user_path(user),
+                  :alert => t("admin.users.cannot_delete_last_superadmin") and return
+    end
+
+    # Games are content other people played. Orphaning them also 500s
+    # games/show.html.erb, which dereferences @game.author.nickname
+    # unguarded. Anonymisation exists for exactly this user.
+    if user.created_games.any?
+      redirect_to admin_user_path(user),
+                  :alert => t("admin.users.cannot_delete_author") and return
+    end
+
+    nickname = user.nickname
+    user.destroy
+
+    # Recorded with the destroyed record, not nil: it is frozen but still
+    # readable, so target_label snapshots the nickname while target_id
+    # deliberately keeps the id that now points at nothing. That pairing is
+    # the whole reason target_label exists -- "User #47" alone would record
+    # the loss of the very thing that explains it.
+    record_admin_action("delete_user", user)
+    redirect_to admin_users_path,
+                :notice => t("admin.users.deleted_notice", :nickname => nickname)
+  end
+
+  # The other half of D4: identity goes, the row stays. This is how a game
+  # author is removed at all -- #destroy refuses one, because orphaning games
+  # 500s games/show.html.erb, while here the row survives and the games keep a
+  # valid author who simply has no name any more.
+  #
+  # Deliberately NOT guarded on created_games for that exact reason.
+  def anonymise
+    user = User.find(params[:id])
+
+    if user.id == current_user.id
+      redirect_to admin_user_path(user),
+                  :alert => t("admin.users.cannot_anonymise_self") and return
+    end
+
+    # Their team would be left with a captain who has no name and cannot log
+    # in -- bricked in all but the column. Reassign first.
+    if user.captain?
+      redirect_to admin_user_path(user),
+                  :alert => t("admin.users.cannot_anonymise_captain") and return
+    end
+
+    # Placeholders are keyed on the id because both columns are validated
+    # unique: two anonymised accounts must not collide.
+    user.update!(
+      :nickname      => "удалённый-#{user.id}",
+      :email         => "deleted-#{user.id}@example.invalid",
+      :phone_number  => nil,
+      :instagram     => nil,
+      :telegram_id   => nil,
+      :date_of_birth => nil,
+      :on_telegram   => false,
+      :on_whatsapp   => false,
+      :on_viber      => false,
+      :on_signal     => false,
+      :on_max        => false,
+      # The person is gone, so they neither play nor administer. Detaching
+      # also stops a nameless ghost sitting in someone's team roster.
+      :team          => nil,
+      :is_superadmin => false
+    )
+
+    record_admin_action("anonymise_user", user)
+    redirect_to admin_user_path(user), :notice => t("admin.users.anonymised_notice")
+  end
+
   # Consent-free, so the refusals matter more than the move. See
   # docs/superpowers/specs/2026-08-08-team-membership-programme-design.md, S2.
   # Every guard refuses before anything changes, matching #revoke above, so no

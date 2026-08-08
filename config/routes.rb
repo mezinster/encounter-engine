@@ -19,6 +19,8 @@ Rails.application.routes.draw do
       post "grant",  on: :member
       post "revoke", on: :member
       post "move",   on: :member
+      delete "destroy", on: :member, as: :destroy
+      post "anonymise", on: :member
     end
     resources :audit, only: [ :index ]
   end

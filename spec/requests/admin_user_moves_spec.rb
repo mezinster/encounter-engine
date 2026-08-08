@@ -127,6 +127,44 @@ describe "moving a user between teams", type: :request do
     expect(member.reload.team).to eq(source)
   end
 
+  describe "the control on the user page" do
+    # Asserts a POSTing FORM, not merely the path: this app has no Turbo and
+    # no rails-ujs, so a link_to with method: :post would satisfy a path check
+    # and then silently issue a GET against a POST-only route.
+    it "offers a move form for a plain member" do
+      _source, member = team_with_member
+      create_team(:captain => create_user)
+      sign_in(superadmin)
+
+      get admin_user_path(member)
+
+      # Matched in two steps rather than one regex, so the assertion does not
+      # depend on Rails' attribute ORDER -- form_with emits action before
+      # method, and a single ordered pattern silently fails for the wrong
+      # reason if that ever changes.
+      form_tag = response.body[
+        %r{<form[^>]*action="#{Regexp.escape(move_admin_user_path(member))}"[^>]*>}
+      ]
+
+      expect(form_tag).not_to be_nil
+      expect(form_tag).to include('method="post"')
+    end
+
+    # The action refuses to move a captain, so offering the control would be
+    # a promise it cannot keep. The remedy is captaincy reassignment on the
+    # admin teams screen.
+    it "does not offer it for a captain" do
+      captain = create_user
+      create_team(:captain => captain)
+      create_team(:captain => create_user)
+      sign_in(superadmin)
+
+      get admin_user_path(captain)
+
+      expect(response.body).not_to include(move_admin_user_path(captain))
+    end
+  end
+
   it "refuses an ordinary signed-in user" do
     source, member = team_with_member
     destination = create_team(:captain => create_user)

@@ -33,6 +33,7 @@ en:
         back: "Back to players"
         grant: "Make administrator"
         revoke: "Revoke administrator rights"
+        move: "Move to team"
     audit:
       index:
         title: "Administrator action log"

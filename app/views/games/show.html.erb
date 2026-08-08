@@ -96,7 +96,7 @@
   <% end %>
 
   $("#countdown-example").countdown(date,{
-    prefix:'<%= t("games.show.countdown_prefix") %>'
+    prefix: <%= t("games.show.countdown_prefix").to_json.html_safe %>
   });
 </script>
 

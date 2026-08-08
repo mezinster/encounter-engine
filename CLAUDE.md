@@ -111,12 +111,12 @@ add steps there or Cucumber will auto-require them a second time.
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and all four registered locales (`config.i18n.available_locales`
   in `config/application.rb`) are now fully translated: `ru`, `en`, `uk` and `ka` each carry the
-  same 488 leaf keys. `config.i18n.fallbacks` still sends anything missing to `:ru`, which is what
+  same 489 leaf keys. `config.i18n.fallbacks` still sends anything missing to `:ru`, which is what
   makes it safe to add a key to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces
   exact `ru`↔`en` parity but only requires `uk`/`ka` to be a subset, so they can lag without a red
   build. Translations live in `config/locales/{en,ru,uk,ka}.yml`.
 - **The Ukrainian and Georgian were machine-produced without a native reviewer.** They are
-  complete and structurally verified — every interpolation variable matches and all 488 keys
+  complete and structurally verified — every interpolation variable matches and all 489 keys
   resolve at runtime — but the wording has not been checked by a speaker. Georgian needed
   restructuring rather than word-for-word translation in a few places where the template's fixed
   word order fights the language (the hint delay labels, which bracket a number Georgian

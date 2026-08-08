@@ -113,8 +113,8 @@ class UsersController < ApplicationController
   # Merb original: app/controllers/users.rb#send_welcome_letter_to, which
   # passed user.email and user.password to NotificationMailer#welcome_letter.
   # user.password is the plaintext virtual attribute set earlier in #create
-  # (before_save hashes it into crypted_password), so it's still readable
-  # here.
+  # (before_save hashes it into password_digest -- see User#encrypt_password),
+  # so it's still readable here.
   def send_welcome_letter_to(user)
     NotificationMailer.welcome_letter(user, user.password).deliver_now
   end

@@ -84,8 +84,17 @@ class User < ApplicationRecord
     self.superadmin? && User.superadmin_count <= 1
   end
 
+  # "Already has a password" now means either column is populated:
+  # crypted_password for a row nobody has logged into since the bcrypt
+  # migration, password_digest for a new or already-upgraded row. Checking
+  # crypted_password alone broke the moment encrypt_password (below) stopped
+  # writing it -- every user created or upgraded after that point has a
+  # permanently blank crypted_password, so this predicate was permanently
+  # true, forcing the presence/length/confirmation password validations onto
+  # every unrelated save (a timezone change, a superadmin grant) and making
+  # the record invalid whenever the request didn't also submit a password.
   def password_required?
-    crypted_password.blank? || password.present?
+    (crypted_password.blank? && password_digest.blank?) || password.present?
   end
 
   before_save :encrypt_password, if: -> { password.present? }
@@ -95,19 +104,31 @@ class User < ApplicationRecord
   # record, so this column is the only thing that can invalidate a cookie held
   # by someone else -- reset_session rotates the requesting browser only.
   #
-  # Deliberately keyed on crypted_password_changed?, not password.present?.
-  # `password` is a plain attr_accessor (line 15): it is never cleared after
-  # save, so on an AR instance that was ever assigned a password (e.g. the one
-  # `create_user` returns), every later unrelated #update/#save would see
-  # password.present? still true and re-rotate the token -- silently
-  # invalidating a session that was just established, with no password change
-  # involved. crypted_password_changed? only fires when encrypt_password (the
-  # callback above) actually produced a new hash, i.e. a genuine password
-  # change; re-saving the same password onto the same salt is idempotent and
-  # correctly does not rotate. Order matters: this must run after
-  # encrypt_password, which it does since before_save callbacks run in
-  # definition order.
-  before_save :rotate_session_token, if: -> { crypted_password_changed? }
+  # Deliberately keyed on crypted_password_changed?/password_digest_changed?,
+  # not password.present?. `password` is a plain attr_accessor (line 15): it
+  # is never cleared after save, so on an AR instance that was ever assigned
+  # a password (e.g. the one `create_user` returns), every later unrelated
+  # #update/#save would see password.present? still true and re-rotate the
+  # token -- silently invalidating a session that was just established, with
+  # no password change involved. The two *_changed? predicates only fire when
+  # encrypt_password (the callback above) actually produced a new hash, i.e.
+  # a genuine password change; re-saving the same password onto the same
+  # salt/digest is idempotent and correctly does not rotate. Order matters:
+  # this must run after encrypt_password, which it does since before_save
+  # callbacks run in definition order.
+  #
+  # Both columns are checked because encrypt_password (below) now writes
+  # password_digest for every save that goes through it, while
+  # crypted_password is retained only as the legacy verification path -- see
+  # the comment there. Checking only crypted_password_changed? would silently
+  # stop rotating the session on every real password change once encrypt_password
+  # stopped touching that column, which is exactly the regression
+  # session_eviction_spec.rb exists to catch. The lazy legacy-row upgrade in
+  # #authenticate below writes password_digest via update_column, which
+  # bypasses callbacks entirely (including this one) by design -- upgrading
+  # the on-disk hash format for an already-authenticated request is not a
+  # credential change and must not evict the session that is mid-request.
+  before_save :rotate_session_token, if: -> { crypted_password_changed? || password_digest_changed? }
   before_create :ensure_session_token
 
   # Digest::SHA1.hexdigest("--" + salt + "--" + password + "--") -- this is
@@ -125,14 +146,24 @@ class User < ApplicationRecord
     Digest::SHA1.hexdigest("--#{salt}--#{password}--")
   end
 
+  # Verification order: bcrypt if this row has been upgraded, legacy SHA-1
+  # otherwise. A successful legacy verification upgrades the row in place --
+  # that is the only moment the plaintext is available, so it is the only
+  # moment an upgrade is possible. A failed attempt upgrades nothing.
   def authenticate(candidate)
+    if password_digest.present?
+      return BCrypt::Password.new(password_digest).is_password?(candidate)
+    end
+
     # Guard salt as well as crypted_password: a row with a null/blank salt
     # would otherwise hash "----#{candidate}--" (salt interpolated as "")
     # and could authenticate against it. Any row missing either half of the
     # pair is malformed and must fail closed, not verify.
     return false if crypted_password.blank? || salt.blank?
+    return false unless self.class.encrypt(candidate, salt) == crypted_password
 
-    self.class.encrypt(candidate, salt) == crypted_password
+    update_column(:password_digest, BCrypt::Password.create(candidate))
+    true
   end
 
   private
@@ -152,20 +183,39 @@ class User < ApplicationRecord
                I18n.t("admin.users.cannot_revoke_last"))
   end
 
+  # New passwords are bcrypt. self.encrypt above is retained unchanged for
+  # verifying rows written by the Merb app -- see the comment on it; the
+  # formula was verified byte-for-byte against real (salt, crypted_password)
+  # pairs and changing it silently locks those users out, because a mismatched
+  # hash raises nothing and the login form just rejects a correct password.
+  #
+  # Note self.salt ||= SecureRandom.hex(20) (formerly here) is no longer
+  # reached for new passwords, which also resolves the related defect that a
+  # user changing their password kept a legacy salt derived from a
+  # one-second-resolution timestamp -- see the RULING in
+  # .superpowers/sdd/2026-08-04-merb-to-rails-i18n/task-6-password-vectors.txt,
+  # which no longer applies to any password set through this callback.
+  #
+  # Guarded to be a no-op when `password` already matches the stored digest.
+  # `password` is a sticky attr_accessor (line 15, never cleared after save --
+  # see the comment on rotate_session_token above) and this callback is
+  # `before_save ... if: -> { password.present? }` (unconditional on whether
+  # the value actually changed), so *every* later save of an AR instance that
+  # was ever assigned a password -- e.g. `let(:user) { create_user }` reused
+  # for an unrelated `user.update!(:timezone => ...)` -- re-runs this method.
+  # SHA-1-with-a-stored-salt was deterministic, so a legacy re-hash of the
+  # same password produced byte-identical output and crypted_password_changed?
+  # stayed false. BCrypt::Password.create salts every call, so re-hashing an
+  # unchanged password produces a *different* digest string every time --
+  # marking password_digest dirty, rotating the session token, and evicting
+  # the very session that just made the request. Checking the plaintext
+  # against the existing digest first restores the old idempotence: a genuine
+  # change (digest doesn't verify) still re-hashes and rotates; a re-save of
+  # the same password does neither.
   def encrypt_password
-    # merb-auth generated new salts as
-    #   Digest::SHA1.hexdigest("--#{Time.now.to_s}--#{login_param}--")
-    # (login_param is the constant :email). Time.now.to_s has one-second
-    # resolution and login_param never varies, so that salt carries no
-    # per-user entropy at all -- it's fully predictable from a timestamp.
-    # The vectors file demonstrates this directly: two distinct demo
-    # accounts created in the same second share one salt. RULING (see
-    # task-6-password-vectors.txt): do NOT reproduce that formula for new
-    # salts. Salts are stored per row, so existing users keep verifying
-    # against whatever salt is already in their row -- only *new* salts
-    # change here, to a cryptographically strong SecureRandom.hex(20).
-    self.salt ||= SecureRandom.hex(20)
-    self.crypted_password = self.class.encrypt(password, salt)
+    return if password_digest.present? && BCrypt::Password.new(password_digest).is_password?(password)
+
+    self.password_digest = BCrypt::Password.create(password)
   end
 
   def rotate_session_token

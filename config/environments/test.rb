@@ -18,4 +18,11 @@ Rails.application.configure do
   # `expect(rendered).to include(I18n.t(key))` passes even when key exists
   # nowhere. Raising here turns a silent typo into a loud test failure.
   config.i18n.raise_on_missing_translations = true
+
+  # bcrypt's default cost is tuned to make offline brute force expensive in
+  # production; the same cost applied to every fixture user in the suite is
+  # what pushed a ~24s RSpec run past five minutes once User#encrypt_password
+  # started hashing with it. MIN_COST keeps hashing cheap for tests only --
+  # this file is test-environment-only, so production keeps the real default.
+  BCrypt::Engine.cost = BCrypt::Engine::MIN_COST
 end

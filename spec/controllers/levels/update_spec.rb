@@ -56,6 +56,16 @@ RSpec.describe LevelsController, "#update", type: :controller do
       @level.reload
       @level.position.should == @initial_level_position
     end
+
+    # A text-only update never touches position (acts_as_list scope: :game),
+    # so the assertion above holds whether the update actually ran or was
+    # blocked before reaching the controller -- it cannot detect a broken
+    # #update on its own. This asserts the attribute the request itself
+    # changed, so the block can no longer pass vacuously.
+    it "updates the level's text" do
+      @level.reload
+      @level.text.should == "Some other text"
+    end
   end
 
   def perform_request(opts={}, params={})

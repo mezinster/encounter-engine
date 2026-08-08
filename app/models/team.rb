@@ -6,6 +6,7 @@ class Team < ApplicationRecord
   belongs_to :captain, :class_name => "User", optional: true
 
   validates :name, presence: true, uniqueness: true
+  validate :captain_is_not_another_teams_member
 
   after_save :adopt_captain
 
@@ -44,6 +45,27 @@ class Team < ApplicationRecord
   end
 
   protected
+
+  # adopt_captain (below) overwrites users.team_id, so without this a team
+  # could take a captain straight out of somebody else's team -- silently,
+  # with no error and no notification to the team they were taken from.
+  #
+  # Refusing the save is deliberately preferred to skipping the adoption:
+  # skipping would leave captain_id pointing at a non-member, and
+  # User#captain? reads through user.team rather than teams.captain_id, so
+  # the two would disagree. That divergence is precisely what makes the weak
+  # SecurityFilters#ensure_team_captain guard ("is this user *a* captain")
+  # exploitable, so leaving no divergent state is the safer direction.
+  #
+  # A teamless captain is fine and must stay fine: TeamsController#create
+  # assigns a captain who has no team yet, and adopt_captain is what makes
+  # the creator a member. spec/controllers/teams/create_spec.rb pins that.
+  def captain_is_not_another_teams_member
+    return if captain.nil?
+    return if captain.team_id.nil? || captain.team_id == id
+
+    errors.add(:captain, :belongs_to_another_team)
+  end
 
   def adopt_captain
     unless captain.nil?

@@ -665,6 +665,10 @@ ka:
               missing_primary: "უნდა მოიცავდეს თამაშის ძირითად ენას"
             primary_locale:
               settled: "ვერ შეიცვლება მას შემდეგ, რაც თარგმანები დაემატა"
+        team:
+          attributes:
+            captain:
+              belongs_to_another_team: "უკვე სხვა გუნდის წევრია"
         game_entry:
           attributes:
             game:

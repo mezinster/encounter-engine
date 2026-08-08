@@ -7,10 +7,18 @@ class BackfillLogTeamAndLevelIds < ActiveRecord::Migration[8.0]
     say "logs still missing team_id:  #{Log.where(:team_id => nil).count}"
   end
 
-  # Genuinely reversible: this clears only the two columns the previous
-  # migration (20260808060240_add_team_and_level_ids_to_logs.rb) added, and no
-  # other code path writes to them yet (Task 3 still name-based scopes).
+  # NOT reversible. This was written when true: at the time, no other code
+  # path wrote to team_id/level_id (Task 3 still had name-based scopes), so
+  # clearing them just undid this migration's own backfill. That stopped
+  # being true once save_log started writing both ids on every new row --
+  # in an earlier commit than this migration, so by the time this migration
+  # runs in production the app is already populating the columns live.
+  # db:rollback would now wipe ids written by real gameplay, not just
+  # backfilled ones, and under Log.of_team/of_level's id-only scopes (Task 4,
+  # app/models/log.rb) every log row would vanish from all three author
+  # views until re-backfilled -- and re-running `up` only recovers what
+  # resolves unambiguously, not what was wiped.
   def down
-    Log.update_all(:team_id => nil, :level_id => nil)
+    raise ActiveRecord::IrreversibleMigration
   end
 end

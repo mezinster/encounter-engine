@@ -89,11 +89,18 @@ end
 
 RSpec.describe "logs/show_level_log", type: :view do
   it "renders the level's correct answer and the team's submission log" do
-    level = create_level
+    # create_level's own fixture default builds one question via
+    # Level#correct_answer=; override it directly so the level has exactly
+    # the single question this test asserts on (a second create_question
+    # call would leave level.questions.first pointing at the wrong one).
+    level = create_level(correct_answer: "enone")
     game = level.game
     team = create_team
-    create_question(level: level, correct_answer: "enone")
-    log = Log.create!(game_id: game.id, team: team.name, level: level.name, answer: "enone", time: Time.current)
+    # Deliberately distinct from the level's correct_answer ("enone",
+    # asserted on separately below) -- otherwise this example would pass
+    # even if the log row were never rendered at all.
+    log = Log.create!(game_id: game.id, team: team.name, team_id: team.id,
+                      level: level.name, level_id: level.id, answer: "submitted-answer", time: Time.current)
 
     assign(:team, team)
     assign(:level, level)
@@ -105,6 +112,7 @@ RSpec.describe "logs/show_level_log", type: :view do
     expect(rendered).to include(ERB::Util.html_escape(I18n.t("logs.show_level_log.title", team: team.name, level: level.name, game: game.name)))
     expect(rendered).to include(I18n.t("logs.show_level_log.correct_answer"))
     expect(rendered).to include("enone")
+    expect(rendered).to include("submitted-answer")
   end
 end
 

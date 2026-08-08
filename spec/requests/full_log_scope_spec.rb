@@ -62,6 +62,27 @@ describe "the full answer log", type: :request do
     expect(response.body.scan("ОДНОЗНАЧНЫЙ-КОД").length).to eq(1)
   end
 
+  # The example above ("colliding-named level ... different game") passes
+  # even with of_game dropped from the controller, because the other game's
+  # log row points at other_level -- a different id from `level` -- so
+  # of_level(level) alone already excludes it. That makes of_game look
+  # unpinned: it isn't. Here the row's level_id/team_id genuinely match
+  # `level`/`team` in `game` (of_level and of_team alone would let it
+  # through); only its own :game_id column says otherwise (data corruption,
+  # or a future write path that gets it wrong). of_game is the only scope
+  # that can catch this one.
+  it "does not show a row whose game_id disagrees with its own (correct) level_id and team_id" do
+    expect(game.id).not_to eq(other_game.id)
+
+    Log.create!(:game_id => other_game.id, :level => level.name, :level_id => level.id,
+                :team => team.name, :team_id => team.id,
+                :time => Time.now, :answer => "НЕВЕРНЫЙ-GAME-ID")
+
+    get show_full_log_path(:game_id => game.id)
+
+    expect(response.body).not_to include("НЕВЕРНЫЙ-GAME-ID")
+  end
+
   # LogsController#show_full_log builds @teams with
   # Team.find_by_sql("select * from teams t inner join game_passings gp
   # on t.id = gp.team_id where gp.game_id = ..."). A bare `select *` across

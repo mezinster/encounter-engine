@@ -37,3 +37,4 @@ CLAUDE.local.md
 
 # git worktrees for parallel hotfixes
 .worktrees/
+.claude/worktrees/

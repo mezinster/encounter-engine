@@ -44,7 +44,8 @@ describe "the per-game answer log", type: :request do
     # the example below would pass vacuously -- fail loudly instead.
     expect(game.id).not_to eq(level.id)
 
-    Log.create!(:game_id => level.id, :level => level.name, :team => team.name,
+    Log.create!(:game_id => level.id, :level => level.name, :level_id => level.id,
+                :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "ЧУЖОЙ-КОД")
 
     get show_game_log_path(:game_id => game.id, :team_id => team.id)
@@ -54,7 +55,8 @@ describe "the per-game answer log", type: :request do
 
   it "does not show another team's submissions on this game" do
     other = create_team(:captain => create_user)
-    Log.create!(:game_id => game.id, :level => level.name, :team => other.name,
+    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+                :team => other.name, :team_id => other.id,
                 :time => Time.now, :answer => "ЧУЖАЯ-КОМАНДА")
 
     get show_game_log_path(:game_id => game.id, :team_id => team.id)

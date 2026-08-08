@@ -1,3 +1,9 @@
 <h2><%= t("index.index.title") %></h2>
 
-<p><%= link_to t("index.index.games_list"), games_path %></p>
+<%# features/games/games-list.feature:33 clicks this exact link text on the
+    home page and expects to land on the full games list, so the heading
+    stays a link to /games rather than becoming plain text now that the
+    list itself also renders inline below. %>
+<h3><%= link_to t("index.index.games_list"), games_path %></h3>
+
+<%= render "games/list", games: @games %>

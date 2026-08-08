@@ -110,10 +110,17 @@ depends on the one before, as noted.
 | 3 | **Superadmin moves a user between teams**, audited, refused for captains and mid-race at either end | `docs/superpowers/plans/2026-08-08-team-membership-phase-3-superadmin-moves.md` — **3 tasks**. **Built: PR [#50](https://github.com/mezinster/encounter-engine/pull/50)** | 2 |
 | 4 | **Leaving a team** — `POST /teams/leave`; a solo captain may leave, emptying the team | `docs/superpowers/plans/2026-08-08-team-membership-phase-4-leaving.md` — **3 tasks**. **Built: PR [#51](https://github.com/mezinster/encounter-engine/pull/51)** | 2 |
 | 5 | **Join requests** — new `TeamJoinRequest` model; cannot reuse `Invitation`, whose frozen validation points the wrong way | `docs/superpowers/plans/2026-08-08-team-membership-phase-5-join-requests.md` — **6 tasks**. **Built: PR [#52](https://github.com/mezinster/encounter-engine/pull/52)** | 4 |
-| 6 | **`actor_label` on `AdminAction`, then user deletion and anonymise** | not yet written | 2 |
+| 6 | **`actor_label` on `AdminAction`, then user deletion and anonymise** | `docs/superpowers/plans/2026-08-08-team-membership-phase-6-deletion.md` — **5 tasks**. **Built: PR [#53](https://github.com/mezinster/encounter-engine/pull/53)** | 2 |
 
-Plans are written **just before each phase is built**, not all up front: phase 1's
-foundations shape everything after them.
+Plans were written **just before each phase was built**, not all up front: phase 1's
+foundations shaped everything after them, and phase 6's exploration found three hazards
+(`User` had no `dependent:` option at all) that a plan written on day one could not have
+known — one of them created by phase 5, hours earlier.
+
+**All six phases are built.** With #53 merged the programme is complete: a captain who
+stops logging in no longer bricks their team, members can leave, users can move between
+teams by request or by operator action, and accounts can be removed either permanently or
+by scrubbing identity.
 
 **A rule worth carrying into every remaining phase**, learned the same way twice: an
 assertion placed after a `raise_error` or `assert_unauthorized` expectation **in the same

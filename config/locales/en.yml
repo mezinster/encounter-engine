@@ -62,6 +62,7 @@ en:
         totals: "Totals"
         entries_by_status: "Entry requests by status"
         all_games: "All games"
+        all_teams: "All teams"
         audit_log: "Action log"
         status:
           withdrawn: "Withdrawn"
@@ -103,6 +104,13 @@ en:
         unlock: "Unlock"
         delete: "Delete"
         delete_confirm: "Delete the game “%{name}” and all its levels? This cannot be undone."
+    teams:
+      index:
+        title: "Teams"
+        name: "Name"
+        captain: "Captain"
+        members: "Members"
+        no_captain: "no captain"
   answers:
     must_have_at_least_one_variant: "There must be at least one answer code"
     index:

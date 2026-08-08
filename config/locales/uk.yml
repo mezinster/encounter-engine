@@ -80,6 +80,7 @@ uk:
         totals: "Усього"
         entries_by_status: "Заявки за статусом"
         all_games: "Усі ігри"
+        all_teams: "Усі команди"
         status:
           withdrawn: "Знята з публікації"
           draft: "Чернетка"
@@ -120,6 +121,13 @@ uk:
         unlock: "Розморозити"
         delete: "Видалити"
         delete_confirm: "Видалити гру «%{name}» з усіма завданнями? Це незворотно."
+    teams:
+      index:
+        title: "Команди"
+        name: "Назва"
+        captain: "Капітан"
+        members: "Склад"
+        no_captain: "немає капітана"
   answers:
     must_have_at_least_one_variant: "Має бути хоча б один варіант коду"
     index:

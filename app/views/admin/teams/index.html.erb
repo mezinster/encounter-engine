@@ -1,0 +1,29 @@
+<%# app/views/admin/teams/index.html.erb %>
+<h1><%= t("admin.teams.index.title") %></h1>
+
+<div class="table-wrap">
+<table class="table--cards">
+  <thead>
+    <tr>
+      <th><%= t("admin.teams.index.name") %></th>
+      <th><%= t("admin.teams.index.captain") %></th>
+      <th><%= t("admin.teams.index.members") %></th>
+    </tr>
+  </thead>
+  <tbody>
+  <% @teams.each do |team| %>
+    <tr>
+      <td data-label="<%= t("admin.teams.index.name") %>"><%= team.name %></td>
+      <%# A captainless team is the state this screen exists to repair, so the
+          nil case is a label rather than a dereference. %>
+      <td data-label="<%= t("admin.teams.index.captain") %>">
+        <%= team.captain&.nickname || t("admin.teams.index.no_captain") %>
+      </td>
+      <td data-label="<%= t("admin.teams.index.members") %>">
+        <%= team.members.map(&:nickname).join(", ") %>
+      </td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+</div>

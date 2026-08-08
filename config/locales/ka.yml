@@ -86,6 +86,7 @@ ka:
         totals: "სულ"
         entries_by_status: "განაცხადები სტატუსის მიხედვით"
         all_games: "ყველა თამაში"
+        all_teams: "ყველა გუნდი"
         status:
           withdrawn: "მოხსნილია გამოქვეყნებიდან"
           draft: "მონახაზი"
@@ -126,6 +127,13 @@ ka:
         unlock: "გაყინვის მოხსნა"
         delete: "წაშლა"
         delete_confirm: "წავშალოთ თამაში «%{name}» ყველა დავალებითურთ? ეს შეუქცევადია."
+    teams:
+      index:
+        title: "გუნდები"
+        name: "სახელი"
+        captain: "კაპიტანი"
+        members: "შემადგენლობა"
+        no_captain: "კაპიტანი არ არის"
   answers:
     must_have_at_least_one_variant: "უნდა იყოს კოდის სულ მცირე ერთი ვარიანტი"
     index:

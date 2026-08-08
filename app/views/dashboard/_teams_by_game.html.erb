@@ -1,0 +1,18 @@
+<fieldset class="card">
+  <legend>
+    <%= t("games.teams.legend") %>
+  </legend>
+
+  <% teams_by_game.each do |game, teams| %>
+    <div class="team-group">
+      <h3><%= game.name %></h3>
+      <ul class="game-list">
+        <% teams.each do |team| %>
+          <li>
+            <strong><%= team.name %></strong>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</fieldset>

@@ -114,7 +114,7 @@ RSpec.describe "dashboard/index", type: :view do
     assign(:invitations, [])
     assign(:games, [])
     assign(:game_entries, [])
-    assign(:teams, [])
+    assign(:teams_by_game, {})
 
     view.define_singleton_method(:logged_in?) { true }
     view.define_singleton_method(:current_user) { captain }

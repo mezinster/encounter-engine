@@ -633,10 +633,6 @@ ru:
               missing_primary: "должны включать основной язык игры"
             primary_locale:
               settled: "нельзя изменить после того, как добавлены переводы"
-        team:
-          attributes:
-            captain:
-              belongs_to_another_team: "уже состоит в другой команде"
         game_entry:
           attributes:
             game:
@@ -664,6 +660,8 @@ ru:
             name:
               taken: "Команда с таким названием уже существует"
               blank: "Название команды должно быть непустым"
+            captain:
+              belongs_to_another_team: "уже состоит в другой команде"
         user:
           attributes:
             email:

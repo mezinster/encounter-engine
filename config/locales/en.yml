@@ -621,10 +621,6 @@ en:
               missing_primary: "must include the game's primary language"
             primary_locale:
               settled: "cannot be changed once translations exist"
-        team:
-          attributes:
-            captain:
-              belongs_to_another_team: "already belongs to another team"
         game_entry:
           attributes:
             game:
@@ -652,6 +648,8 @@ en:
             name:
               taken: "A team with that name already exists"
               blank: "Team name cannot be empty"
+            captain:
+              belongs_to_another_team: "already belongs to another team"
         user:
           attributes:
             email:

@@ -649,10 +649,6 @@ uk:
               missing_primary: "мають включати основну мову гри"
             primary_locale:
               settled: "не можна змінити після того, як додано переклади"
-        team:
-          attributes:
-            captain:
-              belongs_to_another_team: "вже перебуває в іншій команді"
         game_entry:
           attributes:
             game:
@@ -680,6 +676,8 @@ uk:
             name:
               taken: "Команда з такою назвою вже існує"
               blank: "Назва команди має бути непорожньою"
+            captain:
+              belongs_to_another_team: "вже перебуває в іншій команді"
         user:
           attributes:
             email:

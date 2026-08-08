@@ -28,6 +28,30 @@ RSpec.describe Team, "captain membership" do
     expect(victim.reload.team).to eq(other_team)
   end
 
+  # The refusal has to SAY something. Every other example here asserts the
+  # validation's behaviour, and behaviour alone cannot see a missing
+  # translation: errors.add(:captain, :belongs_to_another_team) still marks
+  # the record invalid when the key does not resolve, it just renders
+  # "translation missing" (or, under a fallback, the generic "имеет неверное
+  # значение") to the author.
+  #
+  # This example exists because that is exactly what happened: the key was
+  # added as a SECOND `team:` block under activerecord.errors.models, YAML
+  # let the last duplicate win, and the whole block was discarded at parse
+  # time. It was in the file and absent from I18n. See the duplicate-key
+  # guard in spec/i18n_spec.rb, which now catches the cause rather than this
+  # single symptom.
+  it "renders a real message for the refusal, not a missing translation" do
+    victim = create_user
+    create_team(:captain => victim)
+    team = create_team(:captain => create_user)
+
+    team.captain = victim
+    team.valid?
+
+    expect(team.errors[:captain]).to eq(["уже состоит в другой команде"])
+  end
+
   # Load-bearing for TeamsController#create, where the creator has no team_id
   # yet and adopt_captain is what makes them a member. Pinned end-to-end by
   # spec/controllers/teams/create_spec.rb.

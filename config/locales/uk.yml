@@ -595,7 +595,11 @@ uk:
       composition: "Склад"
       captain_suffix: "- капітан"
       invite: "Запросити учасників"
+      hand_over: "Передати капітанство"
   teams:
+    handed_over: "Капітанство передано: %{nickname}"
+    cannot_hand_over_mid_race: "Не можна передати капітанство, поки команда на дистанції"
+    hand_over_needs_another_member: "Оберіть іншого учасника команди"
     new:
       name_label: "Назва"
       submit: "Створити команду"

@@ -581,7 +581,11 @@ ru:
       composition: "Состав"
       captain_suffix: "- капитан"
       invite: "Пригласить участников"
+      hand_over: "Передать капитанство"
   teams:
+    handed_over: "Капитанство передано: %{nickname}"
+    cannot_hand_over_mid_race: "Нельзя передать капитанство, пока команда на дистанции"
+    hand_over_needs_another_member: "Выберите другого участника команды"
     new:
       name_label: "Название"
       submit: "Создать команду"

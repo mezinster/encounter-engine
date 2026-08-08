@@ -610,7 +610,11 @@ ka:
       composition: "შემადგენლობა"
       captain_suffix: "- კაპიტანი"
       invite: "მონაწილეების მოწვევა"
+      hand_over: "კაპიტნობის გადაცემა"
   teams:
+    handed_over: "კაპიტნობა გადაეცა: %{nickname}"
+    cannot_hand_over_mid_race: "კაპიტნობის გადაცემა შეუძლებელია, სანამ გუნდი დისტანციაზეა"
+    hand_over_needs_another_member: "აირჩიეთ გუნდის სხვა წევრი"
     new:
       name_label: "დასახელება"
       submit: "გუნდის შექმნა"

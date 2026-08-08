@@ -569,7 +569,11 @@ en:
       composition: "Members"
       captain_suffix: "- captain"
       invite: "Invite members"
+      hand_over: "Hand over captaincy"
   teams:
+    handed_over: "Captaincy handed over to %{nickname}"
+    cannot_hand_over_mid_race: "Captaincy cannot be handed over while the team is racing"
+    hand_over_needs_another_member: "Choose another member of the team"
     new:
       name_label: "Title"
       submit: "Create team"

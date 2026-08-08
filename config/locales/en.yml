@@ -42,6 +42,7 @@ en:
         action:
           withdraw: "Withdrew"
           restore: "Published"
+          unfinish: "Resumed the game"
           lock: "Froze editing"
           unlock: "Unfroze editing"
           update: "Edited"
@@ -145,6 +146,7 @@ en:
   games:
     withdrawn_notice: "Game withdrawn from players"
     restored_notice: "Game published again"
+    unfinished_notice: "The game has been resumed"
     locked_notice: "Game editing locked"
     unlocked_notice: "Game editing unlocked"
     not_deletable: "This game cannot be deleted because teams have played it. Withdraw it instead."

@@ -116,6 +116,16 @@ class Game < ApplicationRecord
     update_column(:withdrawn_at, nil)
   end
 
+  # The reverse of finish_game!, superadmin-only (see GamesController). Same
+  # update_column shape as withdraw!/restore! -- deliberately unvalidated,
+  # because game_starts_in_the_future and deadline_is_in_future are skipped
+  # while author_finished_at is set, so a game ended after its start date
+  # carries past dates a validated save would reject. For the "ended too
+  # early, let it continue" case those past dates are correct, not stale.
+  def unfinish!
+    update_column(:author_finished_at, nil)
+  end
+
   def lock_editing!
     update_column(:editing_locked_at, Time.now)
   end

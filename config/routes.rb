@@ -76,6 +76,7 @@ Rails.application.routes.draw do
       get :delete
       post :withdraw
       post :restore
+      post :unfinish
       post :lock
       post :unlock
     end

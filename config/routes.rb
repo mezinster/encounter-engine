@@ -18,6 +18,7 @@ Rails.application.routes.draw do
     resources :users, only: [ :index, :show ] do
       post "grant",  on: :member
       post "revoke", on: :member
+      post "move",   on: :member
     end
     resources :audit, only: [ :index ]
   end

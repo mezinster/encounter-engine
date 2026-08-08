@@ -584,6 +584,11 @@ en:
     captain_must_hand_over_first: "Hand over captaincy or leave your team first"
     cannot_apply_mid_race: "You cannot apply while your team is racing"
     unknown_team: "Team not found"
+    accepted: "%{nickname} has joined the team"
+    rejected: "%{nickname}'s application has been declined"
+    already_decided: "This application has already been decided"
+    applicant_is_a_captain: "That player now captains their own team. They must hand over captaincy first."
+    cannot_decide_mid_race: "Applications cannot be decided while a team is racing"
   teams:
     handed_over: "Captaincy handed over to %{nickname}"
     cannot_hand_over_mid_race: "Captaincy cannot be handed over while the team is racing"

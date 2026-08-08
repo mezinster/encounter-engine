@@ -577,6 +577,13 @@ en:
       invite: "Invite members"
       hand_over: "Hand over captaincy"
       leave: "Leave the team"
+  team_join_requests:
+    sent: "Your application to join “%{team}” has been sent"
+    already_applied: "You have already applied to this team"
+    already_a_member: "You are already in this team"
+    captain_must_hand_over_first: "Hand over captaincy or leave your team first"
+    cannot_apply_mid_race: "You cannot apply while your team is racing"
+    unknown_team: "Team not found"
   teams:
     handed_over: "Captaincy handed over to %{nickname}"
     cannot_hand_over_mid_race: "Captaincy cannot be handed over while the team is racing"

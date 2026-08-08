@@ -8,6 +8,23 @@ module GamePassingsHelper
     !! @answer_was_correct
   end
 
+  # Set only by GamePassingsController#reject_empty_answer, mutually
+  # exclusive with answer_posted? -- a rejected submission never sets
+  # @answer, so the two branches in show_current_level.html.erb never both
+  # fire.
+  def answer_rejected?
+    @answer_rejected.present?
+  end
+
+  # @answer_rejected is one of the two kinds reject_empty_answer is called
+  # with: :choice (post_options) or :code (post_answer). Building the key
+  # this way keeps the two messages next to each other in the locale files
+  # rather than needing a case statement here for what is otherwise the same
+  # lookup.
+  def rejected_answer_message
+    t("game_passings.show_current_level.answer_missing_#{@answer_rejected}")
+  end
+
   # show_results is guest-reachable (GamePassingsController#show_results has
   # no require_authentication! before_action -- see game_passings_controller.rb:9),
   # unlike LogsController#show_full_log which the link points to. Without this

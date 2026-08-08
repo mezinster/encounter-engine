@@ -42,13 +42,21 @@ describe "quiz option submission scoping", type: :request do
     expect(response.body).not_to include("ЧУЖОЙ СЕКРЕТ")
   end
 
+  # A foreign question_id/option_id resolves to nothing under the scoped
+  # Option.where above, so chosen_texts stays empty -- indistinguishable, by
+  # construction, from a genuinely empty submission (see
+  # GamePassingsController#post_options). Before the reject-empty-answer fix
+  # this still wrote a blank Log row (never leaking the foreign text, just
+  # logging ""); now it is refused outright by the same guard that rejects
+  # "nothing selected", so no row is written at all -- a strictly narrower
+  # surface, not a regression.
   it "does not log the text of options from another game" do
     expect {
       post post_answer_path(:game_id => game.id),
            :params => { :option_ids => { foreign_question.id.to_s => [ foreign_option.id.to_s ] } }
-    }.to change { Log.count }.by(1)
+    }.not_to change { Log.count }
 
-    expect(Log.last.answer).not_to include("ЧУЖОЙ СЕКРЕТ")
+    expect(response.body).not_to include("ЧУЖОЙ СЕКРЕТ")
   end
 
   it "still records a genuine selection on this level" do

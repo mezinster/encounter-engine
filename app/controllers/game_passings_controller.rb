@@ -102,7 +102,20 @@ class GamePassingsController < ApplicationController
     # GamePassing#check_answer!'s internal strip!, which mutates in place --
     # save_log below must see the trimmed value, same as the original.
     raw_answer = params[:answer]
-    @answer = raw_answer.is_a?(String) ? raw_answer.strip : ""
+    stripped_answer = raw_answer.is_a?(String) ? raw_answer.strip : ""
+
+    # An empty code box submits @answer = "" -- this level has no quiz
+    # question, so there is nothing else it could be. Production logged this
+    # silently (14 blank rows on game 4's full log: no scoring, no feedback,
+    # just the page again -- one team hit it three times in eleven seconds).
+    # The owner's call: refuse it with a message rather than writing a blank
+    # row nobody asked to submit.
+    if stripped_answer.blank?
+      reject_empty_answer(:code)
+      return
+    end
+
+    @answer = stripped_answer
     save_log
     @answer_was_correct = @game_passing.check_answer!(@answer)
 
@@ -177,6 +190,17 @@ class GamePassingsController < ApplicationController
     typed = params[:answer]
     typed = typed.is_a?(String) ? typed.strip : ""
     chosen_texts << typed if typed.present?
+
+    # Nothing picked and nothing typed -- exactly what pressing "Отправить!"
+    # with no selection produces (params[:option_ids] is simply absent).
+    # Production logged this as a blank row with no scoring and no feedback
+    # (game 4's full log, 14 rows); the owner's call is to refuse it instead.
+    # chosen_texts already folds the typed answer in above, so this single
+    # check covers a pure quiz level and a mixed quiz-and-code level alike.
+    if chosen_texts.empty?
+      reject_empty_answer(:choice)
+      return
+    end
 
     # Logged, and against the level the answer was actually submitted on --
     # before any of the calls below can advance current_level via pass_level!,
@@ -315,6 +339,18 @@ class GamePassingsController < ApplicationController
     return true if @game.is_testing? && @game.created_by?(current_user)
 
     GameEntry.of(@team, @game)&.status == "accepted"
+  end
+
+  # Shared by post_answer and post_options: a submission with nothing typed
+  # and nothing selected is refused outright rather than logged -- no
+  # save_log, no scoring, just the same show_current_level render every other
+  # non-advancing submission gets. @answer is left nil (answer_posted? stays
+  # false), and @answer_rejected drives the new alert instead
+  # (GamePassingsHelper#answer_rejected? / #rejected_answer_message).
+  def reject_empty_answer(kind)
+    @answer_rejected = kind
+    @game_passing.current_level = preloaded_level(@game_passing.current_level)
+    render :show_current_level, layout: "in_game"
   end
 
   def save_log

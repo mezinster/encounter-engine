@@ -529,6 +529,8 @@ ru:
       no_more_hints: "Подсказок больше не будет"
       answer_correct: "Код '%{answer}' -- верный."
       answer_incorrect: "Код неверный, вы ввели '%{answer}'."
+      answer_missing_choice: "Выберите вариант"
+      answer_missing_code: "Введите код"
       multi_question_progress: "Правильных кодов введено: %{answered} из %{total}"
       answer_label: "Код"
       submit: "Отправить!"

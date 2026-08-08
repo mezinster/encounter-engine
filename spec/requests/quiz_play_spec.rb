@@ -98,6 +98,26 @@ describe "playing a quiz level", type: :request do
     expect(passing.reload.current_level).to eq(level)
   end
 
+  # Production behaviour before this fix: pressing "Отправить!" with nothing
+  # selected sends no option_ids at all, which built @answer = "" and logged
+  # it unconditionally -- no scoring, no feedback, just the page again (game
+  # 4's full log has 14 such rows, one team hitting it three times in eleven
+  # seconds on the same question). The owner's call is to refuse the
+  # submission instead of logging it.
+  it "rejects a submission with nothing chosen, writing no log row and not advancing" do
+    expect {
+      post post_answer_path(:game_id => game.id), :params => {}
+    }.not_to change { Log.count }
+
+    passing.reload
+    expect(passing.current_level).to eq(level)
+    expect(passing.answered_questions).to be_empty
+    # The literal string, not I18n.t of the same key: a missing key degrades
+    # both sides to "translation missing: ..." identically, so the t() form
+    # would still pass with the locale entry deleted.
+    expect(response.body).to include("Выберите вариант")
+  end
+
   # The author's answer log is a complete record of what teams did, for typed
   # codes and for picks alike.
   it "records the chosen option text in the log" do
@@ -285,5 +305,49 @@ describe "a quiz level whose questions are answered one at a time", type: :reque
          :params => { :option_ids => { first.id.to_s => [ first_wrong.id.to_s ] } }
 
     expect(passing.reload.penalty_seconds).to eq(charged)
+  end
+end
+
+# The same defect as the quiz case above, on the plain typed-code path: an
+# empty code box submits @answer = "" via #post_answer directly (this level
+# has no quiz question, so #post_options is never reached). Same production
+# symptom, same owner's decision -- reject with a message rather than log a
+# blank row.
+describe "submitting a typed-code level with an empty answer", type: :request do
+  let(:author)  { create_user }
+  let(:game)    { g = create_game(:author => author, :is_draft => false); g.update_column(:starts_at, 1.hour.ago); g }
+  let(:level)   { create_level(:game => game, :correct_answer => "правильно") }
+  let(:passing) { create_game_passing(:level => level) }
+  let(:player) do
+    u = create_user
+    u.update!(:team => passing.team)
+    passing.team.update!(:captain => u)
+    u
+  end
+
+  before do
+    passing
+    put login_path, :params => { :email => player.email, :password => "1234" }
+  end
+
+  it "rejects a blank code, writing no log row and not advancing" do
+    expect {
+      post post_answer_path(:game_id => game.id), :params => { :answer => "" }
+    }.not_to change { Log.count }
+
+    passing.reload
+    expect(passing.current_level).to eq(level)
+    # Literal, for the same reason as the quiz case above.
+    expect(response.body).to include("Введите код")
+  end
+
+  # The guard must not eat the normal path: a genuine code still logs and
+  # still scores.
+  it "still logs and scores a genuine submission" do
+    expect {
+      post post_answer_path(:game_id => game.id), :params => { :answer => "правильно" }
+    }.to change { Log.count }.by(1)
+
+    expect(passing.reload.current_level).not_to eq(level)
   end
 end

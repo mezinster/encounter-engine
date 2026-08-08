@@ -28,4 +28,17 @@ describe Log do
     expect(log.team_record).to be_nil
     expect(log.level).to eq("Старое задание")
   end
+
+  # Task 4: of_team/of_level dropped the name-based fallback once production
+  # confirmed nothing depended on it (see app/models/log.rb). A row whose
+  # id was never backfilled now simply does not match -- it used to be
+  # picked up by "logs.team_id IS NULL AND logs.team = :name". Assert that
+  # explicitly rather than leaving it as an emergent property of the scope.
+  it "does not return a row whose id was never backfilled, even though its name matches" do
+    log = Log.create!(:game_id => game.id, :level => level.name,
+                      :team => team.name, :time => Time.now, :answer => "код")
+
+    expect(Log.of_team(team)).not_to include(log)
+    expect(Log.of_level(level)).not_to include(log)
+  end
 end

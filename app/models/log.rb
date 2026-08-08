@@ -8,19 +8,19 @@ class Log < ApplicationRecord
 
   scope :of_game,  ->(game)  { where(game_id: game) }
 
-  # id-scoped, with a fallback for rows the backfill could not resolve (a level
-  # name that is ambiguous within its own game). Every caller chains of_game
-  # first, so the fallback is bounded to one game and cannot reach across games
-  # the way the bare name match did. Task 4 removes it once production is
-  # confirmed clean.
-  scope :of_team,  ->(team) {
-    where("logs.team_id = :id OR (logs.team_id IS NULL AND logs.team = :name)",
-          :id => team.id, :name => team.name)
-  }
-  scope :of_level, ->(level) {
-    where("logs.level_id = :id OR (logs.level_id IS NULL AND logs.level = :name)",
-          :id => level.id, :name => level.name)
-  }
+  # Plain id matching. This used to fall back to a name match
+  # (logs.team_id IS NULL AND logs.team = :name) for rows the backfill
+  # (.backfill_ids!) could not resolve. It was removed once production
+  # confirmed there was nothing left for it to protect: zero Log rows, zero
+  # level names ambiguous within their own game, and zero duplicate team
+  # names (checked 2026-08-08, see
+  # .superpowers/sdd/2026-08-08-log-foreign-keys/task-4-report.md). Rows
+  # written between that check and deploy are resolved by the Task 2
+  # backfill, which db:prepare runs before puma starts. A row whose id is
+  # still NULL now simply does not match -- it silently drops out of the
+  # author's log views instead of falling back to a name lookup.
+  scope :of_team,  ->(team)  { where(team_id: team.id) }
+  scope :of_level, ->(level) { where(level_id: level.id) }
 
   # Idempotent and safe to re-run: only touches rows whose id is still NULL.
   # Returns the counts, which the migration logs -- a silent backfill that

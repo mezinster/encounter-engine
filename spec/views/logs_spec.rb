@@ -18,7 +18,8 @@ RSpec.describe "logs/show_full_log", type: :view do
     level = create_level(correct_answer: "enone")
     team = create_team
 
-    Log.create!(game_id: level.game_id, team: team.name, level: level.name, answer: "wrong", time: Time.current)
+    Log.create!(game_id: level.game_id, team: team.name, team_id: team.id,
+                level: level.name, level_id: level.id, answer: "wrong", time: Time.current)
 
     assign(:levels, [level])
     assign(:teams, [team])
@@ -55,15 +56,23 @@ end
 RSpec.describe "logs/show_game_log", type: :view do
   it "renders every level of the game with its correct answer and log entries" do
     team = create_team
-    level = create_level
+    # create_level's own fixture default builds one question via
+    # Level#correct_answer=; override it directly so the level has exactly
+    # the single question this test asserts on (a second create_question
+    # call would leave level.questions.first pointing at the wrong one).
+    level = create_level(correct_answer: "enone")
     game = level.game
-    create_question(level: level, correct_answer: "enone")
     # The view no longer re-queries Log.of_game(level) itself (see the
     # security fix under .superpowers/sdd/2026-08-07-security-data-exposure) --
     # it now scopes the controller-supplied @logs down to the current level
     # via Log.of_level, so the view local test must assign :logs the same way
     # LogsController#show_game_log does: Log.of_game(@game).of_team(@team).
-    Log.create!(game_id: game.id, team: team.name, level: level.name, answer: "enone", time: Time.current)
+    # The submitted answer is deliberately distinct from the level's
+    # correct_answer ("enone", asserted on separately below) -- otherwise this
+    # example would pass even if the log row were never rendered at all, since
+    # "enone" already appears from the correct-answer line above it.
+    Log.create!(game_id: game.id, team: team.name, team_id: team.id,
+                level: level.name, level_id: level.id, answer: "submitted-answer", time: Time.current)
 
     assign(:game, game)
     assign(:team, team)
@@ -74,6 +83,7 @@ RSpec.describe "logs/show_game_log", type: :view do
     expect(rendered).to include(ERB::Util.html_escape(I18n.t("logs.show_game_log.title", team: team.name, game: game.name)))
     expect(rendered).to include(I18n.t("logs.show_game_log.correct_answer"))
     expect(rendered).to include("enone")
+    expect(rendered).to include("submitted-answer")
   end
 end
 

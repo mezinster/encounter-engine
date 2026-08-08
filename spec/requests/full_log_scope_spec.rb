@@ -29,9 +29,11 @@ describe "the full answer log", type: :request do
     # example below would be meaningless rather than red.
     expect(game.id).not_to eq(other_game.id)
 
-    Log.create!(:game_id => game.id, :level => level.name, :team => team.name,
+    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+                :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "СВОЙ-КОД")
-    Log.create!(:game_id => other_game.id, :level => other_level.name, :team => team.name,
+    Log.create!(:game_id => other_game.id, :level => other_level.name, :level_id => other_level.id,
+                :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "ЧУЖАЯ-ИГРА")
 
     get show_full_log_path(:game_id => game.id)

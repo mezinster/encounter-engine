@@ -29,7 +29,8 @@ describe "the per-game answer log", type: :request do
   end
 
   it "shows this team's submissions on this game" do
-    Log.create!(:game_id => game.id, :level => level.name, :team => team.name,
+    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+                :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "МОЙ-КОД")
 
     get show_game_log_path(:game_id => game.id, :team_id => team.id)

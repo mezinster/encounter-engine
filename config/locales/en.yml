@@ -148,6 +148,7 @@ en:
     locked_notice: "Game editing locked"
     unlocked_notice: "Game editing unlocked"
     not_deletable: "This game cannot be deleted because teams have played it. Withdraw it instead."
+    not_endable_in_test: "This game cannot be ended: it is in test mode. Use “Finish testing” to stop the test."
     translations:
       incomplete: "This game declares languages it is not fully translated into: %{count} fields are missing"
       game_field: "Game — %{field}"

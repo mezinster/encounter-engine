@@ -1,0 +1,16 @@
+<h1><%= t("password_resets.edit.title") %></h1>
+
+<%= error_messages_for @user if @user %>
+
+<%= form_with url: password_reset_path, method: :patch do |f| %>
+  <%= hidden_field_tag :token, @token %>
+  <div class="field">
+    <%= label_tag "user[password]", t("password_resets.edit.password") %>
+    <%= password_field_tag "user[password]" %>
+  </div>
+  <div class="field">
+    <%= label_tag "user[password_confirmation]", t("password_resets.edit.password_confirmation") %>
+    <%= password_field_tag "user[password_confirmation]" %>
+  </div>
+  <%= submit_tag t("password_resets.edit.submit"), class: "btn btn--go" %>
+<% end %>

@@ -1,5 +1,6 @@
 # -*- encoding : utf-8 -*-
 require "digest/sha1"
+require "digest/sha2"
 
 class User < ApplicationRecord
   belongs_to :team, optional: true
@@ -176,6 +177,50 @@ class User < ApplicationRecord
                     :crypted_password => nil,
                     :salt => nil)
     true
+  end
+
+  RESET_PASSWORD_VALID_FOR = 2.hours
+
+  # Only the digest is stored: a database disclosure must not yield usable
+  # reset tokens. The raw token is returned once, for the mail, and never
+  # persisted.
+  def issue_reset_password_token!
+    raw = SecureRandom.urlsafe_base64(32)
+    update_columns(:reset_password_token_digest => self.class.digest_reset_token(raw),
+                   :reset_password_sent_at => Time.now.utc)
+    raw
+  end
+
+  def self.digest_reset_token(raw)
+    Digest::SHA256.hexdigest(raw.to_s)
+  end
+
+  # Guards against two distinct failure modes, not just "no matching row":
+  #   - a nil/blank raw token must never resolve to anything, even a row
+  #     whose reset_password_token_digest happens to be nil/NULL (the state
+  #     of every user who has never requested a reset) -- hence both the
+  #     early `raw.blank?` return AND `where.not(... => nil)` below, so a
+  #     blank digest can never be the thing a blank token matches.
+  #   - the digest comparison itself uses secure_compare, not the `==` that
+  #     already happened inside the SQL lookup, so this does not depend on
+  #     the database's equality check being constant-time for a hit vs. a
+  #     miss on an indexed column.
+  def self.find_by_reset_token(raw)
+    return nil if raw.blank?
+
+    digest = digest_reset_token(raw)
+    candidate = where.not(:reset_password_token_digest => nil)
+                      .find_by(:reset_password_token_digest => digest)
+    return nil unless candidate
+    return nil unless ActiveSupport::SecurityUtils.secure_compare(candidate.reset_password_token_digest, digest)
+    return nil if candidate.reset_password_sent_at.blank?
+    return nil if candidate.reset_password_sent_at < RESET_PASSWORD_VALID_FOR.ago
+
+    candidate
+  end
+
+  def clear_reset_password_token!
+    update_columns(:reset_password_token_digest => nil, :reset_password_sent_at => nil)
   end
 
   private

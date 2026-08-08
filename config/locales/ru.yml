@@ -339,6 +339,22 @@ ru:
       messengers_label: "Мессенджеры:"
       phone_label: "Контактный телефон:"
       edit_link: "Редактировать профиль..."
+  password_resets:
+    invalid: "Ссылка для сброса пароля недействительна или устарела."
+    new:
+      title: "Восстановление пароля"
+      email: "Email"
+      submit: "Отправить ссылку"
+      link: "Забыли пароль?"
+    edit:
+      title: "Новый пароль"
+      password: "Новый пароль"
+      password_confirmation: "Подтверждение пароля"
+      submit: "Сохранить пароль"
+    create:
+      sent: "Если такой адрес зарегистрирован, мы отправили на него ссылку для сброса пароля."
+    update:
+      done: "Пароль изменён. Войдите с новым паролем."
   notification_mailer:
     # Sent in the recipient's locale, not the sender's -- see
     # NotificationMailer#mail_in_recipient_locale. Body text below is
@@ -374,6 +390,16 @@ ru:
     accept_notification:
       subject: "Пользователь %{nickname} принял Ваше приглашение"
       body: "Пользователь %{nickname} принял Ваше приглашение и вступил в команду"
+    password_reset:
+      subject: "Сброс пароля на %{host}"
+      body: |
+        %{nickname}, кто-то запросил сброс пароля для вашей учётной записи.
+
+        Чтобы задать новый пароль, перейдите по ссылке:
+        %{url}
+
+        Ссылка действует %{hours} ч. Если вы не запрашивали сброс, просто
+        проигнорируйте это письмо — пароль останется прежним.
   # Language names for the switcher (app/views/layouts/_header.html.erb) and
   # the profile form's language field (app/views/users/edit.html.erb).
   # Deliberately identical across every locale file: each language is named

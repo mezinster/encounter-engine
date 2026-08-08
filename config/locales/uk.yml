@@ -356,6 +356,22 @@ uk:
       messengers_label: "Месенджери:"
       phone_label: "Контактний телефон:"
       edit_link: "Редагувати профіль..."
+  password_resets:
+    invalid: "Посилання для скидання пароля недійсне або застаріло."
+    new:
+      title: "Відновлення пароля"
+      email: "Email"
+      submit: "Надіслати посилання"
+      link: "Забули пароль?"
+    edit:
+      title: "Новий пароль"
+      password: "Новий пароль"
+      password_confirmation: "Підтвердження пароля"
+      submit: "Зберегти пароль"
+    create:
+      sent: "Якщо така адреса зареєстрована, ми надіслали на неї посилання для скидання пароля."
+    update:
+      done: "Пароль змінено. Увійдіть з новим паролем."
   notification_mailer:
     # Sent in the recipient's locale, not the sender's -- see
     # NotificationMailer#mail_in_recipient_locale.
@@ -381,6 +397,16 @@ uk:
     accept_notification:
       subject: "Користувач %{nickname} прийняв Ваше запрошення"
       body: "Користувач %{nickname} прийняв Ваше запрошення і вступив до команди"
+    password_reset:
+      subject: "Скидання пароля на %{host}"
+      body: |
+        %{nickname}, хтось запросив скидання пароля для вашого облікового запису.
+
+        Щоб встановити новий пароль, перейдіть за посиланням:
+        %{url}
+
+        Посилання дійсне %{hours} год. Якщо ви не запитували скидання, просто
+        проігноруйте цей лист — пароль залишиться незмінним.
   # Language names for the switcher (app/views/layouts/_header.html.erb) and
   # the profile form's language field (app/views/users/edit.html.erb).
   # Deliberately identical across every locale file: each language is named

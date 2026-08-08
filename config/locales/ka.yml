@@ -368,6 +368,22 @@ ka:
       messengers_label: "მესენჯერები:"
       phone_label: "საკონტაქტო ტელეფონი:"
       edit_link: "პროფილის რედაქტირება..."
+  password_resets:
+    invalid: "პაროლის განულების ბმული არასწორია ან ვადაგასულია."
+    new:
+      title: "პაროლის აღდგენა"
+      email: "Email"
+      submit: "ბმულის გაგზავნა"
+      link: "დაგავიწყდათ პაროლი?"
+    edit:
+      title: "ახალი პაროლი"
+      password: "ახალი პაროლი"
+      password_confirmation: "პაროლის დადასტურება"
+      submit: "პაროლის შენახვა"
+    create:
+      sent: "თუ ეს მისამართი დარეგისტრირებულია, ჩვენ გავუგზავნეთ მას პაროლის განულების ბმული."
+    update:
+      done: "პაროლი შეიცვალა. შედით სისტემაში ახალი პაროლით."
   notification_mailer:
     # Sent in the recipient's locale, not the sender's -- see
     # NotificationMailer#mail_in_recipient_locale.
@@ -393,6 +409,17 @@ ka:
     accept_notification:
       subject: "მომხმარებელმა %{nickname} მიიღო თქვენი მოწვევა"
       body: "მომხმარებელმა %{nickname} მიიღო თქვენი მოწვევა და გაწევრიანდა გუნდში"
+    password_reset:
+      subject: "პაროლის განულება საიტზე %{host}"
+      body: |
+        %{nickname}, ვიღაცამ მოითხოვა თქვენი ანგარიშის პაროლის განულება.
+
+        ახალი პაროლის დასაყენებლად, გადადით ბმულზე:
+        %{url}
+
+        ბმული მოქმედებს %{hours} საათის განმავლობაში. თუ თქვენ არ მოგითხოვიათ
+        პაროლის განულება, უბრალოდ დააიგნორეთ ეს წერილი — თქვენი პაროლი
+        უცვლელი დარჩება.
   # Language names for the switcher (app/views/layouts/_header.html.erb) and
   # the profile form's language field (app/views/users/edit.html.erb).
   # Deliberately identical across every locale file: each language is named

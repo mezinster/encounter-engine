@@ -339,6 +339,22 @@ en:
       messengers_label: "Messengers:"
       phone_label: "Contact phone number:"
       edit_link: "Edit profile..."
+  password_resets:
+    invalid: "This password reset link is invalid or has expired."
+    new:
+      title: "Reset your password"
+      email: "Email"
+      submit: "Send the link"
+      link: "Forgot your password?"
+    edit:
+      title: "New password"
+      password: "New password"
+      password_confirmation: "Confirm password"
+      submit: "Save password"
+    create:
+      sent: "If that address is registered, we have sent it a password reset link."
+    update:
+      done: "Password changed. Sign in with your new password."
   notification_mailer:
     welcome_letter:
       subject: "Registration on %{host}"
@@ -362,6 +378,16 @@ en:
     accept_notification:
       subject: "%{nickname} has accepted your invitation"
       body: "User %{nickname} has accepted your invitation and joined the team"
+    password_reset:
+      subject: "Password reset at %{host}"
+      body: |
+        %{nickname}, someone asked to reset the password for your account.
+
+        To set a new password, follow this link:
+        %{url}
+
+        The link is valid for %{hours} hours. If you did not ask for a reset,
+        ignore this message — your password is unchanged.
   # Language names for the switcher (app/views/layouts/_header.html.erb) and
   # the profile form's language field (app/views/users/edit.html.erb).
   # Deliberately identical across every locale file: each language is named

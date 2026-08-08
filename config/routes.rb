@@ -46,6 +46,11 @@ Rails.application.routes.draw do
   delete "/logout", to: "sessions#destroy", as: :logout
   get    "/signup", to: "users#new",        as: :signup
 
+  get   "/password/new",  to: "password_resets#new",    as: :new_password_reset
+  post  "/password",      to: "password_resets#create", as: :password_resets
+  get   "/password/edit", to: "password_resets#edit",   as: :edit_password_reset
+  patch "/password",      to: "password_resets#update", as: :password_reset
+
   get "/dashboard", to: "dashboard#index", as: :dashboard
   get "/team-room", to: "team_room#index", as: :team_room
 

@@ -51,6 +51,13 @@
       </p>
     <% end %>
   <% end %>
+
+  <%# Where a member goes to move somewhere else. Link text is deliberately
+      unrelated to the game-registration strings the two frozen "Не капитан"
+      scenarios assert are absent from this region. %>
+  <p>
+    <%= link_to t("team_room.index.browse_teams"), teams_path, class: "btn" %>
+  </p>
 </fieldset>
 
 <%= render "shared/current_games" %>

@@ -559,6 +559,7 @@ en:
       legend: "My team"
       no_team: "You are not a member of any team"
       create_team: "Create a team"
+      browse_teams: "Find a team"
       invited: "You were invited to join team %{team}"
       accept: "(accept)"
       decline: "(decline)"
@@ -577,6 +578,7 @@ en:
       invite: "Invite members"
       hand_over: "Hand over captaincy"
       leave: "Leave the team"
+      browse_teams: "All teams"
   team_join_requests:
     sent: "Your application to join “%{team}” has been sent"
     already_applied: "You have already applied to this team"
@@ -590,6 +592,13 @@ en:
     applicant_is_a_captain: "That player now captains their own team. They must hand over captaincy first."
     cannot_decide_mid_race: "Applications cannot be decided while a team is racing"
   teams:
+    index:
+      title: "Teams"
+      name: "Name"
+      captain: "Captain"
+      members: "Members"
+      no_captain: "no captain"
+      apply: "Apply to join"
     handed_over: "Captaincy handed over to %{nickname}"
     cannot_hand_over_mid_race: "Captaincy cannot be handed over while the team is racing"
     hand_over_needs_another_member: "Choose another member of the team"

@@ -37,4 +37,45 @@ describe "the team cap", type: :request do
       expect(game.reload.can_request?).to be true
     end
   end
+
+  # GameEntriesController's status transitions are guarded ("only recall! a
+  # 'new' entry"), but the counter operations that ride along with them used
+  # to be unconditional -- so a double-click on "Отозвать" (recall) called
+  # free_place_of_team! twice even though the second recall! was a no-op.
+  # Game#free_place_of_team! itself floors at zero, so this only shows up
+  # when OTHER active entries keep the counter above zero after the first
+  # recall -- exactly reproduced below with a second, unrelated "new" entry.
+  describe "recalling the same entry twice" do
+    it "does not decrement the counter a second time" do
+      game.update!(:max_team_number => 5)
+      entry = GameEntry.create!(:game => game, :team => captain.team, :status => "new")
+
+      other_captain = (u = create_user; create_team(:captain => u); u)
+      GameEntry.create!(:game => game, :team => other_captain.team, :status => "new")
+      game.update_column(:requested_teams_number, 2)
+
+      post recall_game_entry_path(entry)
+      expect(game.reload.requested_teams_number).to eq(1)
+
+      post recall_game_entry_path(entry) # already "recalled" -- should be a no-op
+      expect(game.reload.requested_teams_number).to eq(1)
+    end
+  end
+
+  # reopen incremented requested_teams_number unconditionally inside the
+  # `if @game.can_request?` block, even when reopen! itself was skipped
+  # because the entry was already "accepted" -- silently inflating the
+  # counter above the number of actually-active entries.
+  describe "reopening an already-accepted entry" do
+    it "does not inflate the counter" do
+      game.update!(:max_team_number => 5)
+      entry = GameEntry.create!(:game => game, :team => captain.team, :status => "accepted")
+      game.update_column(:requested_teams_number, 1)
+
+      post reopen_game_entry_path(entry)
+
+      expect(entry.reload.status).to eq("accepted")
+      expect(game.reload.requested_teams_number).to eq(1)
+    end
+  end
 end

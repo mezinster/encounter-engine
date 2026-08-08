@@ -46,6 +46,38 @@ RSpec.describe GameEntriesController, "#new", type: :controller do
     end
   end
 
+  # GameEntry has no unique index on (team_id, game_id), and this action
+  # creates a fresh row on every hit -- so a captain double-clicking "apply",
+  # or two near-simultaneous requests, could leave a team holding two
+  # entries for the same game (see the comment on GameEntry.of).
+  describe "when the team already has an entry for this game" do
+    before :each do
+      @captain = create_user
+      @team = create_team :captain => @captain
+      @game = create_game :max_team_number => 5, :requested_teams_number => 0
+    end
+
+    it "does not create a second entry on a double submission" do
+      expect do
+        2.times { perform_request :as_user => @captain }
+      end.to change(GameEntry, :count).by(1)
+    end
+
+    it "does not reserve a place twice on a double submission" do
+      2.times { perform_request :as_user => @captain }
+
+      expect(@game.reload.requested_teams_number).to eq(1)
+    end
+
+    it "does not create a duplicate row when an entry already exists in another status" do
+      GameEntry.create!(:game => @game, :team => @team, :status => "rejected")
+
+      expect do
+        perform_request :as_user => @captain
+      end.not_to change(GameEntry, :count)
+    end
+  end
+
   # There is no equivalent "game has no room left" example here: Game#can_request?
   # (app/models/game.rb) now correctly returns
   # `requested_teams_number < max_team_number`, and the server-side cap it

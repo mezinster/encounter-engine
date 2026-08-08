@@ -59,4 +59,51 @@ describe "the full answer log", type: :request do
 
     expect(response.body.scan("ОДНОЗНАЧНЫЙ-КОД").length).to eq(1)
   end
+
+  # LogsController#show_full_log builds @teams with
+  # Team.find_by_sql("select * from teams t inner join game_passings gp
+  # on t.id = gp.team_id where gp.game_id = ..."). A bare `select *` across
+  # that join returns `id` twice -- teams.id, then game_passings.id -- and
+  # the later column wins, so every row in @teams actually carries the
+  # game_passing's id, not the team's. `name` survives only because
+  # game_passings has no name column.
+  #
+  # Under transactional rollback both tables' AUTOINCREMENT counters restart
+  # together, so when N teams and N game_passings are created in the same
+  # relative order (as every other example in this file does), gp.id == team.id
+  # by coincidence -- which is exactly why nothing else here can see this bug.
+  # This example burns extra game_passing ids first so they can't align.
+  it "attributes rows to the right team's column even when game_passing ids don't align with team ids" do
+    burner_team = create_team(:captain => create_user)
+    3.times { create_game_passing(:team => burner_team, :level => create_level(:game => create_game)) }
+
+    team_one = create_team(:captain => create_user)
+    team_two = create_team(:captain => create_user)
+    create_game_passing(:team => team_one, :level => level)
+    create_game_passing(:team => team_two, :level => level)
+
+    # Sanity guard, same spirit as the other examples in this file: if these
+    # ever coincide the assertions below would be meaningless rather than red.
+    expect(GamePassing.of(team_one, game).id).not_to eq(team_one.id)
+    expect(GamePassing.of(team_two, game).id).not_to eq(team_two.id)
+
+    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+                :team => team_one.name, :team_id => team_one.id,
+                :time => Time.now, :answer => "КОД-ОДИН")
+    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+                :team => team_two.name, :team_id => team_two.id,
+                :time => Time.now, :answer => "КОД-ДВА")
+
+    get show_full_log_path(:game_id => game.id)
+
+    doc = Nokogiri::HTML(response.body)
+    cells = doc.css("table#stats td")
+    team_one_cell = cells.find { |td| td.text.include?(team_one.name) }
+    team_two_cell = cells.find { |td| td.text.include?(team_two.name) }
+
+    expect(team_one_cell.text).to include("КОД-ОДИН")
+    expect(team_one_cell.text).not_to include("КОД-ДВА")
+    expect(team_two_cell.text).to include("КОД-ДВА")
+    expect(team_two_cell.text).not_to include("КОД-ОДИН")
+  end
 end

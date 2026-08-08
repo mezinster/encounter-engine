@@ -41,14 +41,10 @@ class LogsController < ApplicationController
     # fallback above still resolves `level.id`/`level.name` on its argument, so
     # a nil @level would raise the same NoMethodError the old name-only scope
     # did -- but relying on that as the safety net is an accident waiting to
-    # break the next time this scope changes shape. Render an empty log instead.
-    if @level.nil?
-      @logs = Log.none
-      render plain: "", :status => :ok
-      return
-    end
-
-    @logs = Log.of_game(@game).of_team(@team).of_level(@level)
+    # break the next time this scope changes shape. Render the normal page
+    # with an empty log (the view guards @level itself) rather than a blank
+    # response.
+    @logs = @level ? Log.of_game(@game).of_team(@team).of_level(@level) : Log.none
   end
 
   def show_game_log
@@ -58,9 +54,14 @@ class LogsController < ApplicationController
   def show_full_log
     @logs = Log.of_game(@game)
     @levels = Level.of_game(@game)
-    @teams = Team.find_by_sql(
-      "select * from teams t inner join game_passings gp on t.id = gp.team_id where gp.game_id = #{@game.id}"
-    )
+    # Not find_by_sql("select * from teams t inner join game_passings gp ...")
+    # -- a bare `select *` across that join returns `id` twice (teams.id, then
+    # game_passings.id) and the later column wins, so every row would carry
+    # the game_passing's id, not the team's. `name` survived because
+    # game_passings has no name column, which is exactly why the old
+    # name-based of_team scope worked against these rows and the id-based one
+    # does not: of_team(team) filters on the wrong id and finds nothing.
+    @teams = Team.joins(:game_passings).where(:game_passings => { :game_id => @game.id }).distinct
   end
 
   private

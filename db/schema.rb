@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_08_070000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_08_140000) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -142,6 +142,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_08_070000) do
     t.integer "level_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+  end
+
+  create_table "team_join_requests", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "team_id", null: false
+    t.string "status", default: "new", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["team_id", "status"], name: "index_team_join_requests_on_team_id_and_status"
+    t.index ["user_id", "team_id"], name: "index_team_join_requests_on_user_id_and_team_id_pending", unique: true, where: "status = 'new'"
   end
 
   create_table "teams", force: :cascade do |t|

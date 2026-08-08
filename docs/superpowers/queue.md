@@ -88,6 +88,46 @@ obvious "migration first" ordering leaves the suite red for two tasks.
 
 ---
 
+### 4 · Team membership programme — six phases, `design/team-membership-programme`
+
+- Spec: `docs/superpowers/specs/2026-08-08-team-membership-programme-design.md`
+- Origin brief: PR [#38](https://github.com/mezinster/encounter-engine/pull/38),
+  `docs/handoff/2026-08-08-captaincy-transfer-context.md`
+- Owner decisions D1–D5 recorded in §2 of the spec, answered 2026-08-08.
+
+**The problem:** a team's captain can never be changed, and you cannot leave a team, be
+removed from one, or delete one. So a captain who simply stops logging in **bricks their
+team permanently** — it can never register for a game, invite anyone, or quit a race it is
+already in, and its members can never form another team.
+
+Six phases, each a separate plan, branch and PR. **Phases are strictly ordered** — each
+depends on the one before, as noted.
+
+| # | Phase | Plan | Depends on |
+|---|---|---|---|
+| 1 | **Foundations** — `Team#set_captain!`, refuse a captain owned by another team, guard the captainless-team mailer crash, plus the missing `TeamsController#create` spec | `docs/superpowers/plans/2026-08-08-team-membership-phase-1-foundations.md` — **5 tasks** | — |
+| 2 | **Reassign captaincy** — net-new `Admin::TeamsController` (the admin console has no team management at all today) plus captain self-service handover | not yet written | 1 |
+| 3 | **Superadmin moves a user between teams**, audited, refused for captains | not yet written | 2 |
+| 4 | **Leaving a team** — `POST /teams/leave`; a solo captain may leave, emptying the team | not yet written | 2 |
+| 5 | **Join requests** — new `TeamJoinRequest` model; cannot reuse `Invitation`, whose frozen validation points the wrong way | not yet written | 4 |
+| 6 | **`actor_label` on `AdminAction`, then user deletion and anonymise** | not yet written | 2 |
+
+Plans are written **just before each phase is built**, not all up front: phase 1's
+foundations shape everything after them.
+
+**Descope point if the week is short:** phases 1–3 alone already unbrick every abandoned
+team, which was the original problem. Phases 4–5 carry the largest UI surface and the only
+real risk to the frozen acceptance suite.
+
+**Constraints every phase inherits** (§6 of the spec): eight frozen scenarios bound this
+design, including that a captain must be a member of their own team, and that four mail
+assertions resolve their recipient through `team.captain` — so who the captain is at
+accept/reject time is observable in the acceptance suite. Note the line numbers in the #38
+brief point at *scenario headers*, not the assertions a few lines below; cite scenarios by
+name.
+
+---
+
 ## Known, unfixed, no plan yet
 
 - **`Question` has no renderable text**, so a multi-question quiz level gives the

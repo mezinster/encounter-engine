@@ -59,6 +59,7 @@ uk:
         action:
           withdraw: "Зняв з публікації"
           restore: "Опублікував"
+          unfinish: "Відновив гру"
           lock: "Заморозив редагування"
           unlock: "Розморозив редагування"
           update: "Змінив"
@@ -114,6 +115,7 @@ uk:
         edit: "Редагувати"
         withdraw: "Зняти"
         restore: "Опублікувати"
+        unfinish: "Відновити"
         lock: "Заморозити"
         unlock: "Розморозити"
         delete: "Видалити"
@@ -162,6 +164,7 @@ uk:
   games:
     withdrawn_notice: "Гру знято з публікації"
     restored_notice: "Гру знову опубліковано"
+    unfinished_notice: "Гру відновлено"
     locked_notice: "Редагування гри заморожено"
     unlocked_notice: "Редагування гри розморожено"
     not_deletable: "Гру не можна видалити: у неї вже грали. Зніміть її з публікації."

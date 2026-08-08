@@ -4,7 +4,7 @@ class GamesController < ApplicationController
   include AdminAudit
 
   before_action :require_authentication!, except: [:index, :show]
-  before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :lock, :unlock]
+  before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :unfinish, :lock, :unlock]
   before_action :find_team, only: [:show]
   before_action :ensure_author_if_game_is_draft, only: [:show]
   before_action :ensure_author_if_no_start_time, only: [:show]
@@ -12,7 +12,7 @@ class GamesController < ApplicationController
   before_action :ensure_author, only: [:edit, :update, :delete, :end_game, :start_test, :finish_test]
   before_action :ensure_editing_not_locked, only: [:edit, :update, :delete, :end_game, :start_test, :finish_test]
   before_action :ensure_game_was_not_started, only: [:edit, :update]
-  before_action :require_superadmin!, only: [:withdraw, :restore, :lock, :unlock]
+  before_action :require_superadmin!, only: [:withdraw, :restore, :unfinish, :lock, :unlock]
 
   def index
     @games = if params[:user_id].present?
@@ -124,6 +124,17 @@ class GamesController < ApplicationController
     @game.restore!
     record_admin_action("restore", @game)
     redirect_to admin_games_path, :notice => t("games.restored_notice")
+  end
+
+  # Revival of an ended game -- the reverse of end_game, restricted to
+  # superadmins as incident repair rather than an author flow. Team passings
+  # marked "ended" are deliberately left alone: the reinstate intervention
+  # already revives teams one by one with a fair clock reset. See
+  # docs/superpowers/specs/2026-08-08-superadmin-unfinish-design.md.
+  def unfinish
+    @game.unfinish!
+    record_admin_action("unfinish", @game)
+    redirect_to admin_games_path, :notice => t("games.unfinished_notice")
   end
 
   def lock

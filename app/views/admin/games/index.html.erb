@@ -52,6 +52,12 @@
           <% else %>
             <%= button_to t("admin.games.index.withdraw"), withdraw_game_path(game), :method => :post, :class => "btn" %>
           <% end %>
+          <%# Independent of the withdraw/restore toggle above: withdrawal and
+              author-finish are separate facts, and a withdrawn-and-finished
+              game legitimately offers both ways back. %>
+          <% if game.author_finished? %>
+            <%= button_to t("admin.games.index.unfinish"), unfinish_game_path(game), :method => :post, :class => "btn" %>
+          <% end %>
           <% if game.editing_locked? %>
             <%= button_to t("admin.games.index.unlock"), unlock_game_path(game), :method => :post, :class => "btn" %>
           <% else %>

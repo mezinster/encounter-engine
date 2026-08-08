@@ -3,6 +3,8 @@ require "rails_helper"
 
 RSpec.describe "index/index", type: :view do
   it "renders the home page with a link to the games list" do
+    assign(:games, [])
+
     render
 
     expect(rendered).to include(I18n.t("index.index.title"))

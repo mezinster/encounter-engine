@@ -540,6 +540,8 @@ uk:
       no_more_hints: "Підказок більше не буде"
       answer_correct: "Код '%{answer}' -- правильний."
       answer_incorrect: "Код неправильний, ви ввели '%{answer}'."
+      answer_missing_choice: "Оберіть варіант"
+      answer_missing_code: "Введіть код"
       multi_question_progress: "Правильних кодів введено: %{answered} з %{total}"
       answer_label: "Код"
       submit: "Надіслати!"

@@ -517,6 +517,8 @@ en:
       no_more_hints: "There will be no more hints"
       answer_correct: "Code '%{answer}' -- correct."
       answer_incorrect: "Code incorrect, you entered '%{answer}'."
+      answer_missing_choice: "Choose an option"
+      answer_missing_code: "Enter a code"
       multi_question_progress: "Correct codes entered: %{answered} out of %{total}"
       answer_label: "Code"
       submit: "Submit!"

@@ -555,6 +555,8 @@ ka:
       no_more_hints: "მინიშნებები აღარ იქნება"
       answer_correct: "კოდი '%{answer}' -- სწორია."
       answer_incorrect: "კოდი არასწორია, თქვენ შეიყვანეთ '%{answer}'."
+      answer_missing_choice: "აირჩიეთ ვარიანტი"
+      answer_missing_code: "შეიყვანეთ კოდი"
       multi_question_progress: "სწორი კოდები შეყვანილია: %{answered} %{total}-დან"
       answer_label: "კოდი"
       submit: "გაგზავნა!"

@@ -42,6 +42,10 @@
       <%= t("game_passings.show_current_level.answer_incorrect", answer: @answer) %>
     </p>
   <% end %>
+<% elsif answer_rejected? %>
+  <p class="flash flash--alert">
+    <%= rejected_answer_message %>
+  </p>
 <% end %>
 
 <%# Counting toward a total is meaningless when any single code suffices --

@@ -17,7 +17,7 @@ describe "deleting a code from a level", type: :request do
   it "removes the code when the level has more than one" do
     extra = add_code("второй")
 
-    expect { get delete_game_level_question_path(game, level, extra) }
+    expect { delete delete_game_level_question_path(game, level, extra) }
       .to change { level.reload.questions.count }.from(2).to(1)
 
     expect(response).to redirect_to(game_level_path(game, level))
@@ -29,7 +29,7 @@ describe "deleting a code from a level", type: :request do
   it "refuses to remove the level's last code" do
     only_question = level.questions.first
 
-    expect { get delete_game_level_question_path(game, level, only_question) }
+    expect { delete delete_game_level_question_path(game, level, only_question) }
       .not_to change { level.reload.questions.count }
 
     expect(flash[:error]).to eq(I18n.t("questions.must_have_at_least_one_code"))
@@ -42,7 +42,7 @@ describe "deleting a code from a level", type: :request do
     extra = add_code("второй")
     game.update_column(:starts_at, 1.hour.ago)
 
-    expect { get delete_game_level_question_path(game, level, extra) }
+    expect { delete delete_game_level_question_path(game, level, extra) }
       .not_to change { level.reload.questions.count }
 
     expect(response).to have_http_status(:unauthorized)
@@ -53,7 +53,7 @@ describe "deleting a code from a level", type: :request do
     other = create_user
     put login_path, :params => { :email => other.email, :password => "1234" }
 
-    expect { get delete_game_level_question_path(game, level, extra) }
+    expect { delete delete_game_level_question_path(game, level, extra) }
       .not_to change { level.reload.questions.count }
 
     expect(response).to have_http_status(:unauthorized)
@@ -64,7 +64,7 @@ describe "deleting a code from a level", type: :request do
   it "404s on a question that belongs to another level" do
     foreign = create_level(:game => game).questions.first
 
-    expect { get delete_game_level_question_path(game, level, foreign) }
+    expect { delete delete_game_level_question_path(game, level, foreign) }
       .to raise_error(ActiveRecord::RecordNotFound)
   end
 
@@ -72,7 +72,7 @@ describe "deleting a code from a level", type: :request do
     extra = add_code("второй")
     Answer.create!(:question => extra, :value => "vtoroy")
 
-    expect { get delete_game_level_question_path(game, level, extra) }
+    expect { delete delete_game_level_question_path(game, level, extra) }
       .to change { Answer.where(:question_id => extra.id).count }.to(0)
   end
 
@@ -81,7 +81,7 @@ describe "deleting a code from a level", type: :request do
   # block re-adding that same code -- rejected by a row the author cannot see.
   it "lets the same code be added again afterwards" do
     extra = add_code("второй")
-    get delete_game_level_question_path(game, level, extra)
+    delete delete_game_level_question_path(game, level, extra)
 
     readded = Question.new(:correct_answer => "второй")
     readded.level = level.reload

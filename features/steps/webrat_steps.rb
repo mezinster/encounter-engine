@@ -11,8 +11,8 @@ When /нажимаю "(.*)"$/ do |button|
   click_button(button)
 end
 
-# first(:link, …).click rather than click_link, and rather than a global
-# Capybara.match = :first.
+# first(:link_or_button, …).click rather than click_link_or_button, and rather
+# than a global Capybara.match = :first.
 #
 # Webrat resolved an ambiguous locator by picking a match; Capybara's default
 # :smart raises Capybara::Ambiguous. Running the suite under :smart finds
@@ -26,7 +26,7 @@ end
 # Capybara.match = :first would also make click_button and fill_in silently
 # pick among genuinely different targets.
 When /иду по ссылке "(.*)"$/ do |link|
-  first(:link, link).click
+  first(:link_or_button, link).click
 end
 
 When /ввожу "(.*)" в поле "(.*)"$/ do |value, field|

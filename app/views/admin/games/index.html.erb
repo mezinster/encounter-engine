@@ -66,7 +66,7 @@
         </div>
         <% if game.deletable? %>
           <div class="game-control">
-            <%= link_to t("admin.games.index.delete"), delete_game_path(game), class: "btn btn--danger",
+            <%= button_to t("admin.games.index.delete"), delete_game_path(game), :method => :delete, :class => "btn btn--danger",
                         :data => { :confirm => t("admin.games.index.delete_confirm", :name => game.name) } %>
           </div>
         <% end %>

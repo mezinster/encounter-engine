@@ -73,7 +73,7 @@ describe "withdrawal", type: :request do
     sign_in(captain)
 
     expect do
-      get new_game_entry_path(:game_id => game.id, :team_id => team.id)
+      post new_game_entry_path(:game_id => game.id, :team_id => team.id)
     end.not_to change(GameEntry, :count)
     expect(response).to have_http_status(:unauthorized)
   end

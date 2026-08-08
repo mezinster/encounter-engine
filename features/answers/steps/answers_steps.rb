@@ -14,7 +14,7 @@ Given /^нажимаю на "([^\"]*)" возле варианта "([^\"]*)"$/ 
   # Webrat's within yielded a scope object; Capybara's runs the block with the
   # scope already applied, so the bare helper is the scoped one.
   within "#answer-#{answer.id}" do
-    click_link button_name
+    click_link_or_button button_name
   end
 end
 

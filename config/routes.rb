@@ -64,16 +64,19 @@ Rails.application.routes.draw do
   # `GET /<resource>/:id/delete` to every `resources` call by default
   # (merb-core/lib/merb-core/dispatch/router/resources.rb:80, removed by
   # Task 13 -- see git history -- `member = { :edit => :get, :delete => :get }`).
-  # Rails' `resources` only
-  # adds :edit. None of these controllers define a `destroy` action (Rails'
-  # convention) -- they define `delete` (a GET-rendered confirmation page,
-  # per app/controllers/games.rb:55, levels.rb:37, hints.rb:35,
-  # answers.rb:23), and every deletion link in app/views calls that
-  # `/.../:id/delete` path via `resource(..., :delete)`. Restore the member
-  # route for the four resources actually linked that way.
+  # Rails' `resources` only adds :edit.
+  #
+  # These controllers define `delete`, not Rails' conventional `destroy`, and
+  # the action name is kept -- but the VERB is DELETE, not GET. Every one of
+  # these actions destroys immediately; none renders a confirmation page (an
+  # earlier version of this comment claimed otherwise, which was wrong about
+  # both this code and the Merb original). Rails skips CSRF verification for
+  # GET by design, so a destructive action on GET is a destructive action with
+  # no CSRF protection. The views drive these with button_to; this app has no
+  # Turbo and no rails-ujs, so link_to with :method does nothing here.
   resources :games do
     member do
-      get :delete
+      delete :delete
       post :withdraw
       post :restore
       post :unfinish
@@ -83,37 +86,37 @@ Rails.application.routes.draw do
 
     resources :levels do
       member do
-        get :delete
-        get :move_up
-        get :move_down
+        delete :delete
+        post :move_up
+        post :move_down
       end
 
       resources :hints do
         member do
-          get :delete
+          delete :delete
         end
       end
 
       resources :questions do
-        # Deleting a code, mirroring the GET delete used by :answers and
-        # :options below -- the established (if unfashionable) shape here.
-        # The action itself refuses on a started game and on a level's last
-        # remaining code; see QuestionsController#delete.
+        # Deleting a code, mirroring the DELETE :delete used by :answers and
+        # :options below -- the established (if unfashionable) route-name
+        # shape here. The action itself refuses on a started game and on a
+        # level's last remaining code; see QuestionsController#delete.
         member do
-          get :delete
+          delete :delete
         end
 
         resources :answers do
           member do
-            get :delete
+            delete :delete
           end
         end
 
-        # Quiz options, mirroring :answers exactly -- including the GET delete,
-        # which is the established (if unfashionable) shape here.
+        # Quiz options, mirroring :answers exactly -- including the :delete
+        # route name, which is the established (if unfashionable) shape here.
         resources :options, only: [ :index, :create ] do
           member do
-            get :delete
+            delete :delete
           end
 
           # Translating options is a bulk edit of the whole list for one
@@ -144,15 +147,18 @@ Rails.application.routes.draw do
   # The routes below have no `resources` equivalent: in Merb they were only
   # reachable through the catch-all `default_routes` entry
   # (`match("/:controller(/:action(/:id))(.:format)")`) at the bottom of
-  # config/router.rb, which Rails has no equivalent of. Every path here is
-  # exercised today via a plain (GET) link_to in app/views -- see the grep
-  # evidence in task-7-report.md -- so each is added as a `get` route in the
+  # config/router.rb, which Rails has no equivalent of. Each is added in the
   # same /:controller/:action/:id segment order Merb used (action before id).
-  get "/games/start_test/:id",  to: "games#start_test"
-  get "/games/finish_test/:id", to: "games#finish_test"
-  get "/games/end_game/:id",    to: "games#end_game"
+  # All three below mutate state (start_test/finish_test/end_game all change
+  # a game's lifecycle, and finish_test also deletes every passing and log
+  # line for it), so they are POST, driven by button_to in app/views -- this
+  # app has no Turbo and no rails-ujs, so a plain GET link_to would have left
+  # them reachable, unprotected by CSRF, from any crafted or prefetched link.
+  post "/games/start_test/:id",  to: "games#start_test",  as: :start_test_game
+  post "/games/finish_test/:id", to: "games#finish_test", as: :finish_test_game
+  post "/games/end_game/:id",    to: "games#end_game",    as: :end_game_game
 
-  get "/game_passings/exit_game/:game_id", to: "game_passings#exit_game", as: :exit_game
+  post "/game_passings/exit_game/:game_id", to: "game_passings#exit_game", as: :exit_game
 
   # app/views/dashboard/_finished_games.html.erb:7 and
   # app/views/shared/_current_games.html.erb:13 build this URL with
@@ -167,15 +173,15 @@ Rails.application.routes.draw do
   # string, so it isn't declared as a path segment here.
   get "/game_passings/show_results", to: "game_passings#show_results"
 
-  get "/invitations/accept/:id", to: "invitations#accept"
-  get "/invitations/reject/:id", to: "invitations#reject"
+  post "/invitations/accept/:id", to: "invitations#accept", as: :accept_invitation
+  post "/invitations/reject/:id", to: "invitations#reject", as: :reject_invitation
 
-  get "/game_entries/new/:game_id/:team_id", to: "game_entries#new", as: :new_game_entry
-  get "/game_entries/reopen/:id", to: "game_entries#reopen"
-  get "/game_entries/accept/:id", to: "game_entries#accept"
-  get "/game_entries/reject/:id", to: "game_entries#reject"
-  get "/game_entries/recall/:id", to: "game_entries#recall"
-  get "/game_entries/cancel/:id", to: "game_entries#cancel"
+  post "/game_entries/new/:game_id/:team_id", to: "game_entries#new", as: :new_game_entry
+  post "/game_entries/reopen/:id", to: "game_entries#reopen", as: :reopen_game_entry
+  post "/game_entries/accept/:id", to: "game_entries#accept", as: :accept_game_entry
+  post "/game_entries/reject/:id", to: "game_entries#reject", as: :reject_game_entry
+  post "/game_entries/recall/:id", to: "game_entries#recall", as: :recall_game_entry
+  post "/game_entries/cancel/:id", to: "game_entries#cancel", as: :cancel_game_entry
 
   # Gameplay paths are load-bearing: they appear in features and in links
   # players have bookmarked. Keep them exactly as Merb served them.

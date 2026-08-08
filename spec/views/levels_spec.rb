@@ -17,6 +17,18 @@ RSpec.describe "levels/_list", type: :view do
     expect(rendered).to include(move_up_game_level_path(game, second_level))
     expect(rendered).not_to include(move_down_game_level_path(game, second_level))
   end
+
+  it "shows both move-up and move-down links for a middle level" do
+    game = create_game
+    first_level = create_level(game: game, name: "First")
+    middle_level = create_level(game: game, name: "Middle")
+    last_level = create_level(game: game, name: "Last")
+
+    render partial: "levels/list", locals: { levels: [first_level, middle_level, last_level] }
+
+    expect(rendered).to include(move_up_game_level_path(game, middle_level))
+    expect(rendered).to include(move_down_game_level_path(game, middle_level))
+  end
 end
 
 RSpec.describe "levels/edit", type: :view do

@@ -11,8 +11,8 @@
 %>
   <li>
     <strong><%= @team.name %> <%= @game.name %></strong>
-    <em><%= link_to t("games.game_entries.accept"), "/game_entries/accept/#{entry.id}" %></em>
-    <em><%= link_to t("games.game_entries.reject"), "/game_entries/reject/#{entry.id}" %></em>
+    <em><%= button_to t("games.game_entries.accept"), accept_game_entry_path(entry) %></em>
+    <em><%= button_to t("games.game_entries.reject"), reject_game_entry_path(entry) %></em>
   </li>
 <% end %>
 </ul>

@@ -59,7 +59,7 @@ describe "playing a paused game", type: :request do
   it "refuses to let a team quit while paused" do
     game.pause!
 
-    get exit_game_path(:game_id => game.id)
+    post exit_game_path(:game_id => game.id)
 
     expect(passing.reload.exited?).to be false
   end

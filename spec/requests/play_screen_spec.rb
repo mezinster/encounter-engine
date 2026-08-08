@@ -76,4 +76,27 @@ describe "the play screen", type: :request do
         "expected exactly one ##{dom_id}; hints break silently if it is renamed, dropped or duplicated"
     end
   end
+
+  # TICKET #83 regression test. Finishing the last level sets current_level to
+  # nil (GamePassing#pass_level! -- `self.current_level = self.current_level.next`
+  # returns nil off the last level) and stamps finished_at. Before
+  # GamePassingsController#show_current_level's own `if @game_passing.finished?`
+  # guard (game_passings_controller.rb:35-38) existed, GET-ing this page for a
+  # finished team read current_level.something on a nil current_level and
+  # 500'd -- refreshing the browser at game end broke it. #post_answer already
+  # had the identical guard; GET simply never got it, in the Merb original as
+  # much as here.
+  #
+  # This used to be covered only by Cucumber's "я обновляю страницу" step
+  # (features/tickets/ticket-83(5).feature:38), and only as a side effect of
+  # that step happening to issue a GET. Pinned here directly so the guard does
+  # not depend on a Cucumber step definition's choice of HTTP verb.
+  it "shows the results, not a 500, on GET after the game has finished" do
+    passing.update!(:current_level => nil, :finished_at => Time.current)
+
+    get show_current_level_path(:game_id => game.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(I18n.t("game_passings.show_results.congrats"))
+  end
 end

@@ -110,11 +110,24 @@ Then /должен увидеть следующюю таблицу:/ do |string
   strings_table.diff!(tableish('#results tr', 'td,th'), :missing_col => false)
 end
 
-# Was an empty no-op, like "страница перегружается" in games_steps.rb. Both are
-# implemented now: re-issuing a GET for the current URL is what a browser
-# refresh does, and it is the entire subject of ticket #83
-# (features/tickets/ticket-83(5).feature). Implementing it exposed a real 500
-# on refresh at game end -- see GamePassingsController#show_current_level.
+# Was an empty no-op, like "страница перегружается" in games_steps.rb.
+# Implemented now as a plain GET reload: this step's call sites
+# (features/tickets/ticket-83(5).feature) always reach the play screen by GET,
+# so `visit page.current_url` reproduces a real reload correctly here.
+#
+# Deliberately NOT delegating to reload_last_page (features/support/env.rb,
+# see its comment) -- that helper's non-GET branch exists for
+# "страница перегружается" alone. This step's own last request can be a
+# plain POST with no _method override (GamePassingsController#post_answer,
+# reached by submitting an answer), and resubmitting that POST would
+# exercise #post_answer's finished? guard instead of the
+# #show_current_level GET guard that features/tickets/ticket-83(5).feature
+# exists to cover -- a scenario that still passes while silently testing the
+# wrong code path. That guard has its own RSpec regression test now
+# (spec/requests/play_screen_spec.rb), so this step no longer needs to be the
+# thing that exercises it. Implementing this originally (as this same bare
+# GET reload) exposed a real 500 on refresh at game end -- see
+# GamePassingsController#show_current_level.
 Given /^я обновляю страницу$/ do
   visit page.current_url
 end

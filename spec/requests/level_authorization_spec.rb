@@ -45,18 +45,18 @@ describe "a non-author reaching another game's level through LevelsController", 
 
   it "404s on delete and does not destroy the victim level" do
     expect {
-      expect { get delete_game_level_path(attacker_game, victim_level) }
+      expect { delete delete_game_level_path(attacker_game, victim_level) }
         .to raise_error(ActiveRecord::RecordNotFound)
     }.not_to change { Level.exists?(victim_level.id) }
   end
 
   it "404s on move_up" do
-    expect { get move_up_game_level_path(attacker_game, victim_level) }
+    expect { post move_up_game_level_path(attacker_game, victim_level) }
       .to raise_error(ActiveRecord::RecordNotFound)
   end
 
   it "404s on move_down" do
-    expect { get move_down_game_level_path(attacker_game, victim_level) }
+    expect { post move_down_game_level_path(attacker_game, victim_level) }
       .to raise_error(ActiveRecord::RecordNotFound)
   end
 end

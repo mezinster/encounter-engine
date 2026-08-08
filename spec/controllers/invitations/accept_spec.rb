@@ -75,7 +75,7 @@ RSpec.describe InvitationsController, "#accept", type: :controller do
 
   def perform_request(opts={})
     session[:user_id] = opts[:as_user]&.id
-    get :accept, params: { id: @invitation.id }
+    post :accept, params: { id: @invitation.id }
     response
   end
 end

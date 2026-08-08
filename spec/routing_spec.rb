@@ -124,19 +124,19 @@ RSpec.describe "routing" do
     to: { controller: "games", action: "index", user_id: "4" }
 
   it_recognizes "keeps /games/start_test/:id",
-    method: :get, path: "/games/start_test/7",
+    method: :post, path: "/games/start_test/7",
     to: { controller: "games", action: "start_test", id: "7" }
 
   it_recognizes "keeps /games/finish_test/:id",
-    method: :get, path: "/games/finish_test/7",
+    method: :post, path: "/games/finish_test/7",
     to: { controller: "games", action: "finish_test", id: "7" }
 
   it_recognizes "keeps /games/end_game/:id",
-    method: :get, path: "/games/end_game/7",
+    method: :post, path: "/games/end_game/7",
     to: { controller: "games", action: "end_game", id: "7" }
 
   it_recognizes "keeps /game_passings/exit_game/:game_id",
-    method: :get, path: "/game_passings/exit_game/7",
+    method: :post, path: "/game_passings/exit_game/7",
     to: { controller: "game_passings", action: "exit_game", game_id: "7" }
 
   it_recognizes "keeps /game_passings/show_results (Merb's :default route for a Hash url(), game_id arrives via query string)",
@@ -144,51 +144,59 @@ RSpec.describe "routing" do
     to: { controller: "game_passings", action: "show_results" }
 
   it_recognizes "keeps /games/:id/delete (Merb resources' auto member :delete)",
-    method: :get, path: "/games/7/delete",
+    method: :delete, path: "/games/7/delete",
     to: { controller: "games", action: "delete", id: "7" }
 
   it_recognizes "keeps /games/:game_id/levels/:id/delete",
-    method: :get, path: "/games/7/levels/9/delete",
+    method: :delete, path: "/games/7/levels/9/delete",
     to: { controller: "levels", action: "delete", game_id: "7", id: "9" }
 
+  it_recognizes "keeps /games/:game_id/levels/:id/move_up",
+    method: :post, path: "/games/7/levels/9/move_up",
+    to: { controller: "levels", action: "move_up", game_id: "7", id: "9" }
+
+  it_recognizes "keeps /games/:game_id/levels/:id/move_down",
+    method: :post, path: "/games/7/levels/9/move_down",
+    to: { controller: "levels", action: "move_down", game_id: "7", id: "9" }
+
   it_recognizes "keeps /games/:game_id/levels/:level_id/hints/:id/delete",
-    method: :get, path: "/games/7/levels/9/hints/3/delete",
+    method: :delete, path: "/games/7/levels/9/hints/3/delete",
     to: { controller: "hints", action: "delete", game_id: "7", level_id: "9", id: "3" }
 
   it_recognizes "keeps /games/:game_id/levels/:level_id/questions/:question_id/answers/:id/delete",
-    method: :get, path: "/games/7/levels/9/questions/2/answers/1/delete",
+    method: :delete, path: "/games/7/levels/9/questions/2/answers/1/delete",
     to: { controller: "answers", action: "delete", game_id: "7", level_id: "9", question_id: "2", id: "1" }
 
   it_recognizes "keeps /invitations/accept/:id",
-    method: :get, path: "/invitations/accept/5",
+    method: :post, path: "/invitations/accept/5",
     to: { controller: "invitations", action: "accept", id: "5" }
 
   it_recognizes "keeps /invitations/reject/:id",
-    method: :get, path: "/invitations/reject/5",
+    method: :post, path: "/invitations/reject/5",
     to: { controller: "invitations", action: "reject", id: "5" }
 
   it_recognizes "keeps /game_entries/new/:game_id/:team_id",
-    method: :get, path: "/game_entries/new/7/2",
+    method: :post, path: "/game_entries/new/7/2",
     to: { controller: "game_entries", action: "new", game_id: "7", team_id: "2" }
 
   it_recognizes "keeps /game_entries/reopen/:id",
-    method: :get, path: "/game_entries/reopen/5",
+    method: :post, path: "/game_entries/reopen/5",
     to: { controller: "game_entries", action: "reopen", id: "5" }
 
   it_recognizes "keeps /game_entries/accept/:id",
-    method: :get, path: "/game_entries/accept/5",
+    method: :post, path: "/game_entries/accept/5",
     to: { controller: "game_entries", action: "accept", id: "5" }
 
   it_recognizes "keeps /game_entries/reject/:id",
-    method: :get, path: "/game_entries/reject/5",
+    method: :post, path: "/game_entries/reject/5",
     to: { controller: "game_entries", action: "reject", id: "5" }
 
   it_recognizes "keeps /game_entries/recall/:id",
-    method: :get, path: "/game_entries/recall/5",
+    method: :post, path: "/game_entries/recall/5",
     to: { controller: "game_entries", action: "recall", id: "5" }
 
   it_recognizes "keeps /game_entries/cancel/:id",
-    method: :get, path: "/game_entries/cancel/5",
+    method: :post, path: "/game_entries/cancel/5",
     to: { controller: "game_entries", action: "cancel", id: "5" }
 
   # Negative checks: prove the router is not over-permissive. A route file
@@ -206,5 +214,27 @@ RSpec.describe "routing" do
   it "does not recognize /logout for verbs we did not intentionally add (only GET and DELETE are wired up)" do
     expect(recognized_params(method: :put, path: "/logout")).to be_nil
     expect(recognized_params(method: :post, path: "/logout")).to be_nil
+  end
+
+  # Every `it_recognizes` example above was flipped from :get to its new verb
+  # (:post or :delete) when the mutating-GET remediation landed, which proves
+  # the new verb works. It proves nothing about GET having stopped working --
+  # re-adding e.g. `get :delete` next to `delete :delete` in config/routes.rb
+  # would leave every one of those examples green. This guards the actual
+  # security property: GET must be gone, not just POST/DELETE present.
+  it "no longer recognizes GET on any of the mutating actions this plan moved off it" do
+    [
+      "/games/7/delete",
+      "/games/start_test/7",
+      "/games/finish_test/7",
+      "/games/end_game/7",
+      "/game_passings/exit_game/7",
+      "/invitations/accept/5",
+      "/game_entries/accept/5",
+      "/games/7/levels/9/delete",
+      "/games/7/levels/9/move_up",
+    ].each do |path|
+      expect(recognized_params(method: :get, path: path)).to be_nil, "expected GET #{path} to be unrecognized, but it still routed"
+    end
   end
 end

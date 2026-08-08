@@ -8,7 +8,7 @@
             <em><%= t("hints.list.after") %></em> <strong><%= link_to hint.delay_in_minutes, edit_game_level_hint_path(hint.level.game, hint.level, hint) unless @level.game.started? %></strong> <em><%= t("hints.list.minutes_colon") %></em>
             <em>
               <%= link_to t("shared.edit_short"), edit_game_level_hint_path(hint.level.game, hint.level, hint) unless @level.game.started? %>
-              <%= link_to t("shared.delete_short"), delete_game_level_hint_path(hint.level.game, hint.level, hint) unless @level.game.started? %>
+              <%= button_to t("shared.delete_short"), delete_game_level_hint_path(hint.level.game, hint.level, hint), :method => :delete unless @level.game.started? %>
             </em>
           </p>
           <p>

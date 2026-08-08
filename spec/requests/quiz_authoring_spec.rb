@@ -84,7 +84,7 @@ describe "quiz options and the publish gate", type: :request do
       sign_in(author)
 
       expect {
-        get delete_game_level_question_option_path(game, level, question, option)
+        delete delete_game_level_question_option_path(game, level, question, option)
       }.to change { Option.count }.by(-1)
     end
 

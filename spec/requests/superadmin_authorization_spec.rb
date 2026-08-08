@@ -75,14 +75,16 @@ describe "superadmin authorization", type: :request do
   # could erase the very evidence an operator locked the game to investigate,
   # which makes Game#deletable? true and opens a path to deleting the game
   # outright. Both new invariants (frozen content, frozen lifecycle) fell to
-  # one GET.
+  # one request -- unprotected by CSRF too, back when this route was still
+  # GET; it is POST now (see config/routes.rb), but the authorization gap
+  # this spec pins was never about the verb.
   it "stops a locked author erasing history and passings through finish_test" do
     game.update!(:editing_locked_at => Time.now)
     passing = create_game_passing(:level => create_level(:game => game))
     sign_in(author)
 
     expect do
-      get "/games/finish_test/#{game.id}"
+      post finish_test_game_path(game)
     end.not_to change(GamePassing, :count)
 
     expect(response).to have_http_status(:unauthorized)
@@ -94,7 +96,7 @@ describe "superadmin authorization", type: :request do
     game.update!(:editing_locked_at => Time.now)
     sign_in(superadmin)
 
-    get "/games/finish_test/#{game.id}"
+    post finish_test_game_path(game)
 
     expect(response).to redirect_to(game_path(game))
   end

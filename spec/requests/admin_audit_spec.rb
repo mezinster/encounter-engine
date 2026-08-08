@@ -46,7 +46,7 @@ describe "auditing administrative changes", type: :request do
 
     it "records a deletion, and still names the game afterwards" do
       name = game.name
-      expect { get delete_game_path(game) }.to change { AdminAction.count }.by(1)
+      expect { delete delete_game_path(game) }.to change { AdminAction.count }.by(1)
 
       entry = AdminAction.newest_first.first
       expect(entry.action).to eq("delete")
@@ -55,7 +55,7 @@ describe "auditing administrative changes", type: :request do
     end
 
     it "records ending a game" do
-      expect { get "/games/end_game/#{game.id}" }.to change { AdminAction.count }.by(1)
+      expect { post end_game_game_path(game) }.to change { AdminAction.count }.by(1)
       expect(AdminAction.newest_first.first.action).to eq("end_game")
     end
 
@@ -74,14 +74,14 @@ describe "auditing administrative changes", type: :request do
     end
 
     it "records starting a test" do
-      expect { get "/games/start_test/#{game.id}" }.to change { AdminAction.count }.by(1)
+      expect { post start_test_game_path(game) }.to change { AdminAction.count }.by(1)
       expect(AdminAction.newest_first.first.action).to eq("start_test")
     end
 
     it "records finishing a test" do
       testing_game = create_game(:author => author, :is_testing => true, :test_date => "2099-02-02 00:00")
 
-      expect { get "/games/finish_test/#{testing_game.id}" }.to change { AdminAction.count }.by(1)
+      expect { post finish_test_game_path(testing_game) }.to change { AdminAction.count }.by(1)
       expect(AdminAction.newest_first.first.action).to eq("finish_test")
     end
   end
@@ -92,7 +92,7 @@ describe "auditing administrative changes", type: :request do
   describe "an author acting on their own game" do
     it "records nothing" do
       sign_in(author)
-      expect { get "/games/end_game/#{game.id}" }.not_to change { AdminAction.count }
+      expect { post end_game_game_path(game) }.not_to change { AdminAction.count }
     end
 
     # acting_as_operator? is "superadmin AND not the author". The example
@@ -103,7 +103,7 @@ describe "auditing administrative changes", type: :request do
     it "records nothing when the author is also a superadmin" do
       author.update!(:is_superadmin => true)
       sign_in(author)
-      expect { get "/games/end_game/#{game.id}" }.not_to change { AdminAction.count }
+      expect { post end_game_game_path(game) }.not_to change { AdminAction.count }
     end
   end
 
@@ -115,7 +115,7 @@ describe "auditing administrative changes", type: :request do
       create_game_passing(:level => create_level(:game => played))
       sign_in(superadmin)
 
-      expect { get delete_game_path(played) }.not_to change { AdminAction.count }
+      expect { delete delete_game_path(played) }.not_to change { AdminAction.count }
       expect(Game.where(:id => played.id)).not_to be_empty
     end
   end
@@ -137,7 +137,7 @@ describe "auditing administrative changes", type: :request do
       sign_in(superadmin)
       name = game.name
       id = game.id
-      get delete_game_path(game)
+      delete delete_game_path(game)
 
       get admin_audit_index_path
 

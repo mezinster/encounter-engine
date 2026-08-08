@@ -52,8 +52,10 @@ Before { I18n.locale = :ru }
 #
 # A rollback per scenario is equivalent to the old drop-and-recreate for these
 # features and much faster. It also rewinds SQLite's AUTOINCREMENT counters,
-# which recreate_database! did too -- several features rely on the first game
-# created in a scenario having id 1.
+# matching what recreate_database! did too. That parity is not load-bearing --
+# a grep of all of features/ turns up no scenario that hardcodes an id-1
+# assumption (the suite's only bare "1" hit is a team-count assertion in
+# max-team-number.feature:58, unrelated) -- but it is harmless, so it stays.
 Around do |_scenario, block|
   ActiveRecord::Base.transaction do
     block.call
@@ -68,13 +70,18 @@ end
 # then belongs to a stranger's game. So start the run from an empty database,
 # exactly as recreate_database! used to guarantee.
 #
-# The identity counters have to go too, not just the rows: Rails declares
-# SQLite primary keys AUTOINCREMENT, so a leftover counter would stop the first
-# game of a scenario from getting id 1 -- and features/logs/log.feature:53-82
-# passes only because game id 1 and level id 1 coincide there
-# (app/views/logs/show_game_log.html.erb:7 passes a level to Log.of_game, which
-# resolves to `where(game_id: level.id)`). That is load-bearing, so this must
-# not fail quietly.
+# The identity counters are reset here too, not just the rows. This is NOT
+# what fixes the first-link problem above -- that problem is caused by
+# leftover ROWS on the dashboard, and the DELETE FROM loop already handles
+# that on its own; the counter reset contributes nothing to it. (An earlier
+# version of this comment also claimed the reset was load-bearing for
+# features/logs/log.feature:53-82, which used to pass only because game id 1
+# and level id 1 coincided under a since-fixed scoping bug in
+# app/views/logs/show_game_log.html.erb. That claim was equally
+# unsubstantiated -- a grep of all of features/ finds no scenario that
+# hardcodes an id-1 dependency.) Kept anyway, matching what recreate_database!
+# used to guarantee: harmless, and removing it is a separate risk not worth
+# taking here.
 BeforeAll do
   connection = ActiveRecord::Base.connection
   keep = %w[schema_migrations ar_internal_metadata]
@@ -105,6 +112,62 @@ def reset_primary_key_sequences!(connection)
   connection.execute('DELETE FROM sqlite_sequence')
 rescue ActiveRecord::StatementInvalid => e
   raise unless e.message.include?('no such table: sqlite_sequence')
+end
+
+# --- Reloading the current page ----------------------------------------------
+#
+# "страница перегружается" (features/games/steps/games_steps.rb) means "the
+# user reloads the page in their browser". It used to just `visit
+# page.current_url`, which reproduces a *GET* reload -- correct for a page
+# reached by following a link, which is what every one of this step's usages
+# did until task 4 of the 2026-08-07-security-csrf-verbs plan moved answer
+# deletion off GET and onto `button_to ..., method: :delete`.
+#
+# A real browser reload re-issues the *last* request as-is: for a page
+# reached by submitting a form it resubmits that form, verb and all (usually
+# behind a "resubmit this form?" prompt a human clicks through -- rack_test
+# has no such prompt to bypass). `visit page.current_url` cannot reproduce
+# that: it always issues a fresh GET, so once a route only accepts DELETE it
+# 404s outright. Worse, for an action whose *response* differs from what a
+# fresh GET would show -- e.g. AnswersController#delete, which refuses
+# deleting a level's last answer by re-rendering :index with 422 on that same
+# DELETE request, so the error text lives only in that response, never in a
+# flash or the database -- a fresh GET would show a *different* page (the
+# answer still there, no error), silently breaking the scenario asserting on
+# the refusal (features/answers/managing-answers.feature:59). Do not
+# "simplify" this back to a bare `visit page.current_url`.
+#
+# Scoped to this one step deliberately, NOT to its near-twin "я обновляю
+# страницу" (features/game-passing/steps/game-passing_steps.rb), which stays
+# a bare `visit page.current_url`. That step's own call sites
+# (features/tickets/ticket-83(5).feature) reach the play screen only by GET
+# in the first place, so resubmitting "the last request's verb" there would
+# not replay a GET refresh at all -- GamePassingsController#post_answer
+# renders (never redirects) after a plain POST with no _method override, so
+# the last request there is that POST, and resubmitting it would exercise
+# #post_answer's own finished? guard instead of #show_current_level's. Both
+# guards happen to produce the same visible page, so a scenario relying on
+# that would still pass -- while silently testing the wrong code path and
+# leaving #show_current_level's GET guard uncovered. See
+# spec/requests/play_screen_spec.rb ("shows the results, not a 500, on GET
+# after the game has finished") for that guard's real regression test.
+#
+# Submits with an empty params hash -- not a replay of whatever the original
+# form actually sent. Harmless for today's one non-GET caller
+# (AnswersController#delete reads the id from the path, not from params), but
+# worth knowing before reusing this for a future non-GET call site whose
+# action re-renders differently depending on submitted params (e.g. a create
+# action re-rendering its form on a validation failure): resubmitting empty
+# params there would exercise a different validation outcome than the
+# original submit, not reproduce it.
+def reload_last_page
+  last_request = page.driver.request
+
+  if last_request.request_method == "GET"
+    visit page.current_url
+  else
+    page.driver.submit(last_request.request_method, last_request.url, {})
+  end
 end
 
 # --- Time travel -------------------------------------------------------------

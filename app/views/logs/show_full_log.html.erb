@@ -21,7 +21,13 @@
         <% @teams.each do |team| %>
         <td>
           <%= team.name %>
-          <% team_logs = Log.of_team(team).of_level(level) %>
+          <%# @logs is Log.of_game(@game) (LogsController#show_full_log). This used
+              to re-query with Log.of_team(team).of_level(level), and because
+              logs.team/logs.level are name strings rather than foreign keys
+              (db/schema.rb), that matched the named team's submissions at the
+              named level across EVERY game the team ever played, not just this
+              one. %>
+          <% team_logs = @logs.of_team(team).of_level(level) %>
           <ul>
           <% team_logs.each do |team_log| %>
             <li><%= team_log.time.strftime("%H:%M:%S") %>&nbsp;<%= team_log.answer %></li>

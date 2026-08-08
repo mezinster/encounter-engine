@@ -14,7 +14,7 @@ describe "the team cap", type: :request do
   # directly -- which is exactly the case a server-side check exists for.
   it "refuses a registration once the cap is reached" do
     expect {
-      get "/game_entries/new/#{game.id}/#{captain.team_id}"
+      post new_game_entry_path(:game_id => game.id, :team_id => captain.team_id)
     }.not_to change { GameEntry.count }
   end
 
@@ -22,7 +22,7 @@ describe "the team cap", type: :request do
     game.update_column(:requested_teams_number, 0)
 
     expect {
-      get "/game_entries/new/#{game.id}/#{captain.team_id}"
+      post new_game_entry_path(:game_id => game.id, :team_id => captain.team_id)
     }.to change { GameEntry.count }.by(1)
   end
 

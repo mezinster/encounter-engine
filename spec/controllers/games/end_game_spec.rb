@@ -65,7 +65,7 @@ RSpec.describe GamesController, "#end_game", type: :controller do
 
   def perform_request(opts={})
     session[:user_id] = opts[:as_user]&.id
-    get :end_game, params: { id: @game.id }
+    post :end_game, params: { id: @game.id }
     response
   end
 end

@@ -54,18 +54,25 @@ module ApplicationHelper
     build_li    = options[:build_li]    || "<li>%s</li>"
     header      = options[:header]      || "<h2>Form submission failed because of %s problem%s</h2>"
 
-    # build_li/header/error_class are option-provided *format strings* and may
-    # legitimately contain HTML (every real call site passes a header like
-    # "<h2>...</h2>"). What must be escaped is the *values* interpolated into
-    # them: errors.size is an integer (harmless, escaped anyway to stay
-    # deliberate rather than lucky), and each full_message can embed
-    # arbitrary submitter-controlled text -- see
-    # Game#available_locales_are_known, whose %{locales} is built from
-    # params[:game][:available_locale_list] via unknown.join(", ").
+    # build_li/header are option-provided *format strings* and are
+    # deliberately NOT escaped -- they're developer-supplied and legitimately
+    # contain HTML (every real call site passes a header like "<h2>...</h2>").
+    # What must be escaped is the *values* substituted into them: error_class
+    # is a value a caller controls (options[:error_class]); errors.size is an
+    # integer (ERB::Util.html_escape here is ceremony -- harmless, kept to
+    # stay deliberate rather than lucky, not because an Integer can carry
+    # markup). Each full_message can embed arbitrary submitter-controlled
+    # text -- see Game#available_locales_are_known, whose %{locales} is built
+    # from params[:game][:available_locale_list] via unknown.join(", ") --
+    # so its escaping has to be unconditional: CGI.escapeHTML, not
+    # ERB::Util.html_escape, which is a no-op on a string that already
+    # answers true to html_safe?. A full_message can be html_safe already,
+    # e.g. via an `_html`-suffixed i18n key (Rails marks those safe
+    # automatically); CGI.escapeHTML escapes it regardless.
     header_message = header % [ERB::Util.html_escape(errors.size), errors.size == 1 ? "" : "s"]
 
     markup = +"<div class='#{ERB::Util.html_escape(error_class)}'>#{header_message}<ul>"
-    errors.full_messages.each { |message| markup << (build_li % ERB::Util.html_escape(message)) }
+    errors.full_messages.each { |message| markup << (build_li % CGI.escapeHTML(message.to_s)) }
     markup << "</ul></div>"
 
     markup.html_safe

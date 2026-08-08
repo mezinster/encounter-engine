@@ -50,6 +50,62 @@ class Admin::UsersController < ApplicationController
     redirect_to admin_user_path(user), :notice => t("admin.users.revoked_notice")
   end
 
+  # Housekeeping -- spam and test accounts. Every refusal exists because the
+  # alternative damages something the deleted user does not own. See
+  # docs/superpowers/specs/2026-08-08-team-membership-programme-design.md, S5.
+  #
+  # Refused before anything changes, matching #revoke, so no audit entry is
+  # written for a deletion that did not happen.
+  def destroy
+    user = User.find(params[:id])
+
+    if user.id == current_user.id
+      redirect_to admin_user_path(user), :alert => t("admin.users.cannot_delete_self") and return
+    end
+
+    # Their team would be left captainless WITH members -- the bricked state
+    # this whole programme exists to remove. Reassign the captaincy first.
+    if user.captain?
+      redirect_to admin_user_path(user),
+                  :alert => t("admin.users.cannot_delete_captain") and return
+    end
+
+    # last_superadmin_keeps_the_role guards REVOKING the role; destroy walks
+    # straight past it. Unreachable through this controller today -- see the
+    # note in spec/requests/admin_user_deletion_spec.rb -- because
+    # require_superadmin! plus the self guard above already make it
+    # impossible to empty the role. Kept because it costs one comparison and
+    # is the only thing between a future removal of the self guard and an
+    # instance nobody can administer.
+    if user.last_superadmin?
+      redirect_to admin_user_path(user),
+                  :alert => t("admin.users.cannot_delete_last_superadmin") and return
+    end
+
+    # Games are content other people played. Orphaning them also 500s
+    # games/show.html.erb, which dereferences @game.author.nickname
+    # unguarded. Anonymisation exists for exactly this user.
+    # Games are content other people played. Orphaning them also 500s
+    # games/show.html.erb, which dereferences @game.author.nickname
+    # unguarded. Anonymisation exists for exactly this user.
+    if user.created_games.any?
+      redirect_to admin_user_path(user),
+                  :alert => t("admin.users.cannot_delete_author") and return
+    end
+
+    nickname = user.nickname
+    user.destroy
+
+    # Recorded with the destroyed record, not nil: it is frozen but still
+    # readable, so target_label snapshots the nickname while target_id
+    # deliberately keeps the id that now points at nothing. That pairing is
+    # the whole reason target_label exists -- "User #47" alone would record
+    # the loss of the very thing that explains it.
+    record_admin_action("delete_user", user)
+    redirect_to admin_users_path,
+                :notice => t("admin.users.deleted_notice", :nickname => nickname)
+  end
+
   # Consent-free, so the refusals matter more than the move. See
   # docs/superpowers/specs/2026-08-08-team-membership-programme-design.md, S2.
   # Every guard refuses before anything changes, matching #revoke above, so no

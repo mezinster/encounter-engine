@@ -60,6 +60,7 @@ uk:
           withdraw: "Зняв з публікації"
           restore: "Опублікував"
           unfinish: "Відновив гру"
+          set_captain: "Призначив капітана команди"
           lock: "Заморозив редагування"
           unlock: "Розморозив редагування"
           update: "Змінив"
@@ -80,6 +81,7 @@ uk:
         totals: "Усього"
         entries_by_status: "Заявки за статусом"
         all_games: "Усі ігри"
+        all_teams: "Усі команди"
         status:
           withdrawn: "Знята з публікації"
           draft: "Чернетка"
@@ -120,6 +122,17 @@ uk:
         unlock: "Розморозити"
         delete: "Видалити"
         delete_confirm: "Видалити гру «%{name}» з усіма завданнями? Це незворотно."
+    teams:
+      captain_set: "Капітаном команди призначено %{nickname}"
+      not_a_member: "Цей користувач не входить до складу команди"
+      index:
+        title: "Команди"
+        name: "Назва"
+        captain: "Капітан"
+        members: "Склад"
+        no_captain: "немає капітана"
+        actions: "Дії"
+        set_captain: "Призначити капітаном"
   answers:
     must_have_at_least_one_variant: "Має бути хоча б один варіант коду"
     index:
@@ -582,7 +595,11 @@ uk:
       composition: "Склад"
       captain_suffix: "- капітан"
       invite: "Запросити учасників"
+      hand_over: "Передати капітанство"
   teams:
+    handed_over: "Капітанство передано: %{nickname}"
+    cannot_hand_over_mid_race: "Не можна передати капітанство, поки команда на дистанції"
+    hand_over_needs_another_member: "Оберіть іншого учасника команди"
     new:
       name_label: "Назва"
       submit: "Створити команду"

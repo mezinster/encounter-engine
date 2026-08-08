@@ -16,6 +16,26 @@
   <p>
     <%= link_to t("team_room.index.invite"), new_invitation_path, class: "btn" if @current_user.captain? %>
   </p>
+
+  <%# Captain-only, so it cannot collide with the two frozen "Не капитан"
+      scenarios in features/games/registration-to-game.feature, which assert
+      that a non-captain sees neither "Подать заявку на регистрацию" nor a
+      link "Отозвать" in this very region. Hidden mid-race (D1) and when the
+      captain is the only member, since there would be nobody to hand to.
+
+      A real form, not a link: this app ships no Turbo and no rails-ujs, so
+      link_to with method: :post would silently issue a GET against a
+      POST-only route. %>
+  <% if @current_user.captain? && !@team.in_live_race? %>
+    <% candidates = @team.members.reject { |member| member.id == @current_user.id } %>
+    <% if candidates.any? %>
+      <%= form_with url: hand_over_team_path(@team), method: :post do %>
+        <%= select_tag :member_id,
+                       options_from_collection_for_select(candidates, :id, :nickname) %>
+        <%= submit_tag t("team_room.index.hand_over"), :class => "btn" %>
+      <% end %>
+    <% end %>
+  <% end %>
 </fieldset>
 
 <%= render "shared/current_games" %>

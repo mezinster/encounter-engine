@@ -12,6 +12,9 @@ Rails.application.routes.draw do
   namespace :admin do
     get "/", to: "dashboard#show", as: :dashboard
     resources :games, only: [ :index ]
+    resources :teams, only: [ :index ] do
+      post "set_captain", on: :member
+    end
     resources :users, only: [ :index, :show ] do
       post "grant",  on: :member
       post "revoke", on: :member
@@ -62,7 +65,13 @@ Rails.application.routes.draw do
   resources :users do
     resources :games
   end
-  resources :teams
+  # The bare resource also generates index/show/edit/update/destroy routes
+  # with no actions behind them; those 404 via ActionNotFound before any
+  # filter. That is pre-existing and deliberately left alone -- only the
+  # member route below is added.
+  resources :teams do
+    post "hand_over", on: :member
+  end
   resources :invitations
 
   # Merb's `resources` auto-added `GET /<resource>/:id/edit` AND

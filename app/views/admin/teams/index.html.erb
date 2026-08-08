@@ -1,0 +1,44 @@
+<%# app/views/admin/teams/index.html.erb %>
+<h1><%= t("admin.teams.index.title") %></h1>
+
+<div class="table-wrap">
+<table class="table--cards">
+  <thead>
+    <tr>
+      <th><%= t("admin.teams.index.name") %></th>
+      <th><%= t("admin.teams.index.captain") %></th>
+      <th><%= t("admin.teams.index.members") %></th>
+      <th><%= t("admin.teams.index.actions") %></th>
+    </tr>
+  </thead>
+  <tbody>
+  <% @teams.each do |team| %>
+    <tr>
+      <td data-label="<%= t("admin.teams.index.name") %>"><%= team.name %></td>
+      <%# A captainless team is the state this screen exists to repair, so the
+          nil case is a label rather than a dereference. %>
+      <td data-label="<%= t("admin.teams.index.captain") %>">
+        <%= team.captain&.nickname || t("admin.teams.index.no_captain") %>
+      </td>
+      <td data-label="<%= t("admin.teams.index.members") %>">
+        <%= team.members.map(&:nickname).join(", ") %>
+      </td>
+      <%# A real form, not a link: this app ships no Turbo and no rails-ujs,
+          so link_to ..., method: :post would silently issue a GET against a
+          POST-only route. A select cannot ride button_to either, which is
+          why this is form_with rather than the button_to used elsewhere on
+          the admin screens. %>
+      <td>
+        <% if team.members.any? %>
+          <%= form_with url: set_captain_admin_team_path(team), method: :post do %>
+            <%= select_tag :member_id,
+                           options_from_collection_for_select(team.members, :id, :nickname, team.captain_id) %>
+            <%= submit_tag t("admin.teams.index.set_captain"), :class => "btn" %>
+          <% end %>
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+</div>

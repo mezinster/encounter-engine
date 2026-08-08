@@ -43,6 +43,7 @@ ru:
           withdraw: "Снял с публикации"
           restore: "Опубликовал"
           unfinish: "Возобновил игру"
+          set_captain: "Назначил капитана команды"
           lock: "Заморозил редактирование"
           unlock: "Разморозил редактирование"
           update: "Изменил"
@@ -62,6 +63,7 @@ ru:
         totals: "Всего"
         entries_by_status: "Заявки по статусу"
         all_games: "Все игры"
+        all_teams: "Все команды"
         audit_log: "Журнал действий"
         status:
           withdrawn: "Снята с публикации"
@@ -103,6 +105,17 @@ ru:
         unlock: "Разморозить"
         delete: "Удалить"
         delete_confirm: "Удалить игру «%{name}» со всеми уровнями? Это необратимо."
+    teams:
+      captain_set: "Капитаном команды назначен %{nickname}"
+      not_a_member: "Этот пользователь не состоит в команде"
+      index:
+        title: "Команды"
+        name: "Название"
+        captain: "Капитан"
+        members: "Состав"
+        no_captain: "нет капитана"
+        actions: "Действия"
+        set_captain: "Назначить капитаном"
   answers:
     must_have_at_least_one_variant: "Должен быть хотя бы один вариант кода"
     index:
@@ -568,7 +581,11 @@ ru:
       composition: "Состав"
       captain_suffix: "- капитан"
       invite: "Пригласить участников"
+      hand_over: "Передать капитанство"
   teams:
+    handed_over: "Капитанство передано: %{nickname}"
+    cannot_hand_over_mid_race: "Нельзя передать капитанство, пока команда на дистанции"
+    hand_over_needs_another_member: "Выберите другого участника команды"
     new:
       name_label: "Название"
       submit: "Создать команду"

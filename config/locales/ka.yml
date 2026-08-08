@@ -66,6 +66,7 @@ ka:
           withdraw: "მოხსნა გამოქვეყნებიდან"
           restore: "გამოაქვეყნა"
           unfinish: "აღადგინა თამაში"
+          set_captain: "დანიშნა გუნდის კაპიტანი"
           lock: "გააყინა რედაქტირება"
           unlock: "მოხსნა რედაქტირების გაყინვა"
           update: "შეცვალა"
@@ -86,6 +87,7 @@ ka:
         totals: "სულ"
         entries_by_status: "განაცხადები სტატუსის მიხედვით"
         all_games: "ყველა თამაში"
+        all_teams: "ყველა გუნდი"
         status:
           withdrawn: "მოხსნილია გამოქვეყნებიდან"
           draft: "მონახაზი"
@@ -126,6 +128,17 @@ ka:
         unlock: "გაყინვის მოხსნა"
         delete: "წაშლა"
         delete_confirm: "წავშალოთ თამაში «%{name}» ყველა დავალებითურთ? ეს შეუქცევადია."
+    teams:
+      captain_set: "გუნდის კაპიტნად დაინიშნა %{nickname}"
+      not_a_member: "ეს მომხმარებელი გუნდის წევრი არ არის"
+      index:
+        title: "გუნდები"
+        name: "სახელი"
+        captain: "კაპიტანი"
+        members: "შემადგენლობა"
+        no_captain: "კაპიტანი არ არის"
+        actions: "მოქმედებები"
+        set_captain: "კაპიტნად დანიშვნა"
   answers:
     must_have_at_least_one_variant: "უნდა იყოს კოდის სულ მცირე ერთი ვარიანტი"
     index:
@@ -597,7 +610,11 @@ ka:
       composition: "შემადგენლობა"
       captain_suffix: "- კაპიტანი"
       invite: "მონაწილეების მოწვევა"
+      hand_over: "კაპიტნობის გადაცემა"
   teams:
+    handed_over: "კაპიტნობა გადაეცა: %{nickname}"
+    cannot_hand_over_mid_race: "კაპიტნობის გადაცემა შეუძლებელია, სანამ გუნდი დისტანციაზეა"
+    hand_over_needs_another_member: "აირჩიეთ გუნდის სხვა წევრი"
     new:
       name_label: "დასახელება"
       submit: "გუნდის შექმნა"

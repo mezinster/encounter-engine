@@ -253,6 +253,7 @@ en:
       max_team_number_label: "Maximum number of teams:"
       levels_legend: "Tasks:"
       add_level: "Add a new task"
+      import_questions: "Import a list of questions"
       edit_link: "Edit this game"
       delete_link: "Delete this game"
       countdown_prefix: "Time until start: "

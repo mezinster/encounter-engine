@@ -61,6 +61,28 @@ describe "importing quiz questions", type: :request do
     end
   end
 
+  describe "the link on the game page" do
+    it "is offered to the author while the game has not started" do
+      sign_in(author)
+
+      get game_path(game)
+
+      expect(response.body).to include(new_game_quiz_import_path(game))
+    end
+
+    # Same rule as adding a single level: the importer rides the same guards,
+    # so offering it on a started game would be a promise it cannot keep.
+    it "is not offered once the game has started" do
+      started = create_game(:author => author, :starts_at => 1.minute.from_now)
+      allow(Time).to receive(:now).and_return(1.hour.from_now)
+      sign_in(author)
+
+      get game_path(started)
+
+      expect(response.body).not_to include(new_game_quiz_import_path(started))
+    end
+  end
+
   describe "previewing" do
     # The whole point of the two-step flow: the author sees what will happen
     # before any of it is real.

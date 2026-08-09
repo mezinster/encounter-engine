@@ -270,6 +270,7 @@ uk:
       max_team_number_label: "Максимальна кількість команд:"
       levels_legend: "Завдання:"
       add_level: "Додати нове завдання"
+      import_questions: "Імпорт питань списком"
       edit_link: "Редагувати цю гру"
       delete_link: "Видалити цю гру"
       countdown_prefix: "До початку залишилося: "

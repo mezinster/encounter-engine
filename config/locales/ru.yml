@@ -253,6 +253,7 @@ ru:
       max_team_number_label: "Максимальное количество команд:"
       levels_legend: "Задания:"
       add_level: "Добавить новое задание"
+      import_questions: "Импорт вопросов списком"
       edit_link: "Редактировать эту игру"
       delete_link: "Удалить эту игру"
       countdown_prefix: "До начала осталось: "

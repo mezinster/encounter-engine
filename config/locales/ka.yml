@@ -276,6 +276,7 @@ ka:
       max_team_number_label: "გუნდების მაქსიმალური რაოდენობა:"
       levels_legend: "დავალებები:"
       add_level: "ახალი დავალების დამატება"
+      import_questions: "კითხვების სიით იმპორტი"
       edit_link: "ამ თამაშის რედაქტირება"
       delete_link: "ამ თამაშის წაშლა"
       countdown_prefix: "დაწყებამდე დარჩა: "

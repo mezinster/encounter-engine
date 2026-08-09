@@ -354,6 +354,12 @@ ka:
       heading_prefix: "ახალი მინიშნება დავალებისთვის"
       heading_game_prefix: "თამაშიდან"
       submit: "მინიშნების დამატება"
+  quiz_imports:
+    errors:
+      option_before_question: "ხაზი %{line}: ვარიანტები კითხვის ტექსტამდეა"
+      too_few_options: "ხაზი %{line}: კითხვას ორზე ნაკლები ვარიანტი აქვს"
+      no_correct_option: "ხაზი %{line}: სწორი ვარიანტი ვარსკვლავით არ არის მონიშნული"
+      empty: "ტექსტი ცარიელია — იმპორტისთვის არაფერია"
   questions:
     must_have_at_least_one_code: "დავალებას სულ მცირე ერთი კოდი უნდა დარჩეს"
     code_deleted: "კოდი წაიშალა დავალებიდან"

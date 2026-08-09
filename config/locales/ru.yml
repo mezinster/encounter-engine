@@ -325,6 +325,12 @@ ru:
       heading_prefix: "Новое подсказка для задания"
       heading_game_prefix: "игры"
       submit: "Добавить подсказку"
+  quiz_imports:
+    errors:
+      option_before_question: "строка %{line}: варианты идут до текста вопроса"
+      too_few_options: "строка %{line}: у вопроса меньше двух вариантов"
+      no_correct_option: "строка %{line}: не отмечен правильный вариант (звёздочкой)"
+      empty: "Текст пуст — нечего импортировать"
   questions:
     must_have_at_least_one_code: "В задании должен остаться хотя бы один код"
     code_deleted: "Код удалён из задания"

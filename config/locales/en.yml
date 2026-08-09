@@ -325,6 +325,12 @@ en:
       heading_prefix: "New hint for task"
       heading_game_prefix: "of game"
       submit: "Add hint"
+  quiz_imports:
+    errors:
+      option_before_question: "line %{line}: options appear before any question text"
+      too_few_options: "line %{line}: the question has fewer than two options"
+      no_correct_option: "line %{line}: no correct option is marked with an asterisk"
+      empty: "The text is empty — there is nothing to import"
   questions:
     must_have_at_least_one_code: "A task must keep at least one code"
     code_deleted: "The code was deleted from the task"

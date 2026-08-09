@@ -342,6 +342,12 @@ uk:
       heading_prefix: "Нова підказка для завдання"
       heading_game_prefix: "гри"
       submit: "Додати підказку"
+  quiz_imports:
+    errors:
+      option_before_question: "рядок %{line}: варіанти йдуть до тексту питання"
+      too_few_options: "рядок %{line}: у питання менше двох варіантів"
+      no_correct_option: "рядок %{line}: не позначено правильний варіант (зірочкою)"
+      empty: "Текст порожній — нема чого імпортувати"
   questions:
     must_have_at_least_one_code: "У завданні має залишитися хоча б один код"
     code_deleted: "Код видалено із завдання"

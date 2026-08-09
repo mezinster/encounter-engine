@@ -33,12 +33,15 @@ Puma single-process behind kamal-proxy, RSpec + Cucumber.
   A green suite has repeatedly been weak evidence in this repository.
 - **Implementers cannot run Cucumber** — their Bash tool times out at 120s and the suite needs ~4
   minutes. Run RSpec, stop before committing, and report. The controller runs Cucumber.
-- The per-task example counts below are arithmetic from the baseline, given so a
-  silently-skipped spec file is visible. They are guidance; **0 failures is the binding check.** If
-  your count differs, find out why before continuing rather than adjusting the number.
-- Baselines to confirm before Task 1 and after every task:
-  **RSpec 1128 examples / 0 failures / 6 pending**;
-  **Cucumber 232 scenarios (2 undefined, 230 passed) / 2342 steps**.
+- Per-task expectations below are stated as **deltas**, not absolute counts. The absolute number
+  moves whenever master does -- it was quoted as 1128 while this plan was being written and measured
+  **1164** on the branch a few hours later, because PR #58 landed in between. **0 failures is the
+  binding check**; the delta is there so a silently-skipped spec file is visible. If your delta
+  differs, find out why rather than adjusting the number.
+- Baselines, re-measured on `feature/signup-abuse-hardening` on 2026-08-09:
+  **RSpec 1164 examples / 0 failures / 6 pending**;
+  **Cucumber 232 scenarios (2 undefined, 230 passed) / 2342 steps** (this one has been stable for
+  days and is the reliable figure).
 - Production is a single Puma process in a single container (there is no `config/puma.rb` and no
   `WEB_CONCURRENCY` in `config/deploy.yml`). The whole `:memory_store` decision rests on that; it is
   recorded in the config comment in Task 1 and must not be quietly invalidated.
@@ -221,7 +224,7 @@ export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 bundle exec rspec
 ```
 
-Expected: 1130 examples, 0 failures, 6 pending. (1128 baseline + 2 new.) Any *other* example that
+Expected: baseline **+2**. Any *other* example that
 changes behaviour here is a real finding: it would mean something depended on `Rails.cache` being a
 no-op. Report it rather than adapting the test.
 
@@ -431,7 +434,7 @@ git add db/migrate/20260809120000_create_settings.rb db/schema.rb app/models/set
 git commit -m "Add operator-tunable settings, with in-code defaults"
 ```
 
-Expected: 1136 examples, 0 failures, 6 pending.
+Expected: baseline **+8** (2 from Task 1, 6 here).
 
 ---
 
@@ -733,8 +736,8 @@ git add app/controllers/concerns/request_throttling.rb app/controllers/users_con
 git commit -m "Rate-limit the two endpoints that send mail to a chosen address"
 ```
 
-Expected: 1140 examples, 0 failures, 6 pending — Task 1's two examples in this file are
-replaced by six, so the file's own contribution goes from 2 to 6. **Report and STOP if any signup or login example
+Expected: baseline **+12** — Task 1's two examples in this file are replaced by six, so this
+file's contribution goes from 2 to 6. **Report and STOP if any signup or login example
 outside this file changed** — several frozen Cucumber scenarios sign users up, and a limit of 5/hour
 could bite a scenario that registers more than five users from one address.
 
@@ -999,7 +1002,7 @@ git add app/controllers/admin/settings_controller.rb app/views/admin/settings ap
 git commit -m "Let a superadmin change the rate limits without a deploy"
 ```
 
-Expected: 1147 examples, 0 failures, 6 pending.
+Expected: baseline **+19**.
 
 ---
 
@@ -1237,7 +1240,7 @@ git add app/views/users/new.html.erb app/controllers/users_controller.rb public/
 git commit -m "Add a signup honeypot that costs people nothing"
 ```
 
-Expected full suite: 1152 examples, 0 failures, 6 pending.
+Expected full suite: baseline **+24**.
 
 ---
 

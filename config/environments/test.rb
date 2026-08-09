@@ -6,6 +6,12 @@ Rails.application.configure do
   config.action_dispatch.show_exceptions = :none
   config.action_controller.allow_forgery_protection = false
   config.action_mailer.delivery_method = :test
+
+  # Explicit, and in memory rather than Rails' :file_store default: the
+  # throttle specs assert on counters, so the store has to be real -- and a
+  # file store persists tmp/cache BETWEEN runs, which would carry a counter
+  # from one suite invocation into the next.
+  config.cache_store = :memory_store
   config.active_support.deprecation = :stderr
 
   # The 59 feature files assert Russian UI copy. Pinning the locale here is

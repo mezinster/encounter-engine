@@ -165,6 +165,17 @@ deliberately; this is documented in `config/routes.rb` too.
   real signup form, so nearly every scenario POSTs through the rate-limited controller from
   `127.0.0.1` — with the hook removed, 5 of 11 scenarios fail in `features/signup` and
   `features/teams` alone.
+- **Neither suite covers `config/environments/production.rb`.** Both run in the test environment, so
+  that file is never evaluated — a change to it can be green locally and still break the image. The
+  `app-image` CI job ("Prove the image actually serves") is what catches it. To check locally, boot
+  the environment directly:
+  `RAILS_ENV=production SECRET_KEY_BASE=x APP_HOST=example.com SMTP_USERNAME=u SMTP_PASSWORD=p SMTP_ADDRESS=s MAIL_FROM=m@e.com DATABASE_URL="sqlite3:/tmp/probe.sqlite3" bin/rails runner 'puts "ok"'`
+  (sqlite because `pg` is production-group and not in the local bundle).
+- **ActiveSupport core extensions are NOT all loaded in an environment file.** `config/application.rb`
+  requires railties selectively rather than `rails/all`, so `active_support/all` is never pulled in,
+  and an environment file is evaluated during `initialize!` before the component that would have
+  loaded a given core extension. `32.megabytes` raises `NoMethodError` on `Integer` there while
+  working fine anywhere that runs after boot. Write the literal, or require the specific core_ext.
 - **A new validator needs its message in all four locales.** This app carries no `rails-i18n`, and
   the test environment sets `raise_on_missing_translations`, so a validator with no
   `activerecord.errors` entry fires correctly and then raises `I18n::MissingTranslationData` while

@@ -50,7 +50,15 @@ Rails.application.configure do
   # egress IP would become "the client" unless added to trusted_proxies.
   # RequestThrottling also logs remote_ip and X-Forwarded-For on every refusal,
   # so the check can be repeated at any time.
-  config.cache_store = :memory_store, { :size => 32.megabytes }
+  # 32 MB written out, not 32.megabytes. config/application.rb requires
+  # railties selectively rather than "rails/all", so active_support/all is
+  # never loaded, and an environment file is evaluated during initialize!
+  # before whichever component would have pulled in the numeric/bytes core
+  # extension. `32.megabytes` therefore raises NoMethodError on Integer here,
+  # while working fine anywhere that runs after boot -- which is why neither
+  # suite caught it (both run in the test environment, and this file is only
+  # read in production). The image smoke test did.
+  config.cache_store = :memory_store, { :size => 32 * 1024 * 1024 }
 
   config.action_mailer.delivery_method = :smtp
   # Welcome letters and invitations contain links; without a host they render

@@ -5,10 +5,11 @@
 **Goal:** Fill `config/locales/{be,pl,tr}.yml` with the platform's 587 interface strings, one language
 at a time, each shippable on its own.
 
-**The 587 figure was measured on `master` at 437a786, before PR #59 (signup abuse hardening) merged.**
-That PR adds `errors.too_many_requests`, `admin.settings.*`, `users.create.check_your_mail` and the
-`activerecord.errors.models.setting.*` messages — so once it lands the real number is higher. Every
-task below tells you to count rather than trust this figure; do that, and use what you get.
+**587 is `master` as of 2026-08-09, with PR #59 merged** (commit c0f8239) — verified by counting, not
+carried over. For the record, because an earlier draft of this note got it backwards: master before
+#59 was **573**, and #59's fourteen new keys (`errors.too_many_requests`, `admin.settings.*`,
+`users.create.check_your_mail`, `activerecord.errors.models.setting.*`) took it to 587. Every task
+below still tells you to count rather than trust the figure — do that, and use what you get.
 
 **Architecture:** Each language is one self-contained task producing one PR. The order is deliberate —
 Belarusian and Polish are close to the Russian source and mostly mechanical; Turkish is not, and goes

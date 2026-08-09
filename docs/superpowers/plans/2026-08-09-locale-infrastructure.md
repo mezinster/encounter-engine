@@ -43,10 +43,11 @@ Gherkin, frozen), RSpec.
 **Current state:** four locales (`ru`, `en`, `uk`, `ka`), **587 leaf keys each**, all four complete.
 `CLAUDE.md` says 489 — that number is stale and Task 4 fixes it.
 
-**The 587 figure was measured on `master` at 437a786, before PR #59 (signup abuse hardening) merged.**
-That PR adds `errors.too_many_requests`, `admin.settings.*`, `users.create.check_your_mail` and the
-`activerecord.errors.models.setting.*` messages — so once it lands the real number is higher. Every
-task below tells you to count rather than trust this figure; do that, and use what you get.
+**587 is `master` as of 2026-08-09, with PR #59 merged** (commit c0f8239) — verified by counting, not
+carried over. For the record, because an earlier draft of this note got it backwards: master before
+#59 was **573**, and #59's fourteen new keys (`errors.too_many_requests`, `admin.settings.*`,
+`users.create.check_your_mail`, `activerecord.errors.models.setting.*`) took it to 587. Every task
+below still tells you to count rather than trust the figure — do that, and use what you get.
 
 **There is no `rails-i18n` gem.** Everything Rails would normally supply per-locale is hand-written
 in this repository: `activerecord.errors.messages`, the per-model/per-attribute error messages, and

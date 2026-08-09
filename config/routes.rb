@@ -111,6 +111,11 @@ Rails.application.routes.draw do
       post :unlock
     end
 
+    # Singular: a game has one import screen, not a collection of imports.
+    # Nothing is persisted for the import itself -- the pasted text rides a
+    # hidden field between preview and confirm.
+    resource :quiz_import, only: [ :new, :create ]
+
     resources :levels do
       member do
         delete :delete

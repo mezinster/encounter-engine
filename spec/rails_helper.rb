@@ -63,6 +63,13 @@ RSpec.configure do |config|
   config.include ExceptionsHelper
   config.include ActiveSupport::Testing::TimeHelpers
 
+  # Rate-limit counters live in Rails.cache, which is process-global and does
+  # NOT roll back with the database transaction around each example. Without
+  # this the first example to trip a limit leaves the counter set and a later
+  # one starts mid-window -- an order-dependent failure, the kind that only
+  # appears when someone runs the suite with a different seed.
+  config.before(:each) { Rails.cache.clear }
+
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [
     Rails.root.join('spec/fixtures')

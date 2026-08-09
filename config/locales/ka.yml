@@ -97,6 +97,17 @@ ka:
           revoke_superadmin: "ჩამოართვა ადმინისტრატორის უფლებები"
           allow_any_code: "დაუშვა ნებისმიერი კოდი დონეზე"
           require_all_codes: "მოითხოვა ყველა კოდი დონეზე"
+    settings:
+      title: "შეზღუდვების პარამეტრები"
+      explanation: "შეზღუდვები მოქმედებს ერთ IP-მისამართზე მითითებულ პერიოდში. 0 თიშავს შეზღუდვას."
+      submit: "შენახვა"
+      saved: "პარამეტრები შენახულია"
+      invalid: "მნიშვნელობა უნდა იყოს მთელი რიცხვი ნულის ან მეტი"
+      names:
+        signup_max: "რეგისტრაცია ერთი მისამართიდან"
+        signup_window_seconds: "რეგისტრაციის პერიოდი (წამი)"
+        reset_max: "პაროლის აღდგენის მოთხოვნა ერთი მისამართიდან"
+        reset_window_seconds: "პაროლის აღდგენის პერიოდი (წამი)"
     dashboard:
       show:
         title: "მიმოხილვა"
@@ -185,6 +196,7 @@ ka:
     game_is_locked: "თამაშის რედაქტირება ადმინისტრატორმა გაყინა"
     game_is_withdrawn: "თამაში მოხსნილია გამოქვეყნებიდან"
     must_be_superadmin: "წვდომა მხოლოდ ადმინისტრატორისთვის"
+    too_many_requests: "ძალიან ბევრი მცდელობა. სცადეთ მოგვიანებით."
     game_is_not_live: "თამაში ამჟამად არ მიმდინარეობს"
   interventions:
     paused_notice: "თამაში შეჩერებულია"
@@ -392,6 +404,8 @@ ka:
     signal: "Signal"
     max: "MAX"
   users:
+    create:
+      check_your_mail: "შეამოწმეთ ფოსტა"
     new:
       nickname_label: "სახელი"
       email_label: "Email"
@@ -779,6 +793,13 @@ ka:
               blank: "თქვენ არ შეიყვანეთ დავალების დასახელება"
             text:
               blank: "თქვენ არ შეიყვანეთ დავალების ტექსტი"
+        setting:
+          attributes:
+            value:
+              greater_than_or_equal_to: "არ შეიძლება იყოს უარყოფითი"
+              not_a_number: "უნდა იყოს მთელი რიცხვი"
+            name:
+              inclusion: "უცნობი პარამეტრი"
         team:
           attributes:
             name:

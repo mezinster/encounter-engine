@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_08_150000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_09_120000) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -143,6 +143,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_08_150000) do
     t.integer "level_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+  end
+
+  create_table "settings", force: :cascade do |t|
+    t.string "name", null: false
+    t.integer "value", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_settings_on_name", unique: true
   end
 
   create_table "team_join_requests", force: :cascade do |t|

@@ -207,3 +207,72 @@ app's request budget.
     Rehearsed and recorded: PR #31 ("Add a rehearsed restore runbook, a Database workflow, and WAL
     retention") added the runbook and the Database workflow; PR #41 includes "Record the post-change
     restore rehearsal" confirming the rehearsal ran clean after the escaping fix landed.
+
+---
+
+## Tier 5 — signup and reset abuse (added 2026-08-09)
+
+Opened by a question from the owner: registration takes only a nickname and an e-mail, so what stops
+a script from creating accounts in bulk? The database turned out to be the least of it.
+
+### 20. Unauthenticated mail cannons — DONE (rate limiting), `feature/signup-abuse-hardening`
+`POST /users` and `POST /password` both send mail to an **attacker-chosen** address. SMTP defaults to
+`smtp.gmail.com` (`config/environments/production.rb`), which caps sending at a few hundred a day and
+suspends senders that trip its spam heuristics — so a script could exhaust the quota and get the
+account suspended, which stops invitations and resets too, not just signups.
+
+Closed by a per-IP fixed-window throttle (`app/controllers/concerns/request_throttling.rb`) whose
+limits live in `settings` and are edited at `/admin/settings` without a deploy. Rails 8's built-in
+`rate_limit` was not usable: it captures `to:`/`within:` at class-load time.
+
+Also closed: a signup honeypot, measured to have no layout effect on phone or desktop.
+
+### 21. Mail is still delivered synchronously — OPEN
+Both endpoints call `deliver_now`, so a permitted request holds a Puma thread for a full SMTP round
+trip (0.5–2s to Gmail). Below the throttle's limits this is still the cheapest way to occupy every
+thread this app has, and it puts SMTP latency in the user's signup.
+
+`deliver_later` is the obvious fix and is **not free here**: no queue backend is configured, so
+Rails' default `:async` adapter is an in-process thread pool that drops jobs on restart or deploy. A
+welcome letter or a reset link vanishing silently is arguably worse than a slow signup. Needs a
+durable queue (solid_queue) before it is worth doing.
+
+### 22. Nothing alerts on a throttle trip — OPEN
+`RequestThrottling` logs `[throttle] ... remote_ip= xff= count= limit=` on every refusal, and nobody
+reads it. The first sign of a real attack would be Gmail suspending the sending account. Same blind
+spot as the backup timer, which also tells nobody when it fails.
+
+### 23. `remote_ip` behind kamal-proxy — DONE, verified in production 2026-08-09
+The limiter keys on `request.remote_ip`. Every connection arrives from the proxy container, so this
+is only correct if `ActionDispatch::RemoteIp` trusts that hop and reads `X-Forwarded-For`. It should
+— the proxy connects over the Docker bridge, a private address Rails trusts by default — but that is
+reasoning, not evidence, and the failure direction is the bad one: if XFF is ignored, **every request
+in the world shares one counter** and the first few signups of each window lock everyone out.
+
+**Verified, and it did not need a deploy.** Rails already logs the client address on every request:
+`Rails::Rack::Logger`'s "Started ... for X" line is `request.remote_ip`, the same expression the
+limiter keys on. A marked request from a known public address was made against the live site and the
+running container's log read back:
+
+    Started GET "/login?probe=remoteip-check" for 178.134.238.169   <- the real client
+    Started GET "/team-room"                  for 3.78.35.189
+    Started GET "/"                           for 73.151.93.198
+
+The address is the client's public IP, not a `172.x` bridge address or the proxy's, and it differs
+per client — so kamal-proxy is setting `X-Forwarded-For` and `ActionDispatch::RemoteIp` is honouring
+it. There is no `trusted_proxies` override anywhere in `config/` or `app/`, so this is Rails' default
+private-range trust doing the right thing, and nothing in this branch changes it.
+
+Re-check if the proxy is ever replaced, moved off the Docker bridge, or fronted by a CDN — a CDN in
+particular would make the CDN's egress IP the client unless it is added to `trusted_proxies`.
+
+### 24. The reset flow was left as it is — owner's decision, 2026-08-09
+A redesign was planned (the emailed link would issue a generated password in a second mail) and then
+dropped, because the property it was meant to buy already holds: `PasswordResetsController#create`
+only issues a token and mails a link, so a stranger submitting someone else's address changes
+nothing. The redesign would have added a second cleartext-password e-mail — the opposite direction
+from item #10 — and doubled the mail volume of an endpoint this work was hardening.
+
+Recorded so it is not re-proposed as an oversight. If it is ever revisited, the emailed link must
+**not** perform the reset itself: mail scanners follow links on delivery, so a mutating `GET` would
+reset accounts nobody asked to reset.

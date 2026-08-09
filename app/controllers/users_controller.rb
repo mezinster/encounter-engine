@@ -1,5 +1,7 @@
 # -*- encoding : utf-8 -*-
 class UsersController < ApplicationController
+  include RequestThrottling
+
   # SECURITY FIX (see .superpowers/sdd/2026-08-04-merb-to-rails-i18n/task-S-report.md):
   # The Merb original (app/controllers/users.rb) had no `before` filters at
   # all -- not even ensure_authenticated on #update, which loaded @user by
@@ -31,6 +33,28 @@ class UsersController < ApplicationController
   end
 
   def create
+    # Honeypot: see the field's comment in app/views/users/new.html.erb. Read
+    # straight off params -- signup_params permits only nickname and email, so
+    # this would be stripped before it could ever be checked.
+    #
+    # Answers with an ordinary redirect rather than an error, so an operator
+    # watching responses cannot find the trap by diffing them. Nothing is
+    # created and nothing is mailed. Checked BEFORE the throttle, so a bot's
+    # flood does not consume the per-IP budget that real people share.
+    if params[:website].present?
+      redirect_to login_path, :notice => t("users.create.check_your_mail")
+      return
+    end
+
+    # Before anything is built or saved: a refused request must cost this
+    # server as little as it costs the client.
+    unless throttle!("signup")
+      @user = User.new(signup_params)
+      flash.now[:alert] = t("errors.too_many_requests")
+      render :new, status: :too_many_requests
+      return
+    end
+
     @user = User.new(signup_params)
 
     # Registration no longer collects a password -- the server generates the

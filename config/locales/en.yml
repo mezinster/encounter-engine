@@ -74,6 +74,17 @@ en:
           revoke_superadmin: "Revoked administrator rights"
           allow_any_code: "Allowed any one code on a level"
           require_all_codes: "Required all codes on a level"
+    settings:
+      title: "Rate limits"
+      explanation: "Limits apply per IP address per window. 0 disables the limit."
+      submit: "Save"
+      saved: "Settings saved"
+      invalid: "Value must be a whole number of zero or more"
+      names:
+        signup_max: "Signups per address"
+        signup_window_seconds: "Signup window (seconds)"
+        reset_max: "Password reset requests per address"
+        reset_window_seconds: "Password reset window (seconds)"
     dashboard:
       show:
         title: "Overview"
@@ -154,6 +165,7 @@ en:
     must_be_author: "You must be the game's author to view this page"
     not_registered_for_game: "Your team is not registered for this game."
     must_be_superadmin: "Administrator access only"
+    too_many_requests: "Too many attempts. Please try again later."
     must_be_author_or_finished_player: "The full log is only available to the game's author or a player whose team has finished the game"
     game_already_started: "You can't edit a game after it has started"
     game_is_locked: "Editing this game has been frozen by an administrator"
@@ -363,6 +375,8 @@ en:
     signal: "Signal"
     max: "MAX"
   users:
+    create:
+      check_your_mail: "Check your e-mail"
     new:
       nickname_label: "Name"
       email_label: "Email"
@@ -735,6 +749,13 @@ en:
               blank: "Task name is required"
             text:
               blank: "Task text is required"
+        setting:
+          attributes:
+            value:
+              greater_than_or_equal_to: "must not be negative"
+              not_a_number: "must be a whole number"
+            name:
+              inclusion: "is not a known setting"
         team:
           attributes:
             name:

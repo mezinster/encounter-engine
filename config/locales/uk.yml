@@ -91,6 +91,17 @@ uk:
           revoke_superadmin: "Зняв права адміністратора"
           allow_any_code: "Дозволив будь-який код на рівні"
           require_all_codes: "Зажадав усі коди на рівні"
+    settings:
+      title: "Налаштування обмежень"
+      explanation: "Обмеження діють на одну IP-адресу за вказаний період. 0 вимикає обмеження."
+      submit: "Зберегти"
+      saved: "Налаштування збережено"
+      invalid: "Значення має бути цілим числом не менше нуля"
+      names:
+        signup_max: "Реєстрацій з однієї адреси"
+        signup_window_seconds: "Період для реєстрацій (секунд)"
+        reset_max: "Запитів скидання пароля з однієї адреси"
+        reset_window_seconds: "Період для скидання пароля (секунд)"
     dashboard:
       show:
         title: "Огляд"
@@ -179,6 +190,7 @@ uk:
     game_is_locked: "Редагування гри заморожено адміністратором"
     game_is_withdrawn: "Гру знято з публікації"
     must_be_superadmin: "Доступ лише для адміністратора"
+    too_many_requests: "Забагато спроб. Спробуйте пізніше."
     game_is_not_live: "Гра зараз не триває"
   interventions:
     paused_notice: "Гру призупинено"
@@ -380,6 +392,8 @@ uk:
     signal: "Signal"
     max: "MAX"
   users:
+    create:
+      check_your_mail: "Перевірте пошту"
     new:
       nickname_label: "Ім'я"
       email_label: "Email"
@@ -763,6 +777,13 @@ uk:
               blank: "Ви не ввели назву завдання"
             text:
               blank: "Ви не ввели текст завдання"
+        setting:
+          attributes:
+            value:
+              greater_than_or_equal_to: "не може бути від'ємним"
+              not_a_number: "має бути цілим числом"
+            name:
+              inclusion: "невідоме налаштування"
         team:
           attributes:
             name:

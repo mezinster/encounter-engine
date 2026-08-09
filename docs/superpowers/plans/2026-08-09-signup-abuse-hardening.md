@@ -1246,6 +1246,14 @@ Expected full suite: baseline **+24**.
 
 ## Task 6: Reset issues a generated password, after a confirmation
 
+## DROPPED — owner's decision, 2026-08-09
+
+Not implemented. The owner chose to keep the existing choose-your-own-password form, on the finding
+recorded in "Decision to confirm" above: the anti-lockout property this task was meant to buy already
+holds, because `PasswordResetsController#create` only issues a token and mails a link. The task text
+is kept below unchanged, so the reasoning survives if it is ever revisited — see item 24 of
+`docs/security/2026-08-08-follow-up-queue.md`.
+
 **Read the "Decision to confirm" section at the top of this plan before starting.** This task changes
 a security-relevant flow and its trade-off has been recorded rather than assumed. If the owner has not
 confirmed, ask before implementing.

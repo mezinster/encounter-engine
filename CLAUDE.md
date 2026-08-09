@@ -143,7 +143,9 @@ deliberately; this is documented in `config/routes.rb` too.
 - **Cucumber** — `features/**/*.feature`, Russian Gherkin. 232 scenarios (230 passed, 2 undefined),
   2342 steps (the 2 undefined scenarios are pre-existing empty placeholders — not a regression).
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 967 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+- **RSpec** — 1188 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+  **Do not trust a quoted RSpec count** — this number has moved five times in a week and stale copies
+  have been cited as current twice. Re-run it. Cucumber's 232/2342 is the stable figure.
   `spec/rails_helper.rb` enables the legacy `should` syntax
   (`config.expect_with :rspec do |c| c.syntax = [:should, :expect] end`) because roughly 140
   assertions ported from the Merb-era RSpec 1.x suite still use `x.should == y`; new specs may use
@@ -153,7 +155,20 @@ deliberately; this is documented in `config/routes.rb` too.
   `bin/rails db:test:prepare` after adding a migration, same as any Rails app.
 - Object factories are plain helpers in `spec/spec_helpers/fixtures_helper.rb` (`create_user`,
   `create_game`, `create_level`, ...) — not FactoryBot. Keep using them; don't introduce FactoryBot
-  for new specs without raising it first.
+  for new specs without raising it first. **`create_user` takes no arguments** — it generates its own
+  nickname and e-mail; passing a hash raises `ArgumentError`.
+- **`Rails.cache` is real now, and process-global.** `config.cache_store = :memory_store` in both
+  production and test (it was Rails' `:file_store` default, which in test persisted `tmp/cache`
+  *between* runs). It does not roll back with the transaction around an example, so
+  `spec/rails_helper.rb` and `features/support/env.rb` both clear it before each example/scenario.
+  The Cucumber hook is load-bearing, not tidiness: `Given зарегистрирован пользователь X` drives the
+  real signup form, so nearly every scenario POSTs through the rate-limited controller from
+  `127.0.0.1` — with the hook removed, 5 of 11 scenarios fail in `features/signup` and
+  `features/teams` alone.
+- **A new validator needs its message in all four locales.** This app carries no `rails-i18n`, and
+  the test environment sets `raise_on_missing_translations`, so a validator with no
+  `activerecord.errors` entry fires correctly and then raises `I18n::MissingTranslationData` while
+  rendering its message — which reads like a broken test rather than a missing key.
 
 ## Conventions
 

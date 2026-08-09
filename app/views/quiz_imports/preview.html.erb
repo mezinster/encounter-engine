@@ -1,0 +1,51 @@
+<%# app/views/quiz_imports/preview.html.erb
+    Nothing has been written at this point. The pasted text is carried in a
+    hidden field so the confirm step needs no server-side state. %>
+<h1><%= t("quiz_imports.preview.title", :game => @game.name) %></h1>
+
+<p>
+  <strong>
+    <%= t("quiz_imports.preview.summary",
+          :parsed => @parsed.questions.size,
+          :skipped => @writer.skipped.size,
+          :added => @writer.to_add.size) %>
+  </strong>
+</p>
+
+<% if @writer.skipped.any? %>
+  <fieldset class="card">
+    <legend><%= t("quiz_imports.preview.skipped") %></legend>
+    <ul class="game-list">
+      <% @writer.skipped.each do |question| %>
+        <li><%= question[:text] %></li>
+      <% end %>
+    </ul>
+  </fieldset>
+<% end %>
+
+<fieldset class="card">
+  <legend><%= t("quiz_imports.preview.will_add") %></legend>
+  <ul class="game-list">
+    <% @writer.to_add.each do |question| %>
+      <li>
+        <%= question[:text] %>
+        <ul>
+          <% question[:options].each do |option| %>
+            <li>
+              <%# A glyph, not copy: deliberately not a locale key -- it reads the same in every language, and i18n_spec flags identical ru/en values as untranslated. %><%= option[:correct] ? "✓" : "" %>
+              <%= option[:text] %>
+            </li>
+          <% end %>
+        </ul>
+      </li>
+    <% end %>
+  </ul>
+</fieldset>
+
+<%= form_with url: game_quiz_import_path(@game), method: :post do %>
+  <%= hidden_field_tag :text, @text %>
+  <%= hidden_field_tag :confirm, "1" %>
+  <%= submit_tag t("quiz_imports.preview.confirm"), :class => "btn btn--go" %>
+<% end %>
+
+<p><%= link_to t("quiz_imports.preview.back"), new_game_quiz_import_path(@game) %></p>

@@ -253,6 +253,7 @@ en:
       max_team_number_label: "Maximum number of teams:"
       levels_legend: "Tasks:"
       add_level: "Add a new task"
+      import_questions: "Import a list of questions"
       edit_link: "Edit this game"
       delete_link: "Delete this game"
       countdown_prefix: "Time until start: "
@@ -325,6 +326,27 @@ en:
       heading_prefix: "New hint for task"
       heading_game_prefix: "of game"
       submit: "Add hint"
+  quiz_imports:
+    created_notice: "Questions added: %{added}. Skipped (already present): %{skipped}"
+    new:
+      title: "Import questions into “%{game}”"
+      intro: "Paste your questions: a question line, then its options. Mark the correct option with an asterisk. Two asterisks means a question with several correct answers."
+      example: "Which city is the capital of Belarus?\nA) Brest\nB) Grodno\nC) *Minsk"
+      errors_heading: "The text was not accepted:"
+      preview: "See what would be added"
+      back: "Back to the game"
+    preview:
+      title: "What would be added to “%{game}”"
+      summary: "Questions parsed: %{parsed}. Skipped (already present): %{skipped}. To be added: %{added}"
+      skipped: "Skipped — already in the game"
+      will_add: "Will be added"
+      confirm: "Add these questions"
+      back: "Edit the text"
+    errors:
+      option_before_question: "line %{line}: options appear before any question text"
+      too_few_options: "line %{line}: the question has fewer than two options"
+      no_correct_option: "line %{line}: no correct option is marked with an asterisk"
+      empty: "The text is empty — there is nothing to import"
   questions:
     must_have_at_least_one_code: "A task must keep at least one code"
     code_deleted: "The code was deleted from the task"

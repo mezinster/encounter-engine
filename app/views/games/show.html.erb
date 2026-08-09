@@ -59,6 +59,12 @@
 
     <p>
       <%= link_to t("games.show.add_level"), new_game_level_path(@game), class: "btn" if ! @game.started? %>
+      <%# Same condition as adding a single level, because the importer rides
+          the same guards: an author cannot bulk-import into a started game
+          either. The label deliberately shares no wording with "Добавить
+          новое задание", whose absence two frozen scenarios in
+          features/levels/create-level.feature assert for non-authors. %>
+      <%= link_to t("games.show.import_questions"), new_game_quiz_import_path(@game), class: "btn" if ! @game.started? %>
     </p>
   </fieldset>
 

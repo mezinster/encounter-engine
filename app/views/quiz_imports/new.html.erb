@@ -1,0 +1,29 @@
+<%# app/views/quiz_imports/new.html.erb %>
+<h1><%= t("quiz_imports.new.title", :game => @game.name) %></h1>
+
+<p><%= t("quiz_imports.new.intro") %></p>
+
+<pre class="card"><%= t("quiz_imports.new.example") %></pre>
+
+<% if @parsed && !@parsed.valid? %>
+  <div class="card">
+    <strong><%= t("quiz_imports.new.errors_heading") %></strong>
+    <ul class="game-list">
+      <% @parsed.errors.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<%# A real form: this app ships neither Turbo nor rails-ujs. %>
+<%= form_with url: game_quiz_import_path(@game), method: :post do %>
+  <p>
+    <%= text_area_tag :text, @text, :rows => 20, :cols => 80 %>
+  </p>
+  <p>
+    <%= submit_tag t("quiz_imports.new.preview"), :class => "btn" %>
+  </p>
+<% end %>
+
+<p><%= link_to t("quiz_imports.new.back"), game_path(@game) %></p>

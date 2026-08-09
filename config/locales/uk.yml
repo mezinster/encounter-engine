@@ -492,6 +492,9 @@ uk:
     en: "English"
     uk: "Українська"
     ka: "ქართული"
+    tr: "Türkçe"
+    be: "Беларуская"
+    pl: "Polski"
   layout:
     title: "Активні міські ігри"
     header:

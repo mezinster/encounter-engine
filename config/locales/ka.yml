@@ -505,6 +505,9 @@ ka:
     en: "English"
     uk: "Українська"
     ka: "ქართული"
+    tr: "Türkçe"
+    be: "Беларуская"
+    pl: "Polski"
   layout:
     title: "აქტიური ქალაქური თამაშები"
     header:

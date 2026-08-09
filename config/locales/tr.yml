@@ -1,0 +1,24 @@
+# Turkish.
+#
+# Registered ahead of being translated -- the same "register now, translate
+# later" move uk and ka were introduced with. Right now this file carries only
+# the language-switcher endonyms, which is the one block that CANNOT fall back:
+# app/views/layouts/_header.html.erb and app/views/users/edit.html.erb both
+# render t("locales.<code>") for every entry in I18n.available_locales, so a
+# registered locale with no name raises rather than falling back (there is
+# nothing in ru.yml to fall back to either).
+#
+# Every other key resolves through config.i18n.fallbacks ([:ru],
+# config/application.rb) to the Russian copy until
+# docs/superpowers/plans/2026-08-09-locale-translation-delivery.md fills this
+# file in. spec/i18n_spec.rb permits that -- it asserts subset-of-ru, not
+# equality.
+tr:
+  locales:
+    ru: "Русский"
+    en: "English"
+    uk: "Українська"
+    ka: "ქართული"
+    tr: "Türkçe"
+    be: "Беларуская"
+    pl: "Polski"

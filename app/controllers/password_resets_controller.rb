@@ -1,5 +1,7 @@
 # -*- encoding : utf-8 -*-
 class PasswordResetsController < ApplicationController
+  include RequestThrottling
+
   def new
   end
 
@@ -7,6 +9,14 @@ class PasswordResetsController < ApplicationController
   # form already refuses to distinguish "no such e-mail" from "wrong password"
   # (sessions_controller.rb:24) and this must not undo that.
   def create
+    # Checked before the lookup, so a throttled response cannot become the
+    # address oracle the identical-response design above exists to prevent.
+    unless throttle!("reset")
+      flash.now[:alert] = t("errors.too_many_requests")
+      render :new, status: :too_many_requests
+      return
+    end
+
     user = User.find_by(email: params[:email].to_s.strip)
 
     if user

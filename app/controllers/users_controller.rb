@@ -1,5 +1,7 @@
 # -*- encoding : utf-8 -*-
 class UsersController < ApplicationController
+  include RequestThrottling
+
   # SECURITY FIX (see .superpowers/sdd/2026-08-04-merb-to-rails-i18n/task-S-report.md):
   # The Merb original (app/controllers/users.rb) had no `before` filters at
   # all -- not even ensure_authenticated on #update, which loaded @user by
@@ -31,6 +33,15 @@ class UsersController < ApplicationController
   end
 
   def create
+    # Before anything is built or saved: a refused request must cost this
+    # server as little as it costs the client.
+    unless throttle!("signup")
+      @user = User.new(signup_params)
+      flash.now[:alert] = t("errors.too_many_requests")
+      render :new, status: :too_many_requests
+      return
+    end
+
     @user = User.new(signup_params)
 
     # Registration no longer collects a password -- the server generates the

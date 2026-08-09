@@ -179,6 +179,7 @@ uk:
     game_is_locked: "Редагування гри заморожено адміністратором"
     game_is_withdrawn: "Гру знято з публікації"
     must_be_superadmin: "Доступ лише для адміністратора"
+    too_many_requests: "Забагато спроб. Спробуйте пізніше."
     game_is_not_live: "Гра зараз не триває"
   interventions:
     paused_notice: "Гру призупинено"

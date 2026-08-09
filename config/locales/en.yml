@@ -154,6 +154,7 @@ en:
     must_be_author: "You must be the game's author to view this page"
     not_registered_for_game: "Your team is not registered for this game."
     must_be_superadmin: "Administrator access only"
+    too_many_requests: "Too many attempts. Please try again later."
     must_be_author_or_finished_player: "The full log is only available to the game's author or a player whose team has finished the game"
     game_already_started: "You can't edit a game after it has started"
     game_is_locked: "Editing this game has been frozen by an administrator"

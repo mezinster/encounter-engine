@@ -37,6 +37,16 @@ Capybara.default_normalize_ws = true
 # scenario).
 Before { I18n.locale = :ru }
 
+# Rate-limit counters (RequestThrottling) live in Rails.cache, which is
+# process-global: the whole suite runs in ONE process and every request in it
+# comes from 127.0.0.1, so without this the counters accumulate ACROSS
+# scenarios. With the shipped default of five signups an hour, the sixth
+# scenario to register a user would be refused -- and it would fail looking
+# like a defect in whatever that scenario was actually testing, which is the
+# worst possible signal. The limiter is still exercised WITHIN a scenario,
+# which is correct; no scenario registers more than a handful of users.
+Before { Rails.cache.clear }
+
 # --- Database isolation ------------------------------------------------------
 #
 # The Merb suite called ActiveRecordHelper.recreate_database! before every

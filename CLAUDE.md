@@ -166,15 +166,23 @@ add steps there or Cucumber will auto-require them a second time.
   `<html lang="<%= I18n.locale %>">`, so the five `text-transform: uppercase` rules get Turkish
   casing from the browser. **Never add a Ruby-side `.upcase`/`.downcase` to user-facing text** —
   it is locale-blind and turns `i` into `I` rather than `İ`.
-- **`shared.countdown.*` is a hand-rolled plural array, not an i18n pluralisation, and Polish is
-  slightly wrong because of it.** `app/views/shared/_countdown.html.erb` hard-codes an East Slavic
-  index function (`n%10==1 && n%100!=11 → 0`, `n%10 in 2..4 && n%100 not in 12..14 → 1`, else `2`)
-  and indexes a three-element array with it, in every locale. `ru`/`uk`/`be` are correct; `en`,
-  `ka` and `tr` fill all three slots with the same form (Turkish has no plural agreement after a
-  numeral); **Polish agrees everywhere except slot 0**, which also fires for 21, 31, 101…, so a
-  countdown standing at exactly 21 units reads `21 rok` instead of `21 lat`. `en` has had the same
-  defect since it was written (`21 year`). Fixing it means making that index function locale-aware
-  in the template.
+- **`shared.countdown.*` is a hand-rolled plural array, not an i18n pluralisation.** The countdown
+  ticks client-side, so the rule has to be JavaScript — `n` changes after the page is sent.
+  `app/views/shared/_countdown.html.erb` emits a three-element array per unit and a function
+  picking one of the three indices. That function was **one hard-coded East Slavic rule for every
+  locale** until 2026-08-09, which is right for `ru`/`uk`/`be` and wrong elsewhere in a way that
+  only shows at particular numbers: its "one" slot fires for 1, 21, 31, 101…, so Polish read
+  `21 rok` instead of `21 lat`, and English read `21 year`. It is now
+  `ApplicationHelper#countdown_plural_function`, three rule families
+  (`east_slavic`, `polish`, `one_other`) selected by locale, with `one_other` the default — safe
+  both for simple pluralisation and for `tr`/`ka`, whose three slots hold the same word anyway.
+  **If you add a locale, check whether it needs a family**; the default is correct unless it has
+  Slavic-style few/many forms.
+  `spec/helpers/countdown_plural_spec.rb` and the locale examples in `spec/views/countdown_spec.rb`
+  run the emitted JavaScript **through `node`** rather than reimplementing the rule in Ruby — a
+  Ruby mirror would agree with itself while the shipped JavaScript stayed broken. Both were
+  mutation-tested against the old inline rule and fail with `21 dzień` / `21 day`. The specs need
+  `node` on `PATH`; GitHub's `ubuntu-latest` has it.
 - **Georgian needed the same treatment as Turkish, and got it first.** It was restructured rather
   than translated word-for-word wherever the template's fixed word order fights the language: the
   hint delay labels, which bracket a number Georgian postposes; and anywhere a user-supplied name
@@ -237,7 +245,7 @@ deliberately; this is documented in `config/routes.rb` too.
 - **Cucumber** — `features/**/*.feature`, Russian Gherkin. 232 scenarios (230 passed, 2 undefined),
   2342 steps (the 2 undefined scenarios are pre-existing empty placeholders — not a regression).
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 1207 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+- **RSpec** — 1222 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
   **Do not trust a quoted RSpec count** — this number has moved five times in a week and stale copies
   have been cited as current twice. Re-run it. Cucumber's 232/2342 is the stable figure.
   `spec/rails_helper.rb` enables the legacy `should` syntax

@@ -171,3 +171,21 @@ th {
 }
 .tag--live { color: var(--go); border-color: var(--go); }
 .tag--danger { color: var(--danger); border-color: var(--danger); }
+
+/* The signup honeypot (app/views/users/new.html.erb). Positioned off-screen
+   rather than display:none or visibility:hidden -- some scripted clients skip
+   fields whose computed style hides them, and the field is only useful if a
+   robot believes it is real.
+
+   Absolutely positioned so it is out of flow and can shift nothing: the form
+   below it lays out exactly as if this element did not exist, on any viewport.
+   Moved LEFT, not up or down, because overflow to the left of the viewport
+   does not extend the scrollable area, while overflow to the right would add a
+   horizontal scrollbar on a phone. */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

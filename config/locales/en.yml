@@ -375,6 +375,8 @@ en:
     signal: "Signal"
     max: "MAX"
   users:
+    create:
+      check_your_mail: "Check your e-mail"
     new:
       nickname_label: "Name"
       email_label: "Email"

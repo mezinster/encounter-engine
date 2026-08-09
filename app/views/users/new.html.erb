@@ -9,5 +9,27 @@
     <%= f.label :email, t("users.new.email_label") %>
     <%= f.text_field :email %>
   </div>
+  <%# Honeypot. Hidden from people, offered to robots: a scripted client fills
+      every input it parses, a human never sees this one. Deliberately NOT
+      type="hidden" -- plenty of bots skip those, and the point is that it
+      looks like an ordinary field to anything reading the markup.
+
+      The name is bait ("website" is a field spam tooling expects on a signup
+      form), so it must not be renamed to anything self-describing.
+
+      Three attributes are for people, not robots:
+        aria-hidden  keeps it out of the screen-reader tree -- without it this
+                     traps blind users and nobody else
+        tabindex=-1  keeps it out of the keyboard order
+        autocomplete keeps password managers from filling it helpfully
+
+      Hidden by class, not an inline style, so the rule lives with the rest of
+      the CSS -- see .hp-field in components.css, which also explains why it is
+      positioned off-screen rather than display:none. %>
+  <div class="hp-field" aria-hidden="true">
+    <%= label_tag :website, "Website" %>
+    <%= text_field_tag :website, nil, :tabindex => -1, :autocomplete => "off" %>
+  </div>
+
   <%= f.submit t("users.new.submit"), class: "btn btn--go" %>
 <% end %>

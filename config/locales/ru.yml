@@ -375,6 +375,8 @@ ru:
     signal: "Signal"
     max: "MAX"
   users:
+    create:
+      check_your_mail: "Проверьте почту"
     new:
       nickname_label: "Имя"
       email_label: "Email"

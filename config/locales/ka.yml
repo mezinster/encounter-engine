@@ -404,6 +404,8 @@ ka:
     signal: "Signal"
     max: "MAX"
   users:
+    create:
+      check_your_mail: "შეამოწმეთ ფოსტა"
     new:
       nickname_label: "სახელი"
       email_label: "Email"

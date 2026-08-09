@@ -392,6 +392,8 @@ uk:
     signal: "Signal"
     max: "MAX"
   users:
+    create:
+      check_your_mail: "Перевірте пошту"
     new:
       nickname_label: "Ім'я"
       email_label: "Email"

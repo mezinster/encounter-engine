@@ -33,6 +33,19 @@ class UsersController < ApplicationController
   end
 
   def create
+    # Honeypot: see the field's comment in app/views/users/new.html.erb. Read
+    # straight off params -- signup_params permits only nickname and email, so
+    # this would be stripped before it could ever be checked.
+    #
+    # Answers with an ordinary redirect rather than an error, so an operator
+    # watching responses cannot find the trap by diffing them. Nothing is
+    # created and nothing is mailed. Checked BEFORE the throttle, so a bot's
+    # flood does not consume the per-IP budget that real people share.
+    if params[:website].present?
+      redirect_to login_path, :notice => t("users.create.check_your_mail")
+      return
+    end
+
     # Before anything is built or saved: a refused request must cost this
     # server as little as it costs the client.
     unless throttle!("signup")

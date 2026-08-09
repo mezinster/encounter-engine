@@ -137,14 +137,59 @@
 .page--focused {
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas: "top" "main";
+  /* The one shell that must fill the viewport EXACTLY rather than grow with
+     its content: the bar sits at the bottom, the task area scrolls between
+     it and the header. So .page's `align-content: start` is undone here and
+     the main row takes whatever is left.
+     100dvh, not 100vh: on a phone 100vh is the height with the browser's
+     URL bar hidden, which is taller than what you can actually see -- the
+     precise error that let the bar overhang the visible screen. */
+  /* minmax(0, 1fr), not 1fr -- the same trap this file documents for columns
+     at the top, in the other axis. A bare 1fr is minmax(auto, 1fr), and that
+     auto floor lets the row grow to its content, so .main is never actually
+     constrained to the viewport, the flex children below never see a
+     shortage, and nothing shrinks: the bar stayed at its full height and the
+     page just overflowed instead. */
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content: stretch;
+  /* height, not min-height, and the distinction is load-bearing: min-height
+     leaves the grid's height INDEFINITE, and against an indefinite height an
+     fr track sizes to its content -- so .main was never constrained, the
+     flex children below never saw a shortage, and nothing shrank. The
+     too-short-viewport case is handled by .main's own overflow instead of by
+     letting the shell grow. */
+  height: 100dvh;
 }
+
+/* A race, not a browsing session. The theme toggle and the four language
+   links are chrome nobody adjusts while a clock is running, and at 390px
+   they wrapped the header onto three rows -- 181px, 27% of the visible
+   screen, more than the question itself. Hidden here only; every other page
+   keeps them, and a locale is still chosen from the profile form or a
+   ?locale= link. */
+.page--focused #theme-toggle,
+.page--focused #locale-switcher { display: none; }
 /* No bottom reserve for the pinned answer bar: it is position: sticky, so it
    holds its own space in flow at whatever height its contents come to. The
    12rem/17rem constants that used to live here were measured against a bar
    holding a code field and were 118px short of a quiz bar, which is how the
    captain's exit button ended up unreachable underneath it. See the .playbar
    comment in screens.css. */
-.page--focused .main { max-width: 44rem; }
+.page--focused .main {
+  max-width: 44rem;
+  /* Column of three: title, the scrolling task area, then the pinned
+     controls and the bar. min-height: 0 because a flex/grid child's auto
+     floor refuses to shrink below its content, which would push the bar off
+     the bottom instead of letting .play-scroll scroll. */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* Last resort, and it should never fire on a real phone: below roughly
+     595px of viewport even the floors do not fit, and this scrolls the
+     column rather than clipping the bar off the bottom of a shell that
+     cannot grow. */
+  overflow-y: auto;
+}
 
 @media (prefers-reduced-motion: reduce) {
   #drawer, .drawer-scrim { transition: none; }

@@ -7,6 +7,10 @@
   <%= t("game_passings.show_current_level.title_prefix") %> "<strong><%= @game.translated(:name, content_locale) %></strong>", <%= t("game_passings.show_current_level.level_label") %> #<%= @game_passing.current_level.position %>
 </h2>
 
+<%# Everything that may grow without bound -- task text, an accumulating pile
+    of hints -- scrolls in here, so it can never push the two things below it
+    off the screen. See .play-scroll in screens.css. %>
+<div class="play-scroll">
 <%= render "shared/content_language_switcher", :game => @game_passing.game %>
 
 <fieldset class="card">
@@ -32,22 +36,6 @@
   <% end %>
 </div>
 
-<% if answer_posted? %>
-  <% if answer_was_correct? %>
-    <div class="flash">
-      <%= t("game_passings.show_current_level.answer_correct", answer: @answer) %>
-    </div>
-  <% else %>
-    <p class="flash flash--alert">
-      <%= t("game_passings.show_current_level.answer_incorrect", answer: @answer) %>
-    </p>
-  <% end %>
-<% elsif answer_rejected? %>
-  <p class="flash flash--alert">
-    <%= rejected_answer_message %>
-  </p>
-<% end %>
-
 <%# Counting toward a total is meaningless when any single code suffices --
     showing "0 из 3" to a team that needs only one is actively misleading. %>
 <% if @game_passing.current_level.multi_question? && !@game_passing.current_level.any_code_passes? %>
@@ -55,15 +43,41 @@
     <%= t("game_passings.show_current_level.multi_question_progress", answered: @game_passing.answered_questions.size, total: @game_passing.current_level.questions.count) %>
   </div>
 <% end %>
+</div>
 
-<p>
-  <% if current_user.captain? %>
-      <%= button_to t("game_passings.show_current_level.exit_game"), exit_game_path(:game_id => @game_passing.game_id), :class => "btn" %>
+<%# Outside the scrolling region on purpose: whether the last answer was
+    refused, and the captain's way out of the game, are the two things that
+    must be on screen no matter how long the task text runs or how many
+    hints have landed. Both are short and fixed-height, so pinning them costs
+    a bounded amount of room. %>
+<div class="play-pinned">
+  <% if answer_posted? %>
+    <% if answer_was_correct? %>
+      <div class="flash">
+        <%= t("game_passings.show_current_level.answer_correct", answer: @answer) %>
+      </div>
+    <% else %>
+      <p class="flash flash--alert">
+        <%= t("game_passings.show_current_level.answer_incorrect", answer: @answer) %>
+      </p>
+    <% end %>
+  <% elsif answer_rejected? %>
+    <p class="flash flash--alert">
+      <%= rejected_answer_message %>
+    </p>
   <% end %>
-  <% if @game.is_testing? %>
-    <%= button_to t("game_passings.show_current_level.finish_testing"), finish_test_game_path(@game), :class => "btn" %>
+
+  <% if current_user.captain? || @game.is_testing? %>
+    <p>
+      <% if current_user.captain? %>
+        <%= button_to t("game_passings.show_current_level.exit_game"), exit_game_path(:game_id => @game_passing.game_id), :class => "btn" %>
+      <% end %>
+      <% if @game.is_testing? %>
+        <%= button_to t("game_passings.show_current_level.finish_testing"), finish_test_game_path(@game), :class => "btn" %>
+      <% end %>
+    </p>
   <% end %>
-</p>
+</div>
 
 <%# The pinned bar: the code field, the countdown to the next hint and the
     newest hint text, so the distance from "stuck" to "trying again" never
@@ -119,6 +133,14 @@
   <% unless @game.paused? %>
     <% if @game_passing.current_level.quiz? %>
       <%= form_with url: post_answer_path(game_id: @game.id), method: :post, html: { class: "playbar-form playbar-form--quiz" } do %>
+        <%# The ONLY scrolling part of the bar. Everything else in here -- the
+            hint, the countdown, the code field on a mixed level, the submit
+            button -- must stay put, and the task text, any flash and the
+            captain's exit button must keep the top half of the screen. A
+            quiz's option list is the one piece that can grow without bound,
+            so it is the one piece that yields. See .playbar-questions in
+            screens.css. %>
+        <div class="playbar-questions">
         <%# unanswered_questions, not questions: an answered question that is
             still on the form can be submitted again, and a wrong pick charges
             the penalty a second time for a question the team already got
@@ -143,6 +165,7 @@
             <% end %>
           </fieldset>
         <% end %>
+        </div>
 
         <%# A level may mix a quiz question with a code question. Without this
             the code field simply never renders on such a level and it becomes

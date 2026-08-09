@@ -145,25 +145,24 @@ ul.language-tabs .missing-count {
  * countdown and the newest hint -- is pinned here instead of drifting down
  * the page.
  *
- * STICKY, NOT FIXED, and that is the whole point. Fixed lifts the bar out of
- * flow, so the space it needs has to be reserved by hand somewhere else --
- * which is what .page--focused .main's bottom padding used to do, with a
- * constant measured against a bar holding a code field (222px, 255px paused).
- * A quiz bar carries a whole fieldset of options and measures 390px, past
- * even the 272px phone reserve, so it buried the last thing in flow: the
- * captain's "Сойти с дистанции" button. Measured at 390x844 scrolled fully
- * to the bottom, the button sat under 102px of bar and elementFromPoint at
- * its centre returned a quiz option -- unreachable at any scroll position,
- * not merely awkward. All three teams in game 4 played a phone through it.
+ * IN FLOW -- neither fixed nor sticky, and that is the whole point. Fixed
+ * lifted the bar out of flow, so the space it needs had to be reserved by
+ * hand somewhere else: a constant measured against a bar holding a code
+ * field (222px, 255px paused). A quiz bar carries a whole fieldset of
+ * options and measures 390px, past even the 272px phone reserve, so it
+ * buried the last thing in flow -- the captain's "Сойти с дистанции"
+ * button, unreachable at any scroll position.
  *
- * Sticky pins the bar to the viewport bottom exactly as fixed did, but it
- * keeps its box in flow, so it reserves its own space at whatever height its
- * contents happen to be. There is no constant to keep in step with the
- * markup, and no content shape that can reintroduce the bug.
+ * Sticky fixed that but not the squeeze: the bar still sized itself to its
+ * contents and took 59% of a 660px visible viewport, cutting the task text
+ * off mid-sentence. Now .page--focused is a viewport-height column
+ * (layout.css) and the bar is simply its last row, so its height is
+ * negotiated against the task area rather than imposed on it. Sticky would
+ * actively hurt here: in the extreme case where the page does overflow, a
+ * bar pinned to the viewport bottom would cover .play-pinned again, which is
+ * exactly the bug this file has now been through twice.
  */
 .playbar {
-  position: sticky;
-  bottom: 0;
   z-index: 15;
   padding: var(--space-3) var(--space-4);
   /* Keeps the bar clear of the iOS home indicator. */
@@ -175,12 +174,65 @@ ul.language-tabs .missing-count {
   margin-right: calc(-1 * var(--space-4));
   background: var(--surface);
   border-top: 1px solid var(--border);
-  /* A quiz question can carry many options; without a cap a bar pinned to the
-     bottom grows taller than the viewport and buries the task text, the
-     countdown, and even some of its own options above the fold. Scrolling
-     inside the bar instead keeps every control reachable. */
-  max-height: 70vh;
+  /* Half the screen, no more. A quiz's option list grows without bound, and
+     with the whole list inside the bar it reached 390px of a 660px visible
+     viewport -- 59% -- which cut the task text off mid-sentence and put the
+     captain's exit button underneath it again. The old 70vh cap never even
+     engaged at that size (70vh was 462px), which is why capping alone was
+     never the fix: the options themselves have to yield. They do, in
+     .playbar-questions below.
+     50vh is measured against the worst case, not chosen for looks: title,
+     task card, an incorrect-answer flash and the exit button come to ~290px,
+     which the other half covers on every phone viewport tested down to
+     375x600. */
+  max-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  /* Belt and braces: if the bar's UNSCROLLABLE parts alone ever exceed the
+     cap (a long pinned hint, paused and penalised at once), this keeps them
+     reachable rather than clipped. */
   overflow-y: auto;
+}
+
+/* The task area: everything that can grow without bound. It takes the space
+   left between the title and the pinned controls, and scrolls within it, so
+   a long task or a pile of hints can never push the exit button or the
+   answer feedback off the screen. */
+.play-scroll {
+  flex: 1 1 auto;
+  /* A floor, not 0. min-height: 0 is the usual way to let a flex child
+     shrink below its content, but it also lets it shrink to NOTHING: at
+     375x560 this region and the option list below both collapsed to empty
+     strips -- a question with no question in it. 5rem is about two lines
+     plus the legend, and being a real number rather than auto it still
+     shrinks past its content, which is what makes the scroll work.
+     4rem, sized against the tightest real case: an iPhone SE (375x553 of
+     visible viewport in Safari) showing a wrong-answer flash. */
+  min-height: 4rem;
+  overflow-y: auto;
+}
+
+/* base.css's rhythm is scoped to DIRECT children of .main, so the blocks
+   that moved inside these two wrappers would otherwise lose their spacing. */
+.play-scroll > * + *,
+.play-pinned > * + * { margin-top: var(--space-4); }
+
+/* Never shrinks: this is the guarantee. */
+.play-pinned { flex: 0 0 auto; }
+
+/* The scrolling region -- the option list and nothing else. min-height: 0
+   because a flex child's default min-height is auto, which refuses to shrink
+   below its content and would push the bar past its cap instead of
+   scrolling. The submit button is the child AFTER this one, so it can never
+   be scrolled out of reach the way it could when the whole bar scrolled. */
+.playbar-questions {
+  overflow-y: auto;
+  /* No floor here, deliberately -- the floor belongs on .playbar itself. A
+     floor on this list makes the bar's CONTENT unshrinkable while the bar
+     goes on shrinking, and the first thing pushed out of the clipped box is
+     the submit button. Measured: at 375x560 that left «Отправить!»
+     unreachable, which is worse than the collapse it was meant to fix. */
+  min-height: 0;
 }
 
 .playbar-hint {
@@ -227,6 +279,18 @@ ul.language-tabs .missing-count {
 .playbar-form--quiz {
   flex-direction: column;
   align-items: stretch;
+  /* The form sits between .playbar and .playbar-questions in the flex chain,
+     so it has to be allowed to shrink too -- otherwise it holds its content
+     height, the option list never gets the chance to scroll, and the cap
+     above is defeated one level up.
+
+     The floor lives HERE rather than on .playbar so that it applies to quiz
+     bars only: a code level's bar is 103px of label, field and button, and a
+     floor on the bar itself would pad it out with 57px of nothing. 8rem is
+     what this form must never shrink below -- one option plus the submit
+     button -- so .play-scroll absorbs the squeeze first, and past that .main
+     scrolls, which is safe now that nothing is covering anything. */
+  min-height: 8rem;
 }
 
 .quiz-question {

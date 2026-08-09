@@ -19,7 +19,34 @@
 <button type="button" id="theme-toggle" class="btn" onclick="toggleTheme()">
   <%= t("layout.header.theme") %>
 </button>
+<%# A dropdown, not a row. With four locales this control wrapped the header
+    onto three rows at phone width; at seven it measured 225px tall at 390x660
+    -- 34% of the visible viewport, and 41% on a 375x553 iPhone SE. The links
+    are all still here, they are just behind a trigger.
+
+    CSS-only. Not a <select> (it would need JS to navigate, and this app has
+    no Turbo and no rails-ujs -- see the GET /logout wart in CLAUDE.md) and
+    NOT a <details>, because both would break
+    features/i18n/switch-language.feature:37, which is frozen and whose step
+    does within("#locale-switcher") { click_link(label) }.
+
+    Why hiding the menu in layout.css is safe for that scenario, and an
+    inline style or a hidden attribute would NOT be: Capybara's rack-test
+    driver never parses stylesheets. Capybara::Node::Simple#visible? checks
+    exactly five things -- input[type=hidden], <template>, the hidden
+    ATTRIBUTE, an INLINE style containing display:none, and script/head/style
+    tags. A closed <details> is special-cased invisible on top of that. So a
+    link hidden by an external rule stays clickable for the acceptance suite
+    while being genuinely hidden from a person. See .locale-menu in
+    public/stylesheets/layout.css. %>
 <div id="locale-switcher">
+  <%# aria-expanded is deliberately absent: with no JS there is nothing to
+      update it, and a permanently-false value is worse than none. %>
+  <button type="button" class="btn locale-trigger" aria-haspopup="true">
+    <%= t("locales.#{I18n.locale}") %>
+  </button>
+
+  <div class="locale-menu">
   <% I18n.available_locales.each do |available_locale| %>
     <% if available_locale == I18n.locale %>
       <span class="locale-switcher-current"><%= t("locales.#{available_locale}") %></span>
@@ -33,4 +60,5 @@
             class: "locale-switcher-link" %>
     <% end %>
   <% end %>
+  </div>
 </div>

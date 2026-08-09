@@ -485,6 +485,9 @@ ru:
     en: "English"
     uk: "Українська"
     ka: "ქართული"
+    tr: "Türkçe"
+    be: "Беларуская"
+    pl: "Polski"
   layout:
     title: "Активные городские игры"
     header:

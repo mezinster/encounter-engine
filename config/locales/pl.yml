@@ -1,0 +1,814 @@
+# Polish.
+#
+# Registered on 2026-08-09 and translated in the same programme -- see
+# docs/superpowers/plans/2026-08-09-locale-translation-delivery.md.
+#
+# MACHINE-PRODUCED, NOT REVIEWED BY A NATIVE SPEAKER. The same status uk, ka
+# and be carry (see CLAUDE.md). Structurally verified -- every key in ru.yml
+# has a value here, every interpolation variable matches -- but the wording
+# has not been read by anyone who speaks Polish. Treat reported wording
+# problems as real.
+#
+# Translated from ru.yml, cross-checked against en.yml. Game jargon follows
+# the Russian consistently: игра -> gra, команда -> drużyna, задание ->
+# zadanie (the puzzle a level poses), уровень -> poziom (its numbered
+# position), код -> kod (the answer string players find in the city),
+# подсказка -> podpowiedź, игрок -> gracz, заявка -> zgłoszenie, "сойти с
+# дистанции" -> "zrezygnować z gry" (quit mid-game).
+#
+# Polish inflects around interpolated names the way Russian does -- «%{team}»
+# in a sentence wanting the genitive reads slightly off. It is not a blocker
+# (Russian ships with the same issue), but where a phrasing could avoid
+# inflecting around a name, it does: "drużyny «%{team}»" is written as
+# "drużyny o nazwie «%{team}»" nowhere -- instead the quoted name is kept in
+# apposition after a common noun, which is grammatical whatever the name is.
+pl:
+  admin:
+    users:
+      granted_notice: "Uprawnienia administratora zostały nadane"
+      revoked_notice: "Uprawnienia administratora zostały cofnięte"
+      cannot_revoke_self: "Nie można odebrać uprawnień samemu sobie"
+      cannot_revoke_last: "Nie można odebrać uprawnień ostatniemu administratorowi"
+      moved_notice: "Gracz został przeniesiony do drużyny «%{team}»"
+      cannot_move_captain: "Nie można przenieść kapitana. Najpierw wyznacz innego kapitana jego drużynie."
+      cannot_move_mid_race: "Nie można przenosić graczy, dopóki drużyna jest na trasie"
+      move_needs_another_team: "Wybierz inną drużynę"
+      deleted_notice: "Konto %{nickname} zostało usunięte"
+      cannot_delete_self: "Nie można usunąć własnego konta"
+      cannot_delete_captain: "Nie można usunąć kapitana. Najpierw wyznacz innego kapitana jego drużynie."
+      cannot_delete_last_superadmin: "Nie można usunąć ostatniego administratora"
+      cannot_delete_author: "Nie można usunąć autora gier. Zanonimizuj konto, aby zachować gry."
+      anonymised_notice: "Konto zostało zanonimizowane"
+      cannot_anonymise_self: "Nie można zanonimizować własnego konta"
+      cannot_anonymise_captain: "Nie można zanonimizować kapitana. Najpierw wyznacz innego kapitana jego drużynie."
+      index:
+        title: "Gracze"
+        nickname: "Pseudonim"
+        email: "E-mail"
+        team: "Drużyna"
+        locale: "Język"
+        signed_up: "Rejestracja"
+        role: "Rola"
+        superadmin: "administrator"
+        back: "Do przeglądu"
+      show:
+        email: "E-mail"
+        phone: "Telefon"
+        instagram: "Instagram"
+        telegram: "Telegram"
+        messengers: "Komunikatory"
+        date_of_birth: "Data urodzenia"
+        team: "Drużyna"
+        locale: "Język"
+        signed_up: "Rejestracja"
+        authored_games: "Utworzone gry"
+        back: "Do listy graczy"
+        grant: "Nadaj uprawnienia administratora"
+        revoke: "Odbierz uprawnienia administratora"
+        move: "Przenieś do drużyny"
+        delete: "Usuń konto"
+        anonymise: "Zanonimizuj konto"
+    audit:
+      index:
+        title: "Dziennik działań administratorów"
+        when: "Kiedy"
+        who: "Kto"
+        what: "Działanie"
+        target: "Obiekt"
+        details: "Szczegóły"
+        unknown_actor: "nieznany"
+        back: "Do przeglądu"
+        action:
+          withdraw: "Wycofał z publikacji"
+          restore: "Opublikował"
+          unfinish: "Wznowił grę"
+          set_captain: "Wyznaczył kapitana drużyny"
+          delete_team: "Usunął drużynę"
+          move_user: "Przeniósł gracza do innej drużyny"
+          delete_user: "Usunął konto"
+          anonymise_user: "Zanonimizował konto"
+          lock: "Zablokował edycję"
+          unlock: "Odblokował edycję"
+          update: "Zmienił"
+          delete: "Usunął"
+          end_game: "Zakończył grę"
+          start_test: "Uruchomił testowanie"
+          finish_test: "Zakończył testowanie"
+          grant_superadmin: "Nadał uprawnienia administratora"
+          revoke_superadmin: "Odebrał uprawnienia administratora"
+          allow_any_code: "Zezwolił na dowolny kod na poziomie"
+          require_all_codes: "Wymógł wszystkie kody na poziomie"
+    settings:
+      title: "Ustawienia limitów"
+      explanation: "Limity obowiązują dla jednego adresu IP w podanym okresie. 0 wyłącza limit."
+      submit: "Zapisz"
+      saved: "Ustawienia zostały zapisane"
+      invalid: "Wartość musi być liczbą całkowitą nie mniejszą niż zero"
+      names:
+        signup_max: "Rejestracji z jednego adresu"
+        signup_window_seconds: "Okres dla rejestracji (sekund)"
+        reset_max: "Żądań resetu hasła z jednego adresu"
+        reset_window_seconds: "Okres dla resetu hasła (sekund)"
+    dashboard:
+      show:
+        title: "Przegląd"
+        games_by_status: "Gry według statusu"
+        editing_locked: "Edycja zablokowana"
+        totals: "Łącznie"
+        entries_by_status: "Zgłoszenia według statusu"
+        all_games: "Wszystkie gry"
+        all_teams: "Wszystkie drużyny"
+        audit_log: "Dziennik działań"
+        status:
+          withdrawn: "Wycofana z publikacji"
+          draft: "Szkic"
+          finished: "Zakończona"
+          running: "Trwa"
+          scheduled: "Zaplanowana"
+        total:
+          users: "Graczy"
+          teams: "Drużyn"
+          games: "Gier"
+          passings_finished: "Przejść zakończonych"
+          passings_in_progress: "Przejść w toku"
+        entry_status:
+          new: "Nowe"
+          accepted: "Przyjęte"
+          rejected: "Odrzucone"
+          recalled: "Wycofane"
+          canceled: "Anulowane"
+    games:
+      index:
+        title: "Wszystkie gry"
+        name: "Nazwa"
+        author: "Autor"
+        locales: "Języki"
+        status: "Status"
+        teams: "Drużyn"
+        draft: "Szkic"
+        scheduled: "Zaplanowana"
+        running: "Trwa"
+        finished: "Zakończona"
+        withdrawn: "Wycofana z publikacji"
+        locked: "edycja zablokowana"
+        edit: "Edytuj"
+        withdraw: "Wycofaj"
+        restore: "Opublikuj"
+        unfinish: "Wznów"
+        lock: "Zablokuj"
+        unlock: "Odblokuj"
+        delete: "Usuń"
+        delete_confirm: "Usunąć grę «%{name}» wraz ze wszystkimi poziomami? Tej operacji nie da się cofnąć."
+    teams:
+      captain_set: "Kapitanem drużyny został %{nickname}"
+      not_a_member: "Ten użytkownik nie należy do drużyny"
+      deleted_notice: "Drużyna «%{name}» została usunięta"
+      not_deletable: "Tej drużyny nie można usunąć: ma członków albo już grała"
+      index:
+        title: "Drużyny"
+        name: "Nazwa"
+        captain: "Kapitan"
+        members: "Skład"
+        no_captain: "brak kapitana"
+        actions: "Działania"
+        set_captain: "Wyznacz kapitanem"
+        delete: "Usuń drużynę"
+  answers:
+    must_have_at_least_one_variant: "Musi być co najmniej jeden wariant kodu"
+    index:
+      title: "Zadanie"
+      game_prefix: "gra"
+      variants_label: "Warianty kodów:"
+      new_variant_label: "Jeszcze jeden wariant kodu"
+      submit: "Dodaj wariant kodu"
+  errors:
+    unauthenticated: "Nie masz uprawnień, aby odwiedzić tę stronę. Spróbuj się zalogować."
+    unauthorized: "Nie masz uprawnień do wykonania tego działania"
+    not_team_member: "Nie masz uprawnień, aby odwiedzić tę stronę"
+    must_be_captain: "Musisz być kapitanem, aby wykonać to działanie"
+    must_be_author: "Musisz być autorem gry, aby zobaczyć tę stronę"
+    not_registered_for_game: "Twoja drużyna nie jest zapisana na tę grę."
+    must_be_superadmin: "Dostęp tylko dla administratora"
+    too_many_requests: "Zbyt wiele prób. Spróbuj później."
+    must_be_author_or_finished_player: "Pełny dziennik odpowiedzi jest dostępny tylko dla autora gry albo gracza z drużyny, która ukończyła grę"
+    game_already_started: "Nie można edytować gry po jej rozpoczęciu"
+    game_is_locked: "Edycja gry została zablokowana przez administratora"
+    game_is_withdrawn: "Gra została wycofana z publikacji"
+    must_be_recipient: "Musisz być odbiorcą zaproszenia, aby wykonać to działanie"
+    cannot_play_own_game: "Nie można grać we własne gry, sorry :-)"
+    game_finished_by_author: "Gra została zakończona przez autora i nie możesz już w nią grać"
+    team_exited: "Drużyna zrezygnowała z gry"
+    game_is_not_live: "Gra w tej chwili nie trwa"
+  interventions:
+    paused_notice: "Gra została wstrzymana"
+    resumed_notice: "Gra jest kontynuowana"
+    moved_notice: "Drużyna została przeniesiona na inny poziom"
+    reinstated_notice: "Drużyna wróciła do gry"
+    clock_reset_notice: "Odliczanie czasu na poziomie zostało wyzerowane"
+    any_code_notice: "Na poziomie «%{name}» wystarczy teraz dowolny kod"
+    all_codes_notice: "Na poziomie «%{name}» potrzebne są teraz wszystkie kody"
+    refused: "To działanie jest w tej chwili niemożliwe"
+  invitations:
+    notice_sent: "Do użytkownika %{nickname} zostało wysłane zaproszenie"
+    new:
+      recipient_label: "Zaproś nowego członka"
+      submit: "Zaproś"
+  game:
+    not_started: "Nie można grać w grę przed jej rozpoczęciem. A w ogóle, skąd masz ten link? :-)"
+    already_in_team: "Należysz już do drużyny"
+  games:
+    withdrawn_notice: "Gra została wycofana z publikacji"
+    restored_notice: "Gra została ponownie opublikowana"
+    unfinished_notice: "Gra została wznowiona"
+    locked_notice: "Edycja gry została zablokowana"
+    unlocked_notice: "Edycja gry została odblokowana"
+    not_deletable: "Gry nie można usunąć: już w nią grano. Wycofaj ją z publikacji."
+    not_endable_in_test: "Gry nie można zakończyć: jest w trybie testowania. Aby zatrzymać test, użyj «Zakończ testowanie»."
+    translations:
+      incomplete: "Gra deklaruje języki, na które przetłumaczono nie wszystko: brakuje %{count} pól"
+      game_field: "Gra — %{field}"
+      level_field: "Poziom %{position} — %{field}"
+      hint_field: "Poziom %{position} — podpowiedź po %{minutes} min"
+      question_field: "Poziom %{position} — pytanie"
+      option_field: "Poziom %{position} — wariant «%{text}»"
+      missing_count: "brakuje: %{count}"
+      heading: "Nieprzetłumaczone (%{count})"
+      fields:
+        name: "nazwa"
+        description: "opis"
+        text: "treść zadania"
+    list:
+      name: "Gra"
+      status: "Status"
+      starts_at: "Początek"
+      ends_at: "Koniec"
+      participants: "Drużyny"
+      status_withdrawn: "Wycofana z publikacji"
+      status_draft: "Szkic"
+      status_finished: "Zakończona"
+      status_running: "Trwa"
+      status_scheduled: "Zaplanowana"
+      paused: "wstrzymana"
+      duration: "%{hours} godz. %{minutes} min"
+      playing: "grają: %{count}"
+      played: "grali: %{count}"
+      view: "(zobacz)"
+      stats: "(statystyki)"
+      live_channel: "(transmisja na żywo)"
+      full_log: "(dziennik odpowiedzi)"
+      end_game: "ZAKOŃCZ GRĘ"
+      author_finished: "Gra została przez Ciebie zakończona"
+    game_entries:
+      legend: "Zgłoszenia do rejestracji:"
+      accept: "(przyjmij)"
+      reject: "(odrzuć)"
+    teams:
+      legend: "Biorą udział drużyny:"
+    form:
+      name: "Nazwa"
+      description: "Opis"
+      starts_at: "Początek gry"
+      registration_deadline: "Ostateczny termin rejestracji "
+      max_team_number: "Maksymalna liczba drużyn"
+      is_draft: "Szkic?"
+    primary_locale_label: "Język główny"
+    available_locales_label: "Języki gry"
+    new:
+      submit: "Utwórz grę"
+    edit:
+      submit: "Zapisz"
+    show:
+      title: "Gra"
+      draft_label: "Szkic"
+      author_label: "Autor"
+      starts_at_label: "Początek gry"
+      starts_at_not_set: "Data rozpoczęcia gry nie została jeszcze wyznaczona"
+      registration_deadline_label: "Ostateczny termin rejestracji"
+      registration_deadline_not_set: "Ostateczny termin rejestracji nie został jeszcze wyznaczony"
+      description_label: "Opis:"
+      max_team_number_label: "Maksymalna liczba drużyn:"
+      levels_legend: "Zadania:"
+      add_level: "Dodaj nowe zadanie"
+      import_questions: "Import pytań listą"
+      edit_link: "Edytuj tę grę"
+      delete_link: "Usuń tę grę"
+      countdown_prefix: "Do rozpoczęcia pozostało: "
+      start_test: "Rozpocznij testowanie"
+      start: "Start"
+      finish_test: "Zakończ testowanie"
+  options:
+    index:
+      title: "Warianty odpowiedzi do zadania"
+      game_prefix: "gra"
+      explain: "Jeśli pytanie ma warianty, gracze wybierają spośród nich, zamiast wpisywać kod."
+      text_label: "Wariant"
+      correct_label: "Poprawny"
+      correct_yes: "poprawny"
+      new_option_label: "Nowy wariant"
+      is_correct_label: "To jest poprawna odpowiedź"
+      submit: "Dodaj wariant"
+      back: "Do zadania"
+      translations_saved: "Tłumaczenia wariantów zostały zapisane"
+      translate_explain: "Po lewej — wariant w języku «%{language}». Po prawej wpisz tłumaczenie."
+      original_label: "Oryginał"
+      save_translations: "Zapisz tłumaczenia"
+  levels:
+    codes_rule_any: "Wystarczy dowolny z kodów"
+    codes_rule_all: "Trzeba znaleźć wszystkie kody"
+    form:
+      wrong_answer_penalty: "Kara za błędną odpowiedź (minut)"
+      name: "Nazwa"
+      text: "Treść zadania"
+      correct_answer: "Kod"
+      codes_rule: "Jak zaliczać kody"
+    edit:
+      title: "Zadanie"
+      game_prefix: "gra"
+      submit: "Zapisz"
+    new:
+      heading: "Nowe zadanie do gry %{name}"
+      hint_more_codes: "po utworzeniu będzie można dodać do zadania więcej kodów"
+      submit: "Dodaj zadanie"
+    show:
+      title: "Zadanie"
+      game_prefix: "gra"
+      text_label: "Treść zadania:"
+      edit_link: "Edytuj treść i nazwę zadania"
+      code_label: "Kod:"
+      codes_label: "Kody (%{count}):"
+      add_code: "Dodaj jeszcze jeden kod"
+      options_link: "Warianty odpowiedzi"
+      delete_code: "Usuń kod"
+      delete_code_confirm: "Usunąć kod «%{code}» z zadania? Tej operacji nie da się cofnąć."
+      options_for_code: "(dla kodu «%{code}»)"
+      hints_legend: "Podpowiedzi:"
+      add_hint: "Dodaj podpowiedź"
+      delete_level: "Usuń ten poziom"
+      back_to_game: 'Wróć do gry "%{name}"'
+  hints:
+    form:
+      text_label: "Treść"
+      delay_label: "Po"
+      minutes_suffix: "minutach"
+    list:
+      empty: "Brak podpowiedzi"
+      after: "Po"
+      minutes_colon: "minutach:"
+    edit:
+      heading_prefix: "Edycja podpowiedzi do zadania"
+      heading_game_prefix: "gry"
+      submit: "Zapisz zmiany"
+    new:
+      heading_prefix: "Nowa podpowiedź do zadania"
+      heading_game_prefix: "gry"
+      submit: "Dodaj podpowiedź"
+  quiz_imports:
+    created_notice: "Dodano pytań: %{added}. Pominięto (już są): %{skipped}"
+    new:
+      title: "Import pytań do gry «%{game}»"
+      intro: "Wklej pytania: wiersz z pytaniem, potem warianty. Poprawny wariant oznacz gwiazdką. Dwie gwiazdki — pytanie z kilkoma poprawnymi odpowiedziami."
+      example: "Które miasto jest stolicą Białorusi?\nA) Brześć\nB) Grodno\nC) *Mińsk"
+      errors_heading: "Tekst nie został przyjęty:"
+      preview: "Zobacz, co zostanie dodane"
+      back: "Wróć do gry"
+    preview:
+      title: "Co zostanie dodane do gry «%{game}»"
+      summary: "Rozpoznano pytań: %{parsed}. Pominięto (już są): %{skipped}. Zostanie dodanych: %{added}"
+      skipped: "Pominięte — już są w grze"
+      will_add: "Zostaną dodane"
+      confirm: "Dodaj pytania"
+      back: "Zmień tekst"
+    errors:
+      option_before_question: "wiersz %{line}: warianty występują przed treścią pytania"
+      too_few_options: "wiersz %{line}: pytanie ma mniej niż dwa warianty"
+      no_correct_option: "wiersz %{line}: nie oznaczono poprawnego wariantu (gwiazdką)"
+      empty: "Tekst jest pusty — nie ma czego importować"
+  questions:
+    must_have_at_least_one_code: "W zadaniu musi zostać co najmniej jeden kod"
+    code_deleted: "Kod został usunięty z zadania"
+    new:
+      title: "Zadanie"
+      game_prefix: "gra"
+      code_label: "Kod"
+      submit: "Dodaj kod"
+    answers_are_shared: "Kody odpowiedzi są wspólne dla wszystkich języków. Jeśli odpowiedź zapisuje się różnie, dodaj każdą wersję jako osobną poprawną odpowiedź."
+  messengers:
+    telegram: "Telegram"
+    whatsapp: "WhatsApp"
+    viber: "Viber"
+    signal: "Signal"
+    max: "MAX"
+  users:
+    create:
+      check_your_mail: "Sprawdź pocztę"
+    new:
+      nickname_label: "Imię"
+      email_label: "Email"
+      password_label: "Hasło"
+      password_confirmation_label: "Potwierdzenie"
+      submit: "Zarejestruj się"
+    edit:
+      title: 'Edycja profilu gracza %{nickname}'
+      nickname_label: "Twoje imię"
+      date_of_birth_label: "Data urodzenia"
+      instagram_label: "Instagram"
+      telegram_label: "Telegram"
+      messengers_label: "Dostępny w komunikatorach"
+      phone_label: "Telefon kontaktowy"
+      locale_label: "Język interfejsu"
+      timezone_label: "Strefa czasowa"
+      timezone_default: "Domyślna dla serwera"
+      password_label: "Nowe hasło"
+      password_confirmation_label: "Potwierdzenie hasła"
+      current_password: "Bieżące hasło"
+      current_password_wrong: "Nieprawidłowe bieżące hasło."
+      submit: "Zapisz zmiany"
+    index:
+      title: "Profil użytkownika"
+      captain_prefix: "kapitan drużyny"
+      email_label: "E-mail:"
+      date_of_birth_label: "Data urodzenia:"
+      timezone_label: "Strefa czasowa:"
+      instagram_label: "Instagram:"
+      telegram_label: "Telegram:"
+      messengers_label: "Komunikatory:"
+      phone_label: "Telefon kontaktowy:"
+      edit_link: "Edytuj profil..."
+  password_resets:
+    invalid: "Link do resetu hasła jest nieprawidłowy lub wygasł."
+    new:
+      title: "Odzyskiwanie hasła"
+      email: "Email"
+      submit: "Wyślij link"
+      link: "Nie pamiętasz hasła?"
+    edit:
+      title: "Nowe hasło"
+      password: "Nowe hasło"
+      password_confirmation: "Potwierdzenie hasła"
+      submit: "Zapisz hasło"
+    create:
+      sent: "Jeśli taki adres jest zarejestrowany, wysłaliśmy na niego link do resetu hasła."
+    update:
+      done: "Hasło zostało zmienione. Zaloguj się nowym hasłem."
+  notification_mailer:
+    welcome_letter:
+      subject: "Rejestracja w %{host}"
+      body: |-
+        Dziękujemy za rejestrację!
+
+        Zarejestrowałeś się w serwisie %{host} i możesz teraz zalogować się przy użyciu następujących danych:
+
+        Email: %{email}
+        Hasło: %{password}
+
+        Prosimy o zmianę tego hasła zaraz po zalogowaniu.
+
+        Wszystkiego dobrego :)
+    invitation_notification:
+      subject: "Masz zaproszenie do drużyny %{team_name}"
+      body: |-
+        Masz zaproszenie do drużyny %{team_name}
+        Aby przyjąć zaproszenie lub je odrzucić, zajrzyj do swojego panelu
+    reject_notification:
+      subject: "Użytkownik %{nickname} odrzucił zaproszenie"
+      body: "Użytkownik %{nickname} odrzucił zaproszenie do wstąpienia do Twojej drużyny"
+    accept_notification:
+      subject: "Użytkownik %{nickname} przyjął Twoje zaproszenie"
+      body: "Użytkownik %{nickname} przyjął Twoje zaproszenie i dołączył do drużyny"
+    password_reset:
+      subject: "Reset hasła w %{host}"
+      body: |
+        %{nickname}, ktoś poprosił o reset hasła do Twojego konta.
+
+        Aby ustawić nowe hasło, przejdź pod ten adres:
+        %{url}
+
+        Link jest ważny %{hours} godz. Jeśli to nie Ty prosiłeś o reset, po
+        prostu zignoruj tę wiadomość — hasło pozostanie bez zmian.
+  # Deliberately identical across every locale file -- each language is named
+  # in its own endonym rather than translated. See the comment in ru.yml.
+  locales:
+    ru: "Русский"
+    en: "English"
+    uk: "Українська"
+    ka: "ქართული"
+    tr: "Türkçe"
+    be: "Беларуская"
+    pl: "Polski"
+  layout:
+    title: "Aktywne gry miejskie"
+    header:
+      dashboard: "Panel gracza"
+      home: "Strona główna"
+      menu: "Menu"
+      theme: "Motyw"
+    left_menu:
+      administration: "Administracja"
+      dashboard: "Panel gracza"
+      profile: "Profil"
+      team_room: "Pokój drużyny"
+      create_team: "Utwórz drużynę"
+      all_games: "Wszystkie gry domeny"
+      logout: "Wyloguj się"
+      login_legend: "Logowanie"
+      login: "Zaloguj się"
+      signup: "Zarejestruj się"
+  shared:
+    game_entry_controls:
+      applied: "Zgłoszenie zostało złożone"
+      recall: "Wycofaj"
+      registered: "Jesteś zapisany"
+      decline: "Zrezygnuj"
+      reapply: "Złóż zgłoszenie ponownie"
+      entries_exceeded: "Nie możesz się zapisać, ponieważ przekroczono liczbę uczestników"
+      deadline_passed: "Nie możesz się zapisać, ponieważ termin zgłoszeń minął"
+      apply: "Złóż zgłoszenie"
+    current_games:
+      legend: "Bieżące gry domeny"
+      started: "Rozpoczęła się gra"
+      view_results: "Zobacz wyniki"
+      no_levels: "Gra nie zawiera zadań"
+    current_games_status:
+      play: "Graj!"
+      not_registered: "Nie jesteś zapisany"
+    countdown:
+      # Three-element arrays indexed by the plural function hard-coded in
+      # app/views/shared/_countdown.html.erb: [n%10==1 and n%100!=11,
+      # n%10 in 2..4 and n%100 not in 12..14, everything else].
+      #
+      # That function is East Slavic, and Polish agrees with it everywhere
+      # EXCEPT slot 0: it fires for 1, 21, 31, 101..., and Polish wants the
+      # singular only for a bare 1 ("21 lat", not "21 rok"). So a countdown
+      # standing at exactly 21/31/41 of a unit reads wrong here. The forms
+      # below are the correct Polish three, chosen so the common cases (1, and
+      # 2-4, and everything else) are right; fixing 21 needs a locale-aware
+      # index function in that template, which is a code change and out of
+      # scope for a translation. en.yml has had the same defect since it was
+      # written ("21 year"), so this is a known shape, not a new one.
+      prefix: "Pozostało: "
+      years: ["rok", "lata", "lat"]
+      months: ["miesiąc", "miesiące", "miesięcy"]
+      days: ["dzień", "dni", "dni"]
+      hours: ["godzina", "godziny", "godzin"]
+      minutes: ["minuta", "minuty", "minut"]
+      seconds: ["sekunda", "sekundy", "sekund"]
+    cancel: "(anuluj)"
+    edit_short: "(edytuj)"
+    delete_short: "(usuń)"
+    error_header: "Błąd"
+  game_passings:
+    content_not_translated: "To zadanie nie zostało jeszcze przetłumaczone na Twój język — pokazano język oryginału."
+    content_language: "Język zadań"
+    paused: "Gra została wstrzymana przez organizatora. Zostań na miejscu i czekaj na wznowienie."
+    index:
+      title: 'Gra "%{name}"'
+      team: "Drużyna"
+      level: "Poziom"
+      time_at_level: "Czas na poziomie"
+      exited: "(Zrezygnowali z gry)"
+      finished: "(ukończyli grę)"
+      level_log: "(dziennik poziomu)"
+      game_log: "(dziennik gry)"
+      full_log: "Pełny dziennik odpowiedzi"
+      interventions: "Interwencja"
+      move: "Przenieś"
+      reinstate: "Przywróć do gry"
+      reset_clock: "Wyzeruj odliczanie"
+      pause: "Wstrzymaj grę"
+      resume: "Wznów grę"
+      paused_since: "Gra została wstrzymana o %{time}."
+      level_codes_legend: "Kody na poziomach"
+      allow_any_code: "Wystarczy dowolny"
+      require_all_codes: "Potrzebne wszystkie"
+    show_current_level:
+      choose: "Wybierz odpowiedź"
+      penalty_label: "Kara, minut:"
+      title_prefix: "Gra"
+      level_label: "Zadanie"
+      hint_label: "Podpowiedź"
+      until_next_hint: "Do następnej podpowiedzi"
+      countdown_placeholder: "3 minuty"
+      loading: "Ładowanie..."
+      no_more_hints: "Nie będzie więcej podpowiedzi"
+      answer_correct: "Kod '%{answer}' -- poprawny."
+      answer_incorrect: "Kod jest błędny, wpisano '%{answer}'."
+      answer_missing_choice: "Wybierz wariant"
+      answer_missing_code: "Wpisz kod"
+      multi_question_progress: "Poprawnych kodów wpisano: %{answered} z %{total}"
+      answer_label: "Kod"
+      submit: "Wyślij!"
+      exit_game: "Zrezygnuj z gry"
+      finish_testing: "Zakończ testowanie"
+    show_results:
+      congrats: "Gratulacje, gra ukończona!"
+      place: "Miejsce"
+      team: "Drużyna"
+      finish_time: "Czas na mecie"
+      penalty: "Kara"
+      total: "Razem"
+      exited: "Zrezygnowali z gry"
+      not_finished: "Nie ukończyli"
+      full_log: "Dziennik odpowiedzi"
+      finish_testing: "Zakończ testowanie"
+      times_in_zone: "Czas podano w strefie %{zone}"
+  logs:
+    index:
+      title: "Indeks"
+    show_full_log:
+      title: "Pełny dziennik odpowiedzi"
+      correct_answer_one: "Poprawny kod:"
+      correct_answer_many: "Poprawne kody:"
+    show_game_log:
+      title: 'Dziennik odpowiedzi drużyny "%{team}" w grze "%{game}"'
+      correct_answer: "Poprawny kod:"
+    show_level_log:
+      title: 'Dziennik odpowiedzi drużyny "%{team}" na poziomie "%{level}" w grze "%{game}"'
+      correct_answer: "Poprawny kod:"
+    show_live_channel:
+      title: 'Transmisja na żywo z gry "%{name}"'
+      time: "Czas"
+      team: "Drużyna"
+      level: "Zadanie"
+      code: "Kod"
+  dashboard:
+    index:
+      greeting: "Ty"
+    coming_games:
+      legend: "Nadchodzące gry (%{count})"
+      upcoming: "Zbliża się gra"
+      you_are_author: "Jesteś autorem gry"
+      enter: "Wejdź!"
+    finished_games:
+      legend: "Zakończone gry"
+      finished: "Zakończona gra"
+    my_games:
+      legend: "Moje gry (%{count})"
+      create: "Utwórz grę >> "
+    my_team:
+      legend: "Moja drużyna"
+      no_team: "Nie należysz do żadnej drużyny"
+      create_team: "Utwórz drużynę"
+      browse_teams: "Znajdź drużynę"
+      invited: "Masz zaproszenie do drużyny %{team}"
+      accept: "(przyjmij)"
+      decline: "(odrzuć)"
+      captain_of: "Jesteś kapitanem drużyny"
+      member_of: "Należysz do drużyny"
+      go_to_team_room: "Przejdź do pokoju drużyny"
+  index:
+    index:
+      title: "Strona główna"
+      games_list: "Lista gier"
+  team_room:
+    index:
+      title: "Drużyna %{name}"
+      composition: "Skład"
+      captain_suffix: "- kapitan"
+      invite: "Zaproś członków"
+      hand_over: "Przekaż kapitaństwo"
+      leave: "Opuść drużynę"
+      browse_teams: "Wszystkie drużyny"
+      join_requests: "Zgłoszenia o przyjęcie"
+      accept_request: "Przyjmij"
+      reject_request: "Odrzuć"
+  team_join_requests:
+    sent: "Zgłoszenie o przyjęcie do drużyny «%{team}» zostało wysłane"
+    already_applied: "Zgłoszenie do tej drużyny zostało już przez Ciebie złożone"
+    already_a_member: "Należysz już do tej drużyny"
+    captain_must_hand_over_first: "Najpierw przekaż kapitaństwo albo opuść swoją drużynę"
+    cannot_apply_mid_race: "Nie można złożyć zgłoszenia, dopóki Twoja drużyna jest na trasie"
+    unknown_team: "Nie znaleziono drużyny"
+    accepted: "%{nickname} został przyjęty do drużyny"
+    rejected: "Zgłoszenie od gracza %{nickname} zostało odrzucone"
+    already_decided: "W sprawie tego zgłoszenia podjęto już decyzję"
+    applicant_is_a_captain: "Ten gracz jest teraz kapitanem swojej drużyny. Najpierw musi przekazać kapitaństwo."
+    cannot_decide_mid_race: "Nie można podjąć decyzji w sprawie zgłoszenia, dopóki drużyna jest na trasie"
+  teams:
+    index:
+      title: "Drużyny"
+      name: "Nazwa"
+      captain: "Kapitan"
+      members: "Członków"
+      no_captain: "brak kapitana"
+      apply: "Złóż zgłoszenie o przyjęcie"
+    handed_over: "Kapitaństwo przekazane: %{nickname}"
+    cannot_hand_over_mid_race: "Nie można przekazać kapitaństwa, dopóki drużyna jest na trasie"
+    hand_over_needs_another_member: "Wybierz innego członka drużyny"
+    left_notice: "Drużyna «%{team}» została przez Ciebie opuszczona"
+    not_in_a_team: "Nie należysz do drużyny"
+    cannot_leave_mid_race: "Nie można opuścić drużyny, dopóki jest ona na trasie"
+    hand_over_before_leaving: "Najpierw przekaż kapitaństwo innemu członkowi"
+    new:
+      name_label: "Nazwa"
+      submit: "Utwórz drużynę"
+  time:
+    formats:
+      short: "%Y-%m-%d %H:%M"
+      long: "%d %B %Y, %H:%M"
+  date:
+    month_names:
+      - ~
+      - "stycznia"
+      - "lutego"
+      - "marca"
+      - "kwietnia"
+      - "maja"
+      - "czerwca"
+      - "lipca"
+      - "sierpnia"
+      - "września"
+      - "października"
+      - "listopada"
+      - "grudnia"
+  sessions:
+    invalid_credentials: "Nieprawidłowy email lub hasło"
+    new:
+      title: "Logowanie"
+      email_label: "Email"
+      password_label: "Hasło"
+      submit: "Zaloguj się"
+  activerecord:
+    errors:
+      messages:
+        blank: "nie może być puste"
+        confirmation: "nie zgadza się z polem %{attribute}"
+        invalid: "ma nieprawidłową wartość"
+        record_invalid: "Rekord jest nieprawidłowy"
+      models:
+        answer:
+          attributes:
+            value:
+              blank: "Nie wpisano wariantu kodu"
+              taken: "Taki kod już jest w zadaniu"
+        game:
+          attributes:
+            name:
+              blank: "Nie wpisano nazwy"
+              taken: "Gra o takiej nazwie już istnieje"
+            description:
+              blank: "Nie wpisano opisu"
+            max_team_number:
+              not_a_number: "Zakres liczby drużyn to od 1 do 10000"
+              greater_than: "Zakres liczby drużyn to od 1 do 10000"
+              less_than: "Zakres liczby drużyn to od 1 do 10000"
+              exceeds_requested: "Liczba drużyn, które złożyły zgłoszenie, przekracza zadaną wartość"
+            starts_at:
+              in_the_past: "Wybrano datę z przeszłości. Tak nie można :-)"
+            registration_deadline:
+              in_the_past: "Podano ostateczny termin rejestracji z przeszłości, tak nie można :-)"
+              after_game_start: "Podano ostateczny termin rejestracji późniejszy niż data rozpoczęcia gry, tak nie można :-)"
+            available_locales:
+              unknown: "zawiera nieznane języki: %{locales}"
+              missing_primary: "muszą zawierać język główny gry"
+            primary_locale:
+              settled: "nie można zmienić po dodaniu tłumaczeń"
+        game_entry:
+          attributes:
+            game:
+              blank: "Nie wybrano gry"
+            team_id:
+              blank: "Nie wskazano drużyny"
+        invitation:
+          attributes:
+            for_user:
+              blank: "Użytkownik o takim imieniu nie istnieje"
+            recepient_nickname:
+              blank: "Nie wpisano imienia użytkownika"
+            for_user_id:
+              taken: "Zaproszenie zostało już do tego użytkownika wysłane, a on jeszcze nie odpowiedział"
+            base:
+              recipient_already_team_member: "Użytkownik należy już do jednej z drużyn"
+        level:
+          attributes:
+            name:
+              blank: "Nie wpisano nazwy zadania"
+            text:
+              blank: "Nie wpisano treści zadania"
+        setting:
+          attributes:
+            value:
+              greater_than_or_equal_to: "nie może być ujemna"
+              not_a_number: "musi być liczbą całkowitą"
+            name:
+              inclusion: "nieznane ustawienie"
+        team:
+          attributes:
+            name:
+              taken: "Drużyna o takiej nazwie już istnieje"
+              blank: "Nazwa drużyny nie może być pusta"
+            captain:
+              belongs_to_another_team: "należy już do innej drużyny"
+        user:
+          attributes:
+            email:
+              blank: "Nie wpisano adresu e-mail"
+              taken: "Użytkownik o takim adresie jest już zarejestrowany"
+              invalid: "Nieprawidłowy format pola e-mail"
+            nickname:
+              blank: "Nie wpisano imienia"
+              taken: "Użytkownik o takim imieniu jest już zarejestrowany"
+            password:
+              too_short: "Hasło jest za krótkie (minimum 4 znaki)"
+            password_confirmation:
+              blank: "Nie wpisano potwierdzenia hasła"
+              confirmation: "Hasło i jego potwierdzenie nie są zgodne"

@@ -138,4 +138,51 @@ module ApplicationHelper
 
     ticked.map { |name| t("messengers.#{name}") }.join(", ")
   end
+
+  # The countdown pluralises client-side: _countdown.html.erb emits a
+  # three-element array per unit (shared.countdown.years, .days, ...) and this
+  # function, which maps a number to one of those three indices. The browser
+  # calls it once a second, so the rule has to be JavaScript -- it cannot be
+  # done in Ruby at render time, because n changes after the page is sent.
+  #
+  # It used to be one hard-coded East Slavic rule for every locale. That is
+  # correct for ru/uk/be and wrong elsewhere, in a way nobody noticed because
+  # it is only visibly wrong at particular numbers: its "one" slot fires for
+  # 1, 21, 31, 101..., which is right for Russian ("21 год") and wrong for
+  # Polish, where only a bare 1 takes the singular ("21 lat", not "21 rok").
+  # English had the same defect since the file was written ("21 year").
+  #
+  # Three families cover all seven locales. Anything unlisted gets the
+  # one/other rule, which is the safe default: it is correct for a language
+  # with simple pluralisation, and for a language whose three array slots hold
+  # the same word (tr, ka) every index is correct anyway.
+  #
+  # spec/helpers/countdown_plural_spec.rb runs these through node, rather than
+  # reimplementing them in Ruby -- a Ruby mirror would agree with itself while
+  # the shipped JavaScript stayed broken.
+  COUNTDOWN_PLURAL_FUNCTIONS = {
+    # one: n%10==1 and n%100!=11; few: n%10 in 2..4 and n%100 not in 12..14;
+    # many: everything else. The (n%100 < 10 || n%100 >= 20) clause is how the
+    # original spelled "not in 12..14", given n%10 is already known to be 2-4.
+    :east_slavic => "function(n) { return n % 10 == 1 && n % 100 != 11 ? 0 : " \
+                    "(n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2); }",
+    # Identical to the above except for the "one" slot, which in Polish is a
+    # bare 1 and nothing else. That single difference is the whole bug.
+    :polish      => "function(n) { return n == 1 ? 0 : " \
+                    "(n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 1 : 2); }",
+    :one_other   => "function(n) { return n == 1 ? 0 : 1; }"
+  }.freeze
+
+  COUNTDOWN_PLURAL_RULES = {
+    :ru => :east_slavic, :uk => :east_slavic, :be => :east_slavic,
+    :pl => :polish
+  }.freeze
+
+  # html_safe because this is a fixed, developer-authored JavaScript constant
+  # chosen by locale -- no user input reaches it, and the whole point is that
+  # it is emitted as code rather than escaped text.
+  def countdown_plural_function(locale = I18n.locale)
+    rule = COUNTDOWN_PLURAL_RULES.fetch(locale.to_sym, :one_other)
+    COUNTDOWN_PLURAL_FUNCTIONS.fetch(rule).html_safe
+  end
 end

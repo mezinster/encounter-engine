@@ -473,6 +473,9 @@ en:
     en: "English"
     uk: "Українська"
     ka: "ქართული"
+    tr: "Türkçe"
+    be: "Беларуская"
+    pl: "Polski"
   layout:
     title: "Active urban games"
     header:

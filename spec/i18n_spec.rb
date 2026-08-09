@@ -36,10 +36,46 @@ RSpec.describe "internationalization" do
   # subset of ru's keys, never a superset (an orphan nobody reads) or a
   # sideways set (a typo'd path that silently never resolves). Subset-only,
   # not exact-match, is the whole relaxation.
-  %i[uk ka].each do |locale|
+  #
+  # tr, be and pl joined the same group on 2026-08-09 and are partial BY PLAN,
+  # not by neglect: they carry the locales.* endonyms only, and
+  # docs/superpowers/plans/2026-08-09-locale-translation-delivery.md fills each
+  # one in its own PR. config.i18n.fallbacks ([:ru]) is what makes shipping a
+  # locale in that state safe -- see the fallback proof below.
+  %i[uk ka tr be pl].each do |locale|
     it "only defines keys that also exist in ru (#{locale}.yml may be an incomplete subset)" do
       data = locale_data(locale)
       expect(data.keys - ru.keys).to eq([])
+    end
+  end
+
+  # The locales.* block is the ONE part of a locale file that fallbacks do not
+  # cover, and getting this wrong is not subtle: registering :tr in
+  # config/application.rb without adding locales.tr took 224 examples red at
+  # once. The reason is worth stating, because "fallbacks make partial locale
+  # files safe" is true everywhere else in this suite:
+  #
+  #   * config.i18n.fallbacks sends a key missing from tr.yml to ru.yml.
+  #   * But locales.tr is missing from ru.yml TOO -- it is a new key, not a
+  #     new translation -- so there is nothing to fall back to, and the test
+  #     environment's raise_on_missing_translations turns that into a raise.
+  #   * Several views render t("locales.#{l}") for EVERY available locale:
+  #     layouts/_header.html.erb, users/edit.html.erb, games/new.html.erb,
+  #     games/edit.html.erb, shared/_language_tabs.html.erb. So the blast
+  #     radius is every page with a header, not one screen.
+  #
+  # There is a second reason beyond not-raising: a switcher exists to be read
+  # by someone who cannot read the language currently on screen. A Russian
+  # label rendered through fallback would defeat the control even if it did
+  # not raise.
+  it "names every available locale in every locale file" do
+    I18n.available_locales.each do |file_locale|
+      data = locale_data(file_locale)
+
+      I18n.available_locales.each do |named|
+        expect(data).to have_key("locales.#{named}"),
+          "#{file_locale}.yml is missing locales.#{named}"
+      end
     end
   end
 
@@ -63,7 +99,7 @@ RSpec.describe "internationalization" do
   # :ru, at test time, so the assertion stays honest no matter how complete
   # the locale files get. The subset-not-equality rule above is deliberately
   # left as-is: uk and ka are simply no longer exercising the relaxation.
-  %i[uk ka].each do |locale|
+  %i[uk ka tr be pl].each do |locale|
     it "falls back to the exact Russian copy for a missing #{locale} key" do
       I18n.backend.store_translations(:ru, "spec_fallback_probe" => "Откат к русскому")
 
@@ -113,6 +149,9 @@ RSpec.describe "internationalization" do
       locales.en
       locales.uk
       locales.ka
+      locales.tr
+      locales.be
+      locales.pl
     ]
 
     shared_keys = en.keys & ru.keys
@@ -127,13 +166,19 @@ RSpec.describe "internationalization" do
   # Key parity (checked above) says nothing about interpolation-variable
   # parity. A value carrying a %{placeholder} its caller never passes raises
   # I18n::MissingInterpolationArgument -- a 500 that only shows up in
-  # whichever locale has the mismatched placeholder. The four locales here
-  # are ru, en, uk, ka; uk/ka are partial (see above) so this only compares
-  # keys where more than one locale actually defines a value.
+  # whichever locale has the mismatched placeholder. Driven off
+  # I18n.available_locales rather than a hardcoded list, so registering a
+  # locale enrols it here automatically; several of them are partial (see
+  # above), so this only compares keys where more than one locale actually
+  # defines a value.
+  #
+  # This is the single most valuable check for machine-produced text: a
+  # translator who drops %{nickname} or invents %{user} reddens the build
+  # instead of shipping a raise into a live game.
   it "uses the same interpolation variables for a key across every locale that defines it" do
     interpolation_vars = ->(value) { value.to_s.scan(/%\{(\w+)\}/).flatten.sort.uniq }
 
-    locales = { ru: ru, en: en, uk: locale_data(:uk), ka: locale_data(:ka) }
+    locales = I18n.available_locales.to_h { |locale| [locale, locale_data(locale)] }
     all_keys = locales.values.flat_map(&:keys).uniq
 
     mismatches = all_keys.filter_map do |key|
@@ -183,7 +228,7 @@ RSpec.describe "internationalization" do
       found
     end
 
-    offenders = %i[ru en uk ka].to_h do |locale|
+    offenders = I18n.available_locales.to_h do |locale|
       path = Rails.root.join("config/locales/#{locale}.yml")
       [locale, duplicates_in.call(YAML.parse_file(path), [], [])]
     end.reject { |_, found| found.empty? }

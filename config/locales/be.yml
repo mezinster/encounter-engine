@@ -1,0 +1,801 @@
+# Belarusian.
+#
+# Registered on 2026-08-09 and translated in the same programme -- see
+# docs/superpowers/plans/2026-08-09-locale-translation-delivery.md.
+#
+# MACHINE-PRODUCED, NOT REVIEWED BY A NATIVE SPEAKER. The same status uk and
+# ka carry (see CLAUDE.md). Structurally verified -- every key in ru.yml has a
+# value here, every interpolation variable matches -- but the wording has not
+# been read by anyone who speaks Belarusian. Treat reported wording problems
+# as real.
+#
+# Translated from ru.yml, cross-checked against en.yml. Belarusian is close
+# enough to Russian that machine translation drifts back into it, so the game
+# jargon was fixed deliberately and used consistently: игра -> гульня,
+# команда -> каманда, задание -> заданне (the puzzle a level poses),
+# уровень -> узровень (its numbered position), код -> код (the answer string
+# players find in the city), подсказка -> падказка, игрок -> гулец,
+# заявка -> заяўка, "сойти с дистанции" -> "сысці з дыстанцыі" (quit
+# mid-game).
+be:
+  admin:
+    users:
+      granted_notice: "Правы адміністратара выдадзены"
+      revoked_notice: "Правы адміністратара адкліканы"
+      cannot_revoke_self: "Нельга зняць правы з самога сябе"
+      cannot_revoke_last: "Нельга зняць правы з апошняга адміністратара"
+      moved_notice: "Гулец пераведзены ў каманду «%{team}»"
+      cannot_move_captain: "Нельга перавесці капітана. Спачатку прызначце іншага капітана яго камандзе."
+      cannot_move_mid_race: "Нельга пераводзіць гульцоў, пакуль каманда на дыстанцыі"
+      move_needs_another_team: "Выберыце іншую каманду"
+      deleted_notice: "Акаўнт %{nickname} выдалены"
+      cannot_delete_self: "Нельга выдаліць уласны акаўнт"
+      cannot_delete_captain: "Нельга выдаліць капітана. Спачатку прызначце іншага капітана яго камандзе."
+      cannot_delete_last_superadmin: "Нельга выдаліць апошняга адміністратара"
+      cannot_delete_author: "Нельга выдаліць аўтара гульняў. Абязлічце акаўнт, каб захаваць гульні."
+      anonymised_notice: "Акаўнт абязлічаны"
+      cannot_anonymise_self: "Нельга абязлічыць уласны акаўнт"
+      cannot_anonymise_captain: "Нельга абязлічыць капітана. Спачатку прызначце іншага капітана яго камандзе."
+      index:
+        title: "Гульцы"
+        nickname: "Нік"
+        email: "E-mail"
+        team: "Каманда"
+        locale: "Мова"
+        signed_up: "Рэгістрацыя"
+        role: "Роля"
+        superadmin: "адміністратар"
+        back: "Да агляду"
+      show:
+        email: "E-mail"
+        phone: "Тэлефон"
+        instagram: "Instagram"
+        telegram: "Telegram"
+        messengers: "Месэнджары"
+        date_of_birth: "Дата нараджэння"
+        team: "Каманда"
+        locale: "Мова"
+        signed_up: "Рэгістрацыя"
+        authored_games: "Створаныя гульні"
+        back: "Да спіса гульцоў"
+        grant: "Зрабіць адміністратарам"
+        revoke: "Зняць правы адміністратара"
+        move: "Перавесці ў каманду"
+        delete: "Выдаліць акаўнт"
+        anonymise: "Абязлічыць акаўнт"
+    audit:
+      index:
+        title: "Журнал дзеянняў адміністратараў"
+        when: "Калі"
+        who: "Хто"
+        what: "Дзеянне"
+        target: "Аб'ект"
+        details: "Падрабязнасці"
+        unknown_actor: "невядома"
+        back: "Да агляду"
+        action:
+          withdraw: "Зняў з публікацыі"
+          restore: "Апублікаваў"
+          unfinish: "Аднавіў гульню"
+          set_captain: "Прызначыў капітана каманды"
+          delete_team: "Выдаліў каманду"
+          move_user: "Перавёў гульца ў іншую каманду"
+          delete_user: "Выдаліў акаўнт"
+          anonymise_user: "Абязлічыў акаўнт"
+          lock: "Замарозіў рэдагаванне"
+          unlock: "Размарозіў рэдагаванне"
+          update: "Змяніў"
+          delete: "Выдаліў"
+          end_game: "Завяршыў гульню"
+          start_test: "Запусціў тэставанне"
+          finish_test: "Завяршыў тэставанне"
+          grant_superadmin: "Выдаў правы адміністратара"
+          revoke_superadmin: "Зняў правы адміністратара"
+          allow_any_code: "Дазволіў любы код на ўзроўні"
+          require_all_codes: "Запатрабаваў усе коды на ўзроўні"
+    settings:
+      title: "Налады абмежаванняў"
+      explanation: "Абмежаванні дзейнічаюць на адзін IP-адрас за пазначаны перыяд. 0 адключае абмежаванне."
+      submit: "Захаваць"
+      saved: "Налады захаваны"
+      invalid: "Значэнне павінна быць цэлым лікам не меншым за нуль"
+      names:
+        signup_max: "Рэгістрацый з аднаго адраса"
+        signup_window_seconds: "Перыяд для рэгістрацый (секунд)"
+        reset_max: "Запытаў скіду пароля з аднаго адраса"
+        reset_window_seconds: "Перыяд для скіду пароля (секунд)"
+    dashboard:
+      show:
+        title: "Агляд"
+        games_by_status: "Гульні паводле статусу"
+        editing_locked: "Рэдагаванне замарожана"
+        totals: "Усяго"
+        entries_by_status: "Заяўкі паводле статусу"
+        all_games: "Усе гульні"
+        all_teams: "Усе каманды"
+        audit_log: "Журнал дзеянняў"
+        status:
+          withdrawn: "Знята з публікацыі"
+          draft: "Чарнавік"
+          finished: "Завершана"
+          running: "Ідзе"
+          scheduled: "Запланавана"
+        total:
+          users: "Гульцоў"
+          teams: "Каманд"
+          games: "Гульняў"
+          passings_finished: "Праходжанняў завершана"
+          passings_in_progress: "Праходжанняў ідзе"
+        entry_status:
+          new: "Новая"
+          accepted: "Прынята"
+          rejected: "Адхілена"
+          recalled: "Адклікана"
+          canceled: "Скасавана"
+    games:
+      index:
+        title: "Усе гульні"
+        name: "Назва"
+        author: "Аўтар"
+        locales: "Мовы"
+        status: "Статус"
+        teams: "Каманд"
+        draft: "Чарнавік"
+        scheduled: "Запланавана"
+        running: "Ідзе"
+        finished: "Завершана"
+        withdrawn: "Знята з публікацыі"
+        locked: "рэдагаванне замарожана"
+        edit: "Рэдагаваць"
+        withdraw: "Зняць"
+        restore: "Апублікаваць"
+        unfinish: "Аднавіць"
+        lock: "Замарозіць"
+        unlock: "Размарозіць"
+        delete: "Выдаліць"
+        delete_confirm: "Выдаліць гульню «%{name}» з усімі ўзроўнямі? Гэта незваротна."
+    teams:
+      captain_set: "Капітанам каманды прызначаны %{nickname}"
+      not_a_member: "Гэты карыстальнік не ўваходзіць у каманду"
+      deleted_notice: "Каманда «%{name}» выдалена"
+      not_deletable: "Гэту каманду нельга выдаліць: у ёй ёсць удзельнікі або яна ўжо гуляла"
+      index:
+        title: "Каманды"
+        name: "Назва"
+        captain: "Капітан"
+        members: "Склад"
+        no_captain: "няма капітана"
+        actions: "Дзеянні"
+        set_captain: "Прызначыць капітанам"
+        delete: "Выдаліць каманду"
+  answers:
+    must_have_at_least_one_variant: "Павінен быць хаця б адзін варыянт кода"
+    index:
+      title: "Заданне"
+      game_prefix: "гульня"
+      variants_label: "Варыянты кодаў:"
+      new_variant_label: "Яшчэ адзін варыянт кода"
+      submit: "Дадаць варыянт кода"
+  errors:
+    unauthenticated: "Вы не аўтарызаваны для наведвання гэтай старонкі. Паспрабуйце ўвайсці."
+    unauthorized: "У вас няма правоў для выканання гэтага дзеяння"
+    not_team_member: "Вы не аўтарызаваны для наведвання гэтай старонкі"
+    must_be_captain: "Вы павінны быць капітанам, каб выканаць гэта дзеянне"
+    must_be_author: "Вы павінны быць аўтарам гульні, каб бачыць гэту старонку"
+    not_registered_for_game: "Ваша каманда не зарэгістравана на гэту гульню."
+    must_be_superadmin: "Доступ толькі для адміністратара"
+    too_many_requests: "Занадта шмат спробаў. Паспрабуйце пазней."
+    must_be_author_or_finished_player: "Поўны лог адказаў даступны толькі аўтару гульні або гульцу з каманды, якая скончыла гульню"
+    game_already_started: "Нельга рэдагаваць гульню пасля яе пачатку"
+    game_is_locked: "Рэдагаванне гульні замарожана адміністратарам"
+    game_is_withdrawn: "Гульня знята з публікацыі"
+    must_be_recipient: "Вы павінны быць атрымальнікам запрашэння, каб выканаць гэта дзеянне"
+    cannot_play_own_game: "Нельга гуляць ва ўласныя гульні, соры :-)"
+    game_finished_by_author: "Гульня была завершана аўтарам, і вы больш не можаце ў яе гуляць"
+    team_exited: "Каманда сышла з дыстанцыі"
+    game_is_not_live: "Гульня зараз не ідзе"
+  interventions:
+    paused_notice: "Гульня прыпынена"
+    resumed_notice: "Гульня працягваецца"
+    moved_notice: "Каманда пераведзена на іншы ўзровень"
+    reinstated_notice: "Каманда вернута ў гульню"
+    clock_reset_notice: "Адлік часу на ўзроўні скінуты"
+    any_code_notice: "На ўзроўні «%{name}» цяпер дастаткова любога кода"
+    all_codes_notice: "На ўзроўні «%{name}» цяпер патрэбны ўсе коды"
+    refused: "Гэта дзеянне зараз немагчымае"
+  invitations:
+    notice_sent: "Карыстальніку %{nickname} выслана запрашэнне"
+    new:
+      recipient_label: "Запрасіць новага ўдзельніка"
+      submit: "Запрасіць"
+  game:
+    not_started: "Нельга гуляць у гульню да яе пачатку. І наогул, дзе вы ўзялі гэту спасылку? :-)"
+    already_in_team: "Вы ўжо з'яўляецеся членам каманды"
+  games:
+    withdrawn_notice: "Гульня знята з публікацыі"
+    restored_notice: "Гульня зноў апублікавана"
+    unfinished_notice: "Гульня адноўлена"
+    locked_notice: "Рэдагаванне гульні замарожана"
+    unlocked_notice: "Рэдагаванне гульні размарожана"
+    not_deletable: "Гульню нельга выдаліць: у яе ўжо гулялі. Зніміце яе з публікацыі."
+    not_endable_in_test: "Гульню нельга завяршыць: яна ў рэжыме тэставання. Каб спыніць тэст, скарыстайцеся «Завяршыць тэставанне»."
+    translations:
+      incomplete: "Гульня абвяшчае мовы, на якія перакладзена не ўсё: не хапае %{count} палёў"
+      game_field: "Гульня — %{field}"
+      level_field: "Узровень %{position} — %{field}"
+      hint_field: "Узровень %{position} — падказка праз %{minutes} хв"
+      question_field: "Узровень %{position} — пытанне"
+      option_field: "Узровень %{position} — варыянт «%{text}»"
+      missing_count: "не хапае: %{count}"
+      heading: "Не перакладзена (%{count})"
+      fields:
+        name: "назва"
+        description: "апісанне"
+        text: "тэкст задання"
+    list:
+      name: "Гульня"
+      status: "Статус"
+      starts_at: "Пачатак"
+      ends_at: "Заканчэнне"
+      participants: "Каманды"
+      status_withdrawn: "Знята з публікацыі"
+      status_draft: "Чарнавік"
+      status_finished: "Завершана"
+      status_running: "Ідзе"
+      status_scheduled: "Запланавана"
+      paused: "на паўзе"
+      duration: "%{hours} г %{minutes} хв"
+      playing: "гуляюць: %{count}"
+      played: "гулялі: %{count}"
+      view: "(паглядзець)"
+      stats: "(статыстыка)"
+      live_channel: "(прамы эфір)"
+      full_log: "(лог адказаў)"
+      end_game: "ЗАВЯРШЫЦЬ ГУЛЬНЮ"
+      author_finished: "Вы завяршылі гульню"
+    game_entries:
+      legend: "Заяўкі на рэгістрацыю:"
+      accept: "(прыняць)"
+      reject: "(адмовіць)"
+    teams:
+      legend: "Удзельнічаюць каманды:"
+    form:
+      name: "Назва"
+      description: "Апісанне"
+      starts_at: "Пачатак гульні"
+      registration_deadline: "Крайні тэрмін рэгістрацыі "
+      max_team_number: "Максімальная колькасць каманд"
+      is_draft: "Чарнавік?"
+    primary_locale_label: "Асноўная мова"
+    available_locales_label: "Мовы гульні"
+    new:
+      submit: "Стварыць гульню"
+    edit:
+      submit: "Захаваць"
+    show:
+      title: "Гульня"
+      draft_label: "Чарнавік"
+      author_label: "Аўтар"
+      starts_at_label: "Пачатак гульні"
+      starts_at_not_set: "Дата пачатку гульні яшчэ не прызначана"
+      registration_deadline_label: "Крайні тэрмін рэгістрацыі"
+      registration_deadline_not_set: "Крайні тэрмін рэгістрацыі яшчэ не прызначаны"
+      description_label: "Апісанне:"
+      max_team_number_label: "Максімальная колькасць каманд:"
+      levels_legend: "Заданні:"
+      add_level: "Дадаць новае заданне"
+      import_questions: "Імпарт пытанняў спісам"
+      edit_link: "Рэдагаваць гэту гульню"
+      delete_link: "Выдаліць гэту гульню"
+      countdown_prefix: "Да пачатку засталося: "
+      start_test: "Пачаць тэставанне"
+      start: "Старт"
+      finish_test: "Завяршыць тэставанне"
+  options:
+    index:
+      title: "Варыянты адказу для задання"
+      game_prefix: "гульня"
+      explain: "Калі ў пытання ёсць варыянты, гульцы выбіраюць з іх, а не ўводзяць код."
+      text_label: "Варыянт"
+      correct_label: "Правільны"
+      correct_yes: "правільны"
+      new_option_label: "Новы варыянт"
+      is_correct_label: "Гэта правільны адказ"
+      submit: "Дадаць варыянт"
+      back: "Да задання"
+      translations_saved: "Пераклады варыянтаў захаваны"
+      translate_explain: "Злева — варыянт на мове «%{language}». Справа ўвядзіце пераклад."
+      original_label: "Арыгінал"
+      save_translations: "Захаваць пераклады"
+  levels:
+    codes_rule_any: "Дастаткова любога з кодаў"
+    codes_rule_all: "Трэба знайсці ўсе коды"
+    form:
+      wrong_answer_penalty: "Штраф за няправільны адказ (хвілін)"
+      name: "Назва"
+      text: "Тэкст задання"
+      correct_answer: "Код"
+      codes_rule: "Як залічваць коды"
+    edit:
+      title: "Заданне"
+      game_prefix: "гульня"
+      submit: "Захаваць"
+    new:
+      heading: "Новае заданне для гульні %{name}"
+      hint_more_codes: "пасля стварэння вы зможаце дадаць больш кодаў у заданне"
+      submit: "Дадаць заданне"
+    show:
+      title: "Заданне"
+      game_prefix: "гульня"
+      text_label: "Тэкст задання:"
+      edit_link: "Рэдагаваць тэкст і назву задання"
+      code_label: "Код:"
+      codes_label: "Коды (%{count}):"
+      add_code: "Дадаць яшчэ адзін код"
+      options_link: "Варыянты адказу"
+      delete_code: "Выдаліць код"
+      delete_code_confirm: "Выдаліць код «%{code}» з задання? Гэта незваротна."
+      options_for_code: "(для кода «%{code}»)"
+      hints_legend: "Падказкі:"
+      add_hint: "Дадаць падказку"
+      delete_level: "Выдаліць гэты ўзровень"
+      back_to_game: 'Вярнуцца да гульні "%{name}"'
+  hints:
+    form:
+      text_label: "Тэкст"
+      delay_label: "Праз"
+      minutes_suffix: "хвілін"
+    list:
+      empty: "Падказак няма"
+      after: "Праз"
+      minutes_colon: "хвілін:"
+    edit:
+      heading_prefix: "Рэдагаванне падказкі да задання"
+      heading_game_prefix: "гульні"
+      submit: "Адрэдагаваць"
+    new:
+      heading_prefix: "Новая падказка для задання"
+      heading_game_prefix: "гульні"
+      submit: "Дадаць падказку"
+  quiz_imports:
+    created_notice: "Дададзена пытанняў: %{added}. Прапушчана (ужо ёсць): %{skipped}"
+    new:
+      title: "Імпарт пытанняў у гульню «%{game}»"
+      intro: "Устаўце пытанні: радок з пытаннем, потым варыянты. Правільны варыянт адзначце зорачкай. Дзве зорачкі — пытанне з некалькімі правільнымі адказамі."
+      example: "Які горад з'яўляецца сталіцай Беларусі?\nA) Брэст\nB) Гродна\nC) *Мінск"
+      errors_heading: "Тэкст не прыняты:"
+      preview: "Паглядзець, што будзе дададзена"
+      back: "Вярнуцца да гульні"
+    preview:
+      title: "Што будзе дададзена ў гульню «%{game}»"
+      summary: "Разабрана пытанняў: %{parsed}. Прапушчана (ужо ёсць): %{skipped}. Будзе дададзена: %{added}"
+      skipped: "Прапушчаны — ужо ёсць у гульні"
+      will_add: "Будуць дададзены"
+      confirm: "Дадаць пытанні"
+      back: "Змяніць тэкст"
+    errors:
+      option_before_question: "радок %{line}: варыянты ідуць да тэксту пытання"
+      too_few_options: "радок %{line}: у пытання менш за два варыянты"
+      no_correct_option: "радок %{line}: не адзначаны правільны варыянт (зорачкай)"
+      empty: "Тэкст пусты — няма чаго імпартаваць"
+  questions:
+    must_have_at_least_one_code: "У заданні павінен застацца хаця б адзін код"
+    code_deleted: "Код выдалены з задання"
+    new:
+      title: "Заданне"
+      game_prefix: "гульня"
+      code_label: "Код"
+      submit: "Дадаць код"
+    answers_are_shared: "Коды адказаў агульныя для ўсіх моў. Калі адказ пішацца па-рознаму, дадайце кожны варыянт як асобны правільны адказ."
+  messengers:
+    telegram: "Telegram"
+    whatsapp: "WhatsApp"
+    viber: "Viber"
+    signal: "Signal"
+    max: "MAX"
+  users:
+    create:
+      check_your_mail: "Праверце пошту"
+    new:
+      nickname_label: "Імя"
+      email_label: "Email"
+      password_label: "Пароль"
+      password_confirmation_label: "Пацвярджэнне"
+      submit: "Зарэгістравацца"
+    edit:
+      title: 'Рэдагаванне профілю гульца %{nickname}'
+      nickname_label: "Ваша імя"
+      date_of_birth_label: "Дата нараджэння"
+      instagram_label: "Instagram"
+      telegram_label: "Telegram"
+      messengers_label: "Даступны ў месэнджарах"
+      phone_label: "Кантактны тэлефон"
+      locale_label: "Мова інтэрфейсу"
+      timezone_label: "Часавы пояс"
+      timezone_default: "Па змаўчанні для сервера"
+      password_label: "Новы пароль"
+      password_confirmation_label: "Пацвярджэнне пароля"
+      current_password: "Бягучы пароль"
+      current_password_wrong: "Няправільны бягучы пароль."
+      submit: "Прыняць змены"
+    index:
+      title: "Профіль карыстальніка"
+      captain_prefix: "капітан каманды"
+      email_label: "E-mail:"
+      date_of_birth_label: "Дата нараджэння:"
+      timezone_label: "Часавы пояс:"
+      instagram_label: "Instagram:"
+      telegram_label: "Telegram:"
+      messengers_label: "Месэнджары:"
+      phone_label: "Кантактны тэлефон:"
+      edit_link: "Рэдагаваць профіль..."
+  password_resets:
+    invalid: "Спасылка для скіду пароля несапраўдная або састарэла."
+    new:
+      title: "Аднаўленне пароля"
+      email: "Email"
+      submit: "Адправіць спасылку"
+      link: "Забыліся на пароль?"
+    edit:
+      title: "Новы пароль"
+      password: "Новы пароль"
+      password_confirmation: "Пацвярджэнне пароля"
+      submit: "Захаваць пароль"
+    create:
+      sent: "Калі такі адрас зарэгістраваны, мы адправілі на яго спасылку для скіду пароля."
+    update:
+      done: "Пароль зменены. Увайдзіце з новым паролем."
+  notification_mailer:
+    welcome_letter:
+      subject: "Рэгістрацыя на %{host}"
+      body: |-
+        Дзякуй за рэгістрацыю!
+
+        Вы зарэгістраваліся на сайце %{host} і цяпер можаце ўвайсці з наступнымі данымі:
+
+        Email:  %{email}
+        Пароль: %{password}
+
+        Калі ласка, змяніце гэты пароль адразу пасля ўваходу ў сістэму.
+
+        Усяго добрага :)
+    invitation_notification:
+      subject: "Вас запрасілі ўступіць у каманду %{team_name}"
+      body: |-
+        Вас запрасілі ўступіць у каманду %{team_name}
+        Каб прыняць запрашэнне або адмовіцца ад яго, зайдзіце ў ваш асабісты кабінет
+    reject_notification:
+      subject: "Карыстальнік %{nickname} адмовіўся ад запрашэння"
+      body: "Карыстальнік %{nickname} адмовіўся ад запрашэння ўступіць у вашу каманду"
+    accept_notification:
+      subject: "Карыстальнік %{nickname} прыняў Ваша запрашэнне"
+      body: "Карыстальнік %{nickname} прыняў Ваша запрашэнне і ўступіў у каманду"
+    password_reset:
+      subject: "Скід пароля на %{host}"
+      body: |
+        %{nickname}, нехта запытаў скід пароля для вашага ўліковага запісу.
+
+        Каб задаць новы пароль, перайдзіце па спасылцы:
+        %{url}
+
+        Спасылка дзейнічае %{hours} г. Калі вы не запытвалі скід, проста
+        праігнаруйце гэты ліст — пароль застанецца ранейшым.
+  # Deliberately identical across every locale file -- each language is named
+  # in its own endonym rather than translated. See the comment in ru.yml.
+  locales:
+    ru: "Русский"
+    en: "English"
+    uk: "Українська"
+    ka: "ქართული"
+    tr: "Türkçe"
+    be: "Беларуская"
+    pl: "Polski"
+  layout:
+    title: "Актыўныя гарадскія гульні"
+    header:
+      dashboard: "Асабісты кабінет"
+      home: "Галоўная"
+      menu: "Меню"
+      theme: "Тэма"
+    left_menu:
+      administration: "Адміністраванне"
+      dashboard: "Асабісты кабінет"
+      profile: "Профіль"
+      team_room: "Пакой каманды"
+      create_team: "Стварыць каманду"
+      all_games: "Усе гульні дамена"
+      logout: "Выйсці"
+      login_legend: "Уваход"
+      login: "Увайсці"
+      signup: "Зарэгістравацца"
+  shared:
+    game_entry_controls:
+      applied: "Заяўка пададзена"
+      recall: "Адклікаць"
+      registered: "Вы зарэгістраваны"
+      decline: "Адмовіцца"
+      reapply: "Падаць заяўку на рэгістрацыю зноў"
+      entries_exceeded: "Вы не можаце зарэгістравацца, бо перавышана колькасць удзельнікаў"
+      deadline_passed: "Вы не можаце зарэгістравацца, бо спазніліся на гульню"
+      apply: "Падаць заяўку на рэгістрацыю"
+    current_games:
+      legend: "Бягучыя гульні дамена"
+      started: "Пачалася гульня"
+      view_results: "Паглядзець вынікі"
+      no_levels: "Гульня не змяшчае заданняў"
+    current_games_status:
+      play: "Гуляць!"
+      not_registered: "Вы не зарэгістраваны"
+    countdown:
+      # Three-element arrays indexed by the hard-coded Slavic plural function
+      # in app/views/shared/_countdown.html.erb: [n%10==1 and n%100!=11,
+      # n%10 in 2..4 and n%100 not in 12..14, everything else]. Belarusian
+      # shares that rule with Russian and Ukrainian, so the three-way shape
+      # applies unchanged and every count renders correctly.
+      prefix: "Засталося: "
+      years: ["год", "гады", "гадоў"]
+      months: ["месяц", "месяцы", "месяцаў"]
+      days: ["дзень", "дні", "дзён"]
+      hours: ["гадзіна", "гадзіны", "гадзін"]
+      minutes: ["хвіліна", "хвіліны", "хвілін"]
+      seconds: ["секунда", "секунды", "секунд"]
+    cancel: "(скасаваць)"
+    edit_short: "(рэдагаваць)"
+    delete_short: "(выдаліць)"
+    error_header: "Памылка"
+  game_passings:
+    content_not_translated: "Гэта заданне пакуль не перакладзена на вашу мову — паказана мова арыгінала."
+    content_language: "Мова заданняў"
+    paused: "Гульня прыпынена арганізатарам. Заставайцеся на месцы і чакайце працягу."
+    index:
+      title: 'Гульня "%{name}"'
+      team: "Каманда"
+      level: "Узровень"
+      time_at_level: "Час на ўзроўні"
+      exited: "(Сышлі з дыстанцыі)"
+      finished: "(скончылі гульню)"
+      level_log: "(лог па ўзроўні)"
+      game_log: "(лог па гульні)"
+      full_log: "Поўны лог адказаў"
+      interventions: "Умяшанне"
+      move: "Перавесці"
+      reinstate: "Вярнуць у гульню"
+      reset_clock: "Скінуць адлік"
+      pause: "Прыпыніць гульню"
+      resume: "Працягнуць гульню"
+      paused_since: "Гульня прыпынена ў %{time}."
+      level_codes_legend: "Коды на ўзроўнях"
+      allow_any_code: "Дастаткова любога"
+      require_all_codes: "Патрэбны ўсе"
+    show_current_level:
+      choose: "Выберыце адказ"
+      penalty_label: "Штраф, хвілін:"
+      title_prefix: "Гульня"
+      level_label: "Заданне"
+      hint_label: "Падказка"
+      until_next_hint: "Да наступнай падказкі"
+      countdown_placeholder: "3 хвіліны"
+      loading: "Загрузка..."
+      no_more_hints: "Падказак больш не будзе"
+      answer_correct: "Код '%{answer}' -- правільны."
+      answer_incorrect: "Код няправільны, вы ўвялі '%{answer}'."
+      answer_missing_choice: "Выберыце варыянт"
+      answer_missing_code: "Увядзіце код"
+      multi_question_progress: "Правільных кодаў уведзена: %{answered} з %{total}"
+      answer_label: "Код"
+      submit: "Адправіць!"
+      exit_game: "Сысці з дыстанцыі"
+      finish_testing: "Завяршыць тэставанне"
+    show_results:
+      congrats: "Віншуем, вы скончылі гульню!"
+      place: "Месца"
+      team: "Каманда"
+      finish_time: "Час фінішу"
+      penalty: "Штраф"
+      total: "Разам"
+      exited: "Сышлі з дыстанцыі"
+      not_finished: "Не фінішавалі"
+      full_log: "Лог адказаў"
+      finish_testing: "Завяршыць тэставанне"
+      times_in_zone: "Час паказаны ў поясе %{zone}"
+  logs:
+    index:
+      title: "Індэкс"
+    show_full_log:
+      title: "Поўны лог адказаў"
+      correct_answer_one: "Правільны код:"
+      correct_answer_many: "Правільныя коды:"
+    show_game_log:
+      title: 'Лог адказаў каманды "%{team}" па гульні "%{game}"'
+      correct_answer: "Правільны код:"
+    show_level_log:
+      title: 'Лог адказаў каманды "%{team}" па ўзроўні "%{level}" гульні "%{game}"'
+      correct_answer: "Правільны код:"
+    show_live_channel:
+      title: 'Прамы эфір гульні "%{name}"'
+      time: "Час"
+      team: "Каманда"
+      level: "Заданне"
+      code: "Код"
+  dashboard:
+    index:
+      greeting: "Вы"
+    coming_games:
+      legend: "Будучыя гульні (%{count})"
+      upcoming: "Мае адбыцца гульня"
+      you_are_author: "Вы аўтар гульні"
+      enter: "Увайсці!"
+    finished_games:
+      legend: "Завершаныя гульні"
+      finished: "Завершана гульня"
+    my_games:
+      legend: "Мае гульні (%{count})"
+      create: "Стварыць гульню >> "
+    my_team:
+      legend: "Мая каманда"
+      no_team: "Вы не ўваходзіце ні ў адну з каманд"
+      create_team: "Стварыць каманду"
+      browse_teams: "Знайсці каманду"
+      invited: "Вас запрасілі ў каманду %{team}"
+      accept: "(прыняць)"
+      decline: "(адмовіцца)"
+      captain_of: "Вы - капітан каманды"
+      member_of: "Вы ўваходзіце ў каманду"
+      go_to_team_room: "Перайсці ў пакой каманды"
+  index:
+    index:
+      title: "Галоўная старонка"
+      games_list: "Спіс гульняў"
+  team_room:
+    index:
+      title: "Каманда %{name}"
+      composition: "Склад"
+      captain_suffix: "- капітан"
+      invite: "Запрасіць удзельнікаў"
+      hand_over: "Перадаць капітанства"
+      leave: "Пакінуць каманду"
+      browse_teams: "Усе каманды"
+      join_requests: "Заяўкі на ўступленне"
+      accept_request: "Прыняць"
+      reject_request: "Адхіліць"
+  team_join_requests:
+    sent: "Заяўка на ўступленне ў каманду «%{team}» адпраўлена"
+    already_applied: "Вы ўжо падалі заяўку ў гэту каманду"
+    already_a_member: "Вы ўжо ўваходзіце ў гэту каманду"
+    captain_must_hand_over_first: "Спачатку перадайце капітанства або пакіньце сваю каманду"
+    cannot_apply_mid_race: "Нельга падаць заяўку, пакуль ваша каманда на дыстанцыі"
+    unknown_team: "Каманда не знойдзена"
+    accepted: "%{nickname} прыняты ў каманду"
+    rejected: "Заяўка %{nickname} адхілена"
+    already_decided: "Па гэтай заяўцы ўжо прынята рашэнне"
+    applicant_is_a_captain: "Гэты гулец цяпер капітан сваёй каманды. Спачатку ён павінен перадаць капітанства."
+    cannot_decide_mid_race: "Нельга прыняць рашэнне па заяўцы, пакуль каманда на дыстанцыі"
+  teams:
+    index:
+      title: "Каманды"
+      name: "Назва"
+      captain: "Капітан"
+      members: "Удзельнікаў"
+      no_captain: "няма капітана"
+      apply: "Падаць заяўку на ўступленне"
+    handed_over: "Капітанства перададзена: %{nickname}"
+    cannot_hand_over_mid_race: "Нельга перадаць капітанства, пакуль каманда на дыстанцыі"
+    hand_over_needs_another_member: "Выберыце іншага ўдзельніка каманды"
+    left_notice: "Вы выйшлі з каманды «%{team}»"
+    not_in_a_team: "Вы не ўваходзіце ў каманду"
+    cannot_leave_mid_race: "Нельга выйсці з каманды, пакуль яна на дыстанцыі"
+    hand_over_before_leaving: "Спачатку перадайце капітанства іншаму ўдзельніку"
+    new:
+      name_label: "Назва"
+      submit: "Стварыць каманду"
+  time:
+    formats:
+      short: "%Y-%m-%d %H:%M"
+      long: "%d %B %Y, %H:%M"
+  date:
+    month_names:
+      - ~
+      - "студзеня"
+      - "лютага"
+      - "сакавіка"
+      - "красавіка"
+      - "мая"
+      - "чэрвеня"
+      - "ліпеня"
+      - "жніўня"
+      - "верасня"
+      - "кастрычніка"
+      - "лістапада"
+      - "снежня"
+  sessions:
+    invalid_credentials: "Няправільны email або пароль"
+    new:
+      title: "Уваход"
+      email_label: "Email"
+      password_label: "Пароль"
+      submit: "Увайсці"
+  activerecord:
+    errors:
+      messages:
+        blank: "не можа быць пустым"
+        confirmation: "не супадае з %{attribute}"
+        invalid: "мае няправільнае значэнне"
+        record_invalid: "Запіс несапраўдны"
+      models:
+        answer:
+          attributes:
+            value:
+              blank: "Вы не ўвялі варыянт кода"
+              taken: "Такі код ужо ёсць у заданні"
+        game:
+          attributes:
+            name:
+              blank: "Вы не ўвялі назву"
+              taken: "Гульня з такой назвай ужо існуе"
+            description:
+              blank: "Вы не ўвялі апісанне"
+            max_team_number:
+              not_a_number: "Дыяпазон колькасці каманд ад 1 да 10000"
+              greater_than: "Дыяпазон колькасці каманд ад 1 да 10000"
+              less_than: "Дыяпазон колькасці каманд ад 1 да 10000"
+              exceeds_requested: "Колькасць каманд, якія падалі заяўку, перавышае зададзены лік"
+            starts_at:
+              in_the_past: "Вы выбралі дату з мінулага. Так нельга :-)"
+            registration_deadline:
+              in_the_past: "Вы ўказалі крайні тэрмін рэгістрацыі з мінулага, так нельга :-)"
+              after_game_start: "Вы ўказалі крайні тэрмін рэгістрацыі пазнейшы за дату пачатку гульні, так нельга :-)"
+            available_locales:
+              unknown: "змяшчае невядомыя мовы: %{locales}"
+              missing_primary: "павінны ўключаць асноўную мову гульні"
+            primary_locale:
+              settled: "нельга змяніць пасля таго, як дададзены пераклады"
+        game_entry:
+          attributes:
+            game:
+              blank: "Вы не выбралі гульню"
+            team_id:
+              blank: "Вы не ўказалі каманду"
+        invitation:
+          attributes:
+            for_user:
+              blank: "Карыстальніка з такім імем не існуе"
+            recepient_nickname:
+              blank: "Вы не ўвялі імя карыстальніка"
+            for_user_id:
+              taken: "Вы ўжо высылалі гэтаму карыстальніку запрашэнне, і ён яшчэ не адказаў"
+            base:
+              recipient_already_team_member: "Карыстальнік ужо з'яўляецца членам адной з каманд"
+        level:
+          attributes:
+            name:
+              blank: "Вы не ўвялі назву задання"
+            text:
+              blank: "Вы не ўвялі тэкст задання"
+        setting:
+          attributes:
+            value:
+              greater_than_or_equal_to: "не можа быць адмоўным"
+              not_a_number: "павінна быць цэлым лікам"
+            name:
+              inclusion: "невядомая настройка"
+        team:
+          attributes:
+            name:
+              taken: "Каманда з такой назвай ужо існуе"
+              blank: "Назва каманды павінна быць непустой"
+            captain:
+              belongs_to_another_team: "ужо ўваходзіць у іншую каманду"
+        user:
+          attributes:
+            email:
+              blank: "Не ўведзены e-mail"
+              taken: "Карыстальнік з такім адрасам ужо зарэгістраваны"
+              invalid: "Няправільны фармат поля e-mail"
+            nickname:
+              blank: "Вы не ўвялі імя"
+              taken: "Карыстальнік з такім імем ужо зарэгістраваны"
+            password:
+              too_short: "Занадта кароткі пароль (мінімум 4 сімвалы)"
+            password_confirmation:
+              blank: "Вы не ўвялі пацвярджэнне пароля"
+              confirmation: "Пароль і яго пацвярджэнне не супадаюць"

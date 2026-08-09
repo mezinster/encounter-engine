@@ -90,8 +90,15 @@ RSpec.describe "shared/_countdown", type: :view do
       JSON.parse(stdout.strip)
     end
 
+    # This used to be skip(), and skipping was the wrong call: this job runs
+    # in container: ruby:3.3.12, which has no node, so from the day these
+    # examples were written until 2026-08-09 they reported as PENDING in every
+    # CI run -- indistinguishable from passing unless you counted. They were
+    # only ever really running on a developer's laptop. CI now installs node
+    # (see .github/workflows/ci.yml), so a missing binary means something
+    # broke and should be loud rather than quietly reducing coverage.
     before do
-      skip("node is not on PATH; cannot evaluate timeDifference") unless NODE_BIN
+      raise "node is not on PATH; these examples must run, not skip" unless NODE_BIN
     end
 
     it "renders the reported production case with no phantom day" do
@@ -127,6 +134,50 @@ RSpec.describe "shared/_countdown", type: :view do
       result = time_difference_result(rendered, "2026-01-02T00:00:00", "2026-01-01T00:00:00")
 
       expect(result).to eq(false)
+    end
+
+    # ApplicationHelper#countdown_plural_function is unit-tested in
+    # spec/helpers/countdown_plural_spec.rb. These examples close the gap that
+    # spec cannot: that the TEMPLATE actually calls it, in the locale being
+    # rendered, rather than carrying its own inline copy of one rule -- which
+    # is exactly what it did until 2026-08-09.
+    #
+    # 21 days is the interesting gap. It is the smallest number where the old
+    # East Slavic rule and the Polish one disagree.
+    describe "pluralising in the locale being rendered" do
+      it "says 21 dni in Polish, not 21 dzień" do
+        I18n.with_locale(:pl) { render :partial => "shared/countdown" }
+
+        result = time_difference_result(rendered, "2026-01-01T00:00:00", "2026-01-22T00:00:00")
+
+        expect(result).to eq("21 dni")
+      end
+
+      it "says 21 days in English, not 21 day" do
+        I18n.with_locale(:en) { render :partial => "shared/countdown" }
+
+        result = time_difference_result(rendered, "2026-01-01T00:00:00", "2026-01-22T00:00:00")
+
+        expect(result).to eq("21 days")
+      end
+
+      # The locales that were already right must stay right: Russian genuinely
+      # does take the singular at 21.
+      it "keeps saying 21 день in Russian" do
+        I18n.with_locale(:ru) { render :partial => "shared/countdown" }
+
+        result = time_difference_result(rendered, "2026-01-01T00:00:00", "2026-01-22T00:00:00")
+
+        expect(result).to eq("21 день")
+      end
+
+      it "says 21 gün in Turkish, where a numeral takes no plural at all" do
+        I18n.with_locale(:tr) { render :partial => "shared/countdown" }
+
+        result = time_difference_result(rendered, "2026-01-01T00:00:00", "2026-01-22T00:00:00")
+
+        expect(result).to eq("21 gün")
+      end
     end
   end
 end

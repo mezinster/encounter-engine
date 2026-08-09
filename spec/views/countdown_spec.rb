@@ -90,8 +90,15 @@ RSpec.describe "shared/_countdown", type: :view do
       JSON.parse(stdout.strip)
     end
 
+    # This used to be skip(), and skipping was the wrong call: this job runs
+    # in container: ruby:3.3.12, which has no node, so from the day these
+    # examples were written until 2026-08-09 they reported as PENDING in every
+    # CI run -- indistinguishable from passing unless you counted. They were
+    # only ever really running on a developer's laptop. CI now installs node
+    # (see .github/workflows/ci.yml), so a missing binary means something
+    # broke and should be loud rather than quietly reducing coverage.
     before do
-      skip("node is not on PATH; cannot evaluate timeDifference") unless NODE_BIN
+      raise "node is not on PATH; these examples must run, not skip" unless NODE_BIN
     end
 
     it "renders the reported production case with no phantom day" do

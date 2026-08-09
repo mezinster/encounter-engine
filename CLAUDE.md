@@ -181,8 +181,15 @@ add steps there or Cucumber will auto-require them a second time.
   `spec/helpers/countdown_plural_spec.rb` and the locale examples in `spec/views/countdown_spec.rb`
   run the emitted JavaScript **through `node`** rather than reimplementing the rule in Ruby — a
   Ruby mirror would agree with itself while the shipped JavaScript stayed broken. Both were
-  mutation-tested against the old inline rule and fail with `21 dzień` / `21 day`. The specs need
-  `node` on `PATH`; GitHub's `ubuntu-latest` has it.
+  mutation-tested against the old inline rule and fail with `21 dzień` / `21 day`.
+- **The RSpec CI job installs `node`, and that step is load-bearing.** The job runs inside
+  `container: ruby:3.3.12` — a Debian image with no `node`, and the runner's own `node` is not
+  visible from inside a container. `spec/views/countdown_spec.rb` used to guard its Node examples
+  with `skip(...)`, so from the day they were written until 2026-08-09 they reported **pending in
+  every CI run**, which reads exactly like passing unless you count. They were only ever really
+  running on a developer's laptop. Both files now **raise** instead of skipping: if the binary
+  disappears the suite goes red rather than quietly shedding coverage. Don't turn that back into a
+  `skip`, and don't drop the `actions/setup-node` step.
 - **Georgian needed the same treatment as Turkish, and got it first.** It was restructured rather
   than translated word-for-word wherever the template's fixed word order fights the language: the
   hint delay labels, which bracket a number Georgian postposes; and anywhere a user-supplied name

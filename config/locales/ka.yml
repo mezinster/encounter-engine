@@ -779,6 +779,13 @@ ka:
               blank: "თქვენ არ შეიყვანეთ დავალების დასახელება"
             text:
               blank: "თქვენ არ შეიყვანეთ დავალების ტექსტი"
+        setting:
+          attributes:
+            value:
+              greater_than_or_equal_to: "არ შეიძლება იყოს უარყოფითი"
+              not_a_number: "უნდა იყოს მთელი რიცხვი"
+            name:
+              inclusion: "უცნობი პარამეტრი"
         team:
           attributes:
             name:

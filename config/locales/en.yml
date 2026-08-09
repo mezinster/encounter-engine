@@ -735,6 +735,13 @@ en:
               blank: "Task name is required"
             text:
               blank: "Task text is required"
+        setting:
+          attributes:
+            value:
+              greater_than_or_equal_to: "must not be negative"
+              not_a_number: "must be a whole number"
+            name:
+              inclusion: "is not a known setting"
         team:
           attributes:
             name:

@@ -747,6 +747,13 @@ ru:
               blank: "Вы не ввели название задания"
             text:
               blank: "Вы не ввели текст задания"
+        setting:
+          attributes:
+            value:
+              greater_than_or_equal_to: "не может быть отрицательным"
+              not_a_number: "должно быть целым числом"
+            name:
+              inclusion: "неизвестная настройка"
         team:
           attributes:
             name:

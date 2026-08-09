@@ -763,6 +763,13 @@ uk:
               blank: "Ви не ввели назву завдання"
             text:
               blank: "Ви не ввели текст завдання"
+        setting:
+          attributes:
+            value:
+              greater_than_or_equal_to: "не може бути від'ємним"
+              not_a_number: "має бути цілим числом"
+            name:
+              inclusion: "невідоме налаштування"
         team:
           attributes:
             name:

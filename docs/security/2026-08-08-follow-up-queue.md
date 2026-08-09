@@ -242,18 +242,29 @@ durable queue (solid_queue) before it is worth doing.
 reads it. The first sign of a real attack would be Gmail suspending the sending account. Same blind
 spot as the backup timer, which also tells nobody when it fails.
 
-### 23. `remote_ip` behind kamal-proxy is unverified in production — OPEN, do this after deploy
+### 23. `remote_ip` behind kamal-proxy — DONE, verified in production 2026-08-09
 The limiter keys on `request.remote_ip`. Every connection arrives from the proxy container, so this
 is only correct if `ActionDispatch::RemoteIp` trusts that hop and reads `X-Forwarded-For`. It should
 — the proxy connects over the Docker bridge, a private address Rails trusts by default — but that is
 reasoning, not evidence, and the failure direction is the bad one: if XFF is ignored, **every request
 in the world shares one counter** and the first few signups of each window lock everyone out.
 
-Procedure: trip a limit from a known public IP, then
-`ssh mezin 'docker logs --tail 200 $(docker ps -q --filter name=encounter-engine-web)'` and read the
-`[throttle]` line. **Pass:** `remote_ip=` is your public address. **Fail:** it is a `172.x`/`10.x`
-address, in which case set `config.action_dispatch.trusted_proxies` explicitly before relying on the
-limiter. No test in this repository can cover this.
+**Verified, and it did not need a deploy.** Rails already logs the client address on every request:
+`Rails::Rack::Logger`'s "Started ... for X" line is `request.remote_ip`, the same expression the
+limiter keys on. A marked request from a known public address was made against the live site and the
+running container's log read back:
+
+    Started GET "/login?probe=remoteip-check" for 178.134.238.169   <- the real client
+    Started GET "/team-room"                  for 3.78.35.189
+    Started GET "/"                           for 73.151.93.198
+
+The address is the client's public IP, not a `172.x` bridge address or the proxy's, and it differs
+per client — so kamal-proxy is setting `X-Forwarded-For` and `ActionDispatch::RemoteIp` is honouring
+it. There is no `trusted_proxies` override anywhere in `config/` or `app/`, so this is Rails' default
+private-range trust doing the right thing, and nothing in this branch changes it.
+
+Re-check if the proxy is ever replaced, moved off the Docker bridge, or fronted by a CDN — a CDN in
+particular would make the CDN's egress IP the client unless it is added to `trusted_proxies`.
 
 ### 24. The reset flow was left as it is — owner's decision, 2026-08-09
 A redesign was planned (the emailed link would issue a generated password in a second mail) and then

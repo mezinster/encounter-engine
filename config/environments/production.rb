@@ -39,9 +39,17 @@ Rails.application.configure do
   # Rails trusts private ranges by default. "Should" is not evidence, and the
   # failure mode is the dangerous direction -- if XFF is ignored, EVERY request
   # looks like one client and the first few signups lock out the whole
-  # internet. RequestThrottling logs both values on every refusal so this can
-  # be checked against the running proxy; the procedure is in
-  # docs/superpowers/plans/2026-08-09-signup-abuse-hardening.md, Task 1 Step 9.
+  # internet.
+  #
+  # VERIFIED in production on 2026-08-09, before this shipped: a request from a
+  # known public address was logged by Rails as that address, and other
+  # concurrent requests logged as their own distinct public addresses.
+  # (Rails::Rack::Logger's "Started ... for X" line IS request.remote_ip, so it
+  # tests the exact expression the limiter uses.) Re-check if the proxy is
+  # replaced, moved off the Docker bridge, or fronted by a CDN -- a CDN's
+  # egress IP would become "the client" unless added to trusted_proxies.
+  # RequestThrottling also logs remote_ip and X-Forwarded-For on every refusal,
+  # so the check can be repeated at any time.
   config.cache_store = :memory_store, { :size => 32.megabytes }
 
   config.action_mailer.delivery_method = :smtp

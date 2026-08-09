@@ -1,19 +1,513 @@
 # Turkish.
 #
-# Registered ahead of being translated -- the same "register now, translate
-# later" move uk and ka were introduced with. Right now this file carries only
-# the language-switcher endonyms, which is the one block that CANNOT fall back:
-# app/views/layouts/_header.html.erb and app/views/users/edit.html.erb both
-# render t("locales.<code>") for every entry in I18n.available_locales, so a
-# registered locale with no name raises rather than falling back (there is
-# nothing in ru.yml to fall back to either).
+# Registered on 2026-08-09 and translated in the same programme -- see
+# docs/superpowers/plans/2026-08-09-locale-translation-delivery.md.
 #
-# Every other key resolves through config.i18n.fallbacks ([:ru],
-# config/application.rb) to the Russian copy until
-# docs/superpowers/plans/2026-08-09-locale-translation-delivery.md fills this
-# file in. spec/i18n_spec.rb permits that -- it asserts subset-of-ru, not
-# equality.
+# MACHINE-PRODUCED, NOT REVIEWED BY A NATIVE SPEAKER. The same status uk, ka,
+# be and pl carry (see CLAUDE.md). Structurally verified -- every key in
+# ru.yml has a value here, every interpolation variable matches -- but the
+# wording has not been read by anyone who speaks Turkish. This locale needed
+# more restructuring than the others, so it is the one where an unreviewed
+# translation is most likely to read oddly. Treat reported wording problems as
+# real.
+#
+# ---------------------------------------------------------------------------
+# THE RULE THAT SHAPED THIS FILE: never attach a suffix to a placeholder.
+# ---------------------------------------------------------------------------
+#
+# Turkish is agglutinative. "to the team X" attaches a case suffix to X, and
+# WHICH suffix depends on X's last vowel (vowel harmony) and whether it ends
+# in a consonant -- a team called "Ada" and one called "Kadıköy" take
+# different endings. No template can choose correctly, and the value here is a
+# name a player typed.
+#
+# So every one of the 37 keys carrying a user-authored value (%{team},
+# %{nickname}, %{game}, %{name}, %{level}, %{answer}, ...) is worded so the
+# suffix lands on a COMMON NOUN that is part of the template -- usually via
+# "«%{team}» adlı takım" (the team named X) rather than "%{team}'a". ka.yml
+# solved the same problem the same way; see the note in CLAUDE.md about
+# Georgian moving the case suffix onto a preceding common noun.
+#
+# To check this after editing: render a key with a consonant-final name and a
+# vowel-final one. If only one reads naturally, the template is inflecting
+# around the placeholder again.
+#
+# The i/İ hazard is handled elsewhere and needs no help here: both layouts set
+# <html lang="<%= I18n.locale %>">, so the five text-transform:uppercase rules
+# get Turkish casing from the browser. The rule to keep is never to add a
+# Ruby-side .upcase/.downcase on user-facing text -- that is locale-blind and
+# would turn "i" into "I" instead of "İ".
+#
+# Game jargon, applied consistently: игра -> oyun, команда -> takım,
+# задание -> görev (the puzzle a level poses), уровень -> seviye (its numbered
+# position), код -> kod (the answer string players find in the city),
+# подсказка -> ipucu, игрок -> oyuncu, заявка -> başvuru, "сойти с дистанции"
+# -> "yarıştan çekilmek" (quit mid-game).
 tr:
+  admin:
+    users:
+      granted_notice: "Yönetici yetkileri verildi"
+      revoked_notice: "Yönetici yetkileri geri alındı"
+      cannot_revoke_self: "Kendi yetkilerinizi geri alamazsınız"
+      cannot_revoke_last: "Son yöneticinin yetkileri geri alınamaz"
+      moved_notice: "Oyuncu «%{team}» adlı takıma taşındı"
+      cannot_move_captain: "Kaptan taşınamaz. Önce takımına başka bir kaptan atayın."
+      cannot_move_mid_race: "Takım yarıştayken oyuncular taşınamaz"
+      move_needs_another_team: "Başka bir takım seçin"
+      deleted_notice: "%{nickname} adlı hesap silindi"
+      cannot_delete_self: "Kendi hesabınızı silemezsiniz"
+      cannot_delete_captain: "Kaptan silinemez. Önce takımına başka bir kaptan atayın."
+      cannot_delete_last_superadmin: "Son yönetici silinemez"
+      cannot_delete_author: "Oyun yazarı silinemez. Oyunları korumak için hesabı anonimleştirin."
+      anonymised_notice: "Hesap anonimleştirildi"
+      cannot_anonymise_self: "Kendi hesabınızı anonimleştiremezsiniz"
+      cannot_anonymise_captain: "Kaptan anonimleştirilemez. Önce takımına başka bir kaptan atayın."
+      index:
+        title: "Oyuncular"
+        nickname: "Takma ad"
+        email: "E-posta"
+        team: "Takım"
+        locale: "Dil"
+        signed_up: "Kayıt"
+        role: "Rol"
+        superadmin: "yönetici"
+        back: "Genel bakışa"
+      show:
+        email: "E-posta"
+        phone: "Telefon"
+        instagram: "Instagram"
+        telegram: "Telegram"
+        messengers: "Mesajlaşma uygulamaları"
+        date_of_birth: "Doğum tarihi"
+        team: "Takım"
+        locale: "Dil"
+        signed_up: "Kayıt"
+        authored_games: "Oluşturulan oyunlar"
+        back: "Oyuncu listesine"
+        grant: "Yönetici yap"
+        revoke: "Yönetici yetkilerini al"
+        move: "Takıma taşı"
+        delete: "Hesabı sil"
+        anonymise: "Hesabı anonimleştir"
+    audit:
+      index:
+        title: "Yönetici işlemleri günlüğü"
+        when: "Ne zaman"
+        who: "Kim"
+        what: "İşlem"
+        target: "Nesne"
+        details: "Ayrıntılar"
+        unknown_actor: "bilinmiyor"
+        back: "Genel bakışa"
+        action:
+          withdraw: "Yayından kaldırdı"
+          restore: "Yayımladı"
+          unfinish: "Oyunu yeniden başlattı"
+          set_captain: "Takım kaptanı atadı"
+          delete_team: "Takımı sildi"
+          move_user: "Oyuncuyu başka takıma taşıdı"
+          delete_user: "Hesabı sildi"
+          anonymise_user: "Hesabı anonimleştirdi"
+          lock: "Düzenlemeyi dondurdu"
+          unlock: "Düzenlemeyi çözdü"
+          update: "Değiştirdi"
+          delete: "Sildi"
+          end_game: "Oyunu bitirdi"
+          start_test: "Test başlattı"
+          finish_test: "Testi bitirdi"
+          grant_superadmin: "Yönetici yetkileri verdi"
+          revoke_superadmin: "Yönetici yetkilerini aldı"
+          allow_any_code: "Seviyede herhangi bir koda izin verdi"
+          require_all_codes: "Seviyede tüm kodları zorunlu kıldı"
+    settings:
+      title: "Sınırlama ayarları"
+      explanation: "Sınırlamalar belirtilen süre içinde tek bir IP adresi için geçerlidir. 0 sınırlamayı kapatır."
+      submit: "Kaydet"
+      saved: "Ayarlar kaydedildi"
+      invalid: "Değer sıfırdan küçük olmayan bir tam sayı olmalıdır"
+      names:
+        signup_max: "Tek adresten kayıt sayısı"
+        signup_window_seconds: "Kayıtlar için süre (saniye)"
+        reset_max: "Tek adresten parola sıfırlama isteği sayısı"
+        reset_window_seconds: "Parola sıfırlama için süre (saniye)"
+    dashboard:
+      show:
+        title: "Genel bakış"
+        games_by_status: "Duruma göre oyunlar"
+        editing_locked: "Düzenleme donduruldu"
+        totals: "Toplam"
+        entries_by_status: "Duruma göre başvurular"
+        all_games: "Tüm oyunlar"
+        all_teams: "Tüm takımlar"
+        audit_log: "İşlem günlüğü"
+        status:
+          withdrawn: "Yayından kaldırıldı"
+          draft: "Taslak"
+          finished: "Bitti"
+          running: "Sürüyor"
+          scheduled: "Planlandı"
+        total:
+          users: "Oyuncu"
+          teams: "Takım"
+          games: "Oyun"
+          passings_finished: "Tamamlanan geçiş"
+          passings_in_progress: "Süren geçiş"
+        entry_status:
+          new: "Yeni"
+          accepted: "Kabul edildi"
+          rejected: "Reddedildi"
+          recalled: "Geri çekildi"
+          canceled: "İptal edildi"
+    games:
+      index:
+        title: "Tüm oyunlar"
+        name: "Ad"
+        author: "Yazar"
+        locales: "Diller"
+        status: "Durum"
+        teams: "Takım"
+        draft: "Taslak"
+        scheduled: "Planlandı"
+        running: "Sürüyor"
+        finished: "Bitti"
+        withdrawn: "Yayından kaldırıldı"
+        locked: "düzenleme donduruldu"
+        edit: "Düzenle"
+        withdraw: "Kaldır"
+        restore: "Yayımla"
+        unfinish: "Yeniden başlat"
+        lock: "Dondur"
+        unlock: "Çöz"
+        delete: "Sil"
+        delete_confirm: "«%{name}» adlı oyun tüm seviyeleriyle birlikte silinsin mi? Bu işlem geri alınamaz."
+    teams:
+      captain_set: "Takım kaptanlığına %{nickname} adlı oyuncu atandı"
+      not_a_member: "Bu kullanıcı takımda değil"
+      deleted_notice: "«%{name}» adlı takım silindi"
+      not_deletable: "Bu takım silinemez: üyeleri var ya da daha önce oynamış"
+      index:
+        title: "Takımlar"
+        name: "Ad"
+        captain: "Kaptan"
+        members: "Kadro"
+        no_captain: "kaptan yok"
+        actions: "İşlemler"
+        set_captain: "Kaptan yap"
+        delete: "Takımı sil"
+  answers:
+    must_have_at_least_one_variant: "En az bir kod seçeneği olmalıdır"
+    index:
+      title: "Görev"
+      game_prefix: "oyun"
+      variants_label: "Kod seçenekleri:"
+      new_variant_label: "Bir kod seçeneği daha"
+      submit: "Kod seçeneği ekle"
+  errors:
+    unauthenticated: "Bu sayfayı görüntüleme yetkiniz yok. Giriş yapmayı deneyin."
+    unauthorized: "Bu işlemi yapma yetkiniz yok"
+    not_team_member: "Bu sayfayı görüntüleme yetkiniz yok"
+    must_be_captain: "Bu işlemi yapmak için kaptan olmalısınız"
+    must_be_author: "Bu sayfayı görmek için oyunun yazarı olmalısınız"
+    not_registered_for_game: "Takımınız bu oyuna kayıtlı değil."
+    must_be_superadmin: "Erişim yalnızca yöneticiye açıktır"
+    too_many_requests: "Çok fazla deneme yapıldı. Daha sonra tekrar deneyin."
+    must_be_author_or_finished_player: "Tam cevap günlüğü yalnızca oyunun yazarına ya da oyunu bitiren takımın oyuncusuna açıktır"
+    game_already_started: "Oyun başladıktan sonra düzenlenemez"
+    game_is_locked: "Oyunun düzenlenmesi yönetici tarafından donduruldu"
+    game_is_withdrawn: "Oyun yayından kaldırıldı"
+    must_be_recipient: "Bu işlemi yapmak için davetin alıcısı olmalısınız"
+    cannot_play_own_game: "Kendi oyunlarınızı oynayamazsınız, kusura bakmayın :-)"
+    game_finished_by_author: "Oyun yazarı tarafından bitirildi, artık oynayamazsınız"
+    team_exited: "Takım yarıştan çekildi"
+    game_is_not_live: "Oyun şu anda sürmüyor"
+  interventions:
+    paused_notice: "Oyun duraklatıldı"
+    resumed_notice: "Oyun devam ediyor"
+    moved_notice: "Takım başka bir seviyeye taşındı"
+    reinstated_notice: "Takım oyuna geri alındı"
+    clock_reset_notice: "Seviyedeki süre sayacı sıfırlandı"
+    any_code_notice: "«%{name}» adlı seviyede artık herhangi bir kod yeterli"
+    all_codes_notice: "«%{name}» adlı seviyede artık tüm kodlar gerekli"
+    refused: "Bu işlem şu anda yapılamaz"
+  invitations:
+    notice_sent: "%{nickname} adlı kullanıcıya davet gönderildi"
+    new:
+      recipient_label: "Yeni üye davet et"
+      submit: "Davet et"
+  game:
+    not_started: "Oyun başlamadan önce oynanamaz. Hem bu bağlantıyı nereden buldunuz? :-)"
+    already_in_team: "Zaten bir takımın üyesisiniz"
+  games:
+    withdrawn_notice: "Oyun yayından kaldırıldı"
+    restored_notice: "Oyun yeniden yayımlandı"
+    unfinished_notice: "Oyun yeniden başlatıldı"
+    locked_notice: "Oyunun düzenlenmesi donduruldu"
+    unlocked_notice: "Oyunun düzenlenmesi çözüldü"
+    not_deletable: "Oyun silinemez: daha önce oynandı. Yayından kaldırın."
+    not_endable_in_test: "Oyun bitirilemez: test modunda. Testi durdurmak için «Testi bitir» seçeneğini kullanın."
+    translations:
+      incomplete: "Oyun, çevirisi tamamlanmamış diller bildiriyor: %{count} alan eksik"
+      game_field: "Oyun — %{field}"
+      level_field: "Seviye %{position} — %{field}"
+      hint_field: "Seviye %{position} — %{minutes} dk sonra ipucu"
+      question_field: "Seviye %{position} — soru"
+      option_field: "Seviye %{position} — «%{text}» seçeneği"
+      missing_count: "eksik: %{count}"
+      heading: "Çevrilmedi (%{count})"
+      fields:
+        name: "ad"
+        description: "açıklama"
+        text: "görev metni"
+    list:
+      name: "Oyun"
+      status: "Durum"
+      starts_at: "Başlangıç"
+      ends_at: "Bitiş"
+      participants: "Takımlar"
+      status_withdrawn: "Yayından kaldırıldı"
+      status_draft: "Taslak"
+      status_finished: "Bitti"
+      status_running: "Sürüyor"
+      status_scheduled: "Planlandı"
+      paused: "duraklatıldı"
+      duration: "%{hours} sa %{minutes} dk"
+      playing: "oynayan: %{count}"
+      played: "oynayan (bitmiş): %{count}"
+      view: "(görüntüle)"
+      stats: "(istatistik)"
+      live_channel: "(canlı yayın)"
+      full_log: "(cevap günlüğü)"
+      end_game: "OYUNU BİTİR"
+      author_finished: "Oyunu bitirdiniz"
+    game_entries:
+      legend: "Kayıt başvuruları:"
+      accept: "(kabul et)"
+      reject: "(reddet)"
+    teams:
+      legend: "Katılan takımlar:"
+    form:
+      name: "Ad"
+      description: "Açıklama"
+      starts_at: "Oyunun başlangıcı"
+      registration_deadline: "Son kayıt tarihi "
+      max_team_number: "En fazla takım sayısı"
+      is_draft: "Taslak mı?"
+    primary_locale_label: "Ana dil"
+    available_locales_label: "Oyunun dilleri"
+    new:
+      submit: "Oyun oluştur"
+    edit:
+      submit: "Kaydet"
+    show:
+      title: "Oyun"
+      draft_label: "Taslak"
+      author_label: "Yazar"
+      starts_at_label: "Oyunun başlangıcı"
+      starts_at_not_set: "Oyunun başlangıç tarihi henüz belirlenmedi"
+      registration_deadline_label: "Son kayıt tarihi"
+      registration_deadline_not_set: "Son kayıt tarihi henüz belirlenmedi"
+      description_label: "Açıklama:"
+      max_team_number_label: "En fazla takım sayısı:"
+      levels_legend: "Görevler:"
+      add_level: "Yeni görev ekle"
+      import_questions: "Soruları liste olarak içe aktar"
+      edit_link: "Bu oyunu düzenle"
+      delete_link: "Bu oyunu sil"
+      countdown_prefix: "Başlamasına kalan: "
+      start_test: "Testi başlat"
+      start: "Başla"
+      finish_test: "Testi bitir"
+  options:
+    index:
+      title: "Görev için cevap seçenekleri"
+      game_prefix: "oyun"
+      explain: "Sorunun seçenekleri varsa oyuncular kod girmek yerine bunlardan birini seçer."
+      text_label: "Seçenek"
+      correct_label: "Doğru"
+      correct_yes: "doğru"
+      new_option_label: "Yeni seçenek"
+      is_correct_label: "Doğru cevap budur"
+      submit: "Seçenek ekle"
+      back: "Göreve dön"
+      translations_saved: "Seçenek çevirileri kaydedildi"
+      translate_explain: "Solda — «%{language}» dilindeki seçenek. Sağa çevirisini girin."
+      original_label: "Özgün metin"
+      save_translations: "Çevirileri kaydet"
+  levels:
+    codes_rule_any: "Kodlardan herhangi biri yeterli"
+    codes_rule_all: "Tüm kodların bulunması gerekir"
+    form:
+      wrong_answer_penalty: "Yanlış cevap cezası (dakika)"
+      name: "Ad"
+      text: "Görev metni"
+      correct_answer: "Kod"
+      codes_rule: "Kodlar nasıl sayılsın"
+    edit:
+      title: "Görev"
+      game_prefix: "oyun"
+      submit: "Kaydet"
+    new:
+      heading: "%{name} adlı oyun için yeni görev"
+      hint_more_codes: "oluşturduktan sonra göreve daha fazla kod ekleyebilirsiniz"
+      submit: "Görev ekle"
+    show:
+      title: "Görev"
+      game_prefix: "oyun"
+      text_label: "Görev metni:"
+      edit_link: "Görevin metnini ve adını düzenle"
+      code_label: "Kod:"
+      codes_label: "Kodlar (%{count}):"
+      add_code: "Bir kod daha ekle"
+      options_link: "Cevap seçenekleri"
+      delete_code: "Kodu sil"
+      delete_code_confirm: "«%{code}» kodu görevden silinsin mi? Bu işlem geri alınamaz."
+      options_for_code: "(«%{code}» kodu için)"
+      hints_legend: "İpuçları:"
+      add_hint: "İpucu ekle"
+      delete_level: "Bu seviyeyi sil"
+      back_to_game: '"%{name}" adlı oyuna dön'
+  hints:
+    form:
+      text_label: "Metin"
+      delay_label: "Sonra"
+      minutes_suffix: "dakika"
+    list:
+      empty: "İpucu yok"
+      after: "Sonra"
+      minutes_colon: "dakika:"
+    edit:
+      heading_prefix: "Görev ipucunu düzenleme"
+      heading_game_prefix: "oyun"
+      submit: "Düzenle"
+    new:
+      heading_prefix: "Görev için yeni ipucu"
+      heading_game_prefix: "oyun"
+      submit: "İpucu ekle"
+  quiz_imports:
+    created_notice: "Eklenen soru: %{added}. Atlanan (zaten var): %{skipped}"
+    new:
+      title: "«%{game}» adlı oyuna soru aktarımı"
+      intro: "Soruları yapıştırın: önce soru satırı, sonra seçenekler. Doğru seçeneği yıldızla işaretleyin. İki yıldız — birden çok doğru cevabı olan soru."
+      example: "Belarus'un başkenti hangi şehirdir?\nA) Brest\nB) Grodno\nC) *Minsk"
+      errors_heading: "Metin kabul edilmedi:"
+      preview: "Nelerin ekleneceğini gör"
+      back: "Oyuna dön"
+    preview:
+      title: "«%{game}» adlı oyuna neler eklenecek"
+      summary: "Çözümlenen soru: %{parsed}. Atlanan (zaten var): %{skipped}. Eklenecek: %{added}"
+      skipped: "Atlandı — oyunda zaten var"
+      will_add: "Eklenecek"
+      confirm: "Soruları ekle"
+      back: "Metni değiştir"
+    errors:
+      option_before_question: "satır %{line}: seçenekler soru metninden önce geliyor"
+      too_few_options: "satır %{line}: sorunun ikiden az seçeneği var"
+      no_correct_option: "satır %{line}: doğru seçenek işaretlenmemiş (yıldızla)"
+      empty: "Metin boş — içe aktarılacak bir şey yok"
+  questions:
+    must_have_at_least_one_code: "Görevde en az bir kod kalmalıdır"
+    code_deleted: "Kod görevden silindi"
+    new:
+      title: "Görev"
+      game_prefix: "oyun"
+      code_label: "Kod"
+      submit: "Kod ekle"
+    answers_are_shared: "Cevap kodları tüm diller için ortaktır. Cevap farklı yazılıyorsa her yazımı ayrı bir doğru cevap olarak ekleyin."
+  messengers:
+    telegram: "Telegram"
+    whatsapp: "WhatsApp"
+    viber: "Viber"
+    signal: "Signal"
+    max: "MAX"
+  users:
+    create:
+      check_your_mail: "E-postanızı kontrol edin"
+    new:
+      nickname_label: "Ad"
+      email_label: "E-posta"
+      password_label: "Parola"
+      password_confirmation_label: "Doğrulama"
+      submit: "Kaydol"
+    edit:
+      title: '%{nickname} adlı oyuncunun profilini düzenleme'
+      nickname_label: "Adınız"
+      date_of_birth_label: "Doğum tarihi"
+      instagram_label: "Instagram"
+      telegram_label: "Telegram"
+      messengers_label: "Şu uygulamalarda ulaşılabilir"
+      phone_label: "İletişim telefonu"
+      locale_label: "Arayüz dili"
+      timezone_label: "Saat dilimi"
+      timezone_default: "Sunucunun varsayılanı"
+      password_label: "Yeni parola"
+      password_confirmation_label: "Parola doğrulaması"
+      current_password: "Mevcut parola"
+      current_password_wrong: "Mevcut parola yanlış."
+      submit: "Değişiklikleri kaydet"
+    index:
+      title: "Kullanıcı profili"
+      captain_prefix: "takım kaptanı"
+      email_label: "E-posta:"
+      date_of_birth_label: "Doğum tarihi:"
+      timezone_label: "Saat dilimi:"
+      instagram_label: "Instagram:"
+      telegram_label: "Telegram:"
+      messengers_label: "Mesajlaşma uygulamaları:"
+      phone_label: "İletişim telefonu:"
+      edit_link: "Profili düzenle..."
+  password_resets:
+    invalid: "Parola sıfırlama bağlantısı geçersiz ya da süresi dolmuş."
+    new:
+      title: "Parola kurtarma"
+      email: "E-posta"
+      submit: "Bağlantı gönder"
+      link: "Parolanızı mı unuttunuz?"
+    edit:
+      title: "Yeni parola"
+      password: "Yeni parola"
+      password_confirmation: "Parola doğrulaması"
+      submit: "Parolayı kaydet"
+    create:
+      sent: "Bu adres kayıtlıysa, parola sıfırlama bağlantısını ona gönderdik."
+    update:
+      done: "Parola değiştirildi. Yeni parolanızla giriş yapın."
+  notification_mailer:
+    welcome_letter:
+      subject: "%{host} sitesine kayıt"
+      body: |-
+        Kaydolduğunuz için teşekkürler!
+
+        %{host} sitesine kaydoldunuz ve artık aşağıdaki bilgilerle giriş yapabilirsiniz:
+
+        E-posta: %{email}
+        Parola:  %{password}
+
+        Lütfen sisteme girer girmez bu parolayı değiştirin.
+
+        İyi günler :)
+    invitation_notification:
+      subject: "%{team_name} adlı takıma katılmaya davet edildiniz"
+      body: |-
+        %{team_name} adlı takıma katılmaya davet edildiniz
+        Daveti kabul etmek ya da reddetmek için kişisel panelinize girin
+    reject_notification:
+      subject: "%{nickname} adlı kullanıcı daveti reddetti"
+      body: "%{nickname} adlı kullanıcı takımınıza katılma davetini reddetti"
+    accept_notification:
+      subject: "%{nickname} adlı kullanıcı davetinizi kabul etti"
+      body: "%{nickname} adlı kullanıcı davetinizi kabul etti ve takıma katıldı"
+    password_reset:
+      subject: "%{host} sitesinde parola sıfırlama"
+      body: |
+        %{nickname}, birisi hesabınız için parola sıfırlama isteğinde bulundu.
+
+        Yeni bir parola belirlemek için şu bağlantıya gidin:
+        %{url}
+
+        Bağlantı %{hours} saat geçerlidir. Sıfırlama isteğinde bulunmadıysanız
+        bu iletiyi yok sayın — parolanız değişmeden kalır.
+  # Deliberately identical across every locale file -- each language is named
+  # in its own endonym rather than translated. See the comment in ru.yml.
   locales:
     ru: "Русский"
     en: "English"
@@ -22,3 +516,313 @@ tr:
     tr: "Türkçe"
     be: "Беларуская"
     pl: "Polski"
+  layout:
+    title: "Aktif şehir oyunları"
+    header:
+      dashboard: "Kişisel panel"
+      home: "Ana sayfa"
+      menu: "Menü"
+      theme: "Tema"
+    left_menu:
+      administration: "Yönetim"
+      dashboard: "Kişisel panel"
+      profile: "Profil"
+      team_room: "Takım odası"
+      create_team: "Takım oluştur"
+      all_games: "Alan adındaki tüm oyunlar"
+      logout: "Çıkış yap"
+      login_legend: "Giriş"
+      login: "Giriş yap"
+      signup: "Kaydol"
+  shared:
+    game_entry_controls:
+      applied: "Başvuru gönderildi"
+      recall: "Geri çek"
+      registered: "Kayıtlısınız"
+      decline: "Vazgeç"
+      reapply: "Kayıt başvurusunu yeniden gönder"
+      entries_exceeded: "Katılımcı sayısı aşıldığı için kaydolamazsınız"
+      deadline_passed: "Oyuna geç kaldığınız için kaydolamazsınız"
+      apply: "Kayıt başvurusu gönder"
+    current_games:
+      legend: "Alan adındaki güncel oyunlar"
+      started: "Oyun başladı"
+      view_results: "Sonuçları gör"
+      no_levels: "Oyunda hiç görev yok"
+    current_games_status:
+      play: "Oyna!"
+      not_registered: "Kayıtlı değilsiniz"
+    countdown:
+      # Still three elements, even though Turkish has no plural agreement
+      # after a numeral at all ("3 gün", "1 gün"):
+      # app/views/shared/_countdown.html.erb hard-codes a Slavic index
+      # function that returns 0, 1 or 2 regardless of locale, so a shorter
+      # array would render "undefined". One form correctly fills all three
+      # slots -- the same trick ka.yml uses.
+      prefix: "Kalan süre: "
+      years: ["yıl", "yıl", "yıl"]
+      months: ["ay", "ay", "ay"]
+      days: ["gün", "gün", "gün"]
+      hours: ["saat", "saat", "saat"]
+      minutes: ["dakika", "dakika", "dakika"]
+      seconds: ["saniye", "saniye", "saniye"]
+    cancel: "(iptal)"
+    edit_short: "(düzenle)"
+    delete_short: "(sil)"
+    error_header: "Hata"
+  game_passings:
+    content_not_translated: "Bu görev henüz sizin dilinize çevrilmedi — özgün dili gösteriliyor."
+    content_language: "Görevlerin dili"
+    paused: "Oyun düzenleyici tarafından duraklatıldı. Yerinizde kalın ve devam etmesini bekleyin."
+    index:
+      title: '"%{name}" adlı oyun'
+      team: "Takım"
+      level: "Seviye"
+      time_at_level: "Seviyedeki süre"
+      exited: "(Yarıştan çekildiler)"
+      finished: "(oyunu bitirdiler)"
+      level_log: "(seviye günlüğü)"
+      game_log: "(oyun günlüğü)"
+      full_log: "Tam cevap günlüğü"
+      interventions: "Müdahale"
+      move: "Taşı"
+      reinstate: "Oyuna geri al"
+      reset_clock: "Sayacı sıfırla"
+      pause: "Oyunu duraklat"
+      resume: "Oyuna devam et"
+      paused_since: "Oyun %{time} itibarıyla duraklatıldı."
+      level_codes_legend: "Seviyelerdeki kodlar"
+      allow_any_code: "Herhangi biri yeterli"
+      require_all_codes: "Tümü gerekli"
+    show_current_level:
+      choose: "Cevabı seçin"
+      penalty_label: "Ceza, dakika:"
+      title_prefix: "Oyun"
+      level_label: "Görev"
+      hint_label: "İpucu"
+      until_next_hint: "Sonraki ipucuna kalan"
+      countdown_placeholder: "3 dakika"
+      loading: "Yükleniyor..."
+      no_more_hints: "Başka ipucu olmayacak"
+      answer_correct: "'%{answer}' kodu doğru."
+      answer_incorrect: "Kod yanlış, girdiğiniz kod: '%{answer}'."
+      answer_missing_choice: "Bir seçenek seçin"
+      answer_missing_code: "Kodu girin"
+      multi_question_progress: "Girilen doğru kod sayısı: %{total} kodun %{answered} tanesi"
+      answer_label: "Kod"
+      submit: "Gönder!"
+      exit_game: "Yarıştan çekil"
+      finish_testing: "Testi bitir"
+    show_results:
+      congrats: "Tebrikler, oyunu bitirdiniz!"
+      place: "Sıra"
+      team: "Takım"
+      finish_time: "Bitiş zamanı"
+      penalty: "Ceza"
+      total: "Toplam"
+      exited: "Yarıştan çekildiler"
+      not_finished: "Bitiremediler"
+      full_log: "Cevap günlüğü"
+      finish_testing: "Testi bitir"
+      times_in_zone: "Saatler %{zone} saat diliminde gösterilmiştir"
+  logs:
+    index:
+      title: "Dizin"
+    show_full_log:
+      title: "Tam cevap günlüğü"
+      correct_answer_one: "Doğru kod:"
+      correct_answer_many: "Doğru kodlar:"
+    show_game_log:
+      title: '"%{game}" adlı oyunda "%{team}" adlı takımın cevap günlüğü'
+      correct_answer: "Doğru kod:"
+    show_level_log:
+      title: '"%{game}" adlı oyunun "%{level}" adlı seviyesinde "%{team}" adlı takımın cevap günlüğü'
+      correct_answer: "Doğru kod:"
+    show_live_channel:
+      title: '"%{name}" adlı oyunun canlı yayını'
+      time: "Saat"
+      team: "Takım"
+      level: "Görev"
+      code: "Kod"
+  dashboard:
+    index:
+      greeting: "Siz"
+    coming_games:
+      legend: "Yaklaşan oyunlar (%{count})"
+      upcoming: "Yaklaşan oyun"
+      you_are_author: "Bu oyunun yazarısınız"
+      enter: "Gir!"
+    finished_games:
+      legend: "Biten oyunlar"
+      finished: "Biten oyun"
+    my_games:
+      legend: "Oyunlarım (%{count})"
+      create: "Oyun oluştur >> "
+    my_team:
+      legend: "Takımım"
+      no_team: "Hiçbir takımda değilsiniz"
+      create_team: "Takım oluştur"
+      browse_teams: "Takım bul"
+      invited: "%{team} adlı takıma davet edildiniz"
+      accept: "(kabul et)"
+      decline: "(reddet)"
+      captain_of: "Şu takımın kaptanısınız"
+      member_of: "Şu takımdasınız"
+      go_to_team_room: "Takım odasına git"
+  index:
+    index:
+      title: "Ana sayfa"
+      games_list: "Oyun listesi"
+  team_room:
+    index:
+      title: "%{name} adlı takım"
+      composition: "Kadro"
+      captain_suffix: "- kaptan"
+      invite: "Üye davet et"
+      hand_over: "Kaptanlığı devret"
+      leave: "Takımdan ayrıl"
+      browse_teams: "Tüm takımlar"
+      join_requests: "Katılma başvuruları"
+      accept_request: "Kabul et"
+      reject_request: "Reddet"
+  team_join_requests:
+    sent: "«%{team}» adlı takıma katılma başvurusu gönderildi"
+    already_applied: "Bu takıma zaten başvurdunuz"
+    already_a_member: "Bu takımda zaten üyesiniz"
+    captain_must_hand_over_first: "Önce kaptanlığı devredin ya da takımınızdan ayrılın"
+    cannot_apply_mid_race: "Takımınız yarıştayken başvuru gönderilemez"
+    unknown_team: "Takım bulunamadı"
+    accepted: "%{nickname} adlı oyuncu takıma kabul edildi"
+    rejected: "%{nickname} adlı oyuncunun başvurusu reddedildi"
+    already_decided: "Bu başvuru hakkında karar zaten verilmiş"
+    applicant_is_a_captain: "Bu oyuncu artık kendi takımının kaptanı. Önce kaptanlığı devretmesi gerekir."
+    cannot_decide_mid_race: "Takım yarıştayken başvuru hakkında karar verilemez"
+  teams:
+    index:
+      title: "Takımlar"
+      name: "Ad"
+      captain: "Kaptan"
+      members: "Üye"
+      no_captain: "kaptan yok"
+      apply: "Katılma başvurusu gönder"
+    handed_over: "Kaptanlık devredildi: %{nickname}"
+    cannot_hand_over_mid_race: "Takım yarıştayken kaptanlık devredilemez"
+    hand_over_needs_another_member: "Takımdan başka bir üye seçin"
+    left_notice: "«%{team}» adlı takımdan ayrıldınız"
+    not_in_a_team: "Bir takımda değilsiniz"
+    cannot_leave_mid_race: "Takım yarıştayken takımdan ayrılamazsınız"
+    hand_over_before_leaving: "Önce kaptanlığı başka bir üyeye devredin"
+    new:
+      name_label: "Ad"
+      submit: "Takım oluştur"
+  time:
+    formats:
+      short: "%Y-%m-%d %H:%M"
+      long: "%d %B %Y, %H:%M"
+  date:
+    month_names:
+      - ~
+      - "Ocak"
+      - "Şubat"
+      - "Mart"
+      - "Nisan"
+      - "Mayıs"
+      - "Haziran"
+      - "Temmuz"
+      - "Ağustos"
+      - "Eylül"
+      - "Ekim"
+      - "Kasım"
+      - "Aralık"
+  sessions:
+    invalid_credentials: "E-posta ya da parola yanlış"
+    new:
+      title: "Giriş"
+      email_label: "E-posta"
+      password_label: "Parola"
+      submit: "Giriş yap"
+  activerecord:
+    errors:
+      messages:
+        blank: "boş olamaz"
+        confirmation: "%{attribute} alanıyla eşleşmiyor"
+        invalid: "geçersiz bir değer içeriyor"
+        record_invalid: "Kayıt geçersiz"
+      models:
+        answer:
+          attributes:
+            value:
+              blank: "Kod seçeneğini girmediniz"
+              taken: "Bu kod görevde zaten var"
+        game:
+          attributes:
+            name:
+              blank: "Adı girmediniz"
+              taken: "Bu adda bir oyun zaten var"
+            description:
+              blank: "Açıklamayı girmediniz"
+            max_team_number:
+              not_a_number: "Takım sayısı aralığı 1 ile 10000 arasındadır"
+              greater_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
+              less_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
+              exceeds_requested: "Başvuran takım sayısı belirlenen sayıyı aşıyor"
+            starts_at:
+              in_the_past: "Geçmişten bir tarih seçtiniz. Böyle olmaz :-)"
+            registration_deadline:
+              in_the_past: "Son kayıt tarihini geçmişten seçtiniz, böyle olmaz :-)"
+              after_game_start: "Son kayıt tarihini oyunun başlangıç tarihinden sonraya koydunuz, böyle olmaz :-)"
+            available_locales:
+              unknown: "bilinmeyen diller içeriyor: %{locales}"
+              missing_primary: "oyunun ana dilini içermelidir"
+            primary_locale:
+              settled: "çeviriler eklendikten sonra değiştirilemez"
+        game_entry:
+          attributes:
+            game:
+              blank: "Oyunu seçmediniz"
+            team_id:
+              blank: "Takımı belirtmediniz"
+        invitation:
+          attributes:
+            for_user:
+              blank: "Bu adda bir kullanıcı yok"
+            recepient_nickname:
+              blank: "Kullanıcı adını girmediniz"
+            for_user_id:
+              taken: "Bu kullanıcıya zaten davet gönderdiniz ve henüz yanıt vermedi"
+            base:
+              recipient_already_team_member: "Kullanıcı zaten takımlardan birinin üyesi"
+        level:
+          attributes:
+            name:
+              blank: "Görevin adını girmediniz"
+            text:
+              blank: "Görevin metnini girmediniz"
+        setting:
+          attributes:
+            value:
+              greater_than_or_equal_to: "negatif olamaz"
+              not_a_number: "tam sayı olmalıdır"
+            name:
+              inclusion: "bilinmeyen ayar"
+        team:
+          attributes:
+            name:
+              taken: "Bu adda bir takım zaten var"
+              blank: "Takımın adı boş olamaz"
+            captain:
+              belongs_to_another_team: "zaten başka bir takımda"
+        user:
+          attributes:
+            email:
+              blank: "E-posta girilmedi"
+              taken: "Bu adresle bir kullanıcı zaten kayıtlı"
+              invalid: "E-posta alanının biçimi yanlış"
+            nickname:
+              blank: "Adı girmediniz"
+              taken: "Bu adda bir kullanıcı zaten kayıtlı"
+            password:
+              too_short: "Parola çok kısa (en az 4 karakter)"
+            password_confirmation:
+              blank: "Parola doğrulamasını girmediniz"
+              confirmation: "Parola ve doğrulaması eşleşmiyor"

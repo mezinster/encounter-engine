@@ -50,6 +50,56 @@
   min-height: var(--tap);
 }
 
+/* The locale dropdown. Opened by hover on a pointer and by :focus-within
+   everywhere else -- that second selector is what makes it work on a phone
+   with no JavaScript, because tapping the trigger focuses it, and it covers
+   keyboard tabbing into the menu at the same time.
+
+   The menu is hidden by THIS RULE, in an external stylesheet, and that is
+   load-bearing rather than incidental. Capybara's rack-test driver parses
+   neither stylesheets nor computed style: Capybara::Node::Simple#visible?
+   looks at input[type=hidden], <template>, the hidden ATTRIBUTE, an INLINE
+   style containing display:none, and script/head/style tags -- nothing else.
+   So every link in here stays clickable for
+   features/i18n/switch-language.feature:37, whose step is
+   within("#locale-switcher") { click_link(label) } and whose file is frozen.
+
+   Therefore, three things not to do later: do not move this hiding into an
+   inline style or a hidden attribute, do not rebuild this as <details>
+   (a closed one IS special-cased invisible by that same matcher), and do not
+   make it a <select> (no JS in this app to navigate on change). */
+#locale-switcher { position: relative; }
+
+.locale-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  /* Above .topbar's own 20. */
+  z-index: 25;
+  display: none;
+  min-width: 10rem;
+  padding: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+#locale-switcher:hover .locale-menu,
+#locale-switcher:focus-within .locale-menu { display: block; }
+
+/* flex rather than block so min-height takes effect -- the same reason
+   .locale-switcher-link above needs inline-flex. */
+.locale-menu a,
+.locale-menu .locale-switcher-current {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
+}
+
+.locale-menu .locale-switcher-current { font-weight: 600; }
+
 /* The drawer is driven by a hidden checkbox so it opens with CSS alone.
    drawer.js only adds Escape-to-close and focus handling -- without it the
    navigation still works, which matters because this markup is on the login
@@ -161,12 +211,17 @@
   height: 100dvh;
 }
 
-/* A race, not a browsing session. The theme toggle and the four language
-   links are chrome nobody adjusts while a clock is running, and at 390px
-   they wrapped the header onto three rows -- 181px, 27% of the visible
-   screen, more than the question itself. Hidden here only; every other page
-   keeps them, and a locale is still chosen from the profile form or a
-   ?locale= link. */
+/* A race, not a browsing session. The theme toggle and the language switcher
+   are chrome nobody adjusts while a clock is running, and at 390px they
+   wrapped the header onto three rows -- 181px with four locales, 27% of the
+   visible screen, more than the question itself. Hidden here only; every
+   other page keeps them, and a locale is still chosen from the profile form
+   or a ?locale= link.
+
+   The switcher is a dropdown now (see .locale-menu below) and no longer
+   grows with the locale count, so this rule is no longer load-bearing for
+   height on the play screen -- it stays because the control is still noise
+   during a race. */
 .page--focused #theme-toggle,
 .page--focused #locale-switcher { display: none; }
 /* No bottom reserve for the pinned answer bar: it is position: sticky, so it

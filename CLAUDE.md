@@ -109,14 +109,39 @@ add steps there or Cucumber will auto-require them a second time.
   rendered verbatim — running them through `t()` would print `translation missing:` into a live
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
-- **`ru` is the default locale**, and all four registered locales (`config.i18n.available_locales`
-  in `config/application.rb`) are now fully translated: `ru`, `en`, `uk` and `ka` each carry the
-  same 489 leaf keys. `config.i18n.fallbacks` still sends anything missing to `:ru`, which is what
-  makes it safe to add a key to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces
-  exact `ru`↔`en` parity but only requires `uk`/`ka` to be a subset, so they can lag without a red
-  build. Translations live in `config/locales/{en,ru,uk,ka}.yml`.
+- **`ru` is the default locale**, and **seven** locales are registered
+  (`config.i18n.available_locales` in `config/application.rb`): `ru`, `en`, `uk` and `ka` are
+  complete at **587 leaf keys** each; `tr`, `be` and `pl` were registered on 2026-08-09 and carry
+  **only the `locales.*` endonyms** until
+  `docs/superpowers/plans/2026-08-09-locale-translation-delivery.md` fills them, one PR per
+  language. `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to
+  add a key to `ru.yml` before the others catch up, and what makes an endonym-only locale
+  shippable — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but only requires the other five
+  to be a subset, so they can lag without a red build. Translations live in
+  `config/locales/{en,ru,uk,ka,tr,be,pl}.yml`. **Count the keys rather than trusting this number**;
+  it was documented as 489 for some time after it was 587.
+- **`locales.*` is the one block that cannot fall back, and registering a locale without it breaks
+  every page with a header.** `locales.tr` missing from `tr.yml` falls back to `ru.yml` — where it
+  is also missing, because it is a new *key*, not a new translation — and the test environment's
+  `raise_on_missing_translations` turns that into a raise. Five views render `t("locales.#{l}")`
+  for every available locale (`layouts/_header`, `users/edit`, `games/new`, `games/edit`,
+  `shared/_language_tabs`), so adding `:xx` to `available_locales` without adding `locales.xx` to
+  **all seven files** took 224 examples red in one go. `spec/i18n_spec.rb` guards this now.
+- **`rails-i18n` is in the Gemfile, and the app's own files win over it.** It supplies what this
+  repo would otherwise hand-author per language: `date:`/`time:` formats, ActiveRecord validation
+  defaults, and CLDR plural rules. The gem's files enter `I18n.load_path` *before*
+  `config/locales/*.yml`, so anything this repository defines takes precedence — only four key
+  paths exist in both, and `spec/i18n_rails_defaults_spec.rb` pins the two whose values actually
+  differ (`time.formats.short`, `activerecord.errors.messages.record_invalid`). Those two are the
+  only places an inverted load order would ever be visible; a validation message the gem does not
+  define cannot demonstrate anything about precedence.
+- **No key in this app is pluralised, and that was load-bearing before the gem.** The three `t()`
+  calls passing `count:` are plain `%{count}` interpolation (`"Коды (%{count}):"`). Rails' built-in
+  pluralizer knows `one`/`other` only, so the first genuinely pluralised key would have raised
+  `I18n::InvalidPluralizationData` — in `ru`, the default locale, before any new language was
+  involved. `rails-i18n` supplies the CLDR rules, so pluralised keys are now safe to write.
 - **The Ukrainian and Georgian were machine-produced without a native reviewer.** They are
-  complete and structurally verified — every interpolation variable matches and all 489 keys
+  complete and structurally verified — every interpolation variable matches and all 587 keys
   resolve at runtime — but the wording has not been checked by a speaker. Georgian needed
   restructuring rather than word-for-word translation in a few places where the template's fixed
   word order fights the language (the hint delay labels, which bracket a number Georgian
@@ -127,6 +152,43 @@ add steps there or Cucumber will auto-require them a second time.
   query param beats both (`app/controllers/concerns/locale_selection.rb`).
 - `DEFAULT_LOCALE` (env var, defaults to `ru`) sets the instance-wide default in production —
   see `create-heroku-instance`.
+
+## Known, deliberate design: the CSS-hidden locale dropdown
+
+`app/views/layouts/_header.html.erb` renders the language switcher as a dropdown whose menu is
+hidden by a rule in `public/stylesheets/layout.css` (`.locale-menu { display: none }`, revealed on
+`:hover`/`:focus-within`). Hiding interactive links in an external stylesheet looks like something
+to tidy up. **It is the only construction that works here**, and the reason is worth knowing before
+touching it.
+
+`features/i18n/switch-language.feature:37` is frozen, and its step definition does
+`within("#locale-switcher") { click_link(label) }`. **Capybara's rack-test driver parses neither
+stylesheets nor computed style** — `Capybara::Node::Simple#visible?` (capybara 3.40.0) checks
+exactly five things: `input[type=hidden]`, `<template>`, the `hidden` **attribute**, an **inline**
+`style` containing `display: none`, and `script`/`head`/`style` tags. So a link hidden by an
+external CSS rule is fully clickable for the acceptance suite while being genuinely invisible to a
+person. Verified: `bundle exec cucumber features/i18n` passes with the menu closed.
+
+Therefore:
+
+- Do **not** move the hiding into an inline `style` or a `hidden` attribute — either one is in that
+  list of five and would make `click_link` fail.
+- Do **not** rebuild it as `<details>`/`<summary>`. That element *is* special-cased: the matcher's
+  `VISIBILITY_XPATH` contains `(~x.self(:summary) & XPath.parent(:details)[!XPath.attr(:open)])`,
+  so non-summary children of a closed `<details>` are invisible. (The rule tests the *direct*
+  parent, so deeper nesting happens to slip through — do not rely on that.)
+- Do **not** make it a `<select>`. It would need JavaScript to navigate on change, and this app has
+  no Turbo and no rails-ujs — see the `GET /logout` wart below.
+- Keep real `<a>` elements inside an element with `id="locale-switcher"`.
+
+Why a dropdown at all: one link per locale wrapped the phone header onto three rows. Measured on
+the home page at 390×660 with seven locales registered, header height went **225px → 125px** and
+the switcher **88px → 44px**; at 375×553 the same 225px was 41% of the visible screen. Desktop
+(1280×800) is unchanged at 69px. Horizontal overflow is 0 at every size, and the open menu is
+absolutely positioned, so it overlays the page instead of growing the header (verified: header
+stays 125px with the menu forced open). Layout is not visible to either suite — re-measure with the
+headless-browser procedure recorded in the `.playbar` comment in `public/stylesheets/screens.css`
+before changing any of this.
 
 ## Known, deliberate wart: `GET /logout`
 
@@ -143,7 +205,7 @@ deliberately; this is documented in `config/routes.rb` too.
 - **Cucumber** — `features/**/*.feature`, Russian Gherkin. 232 scenarios (230 passed, 2 undefined),
   2342 steps (the 2 undefined scenarios are pre-existing empty placeholders — not a regression).
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 1188 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+- **RSpec** — 1199 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
   **Do not trust a quoted RSpec count** — this number has moved five times in a week and stale copies
   have been cited as current twice. Re-run it. Cucumber's 232/2342 is the stable figure.
   `spec/rails_helper.rb` enables the legacy `should` syntax

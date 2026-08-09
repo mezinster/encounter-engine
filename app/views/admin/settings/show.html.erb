@@ -1,0 +1,14 @@
+<h1><%= t("admin.settings.title") %></h1>
+
+<p class="hint-text"><%= t("admin.settings.explanation") %></p>
+
+<%= form_with url: admin_settings_path, method: :patch do %>
+  <% @values.each do |name, value| %>
+    <div class="field">
+      <%= label_tag "settings_#{name}", t("admin.settings.names.#{name}") %>
+      <%= number_field_tag "settings[#{name}]", value, :id => "settings_#{name}", :min => 0 %>
+    </div>
+  <% end %>
+
+  <%= submit_tag t("admin.settings.submit"), class: "btn btn--go" %>
+<% end %>

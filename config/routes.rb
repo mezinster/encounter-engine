@@ -11,6 +11,9 @@ Rails.application.routes.draw do
   # superadmins), so only :index exists here -- there is no second editor.
   namespace :admin do
     get "/", to: "dashboard#show", as: :dashboard
+    # Operator-tunable rate limits. GET shows the form, PATCH saves it.
+    get   "/settings", to: "settings#show",   as: :settings
+    patch "/settings", to: "settings#update"
     resources :games, only: [ :index ]
     resources :teams, only: [ :index ] do
       post "set_captain", on: :member

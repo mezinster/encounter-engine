@@ -53,10 +53,19 @@ class LogsController < ApplicationController
   end
 
   def show_full_log
-    @logs = Log.of_run(@run)
+    # Loaded, not a relation. The view groups these in Ruby; leaving it lazy is
+    # what produced one query per level x team cell.
+    @logs = Log.of_run(@run).to_a
     # Level.of_game, deliberately: levels are the game's CONTENT and are shared
     # by every run of it. Only the answers belong to one running.
-    @levels = Level.of_game(@game)
+    #
+    # questions => answers preloaded because the view prints every level's
+    # correct answer. Without it each level costs four more queries -- a COUNT,
+    # the questions themselves, and the two Question#correct_answer makes
+    # (answers.empty? then answers.first). That is the same per-row shape as
+    # the cell N+1 below, on the same page, and the query-count guard measures
+    # both together.
+    @levels = Level.of_game(@game).includes(:questions => :answers)
     # Not find_by_sql("select * from teams t inner join game_passings gp ...")
     # -- a bare `select *` across that join returns `id` twice (teams.id, then
     # game_passings.id) and the later column wins, so every row would carry

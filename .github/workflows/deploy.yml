@@ -56,13 +56,39 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
 
-      - name: Build and push the PostgreSQL image
+      # Built, then TESTED, then pushed -- in three steps rather than one.
+      #
+      # `kamal deploy` does not touch accessories (kamal/cli/main.rb:21,
+      # `def deploy(boot_accessories: false)`); only `kamal setup` does. So this
+      # image is published on every deploy and picked up by nothing until
+      # somebody runs `kamal setup` or `kamal accessory reboot db` -- which, per
+      # docs/runbooks/restore.md, is the disaster-recovery path. An untested
+      # image would sit in the registry looking healthy and fail at the worst
+      # possible moment, so it is verified here before it is published at all.
+      - name: Build the PostgreSQL image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           file: Dockerfile.postgres
-          push: true
-          tags: ghcr.io/mezinster/encounter-engine-postgres:latest
+          load: true
+          tags: ee-postgres:candidate
+
+      # Same script images.yml runs on every push, so the two cannot drift.
+      - name: Smoke-test the PostgreSQL image
+        run: .github/scripts/smoke-postgres-image.sh ee-postgres:candidate
+
+      - name: Push the PostgreSQL image
+        run: |
+          # Two tags for one image. config/deploy.yml:69 pins the accessory to
+          # :latest, which is mutable -- on its own it leaves no known-good
+          # version to go back to, unlike the app image, which kamal tags by
+          # commit. The :$GITHUB_SHA tag is that rollback target: point the
+          # accessory at it by hand if a published image turns out to be bad.
+          repo=ghcr.io/mezinster/encounter-engine-postgres
+          docker tag ee-postgres:candidate "${repo}:latest"
+          docker tag ee-postgres:candidate "${repo}:${GITHUB_SHA}"
+          docker push "${repo}:latest"
+          docker push "${repo}:${GITHUB_SHA}"
 
       - name: Load the deploy SSH key
         uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0

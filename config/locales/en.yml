@@ -83,6 +83,8 @@ en:
           move_team: "Moved a team to another level"
           reinstate_team: "Brought a team back into the game"
           reset_clock: "Reset the level clock"
+          accept_entry: "Accepted a team's application"
+          reject_entry: "Rejected a team's application"
     settings:
       title: "Rate limits"
       explanation: "Limits apply per IP address per window. 0 disables the limit."
@@ -122,6 +124,17 @@ en:
           rejected: "Rejected"
           recalled: "Recalled"
           canceled: "Canceled"
+    entries:
+      title: "Applications for “%{game}”"
+      run: "Run №%{ordinal}"
+      pending: "Awaiting a decision"
+      accepted: "Accepted"
+      none: "—"
+      accept: "Accept"
+      reject: "Reject"
+      accepted_notice: "Team accepted: %{team}"
+      rejected_notice: "Application rejected: %{team}"
+      back: "Back to the games list"
     games:
       index:
         title: "All games"
@@ -137,6 +150,7 @@ en:
         withdrawn: "Withdrawn"
         locked: "editing frozen"
         edit: "Edit"
+        entries_link: "Applications (%{count})"
         withdraw: "Withdraw"
         restore: "Publish"
         unfinish: "Resume"
@@ -526,6 +540,10 @@ en:
       login: "Log in"
       signup: "Sign up"
   shared:
+    pager:
+      previous: "‹ Previous"
+      next: "Next ›"
+      position: "%{current} of %{total}"
     game_entry_controls:
       applied: "Application submitted"
       recall: "Withdraw"

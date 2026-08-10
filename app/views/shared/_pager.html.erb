@@ -1,0 +1,20 @@
+<%# Nothing at all on a single page. features/logs/log.feature and
+    features/games/game_full_log.feature render these screens, and a pager
+    where there was none would change what they read -- the same rule the run
+    switcher follows for a single-run game.
+
+    The href is built from request.path plus the existing query parameters, so
+    ?run= survives paging and vice versa. %>
+<% if total > 1 %>
+  <p class="pager">
+    <% if current > 1 %>
+      <%= link_to t("shared.pager.previous"),
+                  "#{request.path}?#{request.query_parameters.merge("page" => current - 1).to_query}" %>
+    <% end %>
+    <%= t("shared.pager.position", :current => current, :total => total) %>
+    <% if current < total %>
+      <%= link_to t("shared.pager.next"),
+                  "#{request.path}?#{request.query_parameters.merge("page" => current + 1).to_query}" %>
+    <% end %>
+  </p>
+<% end %>

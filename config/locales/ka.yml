@@ -106,6 +106,8 @@ ka:
           move_team: "გადაიყვანა გუნდი სხვა დონეზე"
           reinstate_team: "დააბრუნა გუნდი თამაშში"
           reset_clock: "განულა დროის ათვლა დონეზე"
+          accept_entry: "მიიღო გუნდის განაცხადი"
+          reject_entry: "უარყო გუნდის განაცხადი"
     settings:
       title: "შეზღუდვების პარამეტრები"
       explanation: "შეზღუდვები მოქმედებს ერთ IP-მისამართზე მითითებულ პერიოდში. 0 თიშავს შეზღუდვას."
@@ -145,6 +147,17 @@ ka:
           rejected: "უარყოფილი"
           recalled: "გამოხმობილი"
           canceled: "გაუქმებული"
+    entries:
+      title: "განაცხადები თამაშზე «%{game}»"
+      run: "გარბენი №%{ordinal}"
+      pending: "ელოდება გადაწყვეტილებას"
+      accepted: "მიღებულია"
+      none: "—"
+      accept: "მიღება"
+      reject: "უარყოფა"
+      accepted_notice: "გუნდი მიღებულია: %{team}"
+      rejected_notice: "განაცხადი უარყოფილია: %{team}"
+      back: "თამაშების სიაში"
     games:
       index:
         title: "ყველა თამაში"
@@ -160,6 +173,7 @@ ka:
         withdrawn: "მოხსნილია გამოქვეყნებიდან"
         locked: "რედაქტირება გაყინულია"
         edit: "რედაქტირება"
+        entries_link: "განაცხადები (%{count})"
         withdraw: "მოხსნა"
         restore: "გამოქვეყნება"
         unfinish: "აღდგენა"
@@ -558,6 +572,10 @@ ka:
       login: "შესვლა"
       signup: "რეგისტრაცია"
   shared:
+    pager:
+      previous: "‹ უკან"
+      next: "წინ ›"
+      position: "%{current} / %{total}"
     game_entry_controls:
       applied: "განაცხადი გაგზავნილია"
       recall: "გამოხმობა"

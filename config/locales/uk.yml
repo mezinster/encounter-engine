@@ -100,6 +100,8 @@ uk:
           move_team: "Перевів команду на інший рівень"
           reinstate_team: "Повернув команду в гру"
           reset_clock: "Скинув відлік часу на рівні"
+          accept_entry: "Прийняв заявку команди"
+          reject_entry: "Відхилив заявку команди"
     settings:
       title: "Налаштування обмежень"
       explanation: "Обмеження діють на одну IP-адресу за вказаний період. 0 вимикає обмеження."
@@ -139,6 +141,17 @@ uk:
           rejected: "Відхилена"
           recalled: "Відкликана"
           canceled: "Скасована"
+    entries:
+      title: "Заявки на гру «%{game}»"
+      run: "Забіг №%{ordinal}"
+      pending: "Очікують рішення"
+      accepted: "Прийняті"
+      none: "—"
+      accept: "Прийняти"
+      reject: "Відхилити"
+      accepted_notice: "Команду прийнято: %{team}"
+      rejected_notice: "Заявку відхилено: %{team}"
+      back: "До списку ігор"
     games:
       index:
         title: "Усі ігри"
@@ -154,6 +167,7 @@ uk:
         withdrawn: "Знята з публікації"
         locked: "редагування заморожено"
         edit: "Редагувати"
+        entries_link: "Заявки (%{count})"
         withdraw: "Зняти"
         restore: "Опублікувати"
         unfinish: "Відновити"
@@ -545,6 +559,10 @@ uk:
       login: "Увійти"
       signup: "Зареєструватися"
   shared:
+    pager:
+      previous: "‹ Назад"
+      next: "Далі ›"
+      position: "%{current} з %{total}"
     game_entry_controls:
       applied: "Заявку подано"
       recall: "Відкликати"

@@ -21,6 +21,16 @@ Rails.application.routes.draw do
     resources :games, only: [ :index ] do
       post "set_author", on: :member
       post "open_run",   on: :member
+
+      # Nested under the game deliberately: free_place_of_team! is a method on
+      # Game, and the redirect target is this screen, so both need the game in
+      # scope regardless.
+      resources :entries, only: [ :index ], controller: "game_entries" do
+        member do
+          post :accept
+          post :reject
+        end
+      end
     end
     resources :teams, only: [ :index ] do
       post "set_captain", on: :member

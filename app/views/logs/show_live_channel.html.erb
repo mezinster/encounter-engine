@@ -11,16 +11,11 @@
     </tr>
   </thead>
   <tbody>
-    <%
-      logs_sorted_by_date = @logs.sort do |left, right|
-        if left.time <= right.time
-          1
-        else
-          -1
-        end
-      end
-    %>
-    <% logs_sorted_by_date.each do |log| %>
+    <%# Newest first is now ORDER BY time DESC in the controller, which is what
+        the comparator this replaced already produced: it returned 1 when
+        left.time <= right.time. Sorting in SQL is what lets the page stop
+        loading every log for the run. %>
+    <% @logs.each do |log| %>
       <tr>
         <td data-label="<%= t("logs.show_live_channel.time") %>"><%= log.time.strftime("%H:%M:%S") %></td>
         <td data-label="<%= t("logs.show_live_channel.team") %>"><%= log.team_record&.name || log.team %></td>
@@ -31,3 +26,5 @@
   </tbody>
 </table>
 </div>
+
+<%= render "shared/pager", :current => @page, :total => @total_pages %>

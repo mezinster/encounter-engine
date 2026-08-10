@@ -1,3 +1,9 @@
+<%# One pass over the loaded logs, keyed by the cell that renders them. This
+    replaced @logs.of_team(team).of_level(level) inside the levels x teams
+    loops, which re-queried per cell because @logs was an unloaded relation --
+    77 levels x 3 teams ≈ 231 queries for «Викторина». %>
+<% logs_by_cell = @logs.group_by { |log| [ log.team_id, log.level_id ] } %>
+
 <h1><%= t("logs.show_full_log.title") %></h1>
 
 <div class="table-wrap">
@@ -7,7 +13,10 @@
       <tr>
         <td colspan="<%= @teams.size %>">
           <h2><%= level.name %></h2>
-          <% if level.questions.count == 1 %>
+          <%# size, not count: count issues a COUNT even when the association is
+              already preloaded, which is exactly the per-level query this
+              screen was paying. %>
+          <% if level.questions.size == 1 %>
             <strong><%= t("logs.show_full_log.correct_answer_one") %></strong><%= level.questions.first.correct_answer %>
           <% else %>
             <strong><%= t("logs.show_full_log.correct_answer_many") %></strong>
@@ -21,13 +30,13 @@
         <% @teams.each do |team| %>
         <td>
           <%= team.name %>
-          <%# @logs is Log.of_run(@game.current_run) (LogsController#show_full_log). This used
+          <%# @logs is Log.of_run(@run) (LogsController#show_full_log). This used
               to re-query with Log.of_team(team).of_level(level), and because
               logs.team/logs.level are name strings rather than foreign keys
               (db/schema.rb), that matched the named team's submissions at the
               named level across EVERY game the team ever played, not just this
               one. %>
-          <% team_logs = @logs.of_team(team).of_level(level) %>
+          <% team_logs = logs_by_cell.fetch([ team.id, level.id ], []) %>
           <ul>
           <% team_logs.each do |team_log| %>
             <li><%= team_log.time.strftime("%H:%M:%S") %>&nbsp;<%= team_log.answer %></li>
@@ -40,3 +49,5 @@
   </tbody>
 </table>
 </div>
+
+<%= render "shared/pager", :current => @page, :total => @total_pages %>

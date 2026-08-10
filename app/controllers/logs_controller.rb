@@ -1,9 +1,11 @@
 # -*- encoding : utf-8 -*-
 class LogsController < ApplicationController
   include SecurityFilters
+  include Pagination
 
   before_action :require_authentication!
   before_action :find_game
+  before_action :find_run
   before_action :ensure_author, only: [:show_live_channel, :show_level_log, :show_game_log]
   before_action :ensure_full_log_access, only: [:show_full_log]
   before_action :find_team, only: [:show_level_log, :show_game_log]
@@ -28,8 +30,12 @@ class LogsController < ApplicationController
   # #show_full_log now goes through :ensure_full_log_access instead of
   # :ensure_author, which allows exactly those two cases and blocks a team
   # that is still mid-game.
+  # order(:time => :desc) is the order this ALREADY produced: the view's
+  # comparator returned 1 when left.time <= right.time, i.e. newest first.
+  # Doing it in SQL is what lets the page stop loading every log for the run.
   def show_live_channel
-    @logs = Log.of_run(@game.current_run).includes(:team_record, :level_record)
+    scope = Log.of_run(@run).includes(:team_record, :level_record).order(:time => :desc)
+    @logs, @page, @total_pages = page_of(scope, params[:page], :per => 50)
   end
 
   def show_level_log
@@ -44,18 +50,34 @@ class LogsController < ApplicationController
     # break the next time this scope changes shape. Render the normal page
     # with an empty log (the view guards @level itself) rather than a blank
     # response.
-    @logs = @level ? Log.of_run(@game.current_run).of_team(@team).of_level(@level) : Log.none
+    @logs = @level ? Log.of_run(@run).of_team(@team).of_level(@level) : Log.none
   end
 
   def show_game_log
-    @logs = Log.of_run(@game.current_run).of_team(@team)
+    @logs = Log.of_run(@run).of_team(@team)
   end
 
   def show_full_log
-    @logs = Log.of_run(@game.current_run)
     # Level.of_game, deliberately: levels are the game's CONTENT and are shared
     # by every run of it. Only the answers belong to one running.
-    @levels = Level.of_game(@game)
+    #
+    # questions => answers preloaded because the view prints every level's
+    # correct answer. Without it each level costs four more queries -- a COUNT,
+    # the questions themselves, and the two Question#correct_answer makes
+    # (answers.empty? then answers.first). That is the same per-row shape as
+    # the cell N+1 below, on the same page, and the query-count guard measures
+    # both together.
+    #
+    # Paged by LEVEL -- the rows this matrix lists -- in the order acts_as_list
+    # keeps them, so page 1 is levels 1-20 rather than an arbitrary twenty.
+    @levels, @page, @total_pages =
+      page_of(Level.of_game(@game).includes(:questions => :answers).order(:position),
+              params[:page], :per => 20)
+
+    # Loaded, not a relation, and only this page's levels. The view groups
+    # these in Ruby; leaving it lazy is what produced one query per level x
+    # team cell.
+    @logs = Log.of_run(@run).where(:level_id => @levels.map(&:id)).to_a
     # Not find_by_sql("select * from teams t inner join game_passings gp ...")
     # -- a bare `select *` across that join returns `id` twice (teams.id, then
     # game_passings.id) and the later column wins, so every row would carry
@@ -63,13 +85,28 @@ class LogsController < ApplicationController
     # game_passings has no name column, which is exactly why the old
     # name-based of_team scope worked against these rows and the id-based one
     # does not: of_team(team) filters on the wrong id and finds nothing.
-    @teams = Team.joins(:game_passings).where(:game_passings => { :game_id => @game.id }).distinct
+    #
+    # game_run_id, not game_id: scoped to the game this listed a column for
+    # every team that ever played it, whichever run was being shown.
+    @teams = Team.joins(:game_passings)
+                 .where(:game_passings => { :game_run_id => @run.id }).distinct
   end
 
   private
 
   def find_game
     @game = Game.find(params[:game_id])
+  end
+
+  # The ORDINAL, not the id: stable, human-readable, and meaningful in a URL
+  # someone might share. Unknown or malformed falls back to the current run
+  # rather than 404ing.
+  #
+  # Simply current_run as the default, unlike the results page: no started-run
+  # guard applies to these screens, so there is no run this can choose that the
+  # filters would then refuse.
+  def find_run
+    @run = @game.runs.find_by(:ordinal => params[:run].to_i) || @game.current_run
   end
 
   def find_team

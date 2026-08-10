@@ -1,0 +1,44 @@
+<h1><%= t("admin.entries.title", :game => @game.name) %></h1>
+
+<%# The run is named, so an operator cannot mistake which cohort they are
+    admitting to. Admission is always to the CURRENT run -- nothing else in
+    the application can address any other one. %>
+<p><strong><%= t("admin.entries.run", :ordinal => @run.ordinal) %></strong></p>
+
+<fieldset class="card">
+  <legend><%= t("admin.entries.pending") %></legend>
+  <% if @pending.empty? %>
+    <p><%= t("admin.entries.none") %></p>
+  <% else %>
+    <ul class="game-list">
+      <% @pending.each do |entry| %>
+        <li>
+          <%= entry.team&.name %>
+          <div class="game-control">
+            <%= button_to t("admin.entries.accept"),
+                          accept_admin_game_entry_path(@game, entry),
+                          :method => :post, :class => "btn" %>
+            <%= button_to t("admin.entries.reject"),
+                          reject_admin_game_entry_path(@game, entry),
+                          :method => :post, :class => "btn btn--danger" %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</fieldset>
+
+<fieldset class="card">
+  <legend><%= t("admin.entries.accepted") %></legend>
+  <% if @accepted.empty? %>
+    <p><%= t("admin.entries.none") %></p>
+  <% else %>
+    <ul class="game-list">
+      <% @accepted.each do |entry| %>
+        <li><%= entry.team&.name %></li>
+      <% end %>
+    </ul>
+  <% end %>
+</fieldset>
+
+<p><%= link_to t("admin.entries.back"), admin_games_path %></p>

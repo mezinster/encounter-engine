@@ -107,6 +107,8 @@ pl:
           move_team: "Przeniósł drużynę na inny poziom"
           reinstate_team: "Przywrócił drużynę do gry"
           reset_clock: "Zresetował odliczanie czasu na poziomie"
+          accept_entry: "Przyjął zgłoszenie drużyny"
+          reject_entry: "Odrzucił zgłoszenie drużyny"
     settings:
       title: "Ustawienia limitów"
       explanation: "Limity obowiązują dla jednego adresu IP w podanym okresie. 0 wyłącza limit."
@@ -146,6 +148,17 @@ pl:
           rejected: "Odrzucone"
           recalled: "Wycofane"
           canceled: "Anulowane"
+    entries:
+      title: "Zgłoszenia do gry „%{game}”"
+      run: "Bieg nr %{ordinal}"
+      pending: "Oczekują na decyzję"
+      accepted: "Przyjęte"
+      none: "—"
+      accept: "Przyjmij"
+      reject: "Odrzuć"
+      accepted_notice: "Drużyna przyjęta: %{team}"
+      rejected_notice: "Zgłoszenie odrzucone: %{team}"
+      back: "Do listy gier"
     games:
       index:
         title: "Wszystkie gry"
@@ -161,6 +174,7 @@ pl:
         withdrawn: "Wycofana z publikacji"
         locked: "edycja zablokowana"
         edit: "Edytuj"
+        entries_link: "Zgłoszenia (%{count})"
         withdraw: "Wycofaj"
         restore: "Opublikuj"
         unfinish: "Wznów"
@@ -545,6 +559,10 @@ pl:
       login: "Zaloguj się"
       signup: "Zarejestruj się"
   shared:
+    pager:
+      previous: "‹ Wstecz"
+      next: "Dalej ›"
+      position: "%{current} z %{total}"
     game_entry_controls:
       applied: "Zgłoszenie zostało złożone"
       recall: "Wycofaj"

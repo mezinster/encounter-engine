@@ -73,6 +73,25 @@ describe "entries scoped to a run", type: :request do
     expect(run_two.requested_teams_number).to eq(0)
   end
 
+  # The dashboard's accepted-teams card queries entries directly rather than
+  # through GameEntry.of/of_game, so a grep for those would have missed it --
+  # and an author on a second run would have seen every past cohort piled in.
+  it "shows the author only the current run's accepted teams on the dashboard" do
+    old_team = create_team(:captain => create_user)
+    GameEntry.create!(:game => game, :game_run => game.current_run,
+                      :team => old_team, :status => "accepted")
+    second_run(game)
+    new_team = create_team(:captain => create_user)
+    GameEntry.create!(:game => game, :game_run => game.current_run,
+                      :team => new_team, :status => "accepted")
+    sign_in(author)
+
+    get dashboard_path
+
+    expect(response.body).to include(new_team.name)
+    expect(response.body).not_to include(old_team.name)
+  end
+
   # The author's pending list belongs to the run being registered for.
   it "shows the author only the current run's pending entries" do
     old_team = create_team(:captain => create_user)

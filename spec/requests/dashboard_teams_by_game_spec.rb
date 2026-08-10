@@ -14,8 +14,11 @@ describe "the dashboard's accepted-teams-by-game grouping", type: :request do
     put login_path, params: { email: user.email, password: "1234" }
   end
 
+  # Admission belongs to a run, and the card is grouped by the game's current
+  # one -- an entry with no run authorises nothing and appears nowhere.
   def accept(game, team)
-    GameEntry.create!(:game => game, :team => team, :status => "accepted")
+    GameEntry.create!(:game => game, :game_run => game.current_run,
+                      :team => team, :status => "accepted")
   end
 
   # Scopes to the single fieldset that legends "games.teams.legend" -- the

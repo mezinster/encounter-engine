@@ -17,7 +17,9 @@
     <legend><%= t("quiz_imports.preview.skipped") %></legend>
     <ul class="game-list">
       <% @writer.skipped.each do |question| %>
-        <li><%= question[:text] %></li>
+        <%# simple_format, not raw interpolation: a quest task may carry
+            newlines, which ERB would collapse into one run-on line. %>
+        <li><%= simple_format(question[:text]) %></li>
       <% end %>
     </ul>
   </fieldset>
@@ -28,15 +30,21 @@
   <ul class="game-list">
     <% @writer.to_add.each do |question| %>
       <li>
-        <%= question[:text] %>
-        <ul>
-          <% question[:options].each do |option| %>
-            <li>
-              <%# A glyph, not copy: deliberately not a locale key -- it reads the same in every language, and i18n_spec flags identical ru/en values as untranslated. %><%= option[:correct] ? "✓" : "" %>
-              <%= option[:text] %>
-            </li>
-          <% end %>
-        </ul>
+        <%# simple_format, not raw interpolation: a quest task may carry
+            newlines, which ERB would collapse into one run-on line. %>
+        <%= simple_format(question[:text]) %>
+        <% if question[:mode] == :quest %>
+          <p><%= t("quiz_imports.preview.code_label") %> <strong><%= question[:code] %></strong></p>
+        <% else %>
+          <ul>
+            <% question[:options].each do |option| %>
+              <li>
+                <%# A glyph, not copy: deliberately not a locale key -- it reads the same in every language, and i18n_spec flags identical ru/en values as untranslated. %><%= option[:correct] ? "✓" : "" %>
+                <%= option[:text] %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
       </li>
     <% end %>
   </ul>

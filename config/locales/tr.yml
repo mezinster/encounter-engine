@@ -316,7 +316,7 @@ tr:
       max_team_number_label: "En fazla takım sayısı:"
       levels_legend: "Görevler:"
       add_level: "Yeni görev ekle"
-      import_questions: "Soruları liste olarak içe aktar"
+      import_questions: "Toplu seviye aktarımı"
       edit_link: "Bu oyunu düzenle"
       delete_link: "Bu oyunu sil"
       countdown_prefix: "Başlamasına kalan: "
@@ -392,9 +392,10 @@ tr:
   quiz_imports:
     created_notice: "Eklenen soru: %{added}. Atlanan (zaten var): %{skipped}"
     new:
-      title: "«%{game}» adlı oyuna soru aktarımı"
-      intro: "Soruları yapıştırın: önce soru satırı, sonra seçenekler. Doğru seçeneği yıldızla işaretleyin. İki yıldız — birden çok doğru cevabı olan soru."
-      example: "Belarus'un başkenti hangi şehirdir?\nA) Brest\nB) Grodno\nC) *Minsk"
+      title: "«%{game}» adlı oyuna seviye aktarımı"
+      intro: "Görevleri yapıştırın. Bir satır (veya arka arkaya birkaç satır) görev metnidir, ardından yanıtlar gelir. Tek bir «A) KOD» yanıtı sıradan bir kod seviyesi oluşturur. İki ve daha fazlası seçenekli bir soru oluşturur; doğru olanı yıldızla işaretleyin, iki yıldız birden çok doğru yanıt demektir."
+      example: "Kievskaya ile Çuy köşesine kadar yürüyün.\nBinanın duvarında yapım yılını veren bir levha var.\nA) 1967\n\nBelarus'un başkenti hangi şehirdir?\nA) Brest\nB) Grodno\nC) *Minsk"
+      option_line_note: "«harf) metin» biçimindeki bir satır, görevin ortasında bile her zaman yanıt olarak okunur. Görev satırı böyle başlayamaz."
       errors_heading: "Metin kabul edilmedi:"
       preview: "Nelerin ekleneceğini gör"
       back: "Oyuna dön"
@@ -403,6 +404,7 @@ tr:
       summary: "Çözümlenen soru: %{parsed}. Atlanan (zaten var): %{skipped}. Eklenecek: %{added}"
       skipped: "Atlandı — oyunda zaten var"
       will_add: "Eklenecek"
+      code_label: "kod:"
       confirm: "Soruları ekle"
       back: "Metni değiştir"
     errors:

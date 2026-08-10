@@ -295,7 +295,7 @@ pl:
       max_team_number_label: "Maksymalna liczba drużyn:"
       levels_legend: "Zadania:"
       add_level: "Dodaj nowe zadanie"
-      import_questions: "Import pytań listą"
+      import_questions: "Import poziomów listą"
       edit_link: "Edytuj tę grę"
       delete_link: "Usuń tę grę"
       countdown_prefix: "Do rozpoczęcia pozostało: "
@@ -371,9 +371,10 @@ pl:
   quiz_imports:
     created_notice: "Dodano pytań: %{added}. Pominięto (już są): %{skipped}"
     new:
-      title: "Import pytań do gry «%{game}»"
-      intro: "Wklej pytania: wiersz z pytaniem, potem warianty. Poprawny wariant oznacz gwiazdką. Dwie gwiazdki — pytanie z kilkoma poprawnymi odpowiedziami."
-      example: "Które miasto jest stolicą Białorusi?\nA) Brześć\nB) Grodno\nC) *Mińsk"
+      title: "Import poziomów do gry «%{game}»"
+      intro: "Wklej zadania. Wiersz (lub kilka wierszy z rzędu) to treść zadania, potem odpowiedzi. Jedna odpowiedź «A) KOD» tworzy zwykły poziom z kodem. Dwie lub więcej tworzą pytanie z wariantami; poprawny oznacz gwiazdką, dwie gwiazdki oznaczają kilka poprawnych."
+      example: "Dojdź do rogu Kijowskiej i Czuj.\nNa ścianie domu jest tabliczka z rokiem budowy.\nA) 1967\n\nKtóre miasto jest stolicą Białorusi?\nA) Brześć\nB) Grodno\nC) *Mińsk"
+      option_line_note: "Wiersz w postaci «litera) tekst» zawsze jest czytany jako odpowiedź, nawet w środku zadania. Wiersz treści nie może się tak zaczynać."
       errors_heading: "Tekst nie został przyjęty:"
       preview: "Zobacz, co zostanie dodane"
       back: "Wróć do gry"
@@ -382,6 +383,7 @@ pl:
       summary: "Rozpoznano pytań: %{parsed}. Pominięto (już są): %{skipped}. Zostanie dodanych: %{added}"
       skipped: "Pominięte — już są w grze"
       will_add: "Zostaną dodane"
+      code_label: "kod:"
       confirm: "Dodaj pytania"
       back: "Zmień tekst"
     errors:

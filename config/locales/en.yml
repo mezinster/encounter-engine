@@ -271,7 +271,7 @@ en:
       max_team_number_label: "Maximum number of teams:"
       levels_legend: "Tasks:"
       add_level: "Add a new task"
-      import_questions: "Import a list of questions"
+      import_questions: "Import levels in bulk"
       edit_link: "Edit this game"
       delete_link: "Delete this game"
       countdown_prefix: "Time until start: "
@@ -347,9 +347,10 @@ en:
   quiz_imports:
     created_notice: "Questions added: %{added}. Skipped (already present): %{skipped}"
     new:
-      title: "Import questions into “%{game}”"
-      intro: "Paste your questions: a question line, then its options. Mark the correct option with an asterisk. Two asterisks means a question with several correct answers."
-      example: "Which city is the capital of Belarus?\nA) Brest\nB) Grodno\nC) *Minsk"
+      title: "Import levels into “%{game}”"
+      intro: "Paste your tasks. One line (or several in a row) is the task text, then the answers. A single answer “A) CODE” makes an ordinary code level. Two or more make a multiple-choice question; mark the correct one with an asterisk, two asterisks for several correct."
+      example: "Walk to the corner of Kievskaya and Chui.\nThere is a plaque on the wall giving the year it was built.\nA) 1967\n\nWhich city is the capital of Belarus?\nA) Brest\nB) Grodno\nC) *Minsk"
+      option_line_note: "A line in the form “letter) text” is always read as an answer, even in the middle of a task. A task line must not start that way."
       errors_heading: "The text was not accepted:"
       preview: "See what would be added"
       back: "Back to the game"
@@ -358,6 +359,7 @@ en:
       summary: "Questions parsed: %{parsed}. Skipped (already present): %{skipped}. To be added: %{added}"
       skipped: "Skipped — already in the game"
       will_add: "Will be added"
+      code_label: "code:"
       confirm: "Add these questions"
       back: "Edit the text"
     errors:

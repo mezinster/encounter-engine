@@ -5,6 +5,13 @@
 
 <pre class="card"><%= t("quiz_imports.new.example") %></pre>
 
+<%# OPTION_LINE matches any single letter followed by ")", so a task whose
+    second line begins "б) ..." is read as the code rather than as prose. The
+    hazard predates multi-line tasks; they just make it easier to reach. It is
+    documented rather than escaped, because an escape character would be new
+    syntax for a case no author has hit yet. %>
+<p><%= t("quiz_imports.new.option_line_note") %></p>
+
 <% if @parsed && !@parsed.valid? %>
   <div class="card">
     <strong><%= t("quiz_imports.new.errors_heading") %></strong>

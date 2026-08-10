@@ -140,16 +140,15 @@ module FixturesHelper
   # author_finished_at is nil and starts_at is past), so an ordinary save would
   # raise on exactly the states these specs need to arrange.
   #
-  # It writes BOTH the games column and the run for the duration of phase 1's
-  # expand step, so this call site is correct both before and after the
-  # delegation lands. The games write is deleted in the final task, once the run
-  # is the only reader.
+  # Writes the RUN only. It briefly wrote the games columns too, so that its 58
+  # call sites were correct on both sides of the delegation switch; that write
+  # is gone, and the suite passing without it is the proof that nothing reads
+  # those columns any more -- which is what deploy 2 needs before it can drop
+  # them.
   #
   # Only the EIGHT MOVING COLUMNS belong here. withdrawn_at and
   # editing_locked_at stay on games -- keep using update_column for those.
   def set_game_schedule!(game, attrs)
-    attrs.each { |column, value| game.update_column(column, value) }
-
     run = game.runs.first || game.runs.create!(:ordinal => 1)
     attrs.each { |column, value| run.update_column(column, value) }
 

@@ -55,6 +55,27 @@ class QuizImport
     end
 
     def create_level(question, number)
+      question[:mode] == :quest ? create_quest_level(question, number) : create_quiz_level(question, number)
+    end
+
+    # The standard encounter shape. No options at all, which is what makes
+    # Question#quiz? false and therefore routes the level through
+    # Level#find_question_by_answer -- the same path a hand-made code level
+    # takes. Nothing on the play side needed changing for this.
+    def create_quest_level(question, number)
+      level = game.levels.create!(
+        :name => "Уровень #{number}",
+        :text => question[:text],
+        :any_code_passes => true,
+        :wrong_answer_penalty => 0
+      )
+
+      level.questions.create!.answers.create!(:value => question[:code])
+
+      level
+    end
+
+    def create_quiz_level(question, number)
       level = game.levels.create!(
         :name => "Вопрос #{number}",
         :text => question[:text],

@@ -993,9 +993,43 @@ export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
 bin/rails runner -e test 'g = Game.create!(:author => User.create!(:nickname => "dup1", :email => "dup1@e.invalid", :password => "1234", :password_confirmation => "1234"), :name => "dupgame", :description => "d", :starts_at => "2099-01-01 00:00", :max_team_number => 5); t = Team.create!(:name => "dupteam"); l = Level.create!(:game => g, :name => "L", :text => "t", :correct_answer => "c"); r = g.current_run; 2.times { GamePassing.new(:game => g, :game_run => r, :team => t, :current_level => l).save!(:validate => false) rescue nil }; dups = GamePassing.where.not(:game_run_id => nil).group(:team_id, :game_run_id).having("COUNT(*) > 1").count; puts "duplicate pairs found: #{dups.size}"; GamePassing.delete_all; Log.delete_all; Level.delete_all; Game.delete_all; Team.delete_all; User.delete_all'
 ```
 
-Expected: the insert is refused by the index, so this prints `duplicate pairs found: 0` — **which is itself the proof the index works**. If it prints `1`, the index was not added and the migration silently skipped; investigate before going further.
+That version only proves the **index** refuses duplicates. To prove the **guard** — the duplicate check that decides whether the index is added at all — the index has to be absent and duplicates present. Do it inside a transaction that rolls back, so the database is left exactly as it was:
 
-**Clean up after this**: the command above deletes the rows it created, because `rails runner` writes outside RSpec's transactions and a leftover row causes failures in unrelated specs later.
+```ruby
+# tmp/guard_probe.rb, run with: RAILS_ENV=test bin/rails runner tmp/guard_probe.rb
+INDEX = "index_game_passings_on_team_id_and_game_run_id".freeze
+
+def duplicate_pairs
+  GamePassing.where.not(:game_run_id => nil)
+             .group(:team_id, :game_run_id).having("COUNT(*) > 1").count
+end
+
+conn = ActiveRecord::Base.connection
+
+ActiveRecord::Base.transaction do
+  conn.remove_index :game_passings, :name => INDEX
+
+  user  = User.create!(:nickname => "guard#{rand(99999)}", :email => "guard#{rand(99999)}@e.invalid",
+                       :password => "1234", :password_confirmation => "1234")
+  game  = Game.create!(:author => user, :name => "guard#{rand(99999)}", :description => "d",
+                       :starts_at => "2099-01-01 00:00", :max_team_number => 5)
+  level = Level.create!(:game => game, :name => "L", :text => "t", :correct_answer => "c")
+  team  = Team.create!(:name => "guardteam#{rand(99999)}")
+
+  2.times { GamePassing.create!(:game => game, :game_run => game.current_run,
+                                :team => team, :current_level => level) }
+
+  puts "duplicate pairs the guard sees: #{duplicate_pairs.size}"
+  puts "guard would SKIP the index: #{duplicate_pairs.any?}"
+  raise ActiveRecord::Rollback
+end
+
+puts "leftover rows -- passings=#{GamePassing.count} games=#{Game.count}"
+```
+
+Expected: `duplicate pairs the guard sees: 1`, `guard would SKIP the index: true`, and `leftover rows -- passings=0 games=0`. Delete `tmp/guard_probe.rb` afterwards.
+
+**The rollback is not optional.** `rails runner` writes outside RSpec's transactions, and a leftover row breaks unrelated specs later — which happened twice during phase 1.
 
 - [ ] **Step 6: Run both full suites**
 

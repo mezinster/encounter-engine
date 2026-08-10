@@ -4,12 +4,15 @@ class GamesController < ApplicationController
   include AdminAudit
 
   before_action :require_authentication!, except: [:index, :show]
-  before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :unfinish, :lock, :unlock]
+  before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :unfinish, :lock, :unlock, :hand_over]
   before_action :find_team, only: [:show]
   before_action :ensure_author_if_game_is_draft, only: [:show]
   before_action :ensure_author_if_no_start_time, only: [:show]
   before_action :ensure_author_if_game_is_withdrawn, only: [:show]
-  before_action :ensure_author, only: [:edit, :update, :delete, :end_game, :start_test, :finish_test]
+  # hand_over is deliberately NOT on ensure_editing_not_locked below: that
+  # filter answers with 401, and the lock refusal here is a sentence the author
+  # can act on. See the action.
+  before_action :ensure_author, only: [:edit, :update, :delete, :end_game, :start_test, :finish_test, :hand_over]
   before_action :ensure_editing_not_locked, only: [:edit, :update, :delete, :end_game, :start_test, :finish_test]
   before_action :ensure_game_was_not_started, only: [:edit, :update]
   before_action :require_superadmin!, only: [:withdraw, :restore, :unfinish, :lock, :unlock]
@@ -147,6 +150,50 @@ class GamesController < ApplicationController
     @game.unlock_editing!
     record_admin_action("unlock", @game)
     redirect_to admin_games_path, :notice => t("games.unlocked_notice")
+  end
+
+  # Handing the game to another player. Mirrors TeamsController#hand_over,
+  # including its asymmetry.
+  def hand_over
+    # These two refusals are the AUTHOR's, not the operator's. A superadmin has
+    # no lifecycle refusals at all -- exactly as ensure_editing_not_locked
+    # already exempts them everywhere else -- which is why this is an in-action
+    # check and not that filter: the filter answers with 401, and an author
+    # meeting a rule deserves a sentence explaining it.
+    unless current_user.superadmin?
+      if @game.editing_locked?
+        redirect_to games_path, :alert => t("games.hand_over.locked") and return
+      end
+
+      if @game.started? && !@game.author_finished?
+        redirect_to games_path, :alert => t("games.hand_over.running") and return
+      end
+    end
+
+    successor = User.find_by(:nickname => params[:nickname].to_s.strip)
+
+    # Unlike Team#set_captain! there is no members association to scope the
+    # lookup through -- the target is any user on the instance -- so exactness
+    # IS the guard. Not-found and self-transfer share one message so the field
+    # cannot be used to discover which nicknames exist.
+    if successor.nil? || successor.id == current_user.id
+      redirect_to games_path, :alert => t("games.hand_over.unknown_user") and return
+    end
+
+    # Both read BEFORE the write: afterwards @game.author is the successor, so
+    # neither the audit details nor the operator test would say what happened.
+    operator = acting_as_operator?(@game)
+    previous = @game.author&.nickname
+
+    @game.transfer_authorship_to!(successor)
+
+    record_admin_action("hand_over_authorship", @game,
+                        "#{previous} -> #{successor.nickname}") if operator
+
+    # The games LIST, not the game. A draft sits behind
+    # ensure_author_if_game_is_draft, so redirecting to a game the caller has
+    # just stopped authoring would answer a successful transfer with 401.
+    redirect_to games_path, :notice => t("games.hand_over.done", :nickname => successor.nickname)
   end
 
   # Same treatment as start_test. This direction sets is_draft back to true so

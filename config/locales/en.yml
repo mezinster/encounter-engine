@@ -58,6 +58,7 @@ en:
           withdraw: "Withdrew"
           restore: "Published"
           unfinish: "Resumed the game"
+          hand_over_authorship: "Handed over the game’s authorship"
           set_captain: "Set the team captain"
           delete_team: "Deleted a team"
           move_user: "Moved a player to another team"
@@ -206,6 +207,11 @@ en:
     unlocked_notice: "Game editing unlocked"
     not_deletable: "This game cannot be deleted because teams have played it. Withdraw it instead."
     not_endable_in_test: "This game cannot be ended: it is in test mode. Use “Finish testing” to stop the test."
+    hand_over:
+      done: "Authorship transferred to %{nickname}"
+      unknown_user: "No player with that nickname. Check the spelling."
+      locked: "Authorship cannot be transferred while the game’s editing is frozen"
+      running: "Authorship cannot be transferred while the game is running"
     translations:
       incomplete: "This game declares languages it is not fully translated into: %{count} fields are missing"
       game_field: "Game — %{field}"

@@ -103,6 +103,7 @@ tr:
           withdraw: "Yayından kaldırdı"
           restore: "Yayımladı"
           unfinish: "Oyunu yeniden başlattı"
+          hand_over_authorship: "Oyunun yazarlığını devretti"
           set_captain: "Takım kaptanı atadı"
           delete_team: "Takımı sildi"
           move_user: "Oyuncuyu başka takıma taşıdı"
@@ -251,6 +252,11 @@ tr:
     unlocked_notice: "Oyunun düzenlenmesi çözüldü"
     not_deletable: "Oyun silinemez: daha önce oynandı. Yayından kaldırın."
     not_endable_in_test: "Oyun bitirilemez: test modunda. Testi durdurmak için «Testi bitir» seçeneğini kullanın."
+    hand_over:
+      done: "«%{nickname}» adlı oyuncuya yazarlık devredildi"
+      unknown_user: "Bu takma ada sahip bir oyuncu bulunamadı. Yazımı kontrol edin."
+      locked: "Oyunun düzenlenmesi donmuşken yazarlık devredilemez"
+      running: "Oyun sürerken yazarlık devredilemez"
     translations:
       incomplete: "Oyun, çevirisi tamamlanmamış diller bildiriyor: %{count} alan eksik"
       game_field: "Oyun — %{field}"

@@ -82,6 +82,7 @@ pl:
           withdraw: "Wycofał z publikacji"
           restore: "Opublikował"
           unfinish: "Wznowił grę"
+          hand_over_authorship: "Przekazał autorstwo gry"
           set_captain: "Wyznaczył kapitana drużyny"
           delete_team: "Usunął drużynę"
           move_user: "Przeniósł gracza do innej drużyny"
@@ -230,6 +231,11 @@ pl:
     unlocked_notice: "Edycja gry została odblokowana"
     not_deletable: "Gry nie można usunąć: już w nią grano. Wycofaj ją z publikacji."
     not_endable_in_test: "Gry nie można zakończyć: jest w trybie testowania. Aby zatrzymać test, użyj «Zakończ testowanie»."
+    hand_over:
+      done: "Autorstwo przekazane: %{nickname}"
+      unknown_user: "Nie znaleziono gracza o takim pseudonimie. Sprawdź pisownię."
+      locked: "Nie można przekazać autorstwa, dopóki edycja gry jest zamrożona"
+      running: "Nie można przekazać autorstwa, gdy gra trwa"
     translations:
       incomplete: "Gra deklaruje języki, na które przetłumaczono nie wszystko: brakuje %{count} pól"
       game_field: "Gra — %{field}"

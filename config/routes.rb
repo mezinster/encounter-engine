@@ -112,6 +112,10 @@ Rails.application.routes.draw do
       post :unfinish
       post :lock
       post :unlock
+
+      # Handing the game to another player. POST, not GET: this app has no
+      # Turbo and no rails-ujs, so the view drives it with a real form.
+      post :hand_over
     end
 
     # Singular: a game has one import screen, not a collection of imports.

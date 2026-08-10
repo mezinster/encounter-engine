@@ -32,6 +32,7 @@ class QuizImport
 
   def parse(text)
     current = nil
+    previous_was_option = false
 
     text.each_line.with_index(1) do |raw, number|
       line = raw.strip
@@ -46,9 +47,23 @@ class QuizImport
         option_text = match[:text].strip
         current[:options] << { :text => option_text.sub(/\A\*\s*/, ""),
                                :correct => option_text.start_with?("*") }
+        previous_was_option = true
       else
-        current = { :text => line, :options => [], :line => number }
-        @questions << current
+        # A text line CONTINUES the block it is in unless an option line has
+        # already been seen for that block. That is what lets a quest task run
+        # to several lines, and it is also why every paste written before this
+        # change parses identically: those have one-line questions, so every
+        # text line in them follows an option line and still starts a block.
+        #
+        # Blank lines are skipped above and therefore do not separate blocks
+        # either -- a paste with spaced-out paragraphs must not fragment.
+        if current.nil? || previous_was_option
+          current = { :text => line, :options => [], :line => number }
+          @questions << current
+        else
+          current[:text] = "#{current[:text]}\n#{line}"
+        end
+        previous_was_option = false
       end
     end
 

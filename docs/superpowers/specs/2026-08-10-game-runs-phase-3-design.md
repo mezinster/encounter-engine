@@ -96,9 +96,20 @@ Audited as `open_run` with the new ordinal in `details`, labelled in all seven l
 view falls back to the raw action name on a missing key, so the label is asserted by a spec that
 checks the identifier is **absent** from the log — the same guard phases past have used.
 
-**`GameRun` gains its own validations here.** Phase 1 (D4) deliberately left the four schedule
-validations on `Game`, reading through the delegation, and recorded that a run first becomes
-creatable without a game form in front of it in phase 3. That is now.
+**`GameRun` gains its own validations here, in an `:open` validation context.** Phase 1 (D4)
+deliberately left the four schedule validations on `Game` and recorded that a run first becomes
+creatable without a game form in front of it in phase 3. That is now — but the rules belong to the
+**act of opening** a run, not to a run's existence, and the distinction is real twice over:
+
+- `Game` declares `has_many :runs, autosave: true`, so every `game.save` re-validates its runs. An
+  unconditional check would raise on `finish_game!`, which saves a game whose `starts_at` is long
+  past. This is the reason phase 1 left them on `Game`.
+- `on: :create` is still too broad. **A run with a start date in the past is a legitimate record** —
+  it is what every finished run is, and what a spec modelling an earlier cohort has to be able to
+  build.
+
+Only `Game#open_run!` saves in the `:open` context, so only an operator opening a run is held to
+these.
 
 ## 4. Entries become run-scoped
 

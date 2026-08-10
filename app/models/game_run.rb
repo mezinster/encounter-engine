@@ -33,6 +33,26 @@ class GameRun < ApplicationRecord
                       numericality: { greater_than: 0 },
                       uniqueness: { scope: :game_id }
 
+  # The :open context, not :create, and not unconditional. These are the rules
+  # for the ACT of opening a run, not for a run's existence -- which is a
+  # genuine distinction here, twice over:
+  #
+  #   * Game declares `has_many :runs, autosave: true`, so every `game.save`
+  #     re-validates its runs. An unconditional check would raise on
+  #     finish_game!, which saves a game whose starts_at is long past. Phase 1
+  #     (D4) left these on Game for exactly this reason.
+  #   * on: :create is still too broad. A run whose start date is in the PAST
+  #     is a legitimate record -- it is what every finished run is, and what a
+  #     spec modelling an earlier cohort has to be able to build.
+  #
+  # Only Game#open_run! saves in this context, so only an operator opening a
+  # run is held to them.
+  validates :max_team_number, presence: true,
+                              numericality: { greater_than: 0, less_than: 10000 },
+                              on: :open
+  validate :starts_in_the_future, on: :open
+  validate :deadline_is_before_start, on: :open
+
   has_many :passings, :class_name => "GamePassing", :foreign_key => "game_run_id"
 
   # Replaces GamePassing.of(team, game). A team has at most one passing per
@@ -67,5 +87,26 @@ class GameRun < ApplicationRecord
       other.effective_finished_at < mine
     end
     earlier + 1
+  end
+
+  private
+
+  # The messages are looked up from GAME's existing keys rather than new
+  # game_run ones: the sentences are identical, they are already translated in
+  # all seven locales, and duplicating them would give two strings to keep in
+  # step.
+  def starts_in_the_future
+    return if starts_at.nil? || starts_at > Time.now
+
+    errors.add(:starts_at,
+               I18n.t("activerecord.errors.models.game.attributes.starts_at.in_the_past"))
+  end
+
+  def deadline_is_before_start
+    return if registration_deadline.nil? || starts_at.nil?
+    return if registration_deadline <= starts_at
+
+    errors.add(:registration_deadline,
+               I18n.t("activerecord.errors.models.game.attributes.registration_deadline.after_game_start"))
   end
 end

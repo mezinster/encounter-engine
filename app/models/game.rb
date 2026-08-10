@@ -249,6 +249,24 @@ class Game < ApplicationRecord
     user
   end
 
+  # The single writer that creates a run, mirroring transfer_authorship_to!
+  # above. Nothing else builds one except Game#current_run's autobuild, which
+  # only ever produces the first.
+  #
+  # Deliberately does no refusing: whether this game is ALLOWED a new run --
+  # its current one finished, at least one level -- is the caller's question,
+  # and Admin::GamesController#open_run answers it before anything changes, the
+  # shape every administrative action in this codebase uses.
+  # save!(context: :open) rather than create!: GameRun's schedule rules live in
+  # the :open context, so they hold an operator opening a run to a future start
+  # date and a real team cap, without ever firing on a run that merely exists
+  # with a past date -- which is what every finished run is.
+  def open_run!(attrs)
+    run = runs.build(attrs.merge(:ordinal => runs.reload.maximum(:ordinal).to_i + 1))
+    run.save!(:context => :open)
+    run
+  end
+
   def lock_editing!
     update_column(:editing_locked_at, Time.now)
   end

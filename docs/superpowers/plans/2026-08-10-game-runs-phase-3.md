@@ -19,7 +19,7 @@
 - **A single-run game must render byte-identically to today.** The run switcher emits nothing at all when `game.runs.size == 1`.
 - **Every new user-facing string needs a key in all seven locale files** (`ru,en,uk,ka,tr,be,pl`). `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity. Turkish never lets a case suffix land on an interpolated value.
 - **New audit actions need a label** under `admin.audit.index.action.*` in all seven files. The audit view falls back to the raw identifier, so a forgotten label fails nowhere — assert the identifier is **absent** from the log.
-- **`GameRun`'s new validations are `on: :create` only.** `Game` has `autosave: true` on `:runs`, and `finish_game!` saves a game whose `starts_at` is long past; an unconditional validation would raise on exactly those games. See Task 1.
+- **`GameRun`'s new validations use an `:open` validation context, not `on: :create`.** `Game` has `autosave: true` on `:runs`, and `finish_game!` saves a game whose `starts_at` is long past; an unconditional validation would raise on exactly those games. See Task 1.
 - **Do not scope logs, the live channel or the author's passings list.** They stay on the current run (spec §9).
 - **Hash-rocket style** (`:key => value`), comments in English, user-facing strings in Russian.
 - Run `bin/rails db:test:prepare` after the migration task. Commit after every task.
@@ -34,7 +34,7 @@
 - Test: `spec/models/game/open_run_spec.rb` (create)
 
 **Interfaces:**
-- Produces: `Game#open_run!(attrs)` → the new `GameRun` (ordinal = current max + 1). Raises nothing; the caller does the refusing. `GameRun` validates `starts_at`, `registration_deadline` and `max_team_number` **on create only**. Tasks 3 consumes `open_run!`.
+- Produces: `Game#open_run!(attrs)` → the new `GameRun` (ordinal = current max + 1); saves in the `:open` context, so it raises `ActiveRecord::RecordInvalid` on a bad schedule but does no *policy* refusing — that is the caller's job. `GameRun` validates `starts_at`, `registration_deadline` and `max_team_number` **in the `:open` context only**. Task 3 consumes `open_run!`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -91,25 +91,35 @@ RSpec.describe Game, "#open_run!" do
     expect(first.reload.attributes).to eq(before)
   end
 
-  describe "validation, on create only" do
+  # Validated in the :open context, so these hold an operator opening a run
+  # without ever firing on a run that merely exists with a past date -- which
+  # is what every finished run is, and what a spec modelling an earlier cohort
+  # has to be able to build.
+  describe "validation, when opening" do
+    it "allows a run with a past start date to exist outside that context" do
+      run = game.runs.build(valid_attrs(:starts_at => 1.hour.ago).merge(:ordinal => 2))
+
+      expect(run).to be_valid
+    end
+
     it "refuses a start time in the past" do
       run = game.runs.build(valid_attrs(:starts_at => 1.hour.ago).merge(:ordinal => 2))
 
-      expect(run).not_to be_valid
+      expect(run).not_to be_valid(:open)
       expect(run.errors[:starts_at]).not_to be_empty
     end
 
     it "refuses a registration deadline after the start" do
       run = game.runs.build(valid_attrs(:registration_deadline => 3.years.from_now).merge(:ordinal => 2))
 
-      expect(run).not_to be_valid
+      expect(run).not_to be_valid(:open)
       expect(run.errors[:registration_deadline]).not_to be_empty
     end
 
     it "refuses a missing team cap" do
       run = game.runs.build(valid_attrs(:max_team_number => nil).merge(:ordinal => 2))
 
-      expect(run).not_to be_valid
+      expect(run).not_to be_valid(:open)
       expect(run.errors[:max_team_number]).not_to be_empty
     end
 
@@ -149,21 +159,25 @@ Expected: FAIL with `NoMethodError: undefined method 'open_run!'`, and the valid
 In `app/models/game_run.rb`, after the existing `validates :ordinal` block:
 
 ```ruby
-  # on: :create, and this is not a style preference. Game declares
-  # `has_many :runs, autosave: true`, so every `game.save` re-validates its
-  # runs -- and finish_game! saves a game whose starts_at is long past. An
-  # unconditional check here would raise on exactly the games that method
-  # exists for.
+  # The :open context, not :create, and not unconditional. These are the rules
+  # for the ACT of opening a run, not for a run's existence -- which is a
+  # genuine distinction here, twice over:
   #
-  # Phase 1 (D4) left these on Game for the same reason and recorded that a run
-  # first becomes creatable without a game form in front of it in phase 3. It
-  # is only the CREATE of a new run that needs checking; an existing run's
-  # schedule ages past naturally and must stay saveable.
+  #   * Game declares `has_many :runs, autosave: true`, so every `game.save`
+  #     re-validates its runs. An unconditional check would raise on
+  #     finish_game!, which saves a game whose starts_at is long past. Phase 1
+  #     (D4) left these on Game for exactly this reason.
+  #   * on: :create is still too broad. A run whose start date is in the PAST
+  #     is a legitimate record -- it is what every finished run is, and what a
+  #     spec modelling an earlier cohort has to be able to build.
+  #
+  # Only Game#open_run! saves in this context, so only an operator opening a
+  # run is held to them.
   validates :max_team_number, presence: true,
                               numericality: { greater_than: 0, less_than: 10000 },
-                              on: :create
-  validate :starts_in_the_future, on: :create
-  validate :deadline_is_before_start, on: :create
+                              on: :open
+  validate :starts_in_the_future, on: :open
+  validate :deadline_is_before_start, on: :open
 
   private
 
@@ -197,8 +211,14 @@ In `app/models/game.rb`, immediately after `transfer_authorship_to!`:
   # its current one finished, at least one level -- is the caller's question,
   # and Admin::GamesController#open_run answers it before anything changes, the
   # shape every administrative action in this codebase uses.
+  # save!(context: :open) rather than create!: GameRun's schedule rules live in
+  # the :open context, so they hold an operator opening a run to a future start
+  # date and a real team cap, without ever firing on a run that merely exists
+  # with a past date -- which is what every finished run is.
   def open_run!(attrs)
-    runs.create!(attrs.merge(:ordinal => runs.reload.maximum(:ordinal).to_i + 1))
+    run = runs.build(attrs.merge(:ordinal => runs.reload.maximum(:ordinal).to_i + 1))
+    run.save!(:context => :open)
+    run
   end
 ```
 
@@ -211,9 +231,9 @@ bundle exec rspec
 bundle exec cucumber
 ```
 
-Expected: the new file PASSes 10 examples; RSpec 0 failures; Cucumber **232 / 2342**.
+Expected: the new file PASSes 11 examples; RSpec 0 failures; Cucumber **232 / 2342**.
 
-If anything else in the suite fails here, it is almost certainly a game whose save now re-validates a past-dated run — meaning an `on: :create` was missed.
+If anything else in the suite fails here it is almost certainly a run being *created* with a past start date or no cap — which is legitimate, and the reason these rules live in the `:open` context rather than `on: :create`. `create_next_run` (the phase 2 fixture) copies its game's schedule, so on a started game it builds exactly such a run.
 
 - [ ] **Step 6: Commit**
 
@@ -225,11 +245,12 @@ open_run! is the single writer that creates one, mirroring
 transfer_authorship_to!, and deliberately does no refusing -- whether a
 game may have another run is the caller's question.
 
-GameRun validates its schedule on: :create only. Game declares
+GameRun validates its schedule in an :open context. Game declares
 has_many :runs, autosave: true, so an unconditional validation would
 re-check an existing run on every game.save -- and finish_game! saves a
 game whose starts_at is long past, which is exactly why phase 1 left
-these on Game."
+these on Game. on: :create is still too broad: a run with a past start
+date is a legitimate record, being what every finished run is."
 ```
 
 ---

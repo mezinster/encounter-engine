@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_10_180000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_10_200000) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -97,19 +97,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_180000) do
     t.integer "author_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.datetime "starts_at", precision: nil
     t.boolean "is_draft", default: false, null: false
-    t.integer "max_team_number"
-    t.integer "requested_teams_number", default: 0
-    t.datetime "registration_deadline", precision: nil
-    t.datetime "author_finished_at", precision: nil
-    t.boolean "is_testing", default: false, null: false
-    t.datetime "test_date", precision: nil
     t.string "primary_locale", default: "ru", null: false
     t.string "available_locales", default: "ru", null: false
     t.datetime "editing_locked_at"
     t.datetime "withdrawn_at"
-    t.datetime "paused_at"
   end
 
   create_table "hints", force: :cascade do |t|

@@ -386,7 +386,8 @@ pl:
       back: "Zmień tekst"
     errors:
       option_before_question: "wiersz %{line}: warianty występują przed treścią pytania"
-      too_few_options: "wiersz %{line}: pytanie ma mniej niż dwa warianty"
+      no_answer_line: "wiersz %{line}: zadanie nie ma odpowiedzi — dodaj wiersz w postaci „A) KOD”"
+      blank_code: "wiersz %{line}: kod jest pusty"
       no_correct_option: "wiersz %{line}: nie oznaczono poprawnego wariantu (gwiazdką)"
       empty: "Tekst jest pusty — nie ma czego importować"
   questions:

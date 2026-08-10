@@ -407,7 +407,8 @@ tr:
       back: "Metni değiştir"
     errors:
       option_before_question: "satır %{line}: seçenekler soru metninden önce geliyor"
-      too_few_options: "satır %{line}: sorunun ikiden az seçeneği var"
+      no_answer_line: "satır %{line}: görevin yanıtı yok — “A) KOD” biçiminde bir satır ekleyin"
+      blank_code: "satır %{line}: kod boş"
       no_correct_option: "satır %{line}: doğru seçenek işaretlenmemiş (yıldızla)"
       empty: "Metin boş — içe aktarılacak bir şey yok"
   questions:

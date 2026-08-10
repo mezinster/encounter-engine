@@ -67,6 +67,7 @@ class QuizImport
       end
     end
 
+    assign_modes
     validate_questions
     add_error(1, :empty) if @questions.empty? && @errors.empty?
 
@@ -75,13 +76,36 @@ class QuizImport
     @questions.each { |question| question.delete(:line) }
   end
 
+  # One option line is a code, two or more is a choice. Derived here rather
+  # than in the writer so the whole of the format's surface stays testable
+  # without fixtures.
+  #
+  # A block with NO options is labelled :quiz and rejected a moment later by
+  # validate_questions. The label is never read, because an invalid paste never
+  # reaches the writer.
+  def assign_modes
+    @questions.each do |question|
+      question[:mode] = question[:options].size == 1 ? :quest : :quiz
+      question[:code] = question[:options].first[:text] if question[:mode] == :quest
+    end
+  end
+
   # Every bad question is reported, not just the first. An author fixing one
   # error per round-trip is why bulk import stops being faster than adding
   # levels one at a time.
   def validate_questions
     @questions.each do |question|
-      add_error(question[:line], :too_few_options) if question[:options].size < 2
-      add_error(question[:line], :no_correct_option) if question[:options].none? { |o| o[:correct] }
+      if question[:options].empty?
+        add_error(question[:line], :no_answer_line)
+      elsif question[:mode] == :quest
+        # A) * parses as an option whose text is "*" and strips to nothing.
+        # Caught here rather than at Answer's presence validation, which would
+        # raise RecordInvalid inside the import transaction -- a 500 where the
+        # author should have got a line number.
+        add_error(question[:line], :blank_code) if question[:code].to_s.strip.empty?
+      elsif question[:options].none? { |option| option[:correct] }
+        add_error(question[:line], :no_correct_option)
+      end
     end
   end
 

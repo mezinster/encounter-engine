@@ -362,7 +362,8 @@ en:
       back: "Edit the text"
     errors:
       option_before_question: "line %{line}: options appear before any question text"
-      too_few_options: "line %{line}: the question has fewer than two options"
+      no_answer_line: "line %{line}: the task has no answer — add a line in the form “A) CODE”"
+      blank_code: "line %{line}: the code is empty"
       no_correct_option: "line %{line}: no correct option is marked with an asterisk"
       empty: "The text is empty — there is nothing to import"
   questions:

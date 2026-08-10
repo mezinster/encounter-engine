@@ -38,15 +38,19 @@ jobs:
     # ci.yml and images.yml stay on major tags on purpose. They hold no secrets,
     # publish nothing, and the churn of SHA bumps there would buy nothing.
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
+      - name: Install Ruby and gems
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
         with:
           bundler-cache: true
 
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -60,7 +64,8 @@ jobs:
           push: true
           tags: ghcr.io/mezinster/encounter-engine-postgres:latest
 
-      - uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
+      - name: Load the deploy SSH key
+        uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -100,6 +105,15 @@ jobs:
           RUNNER_IP=$(curl -fsS --max-time 10 https://api.ipify.org || curl -fsS --max-time 10 https://ifconfig.me)
           if [ -z "$RUNNER_IP" ]; then echo "could not determine runner IP"; exit 1; fi
           echo "opening 22 for ${RUNNER_IP}/32"
+          # Handed to the summary step at the end of the job. Written before the
+          # retry loop so a failure to create the rule still reports which
+          # address we were trying to open.
+          #
+          # NOT exported as RUNNER_IP: the GITHUB_ and RUNNER_ prefixes are
+          # reserved for Actions' own use and a $GITHUB_ENV line claiming one is
+          # discarded, silently -- the summary step would just render an empty
+          # cell. The local shell variable above can keep the obvious name.
+          echo "JIT_SOURCE_IP=${RUNNER_IP}" >> "$GITHUB_ENV"
           # Retried because the Azure CLI itself is flaky here, not because the
           # command is: under Python 3.14 azure.cli.core loads command modules
           # across threads, and that concurrent import path deadlocks on
@@ -166,6 +180,68 @@ jobs:
           if [ "$cleaned" != "yes" ]; then
             echo "::error::Failed to remove JIT rule gha-jit-${{ github.run_id }} from webNSG after 5 attempts. Port 22 may still be open to this runner's address. Remove it by hand."
           fi
-          echo "remaining inbound rules:"
+          # The ::error:: above is easy to miss on an otherwise-green run, so the
+          # same fact is repeated in the job summary. See "Write the run summary".
+          echo "NSG_CLEANED=${cleaned}" >> "$GITHUB_ENV"
+          echo "::group::Remaining inbound rules on webNSG"
           az network nsg rule list --resource-group mezineu --nsg-name webNSG \
             --query "[].{name:name,priority:priority,ports:destinationPortRange}" -o table 2>/dev/null || true
+          echo "::endgroup::"
+
+      # The run's Summary tab is empty on every deploy today, so answering "what
+      # did run #40 actually do" means opening the job and reading three
+      # separate step logs. This fills it in: which subcommand, against which
+      # commit and host, from which address, and whether the JIT firewall rule
+      # was removed again.
+      #
+      # `always()` for the same reason `Close SSH again` has it -- a failed
+      # deploy is precisely when you want the summary, and it is the run where
+      # the JIT-rule row matters most.
+      - name: Write the run summary
+        if: always()
+        env:
+          # Passed through `env:` rather than interpolated into the script:
+          # `${{ }}` inside `run:` is substituted before bash sees the line, so
+          # a value containing shell metacharacters would execute. `command` is
+          # a `choice` input and GitHub validates it against the options list,
+          # so this one is not actually attacker-controlled -- but the habit is
+          # what keeps the next added field safe.
+          KAMAL_COMMAND: ${{ inputs.command }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          # Read the target out of config/deploy.yml rather than writing the
+          # address a fourth time (it is already there twice, plus the host-key
+          # pin above). Falls back rather than failing: this step must never be
+          # the thing that turns a good deploy red.
+          deploy_host=$(ruby -ryaml -e 'puts YAML.load_file("config/deploy.yml")["servers"]["web"].first' 2>/dev/null || echo "unknown")
+
+          case "${NSG_CLEANED:-}" in
+            yes) jit_rule="✅ removed" ;;
+            no)  jit_rule="❌ **NOT removed — port 22 may still be open to the address above. Delete \`gha-jit-${GITHUB_RUN_ID}\` from webNSG by hand.**" ;;
+            *)   jit_rule="➖ never created (the job stopped before opening it)" ;;
+          esac
+
+          if [ -n "${JIT_SOURCE_IP:-}" ]; then
+            opened_for="\`${JIT_SOURCE_IP}/32\`"
+          else
+            opened_for="— (runner address never determined)"
+          fi
+
+          case "$JOB_STATUS" in
+            success)   result="✅ success" ;;
+            failure)   result="❌ failure" ;;
+            cancelled) result="⚠️ cancelled" ;;
+            *)         result="$JOB_STATUS" ;;
+          esac
+
+          {
+            echo "## \`kamal ${KAMAL_COMMAND}\` → production"
+            echo
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Result | ${result} |"
+            echo "| Commit | \`${GITHUB_SHA:0:7}\` on \`${GITHUB_REF_NAME}\` |"
+            echo "| Target host | \`${deploy_host}\` |"
+            echo "| SSH opened for | ${opened_for} |"
+            echo "| JIT firewall rule | ${jit_rule} |"
+          } >> "$GITHUB_STEP_SUMMARY"

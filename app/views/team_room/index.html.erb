@@ -1,5 +1,11 @@
 <h2><%= t("team_room.index.title", name: @team.name) %></h2>
 
+<%# The roster, and nothing else. Every control that acts on the team used to
+    sit in here interleaved with the members, so "Пригласить участников" read
+    as though it were another name in the list, and the handover <select> --
+    which inherits the global `select { width: 100% }` from components.css --
+    spanned the whole card and cut the buttons into three unrelated-looking
+    groups. %>
 <fieldset class="card">
   <legend>
     <%= t("team_room.index.composition") %>
@@ -12,62 +18,88 @@
     </li>
   <% end %>
   </ul>
+</fieldset>
 
-  <p>
-    <%= link_to t("team_room.index.invite"), new_invitation_path, class: "btn" if @current_user.captain? %>
-  </p>
+<%# The controls, lifted out of the card above. Only the markup around them
+    moved -- every visibility condition is unchanged, and each one still
+    guards itself here rather than relying on the controller.
 
-  <%# Captain-only, so it cannot collide with the two frozen "Не капитан"
-      scenarios in features/games/registration-to-game.feature, which assert
-      that a non-captain sees neither "Подать заявку на регистрацию" nor a
-      link "Отозвать" in this very region. Hidden mid-race (D1) and when the
-      captain is the only member, since there would be nobody to hand to.
+    Safe to regroup: the two frozen "Не капитан" scenarios in
+    features/games/registration-to-game.feature assert page-WIDE that a
+    non-captain sees neither "Подать заявку на регистрацию" nor a link
+    "Отозвать" -- `не должен видеть`, with no `в блоке` scope -- so which
+    fieldset a control sits in cannot affect them. What still matters is that
+    no label here drifts towards either of those strings. %>
+<div class="team-actions">
+  <div class="team-actions__row">
+    <% if @current_user.captain? %>
+      <%= link_to t("team_room.index.invite"), new_invitation_path, class: "btn" %>
+    <% end %>
+
+    <%# Where a member goes to move somewhere else. Link text is deliberately
+        unrelated to the game-registration strings above. %>
+    <%= link_to t("team_room.index.browse_teams"), teams_path, class: "btn" %>
+
+    <%# Hidden exactly where TeamsController#leave refuses, so it is never a
+        promise that cannot be kept: mid-race (D1), and for a captain who
+        still has teammates -- they see the handover control below instead,
+        and once they have handed over, this appears. A solo captain may
+        leave (D5), taking the role with them.
+
+        button_to rather than form_with: there is nothing to select. %>
+    <% unless @team.in_live_race? %>
+      <% if !@current_user.captain? || @team.members.count == 1 %>
+        <%= button_to t("team_room.index.leave"), leave_teams_path,
+                      :method => :post, :class => "btn" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# Captain-only, hidden mid-race (D1) and when the captain is the only
+      member, since there would be nobody to hand to.
 
       A real form, not a link: this app ships no Turbo and no rails-ujs, so
       link_to with method: :post would silently issue a GET against a
-      POST-only route. %>
+      POST-only route.
+
+      On its own line beneath the buttons, with the <select> next to the
+      button that submits it. The field and its verb belong together, and a
+      nickname reads better at its natural width than stretched across the
+      page. %>
   <% if @current_user.captain? && !@team.in_live_race? %>
     <% candidates = @team.members.reject { |member| member.id == @current_user.id } %>
     <% if candidates.any? %>
-      <%= form_with url: hand_over_team_path(@team), method: :post do %>
+      <%= form_with url: hand_over_team_path(@team), method: :post,
+                    class: "team-actions__handover" do %>
         <%= select_tag :member_id,
                        options_from_collection_for_select(candidates, :id, :nickname) %>
         <%= submit_tag t("team_room.index.hand_over"), :class => "btn" %>
       <% end %>
     <% end %>
   <% end %>
+</div>
 
-  <%# Hidden exactly where TeamsController#leave refuses, so it is never a
-      promise that cannot be kept: mid-race (D1), and for a captain who still
-      has teammates -- they see the handover control above instead, and once
-      they have handed over, this appears. A solo captain may leave (D5),
-      taking the role with them.
+<%# The captain's queue of people asking to join -- its own card now, rather
+    than an <h3> inside the composition card. These are not members yet, and
+    each row carries two controls of its own.
 
-      button_to rather than form_with: there is nothing to select. %>
-  <% unless @team.in_live_race? %>
-    <% if !@current_user.captain? || @team.members.count == 1 %>
-      <p>
-        <%= button_to t("team_room.index.leave"), leave_teams_path, :method => :post, :class => "btn" %>
-      </p>
-    <% end %>
-  <% end %>
+    Rendered only when the captain has something to decide: @join_requests is
+    empty for everyone else, which is what keeps this clear of the frozen
+    "Не капитан" scenarios. These labels match neither asserted string.
 
-  <%# The captain's queue of people asking to join. Rendered only when the
-      captain has something to decide -- @join_requests is empty for everyone
-      else, which is what keeps this clear of the frozen "Не капитан"
-      scenario asserting a non-captain sees neither "Подать заявку на
-      регистрацию" nor a link "Отозвать" in this region. These labels match
-      neither string.
+    Real forms, not links: no Turbo and no rails-ujs here.
 
-      Real forms, not links: no Turbo and no rails-ujs here.
+    The captain? check is deliberately duplicated rather than left to
+    TeamRoomController#index's decision to assign an empty list. Every other
+    control on this page guards itself the same way, and a visibility rule
+    that lives only in the controller leaks the moment a different caller
+    renders this template. %>
+<% if @current_user.captain? && @join_requests.any? %>
+  <fieldset class="card">
+    <legend>
+      <%= t("team_room.index.join_requests") %>
+    </legend>
 
-      The captain? check is deliberately duplicated here rather than left to
-      TeamRoomController#index's decision to assign an empty list. Every other
-      control in this fieldset guards itself the same way, and a visibility
-      rule that lives only in the controller leaks the moment a different
-      caller renders this template. %>
-  <% if @current_user.captain? && @join_requests.any? %>
-    <h3><%= t("team_room.index.join_requests") %></h3>
     <ul class="game-list">
       <% @join_requests.each do |join_request| %>
         <li>
@@ -81,15 +113,8 @@
         </li>
       <% end %>
     </ul>
-  <% end %>
-
-  <%# Where a member goes to move somewhere else. Link text is deliberately
-      unrelated to the game-registration strings the two frozen "Не капитан"
-      scenarios assert are absent from this region. %>
-  <p>
-    <%= link_to t("team_room.index.browse_teams"), teams_path, class: "btn" %>
-  </p>
-</fieldset>
+  </fieldset>
+<% end %>
 
 <%= render "shared/current_games" %>
 

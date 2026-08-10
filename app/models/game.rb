@@ -102,7 +102,33 @@ class Game < ApplicationRecord
     self.is_draft
   end
 
+  # A draft has not begun, whatever the clock says: the start date on an
+  # unpublished game is a plan, not an event.
+  #
+  # The draft guard is not belt-and-braces. game_starts_in_the_future runs on
+  # save and nowhere else, so a draft saved with a start date in the future
+  # simply AGES past it -- no unusual action needed, just time. Without this
+  # line such a game reported :draft from #status (which gives draft
+  # precedence) while every caller of #started? treated it as running: the
+  # dashboard offered "Завершить игру" and the stats, live channel and log
+  # links, and ensure_game_was_not_started answered 401 to the author's own
+  # edit, add-level and quiz-import. That filter has no superadmin exemption,
+  # so the draft was locked for everyone, including the operator brought in to
+  # rescue it. Reported from production 2026-08-10.
+  #
+  # DRAFTS ONLY, deliberately. Withdrawal is what an operator does TO a running
+  # game -- see the comment on withdraw! -- so a withdrawn game has certainly
+  # started, and reporting otherwise would change behaviour under a live race.
+  # ensure_game_is_live already excludes withdrawn separately, which is where
+  # that distinction belongs.
+  #
+  # Nothing downstream shifts: #status short-circuits on draft? before it ever
+  # reaches here, Game.started and .not_started compose this with .visible,
+  # which excludes drafts already, and start_test clears is_draft before it
+  # moves starts_at, so a test run is never a draft.
   def started?
+    return false if draft?
+
     self.starts_at.nil? ? false : Time.now > self.starts_at
   end
 

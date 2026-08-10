@@ -12,13 +12,13 @@ jobs:
     container: ruby:3.3.12
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install bundler
         run: gem install bundler --no-document
 
       - name: Cache gems
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: vendor/bundle
           key: gems-${{ hashFiles('Gemfile.lock') }}
@@ -46,7 +46,7 @@ jobs:
     container: ruby:3.3.12
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install bundler
         run: gem install bundler --no-document
@@ -63,13 +63,18 @@ jobs:
       # so they reported as pending in every CI run from the day they were
       # written until 2026-08-09, which is indistinguishable from passing in
       # the log.
+      # node-version is the Node the SPECS run against, and is unrelated to the
+      # Node the action itself runs on -- every action here moved to a Node 24
+      # runtime in this bump, which changes nothing about the line below. Do
+      # not "align" them: this pins the interpreter the countdown's plural rule
+      # is evaluated by, and changing it changes what the test proves.
       - name: Install node (for the JavaScript-evaluating specs)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "20"
 
       - name: Cache gems
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: vendor/bundle
           key: gems-${{ hashFiles('Gemfile.lock') }}

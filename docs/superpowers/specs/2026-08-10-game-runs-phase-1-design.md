@@ -129,7 +129,8 @@ is not rediscovered as an omission.
 |---|---|
 | `Game#status`, `started?`, `paused?`, `author_finished?`, `is_testing?` | **Source unchanged** — they read `starts_at` and friends, which now delegate |
 | `Game.count_by_status` | **Rewritten.** It filters `games` columns in SQL, so it becomes a join to `game_runs` on the current run |
-| `Game.started` / `Game.notstarted` | Unchanged — they load rows and call `started?` |
+| `scope :finished` | **Rewritten.** It reads `author_finished_at`, which moves. Missed in the first draft of this design and found during implementation by `spec/views/dashboard_spec.rb` — it fails *silently*, because an empty result reads as "no finished games" rather than as a bug |
+| `Game.started` / `Game.notstarted` | Gain `includes(:runs)`. They load rows and call `started?`, which now reads the run, so without preloading each issues one SELECT per game. `scope :finished`, `GamesController#index` and `Admin::GamesController#index` need it too; the query-count guards in `spec/requests/games_listing_spec.rb` and `spec/requests/admin_console_spec.rb` are what catch this |
 | `pause!`, `resume!`, `withdraw!`, `unfinish!`, `finish_game!`, `lock_editing!`, `unlock_editing!` | `withdraw!`, `restore!`, `lock_editing!`, `unlock_editing!` unchanged (their columns stay). `pause!`, `resume!`, `unfinish!`, `finish_game!` retarget their `update_column` to the run |
 | `reserve_place_for_team!` / `free_place_of_team!` | Write `requested_teams_number` on the run |
 | `game_passings`, `game_entries` | Gain `game_run_id`, backfilled. **Nothing reads it in phase 1** — that is phase 2 |

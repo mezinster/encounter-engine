@@ -7,8 +7,11 @@ require "rails_helper"
 RSpec.describe GameRun do
   let(:game) { create_game }
 
+  # create_game builds run 1 through Game's delegated writers, so every game
+  # arrives here with one already. These examples work with that rather than
+  # against it.
   it "belongs to a game" do
-    run = GameRun.create!(:game => game, :ordinal => 1)
+    run = GameRun.create!(:game => game, :ordinal => 2)
 
     expect(run.game).to eq(game)
   end
@@ -18,16 +21,17 @@ RSpec.describe GameRun do
   end
 
   it "refuses a second run with the same ordinal in one game" do
-    GameRun.create!(:game => game, :ordinal => 1)
+    expect(game.runs.size).to eq(1)
 
     expect(GameRun.new(:game => game, :ordinal => 1)).not_to be_valid
   end
 
   # Ordinals are per game, not global -- two different games each have a run 1.
   it "allows the same ordinal in a different game" do
-    GameRun.create!(:game => game, :ordinal => 1)
+    other = create_game
+    other.runs.delete_all
 
-    expect(GameRun.new(:game => create_game, :ordinal => 1)).to be_valid
+    expect(GameRun.new(:game => other, :ordinal => 1)).to be_valid
   end
 
   it "refuses a non-positive ordinal" do

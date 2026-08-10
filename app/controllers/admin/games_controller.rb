@@ -19,7 +19,9 @@ class Admin::GamesController < ApplicationController
     # game_passings is preloaded because the view renders a count per row.
     # Without it this console issues one COUNT per game -- the one query
     # pattern a screen that lists *everything* can least afford.
-    @games = Game.includes(:author, :game_passings).order(:created_at => :desc)
+    # :runs joins :author and :game_passings here for the same reason -- the
+    # view renders a status and a start time per row, and both read the run.
+    @games = Game.includes(:author, :game_passings, :runs).order(:created_at => :desc)
   end
 
   # No lifecycle refusals, deliberately -- the same exemption the comment on

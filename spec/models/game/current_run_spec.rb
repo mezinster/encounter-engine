@@ -33,6 +33,10 @@ RSpec.describe Game, "#current_run" do
     game.reload
 
     3.times { game.current_run }
+    # Deleting the run took the schedule with it, so the game is momentarily
+    # invalid (max_team_number is nil, and valid_max_num requires 1..9999).
+    # Restoring it is arranging the example, not part of what is under test.
+    game.max_team_number = 100
     game.save!
 
     expect(game.runs.reload.size).to eq(1)

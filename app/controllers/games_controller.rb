@@ -27,9 +27,9 @@ class GamesController < ApplicationController
                # anonymous visitor.
                games = games.merge(Game.visible) unless logged_in? &&
                                                         (current_user.superadmin? || current_user.id == params[:user_id].to_i)
-               games
+               games.includes(:runs)
              else
-               Game.visible
+               Game.visible.includes(:runs)
              end
   end
 

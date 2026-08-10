@@ -50,6 +50,15 @@ class GameRun < ApplicationRecord
   validates :max_team_number, presence: true,
                               numericality: { greater_than: 0, less_than: 10000 },
                               on: :open
+  # A run opened without a start date is accepted by starts_in_the_future
+  # below -- it returns early on nil -- and then never starts: Game#started?
+  # reads nil as "not yet", so the game sits scheduled for ever, unplayable,
+  # while the operator was told the run had opened. An empty datetime-local
+  # input submits "", so this is one stray Enter away.
+  #
+  # registration_deadline is deliberately NOT required: a game with no
+  # deadline is a real, existing state (production game 3 has none).
+  validates :starts_at, presence: true, on: :open
   validate :starts_in_the_future, on: :open
   validate :deadline_is_before_start, on: :open
 

@@ -126,6 +126,30 @@ class Game < ApplicationRecord
     update_column(:author_finished_at, nil)
   end
 
+  # The ONLY writer of author_id after creation, mirroring Team#set_captain!.
+  # A game with two ways to change its author is a game whose access control
+  # cannot be reasoned about from one place -- and author_id is what
+  # ensure_author, ensure_author_if_game_is_draft and every author-only screen
+  # ultimately read.
+  #
+  # update_column, not update!, carrying exactly the reasoning on withdraw!
+  # above and for a sharper reason: the superadmin path has NO lifecycle
+  # refusals, so this is reached on running games, and a running game fails
+  # game_starts_in_the_future. update! would raise RecordInvalid on precisely
+  # the games the operator path exists for.
+  #
+  # The assignment after the write keeps the in-memory record agreeing with the
+  # row -- update_column writes the column but leaves the loaded association
+  # pointing at the previous author, so a caller rendering game.author straight
+  # afterwards would name the wrong person.
+  def transfer_authorship_to!(user)
+    raise ArgumentError, "no user" if user.nil?
+
+    update_column(:author_id, user.id)
+    self.author = user
+    user
+  end
+
   def lock_editing!
     update_column(:editing_locked_at, Time.now)
   end

@@ -184,4 +184,44 @@ describe "handing a game over to another author", type: :request do
       expect(response.body).not_to include("hand_over_authorship")
     end
   end
+
+  describe "the form on the game page" do
+    it "is offered to the author" do
+      sign_in(author)
+
+      get game_path(game)
+
+      expect(response.body).to include(hand_over_game_path(game))
+      expect(response.body).to include(I18n.t("games.show.hand_over_button"))
+    end
+
+    # Offering a control the action would refuse is a promise the page cannot
+    # keep -- the same rule the import link already follows.
+    it "is not offered while the game is running" do
+      running = create_game(:author => author, :starts_at => 1.minute.from_now)
+      allow(Time).to receive(:now).and_return(1.hour.from_now)
+      sign_in(author)
+
+      get game_path(running)
+
+      expect(response.body).not_to include(hand_over_game_path(running))
+    end
+
+    it "is not offered while editing is locked" do
+      game.lock_editing!
+      sign_in(author)
+
+      get game_path(game)
+
+      expect(response.body).not_to include(hand_over_game_path(game))
+    end
+
+    it "is not offered to a player who is not the author" do
+      sign_in(create_user)
+
+      get game_path(game)
+
+      expect(response.body).not_to include(hand_over_game_path(game))
+    end
+  end
 end

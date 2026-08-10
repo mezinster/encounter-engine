@@ -72,6 +72,31 @@
 
   <%= render "games/teams", teams: @teams %>
 
+  <%# Rendered only when the action would actually allow it, matching the
+      import link above: offering a control the action refuses is a promise the
+      page cannot keep. The two conditions are GamesController#hand_over's two
+      author-side refusals.
+
+      Its own fieldset, above the edit and delete rows, so the button that
+      gives the game away is never the one next to the button the author meant
+      to press. %>
+  <% unless @game.editing_locked? || (@game.started? && !@game.author_finished?) %>
+    <fieldset class="card">
+      <legend><%= t("games.show.hand_over_legend") %></legend>
+
+      <%# A real form: this app ships neither Turbo nor rails-ujs. %>
+      <%= form_with url: hand_over_game_path(@game), method: :post do %>
+        <p>
+          <%= label_tag :nickname, t("games.show.hand_over_label") %>
+          <%= text_field_tag :nickname, nil, :autocomplete => "off" %>
+        </p>
+        <p>
+          <%= submit_tag t("games.show.hand_over_button"), :class => "btn" %>
+        </p>
+      <% end %>
+    </fieldset>
+  <% end %>
+
   <%# The author's own actions get a row of their own, separate from the
       entries/teams management above -- and the destructive one (delete)
       gets a second row of its own again, so it is never the button next to

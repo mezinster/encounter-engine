@@ -108,22 +108,22 @@ describe "the results page across runs", type: :request do
     expect(response.body).to include(second.name)
   end
 
-  # The href is compared HTML-escaped: the path carries an & between its two
-  # query parameters, which ERB renders as &amp;, so a raw path would never
-  # match and the example would fail whatever the view did.
-  #
-  # The link is to run 2, not run 1: run 1 is the default here (run 2 has not
-  # started), and the selected run renders as plain text rather than a link.
-  it "offers a switcher once a second run exists" do
+  # This example used to assert a LINK to run 2, which was the defect rather
+  # than the requirement: run 2 has not started, so following that link
+  # answered 401. It now asserts what was actually wanted -- the switcher
+  # appears and names both runs -- with the linking rule covered by
+  # spec/requests/run_switcher_links_spec.rb.
+  it "offers a switcher naming both runs once a second one exists" do
     finished_team(game.current_run, 2.days.ago)
     open_second_run
 
     get game_passings_show_results_path(:game_id => game.id)
+    page = Capybara.string(response.body)
 
     expect(response.body).to include(I18n.t("game_passings.show_results.runs_heading"))
-    expect(response.body).to include(
-      ERB::Util.html_escape(game_passings_show_results_path(:game_id => game.id, :run => 2))
-    )
+    expect(page.text).to include("Забег №1")
+    expect(page.text).to include("Забег №2")
+    expect(page).to have_no_link(:href => %r{run=2})
   end
 
   # THE frozen-scenario guard. Today's page must be byte-identical for the only

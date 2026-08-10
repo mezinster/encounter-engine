@@ -23,7 +23,11 @@
       <% label = t("game_passings.show_results.run_label",
                    :ordinal => run.ordinal,
                    :date => run.starts_at ? l(run.starts_at.to_date, :format => :long) : "—") %>
-      <% if run == @run %>
+      <%# Linked only when its results can actually be shown -- the same
+          GameRun#results_visible? the started-run guard reads. A scheduled
+          rerun is still NAMED, so players can see one is coming, but is not
+          offered as a link the guard would refuse with a bare 401. %>
+      <% if run == @run || !run.results_visible? %>
         <strong><%= label %></strong>
       <% else %>
         <%= link_to label, game_passings_show_results_path(:game_id => @game.id, :run => run.ordinal) %>

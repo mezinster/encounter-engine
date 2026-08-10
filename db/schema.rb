@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_09_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_10_120000) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -45,6 +45,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_09_120000) do
     t.integer "game_id"
     t.integer "team_id"
     t.string "status"
+    t.integer "game_run_id"
+    t.index ["game_run_id"], name: "index_game_entries_on_game_run_id"
     t.index ["team_id", "game_id"], name: "index_game_entries_on_team_id_and_game_id_live", unique: true, where: "status IN ('new', 'accepted')"
   end
 
@@ -68,6 +70,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_09_120000) do
     t.text "answered_questions"
     t.string "status"
     t.integer "penalty_seconds", default: 0, null: false
+    t.integer "game_run_id"
+    t.index ["game_run_id"], name: "index_game_passings_on_game_run_id"
+  end
+
+  create_table "game_runs", force: :cascade do |t|
+    t.integer "game_id", null: false
+    t.integer "ordinal", default: 1, null: false
+    t.datetime "starts_at", precision: nil
+    t.datetime "registration_deadline", precision: nil
+    t.integer "max_team_number"
+    t.integer "requested_teams_number", default: 0
+    t.datetime "author_finished_at", precision: nil
+    t.boolean "is_testing", default: false, null: false
+    t.datetime "test_date", precision: nil
+    t.datetime "paused_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "ordinal"], name: "index_game_runs_on_game_id_and_ordinal", unique: true
   end
 
   create_table "games", force: :cascade do |t|

@@ -199,12 +199,15 @@ class GameRun < ApplicationRecord
   # optional: true plus an explicit presence validation, matching Game's own
   # belongs_to :author -- the established shape in this codebase.
   #
-  # inverse_of is NOT optional here: Game's has_many carries a scope
-  # (-> { order(:ordinal) }) and its name does not match this class, both of
-  # which defeat Rails' automatic inverse detection. Without it an autobuilt
-  # run on an unsaved game cannot see its parent, and this presence validation
-  # fails on every newly created game.
-  belongs_to :game, :optional => true, :inverse_of => :runs
+  # inverse_of: :runs is added here at the same time as Game's has_many, not
+  # before it: Rails resolves the named inverse eagerly and raises
+  # InverseOfAssociationNotFoundError if the other side does not exist yet.
+  # It is not merely a nicety once both sides are declared -- Game's has_many
+  # carries a scope (-> { order(:ordinal) }) and its name does not match this
+  # class, and each of those independently defeats Rails' automatic inverse
+  # detection. Without it an autobuilt run on an unsaved game cannot see its
+  # parent, and the presence validation below fails on every new game.
+  belongs_to :game, :optional => true
 
   validates :game, presence: true
   validates :ordinal, presence: true,
@@ -426,6 +429,12 @@ In `app/models/game.rb`, immediately after `has_many :levels` (around line 17):
   has_many :runs, -> { order(:ordinal) },
            :class_name => "GameRun", :inverse_of => :game,
            :autosave => true, :dependent => :destroy
+```
+
+And **now** add the other half of the inverse in `app/models/game_run.rb`, which Task 1 deliberately left off because Rails resolves a named inverse eagerly and raises `InverseOfAssociationNotFoundError` when the other side does not exist yet:
+
+```ruby
+  belongs_to :game, :optional => true, :inverse_of => :runs
 ```
 
 And add `current_run` as a public method, next to the other predicates (after `editing_locked?`, around line 57):

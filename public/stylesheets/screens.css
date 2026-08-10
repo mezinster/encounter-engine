@@ -23,6 +23,38 @@
    its content. The remaining five cards still pair off underneath. */
 .dash-grid > .card--wide { grid-column: 1 / -1; }
 
+/* --- Dashboard: accepted teams, grouped per game -----------------------
+ * Each game is a panel of its own inside the card. Before this, .team-group
+ * was a bare <div> with no rule anywhere, so a game's name and its team names
+ * stacked with nothing between them and two games ran together into one list.
+ *
+ * auto-fit rather than a fixed two columns: the number of games is whatever
+ * the author has, and auto-fit gives one game the full width, two a half
+ * each, and four a quarter, without a breakpoint per count. The 16rem floor
+ * is what stops a long team name from being squeezed into a column narrower
+ * than it reads in.
+ *
+ * Single column below 48rem, matching where .table--cards gives up on
+ * columns: side-by-side panels on a phone would be 160px wide apiece. */
+.team-groups {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .team-groups { grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+}
+
+/* --surface-2 on a --panel inside a --surface card, the same nesting as
+   .team-panel on the operator screen. tokens.css already records the contrast
+   checks against this surface. */
+.team-group { background: var(--surface-2); }
+
+/* The game's name is the panel's heading, so it needs to sit off its list
+   rather than look like the first row of it. */
+.team-group h3 { margin-bottom: var(--space-2); }
+
 /* --- Team room: the controls that act on the team ----------------------
  * A band under the roster card, not part of it. See the comment in
  * team_room/index.html.erb for what these used to be tangled up with. */

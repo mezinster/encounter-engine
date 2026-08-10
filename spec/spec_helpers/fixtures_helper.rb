@@ -111,9 +111,16 @@ module FixturesHelper
   # controller create the passing (rather than pre-creating one with
   # create_game_passing) need the entry that authorises it.
   def create_game_entry(options={})
+    game = options[:game]
+
     creation_params = {
       :status => "accepted"
     }.merge(options)
+
+    # Admission belongs to a run, so an entry with no run authorises nothing.
+    # Defaulted here rather than at every call site; pass :game_run explicitly
+    # to place one in a different run, which is what the isolation examples do.
+    creation_params[:game_run] ||= game.current_run if game
 
     GameEntry.create! creation_params
   end
@@ -184,7 +191,12 @@ module FixturesHelper
   end
 
   def set_game_schedule!(game, attrs)
-    run = game.runs.first || game.runs.create!(:ordinal => 1)
+    # The CURRENT run -- highest ordinal -- not runs.first. Those are the same
+    # record until a game has a second run, and different the moment it does:
+    # writing to runs.first would then schedule the run nobody is playing and
+    # leave the current one untouched, which reads as a mysterious 401 from
+    # ensure_game_is_started.
+    run = game.runs.reload.to_a.last || game.runs.create!(:ordinal => 1)
     attrs.each { |column, value| run.update_column(column, value) }
 
     game

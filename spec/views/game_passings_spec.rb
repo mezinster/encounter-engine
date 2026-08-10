@@ -12,6 +12,7 @@ RSpec.describe "game_passings/index", type: :view do
     level = create_level
     game = level.game
     assign(:game, game)
+    assign(:run, game.current_run)
     # The move control on each row needs the game's levels (Task 6); the
     # controller loads this once and hands it to the view the same way.
     assign(:levels, [level])
@@ -58,6 +59,7 @@ RSpec.describe "game_passings/index", type: :view do
     game = level.game
 
     assign(:game, game)
+    assign(:run, game.current_run)
     assign(:levels, [level])
     assign(:game_passings, [])
     view.define_singleton_method(:logged_in?) { true }
@@ -82,6 +84,7 @@ RSpec.describe "game_passings/show_current_level", type: :view do
     game_passing = create_game_passing(level: level, team: team)
 
     assign(:game, game)
+    assign(:run, game.current_run)
     assign(:game_passing, game_passing)
     view.define_singleton_method(:current_user) { captain }
     # content_locale_for is a helper_method on ApplicationController (Task 5);
@@ -124,6 +127,7 @@ RSpec.describe "game_passings/show_current_level", type: :view do
     game_passing.save!
 
     assign(:game, game)
+    assign(:run, game.current_run)
     assign(:game_passing, game_passing)
     assign(:answer, "WRONG")
     assign(:answer_was_correct, false)
@@ -153,6 +157,7 @@ RSpec.describe "game_passings/show_current_level", type: :view do
     game_passing = create_game_passing(level: level, team: team)
 
     assign(:game, game)
+    assign(:run, game.current_run)
     assign(:game_passing, game_passing)
     view.define_singleton_method(:current_user) { captain }
     view.define_singleton_method(:content_locale_for) { |g| g.primary_locale }
@@ -168,6 +173,7 @@ RSpec.describe "game_passings/show_results", type: :view do
     author = create_user
     game = create_game(author: author)
     assign(:game, game)
+    assign(:run, game.current_run)
     view.define_singleton_method(:logged_in?) { true }
     view.define_singleton_method(:current_user) { author }
 
@@ -187,6 +193,7 @@ RSpec.describe "game_passings/show_results", type: :view do
     create_game_passing(level: level, team: team, finished_at: Time.current)
 
     assign(:game, game)
+    assign(:run, game.current_run)
     view.define_singleton_method(:logged_in?) { true }
     view.define_singleton_method(:current_user) { captain }
 
@@ -198,6 +205,7 @@ RSpec.describe "game_passings/show_results", type: :view do
   it "hides the full-log link from a guest" do
     game = create_game
     assign(:game, game)
+    assign(:run, game.current_run)
     view.define_singleton_method(:logged_in?) { false }
     view.define_singleton_method(:current_user) { nil }
 
@@ -215,6 +223,7 @@ RSpec.describe "game_passings/show_results", type: :view do
     create_game_passing(level: level, team: team)
 
     assign(:game, game)
+    assign(:run, game.current_run)
     view.define_singleton_method(:logged_in?) { true }
     view.define_singleton_method(:current_user) { captain }
 
@@ -232,6 +241,7 @@ RSpec.describe "game_passings/show_results", type: :view do
     create_game_passing(level: level, team: team, finished_at: Time.current, status: "exited")
 
     assign(:game, game)
+    assign(:run, game.current_run)
     view.define_singleton_method(:logged_in?) { true }
     view.define_singleton_method(:current_user) { captain }
 

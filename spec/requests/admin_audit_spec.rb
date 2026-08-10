@@ -72,6 +72,21 @@ describe "auditing administrative changes", type: :request do
       expect(AdminAction.newest_first.first.action).to eq("unlock")
     end
 
+    it "records opening a run" do
+      finished = create_game(:author => author, :is_draft => false)
+      create_level(:game => finished)
+      set_game_schedule!(finished, :starts_at => 2.days.ago, :author_finished_at => 1.day.ago)
+
+      expect do
+        post open_run_admin_game_path(finished),
+             :params => { :starts_at => 2.years.from_now.strftime("%Y-%m-%d %H:%M"),
+                          :registration_deadline => 23.months.from_now.strftime("%Y-%m-%d %H:%M"),
+                          :max_team_number => "10" }
+      end.to change { AdminAction.count }.by(1)
+
+      expect(AdminAction.newest_first.first.action).to eq("open_run")
+    end
+
     it "records an author reassignment" do
       successor = create_user
 

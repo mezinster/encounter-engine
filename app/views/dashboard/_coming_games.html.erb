@@ -10,7 +10,7 @@
         <b><%= t("dashboard.coming_games.you_are_author") %></b>
       <% else %>
         <% if @current_user.captain? %>
-          <% @game_entry = GameEntry.of(@team,game)%>
+          <% @game_entry = GameEntry.of(@team, game.current_run) %>
           <%= render "shared/game_entry_controls", game_entry: @game_entry, game: game, team: @team %>
         <% end %>
         <%= link_to t("dashboard.coming_games.enter"), game_path(game) %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_10_170000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_10_180000) do
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -47,7 +47,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_170000) do
     t.string "status"
     t.integer "game_run_id"
     t.index ["game_run_id"], name: "index_game_entries_on_game_run_id"
-    t.index ["team_id", "game_id"], name: "index_game_entries_on_team_id_and_game_id_live", unique: true, where: "status IN ('new', 'accepted')"
+    t.index ["team_id", "game_run_id"], name: "index_game_entries_on_team_id_and_game_run_id_live", unique: true, where: "status IN ('new', 'accepted')"
   end
 
   create_table "game_locale_preferences", force: :cascade do |t|

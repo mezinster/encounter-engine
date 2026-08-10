@@ -47,4 +47,35 @@ class Admin::GamesController < ApplicationController
     redirect_to admin_games_path,
                 :notice => t("admin.games.author_set", :nickname => successor.nickname)
   end
+
+  # Opening another run of a finished game -- the console's second non-index
+  # action. Every refusal returns BEFORE anything changes, matching set_author
+  # and Admin::UsersController#revoke, so the log never holds an entry for a
+  # change that did not happen.
+  def open_run
+    game = Game.find(params[:id])
+
+    unless game.author_finished?
+      redirect_to admin_games_path,
+                  :alert => t("admin.games.cannot_open_unfinished") and return
+    end
+
+    if game.levels.empty?
+      redirect_to admin_games_path,
+                  :alert => t("admin.games.cannot_open_without_levels") and return
+    end
+
+    run = game.open_run!(:starts_at => params[:starts_at],
+                         :registration_deadline => params[:registration_deadline],
+                         :max_team_number => params[:max_team_number])
+
+    record_admin_action("open_run", game, run.ordinal.to_s)
+    redirect_to admin_games_path,
+                :notice => t("admin.games.run_opened", :ordinal => run.ordinal)
+  rescue ActiveRecord::RecordInvalid => e
+    # The schedule is validated on the run in its :open context. Reporting its
+    # own message rather than a generic one is what tells an operator WHICH
+    # field is wrong.
+    redirect_to admin_games_path, :alert => e.record.errors.full_messages.to_sentence
+  end
 end

@@ -48,8 +48,8 @@ class GamesController < ApplicationController
   end
 
   def show
-    @game_entries = GameEntry.of_game(@game).with_status("new")
-    @teams = GameEntry.of_game(@game).with_status("accepted").map(&:team)
+    @game_entries = GameEntry.of_run(@game.current_run).with_status("new")
+    @teams = GameEntry.of_run(@game.current_run).with_status("accepted").map(&:team)
   end
 
   def edit

@@ -75,6 +75,22 @@
             <%= submit_tag t("admin.games.index.set_author"), :class => "btn" %>
           <% end %>
         </div>
+        <%# Only for a finished game with levels: opening a run otherwise is
+            refused by the action, and offering a control the action refuses is
+            a promise the page cannot keep. %>
+        <% if game.author_finished? && game.levels.any? %>
+          <div class="game-control">
+            <%= form_with url: open_run_admin_game_path(game), method: :post do %>
+              <%= label_tag "run_starts_at_#{game.id}", t("admin.games.index.run_starts_at") %>
+              <%= text_field_tag :starts_at, nil, :id => "run_starts_at_#{game.id}", :autocomplete => "off" %>
+              <%= label_tag "run_deadline_#{game.id}", t("admin.games.index.run_deadline") %>
+              <%= text_field_tag :registration_deadline, nil, :id => "run_deadline_#{game.id}", :autocomplete => "off" %>
+              <%= label_tag "run_max_teams_#{game.id}", t("admin.games.index.run_max_teams") %>
+              <%= text_field_tag :max_team_number, game.max_team_number, :id => "run_max_teams_#{game.id}", :autocomplete => "off" %>
+              <%= submit_tag t("admin.games.index.open_run"), :class => "btn" %>
+            <% end %>
+          </div>
+        <% end %>
         <% if game.deletable? %>
           <div class="game-control">
             <%= button_to t("admin.games.index.delete"), delete_game_path(game), :method => :delete, :class => "btn btn--danger",

@@ -11,6 +11,18 @@
   .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* Cards that opt out of the two-up and take the whole row.
+   Two-up is right for the five cards that hold short <ul> lists, and wrong
+   for the two above them. "My games" holds the only table on the dashboard:
+   its six columns need 800px, half the grid gave it 518, and .table-wrap
+   scrolled the difference sideways while every date wrapped onto three
+   lines. "My team" holds two lines of text and was stretched to the games
+   table's height beside it -- 431px of card around 119px of content, which
+   is the empty half of the screenshot this came from.
+   Full width: the table needs 1086 and gets 1086, and the team card sizes to
+   its content. The remaining five cards still pair off underneath. */
+.dash-grid > .card--wide { grid-column: 1 / -1; }
+
 /* A game row inside a card's list (dashboard "my games", games/index) --
    base.css strips the ul/li default spacing, so give rows back a readable
    rhythm without touching the markup's semantics. */

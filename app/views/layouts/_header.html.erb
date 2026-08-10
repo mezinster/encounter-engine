@@ -3,7 +3,14 @@
 <% else %>
   <%= link_to t("layout.header.home"), root_path, class: "home-link" %>
 <% end %>
-<%= l(Time.current, format: :short) %>
+<%# Wrapped only so the stylesheet has something to select: the timestamp is
+    set a size smaller on phones, which is what lets it share the first line
+    with the hamburger and the home link instead of taking a row of its own
+    (see .topbar-time in layout.css). The rendered STRING must not change --
+    features/time/time-in-header.feature asserts "2050-05-30 21:01" verbatim
+    and that file is frozen, so a shorter format on narrow screens is not an
+    option here however much it would help. %>
+<span class="topbar-time"><%= l(Time.current, format: :short) %></span>
 
 <%# Language switcher. Explicit ?locale= wins over the signed-in user's
     stored preference (see app/controllers/concerns/locale_selection.rb), so

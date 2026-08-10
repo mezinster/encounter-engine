@@ -1,5 +1,11 @@
 <% @my_games = Game.by(current_user) %>
-<fieldset id="mygames" class="card">
+<%# card--wide because this is the one dashboard card holding a table. Six
+    columns need 800px; half of the grid gave it 518 and .table-wrap scrolled
+    the difference sideways, with every date wrapped onto three lines. Full
+    width it needs 1086 and gets 1086. See .dash-grid in screens.css.
+    The id stays: features/games/hide-draft-game.feature says
+    `в блоке "mygames"` and that file is frozen. %>
+<fieldset id="mygames" class="card card--wide">
   <legend>
     <%= t("dashboard.my_games.legend", count: @my_games.count) %>
   </legend>

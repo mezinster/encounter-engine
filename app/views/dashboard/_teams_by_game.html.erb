@@ -1,18 +1,48 @@
-<fieldset class="card">
+<%# card--wide for the same reason as "my games": this card holds the widest
+    thing on the dashboard once each game is a panel of its own, and half a
+    grid gave the game names and their teams a column too narrow to sit side
+    by side. See .dash-grid in screens.css. %>
+<fieldset class="card card--wide">
   <legend>
     <%= t("games.teams.legend") %>
   </legend>
 
-  <% teams_by_game.each do |game, teams| %>
-    <div class="team-group">
-      <h3><%= game.name %></h3>
-      <ul class="game-list">
-        <% teams.each do |team| %>
-          <li>
-            <strong><%= team.name %></strong>
-          </li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
+  <%# One panel per game, rather than a heading and a list repeated down a
+      single column. .team-group carried no styling at all before, so a game's
+      name and the team names under it stacked with nothing between them --
+      the reported problem was not being able to tell which teams belonged to
+      which game, and with two games the reading order alone said nothing.
+
+      Nested surface, following .team-panel on the operator screen: a --panel
+      on --surface-2 inside a --card on --surface. Both contrast pairs are
+      already accounted for in tokens.css.
+
+      The <h3> stays a direct child of this div: the grouping spec in
+      spec/requests/dashboard_teams_by_game_spec.rb finds a game's heading by
+      text and walks to its nearest li/div/section ancestor to assert that a
+      team is under the right game. That ancestor must remain the element that
+      wraps this game and only this game. %>
+  <div class="team-groups">
+    <% teams_by_game.each do |game, teams| %>
+      <div class="panel team-group">
+        <h3><%= game.name %></h3>
+        <%# Team names are plain, and the <strong> they used to carry is gone
+            on purpose. h3 is weight 600 and a browser's default <strong> is
+            700, so every team name was rendering BOLDER than the game it
+            belonged to -- the heading lost to its own list, which is most of
+            why the grouping did not read. The panel's heading is now the only
+            bold thing in it.
+
+            Nothing asserts on the tag: the grouping spec matches with
+            have_text. %>
+        <ul class="game-list">
+          <% teams.each do |team| %>
+            <li>
+              <%= team.name %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  </div>
 </fieldset>

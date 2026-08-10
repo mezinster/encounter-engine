@@ -98,15 +98,22 @@ RSpec.describe Log, ".backfill_run_ids!" do
     expect(orphan.reload.game_run_id).to be_nil
   end
 
+  # run_one is captured BEFORE the second run is created: create_next_run gives
+  # the game a higher ordinal, so current_run then answers with the new run.
   it "scopes logs to a run" do
-    mine = bare_log
+    run_one = game.current_run
+    mine = Log.create!(:game_id => game.id, :game_run_id => run_one.id,
+                       :level => level.name, :level_id => level.id,
+                       :team => team.name, :team_id => team.id,
+                       :time => Time.now, :answer => "мой")
     other_run = create_next_run(game)
     Log.create!(:game_id => game.id, :game_run_id => other_run.id,
                 :level => level.name, :level_id => level.id,
                 :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "другой")
 
-    expect(Log.of_run(game.current_run).map(&:id)).to eq([ mine.id ])
+    expect(Log.of_run(run_one).map(&:id)).to eq([ mine.id ])
+    expect(Log.of_run(other_run).map(&:answer)).to eq([ "другой" ])
   end
 end
 ```

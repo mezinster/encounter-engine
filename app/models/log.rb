@@ -22,6 +22,31 @@ class Log < ApplicationRecord
   scope :of_team,  ->(team)  { where(team_id: team.id) }
   scope :of_level, ->(level) { where(level_id: level.id) }
 
+  scope :of_run, ->(run) { where(:game_run_id => run.id) }
+
+  # Idempotent and safe to re-run: only touches rows whose game_run_id is
+  # still NULL. Returns the count, which the migration logs -- a backfill that
+  # resolved nothing would otherwise look identical to one that resolved
+  # everything, which is why backfill_ids! below reports too.
+  #
+  # Resolves from game_id ALONE, because today every log of a game belongs to
+  # that game's only run. That is exactly correct now and would be ambiguous
+  # once a second run exists -- which is the whole reason this column is being
+  # stored rather than the join being written into the log views.
+  def self.backfill_run_ids!
+    resolved = 0
+
+    where(:game_run_id => nil).where.not(:game_id => nil).find_each do |log|
+      run = GameRun.where(:game_id => log.game_id).order(:ordinal).last
+      next if run.nil?
+
+      log.update_column(:game_run_id, run.id)
+      resolved += 1
+    end
+
+    { :resolved => resolved }
+  end
+
   # Idempotent and safe to re-run: only touches rows whose id is still NULL.
   # Returns the counts, which the migration logs -- a silent backfill that
   # resolved nothing would otherwise look identical to one that resolved

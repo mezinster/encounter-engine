@@ -148,6 +148,37 @@ module FixturesHelper
   #
   # Only the EIGHT MOVING COLUMNS belong here. withdrawn_at and
   # editing_locked_at stay on games -- keep using update_column for those.
+  # A SECOND run on a game. Nothing in the application can create one until
+  # phase 3, and every isolation example in phase 2 needs one: with a single
+  # run every run-scoped query returns exactly what the game-scoped one
+  # returned, so an example without this would pass whether the scoping worked
+  # or not.
+  def create_next_run(game, attrs = {})
+    GameRun.create!({ :game => game,
+                      :ordinal => game.runs.reload.maximum(:ordinal).to_i + 1,
+                      :starts_at => game.starts_at,
+                      :max_team_number => game.max_team_number }.merge(attrs))
+  end
+
+  # A log row, with its run filled in from the game. Specs wrote Log.create!
+  # by hand in 23 places; routing them through here is what let phase 2 add
+  # game_run_id without editing all of them again when the log screens became
+  # run-scoped.
+  def create_log(attrs = {})
+    game  = attrs[:game]  || create_game
+    level = attrs[:level] || create_level(:game => game)
+    team  = attrs[:team]  || create_team(:captain => create_user)
+
+    Log.create!(:game_id     => game.id,
+                :game_run_id => (attrs[:game_run] || game.current_run).id,
+                :level       => attrs[:level_name] || level.name,
+                :level_id    => attrs.key?(:level_id) ? attrs[:level_id] : level.id,
+                :team        => attrs[:team_name] || team.name,
+                :team_id     => attrs.key?(:team_id) ? attrs[:team_id] : team.id,
+                :time        => attrs[:time] || Time.now,
+                :answer      => attrs[:answer] || "код")
+  end
+
   def set_game_schedule!(game, attrs)
     run = game.runs.first || game.runs.create!(:ordinal => 1)
     attrs.each { |column, value| run.update_column(column, value) }

@@ -339,7 +339,7 @@ class GamePassingsController < ApplicationController
     return false if @team.nil?
     return true if @game.is_testing? && @game.created_by?(current_user)
 
-    GameEntry.of(@team, @game)&.status == "accepted"
+    GameEntry.of(@team, @game.current_run)&.status == "accepted"
   end
 
   # Shared by post_answer and post_options: a submission with nothing typed

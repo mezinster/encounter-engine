@@ -70,7 +70,8 @@ RSpec.describe GameEntriesController, "#new", type: :controller do
     end
 
     it "does not create a duplicate row when an entry already exists in another status" do
-      GameEntry.create!(:game => @game, :team => @team, :status => "rejected")
+      GameEntry.create!(:game => @game, :game_run => @game.current_run,
+                        :team => @team, :status => "rejected")
 
       expect do
         perform_request :as_user => @captain

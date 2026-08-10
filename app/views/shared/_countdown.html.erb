@@ -43,7 +43,7 @@
         <% end %>
         <%
         if @team && @game
-          @game_entry = GameEntry.of(@team,@game)
+          @game_entry = GameEntry.of(@team, @game.current_run)
           if @game_entry
             if @game_entry.status == "accepted"
             %>

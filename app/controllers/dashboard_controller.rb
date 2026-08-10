@@ -9,7 +9,7 @@ class DashboardController < ApplicationController
     @games = Game.by(current_user)
     @game_entries = []
     @games.each do |game|
-      @game_entries.concat(GameEntry.of_game(game).with_status("new").to_a)
+      @game_entries.concat(GameEntry.of_run(game.current_run).with_status("new").to_a)
     end
 
     @teams_by_game = accepted_teams_by_game(@games)

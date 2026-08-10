@@ -12,15 +12,17 @@ class GameEntriesController < ApplicationController
   before_action :ensure_captain_of_target_team, except: [:accept, :reject]
   before_action :ensure_game_is_not_withdrawn, only: [:new, :reopen]
 
-  # GameEntry.of(@team, @game) is deliberately not used for this check: it
+  # GameEntry.of(@team, @game.current_run) is deliberately not used for this
+  # check: it
   # prefers an "accepted" row over any other, which is exactly the wrong bias
   # here -- an existing rejected/recalled/canceled row must still block a
   # fresh #new (the team is expected to use "reopen" on it instead, see
   # shared/_game_entry_controls.html.erb), not be shadowed by a search for an
   # accepted one that doesn't exist yet.
   def new
-    if @game.can_request? && !GameEntry.of_team(@team).of_game(@game).exists?
-      @game_entry = GameEntry.create!(status: "new", game: @game, team: @team)
+    if @game.can_request? && !GameEntry.of_team(@team).of_run(@game.current_run).exists?
+      @game_entry = GameEntry.create!(status: "new", game: @game,
+                                      game_run: @game.current_run, team: @team)
       @game.reserve_place_for_team!
     end
     redirect_to dashboard_path

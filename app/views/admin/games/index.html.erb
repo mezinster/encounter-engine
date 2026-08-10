@@ -81,12 +81,23 @@
         <% if game.author_finished? && game.levels.any? %>
           <div class="game-control">
             <%= form_with url: open_run_admin_game_path(game), method: :post do %>
+              <%# Native datetime-local inputs, so every browser supplies its
+                  own picker. games/new and games/edit use a Merb-era
+                  Calendar.setup widget on a text field instead; that cannot be
+                  reused here, because this table renders one form PER ROW and
+                  a widget keyed on a single element id would need N setup
+                  calls and N unique button ids to attach to. These need no
+                  JavaScript at all.
+
+                  They submit YYYY-MM-DDTHH:MM, which the action accepts
+                  unchanged. %>
               <%= label_tag "run_starts_at_#{game.id}", t("admin.games.index.run_starts_at") %>
-              <%= text_field_tag :starts_at, nil, :id => "run_starts_at_#{game.id}", :autocomplete => "off" %>
+              <%= datetime_local_field_tag :starts_at, nil, :id => "run_starts_at_#{game.id}", :required => true %>
               <%= label_tag "run_deadline_#{game.id}", t("admin.games.index.run_deadline") %>
-              <%= text_field_tag :registration_deadline, nil, :id => "run_deadline_#{game.id}", :autocomplete => "off" %>
+              <%= datetime_local_field_tag :registration_deadline, nil, :id => "run_deadline_#{game.id}" %>
               <%= label_tag "run_max_teams_#{game.id}", t("admin.games.index.run_max_teams") %>
-              <%= text_field_tag :max_team_number, game.max_team_number, :id => "run_max_teams_#{game.id}", :autocomplete => "off" %>
+              <%= number_field_tag :max_team_number, game.max_team_number,
+                                   :id => "run_max_teams_#{game.id}", :min => 1, :max => 9999 %>
               <%= submit_tag t("admin.games.index.open_run"), :class => "btn" %>
             <% end %>
           </div>

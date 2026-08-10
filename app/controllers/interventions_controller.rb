@@ -81,7 +81,7 @@ class InterventionsController < ApplicationController
   end
 
   def find_game_passing
-    @game_passing = GamePassing.of_game(@game).of_team(params[:team_id]).first
+    @game_passing = @game.current_run.passings.of_team(params[:team_id]).first
     raise ActiveRecord::RecordNotFound unless @game_passing
   end
 

@@ -44,7 +44,7 @@ module GamePassingsHelper
     return false unless logged_in?
     return true if game.created_by?(current_user)
 
-    game_passing = current_user.team && GamePassing.of(current_user.team, game)
+    game_passing = current_user.team && game.current_run.passing_for(current_user.team)
     !!(game_passing&.finished? && !game_passing.exited?)
   end
 end

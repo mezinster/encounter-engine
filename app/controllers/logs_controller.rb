@@ -29,7 +29,7 @@ class LogsController < ApplicationController
   # :ensure_author, which allows exactly those two cases and blocks a team
   # that is still mid-game.
   def show_live_channel
-    @logs = Log.of_game(@game).includes(:team_record, :level_record)
+    @logs = Log.of_run(@game.current_run).includes(:team_record, :level_record)
   end
 
   def show_level_log
@@ -44,15 +44,17 @@ class LogsController < ApplicationController
     # break the next time this scope changes shape. Render the normal page
     # with an empty log (the view guards @level itself) rather than a blank
     # response.
-    @logs = @level ? Log.of_game(@game).of_team(@team).of_level(@level) : Log.none
+    @logs = @level ? Log.of_run(@game.current_run).of_team(@team).of_level(@level) : Log.none
   end
 
   def show_game_log
-    @logs = Log.of_game(@game).of_team(@team)
+    @logs = Log.of_run(@game.current_run).of_team(@team)
   end
 
   def show_full_log
-    @logs = Log.of_game(@game)
+    @logs = Log.of_run(@game.current_run)
+    # Level.of_game, deliberately: levels are the game's CONTENT and are shared
+    # by every run of it. Only the answers belong to one running.
     @levels = Level.of_game(@game)
     # Not find_by_sql("select * from teams t inner join game_passings gp ...")
     # -- a bare `select *` across that join returns `id` twice (teams.id, then
@@ -95,7 +97,7 @@ class LogsController < ApplicationController
   def ensure_full_log_access
     return if @game.created_by?(current_user)
 
-    game_passing = current_user.team && GamePassing.of(current_user.team, @game)
+    game_passing = current_user.team && @game.current_run.passing_for(current_user.team)
     unless game_passing&.finished? && !game_passing.exited?
       raise Authentication::Unauthorized, t("errors.must_be_author_or_finished_player")
     end

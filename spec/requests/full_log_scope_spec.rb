@@ -29,10 +29,12 @@ describe "the full answer log", type: :request do
     # example below would be meaningless rather than red.
     expect(game.id).not_to eq(other_game.id)
 
-    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+    Log.create!(:game_id => game.id, :game_run_id => game.current_run.id,
+                :level => level.name, :level_id => level.id,
                 :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "СВОЙ-КОД")
-    Log.create!(:game_id => other_game.id, :level => other_level.name, :level_id => other_level.id,
+    Log.create!(:game_id => other_game.id, :game_run_id => other_game.current_run.id,
+                :level => other_level.name, :level_id => other_level.id,
                 :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "ЧУЖАЯ-ИГРА")
 
@@ -53,7 +55,8 @@ describe "the full answer log", type: :request do
   it "does not show a level's rows under a same-named level's heading in the same game" do
     other_level_same_game = create_level(:game => game, :name => level.name)
 
-    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+    Log.create!(:game_id => game.id, :game_run_id => game.current_run.id,
+                :level => level.name, :level_id => level.id,
                 :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "ОДНОЗНАЧНЫЙ-КОД")
 
@@ -74,7 +77,10 @@ describe "the full answer log", type: :request do
   it "does not show a row whose game_id disagrees with its own (correct) level_id and team_id" do
     expect(game.id).not_to eq(other_game.id)
 
-    Log.create!(:game_id => other_game.id, :level => level.name, :level_id => level.id,
+    # The run matches the (wrong) game_id, so the row stays excluded for the
+    # same reason it always was once the screen scopes on the run.
+    Log.create!(:game_id => other_game.id, :game_run_id => other_game.current_run.id,
+                :level => level.name, :level_id => level.id,
                 :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "НЕВЕРНЫЙ-GAME-ID")
 
@@ -107,13 +113,15 @@ describe "the full answer log", type: :request do
 
     # Sanity guard, same spirit as the other examples in this file: if these
     # ever coincide the assertions below would be meaningless rather than red.
-    expect(GamePassing.of(team_one, game).id).not_to eq(team_one.id)
-    expect(GamePassing.of(team_two, game).id).not_to eq(team_two.id)
+    expect(game.current_run.passing_for(team_one).id).not_to eq(team_one.id)
+    expect(game.current_run.passing_for(team_two).id).not_to eq(team_two.id)
 
-    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+    Log.create!(:game_id => game.id, :game_run_id => game.current_run.id,
+                :level => level.name, :level_id => level.id,
                 :team => team_one.name, :team_id => team_one.id,
                 :time => Time.now, :answer => "КОД-ОДИН")
-    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+    Log.create!(:game_id => game.id, :game_run_id => game.current_run.id,
+                :level => level.name, :level_id => level.id,
                 :team => team_two.name, :team_id => team_two.id,
                 :time => Time.now, :answer => "КОД-ДВА")
 

@@ -29,7 +29,8 @@ describe "the per-game answer log", type: :request do
   end
 
   it "shows this team's submissions on this game" do
-    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+    Log.create!(:game_id => game.id, :game_run_id => game.current_run.id,
+                :level => level.name, :level_id => level.id,
                 :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "МОЙ-КОД")
 
@@ -44,7 +45,12 @@ describe "the per-game answer log", type: :request do
     # the example below would pass vacuously -- fail loudly instead.
     expect(game.id).not_to eq(level.id)
 
-    Log.create!(:game_id => level.id, :level => level.name, :level_id => level.id,
+    # Its run belongs to an unrelated game, mirroring the bogus game_id. Once
+    # the screen scopes on the run rather than the game, a row carrying THIS
+    # game's run would legitimately appear and the example would fail for a
+    # reason that has nothing to do with what it guards.
+    Log.create!(:game_id => level.id, :game_run_id => create_game.current_run.id,
+                :level => level.name, :level_id => level.id,
                 :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "ЧУЖОЙ-КОД")
 
@@ -55,7 +61,8 @@ describe "the per-game answer log", type: :request do
 
   it "does not show another team's submissions on this game" do
     other = create_team(:captain => create_user)
-    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+    Log.create!(:game_id => game.id, :game_run_id => game.current_run.id,
+                :level => level.name, :level_id => level.id,
                 :team => other.name, :team_id => other.id,
                 :time => Time.now, :answer => "ЧУЖАЯ-КОМАНДА")
 
@@ -71,7 +78,8 @@ describe "the per-game answer log", type: :request do
   it "does not show a same-named level's rows from another game" do
     other_game  = create_game
     other_level = create_level(:game => other_game, :name => level.name)
-    Log.create!(:game_id => other_game.id, :level => other_level.name,
+    Log.create!(:game_id => other_game.id, :game_run_id => other_game.current_run.id,
+                :level => other_level.name,
                 :level_id => other_level.id, :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "ЧУЖОЙ-КОД")
 
@@ -104,7 +112,8 @@ describe "show_level_log for a team with no current level", type: :request do
   end
 
   it "renders an empty log instead of 500ing or matching every unresolved row" do
-    Log.create!(:game_id => game.id, :level => level.name, :level_id => level.id,
+    Log.create!(:game_id => game.id, :game_run_id => game.current_run.id,
+                :level => level.name, :level_id => level.id,
                 :team => team.name, :team_id => team.id,
                 :time => Time.now, :answer => "НЕ-ДОЛЖЕН-ПОПАСТЬ")
 

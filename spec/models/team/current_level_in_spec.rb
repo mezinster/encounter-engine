@@ -22,8 +22,8 @@ describe Team do
         before :each do
           @first_game_current_level = @first_game.levels.second
           @second_game_current_level = @first_game.levels.first
-          GamePassing.create! :team => @team, :game => @first_game, :current_level => @first_game_current_level
-          GamePassing.create! :team => @team, :game => @second_game, :current_level => @second_game_current_level
+          GamePassing.create! :team => @team, :game => @first_game, :game_run => @first_game.current_run, :current_level => @first_game_current_level
+          GamePassing.create! :team => @team, :game => @second_game, :game_run => @second_game.current_run, :current_level => @second_game_current_level
         end
 
         it "should return correct current level of first game" do

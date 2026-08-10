@@ -14,7 +14,7 @@
 <% zone_reference = (@game.starts_at || Time.current).in_time_zone(Time.zone) %>
 <p><em><%= t("game_passings.show_results.times_in_zone", :zone => zone_reference.formatted_offset) %></em></p>
 
-<% game_passings = GamePassing.of_game(@game) %>
+<% game_passings = @game.current_run.passings %>
 <%# The penalty columns appear only when some team actually accrued one, so a
     game with no quiz levels shows exactly the table it always did rather than
     two permanently empty columns. %>

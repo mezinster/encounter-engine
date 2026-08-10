@@ -18,17 +18,17 @@ describe Game, '#finished_teams' do
 
       describe "when there are teams which still play games" do
         before :each do
-          3.times { GamePassing.create! :game => @game, :team => create_team, :current_level => @game.levels.second }
-          3.times { GamePassing.create! :game => @another_game, :team => create_team, :current_level => @another_game.levels.second }
+          3.times { GamePassing.create! :game => @game, :game_run => @game.current_run, :team => create_team, :current_level => @game.levels.second }
+          3.times { GamePassing.create! :game => @another_game, :game_run => @another_game.current_run, :team => create_team, :current_level => @another_game.levels.second }
         end
 
         describe "when there are teams which finished games" do
           before :each do
             first_team = create_team
-            GamePassing.create!(:game => @game, :team => first_team, :finished_at => Time.now)
+            GamePassing.create!(:game => @game, :game_run => @game.current_run, :team => first_team, :finished_at => Time.now)
 
             second_team = create_team
-            GamePassing.create!(:game => @another_game, :team => second_team, :finished_at => Time.now)
+            GamePassing.create!(:game => @another_game, :game_run => @another_game.current_run, :team => second_team, :finished_at => Time.now)
 
             @finished_teams = [first_team]
           end
@@ -36,8 +36,8 @@ describe Game, '#finished_teams' do
           describe "when there are even teams which finished both games" do
             before :each do
               super_team = create_team
-              GamePassing.create!(:game => @game, :team => super_team, :finished_at => Time.now)
-              GamePassing.create!(:game => @another_game, :team => super_team, :finished_at => Time.now)
+              GamePassing.create!(:game => @game, :game_run => @game.current_run, :team => super_team, :finished_at => Time.now)
+              GamePassing.create!(:game => @another_game, :game_run => @another_game.current_run, :team => super_team, :finished_at => Time.now)
 
               @finished_teams << super_team
             end

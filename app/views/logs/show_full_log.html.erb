@@ -21,7 +21,7 @@
         <% @teams.each do |team| %>
         <td>
           <%= team.name %>
-          <%# @logs is Log.of_game(@game) (LogsController#show_full_log). This used
+          <%# @logs is Log.of_run(@game.current_run) (LogsController#show_full_log). This used
               to re-query with Log.of_team(team).of_level(level), and because
               logs.team/logs.level are name strings rather than foreign keys
               (db/schema.rb), that matched the named team's submissions at the

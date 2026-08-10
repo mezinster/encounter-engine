@@ -62,7 +62,7 @@ class GamePassingsController < ApplicationController
   end
 
   def index
-    @game_passings = GamePassing.of_game(@game)
+    @game_passings = @game.current_run.passings
     # For the move control on each row. Loaded once here rather than per row.
     @levels = Level.of_game(@game).order(:position)
   end
@@ -313,7 +313,7 @@ class GamePassingsController < ApplicationController
   # /play/:game_id for any started game, including one the author had
   # explicitly rejected.
   def find_or_create_game_passing
-    @game_passing = GamePassing.of(@team, @game)
+    @game_passing = @game.current_run.passing_for(@team)
     return @game_passing if @game_passing
 
     unless may_start_passing?
@@ -321,6 +321,7 @@ class GamePassingsController < ApplicationController
     end
 
     @game_passing = GamePassing.create!(team: @team, game: @game,
+                                        game_run: @game.current_run,
                                         current_level: @game.levels.first)
   end
 
@@ -357,7 +358,10 @@ class GamePassingsController < ApplicationController
     return unless @game_passing.current_level&.id
 
     level = Level.find(@game_passing.current_level.id)
-    Log.create!(game_id: @game.id,
+    # game_run_id from the PASSING, not from @game.current_run: the passing is
+    # what this answer actually belongs to, and in phase 3 a team's passing may
+    # be in a run that is no longer the current one.
+    Log.create!(game_id: @game.id, game_run_id: @game_passing.game_run_id,
                 level: level.name, level_id: level.id,
                 team: @team.name,  team_id: @team.id,
                 time: Time.now, answer: @answer)

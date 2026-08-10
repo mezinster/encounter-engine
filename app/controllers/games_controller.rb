@@ -87,7 +87,7 @@ class GamesController < ApplicationController
     end
 
     @game.finish_game!
-    GamePassing.of_game(@game).each(&:end!)
+    @game.current_run.passings.each(&:end!)
     record_admin_action("end_game", @game) if acting_as_operator?(@game)
     redirect_to dashboard_path
   end
@@ -213,8 +213,17 @@ class GamesController < ApplicationController
       redirect_to @game, :alert => @game.errors.full_messages.to_sentence and return
     end
 
-    GamePassing.of_game(@game).delete_all
-    Log.of_game(@game).delete_all
+    # Scoped to the run, and this one matters more than its size suggests: it
+    # deletes player history, and in phase 3 a test run must not erase a real
+    # run's results.
+    #
+    # A RELATION, not the has_many proxy. GameRun#passings carries no
+    # dependent: option, and delete_all on such a proxy NULLIFIES the foreign
+    # key instead of deleting rows -- so `current_run.passings.delete_all`
+    # would leave every passing in place with game_run_id set to NULL, which
+    # looks identical to a successful wipe from any run-scoped count.
+    GamePassing.where(:game_run_id => @game.current_run.id).delete_all
+    Log.of_run(@game.current_run).delete_all
 
     record_admin_action("finish_test", @game) if acting_as_operator?(@game)
     redirect_to @game

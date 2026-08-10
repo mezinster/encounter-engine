@@ -1,0 +1,46 @@
+# github-actions only, deliberately.
+#
+# The bundler ecosystem is NOT enabled here and should not be added casually:
+# features/**/*.feature is a frozen acceptance contract (see CLAUDE.md), and a
+# stream of automated gem bumps against it is a different risk class from
+# bumping a CI action. If gem updates are ever wanted, that is its own decision
+# with its own review discipline.
+#
+# What this fixes: on 2026-08-10 every pinned action was found between one and
+# three majors behind, with each deploy annotating "Node.js 20 is deprecated".
+# Nothing had been watching. This is the thing that watches.
+version: 2
+
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+
+    # Two groups, split by BLAST RADIUS rather than by tidiness, because the
+    # two carry different merge rules.
+    #
+    # The problem being worked around: deploy.yml and database.yml are
+    # workflow_dispatch-only, so nothing in CI ever runs them. A bump to
+    # azure/login or ssh-agent therefore goes all-green while proving nothing
+    # about deployment -- which is worse than no signal, because green reads as
+    # safe. Splitting the groups makes the PR title say which kind it is.
+    #
+    # actions/checkout and the docker/* actions appear in BOTH the CI and the
+    # deploy workflows. Dependabot groups by dependency, not by file, so they
+    # necessarily land in the deploy group: the stricter rule has to win, or a
+    # deploy-affecting change could be merged under the lax one.
+    groups:
+      deploy-path:
+        patterns:
+          - "actions/checkout"
+          - "ruby/setup-ruby"
+          - "docker/*"
+          - "webfactory/ssh-agent"
+          - "azure/login"
+      ci-only:
+        patterns:
+          - "*"

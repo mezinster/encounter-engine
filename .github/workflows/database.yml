@@ -52,10 +52,14 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    steps:
-      - uses: actions/checkout@v7
 
-      - uses: webfactory/ssh-agent@v0.10.0
+    # SHA-pinned rather than tag-pinned, for the reason spelled out at the top
+    # of deploy.yml's steps: this workflow holds the SSH key and reaches the
+    # database host, and a mutable tag can be repointed under it.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -71,7 +75,7 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       - name: Authenticate to Azure
-        uses: azure/login@v3
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

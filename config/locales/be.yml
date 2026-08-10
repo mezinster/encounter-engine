@@ -629,6 +629,8 @@ be:
       full_log: "Лог адказаў"
       finish_testing: "Завяршыць тэставанне"
       times_in_zone: "Час паказаны ў поясе %{zone}"
+      runs_heading: "Забегі:"
+      run_label: "Забег №%{ordinal} — %{date}"
   logs:
     index:
       title: "Індэкс"

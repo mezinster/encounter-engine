@@ -610,6 +610,8 @@ en:
       full_log: "Answer log"
       finish_testing: "Finish testing"
       times_in_zone: "Times shown in %{zone}"
+      runs_heading: "Runs:"
+      run_label: "Run №%{ordinal} — %{date}"
   logs:
     index:
       title: "Index"

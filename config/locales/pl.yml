@@ -642,6 +642,8 @@ pl:
       full_log: "Dziennik odpowiedzi"
       finish_testing: "Zakończ testowanie"
       times_in_zone: "Czas podano w strefie %{zone}"
+      runs_heading: "Biegi:"
+      run_label: "Bieg nr %{ordinal} — %{date}"
   logs:
     index:
       title: "Indeks"

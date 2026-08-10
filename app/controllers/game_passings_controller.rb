@@ -26,6 +26,12 @@ class GamePassingsController < ApplicationController
   # end_game. Pinned by
   # spec/requests/game_registration_enforcement_spec.rb ("creates no passing
   # when an accepted team plays before the game starts").
+  # Before ensure_game_is_started, deliberately: that guard has to know WHICH
+  # run is being looked at. Opening a run gives the game a future start date,
+  # and without this the results page of an already-finished run would be
+  # refused as "the game has not started yet" -- the one thing this whole
+  # programme exists to keep readable.
+  before_action :find_run, only: [:show_results]
   before_action :ensure_game_is_started
   before_action :ensure_team_captain, only: [:exit_game]
   before_action :ensure_game_not_finished_by_author, except: [:index, :show_results]
@@ -52,6 +58,7 @@ class GamePassingsController < ApplicationController
   # #post_answer, so a team that has NOT finished is unaffected.
   def show_current_level
     if @game_passing.finished?
+      @run ||= @game.current_run
       render :show_results
       return
     end
@@ -87,6 +94,7 @@ class GamePassingsController < ApplicationController
 
   def post_answer
     if @game_passing.finished?
+      @run ||= @game.current_run
       render :show_results
       return
     end
@@ -120,6 +128,7 @@ class GamePassingsController < ApplicationController
     @answer_was_correct = @game_passing.check_answer!(@answer)
 
     if @game_passing.finished?
+      @run ||= @game.current_run
       render :show_results
     else
       # check_answer! may have advanced current_level (pass_level!), so the
@@ -135,6 +144,15 @@ class GamePassingsController < ApplicationController
 
   def exit_game
     @game_passing.exit!
+    # These renders reach show_results.html.erb WITHOUT going through
+    # #show_results, so find_run never ran for them. The current run is right
+    # here: a team that has just finished or exited is in the run being played,
+    # never an earlier one.
+    #
+    # find_run stays scoped to #show_results deliberately -- widening it would
+    # let ensure_game_is_started judge a PLAY request against an older, started
+    # run, and admit a team into a run that has not opened yet.
+    @run ||= @game.current_run
     render :show_results
   end
 
@@ -228,6 +246,7 @@ class GamePassingsController < ApplicationController
     @answer_was_correct = results.any? && results.all?
 
     if @game_passing.finished?
+      @run ||= @game.current_run
       render :show_results
     else
       # answer_options! may have advanced current_level, so preload after it --
@@ -255,6 +274,29 @@ class GamePassingsController < ApplicationController
   # different, separately-loaded Game object and does not cover this one.
   def find_game
     @game = Game.includes(:content_translations).find(params[:game_id])
+  end
+
+  # The ORDINAL, not the id: stable, human-readable, and meaningful in a URL a
+  # player might share. Absent, unknown or malformed falls back to the current
+  # run rather than 404ing -- a stale bookmark should show the current
+  # standings, not an error.
+  def find_run
+    @run = @game.runs.find_by(:ordinal => params[:run].to_i) || latest_started_run
+  end
+
+  # The latest run that has actually STARTED, not simply the current one.
+  #
+  # Opening a run gives a game a future start date, so defaulting to the
+  # current run would answer "the game has not started yet" the moment an
+  # operator schedules a rerun -- hiding the standings of the run that just
+  # finished, from the page whose whole job is to show them.
+  #
+  # Falls back to the current run when none has started, which is what a game
+  # awaiting its first run needs; the started-run guard then refuses, exactly
+  # as it did before any of this existed.
+  def latest_started_run
+    @game.runs.to_a.reverse.detect { |run| run.starts_at.present? && Time.now > run.starts_at } ||
+      @game.current_run
   end
 
   def find_team
@@ -369,7 +411,20 @@ class GamePassingsController < ApplicationController
 
   def ensure_game_is_started
     return if @game.is_testing?
-    raise Authentication::Unauthorized, t("game.not_started") unless @game.started?
+    raise Authentication::Unauthorized, t("game.not_started") unless viewing_a_started_run?
+  end
+
+  # Game#started? asks about the CURRENT run. That is right for every action
+  # that plays the game, and wrong for show_results once a second run exists:
+  # run 2 has not started, but run 1 finished months ago and its standings must
+  # stay readable.
+  #
+  # The draft check is kept from Game#started? -- an unpublished game has not
+  # begun whatever the clock says (see the comment there).
+  def viewing_a_started_run?
+    return @game.started? if @run.nil?
+
+    !@game.draft? && @run.starts_at.present? && Time.now > @run.starts_at
   end
 
   def ensure_not_author_of_the_game

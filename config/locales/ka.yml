@@ -648,6 +648,8 @@ ka:
       full_log: "პასუხების ლოგი"
       finish_testing: "ტესტირების დასრულება"
       times_in_zone: "დრო ნაჩვენებია სარტყელში %{zone}"
+      runs_heading: "გარბენები:"
+      run_label: "გარბენი №%{ordinal} — %{date}"
   logs:
     index:
       title: "ინდექსი"

@@ -633,6 +633,8 @@ uk:
       full_log: "Лог відповідей"
       finish_testing: "Завершити тестування"
       times_in_zone: "Час показано в поясі %{zone}"
+      runs_heading: "Забіги:"
+      run_label: "Забіг №%{ordinal} — %{date}"
   logs:
     index:
       title: "Індекс"

@@ -14,7 +14,25 @@
 <% zone_reference = (@game.starts_at || Time.current).in_time_zone(Time.zone) %>
 <p><em><%= t("game_passings.show_results.times_in_zone", :zone => zone_reference.formatted_offset) %></em></p>
 
-<% game_passings = @game.current_run.passings %>
+<%# Nothing at all for a game with one run: that is every game in production
+    today, and several frozen scenarios assert on this page. %>
+<% if @game.runs.size > 1 %>
+  <p>
+    <strong><%= t("game_passings.show_results.runs_heading") %></strong>
+    <% @game.runs.each do |run| %>
+      <% label = t("game_passings.show_results.run_label",
+                   :ordinal => run.ordinal,
+                   :date => run.starts_at ? l(run.starts_at.to_date, :format => :long) : "—") %>
+      <% if run == @run %>
+        <strong><%= label %></strong>
+      <% else %>
+        <%= link_to label, game_passings_show_results_path(:game_id => @game.id, :run => run.ordinal) %>
+      <% end %>
+    <% end %>
+  </p>
+<% end %>
+
+<% game_passings = @run.passings %>
 <%# The penalty columns appear only when some team actually accrued one, so a
     game with no quiz levels shows exactly the table it always did rather than
     two permanently empty columns. %>
@@ -36,7 +54,7 @@
   <tbody>
     <% game_passings.finished.each do |game_passing| %>
       <tr>
-        <td data-label="<%= t("game_passings.show_results.place") %>"><%= @game.place_of(game_passing.team) %></td>
+        <td data-label="<%= t("game_passings.show_results.place") %>"><%= @run.place_of(game_passing.team) %></td>
         <td data-label="<%= t("game_passings.show_results.team") %>"><%= game_passing.team.name %></td>
         <td data-label="<%= t("game_passings.show_results.finish_time") %>">
           <% if game_passing.exited? %>

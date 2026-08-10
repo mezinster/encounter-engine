@@ -656,6 +656,8 @@ tr:
       full_log: "Cevap günlüğü"
       finish_testing: "Testi bitir"
       times_in_zone: "Saatler %{zone} saat diliminde gösterilmiştir"
+      runs_heading: "Koşular:"
+      run_label: "%{ordinal}. koşu — %{date}"
   logs:
     index:
       title: "Dizin"

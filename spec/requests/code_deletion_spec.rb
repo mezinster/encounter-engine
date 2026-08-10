@@ -40,7 +40,7 @@ describe "deleting a code from a level", type: :request do
   # un-answers it for every team that had already found it.
   it "refuses once the game has started" do
     extra = add_code("второй")
-    game.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
 
     expect { delete delete_game_level_question_path(game, level, extra) }
       .not_to change { level.reload.questions.count }
@@ -161,7 +161,7 @@ describe "the level page's code controls", type: :view do
   it "hides the delete links once the game has started" do
     level = create_level(:game => game)
     q = Question.new(:correct_answer => "второй"); q.level = level; q.save!
-    game.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
     assign(:level, level.reload)
 
     render :template => "levels/show"

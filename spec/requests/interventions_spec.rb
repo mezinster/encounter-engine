@@ -6,7 +6,7 @@ describe "live-game interventions", type: :request do
   let(:stranger)   { create_user }
   let(:superadmin) { u = create_user; u.update!(:is_superadmin => true); u }
 
-  let(:game)    { g = create_game(:author => author); g.update_column(:starts_at, 1.hour.ago); g }
+  let(:game)    { g = create_game(:author => author); set_game_schedule!(g, :starts_at => 1.hour.ago); g }
   let(:level)   { create_level(:game => game) }
   let(:passing) { create_game_passing(:level => level) }
 
@@ -67,7 +67,7 @@ describe "live-game interventions", type: :request do
     end
 
     it "refuses a game the author has already finished" do
-      game.update_column(:author_finished_at, Time.now)
+      set_game_schedule!(game, :author_finished_at => Time.now)
       sign_in(author)
 
       post pause_game_path(game)
@@ -80,7 +80,7 @@ describe "live-game interventions", type: :request do
     # condition making this game not-live.
     it "refuses a draft game" do
       draft = create_game(:author => author, :is_draft => true)
-      draft.update_column(:starts_at, 1.hour.ago)
+      set_game_schedule!(draft, :starts_at => 1.hour.ago)
       sign_in(author)
 
       post pause_game_path(draft)
@@ -92,7 +92,7 @@ describe "live-game interventions", type: :request do
     # ensure_game_is_live's `!@game.withdrawn?` clause.
     it "refuses a withdrawn game" do
       withdrawn = create_game(:author => author)
-      withdrawn.update_column(:starts_at, 1.hour.ago)
+      set_game_schedule!(withdrawn, :starts_at => 1.hour.ago)
       withdrawn.update_column(:withdrawn_at, Time.now)
       sign_in(author)
 

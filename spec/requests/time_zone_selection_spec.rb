@@ -17,7 +17,7 @@ describe "the viewer's timezone", type: :request do
   # An absolute instant, so the assertions below are about rendering and not
   # about how the fixture's string was parsed. 2099-01-01 12:00 UTC is 13:00 in
   # Berlin (CET, +1 in January) and 16:00 in Tbilisi (+4).
-  before { game.update_column(:starts_at, Time.utc(2099, 1, 1, 12, 0, 0)) }
+  before { set_game_schedule!(game, :starts_at => Time.utc(2099, 1, 1, 12, 0, 0)) }
 
   # Belt and braces alongside around_action's own restore: whatever a test
   # leaves Time.zone as, the next file that runs must not inherit it.

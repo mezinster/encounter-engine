@@ -31,7 +31,7 @@ describe "paused hint seeding", type: :request do
     # request -- same technique spec/models/game/pausing_spec.rb uses, and
     # for the same reason: a live game fails its own future-start validation,
     # so this has to go through update_column rather than update!.
-    game.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
 
     level = create_level(:game => game)
     create_hint(:level => level, :delay => 20 * 60) # 20-minute hint, still upcoming
@@ -75,7 +75,7 @@ describe "paused hint seeding", type: :request do
   it "answers the tip poll with a null hint_text, not a 500, when paused before any hint has shown" do
     author = create_user
     game = create_game(:author => author)
-    game.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
 
     level = create_level(:game => game)
     create_hint(:level => level, :delay => 20 * 60) # 20-minute hint, still upcoming

@@ -26,7 +26,7 @@ class GameRun < ApplicationRecord
   # class, and each of those independently defeats Rails' automatic inverse
   # detection. Without it an autobuilt run on an unsaved game cannot see its
   # parent, and the presence validation below fails on every new game.
-  belongs_to :game, :optional => true
+  belongs_to :game, :optional => true, :inverse_of => :runs
 
   validates :game, presence: true
   validates :ordinal, presence: true,

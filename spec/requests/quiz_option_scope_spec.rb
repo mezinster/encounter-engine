@@ -8,7 +8,7 @@ describe "quiz option submission scoping", type: :request do
   let(:author)   { create_user }
   let(:game) do
     g = create_game(:author => author, :is_draft => false)
-    g.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(g, :starts_at => 1.hour.ago)
     g
   end
   let(:level)    { create_quiz_level(:game => game) }

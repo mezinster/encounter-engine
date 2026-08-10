@@ -3,7 +3,7 @@ require "rails_helper"
 describe "the games listing", type: :request do
   def running_game(name, options = {})
     game = create_game({ :is_draft => false, :name => name, :max_team_number => 20 }.merge(options))
-    game.update_column(:starts_at, 2.hours.ago)
+    set_game_schedule!(game, :starts_at => 2.hours.ago)
     game
   end
 
@@ -59,7 +59,7 @@ describe "the games listing", type: :request do
     game.pause!
     # finish_game! never clears paused_at, and a running game fails its own
     # validations, so this is update_column, not finish_game!/update!.
-    game.update_column(:author_finished_at, Time.now)
+    set_game_schedule!(game, :author_finished_at => Time.now)
 
     get games_path
 
@@ -69,7 +69,7 @@ describe "the games listing", type: :request do
 
   it "shows a finished game's end time and how long it ran" do
     game = running_game("Всё")
-    game.update_column(:author_finished_at, game.starts_at + 3725)
+    set_game_schedule!(game, :author_finished_at => game.starts_at + 3725)
 
     get games_path
 
@@ -88,8 +88,8 @@ describe "the games listing", type: :request do
   it "shows no duration when the author ends a game before its scheduled start" do
     game = create_game(:is_draft => false, :name => "Завершили раньше начала", :max_team_number => 20)
     starts_at = 1.day.from_now
-    game.update_column(:starts_at, starts_at)
-    game.update_column(:author_finished_at, starts_at - 7260) # 2h1m before the scheduled start
+    # 2h1m before the scheduled start
+    set_game_schedule!(game, :starts_at => starts_at, :author_finished_at => starts_at - 7260)
 
     get games_path
 
@@ -117,7 +117,7 @@ describe "the games listing", type: :request do
     create_game_passing(:level => level, :game => game) # mid-level when the author ended it
     create_game_passing(:level => level, :game => game, :finished_at => Time.now) # finished normally
     create_game_passing(:level => level, :game => game, :status => "exited", :finished_at => Time.now)
-    game.update_column(:author_finished_at, Time.now)
+    set_game_schedule!(game, :author_finished_at => Time.now)
 
     get games_path
 
@@ -150,7 +150,7 @@ describe "the games listing", type: :request do
 
   it "shows no duration for a game with no start time" do
     game = create_game(:is_draft => false, :name => "Без даты")
-    game.update_column(:starts_at, nil)
+    set_game_schedule!(game, :starts_at => nil)
 
     get games_path
 
@@ -166,8 +166,7 @@ describe "the games listing", type: :request do
   # /games for every visitor. This reaches that line.
   it "does not 500 for a finished game with no start time on record" do
     game = create_game(:is_draft => false, :name => "Завершена без даты начала", :max_team_number => 20)
-    game.update_column(:starts_at, nil)
-    game.update_column(:author_finished_at, Time.now)
+    set_game_schedule!(game, :starts_at => nil, :author_finished_at => Time.now)
 
     get games_path
 

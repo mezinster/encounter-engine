@@ -120,8 +120,7 @@ RSpec.describe "games/_list", type: :view do
   # render somewhere in production.
   it "shows no end time for a game that was finished and later withdrawn" do
     game = create_game
-    game.update_column(:starts_at, 2.hours.ago)
-    game.update_column(:author_finished_at, 1.hour.ago)
+    set_game_schedule!(game, :starts_at => 2.hours.ago, :author_finished_at => 1.hour.ago)
     game.withdraw!
 
     view.define_singleton_method(:logged_in?) { false }

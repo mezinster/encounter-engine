@@ -2,7 +2,7 @@ require "rails_helper"
 
 describe "playing a quiz level", type: :request do
   let(:author)   { create_user }
-  let(:game)     { g = create_game(:author => author, :is_draft => false); g.update_column(:starts_at, 1.hour.ago); g }
+  let(:game)     { g = create_game(:author => author, :is_draft => false); set_game_schedule!(g, :starts_at => 1.hour.ago); g }
   # A pure quiz level -- create_level always builds a code question via
   # correct_answer, which would make this a MIXED level instead (see finding
   # 2 of the whole-branch review; the mixed shape gets its own describe block
@@ -253,7 +253,7 @@ end
 # that has nothing to do with the bug under test.
 describe "a quiz level whose questions are answered one at a time", type: :request do
   let(:author)  { create_user }
-  let(:game)    { g = create_game(:author => author, :is_draft => false); g.update_column(:starts_at, 1.hour.ago); g }
+  let(:game)    { g = create_game(:author => author, :is_draft => false); set_game_schedule!(g, :starts_at => 1.hour.ago); g }
   let(:level)   { create_quiz_level(:game => game) }
   let(:first)   { create_question(:level => level) }
   let(:second)  { create_question(:level => level) }
@@ -315,7 +315,7 @@ end
 # blank row.
 describe "submitting a typed-code level with an empty answer", type: :request do
   let(:author)  { create_user }
-  let(:game)    { g = create_game(:author => author, :is_draft => false); g.update_column(:starts_at, 1.hour.ago); g }
+  let(:game)    { g = create_game(:author => author, :is_draft => false); set_game_schedule!(g, :starts_at => 1.hour.ago); g }
   let(:level)   { create_level(:game => game, :correct_answer => "правильно") }
   let(:passing) { create_game_passing(:level => level) }
   let(:player) do

@@ -15,6 +15,22 @@ class Game < ApplicationRecord
 
   belongs_to :author, class_name: "User", optional: true
   has_many :levels, -> {  order('position') }, :dependent => :destroy
+
+  # A Game is CONTENT; a GameRun is one running of it. The schedule lives on
+  # the run from phase 1 onwards -- see
+  # docs/superpowers/specs/2026-08-10-game-runs-phase-1-design.md.
+  #
+  # autosave: true is load-bearing, not decoration. has_many saves NEW children
+  # on parent save but leaves CHANGED persisted ones alone, so without it
+  # `game.starts_at = x; game.save` would silently not persist -- and that is
+  # exactly the path the edit form and several frozen scenarios drive.
+  #
+  # inverse_of is required on both sides: the scope below and the name mismatch
+  # (:runs -> GameRun) each independently defeat Rails' automatic inverse
+  # detection, and GameRun validates the presence of its game.
+  has_many :runs, -> { order(:ordinal) },
+           :class_name => "GameRun", :inverse_of => :game,
+           :autosave => true, :dependent => :destroy
   has_many :logs, -> { order('time') }
   has_many :game_entries, :class_name => "GameEntry", :dependent => :destroy
   has_many :game_passings, :class_name => "GamePassing"
@@ -54,6 +70,24 @@ class Game < ApplicationRecord
 
   def editing_locked?
     self.editing_locked_at.present?
+  end
+
+  # The run everything about the schedule reads and writes. Autobuilds rather
+  # than returning nil because 70 places across spec/ and features/ construct
+  # games as Game.new(:starts_at => ...) before any run could exist, and the
+  # delegated writer has to land somewhere.
+  #
+  # runs.to_a.last, NOT runs.last, and the difference is a bug rather than a
+  # style preference: runs.last on an unloaded association issues
+  # SELECT ... ORDER BY ordinal DESC LIMIT 1 and cannot see a record that has
+  # only been built in memory, so the second call would build a SECOND run and
+  # autosave would persist both. to_a calls load_target, which merges unsaved
+  # new records into the loaded target.
+  #
+  # "Current" is the highest ordinal, not "the one that is not finished" --
+  # deterministic, and still correct in phase 3 when a second run exists.
+  def current_run
+    runs.to_a.last || runs.build(:ordinal => 1)
   end
 
   def paused?

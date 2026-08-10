@@ -9,7 +9,7 @@ require "rails_helper"
 describe "the home page games list", type: :request do
   it "shows a visible game's name without following any link" do
     game = create_game(:is_draft => false, :name => "Открытая игра", :max_team_number => 20)
-    game.update_column(:starts_at, 2.hours.ago)
+    set_game_schedule!(game, :starts_at => 2.hours.ago)
 
     get root_path
 
@@ -27,7 +27,7 @@ describe "the home page games list", type: :request do
 
   it "does not show a withdrawn game" do
     game = create_game(:is_draft => false, :name => "Отозванная игра", :max_team_number => 20)
-    game.update_column(:starts_at, 2.hours.ago)
+    set_game_schedule!(game, :starts_at => 2.hours.ago)
     game.withdraw!
 
     get root_path

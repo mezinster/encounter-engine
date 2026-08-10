@@ -46,7 +46,7 @@ describe "the admin console's team counts", type: :request do
   it "also reports teams actually playing once the game is running" do
     game = create_game(:author => author, :is_draft => false, :max_team_number => 20)
     register(game)
-    game.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
     create_game_passing(:level => create_level(:game => game), :game => game)
 
     get admin_games_path

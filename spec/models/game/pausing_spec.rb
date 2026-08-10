@@ -4,7 +4,7 @@ describe Game, "pausing" do
   # starts_at in the past is what makes this a LIVE game -- and also what makes
   # it fail its own validations (game_starts_in_the_future), which is why
   # pause!/resume! must use update_column.
-  let(:game)    { g = create_game; g.update_column(:starts_at, 1.hour.ago); g }
+  let(:game)    { g = create_game; set_game_schedule!(g, :starts_at => 1.hour.ago); g }
   let(:level)   { create_level(:game => game) }
   let(:passing) { create_game_passing(:level => level) }
 

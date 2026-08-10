@@ -2,7 +2,7 @@ require "rails_helper"
 
 describe "playing a paused game", type: :request do
   let(:author)  { create_user }
-  let(:game)    { g = create_game(:author => author); g.update_column(:starts_at, 1.hour.ago); g }
+  let(:game)    { g = create_game(:author => author); set_game_schedule!(g, :starts_at => 1.hour.ago); g }
   let(:level)   { create_level(:game => game, :correct_answer => "правильно") }
   let(:passing) { create_game_passing(:level => level) }
   # create_game_passing's default team has no captain (fixtures_helper.rb's

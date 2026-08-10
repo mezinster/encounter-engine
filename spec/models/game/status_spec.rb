@@ -6,7 +6,7 @@ describe Game, "#status" do
   # live game row goes through update_column.
   def running_game
     game = create_game(:is_draft => false)
-    game.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
     game
   end
 
@@ -16,7 +16,7 @@ describe Game, "#status" do
 
   it "is :scheduled for a published game with no start time at all" do
     game = create_game(:is_draft => false)
-    game.update_column(:starts_at, nil)
+    set_game_schedule!(game, :starts_at => nil)
 
     expect(game.status).to eq(:scheduled)
   end
@@ -31,7 +31,7 @@ describe Game, "#status" do
 
   it "is :finished once the author has ended it" do
     game = running_game
-    game.update_column(:author_finished_at, Time.now)
+    set_game_schedule!(game, :author_finished_at => Time.now)
 
     expect(game.status).to eq(:finished)
   end
@@ -48,7 +48,7 @@ describe Game, "#status" do
   # :draft respectively.
   it "reports :withdrawn for a game that is both withdrawn and finished" do
     game = running_game
-    game.update_column(:author_finished_at, Time.now)
+    set_game_schedule!(game, :author_finished_at => Time.now)
     game.withdraw!
 
     expect(game.status).to eq(:withdrawn)
@@ -56,7 +56,7 @@ describe Game, "#status" do
 
   it "reports :draft for a draft whose start time has passed" do
     game = create_game(:is_draft => true)
-    game.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
 
     expect(game.status).to eq(:draft)
   end
@@ -99,7 +99,7 @@ describe Game, "#status" do
     create_game(:is_draft => false)
     running_game
     finished = running_game
-    finished.update_column(:author_finished_at, Time.now)
+    set_game_schedule!(finished, :author_finished_at => Time.now)
     create_game(:is_draft => false).withdraw!
     create_game(:is_draft => true).withdraw!
 

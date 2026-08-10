@@ -76,6 +76,7 @@ uk:
           restore: "Опублікував"
           unfinish: "Відновив гру"
           hand_over_authorship: "Передав авторство гри"
+          set_author: "Змінив автора гри"
           set_captain: "Призначив капітана команди"
           delete_team: "Видалив команду"
           move_user: "Перевів гравця до іншої команди"
@@ -159,6 +160,10 @@ uk:
         unlock: "Розморозити"
         delete: "Видалити"
         delete_confirm: "Видалити гру «%{name}» з усіма завданнями? Це незворотно."
+        set_author: "Змінити автора"
+        author_nickname: "Нік автора"
+      author_set: "Автора гри змінено: %{nickname}"
+      no_such_user: "Гравця з таким ніком не знайдено"
     teams:
       captain_set: "Капітаном команди призначено %{nickname}"
       not_a_member: "Цей користувач не входить до складу команди"

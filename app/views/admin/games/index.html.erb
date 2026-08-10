@@ -64,6 +64,17 @@
             <%= button_to t("admin.games.index.lock"), lock_game_path(game), :method => :post, :class => "btn" %>
           <% end %>
         </div>
+        <%# Inline per row, exactly as admin/teams/index does for set_captain.
+            A text field rather than a select: the target is any user on the
+            instance, not a bounded association, so a dropdown would list the
+            entire membership on every row. %>
+        <div class="game-control">
+          <%= form_with url: set_author_admin_game_path(game), method: :post do %>
+            <%= label_tag "nickname_#{game.id}", t("admin.games.index.author_nickname") %>
+            <%= text_field_tag :nickname, nil, :id => "nickname_#{game.id}", :autocomplete => "off" %>
+            <%= submit_tag t("admin.games.index.set_author"), :class => "btn" %>
+          <% end %>
+        </div>
         <% if game.deletable? %>
           <div class="game-control">
             <%= button_to t("admin.games.index.delete"), delete_game_path(game), :method => :delete, :class => "btn btn--danger",

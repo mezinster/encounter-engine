@@ -59,6 +59,7 @@ en:
           restore: "Published"
           unfinish: "Resumed the game"
           hand_over_authorship: "Handed over the game’s authorship"
+          set_author: "Changed the game’s author"
           set_captain: "Set the team captain"
           delete_team: "Deleted a team"
           move_user: "Moved a player to another team"
@@ -142,6 +143,10 @@ en:
         unlock: "Unlock"
         delete: "Delete"
         delete_confirm: "Delete the game “%{name}” and all its levels? This cannot be undone."
+        set_author: "Change author"
+        author_nickname: "Author’s nickname"
+      author_set: "Game author changed to %{nickname}"
+      no_such_user: "No player with that nickname"
     teams:
       captain_set: "%{nickname} is now the team captain"
       not_a_member: "That user is not a member of this team"

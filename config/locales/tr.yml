@@ -104,6 +104,7 @@ tr:
           restore: "Yayımladı"
           unfinish: "Oyunu yeniden başlattı"
           hand_over_authorship: "Oyunun yazarlığını devretti"
+          set_author: "Oyunun yazarını değiştirdi"
           set_captain: "Takım kaptanı atadı"
           delete_team: "Takımı sildi"
           move_user: "Oyuncuyu başka takıma taşıdı"
@@ -187,6 +188,10 @@ tr:
         unlock: "Çöz"
         delete: "Sil"
         delete_confirm: "«%{name}» adlı oyun tüm seviyeleriyle birlikte silinsin mi? Bu işlem geri alınamaz."
+        set_author: "Yazarı değiştir"
+        author_nickname: "Yazarın takma adı"
+      author_set: "Oyunun yazarı değiştirildi: %{nickname}"
+      no_such_user: "Bu takma ada sahip bir oyuncu bulunamadı"
     teams:
       captain_set: "Takım kaptanlığına %{nickname} adlı oyuncu atandı"
       not_a_member: "Bu kullanıcı takımda değil"

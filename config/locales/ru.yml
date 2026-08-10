@@ -59,6 +59,7 @@ ru:
           restore: "Опубликовал"
           unfinish: "Возобновил игру"
           hand_over_authorship: "Передал авторство игры"
+          set_author: "Сменил автора игры"
           set_captain: "Назначил капитана команды"
           delete_team: "Удалил команду"
           move_user: "Перевёл игрока в другую команду"
@@ -142,6 +143,10 @@ ru:
         unlock: "Разморозить"
         delete: "Удалить"
         delete_confirm: "Удалить игру «%{name}» со всеми уровнями? Это необратимо."
+        set_author: "Сменить автора"
+        author_nickname: "Ник автора"
+      author_set: "Автор игры изменён: %{nickname}"
+      no_such_user: "Игрок с таким ником не найден"
     teams:
       captain_set: "Капитаном команды назначен %{nickname}"
       not_a_member: "Этот пользователь не состоит в команде"

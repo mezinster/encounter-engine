@@ -20,6 +20,7 @@ Rails.application.routes.draw do
     # act. Mirrors admin teams' set_captain.
     resources :games, only: [ :index ] do
       post "set_author", on: :member
+      post "open_run",   on: :member
     end
     resources :teams, only: [ :index ] do
       post "set_captain", on: :member

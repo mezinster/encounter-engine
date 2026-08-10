@@ -51,6 +51,25 @@
   margin-left: auto;
 }
 
+/* Phone-width header: three rows down to two.
+   The header carries four things -- hamburger 44, home link 140, timestamp
+   144, chrome group 200 -- and at 375px the first three come to 352 against
+   343 of usable width. Nine pixels short, so the timestamp took a row of its
+   own and the bar stood 163px tall, 29% of a 375x553 screen.
+   Tightening the gap and the padding buys 16 of those pixels and a smaller
+   timestamp buys 18 more, which clears 375 and 360 with room over: measured
+   163px -> 121px, and two rows from 360px up.
+   320px still wraps to three (151px) and cannot not: the first line alone
+   would need the timestamp down to about 96px, which is unreadable. That is
+   an iPhone-5-era width and the bar is at least 12px shorter there too.
+   The timestamp's smaller size is scoped to this query rather than applied
+   everywhere -- at desktop widths the whole header is one 69px row and there
+   is nothing to win. */
+@media (max-width: 47.99rem) {
+  .topbar { gap: var(--space-2); padding: var(--space-3); }
+  .topbar-time { font-size: 0.875rem; }
+}
+
 .main {
   padding: var(--space-5) var(--space-4);
   max-width: 72rem;

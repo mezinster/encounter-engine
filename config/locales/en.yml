@@ -150,6 +150,7 @@ en:
         withdrawn: "Withdrawn"
         locked: "editing frozen"
         edit: "Edit"
+        entries_link: "Applications (%{count})"
         withdraw: "Withdraw"
         restore: "Publish"
         unfinish: "Resume"

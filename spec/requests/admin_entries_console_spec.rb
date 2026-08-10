@@ -157,4 +157,56 @@ describe "the operator's entries console", type: :request do
       expect(response.body).not_to include("accept_entry")
     end
   end
+
+  describe "the link on the games console" do
+    it "shows the pending count for the current run" do
+      pending_entry
+      sign_in(operator)
+
+      get admin_games_path
+
+      expect(response.body).to include(admin_game_entries_path(game))
+      expect(response.body).to include(I18n.t("admin.games.index.entries_link", :count => 1))
+    end
+
+    it "counts only the current run's applications" do
+      GameEntry.create!(:game => game, :game_run => game.current_run,
+                        :team => create_team(:captain => create_user), :status => "new")
+      game.open_run!(:starts_at => 2.years.from_now,
+                     :registration_deadline => 23.months.from_now,
+                     :max_team_number => 10)
+      game.reload
+      sign_in(operator)
+
+      get admin_games_path
+
+      expect(response.body).to include(I18n.t("admin.games.index.entries_link", :count => 0))
+    end
+
+    # The console's own history makes this non-negotiable: it shipped with a
+    # per-row COUNT, and Admin::GamesController#index's comment calls that "the
+    # one query pattern a screen that lists *everything* can least afford".
+    # Compares a small fixture against a larger one, so the assertion is about
+    # the SLOPE being flat rather than a magic number.
+    it "keeps the query count flat as the number of games grows" do
+      sign_in(operator)
+
+      def make_games_with_applications(count)
+        count.times do
+          g = create_game(:author => author, :is_draft => false)
+          create_level(:game => g)
+          GameEntry.create!(:game => g, :game_run => g.current_run,
+                            :team => create_team(:captain => create_user), :status => "new")
+        end
+      end
+
+      make_games_with_applications(2)
+      small = count_queries { get admin_games_path }
+
+      make_games_with_applications(6)
+      large = count_queries { get admin_games_path }
+
+      expect(large).to eq(small)
+    end
+  end
 end

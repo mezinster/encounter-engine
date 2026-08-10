@@ -169,6 +169,7 @@ be:
         withdrawn: "Знята з публікацыі"
         locked: "рэдагаванне замарожана"
         edit: "Рэдагаваць"
+        entries_link: "Заяўкі (%{count})"
         withdraw: "Зняць"
         restore: "Апублікаваць"
         unfinish: "Аднавіць"

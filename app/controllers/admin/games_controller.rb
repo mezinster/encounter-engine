@@ -22,6 +22,15 @@ class Admin::GamesController < ApplicationController
     # :runs joins :author and :game_passings here for the same reason -- the
     # view renders a status and a start time per row, and both read the run.
     @games = Game.includes(:author, :game_passings, :runs).order(:created_at => :desc)
+
+    # ONE grouped query for the whole page, not one per row. :runs is already
+    # preloaded above, so current_run costs nothing here -- and the comment on
+    # the includes above records why a per-row count is the one pattern this
+    # screen can least afford.
+    @pending_entry_counts = GameEntry.with_status("new")
+                                     .where(:game_run_id => @games.map { |g| g.current_run.id })
+                                     .group(:game_run_id)
+                                     .count
   end
 
   # No lifecycle refusals, deliberately -- the same exemption the comment on

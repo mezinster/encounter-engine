@@ -167,6 +167,7 @@ uk:
         withdrawn: "Знята з публікації"
         locked: "редагування заморожено"
         edit: "Редагувати"
+        entries_link: "Заявки (%{count})"
         withdraw: "Зняти"
         restore: "Опублікувати"
         unfinish: "Відновити"

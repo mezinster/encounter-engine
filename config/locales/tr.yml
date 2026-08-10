@@ -196,6 +196,7 @@ tr:
         withdrawn: "Yayından kaldırıldı"
         locked: "düzenleme donduruldu"
         edit: "Düzenle"
+        entries_link: "Başvurular (%{count})"
         withdraw: "Kaldır"
         restore: "Yayımla"
         unfinish: "Yeniden başlat"

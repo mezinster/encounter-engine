@@ -173,6 +173,7 @@ ka:
         withdrawn: "მოხსნილია გამოქვეყნებიდან"
         locked: "რედაქტირება გაყინულია"
         edit: "რედაქტირება"
+        entries_link: "განაცხადები (%{count})"
         withdraw: "მოხსნა"
         restore: "გამოქვეყნება"
         unfinish: "აღდგენა"

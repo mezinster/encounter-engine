@@ -150,6 +150,7 @@ ru:
         withdrawn: "Снята с публикации"
         locked: "редактирование заморожено"
         edit: "Редактировать"
+        entries_link: "Заявки (%{count})"
         withdraw: "Снять"
         restore: "Опубликовать"
         unfinish: "Возобновить"

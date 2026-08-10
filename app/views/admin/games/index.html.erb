@@ -47,6 +47,13 @@
       <td>
         <div class="game-control">
           <%= link_to t("admin.games.index.edit"), edit_game_path(game), class: "btn" unless game.started? %>
+          <%# The count comes from @pending_entry_counts -- one grouped query
+              for the whole page. A count per row is the one query pattern a
+              screen listing everything can least afford, and this console
+              shipped with that shape once already. %>
+          <%= link_to t("admin.games.index.entries_link",
+                        :count => @pending_entry_counts.fetch(game.current_run.id, 0)),
+                      admin_game_entries_path(game), :class => "btn" %>
           <% if game.withdrawn? %>
             <%= button_to t("admin.games.index.restore"), restore_game_path(game), :method => :post, :class => "btn" %>
           <% else %>

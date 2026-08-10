@@ -119,6 +119,12 @@ tr:
           revoke_superadmin: "Yönetici yetkilerini aldı"
           allow_any_code: "Seviyede herhangi bir koda izin verdi"
           require_all_codes: "Seviyede tüm kodları zorunlu kıldı"
+          update_settings: "Ayarları değiştirdi"
+          pause: "Oyunu duraklattı"
+          resume: "Oyunu sürdürdü"
+          move_team: "Takımı başka bir seviyeye taşıdı"
+          reinstate_team: "Takımı oyuna geri aldı"
+          reset_clock: "Seviyedeki süre sayacını sıfırladı"
     settings:
       title: "Sınırlama ayarları"
       explanation: "Sınırlamalar belirtilen süre içinde tek bir IP adresi için geçerlidir. 0 sınırlamayı kapatır."

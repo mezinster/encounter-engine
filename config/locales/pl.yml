@@ -98,6 +98,12 @@ pl:
           revoke_superadmin: "Odebrał uprawnienia administratora"
           allow_any_code: "Zezwolił na dowolny kod na poziomie"
           require_all_codes: "Wymógł wszystkie kody na poziomie"
+          update_settings: "Zmienił ustawienia"
+          pause: "Wstrzymał grę"
+          resume: "Kontynuował grę"
+          move_team: "Przeniósł drużynę na inny poziom"
+          reinstate_team: "Przywrócił drużynę do gry"
+          reset_clock: "Zresetował odliczanie czasu na poziomie"
     settings:
       title: "Ustawienia limitów"
       explanation: "Limity obowiązują dla jednego adresu IP w podanym okresie. 0 wyłącza limit."

@@ -74,6 +74,12 @@ en:
           revoke_superadmin: "Revoked administrator rights"
           allow_any_code: "Allowed any one code on a level"
           require_all_codes: "Required all codes on a level"
+          update_settings: "Changed the settings"
+          pause: "Paused the game"
+          resume: "Continued the game"
+          move_team: "Moved a team to another level"
+          reinstate_team: "Brought a team back into the game"
+          reset_clock: "Reset the level clock"
     settings:
       title: "Rate limits"
       explanation: "Limits apply per IP address per window. 0 disables the limit."

@@ -83,6 +83,8 @@ ru:
           move_team: "Перевёл команду на другой уровень"
           reinstate_team: "Вернул команду в игру"
           reset_clock: "Сбросил отсчёт времени на уровне"
+          accept_entry: "Принял заявку команды"
+          reject_entry: "Отклонил заявку команды"
     settings:
       title: "Настройки ограничений"
       explanation: "Ограничения действуют на один IP-адрес за указанный период. 0 отключает ограничение."
@@ -122,6 +124,17 @@ ru:
           rejected: "Отклонена"
           recalled: "Отозвана"
           canceled: "Отменена"
+    entries:
+      title: "Заявки на игру «%{game}»"
+      run: "Забег №%{ordinal}"
+      pending: "Ожидают решения"
+      accepted: "Приняты"
+      none: "—"
+      accept: "Принять"
+      reject: "Отклонить"
+      accepted_notice: "Команда принята: %{team}"
+      rejected_notice: "Заявка отклонена: %{team}"
+      back: "К списку игр"
     games:
       index:
         title: "Все игры"

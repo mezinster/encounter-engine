@@ -96,6 +96,18 @@ describe "auditing administrative changes", type: :request do
 
       expect(AdminAction.newest_first.first.action).to eq("set_author")
     end
+
+    it "records accepting a team's application" do
+      applicant = create_team(:captain => create_user)
+      entry = GameEntry.create!(:game => game, :game_run => game.current_run,
+                                :team => applicant, :status => "new")
+
+      expect do
+        post accept_admin_game_entry_path(game, entry)
+      end.to change { AdminAction.count }.by(1)
+
+      expect(AdminAction.newest_first.first.action).to eq("accept_entry")
+    end
   end
 
   describe "the inherited actions, performed on someone else's game" do

@@ -152,6 +152,7 @@ RSpec.describe "internationalization" do
       locales.tr
       locales.be
       locales.pl
+      admin.entries.none
     ]
 
     shared_keys = en.keys & ru.keys

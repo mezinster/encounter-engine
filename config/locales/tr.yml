@@ -128,6 +128,8 @@ tr:
           move_team: "Takımı başka bir seviyeye taşıdı"
           reinstate_team: "Takımı oyuna geri aldı"
           reset_clock: "Seviyedeki süre sayacını sıfırladı"
+          accept_entry: "Bir takımın başvurusunu kabul etti"
+          reject_entry: "Bir takımın başvurusunu reddetti"
     settings:
       title: "Sınırlama ayarları"
       explanation: "Sınırlamalar belirtilen süre içinde tek bir IP adresi için geçerlidir. 0 sınırlamayı kapatır."
@@ -167,6 +169,18 @@ tr:
           rejected: "Reddedildi"
           recalled: "Geri çekildi"
           canceled: "İptal edildi"
+    # The case suffix goes on a common noun, never on %{team} or %{game}.
+    entries:
+      title: "«%{game}» adlı oyuna başvurular"
+      run: "%{ordinal}. koşu"
+      pending: "Karar bekliyor"
+      accepted: "Kabul edildi"
+      none: "—"
+      accept: "Kabul et"
+      reject: "Reddet"
+      accepted_notice: "Takım kabul edildi: %{team}"
+      rejected_notice: "Başvuru reddedildi: %{team}"
+      back: "Oyun listesine dön"
     games:
       index:
         title: "Tüm oyunlar"

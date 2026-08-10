@@ -1236,7 +1236,31 @@ Add a `hand_over:` block under the top-level `games:` key in all seven files, as
       running: "ავტორობის გადაცემა შეუძლებელია, სანამ თამაში მიმდინარეობს"
 ```
 
-- [ ] **Step 5: Add the action**
+- [ ] **Step 5: Label the new audit action**
+
+`app/views/admin/audit/index.html.erb:34` renders the action name as
+`t("admin.audit.index.action.#{entry.action}", :default => entry.action)`. That `:default` is deliberate — without it an unanticipated action would raise under `raise_on_missing_translations` and 500 the audit log for a superadmin. The cost is that a genuinely **missing key fails nowhere and renders as its own identifier**, which is what commit `5d5fefb` had to go back and fix for six actions. So a new audit action without a label is a silent defect no test catches.
+
+Add `hand_over_authorship:` inside the existing `admin: → audit: → index: → action:` block in all seven files:
+
+```yaml
+# ru.yml
+          hand_over_authorship: "Передал авторство игры"
+# en.yml
+          hand_over_authorship: "Handed over the game’s authorship"
+# uk.yml
+          hand_over_authorship: "Передав авторство гри"
+# be.yml
+          hand_over_authorship: "Перадаў аўтарства гульні"
+# pl.yml
+          hand_over_authorship: "Przekazał autorstwo gry"
+# tr.yml
+          hand_over_authorship: "Oyunun yazarlığını devretti"
+# ka.yml
+          hand_over_authorship: "გადასცა თამაშის ავტორობა"
+```
+
+- [ ] **Step 6: Add the action**
 
 In `app/controllers/games_controller.rb`, add `:hand_over` to the `find_game` filter list (line 7) and to the `ensure_author` filter list (line 12). **Do not** add it to `ensure_editing_not_locked` — that filter answers with 401, and the design calls for a readable alert instead.
 
@@ -1288,7 +1312,7 @@ Then add the action after `unlock`:
   end
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [ ] **Step 7: Run the tests to verify they pass**
 
 ```bash
 export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
@@ -1297,7 +1321,7 @@ bundle exec rspec spec/requests/game_authorship_spec.rb spec/i18n_spec.rb
 
 Expected: PASS, 0 failures.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add config/routes.rb app/controllers/games_controller.rb config/locales spec/requests/game_authorship_spec.rb
@@ -1732,7 +1756,28 @@ Add `set_author:` and `author_nickname:` inside the existing `admin: → games: 
       no_such_user: "ასეთი მეტსახელით მოთამაშე ვერ მოიძებნა"
 ```
 
-- [ ] **Step 5: Add the action**
+- [ ] **Step 5: Label the new audit action**
+
+Same reasoning as Task 6, Step 5 — `:default => entry.action` means a missing label renders as a raw identifier and no test fails. Add `set_author:` inside `admin: → audit: → index: → action:` in all seven files:
+
+```yaml
+# ru.yml
+          set_author: "Сменил автора игры"
+# en.yml
+          set_author: "Changed the game’s author"
+# uk.yml
+          set_author: "Змінив автора гри"
+# be.yml
+          set_author: "Змяніў аўтара гульні"
+# pl.yml
+          set_author: "Zmienił autora gry"
+# tr.yml
+          set_author: "Oyunun yazarını değiştirdi"
+# ka.yml
+          set_author: "შეცვალა თამაშის ავტორი"
+```
+
+- [ ] **Step 6: Add the action**
 
 Replace `app/controllers/admin/games_controller.rb` with:
 
@@ -1787,7 +1832,7 @@ class Admin::GamesController < ApplicationController
 end
 ```
 
-- [ ] **Step 6: Add the form to the console**
+- [ ] **Step 7: Add the form to the console**
 
 In `app/views/admin/games/index.html.erb`, inside the last `<td>`, after the closing `<% end %>` of the `game.deletable?` block and before `</td>`:
 
@@ -1805,7 +1850,7 @@ In `app/views/admin/games/index.html.erb`, inside the last `<td>`, after the clo
         </div>
 ```
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [ ] **Step 8: Run the tests to verify they pass**
 
 ```bash
 export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
@@ -1814,7 +1859,7 @@ bundle exec rspec spec/requests/admin_game_authorship_spec.rb spec/requests/admi
 
 Expected: PASS, 0 failures.
 
-- [ ] **Step 8: Run both full suites — the plan is complete**
+- [ ] **Step 9: Run both full suites — the plan is complete**
 
 ```bash
 export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
@@ -1827,7 +1872,7 @@ Expected: RSpec 0 failures. Cucumber **232 scenarios (230 passed, 2 undefined), 
 
 **Do not quote a remembered RSpec example count** — it has moved repeatedly and stale copies have been cited as current. Read the number off this run.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 git add config/routes.rb app/controllers/admin/games_controller.rb app/views/admin/games/index.html.erb config/locales spec/requests/admin_game_authorship_spec.rb spec/requests/admin_audit_spec.rb
@@ -1854,5 +1899,7 @@ change that did not happen."
 1. **`update_column` in `Game#transfer_authorship_to!`** — not sloppiness. See the comment on the method and the started-game example in Task 5.
 2. **The lock and running checks live in the action, not in `ensure_editing_not_locked`** — the filter answers 401; the design calls for a readable alert, and the checks must not apply to superadmins.
 3. **`hand_over` redirects to the games list, not the game** — a draft is behind `ensure_author_if_game_is_draft`, so redirecting to a game you just stopped authoring answers a successful transfer with 401.
+
+**One thing no test will catch, so do not skip it.** Both new audit actions need a label under `admin.audit.index.action.*` (Task 6 Step 5, Task 8 Step 5). The audit view passes `:default => entry.action`, so a missing label does not raise — it silently renders the raw identifier in the log. Commit `5d5fefb` had to go back and fix exactly that for six earlier actions.
 
 **If a Cucumber count other than 232/2342 appears, stop.** Do not edit a `.feature` file to make it pass. Three amendments have ever been authorised, each by the repository owner explicitly, and each is recorded in `CLAUDE.md`.

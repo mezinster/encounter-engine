@@ -130,7 +130,7 @@ describe "withdrawal", type: :request do
   describe "on a game that has already started" do
     let(:live) do
       g = create_game(:author => author, :is_draft => false)
-      g.update_column(:starts_at, 1.hour.ago)
+      set_game_schedule!(g, :starts_at => 1.hour.ago)
       g
     end
 

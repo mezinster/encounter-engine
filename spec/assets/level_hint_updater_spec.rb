@@ -56,7 +56,7 @@ end
 # level_hint_updater.js. Setup mirrors spec/requests/play_screen_spec.rb.
 describe "the live hint poller's server-side contract", type: :request do
   let(:author)  { create_user }
-  let(:game)    { g = create_game(:author => author, :is_draft => false); g.update_column(:starts_at, 1.hour.ago); g }
+  let(:game)    { g = create_game(:author => author, :is_draft => false); set_game_schedule!(g, :starts_at => 1.hour.ago); g }
   let(:level)   { create_level(:game => game) }
   let(:passing) { create_game_passing(:level => level) }
   let(:hint_text) { '<img src=x onerror="alert(1)">' }

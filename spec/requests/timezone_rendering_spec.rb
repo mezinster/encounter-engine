@@ -5,8 +5,8 @@ describe "timestamps that carry their zone", type: :request do
   let(:game) { create_game(:author => user, :is_draft => false) }
 
   before do
-    game.update_column(:starts_at, Time.utc(2099, 1, 1, 12, 0, 0))
-    game.update_column(:registration_deadline, Time.utc(2098, 12, 1, 10, 0, 0))
+    set_game_schedule!(game, :starts_at => Time.utc(2099, 1, 1, 12, 0, 0),
+                             :registration_deadline => Time.utc(2098, 12, 1, 10, 0, 0))
     user.update!(:timezone => "Berlin")
     put login_path, :params => { :email => user.email, :password => "1234" }
   end
@@ -56,7 +56,7 @@ describe "the results screen's zone statement", type: :request do
     # game_starts_in_the_future only validates on create -- update_column
     # bypasses validations entirely, same pattern the spec above this one
     # uses to move a game's start into the past.
-    game.update_column(:starts_at, Time.utc(2024, 8, 6, 9, 0, 0))
+    set_game_schedule!(game, :starts_at => Time.utc(2024, 8, 6, 9, 0, 0))
     level = create_level(:game => game)
     create_game_passing(:level => level, :finished_at => Time.utc(2024, 8, 6, 11, 30, 0))
 

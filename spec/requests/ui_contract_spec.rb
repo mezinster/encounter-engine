@@ -26,7 +26,7 @@ describe "the DOM contract the acceptance suite depends on", type: :request do
 
   it "keeps table#stats on the live stats page" do
     game = create_game(:author => author, :is_draft => false)
-    game.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
     create_game_passing(:level => create_level(:game => game))
     sign_in(author)
 

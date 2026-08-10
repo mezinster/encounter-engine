@@ -6,7 +6,7 @@ describe "the team cap", type: :request do
   let(:captain) { u = create_user; create_team(:captain => u); u.reload }
 
   before do
-    game.update_column(:requested_teams_number, 1)  # the cap is already reached
+    set_game_schedule!(game, :requested_teams_number => 1)  # the cap is already reached
     put login_path, :params => { :email => captain.email, :password => "1234" }
   end
 
@@ -19,7 +19,7 @@ describe "the team cap", type: :request do
   end
 
   it "still allows a registration below the cap" do
-    game.update_column(:requested_teams_number, 0)
+    set_game_schedule!(game, :requested_teams_number => 0)
 
     expect {
       post new_game_entry_path(:game_id => game.id, :team_id => captain.team_id)
@@ -32,7 +32,7 @@ describe "the team cap", type: :request do
     end
 
     it "is true below the cap" do
-      game.update_column(:requested_teams_number, 0)
+      set_game_schedule!(game, :requested_teams_number => 0)
 
       expect(game.reload.can_request?).to be true
     end
@@ -52,7 +52,7 @@ describe "the team cap", type: :request do
 
       other_captain = (u = create_user; create_team(:captain => u); u)
       GameEntry.create!(:game => game, :team => other_captain.team, :status => "new")
-      game.update_column(:requested_teams_number, 2)
+      set_game_schedule!(game, :requested_teams_number => 2)
 
       post recall_game_entry_path(entry)
       expect(game.reload.requested_teams_number).to eq(1)
@@ -70,7 +70,7 @@ describe "the team cap", type: :request do
     it "does not inflate the counter" do
       game.update!(:max_team_number => 5)
       entry = GameEntry.create!(:game => game, :team => captain.team, :status => "accepted")
-      game.update_column(:requested_teams_number, 1)
+      set_game_schedule!(game, :requested_teams_number => 1)
 
       post reopen_game_entry_path(entry)
 

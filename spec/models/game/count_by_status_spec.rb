@@ -11,9 +11,9 @@ describe Game, ".count_by_status" do
   let!(:plain_draft)     { create_game(:is_draft => true) }
   let!(:scheduled)       { create_game(:is_draft => false) }
   let!(:withdrawn_draft) { g = create_game(:is_draft => true);  g.update_column(:withdrawn_at, Time.now); g }
-  let!(:finished)        { g = create_game(:is_draft => false); g.update_column(:author_finished_at, Time.now); g }
-  let!(:running)         { g = create_game(:is_draft => false); g.update_column(:starts_at, Time.now - 1.hour); g }
-  let!(:no_start_time)   { g = create_game(:is_draft => false); g.update_column(:starts_at, nil); g }
+  let!(:finished)        { g = create_game(:is_draft => false); set_game_schedule!(g, :author_finished_at => Time.now); g }
+  let!(:running)         { g = create_game(:is_draft => false); set_game_schedule!(g, :starts_at => Time.now - 1.hour); g }
+  let!(:no_start_time)   { g = create_game(:is_draft => false); set_game_schedule!(g, :starts_at => nil); g }
 
   it "puts a withdrawn game in withdrawn, whatever else it is" do
     expect(Game.count_by_status[:withdrawn]).to eq(1)

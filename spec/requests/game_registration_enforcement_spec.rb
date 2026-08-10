@@ -8,7 +8,7 @@ describe "playing a game your team is not registered for", type: :request do
   let(:author) { create_user }
   let(:game) do
     g = create_game(:author => author, :is_draft => false)
-    g.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(g, :starts_at => 1.hour.ago)
     g
   end
   let!(:level) { create_level(:game => game) }
@@ -88,7 +88,7 @@ describe "playing a game your team is not registered for", type: :request do
   # the game has actually started.
   it "creates no passing when an accepted team plays before the game starts" do
     early_game = create_game(:author => author, :is_draft => false)
-    early_game.update_column(:starts_at, 1.hour.from_now)
+    set_game_schedule!(early_game, :starts_at => 1.hour.from_now)
     create_level(:game => early_game)
 
     player = player_on_a_fresh_team
@@ -143,7 +143,7 @@ describe "playing a game your team is not registered for", type: :request do
   # have caught a regression here.
   describe "test mode" do
     before do
-      game.update_column(:is_testing, true)
+      set_game_schedule!(game, :is_testing => true)
     end
 
     it "admits the author's own team with no entry" do

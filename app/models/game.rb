@@ -15,6 +15,40 @@ class Game < ApplicationRecord
 
   belongs_to :author, class_name: "User", optional: true
   has_many :levels, -> {  order('position') }, :dependent => :destroy
+
+  # A Game is CONTENT; a GameRun is one running of it. The schedule lives on
+  # the run from phase 1 onwards -- see
+  # docs/superpowers/specs/2026-08-10-game-runs-phase-1-design.md.
+  #
+  # autosave: true is load-bearing, not decoration. has_many saves NEW children
+  # on parent save but leaves CHANGED persisted ones alone, so without it
+  # `game.starts_at = x; game.save` would silently not persist -- and that is
+  # exactly the path the edit form and several frozen scenarios drive.
+  #
+  # inverse_of is required on both sides: the scope below and the name mismatch
+  # (:runs -> GameRun) each independently defeat Rails' automatic inverse
+  # detection, and GameRun validates the presence of its game.
+  has_many :runs, -> { order(:ordinal) },
+           :class_name => "GameRun", :inverse_of => :game,
+           :autosave => true, :dependent => :destroy
+
+  # The eight scheduling columns now live on the run. These delegations are why
+  # nothing else in the application had to change: Game#status, #started?,
+  # #paused?, #author_finished?, every view and every controller keep reading
+  # the same method names.
+  #
+  # The four schedule validations (game_starts_in_the_future,
+  # deadline_is_in_future, deadline_is_before_game_start, valid_max_num)
+  # deliberately stay on Game and read through these -- see the design, D4.
+  delegate :starts_at, :starts_at=,
+           :registration_deadline, :registration_deadline=,
+           :max_team_number, :max_team_number=,
+           :requested_teams_number, :requested_teams_number=,
+           :author_finished_at, :author_finished_at=,
+           :is_testing, :is_testing=,
+           :test_date, :test_date=,
+           :paused_at, :paused_at=,
+           :to => :current_run
   has_many :logs, -> { order('time') }
   has_many :game_entries, :class_name => "GameEntry", :dependent => :destroy
   has_many :game_passings, :class_name => "GamePassing"
@@ -32,7 +66,24 @@ class Game < ApplicationRecord
 
   scope :by, ->(author) { where(author_id: author) }
   scope :non_drafts, -> { where(is_draft: false) }
-  scope :finished, -> { where.not(author_finished_at: nil) }
+  # Joins each game to its CURRENT run -- the highest ordinal. Every scope and
+  # counter that filters on a schedule column goes through this, so there is one
+  # definition of "the run that speaks for this game" in SQL rather than one per
+  # query. LEFT, not inner: a game whose run is somehow missing must still
+  # appear, or a listing silently loses rows.
+  scope :with_current_run, -> {
+    joins(<<~SQL)
+      LEFT JOIN game_runs ON game_runs.game_id = games.id
+        AND game_runs.ordinal = (SELECT MAX(r2.ordinal) FROM game_runs r2
+                                  WHERE r2.game_id = games.id)
+    SQL
+  }
+
+  # author_finished_at moved to the run, so this can no longer read a games
+  # column. It kept returning nothing at all for a while after the move --
+  # silently, because an empty result looks like "no finished games" rather
+  # than like a bug.
+  scope :finished, -> { with_current_run.includes(:runs).where("game_runs.author_finished_at IS NOT NULL") }
 
   # The single place "may a player see this?" is answered. non_drafts stays as
   # it is -- other callers use it for its literal meaning -- and this composes
@@ -40,8 +91,11 @@ class Game < ApplicationRecord
   # rather than a silent leak.
   scope :visible, -> { non_drafts.where(:withdrawn_at => nil) }
 
+  # includes(:runs) because started? now reads the run. Without it this issues
+  # one SELECT per game -- and both callers render a list, so the cost scales
+  # with the size of the instance.
   def self.started
-    Game.visible.select(&:started?)
+    Game.visible.includes(:runs).select(&:started?)
   end
 
   def draft?
@@ -82,6 +136,24 @@ class Game < ApplicationRecord
     self.editing_locked_at.present?
   end
 
+  # The run everything about the schedule reads and writes. Autobuilds rather
+  # than returning nil because 70 places across spec/ and features/ construct
+  # games as Game.new(:starts_at => ...) before any run could exist, and the
+  # delegated writer has to land somewhere.
+  #
+  # runs.to_a.last, NOT runs.last, and the difference is a bug rather than a
+  # style preference: runs.last on an unloaded association issues
+  # SELECT ... ORDER BY ordinal DESC LIMIT 1 and cannot see a record that has
+  # only been built in memory, so the second call would build a SECOND run and
+  # autosave would persist both. to_a calls load_target, which merges unsaved
+  # new records into the loaded target.
+  #
+  # "Current" is the highest ordinal, not "the one that is not finished" --
+  # deterministic, and still correct in phase 3 when a second run exists.
+  def current_run
+    runs.to_a.last || runs.build(:ordinal => 1)
+  end
+
   def paused?
     self.paused_at.present?
   end
@@ -96,7 +168,7 @@ class Game < ApplicationRecord
   def pause!
     raise ArgumentError, "already paused" if self.paused?
 
-    update_column(:paused_at, Time.now)
+    current_run.update_column(:paused_at, Time.now)
   end
 
   # Shifting current_level_entered_at forward by the held duration is exactly
@@ -118,7 +190,7 @@ class Game < ApplicationRecord
       GamePassing.of_game(self).where(:finished_at => nil).find_each do |gp|
         gp.update_column(:current_level_entered_at, gp.current_level_entered_at + held)
       end
-      update_column(:paused_at, nil)
+      current_run.update_column(:paused_at, nil)
     end
   end
 
@@ -149,7 +221,7 @@ class Game < ApplicationRecord
   # carries past dates a validated save would reject. For the "ended too
   # early, let it continue" case those past dates are correct, not stale.
   def unfinish!
-    update_column(:author_finished_at, nil)
+    current_run.update_column(:author_finished_at, nil)
   end
 
   # The ONLY writer of author_id after creation, mirroring Team#set_captain!.
@@ -223,7 +295,7 @@ class Game < ApplicationRecord
   end
 
   def self.notstarted
-    Game.visible.reject(&:started?)
+    Game.visible.includes(:runs).reject(&:started?)
   end
 
   # The single source of truth for what a game IS. The predicates overlap by
@@ -261,19 +333,26 @@ class Game < ApplicationRecord
   # and filter in memory, which is fine for a listing of two and wrong for a
   # counter -- do not build counts on them.
   def self.count_by_status(now = Time.now)
-    live       = where(:withdrawn_at => nil)
+    # LEFT JOIN, not an inner one: a game whose run is somehow missing must
+    # still be counted, or the columns silently stop summing to the total --
+    # which is the one thing a status table must never do. The MAX(ordinal)
+    # condition picks the current run and is also what stops a game with two
+    # runs being counted twice.
+    live       = with_current_run.where(:withdrawn_at => nil)
     published  = live.where(:is_draft => false)
-    unfinished = published.where(:author_finished_at => nil)
+    unfinished = published.where("game_runs.author_finished_at IS NULL")
 
     {
+      # Unjoined: withdrawn_at is still a games column, so this needs no run.
       :withdrawn => where.not(:withdrawn_at => nil).count,
       :draft     => live.where(:is_draft => true).count,
-      :finished  => published.where.not(:author_finished_at => nil).count,
+      :finished  => published.where("game_runs.author_finished_at IS NOT NULL").count,
       # starts_at is nullable and Game#started? treats NULL as not started, so
       # the NULL check is explicit rather than left to a comparison that would
       # evaluate to unknown and drop the row from every bucket.
-      :running   => unfinished.where.not(:starts_at => nil).where("starts_at < ?", now).count,
-      :scheduled => unfinished.where("starts_at IS NULL OR starts_at >= ?", now).count
+      :running   => unfinished.where("game_runs.starts_at IS NOT NULL")
+                              .where("game_runs.starts_at < ?", now).count,
+      :scheduled => unfinished.where("game_runs.starts_at IS NULL OR game_runs.starts_at >= ?", now).count
     }
   end
 

@@ -8,7 +8,7 @@ describe "the per-game answer log", type: :request do
   let(:author) { create_user }
   let(:game) do
     g = create_game(:author => author, :is_draft => false)
-    g.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(g, :starts_at => 1.hour.ago)
     g
   end
   let(:team) { create_team(:captain => create_user) }
@@ -90,7 +90,7 @@ describe "show_level_log for a team with no current level", type: :request do
   let(:author) { create_user }
   let(:game) do
     g = create_game(:author => author, :is_draft => false)
-    g.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(g, :starts_at => 1.hour.ago)
     g
   end
   let!(:level) { create_level(:game => game) }

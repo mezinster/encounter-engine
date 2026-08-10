@@ -2,7 +2,7 @@ require "rails_helper"
 
 describe "the play screen", type: :request do
   let(:author)  { create_user }
-  let(:game)    { g = create_game(:author => author, :is_draft => false); g.update_column(:starts_at, 1.hour.ago); g }
+  let(:game)    { g = create_game(:author => author, :is_draft => false); set_game_schedule!(g, :starts_at => 1.hour.ago); g }
   let(:level)   { create_level(:game => game) }
   let(:passing) { create_game_passing(:level => level) }
   # An upcoming hint, so the countdown -- and not the "no more hints" text --

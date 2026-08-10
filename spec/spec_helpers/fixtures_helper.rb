@@ -132,4 +132,26 @@ module FixturesHelper
 
     Hint.create! creation_params
   end
+
+  # Arranges a game's SCHEDULE in a spec.
+  #
+  # Specs reach for update_column here because a running or finished game
+  # cannot pass its own validations (game_starts_in_the_future fires whenever
+  # author_finished_at is nil and starts_at is past), so an ordinary save would
+  # raise on exactly the states these specs need to arrange.
+  #
+  # Writes the RUN only. It briefly wrote the games columns too, so that its 58
+  # call sites were correct on both sides of the delegation switch; that write
+  # is gone, and the suite passing without it is the proof that nothing reads
+  # those columns any more -- which is what deploy 2 needs before it can drop
+  # them.
+  #
+  # Only the EIGHT MOVING COLUMNS belong here. withdrawn_at and
+  # editing_locked_at stay on games -- keep using update_column for those.
+  def set_game_schedule!(game, attrs)
+    run = game.runs.first || game.runs.create!(:ordinal => 1)
+    attrs.each { |column, value| run.update_column(column, value) }
+
+    game
+  end
 end

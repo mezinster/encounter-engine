@@ -99,7 +99,7 @@ describe "handing a game over to another author", type: :request do
     it "allows a finished game" do
       finished = create_game(:author => author, :starts_at => 1.minute.from_now)
       allow(Time).to receive(:now).and_return(1.hour.from_now)
-      finished.update_column(:author_finished_at, Time.now)
+      set_game_schedule!(finished, :author_finished_at => Time.now)
 
       post hand_over_game_path(finished), :params => { :nickname => successor.nickname }
 

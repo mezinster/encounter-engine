@@ -8,7 +8,7 @@ describe "an operator changing how a level's codes count mid-game", type: :reque
 
   before do
     level
-    game.update_column(:starts_at, 1.hour.ago)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
   end
 
   def sign_in(user)
@@ -75,7 +75,7 @@ describe "an operator changing how a level's codes count mid-game", type: :reque
     it "records a superadmin acting on their own game" do
       own = create_game(:author => superadmin)
       own_level = create_level(:game => own)
-      own.update_column(:starts_at, 1.hour.ago)
+      set_game_schedule!(own, :starts_at => 1.hour.ago)
       sign_in(superadmin)
 
       expect { post allow_any_code_level_path(:game_id => own.id, :id => own_level.id) }

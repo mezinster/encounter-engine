@@ -62,7 +62,7 @@ class GamePassingsController < ApplicationController
   end
 
   def index
-    @game_passings = GamePassing.of_game(@game)
+    @game_passings = @game.current_run.passings
     # For the move control on each row. Loaded once here rather than per row.
     @levels = Level.of_game(@game).order(:position)
   end

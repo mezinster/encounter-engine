@@ -187,7 +187,8 @@ class Game < ApplicationRecord
       held = Time.now - self.paused_at
       # finished_at excludes both finished and exited teams; neither has a
       # running clock. update_column because this is a mechanical bulk shift.
-      GamePassing.of_game(self).where(:finished_at => nil).find_each do |gp|
+      # The current run's passings: only they have running clocks to shift.
+      current_run.passings.where(:finished_at => nil).find_each do |gp|
         gp.update_column(:current_level_entered_at, gp.current_level_entered_at + held)
       end
       current_run.update_column(:paused_at, nil)

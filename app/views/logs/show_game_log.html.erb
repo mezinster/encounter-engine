@@ -4,7 +4,7 @@
   <h2><%= level.name %></h2>
   <strong><%= t("logs.show_game_log.correct_answer") %></strong>&nbsp;<%= level.questions.first.correct_answer %>
   <ul>
-  <%# @logs is already Log.of_game(@game).of_team(@team) -- see
+  <%# @logs is already Log.of_run(@game.current_run).of_team(@team) -- see
       LogsController#show_game_log. This used to re-query with Log.of_game(level),
       and because that scope is where(game_id: game) and Rails resolves an AR
       object by #id, passing a Level rendered the log of whatever GAME shared

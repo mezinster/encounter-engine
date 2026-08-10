@@ -14,51 +14,63 @@
     never translated (see features/i18n/switch-language.feature). Persisting
     a choice across visits is done separately, on the profile form
     (app/views/users/edit.html.erb). %>
-<%# aria-pressed is not used: the control does not have an on/off meaning so
-    much as a "switch to the other one" meaning, and the label says which. %>
-<button type="button" id="theme-toggle" class="btn" onclick="toggleTheme()">
-  <%= t("layout.header.theme") %>
-</button>
-<%# A dropdown, not a row. With four locales this control wrapped the header
-    onto three rows at phone width; at seven it measured 225px tall at 390x660
-    -- 34% of the visible viewport, and 41% on a 375x553 iPhone SE. The links
-    are all still here, they are just behind a trigger.
-
-    CSS-only. Not a <select> (it would need JS to navigate, and this app has
-    no Turbo and no rails-ujs -- see the GET /logout wart in CLAUDE.md) and
-    NOT a <details>, because both would break
-    features/i18n/switch-language.feature:37, which is frozen and whose step
-    does within("#locale-switcher") { click_link(label) }.
-
-    Why hiding the menu in layout.css is safe for that scenario, and an
-    inline style or a hidden attribute would NOT be: Capybara's rack-test
-    driver never parses stylesheets. Capybara::Node::Simple#visible? checks
-    exactly five things -- input[type=hidden], <template>, the hidden
-    ATTRIBUTE, an INLINE style containing display:none, and script/head/style
-    tags. A closed <details> is special-cased invisible on top of that. So a
-    link hidden by an external rule stays clickable for the acceptance suite
-    while being genuinely hidden from a person. See .locale-menu in
-    public/stylesheets/layout.css. %>
-<div id="locale-switcher">
-  <%# aria-expanded is deliberately absent: with no JS there is nothing to
-      update it, and a permanently-false value is worse than none. %>
-  <button type="button" class="btn locale-trigger" aria-haspopup="true">
-    <%= t("locales.#{I18n.locale}") %>
+<%# The two chrome controls are wrapped in one element rather than sitting
+    loose in the topbar's flex row, and that grouping is what keeps the
+    dropdown below on screen. .topbar wraps, so a loose #locale-switcher lands
+    wherever the line break falls -- at 375px it starts the second line at
+    x=16, and a menu anchored to its right edge then hangs off the left of the
+    viewport at x=-36. Grouped and pushed to the end of the line
+    (.topbar-chrome in layout.css), the trigger's right edge is the topbar's
+    right edge at every width, so the menu opens inward from a fixed side.
+    Measured across 12 viewport widths x all 7 locale labels: 84/84 on screen
+    grouped, 0/7 at 360px before. %>
+<div class="topbar-chrome">
+  <%# aria-pressed is not used: the control does not have an on/off meaning so
+      much as a "switch to the other one" meaning, and the label says which. %>
+  <button type="button" id="theme-toggle" class="btn" onclick="toggleTheme()">
+    <%= t("layout.header.theme") %>
   </button>
+  <%# A dropdown, not a row. With four locales this control wrapped the header
+      onto three rows at phone width; at seven it measured 225px tall at
+      390x660 -- 34% of the visible viewport, and 41% on a 375x553 iPhone SE.
+      The links are all still here, they are just behind a trigger.
 
-  <div class="locale-menu">
-  <% I18n.available_locales.each do |available_locale| %>
-    <% if available_locale == I18n.locale %>
-      <span class="locale-switcher-current"><%= t("locales.#{available_locale}") %></span>
-    <% else %>
-      <%# request.query_parameters is an ActiveSupport::HashWithIndifferentAccess
-          (ActionDispatch::ParamBuilder#make_params), so merging with a string
-          "locale" key replaces any existing :locale/"locale" key rather than
-          sitting alongside it -- no risk of "?locale=en&locale=ru". %>
-      <%= link_to t("locales.#{available_locale}"),
-            "#{request.path}?#{request.query_parameters.merge("locale" => available_locale).to_query}",
-            class: "locale-switcher-link" %>
+      CSS-only. Not a <select> (it would need JS to navigate, and this app has
+      no Turbo and no rails-ujs -- see the GET /logout wart in CLAUDE.md) and
+      NOT a <details>, because both would break
+      features/i18n/switch-language.feature:37, which is frozen and whose step
+      does within("#locale-switcher") { click_link(label) }.
+
+      Why hiding the menu in layout.css is safe for that scenario, and an
+      inline style or a hidden attribute would NOT be: Capybara's rack-test
+      driver never parses stylesheets. Capybara::Node::Simple#visible? checks
+      exactly five things -- input[type=hidden], <template>, the hidden
+      ATTRIBUTE, an INLINE style containing display:none, and script/head/style
+      tags. A closed <details> is special-cased invisible on top of that. So a
+      link hidden by an external rule stays clickable for the acceptance suite
+      while being genuinely hidden from a person. See .locale-menu in
+      public/stylesheets/layout.css. %>
+  <div id="locale-switcher">
+    <%# aria-expanded is deliberately absent: with no JS there is nothing to
+        update it, and a permanently-false value is worse than none. %>
+    <button type="button" class="btn locale-trigger" aria-haspopup="true">
+      <%= t("locales.#{I18n.locale}") %>
+    </button>
+
+    <div class="locale-menu">
+    <% I18n.available_locales.each do |available_locale| %>
+      <% if available_locale == I18n.locale %>
+        <span class="locale-switcher-current"><%= t("locales.#{available_locale}") %></span>
+      <% else %>
+        <%# request.query_parameters is an ActiveSupport::HashWithIndifferentAccess
+            (ActionDispatch::ParamBuilder#make_params), so merging with a string
+            "locale" key replaces any existing :locale/"locale" key rather than
+            sitting alongside it -- no risk of "?locale=en&locale=ru". %>
+        <%= link_to t("locales.#{available_locale}"),
+              "#{request.path}?#{request.query_parameters.merge("locale" => available_locale).to_query}",
+              class: "locale-switcher-link" %>
+      <% end %>
     <% end %>
-  <% end %>
+    </div>
   </div>
 </div>

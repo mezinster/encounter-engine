@@ -24,10 +24,31 @@
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
-  z-index: 20;
+  /* Above #drawer's 30 and .drawer-scrim's 25, so an open drawer slides in
+     BELOW the header instead of over it. Before this the drawer (fixed at
+     inset: 0 auto 0 0, z-index 30) started at y=0 and buried the header's
+     left 320px: the home link, the clock, the theme and language controls on
+     a phone -- and the very hamburger that had just been pressed, which is
+     the only visible way back out on a touch device. The geometry that keeps
+     the drawer clear of this bar is #drawer's top, below. */
+  z-index: 40;
   /* Same reason as .page above: without this, the grid item refuses to
      shrink below its content's intrinsic width. */
   min-width: 0;
+}
+
+/* Theme toggle + language switcher, as one unit pushed to the end of the
+   line. Grouping them is not cosmetic: .topbar wraps, and a loose
+   #locale-switcher lands wherever the break happens to fall, which is what
+   threw the dropdown off screen (see .locale-menu below). margin-left: auto
+   inside a wrapping flex container applies to whichever line the group ends
+   up on, so the trigger's right edge is the topbar's right padding edge at
+   every width -- there is no longer a viewport at which the anchor moves. */
+.topbar-chrome {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
 }
 
 .main {
@@ -70,11 +91,28 @@
    make it a <select> (no JS in this app to navigate on change). */
 #locale-switcher { position: relative; }
 
+/* right: 0, and only safe because .topbar-chrome pins the trigger to the end
+   of its line. The menu is ~160px wide and opens inward from the trigger's
+   right edge; anchoring it to a trigger that can wander is what put it off
+   screen. Swept over 12 widths (320..1440) x all 7 locale labels, since the
+   label sets the trigger's width and therefore where the header wraps:
+
+     right: 0, loose trigger   fails at 320/360/375/600 -- 0 of 7 on screen at
+                               360px, x = -36 at 375px
+     left: 0, loose trigger    fixes the left, overflows the RIGHT at 375/600
+                               when a short label (Polski) leaves room on the
+                               first line and the trigger ends up near the edge
+     right: 0, grouped         84/84 on screen
+
+   So do not "simplify" this by taking the controls back out of
+   .topbar-chrome, and do not switch the side: neither side is safe on its own
+   while .topbar wraps. */
 .locale-menu {
   position: absolute;
   top: 100%;
   right: 0;
-  /* Above .topbar's own 20. */
+  /* Inside .topbar's stacking context (z-index 40), so this only orders the
+     menu against its siblings in the header. */
   z-index: 25;
   display: none;
   min-width: 10rem;
@@ -137,9 +175,23 @@
   cursor: pointer;
 }
 
+/* --topbar-h is published by drawer.js from the header's measured height, and
+   both the drawer and the scrim start below it so the header stays visible
+   AND clickable while the menu is open -- .topbar's z-index 40 is the other
+   half of that. It has to be measured rather than written down: the header
+   wraps, so it is 69px on a desktop, 125px at 390px wide, and 181px at 375px
+   before the .topbar-chrome grouping above pulled it back to two rows.
+
+   The fallback is the one-row height (a --tap-tall control between two
+   --space-3 paddings, 68px) rather than 0. If drawer.js does not run, a
+   one-row header is still fully clear and a wrapped one loses only its lower
+   rows -- strictly better than the 0 that buried all of it. Everything here
+   still works with JavaScript off; see the checkbox comment above. */
 #drawer {
   position: fixed;
-  inset: 0 auto 0 0;
+  top: var(--topbar-h, calc(var(--tap) + var(--space-3) * 2));
+  bottom: 0;
+  left: 0;
   width: min(82vw, 20rem);
   padding: var(--space-4);
   background: var(--surface);
@@ -154,7 +206,10 @@
 
 .drawer-scrim {
   position: fixed;
-  inset: 0;
+  top: var(--topbar-h, calc(var(--tap) + var(--space-3) * 2));
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: var(--scrim);
   opacity: 0;
   pointer-events: none;
@@ -164,8 +219,20 @@
 
 #drawer-state:checked ~ .page .drawer-scrim { opacity: 1; pointer-events: auto; }
 
-/* From tablet up the menu is simply always there and the toggle disappears. */
-@media (min-width: 60rem) {
+/* From tablet up the menu is simply always there and the toggle disappears.
+
+   48rem (768px), not the 60rem this used to be. 60rem meant a laptop browser
+   window narrower than 960 CSS px -- routine once Windows display scaling is
+   on -- got the phone overlay drawer on a screen with room to spare, which is
+   the state the header-overlap bug was reported from. At 768px the permanent
+   sidebar takes 256px and leaves 512px of content, and the admin tables that
+   are the widest thing here already scroll inside .table-wrap.
+
+   Deliberately NOT changed to match: the 60rem query in screens.css, which
+   decides when .dash-grid goes two-up. That is about how much room the
+   CONTENT has, and between 768 and 960 the content column is 512px -- still a
+   single column's worth. */
+@media (min-width: 48rem) {
   .page { grid-template-columns: 16rem minmax(0, 1fr); grid-template-areas: "top top" "nav main"; }
   .topbar { grid-area: top; }
   #drawer-toggle, .drawer-scrim { display: none; }
@@ -181,7 +248,7 @@
 
 /* The play shell: no menu, no max-width, room for a pinned bar.
    Both properties must be overridden together. grid-template-areas from the
-   60rem block above still declares two columns, and the explicit grid takes
+   48rem block above still declares two columns, and the explicit grid takes
    the MAX of the two definitions -- so overriding only the columns leaves a
    phantom second track and pushes .main into it. */
 .page--focused {
@@ -221,9 +288,12 @@
    The switcher is a dropdown now (see .locale-menu below) and no longer
    grows with the locale count, so this rule is no longer load-bearing for
    height on the play screen -- it stays because the control is still noise
-   during a race. */
-.page--focused #theme-toggle,
-.page--focused #locale-switcher { display: none; }
+   during a race.
+
+   One selector rather than #theme-toggle + #locale-switcher: both now live
+   inside .topbar-chrome, and hiding the wrapper also removes its
+   margin-left: auto, which would otherwise be left behind pushing nothing. */
+.page--focused .topbar-chrome { display: none; }
 /* No bottom reserve for the pinned answer bar: it is position: sticky, so it
    holds its own space in flow at whatever height its contents come to. The
    12rem/17rem constants that used to live here were measured against a bar

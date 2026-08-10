@@ -124,8 +124,13 @@ class GamePassingsController < ApplicationController
     end
 
     @answer = stripped_answer
+    @answer_kind = :code
     save_log
+    # check_answer! may call pass_level!, and the render below then shows the
+    # NEXT level with @answer still describing this one -- see #note_level_passed.
+    level_before = @game_passing.current_level
     @answer_was_correct = @game_passing.check_answer!(@answer)
+    note_level_passed(level_before)
 
     if @game_passing.finished?
       @run ||= @game.current_run
@@ -226,8 +231,13 @@ class GamePassingsController < ApplicationController
     # Matches the code path in #post_answer, which calls save_log before
     # check_answer! for the same reason.
     @answer = chosen_texts.join(", ")
+    # A mixed level can carry both kinds at once. "Code" is the honest word the
+    # moment a typed code is part of the submission; only a pure selection gets
+    # the choice wording.
+    @answer_kind = typed.present? ? :code : :choice
     save_log
 
+    level_before = @game_passing.current_level
     results = []
     selections.each do |question_id, option_ids|
       # Restricted to unanswered_questions, not current_level.questions: the
@@ -244,6 +254,7 @@ class GamePassingsController < ApplicationController
     results << @game_passing.check_answer!(typed) if typed.present?
 
     @answer_was_correct = results.any? && results.all?
+    note_level_passed(level_before)
 
     if @game_passing.finished?
       @run ||= @game.current_run
@@ -394,6 +405,28 @@ class GamePassingsController < ApplicationController
     @answer_rejected = kind
     @game_passing.current_level = preloaded_level(@game_passing.current_level)
     render :show_current_level, layout: "in_game"
+  end
+
+  # Both post actions render show_current_level after scoring, and scoring may
+  # have advanced the team. When it has, the page on screen asks a DIFFERENT
+  # question from the one @answer answered, and «Код 'Рецепт суши' -- верный»
+  # sat pinned under a question about penicillin, reading as feedback on the
+  # question in front of the team rather than the one behind it.
+  #
+  # The message cannot simply be suppressed in that case:
+  # features/game-passing/stepping-next-level.feature:26-27 is frozen and
+  # requires it AND "Задание #2" on the same rendered page. So the view is
+  # told which level was passed instead, and says so.
+  #
+  # Left nil when nothing moved -- a correct code on a level with another code
+  # still to find is feedback on the question actually on screen, and must
+  # neither be relabelled nor dismissed. Also left nil when the game ended:
+  # that renders show_results, which has no flash to label.
+  def note_level_passed(level_before)
+    return if level_before.nil? || @game_passing.finished?
+    return if @game_passing.current_level&.id == level_before.id
+
+    @level_passed = level_before
   end
 
   def save_log

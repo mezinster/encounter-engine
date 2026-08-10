@@ -8,6 +8,26 @@ module GamePassingsHelper
     !! @answer_was_correct
   end
 
+  # The level a correct answer took the team OFF, or nil when the team is
+  # still on the level it answered (GamePassingsController#note_level_passed).
+  # Non-nil is exactly the case where the message on screen describes a
+  # question the page no longer shows.
+  def level_passed
+    @level_passed
+  end
+
+  # "Код" or "Ответ", picked from how the answer was actually submitted --
+  # a quiz level sends option ids and #post_options joins the chosen option
+  # TEXTS into @answer, so reporting those through the code message called a
+  # pressed radio button a код. :code is the fallback for any path that did
+  # not say, which keeps the wording the frozen features assert.
+  def answer_feedback_message
+    prefix = @answer_kind == :choice ? "choice" : "answer"
+    suffix = answer_was_correct? ? "correct" : "incorrect"
+
+    t("game_passings.show_current_level.#{prefix}_#{suffix}", :answer => @answer)
+  end
+
   # Set only by GamePassingsController#reject_empty_answer, mutually
   # exclusive with answer_posted? -- a rejected submission never sets
   # @answer, so the two branches in show_current_level.html.erb never both

@@ -663,6 +663,13 @@ tr:
       no_more_hints: "Başka ipucu olmayacak"
       answer_correct: "'%{answer}' kodu doğru."
       answer_incorrect: "Kod yanlış, girdiğiniz kod: '%{answer}'."
+      # Same rule as answer_correct above: the case suffix goes on "cevap", never
+      # on %{answer}, which holds an option text an author typed.
+      choice_correct: "'%{answer}' cevabı doğru."
+      choice_incorrect: "Cevap yanlış, seçtiğiniz cevap: '%{answer}'."
+      # "Task number N is completed" -- the suffix lands on "görev", so the
+      # interpolated number never has to be inflected.
+      level_passed: "#%{position} numaralı görev tamamlandı."
       answer_missing_choice: "Bir seçenek seçin"
       answer_missing_code: "Kodu girin"
       multi_question_progress: "Girilen doğru kod sayısı: %{total} kodun %{answered} tanesi"

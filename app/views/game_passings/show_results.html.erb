@@ -11,7 +11,11 @@
     disagree. Deriving the offset from an actual instant -- the game's start,
     falling back to now when absent -- keeps this statement in agreement with
     the table under it. %>
-<% zone_reference = (@game.starts_at || Time.current).in_time_zone(Time.zone) %>
+<%# @run, not @game: Game#starts_at delegates to current_run, so viewing an
+    earlier run's results computed the offset from the CURRENT run's start
+    date -- a different answer across a DST boundary, printed next to times
+    that disagree with it. %>
+<% zone_reference = (@run.starts_at || Time.current).in_time_zone(Time.zone) %>
 <p><em><%= t("shared.times_in_zone", :zone => zone_reference.formatted_offset) %></em></p>
 
 <%# Linkable only where results_visible? is true -- the same GameRun predicate

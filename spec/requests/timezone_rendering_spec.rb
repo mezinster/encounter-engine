@@ -67,6 +67,30 @@ describe "the results screen's zone statement", type: :request do
     expect(response.body).to include(I18n.t("shared.times_in_zone", :zone => "+02:00"))
     expect(response.body).not_to include(I18n.t("shared.times_in_zone", :zone => "+01:00"))
   end
+
+  # @game.starts_at delegates to current_run (Game#starts_at), so a game with
+  # a second run computed its offset from the run the viewer is NOT looking at.
+  # Run 1 is in August (Berlin, CEST +02:00) and run 2 in December (CET
+  # +01:00), so the two disagree and the example can actually fail.
+  it "states the offset of the run being viewed, not of the current run" do
+    user.update!(:timezone => "Berlin")
+    other = create_game(:author => user, :is_draft => false)
+    level = create_level(:game => other)
+    set_game_schedule!(other, :starts_at => Time.utc(2024, 8, 6, 9, 0, 0))
+    create_game_passing(:level => level, :game_run => other.current_run,
+                        :finished_at => Time.utc(2024, 8, 6, 11, 30, 0))
+
+    other.open_run!(:starts_at => 2.years.from_now,
+                    :registration_deadline => 23.months.from_now,
+                    :max_team_number => 10)
+    other.reload
+    other.current_run.update_column(:starts_at, Time.utc(2024, 12, 15, 9, 0, 0))
+
+    get game_passings_show_results_path(:game_id => other.id, :run => 1)
+
+    expect(response.body).to include(I18n.t("shared.times_in_zone", :zone => "+02:00"))
+    expect(response.body).not_to include(I18n.t("shared.times_in_zone", :zone => "+01:00"))
+  end
 end
 
 describe "the game-form start-time round trip", type: :request do

@@ -75,20 +75,47 @@ jobs:
         run: |
           docker run -d --name pg-smoke -e POSTGRES_PASSWORD=smoke ee-postgres:test
           # pg_isready alone is not enough. The official entrypoint runs initdb
-          # against a TEMPORARY server on a private socket, then shuts it down
-          # before starting the real one -- so pg_isready can answer "ready",
-          # the loop breaks, and the psql calls below land exactly in the
-          # shutdown window with "FATAL: the database system is shutting down".
-          # Observed twice on 2026-08-07, on branches touching no Postgres file.
+          # against a TEMPORARY server, then shuts it down before starting the
+          # real one -- so pg_isready can answer "ready", the loop breaks, and
+          # the psql calls below land exactly in the shutdown window with
+          # "FATAL: the database system is shutting down". Observed twice on
+          # 2026-08-07 and again on 2026-08-10, on branches touching no
+          # Postgres file.
           #
-          # Waiting for the entrypoint's own "ready for start up" banner first
-          # means initdb has finished and the real server is the one answering.
+          # Neither is the server's own startup banner. The temp server is a
+          # full PostgreSQL start: it logs "database system is ready to accept
+          # connections" to the container's stdout exactly like the real one
+          # (pg_ctl sends its output there, the entrypoint redirects nothing),
+          # and `listen_addresses=''` still leaves it on the usual unix socket,
+          # which is the one pg_isready and `docker exec psql` both use. So
+          # BOTH halves of the old condition were satisfiable by the very
+          # server this loop exists to skip past, and the wait was decorative.
+          #
+          # "PostgreSQL init process complete; ready for start up." is echoed
+          # by the entrypoint script itself, after docker_temp_server_stop has
+          # returned. It is the one line in the stream the temp server cannot
+          # produce, which is why the old comment already named it -- the code
+          # just never matched it. -F because the banner contains regex
+          # metacharacters and is a fixed string, not a pattern.
+          ready=no
           for i in $(seq 1 60); do
-            docker logs pg-smoke 2>&1 | grep -q "database system is ready to accept connections" \
-              && docker exec pg-smoke pg_isready -U postgres >/dev/null 2>&1 \
-              && break
+            if docker logs pg-smoke 2>&1 | grep -qF "PostgreSQL init process complete; ready for start up." \
+               && docker exec pg-smoke pg_isready -U postgres >/dev/null 2>&1; then
+              ready=yes
+              echo "real server accepting connections after ${i}s"
+              break
+            fi
             sleep 1
           done
+          # The old loop fell through on timeout and let the psql calls fail
+          # instead, which is how this arrived as "FATAL: the database system
+          # is shutting down" with no container log to read -- the failure that
+          # gets reported is then a symptom of the wait, not the wait itself.
+          if [ "$ready" != yes ]; then
+            echo "FAILED: PostgreSQL never finished starting within 60s"
+            docker logs pg-smoke
+            exit 1
+          fi
           docker exec pg-smoke psql -U postgres -tAc "SHOW max_connections;"      | grep -qx 20
           docker exec pg-smoke psql -U postgres -tAc "SHOW effective_cache_size;" | grep -qx 512MB
           docker exec pg-smoke psql -U postgres -tAc "SHOW archive_mode;"         | grep -qx on

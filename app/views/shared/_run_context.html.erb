@@ -1,0 +1,29 @@
+<%# Context for the run whose answers are on screen, rendered by all four log
+    views. Each of them names its own subject -- team, level, game -- but none
+    named its RUN, and all four have accepted ?run= since the run-scoped-logs
+    change with no UI that produces such a URL.
+
+    Reads instance variables rather than taking locals: this is rendered by
+    four views of ONE controller, all of which set the same three, so passing
+    them four times would be noise. shared/_run_switcher takes locals because
+    its callers live in different controllers with different policies. %>
+<p class="run-context">
+  <strong><%= t("shared.run_switcher.run_label",
+                :ordinal => @run.ordinal,
+                :date => @run.starts_at ? l(@run.starts_at.to_date, :format => :long) : "—") %></strong>
+</p>
+
+<p><%= t("shared.run_context.counts",
+         :teams => @run_team_count, :levels => @game_level_count) %></p>
+
+<%# Every run is linkable: no started-run guard applies to these screens, so
+    unlike the results page there is no run this can name and then refuse. %>
+<%= render "shared/run_switcher", :runs => @game.runs, :current => @run,
+                                  :linkable => @game.runs %>
+
+<%# Derived from the RUN being displayed, never from @game: Game#starts_at
+    delegates to current_run, so on a game with a second run that would report
+    run 2's offset while the times below belong to run 1. Falls back to now
+    when the run has no start date, as the results page does. %>
+<% zone_reference = (@run.starts_at || Time.current).in_time_zone(Time.zone) %>
+<p><em><%= t("shared.times_in_zone", :zone => zone_reference.formatted_offset) %></em></p>

@@ -556,6 +556,8 @@ ru:
     run_switcher:
       heading: "Забеги:"
       run_label: "Забег №%{ordinal} — %{date}"
+    run_context:
+      counts: "Команд: %{teams} · Уровней: %{levels}"
     pager:
       previous: "‹ Назад"
       next: "Далее ›"
@@ -647,7 +649,9 @@ ru:
     index:
       title: "Индекс"
     show_full_log:
-      title: "Полный лог ответов"
+      # Must BEGIN with the unbroken phrase "Полный лог ответов": six frozen
+      # assertions match it as a substring.
+      title: "Полный лог ответов игры «%{game}»"
       correct_answer_one: "Верный код:"
       correct_answer_many: "Верные коды:"
     show_game_log:

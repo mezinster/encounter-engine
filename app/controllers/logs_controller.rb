@@ -6,6 +6,7 @@ class LogsController < ApplicationController
   before_action :require_authentication!
   before_action :find_game
   before_action :find_run
+  before_action :count_the_run
   before_action :ensure_author, only: [:show_live_channel, :show_level_log, :show_game_log]
   before_action :ensure_full_log_access, only: [:show_full_log]
   before_action :find_team, only: [:show_level_log, :show_game_log]
@@ -107,6 +108,19 @@ class LogsController < ApplicationController
   # filters would then refuse.
   def find_run
     @run = @game.runs.find_by(:ordinal => params[:run].to_i) || @game.current_run
+  end
+
+  # Two COUNTs on every log screen, for the header shared/_run_context renders.
+  # show_full_log also loads @teams as objects and so pays one redundant COUNT:
+  # one filter that behaves identically on four screens is worth more than the
+  # single query it would save on one of them, and the header must not vary by
+  # screen.
+  #
+  # Teams are counted through the RUN; levels through the GAME, because levels
+  # are the game's content and are shared by every running of it.
+  def count_the_run
+    @run_team_count   = GamePassing.where(:game_run_id => @run.id).count
+    @game_level_count = Level.of_game(@game).count
   end
 
   def find_team

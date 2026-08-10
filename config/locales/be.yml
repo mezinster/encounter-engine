@@ -558,6 +558,8 @@ be:
     run_switcher:
       heading: "Забегі:"
       run_label: "Забег №%{ordinal} — %{date}"
+    run_context:
+      counts: "Каманд: %{teams} · Узроўняў: %{levels}"
     pager:
       previous: "‹ Назад"
       next: "Далей ›"
@@ -654,7 +656,7 @@ be:
     index:
       title: "Індэкс"
     show_full_log:
-      title: "Поўны лог адказаў"
+      title: "Поўны лог адказаў гульні «%{game}»"
       correct_answer_one: "Правільны код:"
       correct_answer_many: "Правільныя коды:"
     show_game_log:

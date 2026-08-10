@@ -563,6 +563,8 @@ pl:
     run_switcher:
       heading: "Biegi:"
       run_label: "Bieg nr %{ordinal} — %{date}"
+    run_context:
+      counts: "Drużyn: %{teams} · Poziomów: %{levels}"
     pager:
       previous: "‹ Wstecz"
       next: "Dalej ›"
@@ -667,7 +669,7 @@ pl:
     index:
       title: "Indeks"
     show_full_log:
-      title: "Pełny dziennik odpowiedzi"
+      title: "Pełny dziennik odpowiedzi gry „%{game}”"
       correct_answer_one: "Poprawny kod:"
       correct_answer_many: "Poprawne kody:"
     show_game_log:

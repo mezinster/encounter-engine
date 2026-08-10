@@ -1,5 +1,7 @@
 <h1><%= t("logs.show_game_log.title", team: @team.name, game: @game.name) %></h1>
 
+<%= render "shared/run_context" %>
+
 <% @game.levels.each do |level| %>
   <h2><%= level.name %></h2>
   <strong><%= t("logs.show_game_log.correct_answer") %></strong>&nbsp;<%= level.questions.first.correct_answer %>

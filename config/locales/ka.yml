@@ -576,6 +576,8 @@ ka:
     run_switcher:
       heading: "გარბენები:"
       run_label: "გარბენი №%{ordinal} — %{date}"
+    run_context:
+      counts: "გუნდები: %{teams} · დონეები: %{levels}"
     pager:
       previous: "‹ უკან"
       next: "წინ ›"
@@ -676,7 +678,7 @@ ka:
       # Not a Rails pluralisation group -- app/views/logs/show_full_log.html.erb
       # picks between these two keys with an if on the question count, so they
       # are two independent strings, not `one:`/`many:` under a shared parent.
-      title: "პასუხების სრული ლოგი"
+      title: "თამაშის «%{game}» პასუხების სრული ლოგი"
       correct_answer_one: "სწორი კოდი:"
       correct_answer_many: "სწორი კოდები:"
     show_game_log:

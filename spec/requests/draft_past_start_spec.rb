@@ -18,14 +18,30 @@ describe "a draft whose start date has passed", type: :request do
 
   # The only way into this state is the clock moving, which is why the column
   # is written directly -- game_starts_in_the_future refuses it on save.
+  #
+  # Through set_game_schedule! rather than game.update_column: starts_at now
+  # lives on the game's run, and update_column writes the game's own column,
+  # which nothing reads. That would leave this game's real start date at its
+  # default of 2099 -- so every example below would still pass, while testing
+  # a game that has NOT aged past its start date. A regression test that
+  # silently stops reproducing its bug is worse than one that fails.
   let(:game) do
     g = create_game(:author => author, :is_draft => true)
-    g.update_column(:starts_at, 30.minutes.ago)
+    set_game_schedule!(g, :starts_at => 30.minutes.ago)
     g.reload
   end
 
   def login_as(user)
     put login_path, :params => { :email => user.email, :password => "1234" }
+  end
+
+  # Guards the arrangement above, not the behaviour. Every example here would
+  # pass on a game that had never aged past its start date -- the bug simply
+  # would not be reproduced. This fails loudly if the schedule ever stops
+  # landing where #started? reads it.
+  it "really is a draft whose start date has passed" do
+    expect(game.starts_at).to be < Time.now
+    expect(game).to be_draft
   end
 
   describe "its author" do

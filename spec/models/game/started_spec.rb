@@ -52,11 +52,16 @@ describe Game, '#started?' do
   describe "when the game is a draft whose start date has passed" do
     before :each do
       @game.update!(:is_draft => true)
-      # update_column exactly as real time does it: the row was valid when
+      # Past validations, exactly as real time does it: the row was valid when
       # saved and the clock moved afterwards. update! would be refused by
       # game_starts_in_the_future, which is the whole reason this state is
       # only reachable by waiting.
-      @game.update_column(:starts_at, 30.minutes.ago)
+      #
+      # set_game_schedule!, not game.update_column: starts_at lives on the
+      # game's run, and update_column would write the game's own column, which
+      # nothing reads -- leaving this game's real start date at 2099 and this
+      # example passing without ever reproducing the state it names.
+      set_game_schedule!(@game, :starts_at => 30.minutes.ago)
       @game.reload
     end
 
@@ -75,7 +80,7 @@ describe Game, '#started?' do
   # separately, which is where that distinction belongs.
   describe "when the game was withdrawn after starting" do
     before :each do
-      @game.update_column(:starts_at, 30.minutes.ago)
+      set_game_schedule!(@game, :starts_at => 30.minutes.ago)
       @game.withdraw!
       @game.reload
     end

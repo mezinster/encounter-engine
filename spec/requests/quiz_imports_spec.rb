@@ -104,6 +104,18 @@ describe "importing quiz questions", type: :request do
       expect(response.body).to include("Да")
     end
 
+    it "shows the code for a quest block and the options for a quiz block" do
+      sign_in(author)
+
+      post game_quiz_import_path(game),
+           :params => { :text => "Найдите табличку.\nA) ФОНАРЬ\nСтолица?\nA) Брест\nB) *Минск\n" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("quiz_imports.preview.code_label"))
+      expect(response.body).to include("ФОНАРЬ")
+      expect(response.body).to include("Минск")
+    end
+
     it "reports duplicates the game already has" do
       create_level(:game => game, :name => "Вопрос 1", :text => "Раз?")
       sign_in(author)
@@ -180,6 +192,21 @@ describe "importing quiz questions", type: :request do
       expect do
         post game_quiz_import_path(started), :params => { :text => valid_text, :confirm => "1" }
       end.not_to change(Level, :count)
+    end
+  end
+
+  # A mixed paste is the whole point of deciding per block.
+  describe "confirming a mixed paste" do
+    it "creates a code level and a quiz level side by side" do
+      sign_in(author)
+
+      post game_quiz_import_path(game),
+           :params => { :text => "Найдите табличку.\nA) ФОНАРЬ\nСтолица?\nA) Брест\nB) *Минск\n",
+                        :confirm => "1" }
+
+      levels = game.levels.reload.order(:position)
+      expect(levels.map(&:name)).to eq([ "Уровень 1", "Вопрос 2" ])
+      expect(levels.map(&:quiz?)).to eq([ false, true ])
     end
   end
 end

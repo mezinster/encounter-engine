@@ -71,6 +71,16 @@ describe "auditing administrative changes", type: :request do
       expect { post unlock_game_path(game) }.to change { AdminAction.count }.by(1)
       expect(AdminAction.newest_first.first.action).to eq("unlock")
     end
+
+    it "records an author reassignment" do
+      successor = create_user
+
+      expect do
+        post set_author_admin_game_path(game), :params => { :nickname => successor.nickname }
+      end.to change { AdminAction.count }.by(1)
+
+      expect(AdminAction.newest_first.first.action).to eq("set_author")
+    end
   end
 
   describe "the inherited actions, performed on someone else's game" do

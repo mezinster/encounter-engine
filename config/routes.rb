@@ -14,7 +14,13 @@ Rails.application.routes.draw do
     # Operator-tunable rate limits. GET shows the form, PATCH saves it.
     get   "/settings", to: "settings#show",   as: :settings
     patch "/settings", to: "settings#update"
-    resources :games, only: [ :index ]
+    # The console is otherwise read-only -- editing rides the author's own
+    # forms. Authorship is the exception: there is no author's form an operator
+    # can borrow when the point is that the current author cannot or will not
+    # act. Mirrors admin teams' set_captain.
+    resources :games, only: [ :index ] do
+      post "set_author", on: :member
+    end
     resources :teams, only: [ :index ] do
       post "set_captain", on: :member
       delete "destroy", on: :member, as: :destroy
@@ -112,6 +118,10 @@ Rails.application.routes.draw do
       post :unfinish
       post :lock
       post :unlock
+
+      # Handing the game to another player. POST, not GET: this app has no
+      # Turbo and no rails-ujs, so the view drives it with a real form.
+      post :hand_over
     end
 
     # Singular: a game has one import screen, not a collection of imports.

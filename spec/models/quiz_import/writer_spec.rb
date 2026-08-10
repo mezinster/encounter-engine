@@ -15,6 +15,13 @@ RSpec.describe QuizImport::Writer do
       } }
   end
 
+  def quest(text, code)
+    { :text => text,
+      :mode => :quest,
+      :code => code,
+      :options => [ { :text => code, :correct => false } ] }
+  end
+
   describe "computing what will happen, without writing" do
     it "counts everything as new for an empty game" do
       writer = QuizImport::Writer.new(game, [ question("Раз?", "*Да", "Нет") ])
@@ -118,6 +125,63 @@ RSpec.describe QuizImport::Writer do
       allow_any_instance_of(Option).to receive(:save!).and_raise(ActiveRecord::RecordInvalid.new(Option.new))
 
       expect { writer.import! rescue nil }.not_to change(Level, :count)
+    end
+  end
+
+  # The standard encounter shape: a task and a code, indistinguishable from a
+  # level typed in on the per-level screen.
+  describe "quest levels" do
+    it "names them «Уровень N» and keeps the position numbering shared" do
+      QuizImport::Writer.new(game, [ quest("Найдите табличку", "ФОНАРЬ"),
+                                     question("Столица?", "*Минск", "Брест") ]).import!
+
+      levels = game.levels.reload.order(:position)
+      expect(levels.map(&:name)).to eq([ "Уровень 1", "Вопрос 2" ])
+      expect(levels.map(&:position)).to eq([ 1, 2 ])
+    end
+
+    it "stores the code as the level's answer and creates no options" do
+      QuizImport::Writer.new(game, [ quest("Найдите табличку", "ФОНАРЬ") ]).import!
+
+      level = game.levels.reload.first
+      expect(level.questions.count).to eq(1)
+      expect(level.questions.first.options).to be_empty
+      expect(level.correct_answer).to eq("ФОНАРЬ")
+    end
+
+    # The whole design rests on this: no correct options means Question#quiz?
+    # is false, which is what routes the level down the code path instead of
+    # the options path.
+    it "produces a level that is not a quiz" do
+      QuizImport::Writer.new(game, [ quest("Найдите табличку", "ФОНАРЬ") ]).import!
+
+      expect(game.levels.reload.first.quiz?).to be false
+    end
+
+    it "keeps the multi-line task text intact" do
+      QuizImport::Writer.new(game, [ quest("Первая строка.\nВторая строка.", "23") ]).import!
+
+      expect(game.levels.reload.first.text).to eq("Первая строка.\nВторая строка.")
+    end
+
+    # THE end-to-end one. A writer assertion alone would pass on a level no
+    # team could ever complete: this is the only example that crosses the
+    # quiz?/reject boundary the two modes are separated by, through the same
+    # method a real submission goes through.
+    it "accepts its code through the ordinary play path" do
+      QuizImport::Writer.new(game, [ quest("Найдите табличку", "ФОНАРЬ") ]).import!
+      level = game.levels.reload.first
+      passing = create_game_passing(:level => level)
+
+      expect(passing.check_answer!("ФОНАРЬ")).to be true
+    end
+
+    it "rejects a wrong code through the ordinary play path" do
+      QuizImport::Writer.new(game, [ quest("Найдите табличку", "ФОНАРЬ") ]).import!
+      level = game.levels.reload.first
+      passing = create_game_passing(:level => level)
+
+      expect(passing.check_answer!("НЕВЕРНО")).to be false
     end
   end
 end

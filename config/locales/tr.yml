@@ -581,6 +581,13 @@ tr:
       login: "Giriş yap"
       signup: "Kaydol"
   shared:
+    times_in_zone: "Saatler %{zone} saat diliminde gösterilmiştir"
+    run_switcher:
+      heading: "Koşular:"
+      run_label: "%{ordinal}. koşu — %{date}"
+    # Both placeholders are numbers, so no case suffix lands on a name.
+    run_context:
+      counts: "Takım sayısı: %{teams} · Seviye sayısı: %{levels}"
     pager:
       previous: "‹ Geri"
       next: "İleri ›"
@@ -674,14 +681,12 @@ tr:
       not_finished: "Bitiremediler"
       full_log: "Cevap günlüğü"
       finish_testing: "Testi bitir"
-      times_in_zone: "Saatler %{zone} saat diliminde gösterilmiştir"
-      runs_heading: "Koşular:"
-      run_label: "%{ordinal}. koşu — %{date}"
   logs:
     index:
       title: "Dizin"
     show_full_log:
-      title: "Tam cevap günlüğü"
+      # The genitive suffix goes on "oyun", never on %{game}.
+      title: "«%{game}» adlı oyunun tam cevap günlüğü"
       correct_answer_one: "Doğru kod:"
       correct_answer_many: "Doğru kodlar:"
     show_game_log:

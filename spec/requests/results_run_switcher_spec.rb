@@ -120,7 +120,7 @@ describe "the results page across runs", type: :request do
     get game_passings_show_results_path(:game_id => game.id)
     page = Capybara.string(response.body)
 
-    expect(response.body).to include(I18n.t("game_passings.show_results.runs_heading"))
+    expect(response.body).to include(I18n.t("shared.run_switcher.heading"))
     expect(page.text).to include("Забег №1")
     expect(page.text).to include("Забег №2")
     expect(page).to have_no_link(:href => %r{run=2})
@@ -133,9 +133,38 @@ describe "the results page across runs", type: :request do
 
     get game_passings_show_results_path(:game_id => game.id)
 
-    expect(response.body).not_to include(I18n.t("game_passings.show_results.runs_heading"))
+    expect(response.body).not_to include(I18n.t("shared.run_switcher.heading"))
     expect(response.body).not_to include(
       ERB::Util.html_escape(game_passings_show_results_path(:game_id => game.id, :run => 1))
     )
+  end
+
+  # Characterisation examples for the move of this switcher into
+  # shared/_run_switcher. They pin the two halves of the results page's policy
+  # -- a started run is linked, an unstarted one is named but not linked -- and
+  # were green BEFORE the extraction, so a red result afterwards means the move
+  # changed behaviour rather than that the examples were wrong.
+  describe "after the switcher moved to a shared partial" do
+    it "links a started earlier run" do
+      finished_team(game.current_run, 2.days.ago)
+      open_second_run
+      # Bring run 2 into the present, so run 1 becomes the linkable one.
+      set_game_schedule!(game, :starts_at => 1.hour.ago)
+
+      get game_passings_show_results_path(:game_id => game.id)
+
+      expect(Capybara.string(response.body)).to have_link(:href => %r{run=1})
+    end
+
+    it "names but does not link a run that has not started" do
+      finished_team(game.current_run, 2.days.ago)
+      open_second_run
+
+      get game_passings_show_results_path(:game_id => game.id)
+
+      page = Capybara.string(response.body)
+      expect(page.text).to include("Забег №2")
+      expect(page).to have_no_link(:href => %r{run=2})
+    end
   end
 end

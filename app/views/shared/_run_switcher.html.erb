@@ -1,0 +1,35 @@
+<%# Extracted from game_passings/show_results, where this was inline.
+    `linkable` is an explicit array rather than a predicate so each caller
+    states its own policy and this partial holds none:
+
+      * the results page may link only runs whose results_visible? is true --
+        its started-run guard refuses the rest, and offering a link the guard
+        answers with a bare 401 is a defect this programme already shipped
+        once;
+      * the log screens have no started-run guard (ensure_author and
+        ensure_full_log_access only), so every run they name is one they will
+        serve.
+
+    Nothing at all for a game with one run: that is most games in production,
+    and several frozen scenarios render these pages.
+
+    Hrefs are built from request.path plus the existing query parameters, the
+    same idiom shared/_pager uses. `run` is a query parameter on all five
+    pages that render this, whose PATH parameters differ, so this needs no
+    per-caller route helper -- and ?run= and ?page= survive each other. %>
+<% if runs.size > 1 %>
+  <p class="run-switcher">
+    <strong><%= t("shared.run_switcher.heading") %></strong>
+    <% runs.each do |run| %>
+      <% label = t("shared.run_switcher.run_label",
+                   :ordinal => run.ordinal,
+                   :date => run.starts_at ? l(run.starts_at.to_date, :format => :long) : "—") %>
+      <% if run == current || !linkable.include?(run) %>
+        <strong><%= label %></strong>
+      <% else %>
+        <%= link_to label,
+                    "#{request.path}?#{request.query_parameters.merge("run" => run.ordinal).to_query}" %>
+      <% end %>
+    <% end %>
+  </p>
+<% end %>

@@ -33,10 +33,17 @@ RSpec.describe "logs/show_full_log", type: :view do
     # hide a genuinely long page rather than report it.
     assign(:page, 1)
     assign(:total_pages, 1)
+    # shared/_run_context is equally strict, and for the same reason: a nil
+    # @run means a controller forgot the filter, and a partial that shrugged
+    # that off would hide it.
+    assign(:game, level.game)
+    assign(:run, level.game.current_run)
+    assign(:run_team_count, 1)
+    assign(:game_level_count, 1)
 
     render
 
-    expect(rendered).to include(I18n.t("logs.show_full_log.title"))
+    expect(rendered).to include(I18n.t("logs.show_full_log.title", :game => level.game.name))
     expect(rendered).to include(I18n.t("logs.show_full_log.correct_answer_one"))
     expect(rendered).to include("enone")
     expect(rendered).to include(team.name)
@@ -53,6 +60,10 @@ RSpec.describe "logs/show_full_log", type: :view do
     assign(:logs, Log.of_game(level.game))
     assign(:page, 1)
     assign(:total_pages, 1)
+    assign(:game, level.game)
+    assign(:run, level.game.current_run)
+    assign(:run_team_count, 0)
+    assign(:game_level_count, 1)
 
     render
 
@@ -84,6 +95,9 @@ RSpec.describe "logs/show_game_log", type: :view do
     assign(:game, game)
     assign(:team, team)
     assign(:logs, Log.of_game(game).of_team(team))
+    assign(:run, game.current_run)
+    assign(:run_team_count, 1)
+    assign(:game_level_count, 1)
 
     render
 
@@ -113,6 +127,9 @@ RSpec.describe "logs/show_level_log", type: :view do
     assign(:level, level)
     assign(:game, game)
     assign(:logs, [log])
+    assign(:run, game.current_run)
+    assign(:run_team_count, 1)
+    assign(:game_level_count, 1)
 
     render
 
@@ -133,6 +150,9 @@ RSpec.describe "logs/show_live_channel", type: :view do
     assign(:logs, [log1, log2])
     assign(:page, 1)
     assign(:total_pages, 1)
+    assign(:run, game.current_run)
+    assign(:run_team_count, 2)
+    assign(:game_level_count, 1)
 
     render
 

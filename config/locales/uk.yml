@@ -559,6 +559,12 @@ uk:
       login: "Увійти"
       signup: "Зареєструватися"
   shared:
+    times_in_zone: "Час показано в поясі %{zone}"
+    run_switcher:
+      heading: "Забіги:"
+      run_label: "Забіг №%{ordinal} — %{date}"
+    run_context:
+      counts: "Команд: %{teams} · Рівнів: %{levels}"
     pager:
       previous: "‹ Назад"
       next: "Далі ›"
@@ -650,9 +656,6 @@ uk:
       not_finished: "Не фінішували"
       full_log: "Лог відповідей"
       finish_testing: "Завершити тестування"
-      times_in_zone: "Час показано в поясі %{zone}"
-      runs_heading: "Забіги:"
-      run_label: "Забіг №%{ordinal} — %{date}"
   logs:
     index:
       title: "Індекс"
@@ -660,7 +663,7 @@ uk:
       # Not a Rails pluralisation group -- app/views/logs/show_full_log.html.erb
       # picks between these two keys with an if on the question count, so they
       # are two independent strings, not `one:`/`many:` under a shared parent.
-      title: "Повний лог відповідей"
+      title: "Повний лог відповідей гри «%{game}»"
       correct_answer_one: "Правильний код:"
       correct_answer_many: "Правильні коди:"
     show_game_log:

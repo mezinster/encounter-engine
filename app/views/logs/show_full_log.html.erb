@@ -4,7 +4,9 @@
     77 levels x 3 teams ≈ 231 queries for «Викторина». %>
 <% logs_by_cell = @logs.group_by { |log| [ log.team_id, log.level_id ] } %>
 
-<h1><%= t("logs.show_full_log.title") %></h1>
+<h1><%= t("logs.show_full_log.title", :game => @game.name) %></h1>
+
+<%= render "shared/run_context" %>
 
 <div class="table-wrap">
 <table id="stats">

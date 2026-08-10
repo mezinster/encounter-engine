@@ -554,6 +554,10 @@ be:
       login: "Увайсці"
       signup: "Зарэгістравацца"
   shared:
+    pager:
+      previous: "‹ Назад"
+      next: "Далей ›"
+      position: "%{current} з %{total}"
     game_entry_controls:
       applied: "Заяўка пададзена"
       recall: "Адклікаць"

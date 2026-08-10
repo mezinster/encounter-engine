@@ -559,6 +559,10 @@ uk:
       login: "Увійти"
       signup: "Зареєструватися"
   shared:
+    pager:
+      previous: "‹ Назад"
+      next: "Далі ›"
+      position: "%{current} з %{total}"
     game_entry_controls:
       applied: "Заявку подано"
       recall: "Відкликати"

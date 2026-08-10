@@ -28,6 +28,11 @@ RSpec.describe "logs/show_full_log", type: :view do
     # re-querying by team/level name alone -- assign it the way
     # LogsController#show_full_log does: Log.of_game(@game).
     assign(:logs, Log.of_game(level.game))
+    # The pager partial reads these and is deliberately strict about them: a
+    # nil total means a controller forgot to page, and rendering nothing would
+    # hide a genuinely long page rather than report it.
+    assign(:page, 1)
+    assign(:total_pages, 1)
 
     render
 
@@ -46,6 +51,8 @@ RSpec.describe "logs/show_full_log", type: :view do
     assign(:levels, [level])
     assign(:teams, [])
     assign(:logs, Log.of_game(level.game))
+    assign(:page, 1)
+    assign(:total_pages, 1)
 
     render
 
@@ -124,6 +131,8 @@ RSpec.describe "logs/show_live_channel", type: :view do
 
     assign(:game, game)
     assign(:logs, [log1, log2])
+    assign(:page, 1)
+    assign(:total_pages, 1)
 
     render
 

@@ -552,6 +552,10 @@ ru:
       login: "Войти"
       signup: "Зарегистрироваться"
   shared:
+    pager:
+      previous: "‹ Назад"
+      next: "Далее ›"
+      position: "%{current} из %{total}"
     game_entry_controls:
       applied: "Заявка подана"
       recall: "Отозвать"

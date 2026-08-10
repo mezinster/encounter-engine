@@ -540,6 +540,10 @@ en:
       login: "Log in"
       signup: "Sign up"
   shared:
+    pager:
+      previous: "‹ Previous"
+      next: "Next ›"
+      position: "%{current} of %{total}"
     game_entry_controls:
       applied: "Application submitted"
       recall: "Withdraw"

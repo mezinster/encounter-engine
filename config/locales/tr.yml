@@ -581,6 +581,10 @@ tr:
       login: "Giriş yap"
       signup: "Kaydol"
   shared:
+    pager:
+      previous: "‹ Geri"
+      next: "İleri ›"
+      position: "%{total} içinde %{current}"
     game_entry_controls:
       applied: "Başvuru gönderildi"
       recall: "Geri çek"

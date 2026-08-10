@@ -572,6 +572,10 @@ ka:
       login: "შესვლა"
       signup: "რეგისტრაცია"
   shared:
+    pager:
+      previous: "‹ უკან"
+      next: "წინ ›"
+      position: "%{current} / %{total}"
     game_entry_controls:
       applied: "განაცხადი გაგზავნილია"
       recall: "გამოხმობა"

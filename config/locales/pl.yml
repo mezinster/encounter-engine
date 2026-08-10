@@ -559,6 +559,10 @@ pl:
       login: "Zaloguj się"
       signup: "Zarejestruj się"
   shared:
+    pager:
+      previous: "‹ Wstecz"
+      next: "Dalej ›"
+      position: "%{current} z %{total}"
     game_entry_controls:
       applied: "Zgłoszenie zostało złożone"
       recall: "Wycofaj"

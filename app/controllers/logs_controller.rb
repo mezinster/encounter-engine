@@ -1,6 +1,7 @@
 # -*- encoding : utf-8 -*-
 class LogsController < ApplicationController
   include SecurityFilters
+  include Pagination
 
   before_action :require_authentication!
   before_action :find_game
@@ -29,8 +30,12 @@ class LogsController < ApplicationController
   # #show_full_log now goes through :ensure_full_log_access instead of
   # :ensure_author, which allows exactly those two cases and blocks a team
   # that is still mid-game.
+  # order(:time => :desc) is the order this ALREADY produced: the view's
+  # comparator returned 1 when left.time <= right.time, i.e. newest first.
+  # Doing it in SQL is what lets the page stop loading every log for the run.
   def show_live_channel
-    @logs = Log.of_run(@run).includes(:team_record, :level_record)
+    scope = Log.of_run(@run).includes(:team_record, :level_record).order(:time => :desc)
+    @logs, @page, @total_pages = page_of(scope, params[:page], :per => 50)
   end
 
   def show_level_log
@@ -53,9 +58,6 @@ class LogsController < ApplicationController
   end
 
   def show_full_log
-    # Loaded, not a relation. The view groups these in Ruby; leaving it lazy is
-    # what produced one query per level x team cell.
-    @logs = Log.of_run(@run).to_a
     # Level.of_game, deliberately: levels are the game's CONTENT and are shared
     # by every run of it. Only the answers belong to one running.
     #
@@ -65,7 +67,17 @@ class LogsController < ApplicationController
     # (answers.empty? then answers.first). That is the same per-row shape as
     # the cell N+1 below, on the same page, and the query-count guard measures
     # both together.
-    @levels = Level.of_game(@game).includes(:questions => :answers)
+    #
+    # Paged by LEVEL -- the rows this matrix lists -- in the order acts_as_list
+    # keeps them, so page 1 is levels 1-20 rather than an arbitrary twenty.
+    @levels, @page, @total_pages =
+      page_of(Level.of_game(@game).includes(:questions => :answers).order(:position),
+              params[:page], :per => 20)
+
+    # Loaded, not a relation, and only this page's levels. The view groups
+    # these in Ruby; leaving it lazy is what produced one query per level x
+    # team cell.
+    @logs = Log.of_run(@run).where(:level_id => @levels.map(&:id)).to_a
     # Not find_by_sql("select * from teams t inner join game_passings gp ...")
     # -- a bare `select *` across that join returns `id` twice (teams.id, then
     # game_passings.id) and the later column wins, so every row would carry

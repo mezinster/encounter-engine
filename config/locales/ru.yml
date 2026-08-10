@@ -552,6 +552,10 @@ ru:
       login: "Войти"
       signup: "Зарегистрироваться"
   shared:
+    times_in_zone: "Время показано в поясе %{zone}"
+    run_switcher:
+      heading: "Забеги:"
+      run_label: "Забег №%{ordinal} — %{date}"
     pager:
       previous: "‹ Назад"
       next: "Далее ›"
@@ -639,9 +643,6 @@ ru:
       not_finished: "Не финишировали"
       full_log: "Лог ответов"
       finish_testing: "Завершить тестирование"
-      times_in_zone: "Время показано в поясе %{zone}"
-      runs_heading: "Забеги:"
-      run_label: "Забег №%{ordinal} — %{date}"
   logs:
     index:
       title: "Индекс"

@@ -33,7 +33,7 @@ describe "the run switcher's links", type: :request do
   end
 
   def label_for(ordinal, date)
-    I18n.t("game_passings.show_results.run_label", :ordinal => ordinal, :date => date)
+    I18n.t("shared.run_switcher.run_label", :ordinal => ordinal, :date => date)
   end
 
   it "still names a run that has not started" do
@@ -75,7 +75,7 @@ describe "the run switcher's links", type: :request do
   end
 
   it "renders no switcher at all for a game with one run" do
-    expect(switcher.text).not_to include(I18n.t("game_passings.show_results.runs_heading"))
+    expect(switcher.text).not_to include(I18n.t("shared.run_switcher.heading"))
   end
 end
 

@@ -540,6 +540,10 @@ en:
       login: "Log in"
       signup: "Sign up"
   shared:
+    times_in_zone: "Times shown in %{zone}"
+    run_switcher:
+      heading: "Runs:"
+      run_label: "Run №%{ordinal} — %{date}"
     pager:
       previous: "‹ Previous"
       next: "Next ›"
@@ -627,9 +631,6 @@ en:
       not_finished: "Did not finish"
       full_log: "Answer log"
       finish_testing: "Finish testing"
-      times_in_zone: "Times shown in %{zone}"
-      runs_heading: "Runs:"
-      run_label: "Run №%{ordinal} — %{date}"
   logs:
     index:
       title: "Index"

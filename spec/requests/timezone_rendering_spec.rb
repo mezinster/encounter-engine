@@ -64,8 +64,8 @@ describe "the results screen's zone statement", type: :request do
 
     # 11:30 UTC on 2024-08-06 is 13:30 in Berlin under CEST (+02:00).
     expect(response.body).to include("13:30:00")
-    expect(response.body).to include(I18n.t("game_passings.show_results.times_in_zone", :zone => "+02:00"))
-    expect(response.body).not_to include(I18n.t("game_passings.show_results.times_in_zone", :zone => "+01:00"))
+    expect(response.body).to include(I18n.t("shared.times_in_zone", :zone => "+02:00"))
+    expect(response.body).not_to include(I18n.t("shared.times_in_zone", :zone => "+01:00"))
   end
 end
 

@@ -572,6 +572,10 @@ ka:
       login: "შესვლა"
       signup: "რეგისტრაცია"
   shared:
+    times_in_zone: "დრო ნაჩვენებია სარტყელში %{zone}"
+    run_switcher:
+      heading: "გარბენები:"
+      run_label: "გარბენი №%{ordinal} — %{date}"
     pager:
       previous: "‹ უკან"
       next: "წინ ›"
@@ -665,9 +669,6 @@ ka:
       not_finished: "არ დაასრულეს"
       full_log: "პასუხების ლოგი"
       finish_testing: "ტესტირების დასრულება"
-      times_in_zone: "დრო ნაჩვენებია სარტყელში %{zone}"
-      runs_heading: "გარბენები:"
-      run_label: "გარბენი №%{ordinal} — %{date}"
   logs:
     index:
       title: "ინდექსი"

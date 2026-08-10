@@ -42,12 +42,22 @@
         <% end %>
         <%= game_duration_text(game) %>
       </td>
+      <%# Two figures answering two different questions -- how many teams were
+          admitted against the cap, and how many of them actually started -- so
+          they get a line each. Joined by a middot ("4 / 10 · играли: 3") they
+          read as one statement, and left the reader to work out whether the 3
+          was part of the 4 or a competing count.
+
+          Deliberately NOT worded "из них играли: 3", which would say so
+          outright: a TESTING game lets its author play with no accepted entry
+          at all (GamePassingsController#may_start_passing?), so the second
+          figure is not always a subset of the first and the claim would
+          sometimes be false. %>
       <td data-label="<%= t("games.list.participants") %>">
         <%= counts[:registered].fetch(game.id, 0) %> / <%= game.max_team_number %>
         <% participation = game_participation_text(game, counts) %>
         <% if participation %>
-          &middot;
-          <%= participation %>
+          <div class="participation"><%= participation %></div>
         <% end %>
       </td>
       <%# Every link below keeps its exact text, order and visibility

@@ -15,6 +15,29 @@ module GamesHelper
     ids = games.map(&:id).sort
     @game_team_counts ||= {}
     @game_team_counts[ids] ||= begin
+      # Every count here is scoped to the CURRENT run, which is what the rest
+      # of the application means by a game's teams: GamesController#show
+      # (GameEntry.of_run), GamePassingsController#index
+      # (current_run.passings), DashboardController and the admin entries
+      # console all read one run. This helper grouped by game_id alone and was
+      # the only place that did not -- so on a game that has been run twice it
+      # summed both runs' registrations and passings, and divided them by a
+      # max_team_number that Game delegates to the current run only
+      # (app/models/game.rb). The numerator and the denominator answered
+      # different questions.
+      #
+      # Filtering by run id and still grouping by game_id is safe and is what
+      # keeps this to two queries: a run id belongs to exactly one game, and
+      # exactly one run per game is in this list.
+      #
+      # game.current_run is free where the caller preloaded runs
+      # (GamesController#index does `.includes(:runs)`, and #current_run is
+      # `runs.to_a.last`); the dashboard already pays the same per-game read in
+      # #accepted_teams_by_game. compact because #current_run AUTOBUILDS an
+      # unsaved run for a game that somehow has none, and an unsaved record
+      # has no id.
+      run_ids = games.map { |game| game.current_run.id }.compact
+
       # "playing" (games.list.playing, shown on a running game) means
       # *currently* playing: finished_at nil excludes teams that finished
       # normally or exited (exit! always sets finished_at), and the status
@@ -28,21 +51,21 @@ module GamesHelper
       # three-valued logic is NULL -- and therefore excluded -- for every
       # nil-status row. That would have zeroed out the common case. The
       # explicit `.where(:status => nil).or(...)` keeps nil rows in.
-      still_playing = GamePassing.where(:game_id => ids, :finished_at => nil)
+      still_playing = GamePassing.where(:game_run_id => run_ids, :finished_at => nil)
 
       {
         # Deliberately NOT game.game_entries.with_status("accepted").count --
         # with_status is a scope, and a scope builds a new relation, so it
         # re-queries even when the association is already loaded. That exact
         # mistake shipped to review on the quiz branch.
-        :registered => GameEntry.where(:game_id => ids, :status => "accepted").group(:game_id).count,
+        :registered => GameEntry.where(:game_run_id => run_ids, :status => "accepted").group(:game_id).count,
         :playing    => still_playing.where(:status => nil)
                                      .or(still_playing.where.not(:status => %w[exited ended]))
                                      .group(:game_id).count,
         # "played" (games.list.played, shown on a finished game) means *took
-        # part at all* -- every passing ever created for the game, regardless
-        # of how it ended.
-        :played     => GamePassing.where(:game_id => ids).group(:game_id).count
+        # part at all* -- every passing created for this run, regardless of how
+        # it ended.
+        :played     => GamePassing.where(:game_run_id => run_ids).group(:game_id).count
       }
     end
   end

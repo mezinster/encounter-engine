@@ -11,9 +11,16 @@ describe "the games listing", type: :request do
     post login_path, params: { email: user.email, password: "1234" }
   end
 
+  # create_game_entry throughout, not a bare GameEntry.create!, which left
+  # game_run_id NULL. The application cannot produce such a row --
+  # GameEntriesController#new always passes game_run: @game.current_run, and
+  # CreateGameRuns backfilled every existing one -- and it authorises nothing,
+  # because every admission check reads GameEntry.of_run. This listing's counts
+  # are run-scoped now (GamesHelper#game_team_counts), so a runless entry does
+  # not appear in them.
   it "shows a scheduled game's start time and registration count, and no duration" do
     game = create_game(:is_draft => false, :name => "Скоро", :max_team_number => 20)
-    2.times { GameEntry.create!(:game => game, :team => create_team, :status => "accepted") }
+    2.times { create_game_entry(:game => game, :team => create_team, :status => "accepted") }
 
     get games_path
 
@@ -25,9 +32,9 @@ describe "the games listing", type: :request do
 
   it "counts only accepted entries towards registration" do
     game = create_game(:is_draft => false, :max_team_number => 20)
-    GameEntry.create!(:game => game, :team => create_team, :status => "accepted")
-    GameEntry.create!(:game => game, :team => create_team, :status => "new")
-    GameEntry.create!(:game => game, :team => create_team, :status => "rejected")
+    create_game_entry(:game => game, :team => create_team, :status => "accepted")
+    create_game_entry(:game => game, :team => create_team, :status => "new")
+    create_game_entry(:game => game, :team => create_team, :status => "rejected")
 
     get games_path
 

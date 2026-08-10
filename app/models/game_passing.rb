@@ -64,6 +64,7 @@ class GamePassing < ApplicationRecord
   belongs_to :team, optional: true
   belongs_to :game, optional: true
   belongs_to :current_level, :class_name => "Level", optional: true
+  belongs_to :game_run, :optional => true
 
   scope :of_game, ->(game) { where(game_id: game) }
   scope :of_team, ->(team) { where(team_id: team) }
@@ -77,10 +78,6 @@ class GamePassing < ApplicationRecord
   before_save { self.answered_questions ||= [] }
 
   after_find :warn_if_answered_questions_unreadable
-
-  def self.of(team, game)
-    self.of_team(team).of_game(game).first
-  end
 
   def check_answer!(answer)
     answer.strip!

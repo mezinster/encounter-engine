@@ -9,7 +9,7 @@ describe Team, "#finished?(game)" do
 
   describe "when team has finished the game" do
     before :each do
-      GamePassing.create! :team => @team, :game => @game, :finished_at => Time.now
+      GamePassing.create! :team => @team, :game => @game, :game_run => @game.current_run, :finished_at => Time.now
     end
 
     it "should return true" do
@@ -19,7 +19,7 @@ describe Team, "#finished?(game)" do
 
   describe "when team is still playing the game" do
     before :each do
-      GamePassing.create! :team => @team, :game => @game, :finished_at => nil
+      GamePassing.create! :team => @team, :game => @game, :game_run => @game.current_run, :finished_at => nil
     end
 
     it "should return false" do

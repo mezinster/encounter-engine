@@ -113,8 +113,8 @@ describe "the full answer log", type: :request do
 
     # Sanity guard, same spirit as the other examples in this file: if these
     # ever coincide the assertions below would be meaningless rather than red.
-    expect(GamePassing.of(team_one, game).id).not_to eq(team_one.id)
-    expect(GamePassing.of(team_two, game).id).not_to eq(team_two.id)
+    expect(game.current_run.passing_for(team_one).id).not_to eq(team_one.id)
+    expect(game.current_run.passing_for(team_two).id).not_to eq(team_two.id)
 
     Log.create!(:game_id => game.id, :game_run_id => game.current_run.id,
                 :level => level.name, :level_id => level.id,

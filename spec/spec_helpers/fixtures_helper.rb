@@ -95,10 +95,14 @@ module FixturesHelper
     
     creation_params = {
       :game => game,
+      # Every passing belongs to a run. Defaulted here rather than at 85 call
+      # sites; pass :game_run explicitly to place one in a different run, which
+      # is what the isolation examples do.
+      :game_run => game.current_run,
       :current_level => current_level,
       :team => create_team
     }.merge(options)
-    
+
     GamePassing.create! creation_params
   end
 

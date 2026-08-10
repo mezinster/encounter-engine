@@ -313,7 +313,7 @@ class GamePassingsController < ApplicationController
   # /play/:game_id for any started game, including one the author had
   # explicitly rejected.
   def find_or_create_game_passing
-    @game_passing = GamePassing.of(@team, @game)
+    @game_passing = @game.current_run.passing_for(@team)
     return @game_passing if @game_passing
 
     unless may_start_passing?
@@ -321,6 +321,7 @@ class GamePassingsController < ApplicationController
     end
 
     @game_passing = GamePassing.create!(team: @team, game: @game,
+                                        game_run: @game.current_run,
                                         current_level: @game.levels.first)
   end
 

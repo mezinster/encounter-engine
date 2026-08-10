@@ -268,30 +268,16 @@ class Game < ApplicationRecord
     user.author_of?(self)
   end
 
+  # Results belong to a run; the reasoning that used to live here moved with
+  # them to GameRun. These answer for the CURRENT run, which is what every
+  # caller reached by a game-id URL means -- phase 3 introduces the screens
+  # that name a run explicitly.
   def finished_teams
-    GamePassing.of_game(self).finished.map(&:team)
+    current_run.finished_teams
   end
 
-  # Ranks on finish time PLUS accrued penalty, so a team that guessed its way
-  # to an early finish places behind one that took longer and did not. Without
-  # this, quiz penalties would be recorded and never cost anyone a place.
-  #
-  # Compared in Ruby rather than SQL: expressing "finished_at + penalty_seconds"
-  # as a portable interval across SQLite and PostgreSQL is more trouble than it
-  # is worth for a listing of tens of teams. The finished_before scope stays for
-  # its other callers.
-  #
-  # For every game that predates quiz levels penalty_seconds is 0, so the
-  # ordering is unchanged.
   def place_of(team)
-    game_passing = GamePassing.of(team, self)
-    return nil unless game_passing and game_passing.finished?
-
-    mine = game_passing.effective_finished_at
-    earlier = GamePassing.of_game(self).finished.count do |other|
-      other.effective_finished_at < mine
-    end
-    earlier + 1
+    current_run.place_of(team)
   end
 
   def self.notstarted

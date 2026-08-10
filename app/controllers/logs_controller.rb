@@ -95,7 +95,7 @@ class LogsController < ApplicationController
   def ensure_full_log_access
     return if @game.created_by?(current_user)
 
-    game_passing = current_user.team && GamePassing.of(current_user.team, @game)
+    game_passing = current_user.team && @game.current_run.passing_for(current_user.team)
     unless game_passing&.finished? && !game_passing.exited?
       raise Authentication::Unauthorized, t("errors.must_be_author_or_finished_player")
     end

@@ -32,4 +32,40 @@ class GameRun < ApplicationRecord
   validates :ordinal, presence: true,
                       numericality: { greater_than: 0 },
                       uniqueness: { scope: :game_id }
+
+  has_many :passings, :class_name => "GamePassing", :foreign_key => "game_run_id"
+
+  # Replaces GamePassing.of(team, game). A team has at most one passing per
+  # run; in phase 3 it may have one in each of several runs of the same game,
+  # which is exactly what the old game-scoped lookup could not express.
+  def passing_for(team)
+    passings.of_team(team).first
+  end
+
+  def finished_teams
+    passings.finished.map(&:team)
+  end
+
+  # Ranks on finish time PLUS accrued penalty, so a team that guessed its way
+  # to an early finish places behind one that took longer and did not. Without
+  # this, quiz penalties would be recorded and never cost anyone a place.
+  #
+  # Compared in Ruby rather than SQL: expressing "finished_at + penalty_seconds"
+  # as a portable interval across SQLite and PostgreSQL is more trouble than it
+  # is worth for a listing of tens of teams.
+  #
+  # Scoped to THIS run. Game-scoped ranking compared absolute timestamps across
+  # every cohort that ever played, so a team playing months later always placed
+  # last however fast it was -- the defect this whole programme exists to fix.
+  # Ranking WITHIN a run is still absolute-time, which is unchanged behaviour.
+  def place_of(team)
+    passing = passing_for(team)
+    return nil unless passing and passing.finished?
+
+    mine = passing.effective_finished_at
+    earlier = passings.finished.count do |other|
+      other.effective_finished_at < mine
+    end
+    earlier + 1
+  end
 end

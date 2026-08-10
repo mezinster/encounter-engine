@@ -22,13 +22,15 @@ class Team < ApplicationRecord
 
   after_save :adopt_captain
 
+  # Both keep taking a GAME: the screens that ask know a game, not a run. They
+  # resolve its current run, which is the only run a game-id URL can mean.
   def current_level_in(game)
-    game_passing = GamePassing.of(self, game)
+    game_passing = game.current_run.passing_for(self)
     game_passing.try :current_level
   end
 
   def finished?(game)
-    game_passing = GamePassing.of(self, game)
+    game_passing = game.current_run.passing_for(self)
     !! game_passing.try(:finished?)
   end
 

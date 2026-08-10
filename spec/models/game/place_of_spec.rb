@@ -12,7 +12,7 @@ describe Game, '#place_of' do
       @finished_teams = {}
       1.upto(5) do |place|
         team = create_team
-        GamePassing.create!(:team => team, :game => @game, :finished_at => Time.now + place)
+        GamePassing.create!(:team => team, :game => @game, :game_run => @game.current_run, :finished_at => Time.now + place)
         @finished_teams[place] = team
       end      
     end
@@ -20,7 +20,7 @@ describe Game, '#place_of' do
     describe "when there are teams still playing" do
       before :each do
         @playing_team = create_team
-        GamePassing.create! :team => @playing_team, :game => @game, :current_level => @game.levels.second
+        GamePassing.create! :team => @playing_team, :game => @game, :game_run => @game.current_run, :current_level => @game.levels.second
       end
 
       it "should return correct place of each team" do

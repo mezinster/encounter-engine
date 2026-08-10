@@ -75,6 +75,21 @@ class GameRun < ApplicationRecord
     passings.finished.map(&:team)
   end
 
+  # Whether this run's standings may be shown.
+  #
+  # THE single definition of that rule. It used to exist twice -- once in
+  # GamePassingsController's started-run guard, once implicitly in the results
+  # switcher, which linked every run unconditionally. They disagreed, so a
+  # scheduled rerun appeared as a link that answered 401. Both now read this.
+  #
+  # The draft check mirrors Game#started?: an unpublished game has not begun
+  # whatever the clock says.
+  def results_visible?
+    return false if game.nil? || game.draft?
+
+    starts_at.present? && Time.now > starts_at
+  end
+
   # Ranks on finish time PLUS accrued penalty, so a team that guessed its way
   # to an early finish places behind one that took longer and did not. Without
   # this, quiz penalties would be recorded and never cost anyone a place.

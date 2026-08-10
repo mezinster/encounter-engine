@@ -424,7 +424,10 @@ class GamePassingsController < ApplicationController
   def viewing_a_started_run?
     return @game.started? if @run.nil?
 
-    !@game.draft? && @run.starts_at.present? && Time.now > @run.starts_at
+    # GameRun#results_visible? is the single definition of this rule; the
+    # results switcher decides what to link with the same call, so the page
+    # cannot offer a link this guard would refuse.
+    @run.results_visible?
   end
 
   def ensure_not_author_of_the_game

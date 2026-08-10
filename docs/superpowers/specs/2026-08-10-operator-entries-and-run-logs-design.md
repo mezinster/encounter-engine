@@ -156,8 +156,11 @@ that touches the screen.
 page_of(scope, page_param, :per => 20)   # => [records, current_page, total_pages]
 ```
 
-Clamps the requested page into `1..total_pages`, so an out-of-range or malformed `?page=` lands on
-page 1 rather than an empty table or a 500 — the same forgiving rule `?run=` follows.
+Clamps the requested page into `1..total_pages`, so no `?page=` can produce an empty table or a 500 —
+the same forgiving rule `?run=` follows. Clamping is directional and both directions are deliberate:
+a page **beyond the end** lands on the **last** page, because someone asking for the end should get
+it; a **zero, negative or malformed** page lands on the **first**, because `"не-число".to_i` is 0 and
+there is nothing better to mean.
 
 | Screen | Paged over | Per page |
 |---|---|---|
@@ -217,7 +220,7 @@ real production run surfaced it.
   actually pins B2, and a count-based guard is the only way to assert it;
 - the live channel returns newest first;
 - the pager appears once there are two pages and **not before**;
-- an out-of-range `?page=` renders page 1.
+- a `?page=` beyond the end renders the **last** page, and a malformed one renders the **first**.
 
 **Both**
 

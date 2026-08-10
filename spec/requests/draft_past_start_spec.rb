@@ -1,0 +1,83 @@
+require "rails_helper"
+
+# Reported from production on 2026-08-10: a game showing the ЧЕРНОВИК badge and
+# an active "Завершить игру" button at the same time.
+#
+# The cause was #started? being purely time-based while #status gives draft
+# precedence, so a draft that had simply aged past its own start date read as
+# running to every control and as a draft to the badge. The expensive half was
+# not the badge: ensure_game_was_not_started guards edit, update, levels and
+# quiz imports off the same predicate, and it has no superadmin exemption, so
+# the draft could not be edited or published by anyone.
+#
+# These are the consequences, asserted at the level a person actually meets
+# them. See spec/models/game/started_spec.rb for the predicate itself.
+describe "a draft whose start date has passed", type: :request do
+  let(:author)     { create_user }
+  let(:superadmin) { u = create_user; u.update!(:is_superadmin => true); u }
+
+  # The only way into this state is the clock moving, which is why the column
+  # is written directly -- game_starts_in_the_future refuses it on save.
+  let(:game) do
+    g = create_game(:author => author, :is_draft => true)
+    g.update_column(:starts_at, 30.minutes.ago)
+    g.reload
+  end
+
+  def login_as(user)
+    put login_path, :params => { :email => user.email, :password => "1234" }
+  end
+
+  describe "its author" do
+    before { game and login_as(author) }
+
+    it "can still open the edit form" do
+      get edit_game_path(game)
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "can still add a level" do
+      get new_game_level_path(game)
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "can still import questions" do
+      get new_game_quiz_import_path(game)
+      expect(response).to have_http_status(:ok)
+    end
+
+    # The point of the whole fix: the draft can be published again. Without it
+    # the author could not clear is_draft, so the game was unrecoverable.
+    it "can publish it by moving the start date" do
+      patch game_path(game), :params => {
+        :game => { :starts_at => 1.day.from_now.strftime("%Y-%m-%d %H:%M"), :is_draft => "0" }
+      }
+
+      expect(game.reload.draft?).to be_falsey
+    end
+  end
+
+  # Not a redundant restatement of the author case: this filter is the one with
+  # no superadmin escape hatch, so before the fix the operator brought in to
+  # rescue such a game was refused too.
+  it "is editable by a superadmin as well" do
+    game
+    login_as(superadmin)
+
+    get edit_game_path(game)
+
+    expect(response).to have_http_status(:ok)
+  end
+
+  describe "on the author's dashboard" do
+    before { game and login_as(author) }
+
+    it "offers none of the running-game controls" do
+      get dashboard_path
+
+      expect(response.body).not_to include(I18n.t("games.list.end_game"))
+      expect(response.body).not_to include(I18n.t("games.list.stats"))
+      expect(response.body).not_to include(I18n.t("games.list.live_channel"))
+    end
+  end
+end

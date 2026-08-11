@@ -16,8 +16,14 @@ class Admin::DashboardController < ApplicationController
       :users => User.count,
       :teams => Team.count,
       :games => Game.count,
-      :passings_finished => GamePassing.finished.count,
-      :passings_in_progress => GamePassing.where(:finished_at => nil).count
+      # Three outcomes that add up, rather than two that overlap and leave a
+      # gap. See the scopes in GamePassing: `finished_at IS NULL` alone
+      # reported every team the author had ended as still playing, and
+      # `GamePassing.finished` files a team that walked off the course under
+      # the same heading as one that crossed the line.
+      :passings_finished => GamePassing.completed.count,
+      :passings_interrupted => GamePassing.interrupted.count,
+      :passings_in_progress => GamePassing.in_progress.count
     }
   end
 end

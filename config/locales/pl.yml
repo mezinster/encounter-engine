@@ -141,6 +141,7 @@ pl:
           teams: "Drużyn"
           games: "Gier"
           passings_finished: "Przejść zakończonych"
+          passings_interrupted: "Przejść przerwanych"
           passings_in_progress: "Przejść w toku"
         entry_status:
           new: "Nowe"

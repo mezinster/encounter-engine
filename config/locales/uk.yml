@@ -134,6 +134,7 @@ uk:
           teams: "Команд"
           games: "Ігор"
           passings_finished: "Проходжень завершено"
+          passings_interrupted: "Проходжень перервано"
           passings_in_progress: "Проходжень триває"
         entry_status:
           new: "Нова"

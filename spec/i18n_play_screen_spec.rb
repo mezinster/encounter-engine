@@ -35,6 +35,9 @@ describe "the play screen in every shipped locale" do
     game_passings.show_current_level.exit_game
     game_passings.show_current_level.answer_correct
     game_passings.show_current_level.answer_incorrect
+    game_passings.show_current_level.choice_correct
+    game_passings.show_current_level.choice_incorrect
+    game_passings.show_current_level.level_passed
     game_passings.show_current_level.answer_missing_choice
     game_passings.show_current_level.answer_missing_code
     game_passings.show_current_level.hint_label

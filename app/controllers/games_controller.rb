@@ -48,7 +48,11 @@ class GamesController < ApplicationController
   end
 
   def show
-    @game_entries = GameEntry.of_run(@game.current_run).with_status("new")
+    # includes(:team, :game) because games/_game_entries renders both per row.
+    # It used to reach them through Team.find/Game.find, which no preload can
+    # help; now that it goes through the associations, this is what keeps the
+    # partial to one query instead of two per applicant.
+    @game_entries = GameEntry.of_run(@game.current_run).with_status("new").includes(:team, :game)
     @teams = GameEntry.of_run(@game.current_run).with_status("accepted").map(&:team)
   end
 

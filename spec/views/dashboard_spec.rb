@@ -94,6 +94,12 @@ RSpec.describe "dashboard/_my_games", type: :view do
     # games/* partials is gone, per task-9c-report.md).
     view.define_singleton_method(:logged_in?) { true }
     view.define_singleton_method(:current_user) { author }
+    # The partial used to build this collection itself, with a second
+    # Game.by(current_user) that discarded the controller's includes(:runs)
+    # and made the games table fetch one game's runs at a time. It reads
+    # @games now, so a view spec has to supply what
+    # DashboardController#index does -- the same scope, preloaded.
+    assign(:games, Game.by(author).includes(:runs))
 
     render partial: "dashboard/my_games"
 

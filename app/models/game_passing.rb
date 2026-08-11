@@ -73,6 +73,50 @@ class GamePassing < ApplicationRecord
   scope :finished, -> { where.not(finished_at: nil).order('finished_at ASC') }
   scope :finished_before, ->(time) { where('finished_at < ?', time) }
 
+  # --- What became of a passing -----------------------------------------
+  #
+  # Three mutually exclusive scopes covering every row, for anything counting
+  # outcomes rather than listing them (the admin overview today). The naive
+  # pair -- finished_at present / finished_at nil -- gets this wrong twice, and
+  # both mistakes are visible on that page:
+  #
+  #   #end! sets status "ended" and does NOT stamp finished_at, so a team the
+  #   author ended mid-course reads as still playing, for ever. That is the
+  #   reported bug: an instance whose only game was finished, with nothing
+  #   running, reporting three passings in progress.
+  #
+  #   #exit! stamps finished_at as well as the status, so a team that walked
+  #   off the course reads as having completed it.
+  #
+  # And the wrinkle that decides how "ended" is read: GamesController#end_game
+  # calls end! on EVERY passing of the run, and end! skips only exited ones --
+  # so a team that genuinely crossed the finish line also carries status
+  # "ended" once the author closes the game. "ended" therefore cannot mean
+  # "did not finish" by itself. finished_at says whether the course was
+  # completed; exited? separates crossing the line from walking off it. That
+  # is the same pair GamePassingsHelper#full_log_visible? and
+  # LogsController#ensure_full_log_access already use for "genuinely
+  # finished".
+  #
+  # Every `.not` below is spelled with an explicit nil branch. status is
+  # nullable and nil is the ordinary in-progress value, so a bare
+  # `where.not(status: ...)` generates NOT IN / !=, which is NULL -- and so
+  # false -- for every nil-status row under SQL's three-valued logic. That
+  # would silently drop the entire population of a running game.
+  # spec/models/game_passing/outcome_scopes_spec.rb pins all of this,
+  # including that the three still add up.
+  scope :completed, -> {
+    done = where.not(:finished_at => nil)
+    done.where(:status => nil).or(done.where.not(:status => "exited"))
+  }
+  scope :interrupted, -> {
+    where(:status => "exited").or(where(:status => "ended", :finished_at => nil))
+  }
+  scope :in_progress, -> {
+    unfinished = where(:finished_at => nil)
+    unfinished.where(:status => nil).or(unfinished.where.not(:status => %w[exited ended]))
+  }
+
   before_create :update_current_level_entered_at
 
   before_save { self.answered_questions ||= [] }

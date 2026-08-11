@@ -136,6 +136,7 @@ be:
           teams: "Каманд"
           games: "Гульняў"
           passings_finished: "Праходжанняў завершана"
+          passings_interrupted: "Праходжанняў перарвана"
           passings_in_progress: "Праходжанняў ідзе"
         entry_status:
           new: "Новая"

@@ -117,6 +117,7 @@ ru:
           teams: "Команд"
           games: "Игр"
           passings_finished: "Прохождений завершено"
+          passings_interrupted: "Прохождений прервано"
           passings_in_progress: "Прохождений идёт"
         entry_status:
           new: "Новая"

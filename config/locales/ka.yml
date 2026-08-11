@@ -140,6 +140,7 @@ ka:
           teams: "გუნდი"
           games: "თამაში"
           passings_finished: "დასრულებული გავლა"
+          passings_interrupted: "შეწყვეტილი გავლა"
           passings_in_progress: "მიმდინარე გავლა"
         entry_status:
           new: "ახალი"

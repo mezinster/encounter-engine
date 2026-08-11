@@ -162,6 +162,7 @@ tr:
           teams: "Takım"
           games: "Oyun"
           passings_finished: "Tamamlanan geçiş"
+          passings_interrupted: "Yarıda kalan geçiş"
           passings_in_progress: "Süren geçiş"
         entry_status:
           new: "Yeni"

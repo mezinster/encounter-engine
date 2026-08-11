@@ -117,6 +117,7 @@ en:
           teams: "Teams"
           games: "Games"
           passings_finished: "Passings finished"
+          passings_interrupted: "Passings interrupted"
           passings_in_progress: "Passings in progress"
         entry_status:
           new: "New"

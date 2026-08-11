@@ -1,4 +1,11 @@
-<% @my_games = Game.by(current_user) %>
+<%# @games, not a fresh Game.by(current_user). This partial used to build its
+    own copy of the same scope, which threw away the includes(:runs) the
+    controller had just paid for -- so the games table read game.starts_at,
+    game.max_team_number and game.status off unpreloaded records and fetched
+    one game's runs at a time. Same rows either way: DashboardController#index
+    assigns @games from that identical scope.
+    size, not count: @games is already loaded here, and count would send a
+    COUNT for a number Ruby is holding. %>
 <%# card--wide because this is the one dashboard card holding a table. Six
     columns need 800px; half of the grid gave it 518 and .table-wrap scrolled
     the difference sideways, with every date wrapped onto three lines. Full
@@ -7,10 +14,10 @@
     `в блоке "mygames"` and that file is frozen. %>
 <fieldset id="mygames" class="card card--wide">
   <legend>
-    <%= t("dashboard.my_games.legend", count: @my_games.count) %>
+    <%= t("dashboard.my_games.legend", count: @games.size) %>
   </legend>
 
-  <%= render "games/list", games: @my_games %>
+  <%= render "games/list", games: @games %>
 
   <p>
     <%= link_to t("dashboard.my_games.create"), new_game_path, class: "btn" %>

@@ -4,13 +4,19 @@
   </legend>
 
   <ul class="game-list">
+<%# entry.team / entry.game, not Team.find(entry.team_id) / Game.find(...).
+    The finds ignored the associations and so could not be preloaded: two
+    queries per entry, on top of the per-game ones the two controllers feeding
+    this partial used to issue. Both now preload :team and :game
+    (DashboardController#pending_entries_for, GamesController#show), which
+    those finds would have thrown away.
+    GameEntry declares both associations optional, so a row pointing at a
+    deleted team reads nil here where find raised RecordNotFound -- both are a
+    500 on this page, and validates :team_id, presence: true means the column
+    itself is never blank. %>
 <% game_entries.each do |entry| %>
-<%
-  team = Team.find(entry.team_id)
-  game = Game.find(entry.game_id)
-%>
   <li>
-    <strong><%= team.name %> <%= game.name %></strong>
+    <strong><%= entry.team.name %> <%= entry.game.name %></strong>
     <em><%= button_to t("games.game_entries.accept"), accept_game_entry_path(entry) %></em>
     <em><%= button_to t("games.game_entries.reject"), reject_game_entry_path(entry) %></em>
   </li>

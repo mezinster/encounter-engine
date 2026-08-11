@@ -335,6 +335,93 @@
   overflow-y: auto;
 }
 
+/* --- The play shell where there is room for two columns -----------------
+ * Everything above this point is measured against 390x660 and 375x553 and
+ * exists to ration a viewport with nothing to spare: the shell is exactly
+ * one viewport tall, the bar takes at most half of it, and the task area
+ * scrolls in what is left.
+ *
+ * That rationing applied at EVERY width, because .page--focused sits outside
+ * the 48rem query above. On a desktop window it produced the bug it was
+ * written to prevent, inverted: measured at 1920x780, the bar claimed 316px,
+ * .play-scroll was squeezed to 106px and clipped 29px of a two-line
+ * question, and the option list clipped 81px more -- while roughly 1200px of
+ * horizontal space sat empty either side of the 44rem column. Nothing was in
+ * danger of being covered. There was no shortage to negotiate; the layout
+ * invented one.
+ *
+ * Simply switching the rationing off was measured first and is NOT what
+ * this does. It moves the scroll rather than removing it: the content is
+ * ~890px tall against a 780px window, so the page itself scrolls 110px and
+ * «Отправить!» lands below the fold -- worse than the inner scrollbar it
+ * replaces, on the one screen where the submit button matters most. It fails
+ * that way at 1920x780, 1440x800, 1024x600 and 845x600.
+ *
+ * Using the idle horizontal space is what actually resolves it. Task text
+ * and the captain's controls take the left column, the answer bar the right,
+ * and each column is roughly half as tall as the stack was. Measured with
+ * the worst content state (quiz options, a pinned hint and a wrong-answer
+ * flash), page scroll and every clip are 0 and the submit button is hit-
+ * testable at 1920x780, 1440x800, 1280x845, 845x600 and 800x900; 1024x600
+ * leaves 2px of page scroll.
+ *
+ * 52rem (832px), one threshold and not two: it is where two readable columns
+ * first fit (24rem of task + 20rem of bar + the gap), and it catches a
+ * scaled-down laptop viewport at 845px, which a 48rem or 60rem line would
+ * have left on one or the other side of the fix. Below it nothing changes at
+ * all -- the phone measurements above are untouched rather than re-tuned.
+ *
+ * A width query rather than a height one: a height query would flip the
+ * whole layout when someone opened dev tools. The case it gets wrong is a
+ * narrow, short window (800x600), which keeps the phone pinning it can still
+ * use.
+ *
+ * The companion half of this block -- the three scroll containers and the
+ * bar's full-bleed margins -- is in screens.css, next to the rules it
+ * undoes. */
+@media (min-width: 52rem) {
+  .page--focused {
+    /* auto, not 100dvh: with no fixed height there is no shortage, and with
+       no shortage nothing below ever shrinks or scrolls. */
+    height: auto;
+    grid-template-rows: auto auto;
+    /* Undoes the align-content: stretch above, restoring .page's own value --
+       otherwise the rows stretch to fill a grid with no definite height. */
+    align-content: start;
+  }
+
+  .page--focused .main {
+    /* 44rem is a single column of prose. Two columns need the room the rest
+       of the app already takes (.main's own 72rem). */
+    max-width: 72rem;
+    /* Replaces the flex column below 52rem. Named areas rather than
+       auto-placement because the source order is title, task, pinned, bar --
+       the bar must jump the pinned block to reach the right column, and it
+       has to span both content rows so a tall option list is not limited to
+       the height of the task text beside it. */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
+    grid-template-areas: "title title"
+                         "task  bar"
+                         "pinned bar";
+    grid-template-rows: auto auto 1fr;
+    /* Each area at its natural height; the 1fr row absorbs the slack so
+       neither column is stretched to match the other. */
+    align-items: start;
+    /* Column gap only -- the row rhythm is .play-scroll's and .play-pinned's
+       own margins (screens.css), and a row gap here would double it. */
+    gap: 0 var(--space-5);
+    /* Both go with the flex column they belonged to. */
+    min-height: auto;
+    overflow-y: visible;
+  }
+
+  .page--focused .main > h2 { grid-area: title; }
+  .play-scroll { grid-area: task; }
+  .play-pinned { grid-area: pinned; }
+  .playbar     { grid-area: bar; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   #drawer, .drawer-scrim { transition: none; }
 }

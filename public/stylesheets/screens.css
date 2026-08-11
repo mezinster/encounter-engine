@@ -321,6 +321,44 @@ ul.language-tabs .missing-count {
   min-height: 0;
 }
 
+/* From 52rem up the shell is a two-column grid that grows with its content
+   rather than a viewport-height column (see the .page--focused block in
+   layout.css for the measurements and why). There is no shortage left for
+   these three to negotiate, but left alone they would still be scroll
+   containers with caps on them -- and a capped scroll container clips whether
+   or not anything is squeezing it, which is how a two-line question ended up
+   with a scrollbar of its own on a 1920px-wide window. Each goes back to
+   growing with its content. */
+@media (min-width: 52rem) {
+  .playbar {
+    /* The cap is half of a PHONE screen. Half of a desktop window is not the
+       same promise: it was the bar's own claim on that space that starved the
+       task area above it. */
+    max-height: none;
+    overflow-y: visible;
+    /* The negative margins above cancel .main's padding so the bar reaches
+       both edges of a phone screen. In the right-hand column it is a panel
+       beside the task, not a bar under it, so it takes an edge of its own
+       instead of bleeding into the gutter. */
+    margin-left: 0;
+    margin-right: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  /* overflow, not overflow-y: one axis set to visible while the other is auto
+     is not honoured -- the visible axis computes back to auto -- so the
+     shorthand is the only way to genuinely switch the scroll container off. */
+  .play-scroll {
+    overflow: visible;
+    /* The floor stops meaning anything once nothing shrinks, and left in it
+       would pad out a one-line question. */
+    min-height: auto;
+  }
+
+  .playbar-questions { overflow: visible; }
+}
+
 .playbar-hint {
   margin-bottom: var(--space-2);
   padding: var(--space-2) var(--space-3);

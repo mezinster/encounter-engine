@@ -12,13 +12,13 @@ jobs:
     container: ruby:3.3.12
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install bundler
         run: gem install bundler --no-document
 
       - name: Cache gems
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: vendor/bundle
           key: gems-${{ hashFiles('Gemfile.lock') }}
@@ -46,7 +46,7 @@ jobs:
     container: ruby:3.3.12
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install bundler
         run: gem install bundler --no-document
@@ -69,12 +69,12 @@ jobs:
       # not "align" them: this pins the interpreter the countdown's plural rule
       # is evaluated by, and changing it changes what the test proves.
       - name: Install node (for the JavaScript-evaluating specs)
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "20"
 
       - name: Cache gems
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: vendor/bundle
           key: gems-${{ hashFiles('Gemfile.lock') }}
@@ -97,3 +97,38 @@ jobs:
 
       - name: RSpec
         run: bundle exec rspec
+
+  # The other half of the reasoning in .github/dependabot.yml.
+  #
+  # That file deliberately leaves the bundler ecosystem out, because a stream of
+  # automated gem bumps against a frozen acceptance contract is a different risk
+  # class from bumping a CI action. The cost of that decision is that nothing
+  # would notice a published advisory against one of the 139 gems in
+  # Gemfile.lock. This job is what notices. It bumps nothing -- it reads the
+  # lockfile and compares it against ruby-advisory-db -- so it buys the warning
+  # without buying the churn.
+  #
+  # bundler-audit is installed here rather than added to the Gemfile on purpose.
+  # The gem cache above is keyed on hashFiles('Gemfile.lock'), so putting it in
+  # the bundle would invalidate that cache for every job, and it would churn a
+  # lockfile the dependabot config is written to leave alone. The tool only
+  # needs to READ Gemfile.lock; it never has to be resolved alongside the app.
+  #
+  # Blocking rather than advisory: the baseline was clean when this was added
+  # (2026-08-11, 1232 advisories, no vulnerabilities found). A security check
+  # nobody has to act on is one nobody reads.
+  audit:
+    name: Gem advisories
+    runs-on: ubuntu-latest
+    container: ruby:3.3.12
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install bundler-audit
+        run: gem install bundler-audit --no-document
+
+      # --update clones ruby-advisory-db at run time, which is the point: a
+      # pinned copy of the advisory database ages into telling you nothing.
+      - name: Check Gemfile.lock against ruby-advisory-db
+        run: bundle-audit check --update

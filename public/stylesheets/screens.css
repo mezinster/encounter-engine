@@ -106,6 +106,15 @@
 }
 .game-list li:last-child { border-bottom: 0; }
 
+/* The second figure in the games list's "Команды" cell -- who actually
+   started, under the registrations-against-the-cap figure it must not be
+   confused with. Dimmed and smaller for the same reason .notice is: it is
+   context for the number above it, not a number of equal standing. */
+.participation {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
 /* --- Admin: the stats screen's figure grid ------------------------------
  * Each count is a labelled figure rather than a table row. */
 .stat-grid {

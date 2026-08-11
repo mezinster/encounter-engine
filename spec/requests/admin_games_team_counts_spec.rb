@@ -10,8 +10,15 @@ describe "the admin console's team counts", type: :request do
 
   before { put login_path, :params => { :email => superadmin.email, :password => "1234" } }
 
+  # create_game_entry, not a bare GameEntry.create!, because that left
+  # game_run_id NULL -- a state the application cannot produce (the one
+  # creation path, GameEntriesController#new, always passes
+  # game_run: @game.current_run, and CreateGameRuns backfilled every existing
+  # row) and one that authorises nothing, since every admission check reads
+  # GameEntry.of_run. The counts these examples assert are run-scoped now, so
+  # a runless entry is invisible to them -- correctly.
   def register(game, status = "accepted")
-    GameEntry.create!(:game => game, :team => create_team(:captain => create_user), :status => status)
+    create_game_entry(:game => game, :team => create_team(:captain => create_user), :status => status)
   end
 
   it "counts a registration on a DRAFT game, which used to render 0" do

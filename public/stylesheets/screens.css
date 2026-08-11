@@ -281,6 +281,19 @@ ul.language-tabs .missing-count {
      which the other half covers on every phone viewport tested down to
      375x600. */
   max-height: 50vh;
+  /* A floor as well as a cap, and the floor is the newer half. overflow-y
+     below sets this flex item's AUTOMATIC minimum size to zero -- that is what
+     the spec says an item with a scroll overflow gets -- so nothing stopped
+     .main shrinking the bar past its own contents. Measured at 320x480 it
+     collapsed to 25px around 211px of content and threw the submit button
+     112px below the fold; at 375x553 it stood at 142px around 186px and
+     clipped the button's lower half, which is why «Отправить!» failed a hit
+     test on an iPhone SE from the day this bar was written.
+     One tap target plus the bar's own vertical padding: the smallest box that
+     can still show the thing the bar exists for. Not a measured reserve of
+     the kind that failed twice before -- those were guesses at a whole bar's
+     height, this is the size of one button, in the token that defines it. */
+  min-height: calc(var(--tap) + var(--space-3) * 2);
   display: flex;
   flex-direction: column;
   /* Belt and braces: if the bar's UNSCROLLABLE parts alone ever exceed the
@@ -424,6 +437,43 @@ ul.language-tabs .missing-count {
      button -- so .play-scroll absorbs the squeeze first, and past that .main
      scrolls, which is safe now that nothing is covering anything. */
   min-height: 8rem;
+}
+
+/* The submit button rides the bar's visible bottom edge instead of sitting at
+   the end of a box that may be scrolled past it.
+ *
+ * The comment on .playbar-questions says the submit button "can never be
+ * scrolled out of reach the way it could when the whole bar scrolled". That
+ * holds inside the option list. It does not hold for the bar, which still
+ * scrolls -- and on a short screen it is the bar's own scroll that hides the
+ * button: measured at 375x553, the button's box ran from y=517 to y=561 while
+ * the bar ended at y=529, so its centre was outside the bar and it failed a
+ * hit test. The min-height above stops the collapse; this is what keeps the
+ * button visible once the bar is scrolling at all.
+ *
+ * Two things were measured and rejected before this. `min-height: min-content`
+ * on the bar sounds like the principled floor -- the option list has
+ * min-height: 0, so it should contribute nothing -- but the min-content
+ * KEYWORD does not zero a scroll container the way flexbox's automatic
+ * minimum size does: the bar went to 390px, the list stopped scrolling, and
+ * the button went off screen at every phone size including the two that were
+ * fine. Dropping the bar's overflow-y instead let the automatic minimum apply
+ * and the bar grew past the shell, which pushed the button below the fold in
+ * the same way. There is genuinely not enough room at these sizes; the button
+ * has to move rather than the box.
+ *
+ * .btn--go already carries an opaque background, so options scroll under it
+ * rather than through it.
+ *
+ * Below 52rem only: from there up the bar has no cap and no scroll (see the
+ * media block above), so there is no scrollport for this to stick to and
+ * bottom: 0 would resolve against the viewport instead -- pinning the button
+ * to the bottom of a desktop window it is nowhere near. */
+@media (max-width: 51.99rem) {
+  .playbar-form--quiz .btn--go {
+    position: sticky;
+    bottom: 0;
+  }
 }
 
 .quiz-question {

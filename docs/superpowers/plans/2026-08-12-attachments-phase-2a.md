@@ -614,11 +614,17 @@ describe GameFileUpload do
 
     it "retries once when the unique index fires under a race" do
       # The model validation is TOCTOU-racy against its own unique index.
-      # Simulate the loser of that race: the validation passes, the insert does
-      # not.
-      allow_any_instance_of(GameFile).to receive(:save).and_wrap_original do |m, *args|
-        @raised ||= (raise ActiveRecord::RecordNotUnique, "simulated")
-        m.call(*args)
+      # Simulate the loser of that race: validation passes, the insert does not.
+      # Stub save! (what the code calls), and use a plain local flag so the
+      # first call raises and the retry reaches the real implementation.
+      raised = false
+      allow_any_instance_of(GameFile).to receive(:save!).and_wrap_original do |original, *args|
+        unless raised
+          raised = true
+          raise ActiveRecord::RecordNotUnique, "simulated"
+        end
+
+        original.call(*args)
       end
 
       file = upload("photo.jpg")
@@ -770,8 +776,10 @@ class GameFileUpload
     end
 
     image = Vips::Image.new_from_file(@uploaded_file.tempfile.path)
-    bytes = image.write_to_buffer(".jpg", :strip => true, :Q => 88) if target == "jpg"
-    bytes = image.write_to_buffer(".png", :strip => true) if target == "png"
+    bytes = case target
+            when "jpg" then image.write_to_buffer(".jpg", :strip => true, :Q => 88)
+            when "png" then image.write_to_buffer(".png", :strip => true)
+            end
 
     { :io => StringIO.new(bytes),
       :filename => "#{stem}.#{target}",
@@ -1062,11 +1070,33 @@ and wrap the persistence in the game's lock, replacing the `attach_and_measure` 
     # 62. The lock is held across check AND write. Overshoot would be survivable
     # only because the free-space floor is a hard backstop -- which is why that
     # floor must never later be dropped as redundant.
-    @game.with_lock do
-      return reject(game_file, :quota_full) unless room_in_quota?(incoming_size)
+    #
+    # No `return` inside the block: with_lock opens a transaction, and returning
+    # out of a transaction block is a construct Rails has changed the semantics
+    # of more than once. Assign and fall through instead.
+    result = nil
 
-      attach_and_measure(game_file, canonical)
+    @game.with_lock do
+      result =
+        if room_in_quota?(incoming_size)
+          attach_and_measure(game_file, canonical)
+        else
+          reject(game_file, :quota_full,
+                 :left => left_megabytes, :quota => Setting.integer("game_quota_megabytes"))
+        end
     end
+
+    result
+```
+
+`left_megabytes` is the remaining allowance, floored at zero so a message never
+reads a negative number:
+
+```ruby
+  def left_megabytes
+    quota = Setting.integer("game_quota_megabytes") * 1024 * 1024
+    [ quota - GameFile.storage_used_by(@game), 0 ].max / 1024 / 1024
+  end
 ```
 
 and add the predicates:

@@ -1,6 +1,6 @@
 # language: en
 #
-# The other 59 feature files are Russian: the original Merb app only ever
+# The other 58 feature files are Russian: the original Merb app only ever
 # spoke Russian, so its behavioural contract is written in Russian, and that
 # contract is read-only (see the header of features/support/env.rb and
 # task-12-report.md). This one is new platform behaviour with no Russian

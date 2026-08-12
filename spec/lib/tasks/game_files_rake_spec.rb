@@ -53,12 +53,47 @@ describe "game_files rake tasks" do
     end
 
     it "leaves an attached blob alone" do
-      # Without this the task could satisfy its own test by purging everything.
+      # Without this the task could satisfy its own test by purging everything --
+      # EXCEPT it can't, and that's the point of the second example below.
+      #
+      # ActiveStorage::Blob#purge is:
+      #
+      #   def purge
+      #     destroy
+      #     delete
+      #   rescue ActiveRecord::InvalidForeignKey
+      #   end
+      #
+      # and db/schema.rb carries a real foreign key from active_storage_attachments
+      # to active_storage_blobs. For an attached blob, `destroy` raises
+      # InvalidForeignKey, the rescue swallows it, and `delete` is never reached --
+      # so an attached blob (and its file on disk) survives `purge` whether or not
+      # the query was scoped to `.unattached` first. Verified: mutating this task's
+      # body to `ActiveStorage::Blob.find_each(&:purge)` (purging EVERY blob, not
+      # just unattached ones) still passes this exact example -- the database's own
+      # FK does the protecting, not the code under test. Kept as a smoke check, but
+      # the example below is what can actually fail if the scope is dropped.
       file = GameFileUpload.new(@game, fixture_upload("photo.jpg"), create_user).call
 
       Rake::Task["game_files:purge_orphans"].invoke
 
       expect(file.reload.file).to be_attached
+    end
+
+    it "iterates ActiveStorage::Blob.unattached, not every blob" do
+      # The real discriminator for the mutation described above: stub .unattached
+      # to keep returning the SAME relation object, then require `find_each` to be
+      # called on THAT relation. `ActiveStorage::Blob.find_each(&:purge)` calls
+      # find_each on the bare class, never touching the stubbed relation, so this
+      # fails under that mutation even though the outcome-based example above does
+      # not (verified: reverting to `ActiveStorage::Blob.unattached.find_each` --
+      # the shipped code -- makes it pass again; see task 5's review notes for the
+      # actual failure output).
+      scope = ActiveStorage::Blob.unattached
+      allow(ActiveStorage::Blob).to receive(:unattached).and_return(scope)
+      expect(scope).to receive(:find_each).and_call_original
+
+      Rake::Task["game_files:purge_orphans"].invoke
     end
   end
 end

@@ -820,6 +820,14 @@ uk:
       password_label: "Пароль"
       submit: "Увійти"
   activerecord:
+    attributes:
+      file_attachment:
+        attachable: "Об'єкт"
+        game_file: "Файл"
+      game_file:
+        game: "Гра"
+        filename: "Ім'я файлу"
+        content_type: "Тип файлу"
     errors:
       messages:
         blank: "не може бути порожнім"
@@ -835,9 +843,11 @@ uk:
         file_attachment:
           attributes:
             attachable:
-              inclusion: "Не можна прикріпити файл до чужої гри"
+              blank: "не вказаний"
+              inclusion: "належить іншій грі"
             game_file:
-              inclusion: "Цей файл належить іншій грі"
+              blank: "не вибраний"
+              inclusion: "належить іншій грі"
         game:
           attributes:
             name:
@@ -868,8 +878,13 @@ uk:
               blank: "Ви не вказали команду"
         game_file:
           attributes:
+            content_type:
+              blank: "не визначений"
             filename:
-              taken: "Файл з такою назвою вже є в цій грі"
+              blank: "не вказано"
+              taken: "вже використовується в цій грі"
+            game:
+              blank: "не вибрана"
         invitation:
           attributes:
             for_user:

@@ -824,6 +824,14 @@ pl:
       password_label: "Hasło"
       submit: "Zaloguj się"
   activerecord:
+    attributes:
+      file_attachment:
+        attachable: "Obiekt"
+        game_file: "Plik"
+      game_file:
+        game: "Gra"
+        filename: "Nazwa pliku"
+        content_type: "Typ pliku"
     errors:
       messages:
         blank: "nie może być puste"
@@ -839,9 +847,11 @@ pl:
         file_attachment:
           attributes:
             attachable:
-              inclusion: "Nie można dołączyć pliku do cudzej gry"
+              blank: "nie wskazany"
+              inclusion: "należy do innej gry"
             game_file:
-              inclusion: "Ten plik należy do innej gry"
+              blank: "nie wybrany"
+              inclusion: "należy do innej gry"
         game:
           attributes:
             name:
@@ -872,8 +882,13 @@ pl:
               blank: "Nie wskazano drużyny"
         game_file:
           attributes:
+            content_type:
+              blank: "nie określony"
             filename:
-              taken: "Plik o takiej nazwie już istnieje w tej grze"
+              blank: "nie podana"
+              taken: "jest już używana w tej grze"
+            game:
+              blank: "nie wybrana"
         invitation:
           attributes:
             for_user:

@@ -811,6 +811,14 @@ be:
       password_label: "Пароль"
       submit: "Увайсці"
   activerecord:
+    attributes:
+      file_attachment:
+        attachable: "Аб'ект"
+        game_file: "Файл"
+      game_file:
+        game: "Гульня"
+        filename: "Імя файла"
+        content_type: "Тып файла"
     errors:
       messages:
         blank: "не можа быць пустым"
@@ -826,9 +834,11 @@ be:
         file_attachment:
           attributes:
             attachable:
-              inclusion: "Нельга прымацаваць файл да чужой гульні"
+              blank: "не ўказаны"
+              inclusion: "належыць іншай гульні"
             game_file:
-              inclusion: "Гэты файл належыць іншай гульні"
+              blank: "не выбраны"
+              inclusion: "належыць іншай гульні"
         game:
           attributes:
             name:
@@ -859,8 +869,13 @@ be:
               blank: "Вы не ўказалі каманду"
         game_file:
           attributes:
+            content_type:
+              blank: "не вызначаны"
             filename:
-              taken: "Файл з такой назвай ужо ёсць у гэтай гульні"
+              blank: "не ўказана"
+              taken: "ужо выкарыстоўваецца ў гэтай гульні"
+            game:
+              blank: "не выбрана"
         invitation:
           attributes:
             for_user:

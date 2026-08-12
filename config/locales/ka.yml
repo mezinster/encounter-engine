@@ -841,6 +841,14 @@ ka:
       password_label: "პაროლი"
       submit: "შესვლა"
   activerecord:
+    attributes:
+      file_attachment:
+        attachable: "ობიექტი"
+        game_file: "ფაილი"
+      game_file:
+        game: "თამაში"
+        filename: "ფაილის სახელი"
+        content_type: "ფაილის ტიპი"
     errors:
       messages:
         blank: "არ შეიძლება იყოს ცარიელი"
@@ -856,9 +864,11 @@ ka:
         file_attachment:
           attributes:
             attachable:
-              inclusion: "ფაილის სხვისი თამაშისთვის მიმაგრება არ შეიძლება"
+              blank: "არ არის მითითებული"
+              inclusion: "სხვა თამაშს ეკუთვნის"
             game_file:
-              inclusion: "ეს ფაილი სხვა თამაშს ეკუთვნის"
+              blank: "არ არის არჩეული"
+              inclusion: "სხვა თამაშს ეკუთვნის"
         game:
           attributes:
             name:
@@ -889,8 +899,13 @@ ka:
               blank: "თქვენ არ მიუთითეთ გუნდი"
         game_file:
           attributes:
+            content_type:
+              blank: "ვერ დადგინდა"
             filename:
-              taken: "ასეთი სახელის ფაილი უკვე არის ამ თამაშში"
+              blank: "არ არის მითითებული"
+              taken: "უკვე გამოიყენება ამ თამაშში"
+            game:
+              blank: "არ არის არჩეული"
         invitation:
           attributes:
             for_user:

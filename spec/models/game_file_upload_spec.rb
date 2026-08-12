@@ -54,7 +54,14 @@ describe GameFileUpload do
 
       expect(file.web_variant).to be_present
       expect(file.thumb_variant).to be_present
-      expect(file.derived_byte_size).to be > 0
+
+      # Not `be > 0`: that's trivially true and would not notice
+      # derived_byte_size landing at any wrong positive number (it did, at
+      # 2x the canonical byte_size, before the v.image.blob fix -- see the
+      # "sets all four denormalised fields" example below). Pin the real
+      # figure, read straight from the variants' own attached images.
+      true_derived_size = [ file.web_variant, file.thumb_variant ].compact.sum { |v| v.image.blob.byte_size }
+      expect(file.derived_byte_size).to eq(true_derived_size)
     end
 
     it "sets byte_size to the canonical bytes, not the upload" do
@@ -425,7 +432,10 @@ describe GameFileUpload do
       file = upload("photo.jpg")
 
       expect(file).to be_persisted
-      expect(file.derived_byte_size).to be > 0
+
+      # Not `be > 0` -- see the comment on the same pattern earlier in this file.
+      true_derived_size = [ file.web_variant, file.thumb_variant ].compact.sum { |v| v.image.blob.byte_size }
+      expect(file.derived_byte_size).to eq(true_derived_size)
     end
 
     # Rails.root and the storage service root are the same filesystem today and

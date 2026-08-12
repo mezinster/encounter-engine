@@ -792,6 +792,20 @@ en:
       password_label: "Password"
       submit: "Log in"
   activerecord:
+    # human_attribute_name overrides -- see the matching comment in ru.yml.
+    # Kept for ru/en key parity (spec/i18n_spec.rb); English's default
+    # humanized names already read fine, so these mostly restate them.
+    attributes:
+      file_attachment:
+        # "Object", not the default humanisation "Attachable": that is the
+        # polymorphic association's internal name, and the thing it points at
+        # is a level or a hint. Matches ru.yml's "Объект".
+        attachable: "Object"
+        game_file: "File"
+      game_file:
+        game: "Game"
+        filename: "Filename"
+        content_type: "Content type"
     errors:
       messages:
         blank: "can't be blank"
@@ -807,9 +821,11 @@ en:
         file_attachment:
           attributes:
             attachable:
-              inclusion: "Can't attach a file to someone else's game"
+              blank: "is not specified"
+              inclusion: "belongs to a different game"
             game_file:
-              inclusion: "That file belongs to a different game"
+              blank: "is not selected"
+              inclusion: "belongs to a different game"
         game:
           attributes:
             name:
@@ -840,8 +856,13 @@ en:
               blank: "You didn't specify a team"
         game_file:
           attributes:
+            content_type:
+              blank: "could not be determined"
             filename:
-              taken: "A file with that name already exists in this game"
+              blank: "is not specified"
+              taken: "is already used in this game"
+            game:
+              blank: "is not selected"
         invitation:
           attributes:
             for_user:

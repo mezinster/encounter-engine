@@ -806,6 +806,21 @@ ru:
       password_label: "Пароль"
       submit: "Войти"
   activerecord:
+    # human_attribute_name overrides. Rails' full_message concatenates this
+    # noun with an errors.models.*.attributes.*.blank message below as
+    # "%{attribute} %{message}" (see error_messages_for,
+    # app/helpers/application_helper.rb), so each blank message here is
+    # written as a short predicate that AGREES IN GENDER with the noun it
+    # follows, not a standalone sentence -- "Игра" is feminine, "Файл" is
+    # masculine, and Russian predicate participles inflect for that.
+    attributes:
+      file_attachment:
+        attachable: "Объект"
+        game_file: "Файл"
+      game_file:
+        game: "Игра"
+        filename: "Имя файла"
+        content_type: "Тип файла"
     errors:
       messages:
         blank: "не может быть пустым"
@@ -821,9 +836,11 @@ ru:
         file_attachment:
           attributes:
             attachable:
-              inclusion: "Нельзя прикрепить файл к чужой игре"
+              blank: "не указан"
+              inclusion: "принадлежит другой игре"
             game_file:
-              inclusion: "Этот файл принадлежит другой игре"
+              blank: "не выбран"
+              inclusion: "принадлежит другой игре"
         game:
           attributes:
             name:
@@ -854,8 +871,13 @@ ru:
               blank: "Вы не указали команду"
         game_file:
           attributes:
+            content_type:
+              blank: "не определён"
             filename:
-              taken: "Файл с таким именем уже есть в этой игре"
+              blank: "не указано"
+              taken: "уже используется в этой игре"
+            game:
+              blank: "не выбрана"
         invitation:
           attributes:
             for_user:

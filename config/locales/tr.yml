@@ -848,6 +848,14 @@ tr:
       password_label: "Parola"
       submit: "Giriş yap"
   activerecord:
+    attributes:
+      file_attachment:
+        attachable: "Nesne"
+        game_file: "Dosya"
+      game_file:
+        game: "Oyun"
+        filename: "Dosya adı"
+        content_type: "Dosya türü"
     errors:
       messages:
         blank: "boş olamaz"
@@ -863,9 +871,11 @@ tr:
         file_attachment:
           attributes:
             attachable:
-              inclusion: "Dosya başka birinin oyununa eklenemez"
+              blank: "belirtilmedi"
+              inclusion: "başka bir oyuna ait"
             game_file:
-              inclusion: "Bu dosya başka bir oyuna ait"
+              blank: "seçilmedi"
+              inclusion: "başka bir oyuna ait"
         game:
           attributes:
             name:
@@ -896,8 +906,13 @@ tr:
               blank: "Takımı belirtmediniz"
         game_file:
           attributes:
+            content_type:
+              blank: "belirlenemedi"
             filename:
-              taken: "Bu oyunda bu adda bir dosya zaten var"
+              blank: "girilmedi"
+              taken: "bu oyunda zaten kullanılıyor"
+            game:
+              blank: "seçilmedi"
         invitation:
           attributes:
             for_user:

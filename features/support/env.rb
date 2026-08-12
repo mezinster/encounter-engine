@@ -66,8 +66,28 @@ Before { Rails.cache.clear }
 # a grep of all of features/ turns up no scenario that hardcodes an id-1
 # assumption (the suite's only bare "1" hit is a team-count assertion in
 # max-team-number.feature:58, unrelated) -- but it is harmless, so it stays.
+#
+# :joinable => false is load-bearing, not decoration -- it is the same flag
+# Rails' own use_transactional_fixtures sets on the wrapper transaction it
+# opens around every RSpec example (see
+# active_record/railties/console_sandbox.rb for the same pattern, one line
+# long). Application code that opens its own transaction while this one is
+# open normally just joins it (transaction(requires_new: false), which is what
+# GameFile::with_lock does) and defers every after_commit callback until the
+# OUTERMOST transaction commits -- which this one never does, by design. A
+# joinable: false parent flips that: connection_adapters/abstract/
+# transaction.rb reads `run_commit_callbacks = !current_transaction.joinable?`,
+# so a nested transaction opened while the parent is non-joinable becomes a
+# real sub-transaction whose OWN commit fires callbacks immediately. Without
+# this, GameFileUpload#call's with_lock block persists the GameFile row but
+# ActiveStorage's after_commit disk write never runs inside the scenario, so
+# the very next read raises ActiveStorage::FileNotFoundError -- confirmed by
+# reproducing it here before this line existed (see
+# features/games/game-files.feature, task 4 of the attachments-phase-2b plan).
+# The scenario is still rolled back in full at the end; only the visibility of
+# nested-transaction commits *during* the scenario changes.
 Around do |_scenario, block|
-  ActiveRecord::Base.transaction do
+  ActiveRecord::Base.transaction(:joinable => false) do
     block.call
     raise ActiveRecord::Rollback
   end

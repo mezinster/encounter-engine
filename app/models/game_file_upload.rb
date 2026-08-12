@@ -276,9 +276,33 @@ class GameFileUpload
   #
   # Called after the locking transaction commits, deliberately -- see the
   # comment at the call site in #call.
+  #
+  # v.blob is NOT the derivative's own blob -- ActiveStorage::VariantWithRecord#blob
+  # is an attr_reader holding the SOURCE blob it was built from (see its
+  # #initialize), so summing it double-counts the canonical bytes instead of
+  # measuring what the variants actually weigh. Confirmed against a real
+  # upload: derived_byte_size was landing at exactly 2x the canonical
+  # byte_size (11880 for a 5940-byte canonical), while the two variants'
+  # real derivative blobs were 6129 and 1404 bytes -- 7533 total, not 11880.
+  # v.image.blob is the derivative's own blob (#image reads the
+  # ActiveStorage::VariantRecord this variant is tracked as, and returns its
+  # attached image) -- that is the number quota accounting means. #record
+  # itself is private on VariantWithRecord, so v.record.image.blob would raise
+  # NoMethodError; v.image is the public accessor that reaches the same place.
+  #
+  # Written directly rather than defensively (no `.respond_to?(:image)`
+  # fallback to v.blob): file.variant(...) only returns a bare
+  # ActiveStorage::Variant, which has no #image and no tracked derivative blob
+  # to read, when config.active_storage.track_variants is false. This app runs
+  # config.load_defaults 8.0, under which that config defaults to true, and it
+  # is not overridden anywhere in config/ -- verified live
+  # (ActiveStorage.track_variants #=> true, and file.variant(...) returns
+  # VariantWithRecord). A silent fallback to the wrong number if that ever
+  # changed would be worse than a loud NoMethodError pointing straight at this
+  # comment.
   def measure_derived!(game_file)
     derived = [ game_file.web_variant, game_file.thumb_variant ].compact
-    game_file.update_column(:derived_byte_size, derived.sum { |v| v.blob.byte_size })
+    game_file.update_column(:derived_byte_size, derived.sum { |v| v.image.blob.byte_size })
   end
 
   # The model's uniqueness validation is time-of-check/time-of-use racy against

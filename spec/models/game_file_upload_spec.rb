@@ -351,7 +351,15 @@ describe GameFileUpload do
     expect(file.byte_size).to be > 0
     expect(file.content_type).to be_present
     expect(file.checksum).to be_present
-    expect(file.derived_byte_size).to be > 0
+
+    # Not `be > 0`: that passed even while derived_byte_size was landing at
+    # 2x the canonical byte_size (VariantWithRecord#blob is the SOURCE blob,
+    # not the derivative's own). Read the true figure straight from the
+    # variants' own attached images -- v.image.blob, the same expression
+    # measure_derived! now uses -- rather than hardcoding a number libvips
+    # could change by a byte on the next encoder update.
+    true_derived_size = [ file.web_variant, file.thumb_variant ].compact.sum { |v| v.image.blob.byte_size }
+    expect(file.derived_byte_size).to eq(true_derived_size)
   end
 
   describe "disk protection" do

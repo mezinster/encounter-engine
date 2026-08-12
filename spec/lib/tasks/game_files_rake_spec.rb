@@ -18,11 +18,18 @@ describe "game_files rake tasks" do
       # variants after commit, so a process killed in between leaves a row at 0
       # that nothing else revisits.
       file = GameFileUpload.new(@game, fixture_upload("photo.jpg"), create_user).call
+
+      # The true figure, read straight from the variants' own attached images
+      # BEFORE the column is zeroed -- not a hardcoded number, which libvips
+      # could shift by a byte on its next encoder update, and not `be > 0`,
+      # which passed even while the task's own arithmetic double-counted the
+      # canonical bytes instead of measuring the derivatives.
+      true_derived_size = [ file.web_variant, file.thumb_variant ].compact.sum { |v| v.image.blob.byte_size }
       file.update_column(:derived_byte_size, 0)
 
       Rake::Task["game_files:regenerate_variants"].invoke
 
-      expect(file.reload.derived_byte_size).to be > 0
+      expect(file.reload.derived_byte_size).to eq(true_derived_size)
     end
 
     it "leaves a PDF at zero, because a PDF has no variants" do

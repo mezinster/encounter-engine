@@ -58,6 +58,38 @@ class GameFileUpload
            :max => Setting.integer("max_files_per_upload"))
   end
 
+  # The filesystem uploads actually land on, which is not Rails.root. In the
+  # image the service root is /rails/storage, which config/deploy.yml now mounts
+  # as its own named volume and config/storage.yml says should preferably be its
+  # own partition. Today the volume sits on the same device so both numbers
+  # agree; the day that partition exists, probing Rails.root would measure a
+  # filesystem uploads never touch and read healthy forever -- and L4 is no
+  # longer defence-in-depth, it is the only thing between uploads and the next
+  # deploy.
+  #
+  # Public and on the class, not private on the instance, for exactly one
+  # reason: the admin dashboard renders "Free disk space (MB)" directly beside
+  # "Free disk space floor (MB)" -- the floor this guard compares against --
+  # and it used to measure Rails.root. Two numbers side by side inviting a
+  # comparison, taken from two filesystems. One expression, one caller-visible
+  # name, so they cannot drift.
+  #
+  # try(:root): only the Disk service exposes one. S3, Azure and Mirror do not,
+  # and for them the free space of the local disk is still the right thing to
+  # watch, since /tmp is on it and every transit stage passes through /tmp.
+  #
+  # The walk up to an existing ancestor is not defensive padding. The Disk
+  # service creates its root lazily, on the first write, and `df` on a path that
+  # does not exist prints nothing -- which DiskSpace reads as zero megabytes
+  # free, so a brand-new instance would refuse every upload with "the disk is
+  # low on space" until someone happened to create the directory. The ancestor
+  # is on the same filesystem by definition, so the answer is the same one.
+  def self.storage_root
+    path = Pathname.new((ActiveStorage::Blob.service.try(:root) || Rails.root).to_s)
+    path = path.parent until path.exist? || path.root?
+    path.to_s
+  end
+
   def initialize(game, uploaded_file, uploaded_by)
     @game = game
     @uploaded_file = uploaded_file
@@ -396,28 +428,9 @@ class GameFileUpload
       Setting.integer("free_space_floor_megabytes")
   end
 
-  # The filesystem uploads actually land on, which is not Rails.root. In the
-  # image the service root is /rails/storage, which config/deploy.yml now mounts
-  # as its own named volume and config/storage.yml says should preferably be its
-  # own partition. Today the volume sits on the same device so both numbers
-  # agree; the day that partition exists, probing Rails.root would measure a
-  # filesystem uploads never touch and read healthy forever -- and L4 is no
-  # longer defence-in-depth, it is the only thing between uploads and the next
-  # deploy.
-  #
-  # try(:root): only the Disk service exposes one. S3, Azure and Mirror do not,
-  # and for them the free space of the local disk is still the right thing to
-  # watch, since /tmp is on it and every transit stage passes through /tmp.
-  #
-  # The walk up to an existing ancestor is not defensive padding. The Disk
-  # service creates its root lazily, on the first write, and `df` on a path that
-  # does not exist prints nothing -- which DiskSpace reads as zero megabytes
-  # free, so a brand-new instance would refuse every upload with "the disk is
-  # low on space" until someone happened to create the directory. The ancestor
-  # is on the same filesystem by definition, so the answer is the same one.
+  # See the class method of the same name for why this path is not Rails.root
+  # and why it is reachable from outside this class.
   def storage_root
-    path = Pathname.new((ActiveStorage::Blob.service.try(:root) || Rails.root).to_s)
-    path = path.parent until path.exist? || path.root?
-    path.to_s
+    self.class.storage_root
   end
 end

@@ -109,6 +109,26 @@ This is tolerable **only because §2 generates variants eagerly and §3 forbids 
 work.** Nothing in this feature may depend on a job completing. If that stops being true, the queue
 adapter becomes a prerequisite and must be designed properly rather than inherited by accident.
 
+The engine also draws routes, and this cost was not accepted with eyes open the first time —
+`bin/rails routes` after the initial require showed nine `/rails/active_storage/*` entries,
+including `POST /rails/active_storage/direct_uploads` and
+`PUT /rails/active_storage/disk/:encoded_token`. Both controllers descend from
+`ActiveStorage::BaseController`, not `ApplicationController`, so this app's `Authentication` filter
+never runs on them: the disk route accepts an anonymous, CSRF-protected write from anyone who can
+read a token off a public page. That is not a hardening gap in an otherwise-used feature — direct
+uploads are listed under *Out of scope, deliberately* above, precisely because they bypass the §2
+validation pipeline, which is the entire security model this design builds. A route nobody is
+supposed to call is not a smaller problem than one that is misconfigured; it is the same problem
+with no legitimate traffic to excuse it.
+
+The fix is `config.active_storage.draw_routes = false` in `config/application.rb`. This also
+removes `blob.url` / `rails_blob_path`, which is desirable rather than incidental: this app already
+serves every byte through one authorized route (`GET /games/:game_id/files/:id/:variant`, §4), and
+with the built-in helpers gone there is no signed-URL shortcut left lying around for a later phase
+to reach for instead of going through §4's authorization matrix. `spec/models/active_storage_wiring_spec.rb`
+asserts the route table is empty of `/rails/active_storage` entries so this cannot regress silently
+a second time.
+
 ## 2. Upload pipeline
 
 Every uploaded byte passes all of this, in order. Nothing reaches storage until it all passes.

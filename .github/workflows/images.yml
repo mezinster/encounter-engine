@@ -55,12 +55,31 @@ jobs:
       # apt-get step; that says nothing about the image we actually ship.
       # `bundle exec`, not bare ruby: the entrypoint is overridden here, so
       # nothing else puts the bundle on the load path.
-      - name: Prove libvips is in the image
+      #
+      # This also asserts HEIC support specifically, not just that libvips
+      # loads: libvips can be built without HEIC (see the Dockerfile comment
+      # on libheif1), and a photo from any iPhone arrives as HEIC -- it is the
+      # one in-scope format that actually needs conversion. A bare
+      # Vips::Image.black smoke test passes even when heifload is missing, so
+      # it proves nothing about the capability this feature depends on.
+      - name: Prove libvips is in the image, with HEIC support
         run: |
           docker run --rm --entrypoint bundle encounter-engine:test \
-            exec ruby -e 'require "image_processing/vips"; \
-              abort("libvips broken in image") unless Vips::Image.black(4, 4).width == 4; \
-              puts "libvips ok"'
+            exec ruby <<'RUBY'
+          require "image_processing/vips"
+
+          abort("libvips broken in image") unless Vips::Image.black(4, 4).width == 4
+
+          abort("libvips has no HEIC support in image") unless Vips.get_suffixes.include?(".heic")
+
+          begin
+            Vips::Operation.new("heifload")
+          rescue Vips::Error => e
+            abort("heifload operation unavailable in image: #{e.message}")
+          end
+
+          puts "libvips ok, HEIC ok"
+          RUBY
 
   postgres-image:
     runs-on: ubuntu-latest

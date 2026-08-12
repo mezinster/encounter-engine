@@ -64,6 +64,19 @@ describe "string settings" do
   it "refuses a name that is not a registered string key" do
     expect { Setting.put("no_such_key", "x") }.to raise_error(ActiveRecord::RecordInvalid)
   end
+
+  # STRING_DEFAULTS.freeze only freezes the hash, not the array inside it, and
+  # Setting.list used to return that very array -- a caller mutating the
+  # return value permanently widened the process-global shipped default. The
+  # design's §4 invariant is that a superadmin may narrow the allowed set but
+  # never widen it; a caller mutating the return value must not be able to
+  # widen it either.
+  it "does not let a caller mutate the shipped default through the returned value" do
+    returned = Setting.list("allowed_extensions")
+    returned << "svg"
+
+    expect(Setting.list("allowed_extensions")).to eq(%w[jpg jpeg png gif heic pdf])
+  end
 end
 
 describe "the admin settings page's key list" do

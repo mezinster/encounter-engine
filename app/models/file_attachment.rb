@@ -18,8 +18,14 @@ class FileAttachment < ApplicationRecord
   # Rows a player in `locale` should see: the language-neutral ones plus the
   # ones for their language. Written as an explicit NULL check rather than
   # where(:locale => [nil, locale]) so the intent survives a later edit.
+  #
+  # The table name is spelled out on both references because content_translations
+  # and game_locale_preferences also have a `locale` column -- the play screen
+  # joins file_attachments against content_translations to resolve translated
+  # text and render the attachment strip in the same query, and an unqualified
+  # `locale` there raises SQLite3::SQLException: ambiguous column name.
   scope :for_locale, ->(locale) {
-    where("locale IS NULL OR locale = ?", locale.to_s)
+    where("file_attachments.locale IS NULL OR file_attachments.locale = ?", locale.to_s)
   }
 
   private

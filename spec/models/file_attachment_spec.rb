@@ -19,6 +19,7 @@ describe FileAttachment do
     attachment = FileAttachment.create!(:game_file => @file, :attachable => hint)
 
     expect(hint.reload.file_attachments).to eq([attachment])
+    expect(hint.game_files).to eq([@file])
   end
 
   it "refuses a file from a different game" do
@@ -104,6 +105,20 @@ describe FileAttachment do
                                       :locale => "zz")
 
       expect(attachment).not_to be_valid
+    end
+
+    it "does not raise when joined against content_translations, which also has a locale column" do
+      # The play screen resolves content translations and renders the
+      # attachment strip in the same query path. Without table-qualifying
+      # for_locale's SQL, this raises
+      # SQLite3::SQLException: ambiguous column name: locale -- a bug invisible
+      # to any spec that doesn't join both tables together.
+      FileAttachment.create!(:game_file => @file, :attachable => @level)
+
+      expect {
+        Level.joins(:file_attachments).joins(:content_translations)
+             .merge(FileAttachment.for_locale("ru")).to_a
+      }.not_to raise_error
     end
   end
 

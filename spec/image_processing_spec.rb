@@ -25,4 +25,13 @@ describe "libvips" do
     expect(image.width).to eq(10)
     expect(image.height).to eq(20)
   end
+
+  # HEIC specifically is NOT asserted here, on purpose. libvips can be built
+  # without HEIC support at all -- a dev machine's or CI runner's system
+  # libvips commonly is -- so a HEIC assertion in this spec would go red on
+  # any environment whose libvips is otherwise perfectly fine for every other
+  # format this app uses. It IS asserted, against the artefact that actually
+  # ships (which controls its own libheif1 install via the Dockerfile), in the
+  # "Prove libvips is in the image, with HEIC support" step of
+  # .github/workflows/images.yml.
 end

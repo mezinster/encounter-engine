@@ -24,4 +24,14 @@ describe "Active Storage wiring" do
   it "stores test uploads somewhere disposable" do
     expect(Rails.application.config.active_storage.service).to eq(:test)
   end
+
+  # Requiring a Rails engine is not an inert act -- an engine can contribute
+  # routes, middleware and initializers. Active Storage's own routes include an
+  # unauthenticated write path; see config/application.rb.
+  it "publishes none of Active Storage's own routes" do
+    active_storage_paths = Rails.application.routes.routes.map { |r| r.path.spec.to_s }
+                                .select { |path| path.start_with?("/rails/active_storage") }
+
+    expect(active_storage_paths).to be_empty
+  end
 end

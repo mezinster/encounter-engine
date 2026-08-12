@@ -67,7 +67,15 @@ class Setting < ApplicationRecord
 
   def self.list(name)
     record = find_by(:name => name)
-    return STRING_DEFAULTS.fetch(name) if record.nil? || record.string_value.nil?
+    # .dup, not the frozen array itself: STRING_DEFAULTS.freeze only froze the
+    # hash, not the arrays inside it, so returning the array as-is would hand
+    # every caller a reference to the one shipped default -- a caller doing
+    # `Setting.list("allowed_extensions") << "svg"` would permanently widen
+    # the process-global default for every game, forever, until restart. The
+    # design's §4 invariant is that a superadmin may narrow the allowed set
+    # but cannot widen it; a mutable shared default is a way to widen it by
+    # accident.
+    return STRING_DEFAULTS.fetch(name).dup if record.nil? || record.string_value.nil?
 
     normalise_list(record.string_value)
   end

@@ -16,6 +16,13 @@ bundle install
 bin/rails db:setup db:test:prepare
 ```
 
+libvips is a **system library**, not a gem — `bundle install` succeeds without it, and uploads
+cannot work without it. Install `libvips42 libheif1` (the second is HEIC support specifically;
+libvips can be built without it, and a photo from any iPhone arrives as HEIC). Without it,
+`spec/image_processing_spec.rb` fails on purpose: it **raises** rather than skips, so a missing
+libvips shows up as a red build instead of a quietly-pending example — see that spec and the
+`shared.countdown.*` note under Testing for the same pattern.
+
 Ruby is pinned to **3.3.12** (`.ruby-version`, `Gemfile`), installed via rbenv, and is **not on
 `PATH` in non-login shells**. Prefix commands with:
 

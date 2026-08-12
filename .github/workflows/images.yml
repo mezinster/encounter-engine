@@ -62,9 +62,21 @@ jobs:
       # one in-scope format that actually needs conversion. A bare
       # Vips::Image.black smoke test passes even when heifload is missing, so
       # it proves nothing about the capability this feature depends on.
+      # -i is load-bearing, and its absence is silent. `ruby` with no script
+      # argument reads its program from stdin; `docker run` does NOT forward
+      # the client's stdin into the container unless -i is given. Without it
+      # the container's ruby reads EOF immediately, executes an empty program
+      # and exits 0 -- so this whole step passed unconditionally, proving
+      # nothing, which is how it shipped the first time.
+      #
+      # The sentinel grep below is the belt to that braces: a step that cannot
+      # be run locally (no docker daemon on a dev box, and the image only
+      # exists in CI) must not be able to succeed by producing nothing. If the
+      # script does not run, there is no output, and no output is now a failure.
       - name: Prove libvips is in the image, with HEIC support
         run: |
-          docker run --rm --entrypoint bundle encounter-engine:test \
+          set -o pipefail
+          output=$(docker run --rm -i --entrypoint bundle encounter-engine:test \
             exec ruby <<'RUBY'
           require "image_processing/vips"
 
@@ -80,6 +92,12 @@ jobs:
 
           puts "libvips ok, HEIC ok"
           RUBY
+          )
+          echo "$output"
+          echo "$output" | grep -q "libvips ok, HEIC ok" || {
+            echo "FAILED: the probe printed nothing -- the script never reached ruby."
+            exit 1
+          }
 
   postgres-image:
     runs-on: ubuntu-latest

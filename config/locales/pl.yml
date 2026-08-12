@@ -363,6 +363,8 @@ pl:
       unused: "nie jest używany"
       delete: "Usuń"
       confirm_delete: "Usunąć plik?"
+      deleted: "Plik usunięty"
+      type_the_filename: "Gra trwa. Aby usunąć plik, wpisz jego nazwę: %{filename}"
       upload: "Prześlij"
       limits: "Do %{max} MB na plik, nie więcej niż %{count} plików naraz"
     table:

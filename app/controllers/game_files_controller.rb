@@ -28,6 +28,8 @@ class GameFilesController < ApplicationController
     @files = GameFile.of_game(@game).order(:filename)
     @used_megabytes = GameFile.storage_used_by(@game) / 1024 / 1024
     @quota_megabytes = Setting.integer("game_quota_megabytes")
+    @typed_confirmation_ids =
+      @game.status == :running ? @files.select { |f| f.file_attachments.any? }.map(&:id) : []
   end
 
   def create
@@ -67,7 +69,27 @@ class GameFilesController < ApplicationController
                 :alert => (rejected.join("; ") if rejected.any?)
   end
 
+  def destroy
+    file = GameFile.of_game(@game).find(params[:id])
+
+    if typed_confirmation_required?(file) && params[:confirm_filename] != file.filename
+      redirect_to game_game_files_path(@game),
+                  :alert => t("game_files.index.type_the_filename", :filename => file.filename)
+      return
+    end
+
+    file.destroy
+    redirect_to game_game_files_path(@game), :notice => t("game_files.index.deleted")
+  end
+
   private
+
+  # Only for a file a live game is actually serving. :running specifically --
+  # Game#started? is also true of a finished game, where deleting a photo harms
+  # nobody.
+  def typed_confirmation_required?(file)
+    @game.status == :running && file.file_attachments.any?
+  end
 
   def find_game
     @game = Game.find(params[:game_id])

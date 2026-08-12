@@ -339,6 +339,8 @@ en:
       unused: "not used"
       delete: "Delete"
       confirm_delete: "Delete this file?"
+      deleted: "File deleted"
+      type_the_filename: "The game is running. To delete the file, type its name: %{filename}"
       upload: "Upload"
       limits: "Up to %{max} MB per file, no more than %{count} files at a time"
     table:

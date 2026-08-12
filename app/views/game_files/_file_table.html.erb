@@ -29,10 +29,14 @@
         <% if mode == :picker %>
           <%= check_box_tag "#{field_name}[]", file.id, false, :id => "game_file_#{file.id}" %>
         <% else %>
-          <%= button_to t("game_files.index.delete"),
-                        game_game_file_path(file.game, file),
-                        :method => :delete,
-                        :form => { :data => { :confirm => t("game_files.index.confirm_delete") } } %>
+          <%= form_with url: game_game_file_path(file.game, file), method: :delete do %>
+            <% if local_assigns[:typed_confirmation_ids].to_a.include?(file.id) %>
+              <%= text_field_tag :confirm_filename, nil,
+                                 :placeholder => file.filename,
+                                 :id => "confirm_filename_#{file.id}" %>
+            <% end %>
+            <%= submit_tag t("game_files.index.delete") %>
+          <% end %>
         <% end %>
       </td>
     </tr>

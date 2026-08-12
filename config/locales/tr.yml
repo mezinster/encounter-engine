@@ -386,8 +386,10 @@ tr:
       unused: "kullanılmıyor"
       delete: "Sil"
       confirm_delete: "Dosya silinsin mi?"
-      # Neither value here is a user-authored name, so the case-suffix rework
-      # this file uses elsewhere (see the header comment) does not apply.
+      deleted: "Dosya silindi"
+      # %{filename} IS user-authored here, unlike the two lines above -- the
+      # case suffix goes on "dosya" (a common noun), never on the placeholder.
+      type_the_filename: "Oyun devam ediyor. Dosyayı silmek için dosyanın adını yazın: %{filename}"
       upload: "Yükle"
       limits: "Dosya başına en fazla %{max} MB, bir seferde en fazla %{count} dosya"
     table:

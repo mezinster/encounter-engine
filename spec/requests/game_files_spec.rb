@@ -194,4 +194,64 @@ describe "the game file Explorer", :type => :request do
       expect(flash[:alert]).to include("not-a-file-upload")
     end
   end
+
+  describe "deleting" do
+    it "removes an unused file and its blob" do
+      file = create_game_file(:game => @game)
+      login_as(@author)
+
+      expect { delete game_game_file_path(@game, file) }.to change { GameFile.count }.by(-1)
+    end
+
+    it "removes an attached file when the game is not running" do
+      level = create_level(:game => @game)
+      file = create_game_file(:game => @game)
+      FileAttachment.create!(:game_file => file, :attachable => level)
+      login_as(@author)
+
+      expect { delete game_game_file_path(@game, file) }.to change { GameFile.count }.by(-1)
+    end
+
+    it "refuses an attached file in a RUNNING game without the typed filename" do
+      level = create_level(:game => @game)
+      file = create_game_file(:game => @game, :filename => "дом.jpg")
+      FileAttachment.create!(:game_file => file, :attachable => level)
+      allow_any_instance_of(Game).to receive(:status).and_return(:running)
+      login_as(@author)
+
+      expect { delete game_game_file_path(@game, file) }.not_to change { GameFile.count }
+    end
+
+    it "accepts the typed filename in a running game" do
+      level = create_level(:game => @game)
+      file = create_game_file(:game => @game, :filename => "дом.jpg")
+      FileAttachment.create!(:game_file => file, :attachable => level)
+      allow_any_instance_of(Game).to receive(:status).and_return(:running)
+      login_as(@author)
+
+      expect {
+        delete game_game_file_path(@game, file), :params => { :confirm_filename => "дом.jpg" }
+      }.to change { GameFile.count }.by(-1)
+    end
+
+    it "does not accept a wrong typed filename" do
+      # Otherwise the confirmation is theatre: any non-empty value would pass.
+      level = create_level(:game => @game)
+      file = create_game_file(:game => @game, :filename => "дом.jpg")
+      FileAttachment.create!(:game_file => file, :attachable => level)
+      allow_any_instance_of(Game).to receive(:status).and_return(:running)
+      login_as(@author)
+
+      expect {
+        delete game_game_file_path(@game, file), :params => { :confirm_filename => "что-нибудь" }
+      }.not_to change { GameFile.count }
+    end
+
+    it "refuses another author" do
+      file = create_game_file(:game => @game)
+      login_as(create_user)
+
+      expect { delete game_game_file_path(@game, file) }.not_to change { GameFile.count }
+    end
+  end
 end

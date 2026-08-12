@@ -365,6 +365,10 @@ ka:
       unused: "არ გამოიყენება"
       delete: "წაშლა"
       confirm_delete: "წავშალო ფაილი?"
+      deleted: "ფაილი წაშლილია"
+      # No suffix on %{filename} -- the value is simply presented after the
+      # colon, the same shape ru/en use, so nothing needs reworking here.
+      type_the_filename: "თამაში მიმდინარეობს. ფაილის წასაშლელად შეიყვანეთ მისი სახელი: %{filename}"
       upload: "ატვირთვა"
       limits: "თითო ფაილზე მაქსიმუმ %{max} მბ, ერთდროულად მაქსიმუმ %{count} ფაილი"
     table:

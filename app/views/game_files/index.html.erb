@@ -19,4 +19,5 @@
         :count => Setting.integer("max_files_per_upload")) %>
 </p>
 
-<%= render "file_table", :files => @files, :mode => :manage, :field_name => nil %>
+<%= render "file_table", :files => @files, :mode => :manage, :field_name => nil,
+                         :typed_confirmation_ids => @typed_confirmation_ids %>

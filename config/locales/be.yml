@@ -358,6 +358,8 @@ be:
       unused: "не выкарыстоўваецца"
       delete: "Выдаліць"
       confirm_delete: "Выдаліць файл?"
+      deleted: "Файл выдалены"
+      type_the_filename: "Гульня ідзе. Каб выдаліць файл, увядзіце яго імя: %{filename}"
       upload: "Загрузіць"
       limits: "Да %{max} МБ на файл, не больш за %{count} файлаў за раз"
     table:

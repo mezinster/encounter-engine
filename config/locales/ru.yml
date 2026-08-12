@@ -339,6 +339,8 @@ ru:
       unused: "не используется"
       delete: "Удалить"
       confirm_delete: "Удалить файл?"
+      deleted: "Файл удалён"
+      type_the_filename: "Игра идёт. Чтобы удалить файл, введите его имя: %{filename}"
       upload: "Загрузить"
       limits: "До %{max} МБ на файл, не больше %{count} файлов за раз"
     table:

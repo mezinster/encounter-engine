@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_12_110000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_12_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -76,6 +76,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_12_110000) do
     t.integer "game_run_id"
     t.index ["game_run_id"], name: "index_game_entries_on_game_run_id"
     t.index ["team_id", "game_run_id"], name: "index_game_entries_on_team_id_and_game_run_id_live", unique: true, where: "status IN ('new', 'accepted')"
+  end
+
+  create_table "game_files", force: :cascade do |t|
+    t.integer "game_id", null: false
+    t.string "filename", null: false
+    t.string "content_type", null: false
+    t.integer "byte_size", default: 0, null: false
+    t.integer "derived_byte_size", default: 0, null: false
+    t.string "checksum"
+    t.integer "uploaded_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "filename"], name: "index_game_files_on_game_id_and_filename", unique: true
+    t.index ["game_id"], name: "index_game_files_on_game_id"
   end
 
   create_table "game_locale_preferences", force: :cascade do |t|

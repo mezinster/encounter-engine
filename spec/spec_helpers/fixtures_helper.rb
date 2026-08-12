@@ -54,6 +54,23 @@ module FixturesHelper
     game
   end
 
+  def build_game_file(options={})
+    params = {
+      :game              => options[:game] || create_game,
+      :filename          => "file#{random_string}.jpg",
+      :content_type      => "image/jpeg",
+      :byte_size         => 1024,
+      :derived_byte_size => 0
+    }.merge(options)
+    GameFile.new params
+  end
+
+  def create_game_file(options={})
+    game_file = build_game_file(options)
+    game_file.save!
+    game_file
+  end
+
   def build_level(options={})
     params = {
       :name => 'Test level',

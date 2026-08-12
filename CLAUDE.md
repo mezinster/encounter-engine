@@ -17,11 +17,32 @@ bin/rails db:setup db:test:prepare
 ```
 
 libvips is a **system library**, not a gem — `bundle install` succeeds without it, and uploads
-cannot work without it. Install `libvips42 libheif1` (the second is HEIC support specifically;
-libvips can be built without it, and a photo from any iPhone arrives as HEIC). Without it,
-`spec/image_processing_spec.rb` fails on purpose: it **raises** rather than skips, so a missing
-libvips shows up as a red build instead of a quietly-pending example — see that spec and the
-`shared.countdown.*` note under Testing for the same pattern.
+cannot work without it. **The package name differs by distribution**, and getting it wrong reads
+as "libvips is unavailable" rather than "you typed the wrong package":
+
+```bash
+sudo apt-get install -y libvips42t64 libheif1   # Ubuntu 24.04 "noble" and later
+sudo apt-get install -y libvips42   libheif1    # Debian bookworm — what the Dockerfile installs
+```
+
+Ubuntu renamed the library package in its 64-bit `time_t` transition, so on noble `libvips42` has
+no candidate at all and `apt-get` answers *"Unable to locate package"*. This bit a real session:
+the instruction here originally said `libvips42` for both, was reviewed twice, and was correct —
+for the container. The error existed only at the seam between the image and a developer's machine.
+
+`libheif1` is the HEIC half specifically, and it is not optional in practice: libvips can be built
+without HEIC, a photo from any iPhone arrives as HEIC, and HEIC is the one in-scope upload format
+that needs converting. Verify you got both:
+
+```bash
+ruby -e 'require "vips"; puts Vips.get_suffixes.include?(".heic")'   # must print true
+```
+
+Without libvips at all, `spec/image_processing_spec.rb` fails on purpose: it **raises** rather than
+skips, so a missing libvips shows up as a red build instead of a quietly-pending example — see that
+spec and the `shared.countdown.*` note under Testing for the same pattern. Without *HEIC* support
+specifically, one conversion example in `spec/models/game_file_upload_spec.rb` skips locally and
+**raises in CI**, since the shipped image is built with libheif and the `app-image` job proves it.
 
 Ruby is pinned to **3.3.12** (`.ruby-version`, `Gemfile`), installed via rbenv, and is **not on
 `PATH` in non-login shells**. Prefix commands with:

@@ -47,6 +47,17 @@ Before { I18n.locale = :ru }
 # which is correct; no scenario registers more than a handful of users.
 Before { Rails.cache.clear }
 
+# Active Storage's :test service (config/storage.yml) writes real bytes to
+# tmp/storage, and -- like Rails.cache above -- that is not part of the
+# database and does not roll back with it. features/games/game-files.feature
+# is the first Cucumber feature to attach a real file, so this had never
+# mattered here before; spec/rails_helper.rb already carries the identical
+# fix (`config.after(:each) { FileUtils.rm_rf(Rails.root.join("tmp/storage")) }`)
+# for the same reason on the RSpec side. Without this, every scenario run
+# leaves its uploaded blob and both derived variants (web, thumb) orphaned on
+# disk, accumulating across runs.
+After { FileUtils.rm_rf(Rails.root.join("tmp/storage")) }
+
 # --- Database isolation ------------------------------------------------------
 #
 # The Merb suite called ActiveRecordHelper.recreate_database! before every
@@ -68,24 +79,49 @@ Before { Rails.cache.clear }
 # max-team-number.feature:58, unrelated) -- but it is harmless, so it stays.
 #
 # :joinable => false is load-bearing, not decoration -- it is the same flag
-# Rails' own use_transactional_fixtures sets on the wrapper transaction it
-# opens around every RSpec example (see
-# active_record/railties/console_sandbox.rb for the same pattern, one line
-# long). Application code that opens its own transaction while this one is
-# open normally just joins it (transaction(requires_new: false), which is what
-# GameFile::with_lock does) and defers every after_commit callback until the
-# OUTERMOST transaction commits -- which this one never does, by design. A
-# joinable: false parent flips that: connection_adapters/abstract/
-# transaction.rb reads `run_commit_callbacks = !current_transaction.joinable?`,
-# so a nested transaction opened while the parent is non-joinable becomes a
-# real sub-transaction whose OWN commit fires callbacks immediately. Without
-# this, GameFileUpload#call's with_lock block persists the GameFile row but
-# ActiveStorage's after_commit disk write never runs inside the scenario, so
-# the very next read raises ActiveStorage::FileNotFoundError -- confirmed by
-# reproducing it here before this line existed (see
-# features/games/game-files.feature, task 4 of the attachments-phase-2b plan).
-# The scenario is still rolled back in full at the end; only the visibility of
-# nested-transaction commits *during* the scenario changes.
+# Rails' own use_transactional_fixtures relies on. RSpec's version doesn't set
+# it inline the way this hook does: ActiveRecord::TestFixtures#setup_
+# transactional_fixtures (test_fixtures.rb:172) calls pool.pin_connection!,
+# which opens its wrapper transaction via connection_pool.rb:340 --
+# `@pinned_connection.begin_transaction joinable: false, _lazy: false`. Same
+# flag, same reason, different call site.
+#
+# Application code that opens its own transaction while this one is open
+# normally just joins it (transaction(requires_new: false), which is what
+# Game#with_lock does -- called from GameFileUpload#call on @game, not on
+# GameFile) and defers every after_commit callback until the OUTERMOST
+# transaction commits -- which this one never does, by design. A joinable:
+# false parent flips that: database_statements.rb:352-353's `transaction`
+# entry point only joins the current transaction when it is both
+# !requires_new AND current_transaction.joinable? -- with the parent
+# non-joinable that check fails regardless of requires_new, so control falls
+# to within_new_transaction, which opens a REAL nested transaction (a
+# savepoint, once anything is already open). TransactionManager#begin_
+# transaction (transaction.rb:506-535) computes
+# `run_commit_callbacks = !current_transaction.joinable?` (line 508) for that
+# new transaction, so it fires its OWN commit callbacks immediately on release
+# rather than deferring them to the outermost commit. Without this,
+# GameFileUpload#call's with_lock block persists the GameFile row but
+# ActiveStorage's after_commit disk write (registered by has_one_attached
+# itself, not by this app) never runs inside the scenario, so the very next
+# read raises ActiveStorage::FileNotFoundError -- confirmed by reproducing it
+# here before this line existed (see features/games/game-files.feature, task 4
+# of the attachments-phase-2b plan). The scenario is still rolled back in full
+# at the end; only the visibility of nested-transaction commits *during* the
+# scenario changes.
+#
+# The blast radius is not limited to with_lock -- EVERY save/create/destroy in
+# EVERY scenario now opens its own savepoint and fires its commit callbacks
+# immediately, not just GameFileUpload's. That is harmless today only because
+# `grep -rn "after_commit\|after_create_commit\|after_update_commit\|
+# after_destroy_commit\|after_rollback\|counter_cache\|touch: *true\|
+# deliver_later\|perform_later" app/` finds nothing this app registers itself
+# (ActiveStorage's own callback above is the sole hit, and it is exactly the
+# one this fix exists to make fire correctly). The day a model gains an
+# after_create_commit or a counter_cache, this flag is what makes it observe
+# real transaction boundaries mid-scenario instead of only at the final,
+# discarded outer commit -- read this note again before assuming that is
+# still inert.
 Around do |_scenario, block|
   ActiveRecord::Base.transaction(:joinable => false) do
     block.call

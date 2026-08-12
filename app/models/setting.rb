@@ -29,7 +29,12 @@ class Setting < ApplicationRecord
     "max_files_per_upload"       => 10,
     "game_quota_megabytes"       => 100,
     "instance_cap_megabytes"     => 4096,
-    "free_space_floor_megabytes" => 2048
+    # 3072, not the 2048 phase 1 shipped. The floor's job changed: with no
+    # separate partition available on this host, it is the only thing standing
+    # between uploads and the next deploy. Sized from what it protects --
+    # roughly two image pulls (561 MB each and growing), a rollback target, and
+    # slack for the neighbouring tenants.
+    "free_space_floor_megabytes" => 3072
   }.freeze
 
   # Every integer key that Setting.integer will answer for and that the

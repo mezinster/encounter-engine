@@ -186,4 +186,42 @@ describe GameFileUpload do
     expect(file.checksum).to be_present
     expect(file.derived_byte_size).to be > 0
   end
+
+  describe "disk protection" do
+    it "refuses when the game is over its quota" do
+      Setting.put("game_quota_megabytes", 0)
+
+      file = upload("photo.jpg")
+
+      expect(file).not_to be_persisted
+      expect(file.errors[:file].join).to match(/\d/)   # the message carries numbers
+    end
+
+    it "refuses when the instance cap is reached" do
+      Setting.put("instance_cap_megabytes", 0)
+
+      expect(upload("photo.jpg")).not_to be_persisted
+    end
+
+    it "refuses when free space is below the floor" do
+      allow(DiskSpace).to receive(:available_megabytes).and_return(10)
+      Setting.put("free_space_floor_megabytes", 3072)
+
+      file = upload("photo.jpg")
+
+      expect(file).not_to be_persisted
+    end
+
+    it "allows when free space is above the floor" do
+      allow(DiskSpace).to receive(:available_megabytes).and_return(9999)
+
+      expect(upload("photo.jpg")).to be_persisted
+    end
+
+    it "counts variants against the quota, not just the canonical bytes" do
+      first = upload("photo.jpg")
+
+      expect(GameFile.storage_used_by(@game)).to eq(first.byte_size + first.derived_byte_size)
+    end
+  end
 end

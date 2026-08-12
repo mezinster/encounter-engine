@@ -326,6 +326,9 @@ en:
       unsupported_type: "This file type is not supported"
       type_not_allowed: "Uploading this file type has been disabled by the administrator"
       too_large: "The file is too large"
+      quota_full: "Not enough room in the game's quota: %{left} MB left of %{quota} MB"
+      instance_full: "The server has run out of room for files"
+      disk_full: "The server disk is low on space, uploads are temporarily unavailable"
   options:
     index:
       title: "Answer options for task"

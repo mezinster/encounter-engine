@@ -372,6 +372,9 @@ tr:
       unsupported_type: "Bu dosya türü desteklenmiyor"
       type_not_allowed: "Bu dosya türünün yüklenmesi yönetici tarafından devre dışı bırakıldı"
       too_large: "Dosya çok büyük"
+      quota_full: "Oyunun kotasında yeterli alan yok: %{quota} MB'nin %{left} MB'si kaldı"
+      instance_full: "Sunucuda dosyalar için yer kalmadı"
+      disk_full: "Sunucu diskinde az yer var, yükleme geçici olarak kullanılamıyor"
   options:
     index:
       title: "Görev için cevap seçenekleri"

@@ -56,6 +56,12 @@ class GameFile < ApplicationRecord
     of_game(game).sum(:byte_size) + of_game(game).sum(:derived_byte_size)
   end
 
+  # Bytes used across every game. Per-game quotas bound nothing on their own --
+  # twenty games at a 100 MB quota is 2 GB whether or not the disk has it.
+  def self.storage_used_everywhere
+    sum(:byte_size) + sum(:derived_byte_size)
+  end
+
   def web_variant
     return nil unless content_type.in?(%w[image/jpeg image/png])
 

@@ -350,6 +350,9 @@ pl:
       unsupported_type: "Ten typ pliku nie jest obsługiwany"
       type_not_allowed: "Przesyłanie plików tego typu zostało wyłączone przez administratora"
       too_large: "Plik jest zbyt duży"
+      quota_full: "Za mało miejsca w limicie gry: pozostało %{left} MB z %{quota} MB"
+      instance_full: "Na serwerze skończyło się miejsce na pliki"
+      disk_full: "Na dysku serwera jest mało miejsca, przesyłanie jest tymczasowo niedostępne"
   options:
     index:
       title: "Warianty odpowiedzi do zadania"

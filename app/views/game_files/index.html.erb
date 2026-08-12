@@ -8,4 +8,15 @@
   <%= t("game_files.index.quota", :used => @used_megabytes, :quota => @quota_megabytes) %>
 </p>
 
+<%= form_with url: game_game_files_path(@game), method: :post, multipart: true do %>
+  <%= file_field_tag "files[]", :multiple => true %>
+  <%= submit_tag t("game_files.index.upload"), class: "btn btn--go" %>
+<% end %>
+
+<p class="hint-text">
+  <%= t("game_files.index.limits",
+        :max => Setting.integer("file_max_megabytes"),
+        :count => Setting.integer("max_files_per_upload")) %>
+</p>
+
 <%= render "file_table", :files => @files, :mode => :manage, :field_name => nil %>

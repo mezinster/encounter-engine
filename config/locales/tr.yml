@@ -386,6 +386,10 @@ tr:
       unused: "kullanılmıyor"
       delete: "Sil"
       confirm_delete: "Dosya silinsin mi?"
+      # Neither value here is a user-authored name, so the case-suffix rework
+      # this file uses elsewhere (see the header comment) does not apply.
+      upload: "Yükle"
+      limits: "Dosya başına en fazla %{max} MB, bir seferde en fazla %{count} dosya"
     table:
       name: "Dosya adı"
       size: "Boyut"

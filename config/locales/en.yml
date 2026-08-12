@@ -339,6 +339,8 @@ en:
       unused: "not used"
       delete: "Delete"
       confirm_delete: "Delete this file?"
+      upload: "Upload"
+      limits: "Up to %{max} MB per file, no more than %{count} files at a time"
     table:
       name: "File name"
       size: "Size"

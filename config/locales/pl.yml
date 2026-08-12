@@ -363,6 +363,8 @@ pl:
       unused: "nie jest używany"
       delete: "Usuń"
       confirm_delete: "Usunąć plik?"
+      upload: "Prześlij"
+      limits: "Do %{max} MB na plik, nie więcej niż %{count} plików naraz"
     table:
       name: "Nazwa pliku"
       size: "Rozmiar"

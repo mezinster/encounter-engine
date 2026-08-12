@@ -30,6 +30,30 @@ class GameFilesController < ApplicationController
     @quota_megabytes = Setting.integer("game_quota_megabytes")
   end
 
+  def create
+    submitted = Array(params[:files]).reject(&:blank?)
+
+    unless GameFileUpload.batch_within_limit?(submitted.size)
+      # The app must enforce this, not only kamal-proxy: the proxy answers a
+      # bare 413 before Rails runs, so the author would get a browser error page
+      # instead of a translated message.
+      redirect_to game_game_files_path(@game), :alert => GameFileUpload.batch_limit_message
+      return
+    end
+
+    rejected = submitted.filter_map do |uploaded|
+      file = GameFileUpload.new(@game, uploaded, current_user).call
+      next if file.persisted?
+
+      "#{uploaded.original_filename}: #{file.errors[:file].join(", ")}"
+    end
+
+    # Per file, not atomic. An author who picked one oversized photo must not
+    # have to re-select the other nine.
+    redirect_to game_game_files_path(@game),
+                :alert => (rejected.join("; ") if rejected.any?)
+  end
+
   private
 
   def find_game

@@ -34,13 +34,13 @@ describe "the game file Explorer", :type => :request do
 
       get game_game_files_path(@game)
 
-      expect(response).not_to have_http_status(:ok)
+      expect(response).to have_http_status(:unauthorized)
     end
 
     it "refuses a signed-out visitor" do
       get game_game_files_path(@game)
 
-      expect(response).not_to have_http_status(:ok)
+      expect(response).to have_http_status(:unauthorized)
     end
 
     it "still lists files for an author whose game is locked for editing" do
@@ -96,6 +96,71 @@ describe "the game file Explorer", :type => :request do
       get game_game_files_path(@game)
 
       expect(response.body).not_to include("чужой.jpg")
+    end
+
+    it "shows the level name for a file attached to a hint" do
+      level = create_level(:game => @game)
+      hint = Hint.create!(:level => level, :text => "подсказка", :delay => 60)
+      file = create_game_file(:game => @game, :filename => "подсказка.jpg")
+      FileAttachment.create!(:game_file => file, :attachable => hint)
+      login_as(@author)
+
+      get game_game_files_path(@game)
+
+      expect(response.body).to include(level.name)
+    end
+  end
+
+  describe "uploading" do
+    def upload(names)
+      post game_game_files_path(@game),
+           :params => { :files => Array(names).map { |n| fixture_upload(n) } }
+    end
+
+    it "stores an accepted file" do
+      login_as(@author)
+
+      expect { upload("photo.jpg") }.to change { GameFile.count }.by(1)
+      expect(response).to redirect_to(game_game_files_path(@game))
+    end
+
+    it "processes a batch per file, keeping the ones that fit" do
+      # Per-file, not atomic: an author who picked one bad photo must not have to
+      # re-select all the others.
+      login_as(@author)
+
+      expect { upload([ "photo.jpg", "not-really.jpg" ]) }.to change { GameFile.count }.by(1)
+    end
+
+    it "names the rejected file so the author knows which one failed" do
+      login_as(@author)
+
+      upload("not-really.jpg")
+
+      expect(flash[:alert]).to include("not-really.jpg")
+    end
+
+    it "refuses a batch larger than max_files_per_upload without storing any of it" do
+      Setting.put("max_files_per_upload", 1)
+      login_as(@author)
+
+      expect { upload([ "photo.jpg", "small.png" ]) }.not_to change { GameFile.count }
+      expect(flash[:alert]).to eq(GameFileUpload.batch_limit_message)
+    end
+
+    it "refuses an upload to a game locked for editing" do
+      @game.update_column(:editing_locked_at, Time.now)
+      login_as(@author)
+
+      expect { upload("photo.jpg") }.not_to change { GameFile.count }
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "refuses another author" do
+      login_as(create_user)
+
+      expect { upload("photo.jpg") }.not_to change { GameFile.count }
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 end

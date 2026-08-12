@@ -339,6 +339,8 @@ ru:
       unused: "не используется"
       delete: "Удалить"
       confirm_delete: "Удалить файл?"
+      upload: "Загрузить"
+      limits: "До %{max} МБ на файл, не больше %{count} файлов за раз"
     table:
       name: "Имя файла"
       size: "Размер"

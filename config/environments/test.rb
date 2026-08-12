@@ -14,6 +14,11 @@ Rails.application.configure do
   config.cache_store = :memory_store
   config.active_support.deprecation = :stderr
 
+  config.active_storage.service = :test
+  # No queue exists in this application. :inline is deterministic and loses
+  # nothing; :async would drop work when the process stops.
+  config.active_job.queue_adapter = :inline
+
   # The 59 feature files assert Russian UI copy. Pinning the locale here is
   # what lets them stay byte-identical while the app becomes translatable.
   config.i18n.default_locale = :ru

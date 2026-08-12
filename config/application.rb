@@ -3,6 +3,11 @@ require_relative "boot"
 require "rails"
 require "active_model/railtie"
 require "active_record/railtie"
+# Active Storage for game file libraries (see
+# docs/superpowers/specs/2026-08-12-level-and-hint-attachments-design.md).
+# It pulls in Active Job, which this app has no other use for — the queue
+# adapter is pinned to :inline in the environment files for that reason.
+require "active_storage/engine"
 require "action_controller/railtie"
 require "action_view/railtie"
 require "action_mailer/railtie"

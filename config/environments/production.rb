@@ -75,4 +75,7 @@ Rails.application.configure do
     password:             ENV.fetch("SMTP_PASSWORD"),
     domain:               ENV.fetch("APP_HOST")
   }
+
+  config.active_storage.service = :production
+  config.active_job.queue_adapter = :inline
 end

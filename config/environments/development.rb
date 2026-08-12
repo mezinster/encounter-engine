@@ -4,4 +4,7 @@ Rails.application.configure do
   config.consider_all_requests_local = true
   config.action_mailer.delivery_method = :test
   config.active_support.deprecation = :log
+
+  config.active_storage.service = :local
+  config.active_job.queue_adapter = :inline
 end

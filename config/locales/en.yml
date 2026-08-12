@@ -87,15 +87,21 @@ en:
           reject_entry: "Rejected a team's application"
     settings:
       title: "Rate limits"
-      explanation: "Limits apply per IP address per window. 0 disables the limit."
+      explanation: "Signup limits apply per IP address per window; 0 disables the limit. File limits apply per game and across the whole server."
       submit: "Save"
       saved: "Settings saved"
-      invalid: "Value must be a whole number of zero or more"
+      invalid: "Check the values: numbers must be whole and zero or more, extensions must be lowercase letters and digits only, with no dots."
       names:
         signup_max: "Signups per address"
         signup_window_seconds: "Signup window (seconds)"
         reset_max: "Password reset requests per address"
         reset_window_seconds: "Password reset window (seconds)"
+        file_max_megabytes: "Maximum file size (MB)"
+        max_files_per_upload: "Files per upload"
+        game_quota_megabytes: "Quota per game (MB)"
+        instance_cap_megabytes: "Total server limit (MB)"
+        free_space_floor_megabytes: "Free disk space floor (MB)"
+        allowed_extensions: "Allowed file extensions"
     dashboard:
       show:
         title: "Overview"

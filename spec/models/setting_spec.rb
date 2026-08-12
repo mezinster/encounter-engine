@@ -83,17 +83,11 @@ describe "the admin settings page's key list" do
   # The page iterates Setting::DEFAULTS.keys and labels each with
   # t("admin.settings.names.<key>"). Adding a key here without its label in all
   # seven locales makes that page raise under raise_on_missing_translations.
-  # Phase 2 moves the storage keys in, with their labels, alongside the code
-  # that enforces them.
-  it "still offers exactly the four rate limits" do
-    expect(Setting::DEFAULTS.keys).to eq(%w[signup_max signup_window_seconds reset_max reset_window_seconds])
-  end
-
-  it "does not yet offer the storage keys" do
-    expect(Setting::DEFAULTS.keys & Setting::STORAGE_DEFAULTS.keys).to be_empty
-  end
-
-  it "still answers Setting.integer for a storage key even though the page hides it" do
+  # Phase 1 kept Setting::DEFAULTS to the four rate limits and asserted so
+  # here; Phase 2 (this change) is what moves the storage keys in, with their
+  # labels, alongside the code that enforces them -- see "the storage keys
+  # reaching the admin page" above for the pinned key list.
+  it "still answers Setting.integer for a storage key" do
     expect(Setting.integer("game_quota_megabytes")).to eq(100)
   end
 
@@ -119,5 +113,45 @@ describe "integer settings, unchanged" do
 
   it "still accepts zero, the documented off switch" do
     expect { Setting.put("signup_max", 0) }.not_to raise_error
+  end
+end
+
+describe "the storage keys reaching the admin page" do
+  it "offers all nine integer keys" do
+    expect(Setting::DEFAULTS.keys).to eq(Setting::INTEGER_DEFAULTS.keys)
+  end
+
+  it "still offers the four rate limits first" do
+    expect(Setting::DEFAULTS.keys.first(4))
+      .to eq(%w[signup_max signup_window_seconds reset_max reset_window_seconds])
+  end
+end
+
+describe "allowed_extensions entry format" do
+  it "accepts ordinary extensions" do
+    expect { Setting.put("allowed_extensions", "jpg png pdf") }.not_to raise_error
+  end
+
+  it "rejects an entry with a dot" do
+    expect { Setting.put("allowed_extensions", ".jpg") }.to raise_error(ActiveRecord::RecordInvalid)
+  end
+
+  it "rejects an entry with a slash, which is how a path would arrive" do
+    expect { Setting.put("allowed_extensions", "jpg ../etc") }.to raise_error(ActiveRecord::RecordInvalid)
+  end
+
+  it "rejects an absurdly long entry" do
+    expect { Setting.put("allowed_extensions", "a" * 11) }.to raise_error(ActiveRecord::RecordInvalid)
+  end
+
+  it "rejects a numeric value, which normalise_list would otherwise stringify" do
+    # Phase 1 finding: Setting.put("allowed_extensions", 123) silently stored "123".
+    expect { Setting.put("allowed_extensions", 123) }.to raise_error(ActiveRecord::RecordInvalid)
+  end
+end
+
+describe "integer settings, unchanged" do
+  it "rejects nil for an integer key" do
+    expect { Setting.put("signup_max", nil) }.to raise_error(ActiveRecord::RecordInvalid)
   end
 end

@@ -18,12 +18,12 @@ class Setting < ApplicationRecord
   # Game file storage. See
   # docs/superpowers/specs/2026-08-12-level-and-hint-attachments-design.md §6.
   #
-  # Deliberately NOT in DEFAULTS below, which is what the admin settings page
-  # iterates: nothing enforces these until phase 2, and a settings screen
-  # offering a quota that no code obeys is worse than no screen at all. Phase 2
-  # points DEFAULTS at INTEGER_DEFAULTS and adds the five
-  # admin.settings.names.* labels across all seven locales in the same change
-  # that adds the enforcement.
+  # Phase 1 kept these out of DEFAULTS below, which is what the admin settings
+  # page iterates: nothing enforced these yet, and a settings screen offering a
+  # quota that no code obeys is worse than no screen at all. Phase 2 (this
+  # change) is what adds the enforcement, so DEFAULTS now points at
+  # INTEGER_DEFAULTS and these join the page, with their five
+  # admin.settings.names.* labels across all seven locales.
   STORAGE_DEFAULTS = {
     "file_max_megabytes"         => 25,
     "max_files_per_upload"       => 10,
@@ -46,9 +46,12 @@ class Setting < ApplicationRecord
     "allowed_extensions" => %w[jpg jpeg png gif heic pdf]
   }.freeze
 
-  # What the admin settings page renders -- unchanged, four keys. See the
-  # pre-flight ruling in this task's plan text.
-  DEFAULTS = RATE_LIMIT_DEFAULTS
+  # What the admin settings page renders. Phase 1 deliberately kept this to the
+  # four rate limits, because a settings screen offering a quota that no code
+  # obeys is worse than no screen at all. Phase 2 adds the enforcement, so the
+  # storage keys join it here -- together with their five
+  # admin.settings.names.* labels in all seven locales, in this same change.
+  DEFAULTS = INTEGER_DEFAULTS
 
   validates :name, :presence => true, :uniqueness => true,
                    :inclusion => { :in => INTEGER_DEFAULTS.keys + STRING_DEFAULTS.keys }
@@ -60,6 +63,32 @@ class Setting < ApplicationRecord
   validates :value, :numericality => { :only_integer => true,
                                        :greater_than_or_equal_to => 0 },
                     :if => :integer_key?
+
+  # Entries are extensions, not free text. Without this,
+  # Setting.put("allowed_extensions", 123) stored "123" and a stray path
+  # fragment stored whatever it was given -- harmless only because PERMITTED
+  # intersects the result, which is defence we should not have to rely on.
+  #
+  # The lookahead requires at least one letter: a bare [a-z0-9]{1,10} accepts
+  # "123", which is exactly the silently-stringified-integer case this
+  # validation exists to catch. No real extension is pure digits -- even ones
+  # that start with one, like "3gp", carry a letter too.
+  ENTRY = /\A(?=.*[a-z])[a-z0-9]{1,10}\z/
+  validate :string_entries_are_well_formed, :if => :string_key?
+
+  private
+
+  def string_entries_are_well_formed
+    self.class.normalise_list(string_value).each do |entry|
+      next if entry.match?(ENTRY)
+
+      errors.add(:string_value, :invalid)
+    end
+  end
+
+  def string_key?
+    STRING_DEFAULTS.key?(name)
+  end
 
   def self.integer(name)
     find_by(:name => name)&.value || INTEGER_DEFAULTS.fetch(name)

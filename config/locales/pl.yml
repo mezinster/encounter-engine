@@ -111,15 +111,21 @@ pl:
           reject_entry: "Odrzucił zgłoszenie drużyny"
     settings:
       title: "Ustawienia limitów"
-      explanation: "Limity obowiązują dla jednego adresu IP w podanym okresie. 0 wyłącza limit."
+      explanation: "Limity rejestracji obowiązują dla jednego adresu IP w podanym okresie; 0 wyłącza limit. Limity plików obowiązują dla gry i dla całego serwera."
       submit: "Zapisz"
       saved: "Ustawienia zostały zapisane"
-      invalid: "Wartość musi być liczbą całkowitą nie mniejszą niż zero"
+      invalid: "Sprawdź wartości: liczby muszą być całkowite i nie mniejsze niż zero, rozszerzenia — małe litery łacińskie i cyfry, bez kropek."
       names:
         signup_max: "Rejestracji z jednego adresu"
         signup_window_seconds: "Okres dla rejestracji (sekund)"
         reset_max: "Żądań resetu hasła z jednego adresu"
         reset_window_seconds: "Okres dla resetu hasła (sekund)"
+        file_max_megabytes: "Maksymalny rozmiar pliku (MB)"
+        max_files_per_upload: "Plików na jedno przesłanie"
+        game_quota_megabytes: "Limit na grę (MB)"
+        instance_cap_megabytes: "Łączny limit serwera (MB)"
+        free_space_floor_megabytes: "Nienaruszalny zapas miejsca na dysku (MB)"
+        allowed_extensions: "Dozwolone rozszerzenia plików"
     dashboard:
       show:
         title: "Przegląd"

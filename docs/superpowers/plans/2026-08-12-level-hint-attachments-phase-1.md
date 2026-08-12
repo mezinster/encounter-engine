@@ -682,6 +682,12 @@ so that change cannot drift."
 - Modify: `spec/spec_helpers/fixtures_helper.rb`
 - Test: `spec/models/game_file_spec.rb`
 
+**Blocked-task ruling (2026-08-12, repository owner).** An earlier draft of this task declared `has_many :file_attachments, :dependent => :destroy` on `GameFile`. That cannot work here: `:dependent => :destroy` resolves its target class **eagerly on destroy**, not lazily and not only when child rows exist, so `GameFile#destroy` raised `NameError: Missing model class FileAttachment for the GameFile#file_attachments association` — failing this task's own last example, "is destroyed with its game". Reproduced directly: 9 examples, 1 failure.
+
+**The association moves to Task 5**, which creates `FileAttachment` and already carries the spec that covers the cascade (`"is destroyed with its game_file"`). Nothing is lost — the cascade still ships in Phase 1, one task later. **Do not declare `has_many :file_attachments` in this task, and do not create a stub `FileAttachment` class** — Task 5 owns it.
+
+This task's "is destroyed with its game" example still passes without the association, because `Game` destroys its `game_files` regardless.
+
 **Interfaces:**
 - Consumes: Active Storage from Task 2.
 - Produces:
@@ -856,7 +862,9 @@ class GameFile < ApplicationRecord
   belongs_to :game, :optional => true
   belongs_to :uploaded_by, :class_name => "User", :optional => true
 
-  has_many :file_attachments, :dependent => :destroy
+  # NOTE: `has_many :file_attachments, :dependent => :destroy` deliberately
+  # does NOT live here yet -- Task 5 adds it, in the same commit that creates
+  # FileAttachment. See the ruling in this task's plan text.
 
   # The canonical bytes. Variants are generated eagerly at upload rather than
   # on first request, so that reading never allocates disk -- see the design's
@@ -1153,7 +1161,15 @@ class FileAttachment < ApplicationRecord
 end
 ```
 
-- [ ] **Step 5: Declare the associations on `Level` and `Hint`**
+- [ ] **Step 5: Declare the associations on `GameFile`, `Level` and `Hint`**
+
+`GameFile` gets the association Task 4 deliberately left out, now that `FileAttachment` exists. In `app/models/game_file.rb`, replace the placeholder comment (`# NOTE: has_many :file_attachments ... Task 5 adds it`) with the real declaration, immediately after the two `belongs_to` lines:
+
+```ruby
+  has_many :file_attachments, :dependent => :destroy
+```
+
+Destroying a library file destroys the rows that attach it to levels and hints. This is what makes this task's last example — `"is destroyed with its game_file"` — pass; without it that example fails, and `GameFile#destroy` would leave orphaned `file_attachments` rows pointing at a file that no longer exists.
 
 In `app/models/level.rb`, beside the existing `has_many :hints`:
 

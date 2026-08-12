@@ -180,7 +180,7 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **590 leaf
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **690 leaf
   keys** each: `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
@@ -219,7 +219,7 @@ add steps there or Cucumber will auto-require them a second time.
   involved. `rails-i18n` supplies the CLDR rules, so pluralised keys are now safe to write.
 - **Five of the seven locales are machine-produced and unreviewed: `uk`, `ka`, `be`, `pl`, `tr`.**
   Only `ru` and `en` have been read by a speaker. All five are complete and structurally verified —
-  every interpolation variable matches and all 590 keys resolve at runtime — but the *wording* has
+  every interpolation variable matches and all 690 keys resolve at runtime — but the *wording* has
   not been checked by anyone. This is a known, recorded state rather than an oversight, and the
   bottleneck on fixing it is native review, not engineering. Each file says so in its own header
   comment too. **Turkish is the one to get reviewed first** if only one can be: it needed
@@ -319,12 +319,19 @@ deliberately; this is documented in `config/routes.rb` too.
 
 ## Testing
 
-- **Cucumber** — `features/**/*.feature`, Russian Gherkin. 232 scenarios (230 passed, 2 undefined),
-  2342 steps (the 2 undefined scenarios are pre-existing empty placeholders — not a regression).
+- **Cucumber** — `features/**/*.feature`, Russian Gherkin. **Two numbers, and the difference is the
+  whole point.** The *inherited contract* is **232 scenarios (230 passed, 2 undefined) / 2342 steps**
+  — the frozen files, byte-identical to what the Merb app passed, and the figure that must never
+  move (the 2 undefined are pre-existing empty placeholders, not a regression). The *whole suite* is
+  larger, because port-authored feature files are added by ordinary feature work: as of the phase-2B
+  attachments branch it is 238 scenarios / 2386 steps. When you change something, check the
+  inherited 232/2342 specifically — a total that went up is not evidence the contract held. Measure
+  it directly (run the suite over every file except the port-authored ones) rather than subtracting
+  the number you expect to have added.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 1222 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
-  **Do not trust a quoted RSpec count** — this number has moved five times in a week and stale copies
-  have been cited as current twice. Re-run it. Cucumber's 232/2342 is the stable figure.
+- **RSpec** — 1603 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+  **Do not trust a quoted RSpec count** — this number has moved seven times in a week and stale
+  copies have been cited as current twice. Re-run it. The inherited 232/2342 is the stable figure.
   `spec/rails_helper.rb` enables the legacy `should` syntax
   (`config.expect_with :rspec do |c| c.syntax = [:should, :expect] end`) because roughly 140
   assertions ported from the Merb-era RSpec 1.x suite still use `x.should == y`; new specs may use
@@ -355,10 +362,22 @@ deliberately; this is documented in `config/routes.rb` too.
   and an environment file is evaluated during `initialize!` before the component that would have
   loaded a given core extension. `32.megabytes` raises `NoMethodError` on `Integer` there while
   working fine anywhere that runs after boot. Write the literal, or require the specific core_ext.
-- **A new validator needs its message in all four locales.** This app carries no `rails-i18n`, and
-  the test environment sets `raise_on_missing_translations`, so a validator with no
-  `activerecord.errors` entry fires correctly and then raises `I18n::MissingTranslationData` while
-  rendering its message — which reads like a broken test rather than a missing key.
+- **A new validator needs its message in all seven locales.** The test environment sets
+  `raise_on_missing_translations`, so a validator with no `activerecord.errors` entry fires
+  correctly and then raises `I18n::MissingTranslationData` while rendering its message — which
+  reads like a broken test rather than a missing key. `rails-i18n` supplies generic defaults
+  (`blank`, `taken`, …) but nothing model-specific, so a per-model override still has to be written
+  seven times.
+- **A validation message is a predicate, not a sentence, and it needs a noun to attach to.** Every
+  form in this app renders errors through `ApplicationHelper#error_messages_for`, which uses
+  `errors.full_messages` — composed as `"%{attribute} %{message}"`. So a message written as a
+  standalone sentence ("Нельзя прикрепить файл к чужой игре") renders with the attribute name
+  bolted on the front, and if no `activerecord.attributes.<model>.<attr>` entry exists, that name
+  is the **raw English column name**: `Game file не может быть пустым`. Write the pair — a noun
+  under `activerecord.attributes`, and a predicate under `activerecord.errors.models`. In Russian,
+  Ukrainian, Belarusian and Polish the predicate must **agree in gender with its own noun**
+  (`Файл не выбран` masc, `Игра не выбрана` fem, `Имя файла не указано` neut), so the same English
+  "can't be blank" becomes three different words depending on which attribute it follows.
 
 ## Conventions
 

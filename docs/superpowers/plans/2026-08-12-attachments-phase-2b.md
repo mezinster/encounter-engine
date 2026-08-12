@@ -986,7 +986,7 @@ namespace :game_files do
   task :regenerate_variants => :environment do
     GameFile.find_each do |file|
       derived = [ file.web_variant, file.thumb_variant ].compact
-      file.update_column(:derived_byte_size, derived.sum { |v| v.blob.byte_size })
+      file.update_column(:derived_byte_size, derived.sum { |v| v.record.image.blob.byte_size })
     rescue StandardError => e
       # One bad file must not stop the reconciliation of every other.
       warn "#{file.id} #{file.filename}: #{e.class}"

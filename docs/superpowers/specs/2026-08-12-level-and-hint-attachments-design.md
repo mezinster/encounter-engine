@@ -420,14 +420,43 @@ edit forms and the play screen. Run the full suite at the end of every phase, no
 
 ## 9. Open inputs
 
-1. **Fresh `df -h` on the VM.** Sets `instance_cap_megabytes` and confirms `free_space_floor`. The
-   17 GB figure predates Docker.
-2. **Can the VM present a separate partition/disk for `/rails/storage`?** Decides whether §3 L5 is
-   kernel-enforced or arithmetic-enforced.
-3. **Does the `azure-blob` gem support managed identity?** If yes, real blob storage with no access
-   key, and the §8 backup gap closes. One hour to establish.
+1. ~~**Fresh `df -h` on the VM.**~~ **ANSWERED 2026-08-12, measured on the host:**
 
-None of the three blocks starting implementation; each has a conservative default.
+   ```
+   Filesystem      Size  Used Avail Use% Mounted on
+   /dev/sda1        30G   17G   13G  56% /
+   ```
+
+   **13 GB available**, not the 17 GB the 2026-08-05 deployment spec recorded — that figure was free
+   space *before* Docker, its images and the Postgres volume existed. Note the coincidence that
+   nearly cost us the number: 17 GB was *free* then and is *used* now.
+
+   This is also the disk Postgres, the wal-g backups and the other tenants share, so
+   `instance_cap_megabytes` must be a modest slice of 13 GB rather than most of it. Set it against
+   measured headroom at the start of Phase 2, and re-measure — 13 GB is a snapshot, and the
+   Postgres volume grows.
+
+2. ~~**Can the VM present a separate partition/disk for `/rails/storage`?**~~ **ANSWERED 2026-08-12:
+   no, not as the host stands.** `lsblk` shows one real block device, `sda1` mounted at `/`;
+   everything else is a snap loopback. There is no second partition to mount, and no unallocated
+   space on `sda` to make one from.
+
+   **This changes §3 L5 from a preference into a decision.** The design said the boundary between
+   app storage and Postgres should preferably be enforced by the kernel rather than by our
+   arithmetic. That option does not exist today: with a single filesystem, **L2 + L3 + L4 are the
+   only thing standing between an author's uploads and the database**, which raises the stakes on
+   L4 (the `statvfs` floor) specifically — it is the only layer that sees the whole disk rather than
+   our own records. Phase 2 must treat L4 as mandatory, not defence-in-depth.
+
+   Getting kernel enforcement would mean attaching a second Azure managed disk to the VM and
+   mounting it at the Docker volume path — a real option, an infrastructure change, and the
+   repository owner's call. Worth pricing before Phase 2 rather than after.
+
+3. **Does the `azure-blob` gem support managed identity?** If yes, real blob storage with no access
+   key, and the §8 backup gap closes. One hour to establish. **Still open.**
+
+Input 3 does not block starting implementation. Inputs 1 and 2 are now answered, and answer 2 is a
+constraint rather than a value: plan Phase 2's disk protection knowing the kernel will not help.
 
 ## 10. Rejected alternatives
 

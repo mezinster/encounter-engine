@@ -62,6 +62,19 @@ jobs:
       # one in-scope format that actually needs conversion. A bare
       # Vips::Image.black smoke test passes even when heifload is missing, so
       # it proves nothing about the capability this feature depends on.
+      #
+      # It must actually DECODE a HEIC image, not merely confirm the loader is
+      # registered. Vips.get_suffixes.include?(".heic") and
+      # Vips::Operation.new("heifload") are both satisfied by libheif1 alone,
+      # independent of whether any HEVC decoder is installed -- this exact
+      # false positive was found on a developer's machine: those two checks
+      # both said "HEIC ok" while every real HEIC decode failed, because
+      # libheif was present with only its AV1 plugins and not
+      # libheif-plugin-libde265 (HEIC is HEVC, not AV1). Registration is not
+      # capability. .dockerignore excludes spec/, so the fixture bytes -- the
+      # same real 64x64 HEIC as spec/fixtures/files/photo.heic -- are inlined
+      # below rather than copied into the image.
+      #
       # -i is load-bearing, and its absence is silent. `ruby` with no script
       # argument reads its program from stdin; `docker run` does NOT forward
       # the client's stdin into the container unless -i is given. Without it
@@ -79,15 +92,36 @@ jobs:
           output=$(docker run --rm -i --entrypoint bundle encounter-engine:test \
             exec ruby <<'RUBY'
           require "image_processing/vips"
+          require "base64"
+          require "tempfile"
 
           abort("libvips broken in image") unless Vips::Image.black(4, 4).width == 4
 
-          abort("libvips has no HEIC support in image") unless Vips.get_suffixes.include?(".heic")
+          heic_bytes = Base64.decode64(<<~B64)
+            AAAAHGZ0eXBoZWljAAAAAG1pZjFoZWljbWlhZgAAAYNtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgABAAAAAAGnAAEAAAAAAAAAFgACAAAAAAG9AAEAAAAAAAAAvgAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGh2YzEAAAAAFWluZmUCAAABAAIAAEV4aWYAAAAAwmlwcnAAAACkaXBjbwAAAHhodmNDAQNwAAAAAAAAAAAAHvAA/P34+AAADwMgAAEAGEABDAH//wNwAAADAJAAAAMAAAMAHroCQCEAAQArQgEBA3AAAAMAkAAAAwAAAwAeoCCBBZbqSSmubgQEDAgAAAMACAAAAwAIQCIAAQAHRAHBcrAiQAAAABRpc3BlAAAAAAAAAEAAAABAAAAAEHBpeGkAAAAAAwgICAAAABZpcG1hAAAAAAAAAAEAAQOBAoMAAAAaaXJlZgAAAAAAAAAOY2RzYwACAAEAAQAAANxtZGF0AAAAEigBrxOA5shoU///uuOnlGGjmAAAAAZFeGlmAABJSSoACAAAAAYAEgEDAAEAAAABAAAAGgEFAAEAAABWAAAAGwEFAAEAAABeAAAAKAEDAAEAAAACAAAAEwIDAAEAAAABAAAAaYcEAAEAAABmAAAAAAAAADhjAADoAwAAOGMAAOgDAAAGAACQBwAEAAAAMDIxMAGRBwAEAAAAAQIDAACgBwAEAAAAMDEwMAGgAwABAAAA//8AAAKgBAABAAAAQAAAAAOgBAABAAAAQAAAAAAAAAA=
+          B64
 
-          begin
-            Vips::Operation.new("heifload")
-          rescue Vips::Error => e
-            abort("heifload operation unavailable in image: #{e.message}")
+          Tempfile.create(["probe", ".heic"]) do |f|
+            f.binmode
+            f.write(heic_bytes)
+            f.flush
+
+            begin
+              jpeg = Vips::Image.new_from_file(f.path).write_to_buffer(".jpg")
+              abort("HEIC decode in image produced no bytes") if jpeg.nil? || jpeg.bytesize.zero?
+
+              # Re-decode the OUTPUT, not the input's container header: a
+              # loader that can only parse the box structure (the exact false
+              # positive above) can still report the input's declared
+              # dimensions without ever having decoded a pixel. Only the
+              # round-tripped JPEG proves real pixels came out.
+              round_tripped = Vips::Image.new_from_buffer(jpeg, "")
+              unless round_tripped.width == 64 && round_tripped.height == 64
+                abort("HEIC round-trip in image produced wrong dimensions: #{round_tripped.width}x#{round_tripped.height}")
+              end
+            rescue Vips::Error => e
+              abort("libvips cannot actually decode HEIC in this image (loader registered but not capable): #{e.message}")
+            end
           end
 
           puts "libvips ok, HEIC ok"

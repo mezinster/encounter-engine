@@ -10,8 +10,23 @@ describe GameFileUpload do
     GameFileUpload.new(@game, fixture_upload(name, claimed_type), @user).call
   end
 
+  # Decode, do not ask. Vips.get_suffixes.include?(".heic") is true whenever
+  # the .heic loader module registers -- which happens with libheif1 alone,
+  # independent of whether any HEVC decoder is installed. On this very host
+  # that predicate returned TRUE while every pixel decode failed with a seek
+  # 8 bytes past EOF, because libheif was present with only its AV1 plugins
+  # and without libheif-plugin-libde265. HEIC is HEVC, not AV1.
+  #
+  # Registration is not capability. Ask the question you actually mean.
   def heic_capable?
-    Vips.get_suffixes.include?(".heic")
+    Vips::Image.new_from_file(heic_fixture_path).write_to_buffer(".jpg")
+    true
+  rescue Vips::Error
+    false
+  end
+
+  def heic_fixture_path
+    Rails.root.join("spec/fixtures/files/photo.heic").to_s
   end
 
   describe "accepting a photograph" do
@@ -61,10 +76,21 @@ describe GameFileUpload do
       expect(file).not_to be_persisted
     end
 
-    it "a type PERMITTED forbids even if the operator added it" do
-      Setting.put("allowed_extensions", "jpg svg")
+    # PERMITTED cannot currently reject anything, and that is worth being
+    # precise about rather than papering over: MIME_TO_EXTENSION only ever
+    # yields jpg/png/gif/heic/pdf, every one of which is already in PERMITTED,
+    # so the `& PERMITTED` intersection is unreachable by construction. An
+    # end-to-end test is therefore impossible -- an SVG never maps to an
+    # extension at all, so it is rejected as unsupported_type and never reaches
+    # the intersection. A test asserting otherwise would pass for the wrong
+    # reason.
+    #
+    # PERMITTED still earns its place as a ceiling against a FUTURE edit adding
+    # an unsafe mapping. So pin exactly that: the invariant, not the constant.
+    it "never maps a MIME type to an extension outside PERMITTED" do
+      mapped = GameFileUpload::MIME_TO_EXTENSION.values.uniq
 
-      expect(GameFile::PERMITTED).not_to include("svg")
+      expect(mapped - GameFile::PERMITTED).to be_empty
     end
 
     it "a file larger than file_max_megabytes" do
@@ -99,26 +125,6 @@ describe GameFileUpload do
       end
 
       file = upload("photo.heic")
-
-      # Second checkpoint, not in the brief's original text. On the machine
-      # this task was implemented on, `Vips.get_suffixes.include?(".heic")`
-      # above is a false positive: the vips-heif loader registers (so the
-      # suffix list includes ".heic"), but the underlying HEVC codec is
-      # absent/mismatched, so the real decode below raises inside libheif
-      # ("Unsupported codec") on some runs and not others -- observed
-      # flipping between runs of the identical command, so no static or
-      # probe-based capability check taken before the fact can rule it out.
-      # GameFileUpload already rescues that (Vips::Error -> reject), which is
-      # correct production behaviour, so what reaches here on a bad draw is
-      # an unsaved, unattached GameFile rather than a raised exception. Same
-      # asymmetric policy as the check above: a host that claimed capability
-      # and then failed the real conversion is exactly a Dockerfile
-      # regression in CI, and exactly this known machine limitation locally.
-      unless file.persisted?
-        raise "libvips claimed HEIC support but the real conversion failed, and this is CI" if ENV["CI"].present?
-
-        skip "libvips here lacks reliable HEIC support; CI covers this conversion"
-      end
 
       expect(file.content_type).to eq("image/jpeg")
       expect(file.filename).to end_with(".jpg")

@@ -344,6 +344,11 @@ ka:
       start_test: "ტესტირების დაწყება"
       start: "სტარტი"
       finish_test: "ტესტირების დასრულება"
+  game_files:
+    upload:
+      unsupported_type: "ამ ტიპის ფაილი მხარდაუჭერელია"
+      type_not_allowed: "ამ ტიპის ფაილების ატვირთვა გათიშულია ადმინისტრატორის მიერ"
+      too_large: "ფაილი ძალიან დიდია"
   options:
     index:
       title: "პასუხის ვარიანტები დავალებისთვის"

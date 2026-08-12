@@ -340,6 +340,11 @@ be:
       start_test: "Пачаць тэставанне"
       start: "Старт"
       finish_test: "Завяршыць тэставанне"
+  game_files:
+    upload:
+      unsupported_type: "Такі тып файла не падтрымліваецца"
+      type_not_allowed: "Загрузка файлаў гэтага тыпу адключана адміністратарам"
+      too_large: "Файл занадта вялікі"
   options:
     index:
       title: "Варыянты адказу для задання"

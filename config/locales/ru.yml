@@ -321,6 +321,11 @@ ru:
       start_test: "Начать тестирование"
       start: "Старт"
       finish_test: "Завершить тестирование"
+  game_files:
+    upload:
+      unsupported_type: "Такой тип файла не поддерживается"
+      type_not_allowed: "Загрузка файлов этого типа отключена администратором"
+      too_large: "Файл слишком большой"
   options:
     index:
       title: "Варианты ответа для задания"

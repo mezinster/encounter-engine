@@ -71,6 +71,15 @@ module FixturesHelper
     game_file
   end
 
+  # An uploaded file as Rack would hand it to a controller. content_type is
+  # deliberately a LIE in some specs: the pipeline must sniff bytes and ignore
+  # what the client claims.
+  def fixture_upload(name, claimed_type = "application/octet-stream")
+    Rack::Test::UploadedFile.new(
+      Rails.root.join("spec/fixtures/files", name), claimed_type
+    )
+  end
+
   def build_level(options={})
     params = {
       :name => 'Test level',

@@ -345,6 +345,11 @@ pl:
       start_test: "Rozpocznij testowanie"
       start: "Start"
       finish_test: "Zakończ testowanie"
+  game_files:
+    upload:
+      unsupported_type: "Ten typ pliku nie jest obsługiwany"
+      type_not_allowed: "Przesyłanie plików tego typu zostało wyłączone przez administratora"
+      too_large: "Plik jest zbyt duży"
   options:
     index:
       title: "Warianty odpowiedzi do zadania"

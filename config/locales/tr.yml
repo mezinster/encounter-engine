@@ -367,6 +367,11 @@ tr:
       start_test: "Testi başlat"
       start: "Başla"
       finish_test: "Testi bitir"
+  game_files:
+    upload:
+      unsupported_type: "Bu dosya türü desteklenmiyor"
+      type_not_allowed: "Bu dosya türünün yüklenmesi yönetici tarafından devre dışı bırakıldı"
+      too_large: "Dosya çok büyük"
   options:
     index:
       title: "Görev için cevap seçenekleri"

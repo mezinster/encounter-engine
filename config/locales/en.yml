@@ -321,6 +321,11 @@ en:
       start_test: "Start testing"
       start: "Start"
       finish_test: "Finish testing"
+  game_files:
+    upload:
+      unsupported_type: "This file type is not supported"
+      type_not_allowed: "Uploading this file type has been disabled by the administrator"
+      too_large: "The file is too large"
   options:
     index:
       title: "Answer options for task"

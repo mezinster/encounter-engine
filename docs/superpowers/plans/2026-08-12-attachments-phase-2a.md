@@ -444,7 +444,6 @@ bundle exec ruby -e '
   Vips::Image.black(800, 600).write_to_file("spec/fixtures/files/photo.jpg")
   Vips::Image.black(40, 30).write_to_file("spec/fixtures/files/small.png")
   Vips::Image.black(40, 30).write_to_file("spec/fixtures/files/animation.gif")
-  Vips::Image.black(800, 600).write_to_file("spec/fixtures/files/photo.heic")
 '
 printf '%%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%%%EOF\n' > spec/fixtures/files/map.pdf
 printf '<html><script>alert(1)</script></html>' > spec/fixtures/files/not-really.jpg
@@ -476,7 +475,39 @@ bundle exec ruby -e '
 '
 ```
 
-If the HEIC write fails, this host's libvips lacks HEIC — install `libvips42 libheif1` properly rather than dropping the fixture. **Report BLOCKED rather than removing the HEIC test.**
+**The HEIC fixture cannot be generated on this host** and is supplied instead. This host's libvips has no HEIC support: `vips-heif.so` is present in the extracted prefix, but libvips resolves its module directory from the compiled-in `/usr` prefix, and neither `LD_LIBRARY_PATH` nor `VIPSHOME` redirects that. Root would fix it; there is none here. Write the fixture from this base64 — it is a real 64×64 HEIC (`ftypheic`), produced in a `debian:bookworm-slim` container with `libvips-tools`:
+
+```bash
+cat > /tmp/heic.b64 <<'B64'
+AAAAHGZ0eXBoZWljAAAAAG1pZjFoZWljbWlhZgAAAYNtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgABAAAAAAGnAAEAAAAAAAAAFgACAAAAAAG9AAEAAAAAAAAAvgAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGh2YzEAAAAAFWluZmUCAAABAAIAAEV4aWYAAAAAwmlwcnAAAACkaXBjbwAAAHhodmNDAQNwAAAAAAAAAAAAHvAA/P34+AAADwMgAAEAGEABDAH//wNwAAADAJAAAAMAAAMAHroCQCEAAQArQgEBA3AAAAMAkAAAAwAAAwAeoCCBBZbqSSmubgQEDAgAAAMACAAAAwAIQCIAAQAHRAHBcrAiQAAAABRpc3BlAAAAAAAAAEAAAABAAAAAEHBpeGkAAAAAAwgICAAAABZpcG1hAAAAAAAAAAEAAQOBAoMAAAAaaXJlZgAAAAAAAAAOY2RzYwACAAEAAQAAANxtZGF0AAAAEigBrxOA5shoU///uuOnlGGjmAAAAAZFeGlmAABJSSoACAAAAAYAEgEDAAEAAAABAAAAGgEFAAEAAABWAAAAGwEFAAEAAABeAAAAKAEDAAEAAAACAAAAEwIDAAEAAAABAAAAaYcEAAEAAABmAAAAAAAAADhjAADoAwAAOGMAAOgDAAAGAACQBwAEAAAAMDIxMAGRBwAEAAAAAQIDAACgBwAEAAAAMDEwMAGgAwABAAAA//8AAAKgBAABAAAAQAAAAAOgBAABAAAAQAAAAAAAAAA=
+B64
+base64 -d /tmp/heic.b64 > spec/fixtures/files/photo.heic
+head -c 12 spec/fixtures/files/photo.heic | xxd | head -1   # expect ftypheic
+```
+
+**Owner ruling (2026-08-12) on the conversion example.** Because this host cannot decode HEIC and CI can, the single conversion example is guarded — and the guard is asymmetric on purpose:
+
+```ruby
+  def heic_capable?
+    Vips.get_suffixes.include?(".heic")
+  end
+```
+
+and inside the example, before anything else:
+
+```ruby
+      unless heic_capable?
+        # In CI this MUST fail. The shipped image is built with libheif and the
+        # app-image job already proves it prints "libvips ok, HEIC ok", so
+        # missing capability there means the Dockerfile regressed. Locally it is
+        # a machine limitation, not a defect.
+        raise "libvips has no HEIC support and this is CI" if ENV["CI"].present?
+
+        skip "libvips here lacks HEIC support; CI covers this conversion"
+      end
+```
+
+This is a refinement of phase 1's raise-never-skip rule, not an abandonment: that rule exists because `skip` let **CI** silently lose coverage, and this keeps CI strict while relaxing only a machine that physically cannot run the check. **Do not extend the guard to any other example**, and do not skip the sniffing example — Marcel identifies HEIC from its bytes without libvips, so `content_type` detection is testable here even though conversion is not.
 
 - [ ] **Step 2: Add the test helper and the storage cleanup hook**
 
@@ -594,6 +625,12 @@ describe GameFileUpload do
     end
 
     it "converts HEIC to JPEG and says so in the stored name" do
+      unless heic_capable?
+        raise "libvips has no HEIC support and this is CI" if ENV["CI"].present?
+
+        skip "libvips here lacks HEIC support; CI covers this conversion"
+      end
+
       file = upload("photo.heic")
 
       expect(file.content_type).to eq("image/jpeg")

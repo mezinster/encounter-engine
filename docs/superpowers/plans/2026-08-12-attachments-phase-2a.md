@@ -230,7 +230,11 @@ and add, after the numericality validation:
   # Setting.put("allowed_extensions", 123) stored "123" and a stray path
   # fragment stored whatever it was given -- harmless only because PERMITTED
   # intersects the result, which is defence we should not have to rely on.
-  ENTRY = /\A[a-z0-9]{1,10}\z/
+  # The lookahead requires at least one letter, and it is not decoration:
+  # without it /\A[a-z0-9]{1,10}\z/ matches "123", so the very bug this
+  # validation exists to close -- Setting.put("allowed_extensions", 123)
+  # silently storing "123" -- would still pass.
+  ENTRY = /\A(?=.*[a-z])[a-z0-9]{1,10}\z/
   validate :string_entries_are_well_formed, :if => :string_key?
 
   private
@@ -309,7 +313,13 @@ For `config/locales/ru.yml`, under `admin.settings`:
         game_quota_megabytes: "Квота на игру (МБ)"
         instance_cap_megabytes: "Общий лимит на сервер (МБ)"
         free_space_floor_megabytes: "Неснижаемый остаток на диске (МБ)"
+        allowed_extensions: "Разрешённые расширения файлов"
 ```
+
+**Six labels, not five.** The view added in Step 5 iterates `STRING_DEFAULTS`
+as well as the integer keys and labels every one through
+`t("admin.settings.names.#{name}")`, so `allowed_extensions` needs an entry too
+— without it the page raises under `raise_on_missing_translations`.
 
 Write the English equivalents in `en.yml` and translate for `uk ka tr be pl`. None of these keys interpolates a user-authored value, so the Turkish placeholder rule does not bite here.
 
@@ -359,10 +369,15 @@ Expected: all pass. `spec/i18n_spec.rb` is in the list deliberately — it enfor
 ```bash
 bin/rails db:migrate:status | grep 20260812110000
 bin/rails runner 'Setting.put("allowed_extensions", "jpg pdf"); puts Setting.count'
-bin/rails db:rollback STEP=1
+bin/rails db:migrate:down VERSION=20260812110000
 bin/rails db:migrate
 bin/rails db:test:prepare
 ```
+
+**`db:migrate:down VERSION=`, not `db:rollback STEP=1`.** Two later migrations
+(`20260812120000_create_game_files`, `20260812130000_create_file_attachments`)
+sit on top of this one, so `STEP=1` would roll back `create_file_attachments`
+and prove nothing about the `down` this step exists to exercise.
 
 Expected: the rollback succeeds rather than raising. That is the whole point of Step 7; if it raises, the `down` is wrong.
 

@@ -73,6 +73,17 @@ jobs:
         with:
           node-version: "20"
 
+      # Same reasoning as the node step above, same failure mode. This job runs
+      # in container: ruby:3.3.12 — Debian with no libvips — and
+      # spec/image_processing_spec.rb RAISES rather than skips when it is
+      # missing, so removing this step turns the suite red rather than quietly
+      # shedding coverage. Do not convert that spec to a skip to avoid needing
+      # this step.
+      - name: Install libvips (for the image-processing specs)
+        run: |
+          apt-get update -qq
+          apt-get install --no-install-recommends -y libvips42 libheif1
+
       - name: Cache gems
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:

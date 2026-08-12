@@ -51,6 +51,17 @@ jobs:
           docker logs ee-smoke
           exit 1
 
+      # The RSpec job proves libvips exists on a Debian ruby image with an
+      # apt-get step; that says nothing about the image we actually ship.
+      # `bundle exec`, not bare ruby: the entrypoint is overridden here, so
+      # nothing else puts the bundle on the load path.
+      - name: Prove libvips is in the image
+        run: |
+          docker run --rm --entrypoint bundle encounter-engine:test \
+            exec ruby -e 'require "image_processing/vips"; \
+              abort("libvips broken in image") unless Vips::Image.black(4, 4).width == 4; \
+              puts "libvips ok"'
+
   postgres-image:
     runs-on: ubuntu-latest
     steps:

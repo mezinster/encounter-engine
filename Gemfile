@@ -17,6 +17,12 @@ gem "sqlite3", "~> 2.0", group: [:development, :test]
 gem "pg", group: :production
 gem "puma"
 gem "acts_as_list"
+# Image canonicalisation for game file uploads: HEIC→JPEG, metadata stripping,
+# and the web/thumb variants. `require: false` deliberately — ruby-vips binds
+# to the system libvips through FFI at require time, so an eager require would
+# turn a missing system library into a failure to BOOT rather than a failure to
+# upload. See spec/image_processing_spec.rb.
+gem "image_processing", "~> 1.13", require: false
 gem "bcrypt", "~> 3.1"
 
 group :development, :test do

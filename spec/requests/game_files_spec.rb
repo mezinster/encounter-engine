@@ -252,6 +252,36 @@ describe "the game file Explorer", :type => :request do
       login_as(create_user)
 
       expect { delete game_game_file_path(@game, file) }.not_to change { GameFile.count }
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "removes an attached file without a typed filename when the game has finished" do
+      # started? is ALSO true here (starts_at is in the past), which is
+      # exactly why the controller must gate on status == :running rather than
+      # started? -- a finished game where deleting a photo harms nobody must
+      # not demand the typed confirmation.
+      level = create_level(:game => @game)
+      file = create_game_file(:game => @game)
+      FileAttachment.create!(:game_file => file, :attachable => level)
+      set_game_schedule!(@game, :starts_at => 1.day.ago, :author_finished_at => Time.now)
+      expect(@game.status).to eq(:finished)
+      login_as(@author)
+
+      expect { delete game_game_file_path(@game, file) }.to change { GameFile.count }.by(-1)
+    end
+
+    it "404s on a file that belongs to a different game and does not destroy it" do
+      # GameFile.of_game(@game).find(params[:id]) is scoped by construction,
+      # but nothing else in this file exercised the scope -- without it, a
+      # request pairing this game's id with another game's file id would
+      # delete a file no author of @game should be able to touch.
+      other_file = create_game_file(:game => create_game)
+      login_as(@author)
+
+      expect {
+        expect { delete game_game_file_path(@game, other_file) }
+          .to raise_error(ActiveRecord::RecordNotFound)
+      }.not_to change { GameFile.count }
     end
   end
 end

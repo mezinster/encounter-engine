@@ -132,15 +132,21 @@ tr:
           reject_entry: "Bir takımın başvurusunu reddetti"
     settings:
       title: "Sınırlama ayarları"
-      explanation: "Sınırlamalar belirtilen süre içinde tek bir IP adresi için geçerlidir. 0 sınırlamayı kapatır."
+      explanation: "Kayıt sınırlamaları belirtilen süre içinde tek bir IP adresi için geçerlidir; 0 sınırlamayı kapatır. Dosya sınırlamaları oyun başına ve sunucu genelinde geçerlidir."
       submit: "Kaydet"
       saved: "Ayarlar kaydedildi"
-      invalid: "Değer sıfırdan küçük olmayan bir tam sayı olmalıdır"
+      invalid: "Değerleri kontrol edin: sayılar sıfırdan küçük olmayan tam sayı olmalı, uzantılar nokta içermeyen küçük harf ve rakamlardan oluşmalıdır."
       names:
         signup_max: "Tek adresten kayıt sayısı"
         signup_window_seconds: "Kayıtlar için süre (saniye)"
         reset_max: "Tek adresten parola sıfırlama isteği sayısı"
         reset_window_seconds: "Parola sıfırlama için süre (saniye)"
+        file_max_megabytes: "Maksimum dosya boyutu (MB)"
+        max_files_per_upload: "Yükleme başına dosya sayısı"
+        game_quota_megabytes: "Oyun başına kota (MB)"
+        instance_cap_megabytes: "Sunucu genelinde toplam sınır (MB)"
+        free_space_floor_megabytes: "Diskte korunacak minimum boş alan (MB)"
+        allowed_extensions: "İzin verilen dosya uzantıları"
     dashboard:
       show:
         title: "Genel bakış"
@@ -361,6 +367,17 @@ tr:
       start_test: "Testi başlat"
       start: "Başla"
       finish_test: "Testi bitir"
+  game_files:
+    upload:
+      unsupported_type: "Bu dosya türü desteklenmiyor"
+      type_not_allowed: "Bu dosya türünün yüklenmesi yönetici tarafından devre dışı bırakıldı"
+      too_large: "Dosya çok büyük"
+      too_many_pixels: "Görüntünün çözünürlüğü çok yüksek"
+      too_many_files: "Bir seferde en fazla %{max} dosya yükleyebilirsiniz"
+      name_conflict: "Bu adda bir dosya zaten yükleniyor, lütfen tekrar deneyin"
+      quota_full: "Oyunun kotasında yeterli alan yok: %{quota} MB'nin %{left} MB'si kaldı"
+      instance_full: "Sunucuda dosyalar için yer kalmadı"
+      disk_full: "Sunucu diskinde az yer var, yükleme geçici olarak kullanılamıyor"
   options:
     index:
       title: "Görev için cevap seçenekleri"

@@ -165,6 +165,15 @@ and a silent overwrite could change a level in a running game.
 
 ## 3. Disk-space protection
 
+> **SUPERSEDED for phase 2 by
+> `docs/superpowers/specs/2026-08-12-attachments-phase-2-design.md` §1.** This section was written
+> before the host was measured, and two of its claims turned out to be wrong. It says the failure
+> that hurts is Postgres running out of room — Postgres is 96 MB and flat, while every deploy adds a
+> 561 MB image, so what attachments actually threaten is the ability to deploy. And L5 assumed a
+> kernel-enforced partition boundary that this host cannot provide: `lsblk` shows one block device.
+> The layer model below is still correct in shape; read the phase 2 document for the values, the
+> five-step transit table, and what replaces L5.
+
 ### The problem is bigger than "the volume fills up"
 
 One upload can transit the disk four times, and the app does not own that disk:

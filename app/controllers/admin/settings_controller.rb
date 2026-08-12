@@ -14,18 +14,26 @@ class Admin::SettingsController < ApplicationController
     @values = current_values
   end
 
-  # Every key is checked against Setting::DEFAULTS before anything is written,
-  # and the whole submission is applied in one transaction: a form that half
-  # saved would leave the operator with no way to tell which half.
+  # Every key is checked against the permitted list before anything is
+  # written, and the whole submission is applied in one transaction: a form
+  # that half saved would leave the operator with no way to tell which half.
   def update
-    submitted = params.fetch(:settings, {}).to_unsafe_h.slice(*Setting::DEFAULTS.keys)
+    permitted = Setting::INTEGER_DEFAULTS.keys + Setting::STRING_DEFAULTS.keys
+    submitted = params.fetch(:settings, {}).to_unsafe_h.slice(*permitted)
 
     begin
       Setting.transaction do
-        # Integer(value, 10) rather than to_i: "abc".to_i is 0, which here
-        # means "disable this limit" -- a typo must not silently switch a
-        # limit off.
-        submitted.each { |name, value| Setting.put(name, Integer(value, 10)) }
+        submitted.each do |name, value|
+          # Integer(value, 10) rather than to_i for integer keys: "abc".to_i is
+          # 0, which here means "disable this limit" -- a typo must not silently
+          # switch a limit off. A string key is passed through untouched and
+          # validated by the model.
+          if Setting::STRING_DEFAULTS.key?(name)
+            Setting.put(name, value)
+          else
+            Setting.put(name, Integer(value, 10))
+          end
+        end
       end
     rescue ActiveRecord::RecordInvalid, ArgumentError, TypeError
       @values = current_values
@@ -44,6 +52,6 @@ class Admin::SettingsController < ApplicationController
   private
 
   def current_values
-    Setting::DEFAULTS.keys.index_with { |name| Setting.integer(name) }
+    Setting::INTEGER_DEFAULTS.keys.index_with { |name| Setting.integer(name) }
   end
 end

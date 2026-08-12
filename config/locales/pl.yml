@@ -111,15 +111,21 @@ pl:
           reject_entry: "Odrzucił zgłoszenie drużyny"
     settings:
       title: "Ustawienia limitów"
-      explanation: "Limity obowiązują dla jednego adresu IP w podanym okresie. 0 wyłącza limit."
+      explanation: "Limity rejestracji obowiązują dla jednego adresu IP w podanym okresie; 0 wyłącza limit. Limity plików obowiązują dla gry i dla całego serwera."
       submit: "Zapisz"
       saved: "Ustawienia zostały zapisane"
-      invalid: "Wartość musi być liczbą całkowitą nie mniejszą niż zero"
+      invalid: "Sprawdź wartości: liczby muszą być całkowite i nie mniejsze niż zero, rozszerzenia — małe litery łacińskie i cyfry, bez kropek."
       names:
         signup_max: "Rejestracji z jednego adresu"
         signup_window_seconds: "Okres dla rejestracji (sekund)"
         reset_max: "Żądań resetu hasła z jednego adresu"
         reset_window_seconds: "Okres dla resetu hasła (sekund)"
+        file_max_megabytes: "Maksymalny rozmiar pliku (MB)"
+        max_files_per_upload: "Plików na jedno przesłanie"
+        game_quota_megabytes: "Limit na grę (MB)"
+        instance_cap_megabytes: "Łączny limit serwera (MB)"
+        free_space_floor_megabytes: "Nienaruszalny zapas miejsca na dysku (MB)"
+        allowed_extensions: "Dozwolone rozszerzenia plików"
     dashboard:
       show:
         title: "Przegląd"
@@ -339,6 +345,17 @@ pl:
       start_test: "Rozpocznij testowanie"
       start: "Start"
       finish_test: "Zakończ testowanie"
+  game_files:
+    upload:
+      unsupported_type: "Ten typ pliku nie jest obsługiwany"
+      type_not_allowed: "Przesyłanie plików tego typu zostało wyłączone przez administratora"
+      too_large: "Plik jest zbyt duży"
+      too_many_pixels: "Rozdzielczość obrazu jest zbyt duża"
+      too_many_files: "Za jednym razem można przesłać najwyżej %{max} plików"
+      name_conflict: "Plik o tej nazwie jest już przesyłany, spróbuj ponownie"
+      quota_full: "Za mało miejsca w limicie gry: pozostało %{left} MB z %{quota} MB"
+      instance_full: "Na serwerze skończyło się miejsce na pliki"
+      disk_full: "Na dysku serwera jest mało miejsca, przesyłanie jest tymczasowo niedostępne"
   options:
     index:
       title: "Warianty odpowiedzi do zadania"

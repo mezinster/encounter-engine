@@ -11,6 +11,10 @@ schema/*.sqlite
 schema/*.db
 *.sqlite
 *.sqlite3
+# sqlite in WAL mode writes db/test.sqlite3-wal and -shm beside the database.
+# *.sqlite3 does not match them: the glob requires the name to END in .sqlite3.
+# Without this a `git add -A` after any test run stages a binary.
+*.sqlite3-*
 *.db
 src/*
 .hgignore

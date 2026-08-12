@@ -70,6 +70,12 @@ RSpec.configure do |config|
   # appears when someone runs the suite with a different seed.
   config.before(:each) { Rails.cache.clear }
 
+  # Active Storage's :test service writes real bytes to tmp/storage. Specs in
+  # this suite attach real files, so without this they accumulate across runs.
+  config.after(:each) do
+    FileUtils.rm_rf(Rails.root.join("tmp/storage"))
+  end
+
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   config.fixture_paths = [
     Rails.root.join('spec/fixtures')

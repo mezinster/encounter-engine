@@ -10,5 +10,12 @@
     </div>
   <% end %>
 
+  <% Setting::STRING_DEFAULTS.keys.each do |name| %>
+    <div class="field">
+      <%= label_tag "settings_#{name}", t("admin.settings.names.#{name}") %>
+      <%= text_field_tag "settings[#{name}]", Setting.list(name).join(" "), :id => "settings_#{name}" %>
+    </div>
+  <% end %>
+
   <%= submit_tag t("admin.settings.submit"), class: "btn btn--go" %>
 <% end %>

@@ -66,8 +66,8 @@ describe "the superadmin settings screen", type: :request do
     expect(response).to have_http_status(:unprocessable_entity)
   end
 
-  # The controller slices submitted keys against Setting::DEFAULTS. Asserting
-  # only that an unknown key creates no row does NOT test that slice -- the
+  # The controller slices submitted keys against the permitted key list.
+  # Asserting only that an unknown key creates no row does NOT test that slice -- the
   # model's own inclusion validation already refuses it, so such an example
   # passes with the slice deleted (confirmed by mutation). What the slice
   # actually changes is the fate of the REST of the submission: with it, the
@@ -82,5 +82,32 @@ describe "the superadmin settings screen", type: :request do
     expect(Setting.integer("signup_max")).to eq(11)
     expect(Setting.where(:name => "wat")).to be_empty
     expect(response).to have_http_status(:found)
+  end
+
+  it "shows the storage settings to a superadmin" do
+    login_as(superadmin)
+
+    get admin_settings_path
+
+    expect(response.body).to include("settings_game_quota_megabytes")
+    expect(response.body).to include("settings_allowed_extensions")
+  end
+
+  it "stores a changed extension list" do
+    login_as(superadmin)
+
+    patch admin_settings_path, :params => { :settings => { "allowed_extensions" => "jpg pdf" } }
+
+    expect(Setting.list("allowed_extensions")).to eq(%w[jpg pdf])
+  end
+
+  it "refuses a malformed extension list without writing it" do
+    login_as(superadmin)
+    Setting.put("allowed_extensions", "jpg pdf")
+
+    patch admin_settings_path, :params => { :settings => { "allowed_extensions" => "jpg ../etc" } }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(Setting.list("allowed_extensions")).to eq(%w[jpg pdf])
   end
 end

@@ -17,11 +17,47 @@ bin/rails db:setup db:test:prepare
 ```
 
 libvips is a **system library**, not a gem — `bundle install` succeeds without it, and uploads
-cannot work without it. Install `libvips42 libheif1` (the second is HEIC support specifically;
-libvips can be built without it, and a photo from any iPhone arrives as HEIC). Without it,
-`spec/image_processing_spec.rb` fails on purpose: it **raises** rather than skips, so a missing
-libvips shows up as a red build instead of a quietly-pending example — see that spec and the
-`shared.countdown.*` note under Testing for the same pattern.
+cannot work without it. **The package name differs by distribution**, and getting it wrong reads
+as "libvips is unavailable" rather than "you typed the wrong package":
+
+```bash
+sudo apt-get install -y libvips42t64 libheif1 libheif-plugin-libde265   # Ubuntu 24.04 "noble" and later
+sudo apt-get install -y libvips42   libheif1                           # Debian bookworm — what the Dockerfile installs
+```
+
+Ubuntu renamed the library package in its 64-bit `time_t` transition, so on noble `libvips42` has
+no candidate at all and `apt-get` answers *"Unable to locate package"*. This bit a real session:
+the instruction here originally said `libvips42` for both, was reviewed twice, and was correct —
+for the container. The error existed only at the seam between the image and a developer's machine.
+
+`libheif1` is the HEIC half specifically, and it is not optional in practice: libvips can be built
+without HEIC, a photo from any iPhone arrives as HEIC, and HEIC is the one in-scope upload format
+that needs converting. **On Ubuntu, `libheif1` alone is not enough either**: newer libheif ships its
+codecs as separate plugin packages, and `libheif1` on its own pulls in only the AV1 ones — HEIC is
+HEVC, not AV1. Without `libheif-plugin-libde265` too, the `.heic` loader module still registers
+(so anything that only checks *registration* reports success), but every real decode fails. This
+bit a real session the same way the package-name issue above did: `Vips.get_suffixes.include?(".heic")`
+and `Vips::Operation.new("heifload")` both said "HEIC ok" on a machine that could not decode a
+single HEIC byte. Debian's `libheif1` does not split this way, which is why it is not listed above
+for Debian — verify locally regardless, since "should be fine" is exactly what went wrong:
+
+```bash
+ruby -e '
+  require "vips"
+  Vips::Image.new_from_file("spec/fixtures/files/photo.heic").write_to_buffer(".jpg")
+  puts "HEIC decode ok"
+'   # must print "HEIC decode ok", not raise Vips::Error
+```
+
+Run from the repository root, after cloning, so the fixture path resolves. A registration check
+(`Vips.get_suffixes.include?(".heic")`) is not a substitute for this: it can be true while the line
+above still raises.
+
+Without libvips at all, `spec/image_processing_spec.rb` fails on purpose: it **raises** rather than
+skips, so a missing libvips shows up as a red build instead of a quietly-pending example — see that
+spec and the `shared.countdown.*` note under Testing for the same pattern. Without *HEIC* support
+specifically, one conversion example in `spec/models/game_file_upload_spec.rb` skips locally and
+**raises in CI**, since the shipped image is built with libheif and the `app-image` job proves it.
 
 Ruby is pinned to **3.3.12** (`.ruby-version`, `Gemfile`), installed via rbenv, and is **not on
 `PATH` in non-login shells**. Prefix commands with:

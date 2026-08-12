@@ -5,6 +5,12 @@ servers:
   web:
     - 23.100.7.86
 
+# Uploaded game files live here. Without this volume they'd sit in the
+# container's writable layer and vanish at the next deploy -- a prerequisite
+# for Phase 2, not a follow-up.
+volumes:
+  - encounter_engine_storage:/rails/storage
+
 # kamal-proxy rebuilds its whole route table from this block on every deploy.
 # A host registered by hand on the server (`kamal proxy ...`) is NOT preserved --
 # it disappears at the next deploy, and nothing in the deploy output says so.
@@ -29,6 +35,13 @@ proxy:
   app_port: 3000
   healthcheck:
     path: /up
+  # 64 MB. Ten files at the 25 MB per-file limit would be 250 MB of request body
+  # buffered on a host with ~1.1 GB spare RAM. This is the only layer that acts
+  # before Puma and before Rack writes a tempfile to /tmp. The cost: a batch
+  # over this is rejected by kamal-proxy as a bare 413, before Rails can render
+  # a translated message.
+  buffering:
+    max_request_body: 67108864
 
 registry:
   server: ghcr.io

@@ -170,9 +170,11 @@ end
 
 Add to `spec/requests/admin_settings_spec.rb`:
 
+The file already defines `let(:superadmin)` and signs in with `login_as(superadmin)`; these examples use that existing pattern rather than adding a helper.
+
 ```ruby
 it "shows the storage settings to a superadmin" do
-  sign_in_as_superadmin
+  login_as(superadmin)
 
   get admin_settings_path
 
@@ -181,7 +183,7 @@ it "shows the storage settings to a superadmin" do
 end
 
 it "stores a changed extension list" do
-  sign_in_as_superadmin
+  login_as(superadmin)
 
   patch admin_settings_path, :params => { :settings => { "allowed_extensions" => "jpg pdf" } }
 
@@ -189,7 +191,7 @@ it "stores a changed extension list" do
 end
 
 it "refuses a malformed extension list without writing it" do
-  sign_in_as_superadmin
+  login_as(superadmin)
   Setting.put("allowed_extensions", "jpg pdf")
 
   patch admin_settings_path, :params => { :settings => { "allowed_extensions" => "jpg ../etc" } }
@@ -198,8 +200,6 @@ it "refuses a malformed extension list without writing it" do
   expect(Setting.list("allowed_extensions")).to eq(%w[jpg pdf])
 end
 ```
-
-**Read `spec/requests/admin_settings_spec.rb` first** and reuse its existing sign-in helper rather than inventing `sign_in_as_superadmin` — the name above is a placeholder for whatever that file already does.
 
 - [ ] **Step 2: Run them to confirm they fail**
 

@@ -147,6 +147,44 @@ describe GameFileUpload do
     end
   end
 
+  describe "a file whose pixels fail to decode only after the row is committed" do
+    # canonicalise never runs a GIF through Vips -- it passes the raw io
+    # straight through (see canonicalise). The first time libvips touches a
+    # GIF's pixel data is thumb_variant's `.processed` call inside
+    # measure_derived!, which runs AFTER @game.with_lock's transaction has
+    # already committed the GameFile row. A GIF that sniffs correctly but
+    # fails to decode therefore fails only once a persisted, quota-consuming
+    # row already exists.
+    it "sniffs as image/gif despite having no valid frame data" do
+      mime = File.open(Rails.root.join("spec/fixtures/files/corrupt.gif"), "rb") do |io|
+        Marcel::MimeType.for(io)
+      end
+
+      expect(mime).to eq("image/gif")
+    end
+
+    it "rejects the upload and leaves no row or blob behind" do
+      games_before = GameFile.count
+      blobs_before = ActiveStorage::Blob.count
+
+      file = upload("corrupt.gif")
+
+      expect(file).not_to be_persisted
+      expect(file.errors[:file]).not_to be_empty
+      expect(GameFile.count).to eq(games_before)
+      expect(ActiveStorage::Blob.count).to eq(blobs_before)
+    end
+
+    # The counterpart: a GIF that actually decodes must still succeed, so
+    # "reject every GIF" cannot satisfy the example above.
+    it "still accepts a GIF that decodes cleanly" do
+      file = upload("animation.gif")
+
+      expect(file).to be_persisted
+      expect(file.thumb_variant).to be_present
+    end
+  end
+
   describe "filename collisions" do
     it "suffixes rather than overwriting, because a game may be running" do
       first  = upload("photo.jpg")

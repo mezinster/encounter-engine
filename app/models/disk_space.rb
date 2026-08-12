@@ -1,4 +1,5 @@
 # -*- encoding : utf-8 -*-
+require "shellwords"
 #
 # Free space on the filesystem holding a given path.
 #

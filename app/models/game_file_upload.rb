@@ -68,12 +68,33 @@ class GameFileUpload
     # byte_size, written and checked atomically under the lock -- is
     # unaffected; only the secondary derived_byte_size update happens after
     # the lock releases.
-    measure_derived!(result) if result.persisted?
+    #
+    # By the time this runs, `result` is already a COMMITTED, quota-consuming
+    # row -- unlike every other Vips call in this class, which happens before
+    # anything is persisted. A Vips::Error here cannot be allowed to reach the
+    # method-level rescue below: that rescue builds a brand-new, unrelated,
+    # unsaved GameFile, which would silently orphan this real row forever
+    # (reachable concretely for a GIF: canonicalise never runs GIF bytes
+    # through Vips, so thumb_variant's `.processed` call, right here, is the
+    # first decode attempt). Handle it locally instead: the row is not a valid
+    # upload if its pixels don't decode, so destroy it -- has_one_attached's
+    # default `dependent: :purge_later` takes the blob with it -- and reject
+    # with the real reason.
+    if result.persisted?
+      begin
+        measure_derived!(result)
+      rescue Vips::Error
+        result.destroy
+        result = reject(GameFile.new(:game => @game, :uploaded_by => @uploaded_by), :unsupported_type)
+      end
+    end
 
     result
   rescue Vips::Error
     # A file that sniffs as an image and will not decode is not a valid image,
-    # whatever its first bytes say.
+    # whatever its first bytes say. Only reachable pre-commit: canonicalise is
+    # the other Vips call in this method, and it always runs before the lock,
+    # so nothing is persisted yet when this fires.
     reject(GameFile.new(:game => @game, :uploaded_by => @uploaded_by), :unsupported_type)
   end
 

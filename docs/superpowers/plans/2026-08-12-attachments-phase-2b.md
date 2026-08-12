@@ -986,7 +986,12 @@ namespace :game_files do
   task :regenerate_variants => :environment do
     GameFile.find_each do |file|
       derived = [ file.web_variant, file.thumb_variant ].compact
-      file.update_column(:derived_byte_size, derived.sum { |v| v.record.image.blob.byte_size })
+      # v.image, not v.record.image: #record is PRIVATE on
+      # ActiveStorage::VariantWithRecord (variant_with_record.rb:38) and #image
+      # (line 23) is the public accessor to the same tracked derivative. And
+      # not v.blob -- that is the attr_reader holding the SOURCE blob, which is
+      # what made derived_byte_size record canonical_size x N for a whole phase.
+      file.update_column(:derived_byte_size, derived.sum { |v| v.image.blob.byte_size })
     rescue StandardError => e
       # One bad file must not stop the reconciliation of every other.
       warn "#{file.id} #{file.filename}: #{e.class}"

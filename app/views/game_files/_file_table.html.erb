@@ -1,0 +1,40 @@
+<%#
+  Two modes, one partial. :manage gives an actions column (this phase);
+  :picker gives a checkbox column (phase 3's level/hint form). Both are plain
+  HTML so rack-test drives them -- the acceptance suite covers the picker with
+  check/uncheck and needs no browser driver.
+
+  Building both now means phase 3 inherits this component rather than growing
+  a second table that drifts from this one.
+%>
+<table class="file-table">
+  <tr>
+    <th></th>
+    <th><%= t("game_files.table.name") %></th>
+    <th><%= t("game_files.table.size") %></th>
+    <th><%= t("game_files.table.used_in") %></th>
+    <th></th>
+  </tr>
+
+  <% files.each do |file| %>
+    <tr>
+      <td class="file-thumb"><%= file.content_type == "application/pdf" ? "PDF" : "IMG" %></td>
+      <td><%= file.filename %></td>
+      <td><%= number_to_human_size(file.total_byte_size) %></td>
+      <td>
+        <% places = file.file_attachments.map { |a| attachment_place(a) }.compact %>
+        <%= places.any? ? places.join(", ") : t("game_files.index.unused") %>
+      </td>
+      <td>
+        <% if mode == :picker %>
+          <%= check_box_tag "#{field_name}[]", file.id, false, :id => "game_file_#{file.id}" %>
+        <% else %>
+          <%= button_to t("game_files.index.delete"),
+                        game_game_file_path(file.game, file),
+                        :method => :delete,
+                        :form => { :data => { :confirm => t("game_files.index.confirm_delete") } } %>
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+</table>

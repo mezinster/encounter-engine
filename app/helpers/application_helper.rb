@@ -185,4 +185,14 @@ module ApplicationHelper
     rule = COUNTDOWN_PLURAL_RULES.fetch(locale.to_sym, :one_other)
     COUNTDOWN_PLURAL_FUNCTIONS.fetch(rule).html_safe
   end
+
+  # "Уровень 3" or "Ур. 3 → подсказка 2". Returns nil for an attachment whose
+  # owner has been destroyed, so a stale row renders as nothing rather than
+  # raising on a live page.
+  def attachment_place(attachment)
+    case attachment.attachable
+    when Level then attachment.attachable.name
+    when Hint  then "#{attachment.attachable.level&.name} → #{t("game_files.table.hint")}"
+    end
+  end
 end

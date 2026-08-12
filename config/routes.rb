@@ -140,6 +140,10 @@ Rails.application.routes.draw do
     # hidden field between preview and confirm.
     resource :quiz_import, only: [ :new, :create ]
 
+    # The per-game file library. No :show -- a file is served by phase 3's
+    # delivery route, which authorises per level/hint rather than per game.
+    resources :game_files, :only => [ :index, :create, :destroy ]
+
     resources :levels do
       member do
         delete :delete

@@ -332,6 +332,18 @@ en:
       quota_full: "Not enough room in the game's quota: %{left} MB left of %{quota} MB"
       instance_full: "The server has run out of room for files"
       disk_full: "The server disk is low on space, uploads are temporarily unavailable"
+    index:
+      title: "Files for the game “%{game}”"
+      title_short: "Files"
+      quota: "%{used} MB of %{quota} MB used"
+      unused: "not used"
+      delete: "Delete"
+      confirm_delete: "Delete this file?"
+    table:
+      name: "File name"
+      size: "Size"
+      used_in: "Used in"
+      hint: "hint"
   options:
     index:
       title: "Answer options for task"

@@ -356,6 +356,18 @@ pl:
       quota_full: "Za mało miejsca w limicie gry: pozostało %{left} MB z %{quota} MB"
       instance_full: "Na serwerze skończyło się miejsce na pliki"
       disk_full: "Na dysku serwera jest mało miejsca, przesyłanie jest tymczasowo niedostępne"
+    index:
+      title: "Pliki gry „%{game}”"
+      title_short: "Pliki"
+      quota: "Wykorzystano %{used} MB z %{quota} MB"
+      unused: "nie jest używany"
+      delete: "Usuń"
+      confirm_delete: "Usunąć plik?"
+    table:
+      name: "Nazwa pliku"
+      size: "Rozmiar"
+      used_in: "Gdzie jest używany"
+      hint: "podpowiedź"
   options:
     index:
       title: "Warianty odpowiedzi do zadania"

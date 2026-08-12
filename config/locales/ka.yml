@@ -355,6 +355,21 @@ ka:
       quota_full: "თამაშის ლიმიტში საკმარისი ადგილი არ არის: დარჩენილია %{left} მბ %{quota} მბ-დან"
       instance_full: "სერვერზე ფაილებისთვის ადგილი ამოიწურა"
       disk_full: "სერვერის დისკზე ცოტა ადგილია დარჩენილი, ატვირთვა დროებით მიუწვდომელია"
+    # The genitive suffix goes on "თამაშის" (the game), never on %{game} --
+    # same rule as the other interpolated-name titles in this file (see the
+    # header comment).
+    index:
+      title: "თამაშის «%{game}» ფაილები"
+      title_short: "ფაილები"
+      quota: "გამოყენებულია %{used} მბ %{quota} მბ-დან"
+      unused: "არ გამოიყენება"
+      delete: "წაშლა"
+      confirm_delete: "წავშალო ფაილი?"
+    table:
+      name: "ფაილის სახელი"
+      size: "ზომა"
+      used_in: "სად გამოიყენება"
+      hint: "მინიშნება"
   options:
     index:
       title: "პასუხის ვარიანტები დავალებისთვის"

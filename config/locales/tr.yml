@@ -378,6 +378,19 @@ tr:
       quota_full: "Oyunun kotasında yeterli alan yok: %{quota} MB'nin %{left} MB'si kaldı"
       instance_full: "Sunucuda dosyalar için yer kalmadı"
       disk_full: "Sunucu diskinde az yer var, yükleme geçici olarak kullanılamıyor"
+    # The genitive suffix goes on "oyun", never on %{game}.
+    index:
+      title: "«%{game}» adlı oyunun dosyaları"
+      title_short: "Dosyalar"
+      quota: "%{quota} MB'nin %{used} MB'si kullanıldı"
+      unused: "kullanılmıyor"
+      delete: "Sil"
+      confirm_delete: "Dosya silinsin mi?"
+    table:
+      name: "Dosya adı"
+      size: "Boyut"
+      used_in: "Nerede kullanılıyor"
+      hint: "ipucu"
   options:
     index:
       title: "Görev için cevap seçenekleri"

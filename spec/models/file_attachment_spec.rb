@@ -1,0 +1,105 @@
+require "rails_helper"
+
+describe FileAttachment do
+  before(:each) do
+    @game  = create_game
+    @level = create_level(:game => @game)
+    @file  = create_game_file(:game => @game)
+  end
+
+  it "attaches a file to a level" do
+    attachment = FileAttachment.create!(:game_file => @file, :attachable => @level)
+
+    expect(@level.reload.file_attachments).to eq([attachment])
+    expect(@level.game_files).to eq([@file])
+  end
+
+  it "attaches a file to a hint" do
+    hint = Hint.create!(:level => @level, :text => "подсказка", :delay => 60)
+    attachment = FileAttachment.create!(:game_file => @file, :attachable => hint)
+
+    expect(hint.reload.file_attachments).to eq([attachment])
+  end
+
+  it "refuses a file from a different game" do
+    # Otherwise an author could attach another game's photo, and the serving
+    # controller's authorization is scoped by game -- the attachment would
+    # exist and the image would 404 for every player.
+    foreign = create_game_file(:game => create_game)
+
+    attachment = FileAttachment.new(:game_file => foreign, :attachable => @level)
+
+    expect(attachment).not_to be_valid
+    expect(attachment.errors[:game_file]).not_to be_empty
+  end
+
+  it "requires a game_file" do
+    expect(FileAttachment.new(:attachable => @level)).not_to be_valid
+  end
+
+  it "requires something to attach to" do
+    expect(FileAttachment.new(:game_file => @file)).not_to be_valid
+  end
+
+  describe "locale scoping" do
+    it "defaults to NULL, meaning every language" do
+      attachment = FileAttachment.create!(:game_file => @file, :attachable => @level)
+
+      expect(attachment.locale).to be_nil
+    end
+
+    it "includes NULL rows for every locale" do
+      neutral = FileAttachment.create!(:game_file => @file, :attachable => @level)
+
+      expect(FileAttachment.for_locale("en")).to include(neutral)
+      expect(FileAttachment.for_locale("ru")).to include(neutral)
+    end
+
+    it "includes a locale-specific row only for its own locale" do
+      english = FileAttachment.create!(:game_file => create_game_file(:game => @game),
+                                       :attachable => @level, :locale => "en")
+
+      expect(FileAttachment.for_locale("en")).to include(english)
+      expect(FileAttachment.for_locale("ru")).not_to include(english)
+    end
+
+    it "refuses a locale the application does not serve" do
+      attachment = FileAttachment.new(:game_file => @file, :attachable => @level,
+                                      :locale => "zz")
+
+      expect(attachment).not_to be_valid
+    end
+  end
+
+  describe "ordering" do
+    it "numbers attachments from 1 in the order they are added" do
+      first  = FileAttachment.create!(:game_file => @file, :attachable => @level)
+      second = FileAttachment.create!(:game_file => create_game_file(:game => @game),
+                                      :attachable => @level)
+
+      expect([ first.reload.position, second.reload.position ]).to eq([ 1, 2 ])
+    end
+
+    it "numbers each level's list independently" do
+      other_level = create_level(:game => @game)
+      FileAttachment.create!(:game_file => @file, :attachable => @level)
+      elsewhere = FileAttachment.create!(:game_file => create_game_file(:game => @game),
+                                         :attachable => other_level)
+
+      expect(elsewhere.reload.position).to eq(1)
+    end
+  end
+
+  it "is destroyed with its level, leaving the library file alone" do
+    FileAttachment.create!(:game_file => @file, :attachable => @level)
+
+    expect { @level.destroy }.to change { FileAttachment.count }.by(-1)
+    expect(GameFile.exists?(@file.id)).to be(true)
+  end
+
+  it "is destroyed with its game_file" do
+    FileAttachment.create!(:game_file => @file, :attachable => @level)
+
+    expect { @file.destroy }.to change { FileAttachment.count }.by(-1)
+  end
+end

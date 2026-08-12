@@ -15,6 +15,9 @@ class Level < ApplicationRecord
   has_many :questions, :dependent => :destroy
   has_many :answers, :dependent => :destroy
   has_many :hints, -> { order('delay ASC') }, :dependent => :destroy
+  has_many :file_attachments, -> { order(:position) },
+           :as => :attachable, :dependent => :destroy
+  has_many :game_files, :through => :file_attachments
 
   validates :name, presence: true
   validates :text, presence: true

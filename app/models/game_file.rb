@@ -11,9 +11,7 @@ class GameFile < ApplicationRecord
   belongs_to :game, :optional => true
   belongs_to :uploaded_by, :class_name => "User", :optional => true
 
-  # NOTE: `has_many :file_attachments, :dependent => :destroy` deliberately
-  # does NOT live here yet -- Task 5 adds it, in the same commit that creates
-  # FileAttachment. See the ruling in this task's plan text.
+  has_many :file_attachments, :dependent => :destroy
 
   # The canonical bytes. Variants are generated eagerly at upload rather than
   # on first request, so that reading never allocates disk -- see the design's

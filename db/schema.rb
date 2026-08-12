@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_12_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_12_130000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -67,6 +67,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_12_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["translatable_type", "translatable_id", "field", "locale"], name: "index_content_translations_uniqueness", unique: true
+  end
+
+  create_table "file_attachments", force: :cascade do |t|
+    t.integer "game_file_id", null: false
+    t.string "attachable_type", null: false
+    t.integer "attachable_id", null: false
+    t.string "locale"
+    t.integer "position"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["attachable_type", "attachable_id"], name: "index_file_attachments_on_attachable_type_and_attachable_id"
+    t.index ["game_file_id"], name: "index_file_attachments_on_game_file_id"
   end
 
   create_table "game_entries", force: :cascade do |t|

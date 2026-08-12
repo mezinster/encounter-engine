@@ -60,7 +60,7 @@ describe "game_files rake tasks" do
       #
       #   def purge
       #     destroy
-      #     delete
+      #     delete if previously_persisted?
       #   rescue ActiveRecord::InvalidForeignKey
       #   end
       #

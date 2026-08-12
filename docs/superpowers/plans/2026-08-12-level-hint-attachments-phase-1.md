@@ -413,6 +413,10 @@ job completing, so inline is sufficient rather than a compromise."
 
 **The constraint being worked around:** `Setting` today validates `value` as `numericality: { only_integer: true }` unconditionally, and whitelists `name` against a single `DEFAULTS` hash. An allowed-extensions list is strings. The change must leave `Setting.integer` behaving exactly as it does now — `RequestThrottling` reads the four rate-limit keys through it on every throttled request.
 
+**Pre-flight ruling (2026-08-12, repository owner): the registry is split three ways.** An earlier draft of this task folded the five storage keys straight into `DEFAULTS`. That breaks an existing passing spec: `Admin::SettingsController#current_values` (`settings_controller.rb:47`) iterates `Setting::DEFAULTS.keys`, the view labels each with `t("admin.settings.names.#{name}")` (`show.html.erb:8`), only four such labels exist (`ru.yml:94-98`), and `config/environments/test.rb:26` raises on missing translations — so `spec/requests/admin_settings_spec.rb:28` would go red. It also contradicted this plan's own "nothing user-visible has changed" exit criterion.
+
+So: `DEFAULTS` stays **exactly the four rate-limit keys** and remains what the admin page renders. Storage keys are validated and readable by code but are **not** on the admin page in Phase 1. Phase 2 flips `DEFAULTS` to `INTEGER_DEFAULTS` and adds the five labels across all seven locales at the same time it adds the enforcement that makes them meaningful. **Do not add any `admin.settings.names.*` key in this task.**
+
 - [ ] **Step 1: Write the failing test**
 
 Add to `spec/models/setting_spec.rb` (create the file with `require "rails_helper"` if it does not exist):
@@ -443,6 +447,25 @@ describe "string settings" do
 
   it "refuses a name that is not a registered string key" do
     expect { Setting.put("no_such_key", "x") }.to raise_error(ActiveRecord::RecordInvalid)
+  end
+end
+
+describe "the admin settings page's key list" do
+  # The page iterates Setting::DEFAULTS.keys and labels each with
+  # t("admin.settings.names.<key>"). Adding a key here without its label in all
+  # seven locales makes that page raise under raise_on_missing_translations.
+  # Phase 2 moves the storage keys in, with their labels, alongside the code
+  # that enforces them.
+  it "still offers exactly the four rate limits" do
+    expect(Setting::DEFAULTS.keys).to eq(%w[signup_max signup_window_seconds reset_max reset_window_seconds])
+  end
+
+  it "does not yet offer the storage keys" do
+    expect(Setting::DEFAULTS.keys & Setting::STORAGE_DEFAULTS.keys).to be_empty
+  end
+
+  it "still answers Setting.integer for a storage key even though the page hides it" do
+    expect(Setting.integer("game_quota_megabytes")).to eq(100)
   end
 
   it "does not require a numeric value for a string key" do
@@ -513,21 +536,35 @@ Replace the body of `app/models/setting.rb`:
 # one, and a test transaction all behave identically -- and so deleting a row
 # is a safe way back to the shipped value.
 class Setting < ApplicationRecord
-  # Integer keys. Per client IP, per window. 0 disables the limit entirely --
-  # see RequestThrottling, which checks for it before touching the cache.
-  INTEGER_DEFAULTS = {
-    "signup_max"                 => 5,
-    "signup_window_seconds"      => 3600,
-    "reset_max"                  => 3,
-    "reset_window_seconds"       => 3600,
-    # Game file storage. See
-    # docs/superpowers/specs/2026-08-12-level-and-hint-attachments-design.md §6.
+  # Per client IP, per window. 0 disables the limit entirely -- see
+  # RequestThrottling, which checks for it before touching the cache.
+  RATE_LIMIT_DEFAULTS = {
+    "signup_max"            => 5,
+    "signup_window_seconds" => 3600,
+    "reset_max"             => 3,
+    "reset_window_seconds"  => 3600
+  }.freeze
+
+  # Game file storage. See
+  # docs/superpowers/specs/2026-08-12-level-and-hint-attachments-design.md §6.
+  #
+  # Deliberately NOT in DEFAULTS below, which is what the admin settings page
+  # iterates: nothing enforces these until phase 2, and a settings screen
+  # offering a quota that no code obeys is worse than no screen at all. Phase 2
+  # points DEFAULTS at INTEGER_DEFAULTS and adds the five
+  # admin.settings.names.* labels across all seven locales in the same change
+  # that adds the enforcement.
+  STORAGE_DEFAULTS = {
     "file_max_megabytes"         => 25,
     "max_files_per_upload"       => 10,
     "game_quota_megabytes"       => 100,
     "instance_cap_megabytes"     => 4096,
     "free_space_floor_megabytes" => 2048
   }.freeze
+
+  # Every integer key that Setting.integer will answer for and that the
+  # numericality validation applies to.
+  INTEGER_DEFAULTS = RATE_LIMIT_DEFAULTS.merge(STORAGE_DEFAULTS).freeze
 
   # List-of-strings keys. Stored space-separated in string_value.
   #
@@ -539,7 +576,9 @@ class Setting < ApplicationRecord
     "allowed_extensions" => %w[jpg jpeg png gif heic pdf]
   }.freeze
 
-  DEFAULTS = INTEGER_DEFAULTS # kept for callers reading the integer registry
+  # What the admin settings page renders -- unchanged, four keys. See the
+  # pre-flight ruling in this task's plan text.
+  DEFAULTS = RATE_LIMIT_DEFAULTS
 
   validates :name, :presence => true, :uniqueness => true,
                    :inclusion => { :in => INTEGER_DEFAULTS.keys + STRING_DEFAULTS.keys }
@@ -600,7 +639,7 @@ bin/rails db:test:prepare
 bundle exec rspec spec/models/setting_spec.rb
 ```
 
-Expected: PASS, 10 examples.
+Expected: PASS, 13 examples.
 
 - [ ] **Step 6: Prove the rate limiter is untouched**
 
@@ -1209,6 +1248,7 @@ player."
 | Deferred | Lands in |
 |---|---|
 | `PERMITTED` constant intersecting `allowed_extensions` | Phase 2 (it belongs with the validator that reads it) |
+| The five storage keys appearing on `/admin/settings`, with labels in seven locales | Phase 2 (pre-flight ruling: added with the enforcement, not before it) |
 | Magic-byte sniffing, HEIC→JPEG, EXIF stripping, variants | Phase 2 |
 | Quota enforcement, the row lock, the `statvfs` floor, `max_request_body` | Phase 2 |
 | Explorer page, upload form | Phase 2 |

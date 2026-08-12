@@ -41,6 +41,42 @@ describe FileAttachment do
     expect(FileAttachment.new(:game_file => @file)).not_to be_valid
   end
 
+  describe "when the attachable's game cannot be resolved" do
+    # Fail closed: "I cannot tell which game this belongs to" is not "fine".
+    # A validator whose entire job is keeping one game's files out of
+    # another game's levels must refuse rather than silently no-op.
+    it "refuses attaching to a level with no game" do
+      gameless_level = Level.new
+      foreign = create_game_file(:game => create_game)
+
+      attachment = FileAttachment.new(:game_file => foreign, :attachable => gameless_level)
+
+      expect(attachment).not_to be_valid
+      expect(attachment.errors[:attachable]).not_to be_empty
+    end
+
+    it "refuses attaching to a hint whose level has no game" do
+      gameless_level = Level.new
+      hint = Hint.new(:level => gameless_level)
+      foreign = create_game_file(:game => create_game)
+
+      attachment = FileAttachment.new(:game_file => foreign, :attachable => hint)
+
+      expect(attachment).not_to be_valid
+      expect(attachment.errors[:attachable]).not_to be_empty
+    end
+
+    it "refuses attaching to a hint with no level" do
+      hint = Hint.new(:level => nil)
+      foreign = create_game_file(:game => create_game)
+
+      attachment = FileAttachment.new(:game_file => foreign, :attachable => hint)
+
+      expect(attachment).not_to be_valid
+      expect(attachment.errors[:attachable]).not_to be_empty
+    end
+  end
+
   describe "locale scoping" do
     it "defaults to NULL, meaning every language" do
       attachment = FileAttachment.create!(:game_file => @file, :attachable => @level)
@@ -87,6 +123,18 @@ describe FileAttachment do
                                          :attachable => other_level)
 
       expect(elsewhere.reload.position).to eq(1)
+    end
+
+    it "numbers a locale-specific list independently from the NULL-locale list" do
+      null_first = FileAttachment.create!(:game_file => @file, :attachable => @level)
+      english = FileAttachment.create!(:game_file => create_game_file(:game => @game),
+                                       :attachable => @level, :locale => "en")
+      null_second = FileAttachment.create!(:game_file => create_game_file(:game => @game),
+                                           :attachable => @level)
+
+      expect(null_first.reload.position).to eq(1)
+      expect(english.reload.position).to eq(1)
+      expect(null_second.reload.position).to eq(2)
     end
   end
 

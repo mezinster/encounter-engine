@@ -50,6 +50,27 @@ a signal to look harder at the implementation, or to raise it as a separate, exp
 not to "fix" the spec. Step definitions (`features/*/steps/*_steps.rb`, `features/support/env.rb`)
 are fair game.
 
+**Which files the freeze covers.** All 59, but for two different reasons, and the distinction
+decides whether an edit needs the owner's authorisation:
+
+  * **The 58 inherited Russian files** are the Merb contract. "Byte-identical to what the original
+    app passed" is a claim anyone can check mechanically with `git diff` against the pre-port
+    revision, and that check is the whole value — it is what separates "the port preserved
+    behaviour" from "the app and its spec drifted toward each other." Editing one takes an explicit,
+    recorded decision by the repository owner. The three below are the only ones so far.
+  * **One file this port wrote itself** — `features/i18n/switch-language.feature`, English, added
+    2026-08-04 in `6d554a8` for the locale switcher, which is platform behaviour the Merb app never
+    had. It has no pre-port ancestor, so there is nothing for it to be identical *to* and no owner
+    authorisation to obtain; it changes under ordinary review, like any other test this repository
+    owns. It has been edited once, in `d802659`, where review found the scenario was guarding a bug
+    that did not exist and repurposed it onto a real one. That is not a fourth amendment and is not
+    counted as one. A new `.feature` file written by this repository joins this set; adding one is
+    not an amendment either.
+
+What does **not** vary by provenance: no `.feature` file of either set is edited to make a failing
+test pass. On an inherited file that is a contract breach; on a port-authored one it is the same
+mistake wearing different clothes — deleting a requirement and booking it as a fix.
+
 **Three authorised exceptions exist so far.** On 2026-08-06 the repository owner explicitly authorised
 amending `features/games/user-profile-view-and-edit.feature` to drop the ICQ and Jabber fields,
 which were retired from the product along with their database columns (see
@@ -91,6 +112,12 @@ changes follow, all in the signup surface:
   The scenario count went from 234 to 232 (the two deleted scenarios); the step total went from
   2359 to 2342 (-2 for the removed password/confirmation fills, -11 for the deleted
   "Подтверждение пароля не совпадает" scenario, -4 for the deleted signup-password.feature file).
+
+**If you re-count the scenarios yourself**, expect 3 fewer than the figures above. Those are
+Cucumber's numbers; a `grep -c` of `Сценарий:`/`Scenario:` headers gives 231/229, because
+`features/time/time-in-header.feature` holds the suite's only `Структура сценария` and Cucumber
+counts its 4 `Примеры` rows as 4 scenarios where the grep counts the outline once. An amendment is
+audited on the *delta*, and the deltas agree either way: 0, 0, -2.
 
 This is recorded so the amendments are traceable, **not** to soften the rule. The rule stands exactly
 as written above: a feature file is changed only on an explicit, recorded decision by the

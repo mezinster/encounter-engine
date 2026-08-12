@@ -33,6 +33,12 @@ describe "game_files rake tasks" do
     end
 
     it "leaves a PDF at zero, because a PDF has no variants" do
+      # A smoke check, not a guard: the column is already 0 before the task
+      # runs, and the task's `rescue StandardError` swallows anything the block
+      # raises, so this stays green even with `raise "MUTATION"` as the first
+      # line of the find_each body (verified). The example above is the one
+      # that carries the weight -- it pins the exact regenerated figure and
+      # fails if the arithmetic or the iteration is wrong.
       file = GameFileUpload.new(@game, fixture_upload("map.pdf"), create_user).call
 
       Rake::Task["game_files:regenerate_variants"].invoke

@@ -1166,8 +1166,32 @@ and wrap the persistence in the game's lock, replacing the `attach_and_measure` 
         end
     end
 
+    # Variant generation CANNOT happen inside the lock above. ActiveStorage
+    # defers an attached file's physical write to an after_commit callback, which
+    # fires only once the enclosing transaction -- with_lock's -- completes.
+    # Building a variant reads the canonical file back from storage, so doing it
+    # inside the lock reads a file that has not been written yet.
+    #
+    # Verified, not assumed:
+    #   variant INSIDE  with_lock: RAISED ActiveStorage::FileNotFoundError
+    #   variant OUTSIDE with_lock: SUCCEEDED
+    #
+    # Splitting it is safe for the race this lock exists to prevent: byte_size
+    # is the number the quota is computed from, and it is written and checked
+    # atomically inside the lock. Only the secondary derived_byte_size update
+    # lands afterwards, so the quota momentarily undercounts by the variant
+    # sizes -- survivable precisely because the free-space floor is a hard
+    # backstop, which is one more reason that floor must never be dropped as
+    # redundant.
+    measure_derived!(result) if result.persisted?
+
     result
 ```
+
+`attach_and_measure` therefore sets `byte_size`, `checksum`, `content_type` and
+saves; a separate `measure_derived!` builds the two variants and writes
+`derived_byte_size`. All four fields still have exactly one writer class, which is
+what the one-place rule requires.
 
 `left_megabytes` is the remaining allowance, floored at zero so a message never
 reads a negative number:

@@ -81,20 +81,6 @@ class Setting < ApplicationRecord
   ENTRY = /\A(?=.*[a-z])[a-z0-9]{1,10}\z/
   validate :string_entries_are_well_formed, :if => :string_key?
 
-  private
-
-  def string_entries_are_well_formed
-    self.class.normalise_list(string_value).each do |entry|
-      next if entry.match?(ENTRY)
-
-      errors.add(:string_value, :invalid)
-    end
-  end
-
-  def string_key?
-    STRING_DEFAULTS.key?(name)
-  end
-
   def self.integer(name)
     find_by(:name => name)&.value || INTEGER_DEFAULTS.fetch(name)
   end
@@ -134,7 +120,23 @@ class Setting < ApplicationRecord
     Array(value).join(" ").downcase.split(/[\s,]+/).reject(&:empty?).uniq
   end
 
+  # One `private`, at the bottom, and every instance method below it. There
+  # were two, with the public `def self.*` methods sandwiched between them --
+  # which reads as though those are private and is not: `private` has no effect
+  # on singleton methods at all.
   private
+
+  def string_entries_are_well_formed
+    self.class.normalise_list(string_value).each do |entry|
+      next if entry.match?(ENTRY)
+
+      errors.add(:string_value, :invalid)
+    end
+  end
+
+  def string_key?
+    STRING_DEFAULTS.key?(name)
+  end
 
   def integer_key?
     INTEGER_DEFAULTS.key?(name)

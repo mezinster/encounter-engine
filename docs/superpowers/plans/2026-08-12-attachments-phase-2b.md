@@ -480,7 +480,7 @@ describe "uploading" do
   end
 
   it "refuses an upload to a game locked for editing" do
-    @game.update_column(:editing_locked, true)
+    @game.update_column(:editing_locked_at, Time.now)
     login_as(@author)
 
     expect { upload("photo.jpg") }.not_to change { GameFile.count }

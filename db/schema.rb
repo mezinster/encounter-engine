@@ -10,7 +10,35 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_10_200000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_12_130000) do
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
   create_table "admin_actions", force: :cascade do |t|
     t.integer "actor_id", null: false
     t.string "action", null: false
@@ -41,6 +69,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_200000) do
     t.index ["translatable_type", "translatable_id", "field", "locale"], name: "index_content_translations_uniqueness", unique: true
   end
 
+  create_table "file_attachments", force: :cascade do |t|
+    t.integer "game_file_id", null: false
+    t.string "attachable_type", null: false
+    t.integer "attachable_id", null: false
+    t.string "locale"
+    t.integer "position"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["attachable_type", "attachable_id"], name: "index_file_attachments_on_attachable_type_and_attachable_id"
+    t.index ["game_file_id"], name: "index_file_attachments_on_game_file_id"
+  end
+
   create_table "game_entries", force: :cascade do |t|
     t.integer "game_id"
     t.integer "team_id"
@@ -48,6 +88,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_200000) do
     t.integer "game_run_id"
     t.index ["game_run_id"], name: "index_game_entries_on_game_run_id"
     t.index ["team_id", "game_run_id"], name: "index_game_entries_on_team_id_and_game_run_id_live", unique: true, where: "status IN ('new', 'accepted')"
+  end
+
+  create_table "game_files", force: :cascade do |t|
+    t.integer "game_id", null: false
+    t.string "filename", null: false
+    t.string "content_type", null: false
+    t.integer "byte_size", default: 0, null: false
+    t.integer "derived_byte_size", default: 0, null: false
+    t.string "checksum"
+    t.integer "uploaded_by_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "filename"], name: "index_game_files_on_game_id_and_filename", unique: true
+    t.index ["game_id"], name: "index_game_files_on_game_id"
   end
 
   create_table "game_locale_preferences", force: :cascade do |t|
@@ -162,9 +216,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_200000) do
 
   create_table "settings", force: :cascade do |t|
     t.string "name", null: false
-    t.integer "value", null: false
+    t.integer "value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "string_value"
     t.index ["name"], name: "index_settings_on_name", unique: true
   end
 
@@ -211,4 +266,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_200000) do
     t.datetime "reset_password_sent_at"
     t.index ["reset_password_token_digest"], name: "index_users_on_reset_password_token_digest"
   end
+
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
 end

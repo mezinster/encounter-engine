@@ -38,3 +38,9 @@ CLAUDE.local.md
 # git worktrees for parallel hotfixes
 .worktrees/
 .claude/worktrees/
+
+# Active Storage's :local service (config/storage.yml) writes uploaded game
+# files here in development. This repository is public -- never let a
+# developer's local uploads land in a commit.
+/storage/*
+!/storage/.keep

@@ -51,6 +51,54 @@ jobs:
           docker logs ee-smoke
           exit 1
 
+      # The RSpec job proves libvips exists on a Debian ruby image with an
+      # apt-get step; that says nothing about the image we actually ship.
+      # `bundle exec`, not bare ruby: the entrypoint is overridden here, so
+      # nothing else puts the bundle on the load path.
+      #
+      # This also asserts HEIC support specifically, not just that libvips
+      # loads: libvips can be built without HEIC (see the Dockerfile comment
+      # on libheif1), and a photo from any iPhone arrives as HEIC -- it is the
+      # one in-scope format that actually needs conversion. A bare
+      # Vips::Image.black smoke test passes even when heifload is missing, so
+      # it proves nothing about the capability this feature depends on.
+      # -i is load-bearing, and its absence is silent. `ruby` with no script
+      # argument reads its program from stdin; `docker run` does NOT forward
+      # the client's stdin into the container unless -i is given. Without it
+      # the container's ruby reads EOF immediately, executes an empty program
+      # and exits 0 -- so this whole step passed unconditionally, proving
+      # nothing, which is how it shipped the first time.
+      #
+      # The sentinel grep below is the belt to that braces: a step that cannot
+      # be run locally (no docker daemon on a dev box, and the image only
+      # exists in CI) must not be able to succeed by producing nothing. If the
+      # script does not run, there is no output, and no output is now a failure.
+      - name: Prove libvips is in the image, with HEIC support
+        run: |
+          set -o pipefail
+          output=$(docker run --rm -i --entrypoint bundle encounter-engine:test \
+            exec ruby <<'RUBY'
+          require "image_processing/vips"
+
+          abort("libvips broken in image") unless Vips::Image.black(4, 4).width == 4
+
+          abort("libvips has no HEIC support in image") unless Vips.get_suffixes.include?(".heic")
+
+          begin
+            Vips::Operation.new("heifload")
+          rescue Vips::Error => e
+            abort("heifload operation unavailable in image: #{e.message}")
+          end
+
+          puts "libvips ok, HEIC ok"
+          RUBY
+          )
+          echo "$output"
+          echo "$output" | grep -q "libvips ok, HEIC ok" || {
+            echo "FAILED: the probe printed nothing -- the script never reached ruby."
+            exit 1
+          }
+
   postgres-image:
     runs-on: ubuntu-latest
     steps:

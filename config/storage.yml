@@ -1,0 +1,22 @@
+# Disk, not Azure, and not by preference — see the design's "Why not Azure
+# Blob" section. ActiveStorage::Service::AzureStorageService is deprecated
+# (removed in Rails 8.1) and its constructor requires storage_access_key:,
+# a shared key config/deploy.yml deliberately does not have because the VM
+# authenticates to that storage account with a managed identity.
+#
+# The service abstraction is what keeps that decision reversible: switching
+# is this file plus a byte migration, not a rewrite.
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+# Mounted as a Docker volume by config/deploy.yml. Preferably its own
+# partition: filling it must not be able to reach Postgres or the other
+# tenants on this host.
+production:
+  service: Disk
+  root: /rails/storage

@@ -3,6 +3,11 @@ require_relative "boot"
 require "rails"
 require "active_model/railtie"
 require "active_record/railtie"
+# Active Storage for game file libraries (see
+# docs/superpowers/specs/2026-08-12-level-and-hint-attachments-design.md).
+# It pulls in Active Job, which this app has no other use for — the queue
+# adapter is pinned to :inline in the environment files for that reason.
+require "active_storage/engine"
 require "action_controller/railtie"
 require "action_view/railtie"
 require "action_mailer/railtie"
@@ -55,5 +60,24 @@ module EncounterEngine
     # at :info, which config/environments/production.rb sets as the
     # production log level.
     config.filter_parameters += [:password, :password_confirmation, :secret, :token]
+
+    # Active Storage draws nine routes of its own by default, including
+    # POST /rails/active_storage/direct_uploads and
+    # PUT  /rails/active_storage/disk/:encoded_token -- an unauthenticated write
+    # path onto a disk this deployment shares with Postgres and other tenants.
+    # Those controllers descend from ActiveStorage::BaseController, not
+    # ApplicationController, so this app's Authentication filter never runs on
+    # them.
+    #
+    # This app serves its own bytes through one authorized route
+    # (GET /games/:game_id/files/:id/:variant, design §4), so the built-in
+    # routes are not merely unused -- direct uploads are listed under "Out of
+    # scope, deliberately" in the design because they bypass the upload
+    # validation that IS the security model.
+    #
+    # Turning them off also removes blob.url / rails_blob_path, which is the
+    # point: it makes it structurally impossible for a later phase to shortcut
+    # the authorization matrix with a built-in signed URL.
+    config.active_storage.draw_routes = false
   end
 end

@@ -20,8 +20,11 @@ COPY . .
 RUN chmod +x bin/docker-entrypoint
 
 FROM ruby:${RUBY_VERSION}-slim
+# libvips42/libheif1 are what canonicalise uploads (HEIC→JPEG, EXIF stripping,
+# web/thumb variants). libheif1 is separate: libvips can be built without HEIC
+# support, and a photo from any iPhone arrives as HEIC.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y libpq5 curl tzdata && \
+    apt-get install --no-install-recommends -y libpq5 curl tzdata libvips42 libheif1 && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /rails
 COPY --from=build /usr/local/bundle /usr/local/bundle

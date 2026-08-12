@@ -37,3 +37,87 @@ describe Setting do
     expect { Setting.put("signup_maxx", 5) }.to raise_error(ActiveRecord::RecordInvalid)
   end
 end
+
+describe "string settings" do
+  it "returns the shipped default when no row exists" do
+    expect(Setting.list("allowed_extensions")).to eq(%w[jpg jpeg png gif heic pdf])
+  end
+
+  it "round-trips a list through the database" do
+    Setting.put("allowed_extensions", %w[jpg pdf])
+
+    expect(Setting.list("allowed_extensions")).to eq(%w[jpg pdf])
+  end
+
+  it "accepts a space-separated string, which is what the admin form submits" do
+    Setting.put("allowed_extensions", "jpg  pdf\n png")
+
+    expect(Setting.list("allowed_extensions")).to eq(%w[jpg pdf png])
+  end
+
+  it "lowercases and strips, so 'JPG ' and 'jpg' are one entry" do
+    Setting.put("allowed_extensions", "JPG jpg  PDF ")
+
+    expect(Setting.list("allowed_extensions")).to eq(%w[jpg pdf])
+  end
+
+  it "refuses a name that is not a registered string key" do
+    expect { Setting.put("no_such_key", "x") }.to raise_error(ActiveRecord::RecordInvalid)
+  end
+
+  # STRING_DEFAULTS.freeze only freezes the hash, not the array inside it, and
+  # Setting.list used to return that very array -- a caller mutating the
+  # return value permanently widened the process-global shipped default. The
+  # design's §4 invariant is that a superadmin may narrow the allowed set but
+  # never widen it; a caller mutating the return value must not be able to
+  # widen it either.
+  it "does not let a caller mutate the shipped default through the returned value" do
+    returned = Setting.list("allowed_extensions")
+    returned << "svg"
+
+    expect(Setting.list("allowed_extensions")).to eq(%w[jpg jpeg png gif heic pdf])
+  end
+end
+
+describe "the admin settings page's key list" do
+  # The page iterates Setting::DEFAULTS.keys and labels each with
+  # t("admin.settings.names.<key>"). Adding a key here without its label in all
+  # seven locales makes that page raise under raise_on_missing_translations.
+  # Phase 2 moves the storage keys in, with their labels, alongside the code
+  # that enforces them.
+  it "still offers exactly the four rate limits" do
+    expect(Setting::DEFAULTS.keys).to eq(%w[signup_max signup_window_seconds reset_max reset_window_seconds])
+  end
+
+  it "does not yet offer the storage keys" do
+    expect(Setting::DEFAULTS.keys & Setting::STORAGE_DEFAULTS.keys).to be_empty
+  end
+
+  it "still answers Setting.integer for a storage key even though the page hides it" do
+    expect(Setting.integer("game_quota_megabytes")).to eq(100)
+  end
+
+  it "does not require a numeric value for a string key" do
+    expect { Setting.put("allowed_extensions", "jpg") }.not_to raise_error
+  end
+end
+
+describe "integer settings, unchanged" do
+  it "still returns the shipped default" do
+    expect(Setting.integer("signup_max")).to eq(5)
+  end
+
+  it "still round-trips" do
+    Setting.put("signup_max", 9)
+
+    expect(Setting.integer("signup_max")).to eq(9)
+  end
+
+  it "still rejects a non-integer value for an integer key" do
+    expect { Setting.put("signup_max", "abc") }.to raise_error(ActiveRecord::RecordInvalid)
+  end
+
+  it "still accepts zero, the documented off switch" do
+    expect { Setting.put("signup_max", 0) }.not_to raise_error
+  end
+end

@@ -84,9 +84,63 @@ describe "the game file Explorer", :type => :request do
 
       get game_game_files_path(@game)
 
-      # 5 of 100 MB. The megabyte figure, not the byte count.
-      expect(response.body).to include("5")
-      expect(response.body).to include(Setting.integer("game_quota_megabytes").to_s)
+      # The whole rendered sentence, built from the key the view renders, with
+      # the interpolations filled in -- so the number AND its context are
+      # pinned. This example previously asserted `include("5")`, which cannot
+      # fail: the file table's own number_to_human_size cell reads "5 MB" on
+      # the same page. Proved by hard-wiring @used_megabytes = 0 in the
+      # controller and watching it stay green.
+      expect(response.body).to include(
+        I18n.t("game_files.index.quota",
+               :used => 5, :quota => Setting.integer("game_quota_megabytes"))
+      )
+    end
+
+    it "rounds the used figure up, so it never claims room that is not there" do
+      # 99.9 MB truncates to «Занято 99 МБ из 100 МБ» -- a page telling the
+      # author there is a megabyte free while the quota check refuses the very
+      # next upload. Overstating what is used is the safe direction.
+      quota = Setting.integer("game_quota_megabytes")
+      create_game_file(:game => @game,
+                       :byte_size => ((quota - 0.1) * 1024 * 1024).to_i,
+                       :derived_byte_size => 0)
+      login_as(@author)
+
+      get game_game_files_path(@game)
+
+      expect(response.body).to include(
+        I18n.t("game_files.index.quota", :used => quota, :quota => quota)
+      )
+    end
+
+    # Zero is a supported value, not a hypothesis: the validation allows it,
+    # the key is on the admin settings page, and Setting's own comment calls it
+    # the documented "off" switch an operator reaches for during an incident.
+    # The quota bar's inline percentage was NaN.round with no files and
+    # Infinity.round with any, and both raise FloatDomainError -- taking down
+    # the page every author is redirected to after every upload and delete,
+    # while the upload path itself degraded correctly.
+    describe "with the quota switched off entirely" do
+      before(:each) { Setting.put("game_quota_megabytes", 0) }
+
+      it "renders, with the bar full, when the game has no files" do
+        login_as(@author)
+
+        get game_game_files_path(@game)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("width: 100%")
+      end
+
+      it "renders, with the bar full, when the game already has files" do
+        create_game_file(:game => @game, :byte_size => 1024, :derived_byte_size => 0)
+        login_as(@author)
+
+        get game_game_files_path(@game)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("width: 100%")
+      end
     end
 
     it "does not list another game's files" do
@@ -96,6 +150,29 @@ describe "the game file Explorer", :type => :request do
       get game_game_files_path(@game)
 
       expect(response.body).not_to include("чужой.jpg")
+    end
+
+    it "does not ask the database about each file separately" do
+      # The page reads every file's attachments twice: once in the controller
+      # for @typed_confirmation_ids and once per row in _file_table for the
+      # "where it is used" column. Unpreloaded that was 15 queries for 3 files.
+      # A slope, not a magic number -- the shape dashboard_queries_spec.rb uses.
+      a_file_used_by_a_level = lambda do
+        file = create_game_file(:game => @game, :filename => "файл#{rand(10**9)}.jpg")
+        FileAttachment.create!(:game_file => file, :attachable => create_level(:game => @game))
+      end
+
+      login_as(@author)
+
+      a_file_used_by_a_level.call
+      one = count_queries { get game_game_files_path(@game) }
+
+      2.times { a_file_used_by_a_level.call }
+      three = count_queries { get game_game_files_path(@game) }
+
+      expect(three).to eq(one),
+        "the Explorer issued #{one} queries for one file and #{three} for three -- " \
+        "GameFilesController#index or _file_table is reading per row"
     end
 
     it "shows the level name for a file attached to a hint" do
@@ -122,6 +199,28 @@ describe "the game file Explorer", :type => :request do
 
       expect { upload("photo.jpg") }.to change { GameFile.count }.by(1)
       expect(response).to redirect_to(game_game_files_path(@game))
+    end
+
+    it "says so when the whole batch went through" do
+      # A clean upload used to redirect in silence, which reads as "nothing
+      # happened": the new rows are further down a page the author has to scan.
+      login_as(@author)
+
+      upload([ "photo.jpg", "small.png" ])
+
+      expect(flash[:notice]).to eq(I18n.t("game_files.upload.uploaded", :count => 2))
+      expect(flash[:alert]).to be_blank
+    end
+
+    it "stays silent about success when part of the batch was rejected" do
+      # The rejection is the message that matters; a cheerful notice beside it
+      # would bury it.
+      login_as(@author)
+
+      upload([ "photo.jpg", "not-really.jpg" ])
+
+      expect(flash[:notice]).to be_blank
+      expect(flash[:alert]).to be_present
     end
 
     it "processes a batch per file, keeping the ones that fit" do
@@ -232,6 +331,36 @@ describe "the game file Explorer", :type => :request do
       expect {
         delete game_game_file_path(@game, file), :params => { :confirm_filename => "дом.jpg" }
       }.to change { GameFile.count }.by(-1)
+    end
+
+    it "accepts the typed filename with stray whitespace around it" do
+      # A trailing space off a mobile keyboard is a realistic way to type the
+      # name correctly and be refused, and tolerating it costs nothing: an
+      # author who cannot produce the name still cannot delete. Exact
+      # otherwise -- the example below keeps the comparison honest.
+      level = create_level(:game => @game)
+      file = create_game_file(:game => @game, :filename => "дом.jpg")
+      FileAttachment.create!(:game_file => file, :attachable => level)
+      allow_any_instance_of(Game).to receive(:status).and_return(:running)
+      login_as(@author)
+
+      expect {
+        delete game_game_file_path(@game, file), :params => { :confirm_filename => " дом.jpg " }
+      }.to change { GameFile.count }.by(-1)
+    end
+
+    it "refuses a delete in a game locked for editing" do
+      # The lock exists so an author under investigation cannot erase evidence,
+      # and photographs ARE evidence -- so the delete half of
+      # ensure_editing_not_locked matters at least as much as the upload half.
+      # Proved by mutation: dropping :destroy from the filter's :only list left
+      # every other example in this file green.
+      file = create_game_file(:game => @game)
+      @game.update_column(:editing_locked_at, Time.now)
+      login_as(@author)
+
+      expect { delete game_game_file_path(@game, file) }.not_to change { GameFile.count }
+      expect(response).to have_http_status(:unauthorized)
     end
 
     it "does not accept a wrong typed filename" do

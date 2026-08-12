@@ -383,6 +383,9 @@ tr:
       quota_full: "Oyunun kotasında yeterli alan yok: %{quota} MB'nin %{left} MB'si kaldı"
       instance_full: "Sunucuda dosyalar için yer kalmadı"
       disk_full: "Sunucu diskinde az yer var, yükleme geçici olarak kullanılamıyor"
+      # "Number of uploaded files: N" -- a count carries no case suffix, which
+      # is why the app interpolates one here rather than a filename.
+      uploaded: "Yüklenen dosya sayısı: %{count}"
     # The genitive suffix goes on "oyun", never on %{game}.
     index:
       title: "«%{game}» adlı oyunun dosyaları"
@@ -390,7 +393,6 @@ tr:
       quota: "%{quota} MB'nin %{used} MB'si kullanıldı"
       unused: "kullanılmıyor"
       delete: "Sil"
-      confirm_delete: "Dosya silinsin mi?"
       deleted: "Dosya silindi"
       # %{filename} IS user-authored here, unlike the two lines above -- the
       # case suffix goes on "dosya" (a common noun), never on the placeholder.

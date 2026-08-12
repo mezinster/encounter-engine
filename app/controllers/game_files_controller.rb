@@ -25,8 +25,21 @@ class GameFilesController < ApplicationController
   # replace photographs mid-quest.
 
   def index
-    @files = GameFile.of_game(@game).order(:filename)
-    @used_megabytes = GameFile.storage_used_by(@game) / 1024 / 1024
+    # includes, because this page reads every file's attachments TWICE: once
+    # here for @typed_confirmation_ids and once per row in _file_table for the
+    # "where it is used" column. Unpreloaded that was 15 queries for 3 files.
+    # :attachable as well -- attachment_place reaches straight through the
+    # polymorphic association for the level or hint name -- and :game, which
+    # the delete form's own path helper (game_game_file_path(file.game, file))
+    # loads once per row.
+    @files = GameFile.of_game(@game)
+                     .includes(:game, :file_attachments => :attachable)
+                     .order(:filename)
+    # ceil, not integer division. Truncating displayed «99 МБ из 100 МБ» for a
+    # game sitting at 99.9 MB whose very next upload the quota check refuses --
+    # a display that claims room the author does not have. Rounding up can only
+    # overstate what is used, which is the safe direction for a limit.
+    @used_megabytes = (GameFile.storage_used_by(@game) / 1024.0 / 1024).ceil
     @quota_megabytes = Setting.integer("game_quota_megabytes")
     @typed_confirmation_ids =
       @game.status == :running ? @files.select { |f| f.file_attachments.any? }.map(&:id) : []
@@ -65,14 +78,30 @@ class GameFilesController < ApplicationController
 
     # Per file, not atomic. An author who picked one oversized photo must not
     # have to re-select the other nine.
+    #
+    # A clean batch used to redirect in silence, which reads as "nothing
+    # happened" -- the new rows are further down a page the author has to scan.
+    # A count, not a filename: Turkish and Georgian put a case suffix on the
+    # noun a name would otherwise carry (see CLAUDE.md), and «Загружено файлов:
+    # 3» inflects nothing.
+    accepted = submitted.size - rejected.size
+    notice = t("game_files.upload.uploaded", :count => accepted) if rejected.empty? && accepted > 0
+
     redirect_to game_game_files_path(@game),
-                :alert => (rejected.join("; ") if rejected.any?)
+                :alert => (rejected.join("; ") if rejected.any?),
+                :notice => notice
   end
 
   def destroy
     file = GameFile.of_game(@game).find(params[:id])
 
-    if typed_confirmation_required?(file) && params[:confirm_filename] != file.filename
+    # strip, because a trailing space off a mobile keyboard is a realistic way
+    # to type a filename correctly and be refused, and tolerating it costs no
+    # security: an author who cannot produce the name still cannot delete.
+    # EXACT otherwise -- no case folding. Filenames are author content, and
+    # CLAUDE.md forbids a Ruby-side .downcase on user-facing text (it is
+    # locale-blind: Turkish "i" upcases to "I", not "İ").
+    if typed_confirmation_required?(file) && params[:confirm_filename].to_s.strip != file.filename
       redirect_to game_game_files_path(@game),
                   :alert => t("game_files.index.type_the_filename", :filename => file.filename)
       return

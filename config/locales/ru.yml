@@ -337,13 +337,16 @@ ru:
       quota_full: "Не хватает места в квоте игры: осталось %{left} МБ из %{quota} МБ"
       instance_full: "На сервере закончилось место для файлов"
       disk_full: "На диске сервера мало места, загрузка временно недоступна"
+      # A count, not a filename. Turkish and Georgian would have to put a case
+      # suffix on an interpolated name (see the header comments in tr.yml and
+      # ka.yml); a number needs none in any of the seven.
+      uploaded: "Загружено файлов: %{count}"
     index:
       title: "Файлы игры «%{game}»"
       title_short: "Файлы"
       quota: "Занято %{used} МБ из %{quota} МБ"
       unused: "не используется"
       delete: "Удалить"
-      confirm_delete: "Удалить файл?"
       deleted: "Файл удалён"
       type_the_filename: "Игра идёт. Чтобы удалить файл, введите его имя: %{filename}"
       upload: "Загрузить"

@@ -2,7 +2,7 @@
 
 <div class="quota-bar">
   <div class="quota-bar-fill"
-       style="width: <%= [ (@used_megabytes * 100.0 / @quota_megabytes).round, 100 ].min %>%"></div>
+       style="width: <%= quota_bar_percentage(@used_megabytes, @quota_megabytes) %>%"></div>
 </div>
 <p class="hint-text">
   <%= t("game_files.index.quota", :used => @used_megabytes, :quota => @quota_megabytes) %>

@@ -360,6 +360,9 @@ ka:
       quota_full: "თამაშის ლიმიტში საკმარისი ადგილი არ არის: დარჩენილია %{left} მბ %{quota} მბ-დან"
       instance_full: "სერვერზე ფაილებისთვის ადგილი ამოიწურა"
       disk_full: "სერვერის დისკზე ცოტა ადგილია დარჩენილი, ატვირთვა დროებით მიუწვდომელია"
+      # A numeral takes the singular noun in Georgian, and neither needs a case
+      # suffix here -- which is why the app interpolates a count, not a name.
+      uploaded: "ატვირთულია %{count} ფაილი"
     # The genitive suffix goes on "თამაშის" (the game), never on %{game} --
     # same rule as the other interpolated-name titles in this file (see the
     # header comment).
@@ -369,7 +372,6 @@ ka:
       quota: "გამოყენებულია %{used} მბ %{quota} მბ-დან"
       unused: "არ გამოიყენება"
       delete: "წაშლა"
-      confirm_delete: "წავშალო ფაილი?"
       deleted: "ფაილი წაშლილია"
       # No suffix on %{filename} -- the value is simply presented after the
       # colon, the same shape ru/en use, so nothing needs reworking here.

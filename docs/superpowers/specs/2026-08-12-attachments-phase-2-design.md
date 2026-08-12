@@ -77,6 +77,7 @@ table missed it:
 |---|---|---|---|
 | L0 | `proxy.buffering.max_request_body` | **64 MB** | kamal-proxy, before Puma |
 | L1 | `file_max_megabytes` | **25** | app |
+| L1p | `GameFileUpload::MAX_PIXELS` | **50 Mpx** | app, libvips header parse |
 | L2 | `game_quota_megabytes` | **100** | app, under a row lock |
 | L3 | `instance_cap_megabytes` | **4096** | app |
 | L4 | `free_space_floor_megabytes` | **3072** | app, `statvfs`, immediately pre-write |
@@ -97,6 +98,28 @@ leaves ~6 GB of genuine headroom after the floor.
 (561 MB each and growing), plus room for Kamal to retain a rollback target, plus slack for the
 neighbours — `/var/log/apache2` is already 442 MB with nobody watching it. The floor exists to keep
 a deploy possible.
+
+**Why a layer that counts pixels, when every other layer counts bytes.** The five transit stages
+above are all measured in bytes, and so were all the layers — which quietly assumes the two
+quantities track each other. They do not: the compression ratio is the uploader's to choose. A
+**654 KB PNG measured on this host decodes to 625 megapixels**, and costs 2.8 s for the canonical
+re-encode plus 1.7 s for each variant. That file is 0.03% of `file_max_megabytes`, so L1 sees a
+rounding error; at the full 25 MB the same trick is minutes of CPU. Because `:inline` is what makes
+I2 safe, that CPU is spent *in the Puma worker holding the request*, not in a worker pool — and
+signup is open, so "author" means any account that registered. The byte layers cannot see this
+attack at all; it is not a smaller version of L1, it is a different axis.
+
+Checking it is nearly free, which is why it can sit in front of the expensive step rather than
+inside it: `Vips::Image.new_from_file` parses the header and decodes nothing, so `width * height` is
+known before a single pixel is materialised. **PDF is exempt by construction** — answering the
+question for a PDF would mean invoking vips' PDF loader on untrusted bytes, which contradicts §2's
+"No PDF rasterisation" for no benefit, since PDFs get no variants. A header vips cannot read at all
+is not this layer's business either: it declines to answer and lets the format's own path produce
+the right refusal, so a corrupt GIF still fails where it fails today.
+
+**Why 50 Mpx.** A 48 Mpx phone sensor is the top of the current mainstream and a full-frame camera
+sits around 45, so the ceiling is above anything a real photograph arrives as. Bombs are hundreds of
+megapixels — this is orders of magnitude clear of both, not a line drawn between two close numbers.
 
 **Why 64 MB for L0.** Ten files at 25 MB would be 250 MB of request body buffered on a host with
 ~1.1 GB spare RAM. 64 MB bounds that. The cost is a genuine wart, stated plainly: a batch exceeding

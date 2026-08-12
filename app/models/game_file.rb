@@ -30,6 +30,16 @@ class GameFile < ApplicationRecord
     "png" => "png", "gif" => "gif", "pdf" => "pdf"
   }.freeze
 
+  # Two spellings of one format, folded onto the spelling the pipeline actually
+  # uses. This is NOT CANONICAL_EXTENSION, which also folds heic onto jpg --
+  # that is a conversion, and an operator who allows heic but not jpg means
+  # something by it. jpeg and jpg mean nothing different to anyone.
+  EXTENSION_ALIASES = { "jpeg" => "jpg" }.freeze
+
+  def self.normalise_extension(extension)
+    EXTENSION_ALIASES.fetch(extension, extension)
+  end
+
   has_many :file_attachments, :dependent => :destroy
 
   # The canonical bytes. Variants are generated eagerly at upload rather than

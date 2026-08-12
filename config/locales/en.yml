@@ -112,6 +112,11 @@ en:
         all_games: "All games"
         all_teams: "All teams"
         audit_log: "Action log"
+        storage: "Storage"
+        storage_used: "Used (MB)"
+        storage_cap: "Total server limit (MB)"
+        disk_free: "Free disk space (MB)"
+        disk_floor: "Free disk space floor (MB)"
         status:
           withdrawn: "Withdrawn"
           draft: "Draft"
@@ -799,6 +804,12 @@ en:
             value:
               blank: "You didn't enter an answer code"
               taken: "That code is already used in this task"
+        file_attachment:
+          attributes:
+            attachable:
+              inclusion: "Can't attach a file to someone else's game"
+            game_file:
+              inclusion: "That file belongs to a different game"
         game:
           attributes:
             name:
@@ -827,6 +838,10 @@ en:
               blank: "You didn't select a game"
             team_id:
               blank: "You didn't specify a team"
+        game_file:
+          attributes:
+            filename:
+              taken: "A file with that name already exists in this game"
         invitation:
           attributes:
             for_user:

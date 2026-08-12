@@ -157,6 +157,11 @@ tr:
         all_games: "Tüm oyunlar"
         all_teams: "Tüm takımlar"
         audit_log: "İşlem günlüğü"
+        storage: "Depolama"
+        storage_used: "Kullanılan (MB)"
+        storage_cap: "Sunucu genelinde toplam sınır (MB)"
+        disk_free: "Diskte boş alan (MB)"
+        disk_floor: "Diskte korunacak minimum boş alan (MB)"
         status:
           withdrawn: "Yayından kaldırıldı"
           draft: "Taslak"
@@ -855,6 +860,12 @@ tr:
             value:
               blank: "Kod seçeneğini girmediniz"
               taken: "Bu kod görevde zaten var"
+        file_attachment:
+          attributes:
+            attachable:
+              inclusion: "Dosya başka birinin oyununa eklenemez"
+            game_file:
+              inclusion: "Bu dosya başka bir oyuna ait"
         game:
           attributes:
             name:
@@ -883,6 +894,10 @@ tr:
               blank: "Oyunu seçmediniz"
             team_id:
               blank: "Takımı belirtmediniz"
+        game_file:
+          attributes:
+            filename:
+              taken: "Bu oyunda bu adda bir dosya zaten var"
         invitation:
           attributes:
             for_user:

@@ -112,6 +112,11 @@ ru:
         all_games: "Все игры"
         all_teams: "Все команды"
         audit_log: "Журнал действий"
+        storage: "Хранилище"
+        storage_used: "Занято (МБ)"
+        storage_cap: "Общий лимит на сервер (МБ)"
+        disk_free: "Свободно на диске (МБ)"
+        disk_floor: "Неснижаемый остаток на диске (МБ)"
         status:
           withdrawn: "Снята с публикации"
           draft: "Черновик"
@@ -813,6 +818,12 @@ ru:
             value:
               blank: "Вы не ввели вариант кода"
               taken: "Такой код уже есть в задании"
+        file_attachment:
+          attributes:
+            attachable:
+              inclusion: "Нельзя прикрепить файл к чужой игре"
+            game_file:
+              inclusion: "Этот файл принадлежит другой игре"
         game:
           attributes:
             name:
@@ -841,6 +852,10 @@ ru:
               blank: "Вы не выбрали игру"
             team_id:
               blank: "Вы не указали команду"
+        game_file:
+          attributes:
+            filename:
+              taken: "Файл с таким именем уже есть в этой игре"
         invitation:
           attributes:
             for_user:

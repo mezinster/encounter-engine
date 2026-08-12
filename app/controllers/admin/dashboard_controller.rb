@@ -25,5 +25,10 @@ class Admin::DashboardController < ApplicationController
       :passings_interrupted => GamePassing.interrupted.count,
       :passings_in_progress => GamePassing.in_progress.count
     }
+
+    @storage_used_megabytes = GameFile.storage_used_everywhere / 1024 / 1024
+    @storage_cap_megabytes = Setting.integer("instance_cap_megabytes")
+    @disk_free_megabytes = DiskSpace.available_megabytes(Rails.root.to_s)
+    @disk_floor_megabytes = Setting.integer("free_space_floor_megabytes")
   end
 end

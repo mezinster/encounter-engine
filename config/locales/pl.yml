@@ -136,6 +136,11 @@ pl:
         all_games: "Wszystkie gry"
         all_teams: "Wszystkie drużyny"
         audit_log: "Dziennik działań"
+        storage: "Magazyn"
+        storage_used: "Zajęte (MB)"
+        storage_cap: "Łączny limit serwera (MB)"
+        disk_free: "Wolne miejsce na dysku (MB)"
+        disk_floor: "Nienaruszalny zapas miejsca na dysku (MB)"
         status:
           withdrawn: "Wycofana z publikacji"
           draft: "Szkic"
@@ -831,6 +836,12 @@ pl:
             value:
               blank: "Nie wpisano wariantu kodu"
               taken: "Taki kod już jest w zadaniu"
+        file_attachment:
+          attributes:
+            attachable:
+              inclusion: "Nie można dołączyć pliku do cudzej gry"
+            game_file:
+              inclusion: "Ten plik należy do innej gry"
         game:
           attributes:
             name:
@@ -859,6 +870,10 @@ pl:
               blank: "Nie wybrano gry"
             team_id:
               blank: "Nie wskazano drużyny"
+        game_file:
+          attributes:
+            filename:
+              taken: "Plik o takiej nazwie już istnieje w tej grze"
         invitation:
           attributes:
             for_user:

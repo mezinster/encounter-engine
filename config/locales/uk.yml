@@ -129,6 +129,11 @@ uk:
         entries_by_status: "Заявки за статусом"
         all_games: "Усі ігри"
         all_teams: "Усі команди"
+        storage: "Сховище"
+        storage_used: "Зайнято (МБ)"
+        storage_cap: "Загальний ліміт на сервер (МБ)"
+        disk_free: "Вільно на диску (МБ)"
+        disk_floor: "Незнижуваний залишок на диску (МБ)"
         status:
           withdrawn: "Знята з публікації"
           draft: "Чернетка"
@@ -827,6 +832,12 @@ uk:
             value:
               blank: "Ви не ввели варіант коду"
               taken: "Такий код уже є в завданні"
+        file_attachment:
+          attributes:
+            attachable:
+              inclusion: "Не можна прикріпити файл до чужої гри"
+            game_file:
+              inclusion: "Цей файл належить іншій грі"
         game:
           attributes:
             name:
@@ -855,6 +866,10 @@ uk:
               blank: "Ви не обрали гру"
             team_id:
               blank: "Ви не вказали команду"
+        game_file:
+          attributes:
+            filename:
+              taken: "Файл з такою назвою вже є в цій грі"
         invitation:
           attributes:
             for_user:

@@ -135,6 +135,11 @@ ka:
         entries_by_status: "განაცხადები სტატუსის მიხედვით"
         all_games: "ყველა თამაში"
         all_teams: "ყველა გუნდი"
+        storage: "საცავი"
+        storage_used: "დაკავებულია (მბ)"
+        storage_cap: "საერთო ლიმიტი სერვერზე (მბ)"
+        disk_free: "თავისუფალია დისკზე (მბ)"
+        disk_floor: "დისკზე შენარჩუნებული თავისუფალი ადგილი (მბ)"
         status:
           withdrawn: "მოხსნილია გამოქვეყნებიდან"
           draft: "მონახაზი"
@@ -848,6 +853,12 @@ ka:
             value:
               blank: "თქვენ არ შეიყვანეთ კოდის ვარიანტი"
               taken: "ასეთი კოდი უკვე არის დავალებაში"
+        file_attachment:
+          attributes:
+            attachable:
+              inclusion: "ფაილის სხვისი თამაშისთვის მიმაგრება არ შეიძლება"
+            game_file:
+              inclusion: "ეს ფაილი სხვა თამაშს ეკუთვნის"
         game:
           attributes:
             name:
@@ -876,6 +887,10 @@ ka:
               blank: "თქვენ არ აირჩიეთ თამაში"
             team_id:
               blank: "თქვენ არ მიუთითეთ გუნდი"
+        game_file:
+          attributes:
+            filename:
+              taken: "ასეთი სახელის ფაილი უკვე არის ამ თამაშში"
         invitation:
           attributes:
             for_user:

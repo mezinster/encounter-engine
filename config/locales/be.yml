@@ -131,6 +131,11 @@ be:
         all_games: "Усе гульні"
         all_teams: "Усе каманды"
         audit_log: "Журнал дзеянняў"
+        storage: "Сховішча"
+        storage_used: "Занята (МБ)"
+        storage_cap: "Агульны ліміт на сервер (МБ)"
+        disk_free: "Вольна на дыску (МБ)"
+        disk_floor: "Незніжальны астатак на дыску (МБ)"
         status:
           withdrawn: "Знята з публікацыі"
           draft: "Чарнавік"
@@ -818,6 +823,12 @@ be:
             value:
               blank: "Вы не ўвялі варыянт кода"
               taken: "Такі код ужо ёсць у заданні"
+        file_attachment:
+          attributes:
+            attachable:
+              inclusion: "Нельга прымацаваць файл да чужой гульні"
+            game_file:
+              inclusion: "Гэты файл належыць іншай гульні"
         game:
           attributes:
             name:
@@ -846,6 +857,10 @@ be:
               blank: "Вы не выбралі гульню"
             team_id:
               blank: "Вы не ўказалі каманду"
+        game_file:
+          attributes:
+            filename:
+              taken: "Файл з такой назвай ужо ёсць у гэтай гульні"
         invitation:
           attributes:
             for_user:

@@ -42,6 +42,19 @@ class GameFilesController < ApplicationController
     end
 
     rejected = submitted.filter_map do |uploaded|
+      # A well-formed <input type=file multiple> submission puts an uploaded-file
+      # object at every array slot, but params are attacker-controlled: a
+      # hand-built multipart request can put a plain string (or anything else)
+      # at files[]. Duck-typing on the interface GameFileUpload actually calls
+      # (#tempfile) -- rather than pinning ActionDispatch::Http::UploadedFile --
+      # keeps this honest about what breaks it, and treats a malformed entry as
+      # an ordinary per-file rejection instead of an unhandled 500 that could
+      # leave an earlier, already-committed file in the batch unconfirmed to
+      # its author.
+      unless uploaded.respond_to?(:tempfile)
+        next "#{uploaded}: #{I18n.t("game_files.upload.unsupported_type")}"
+      end
+
       file = GameFileUpload.new(@game, uploaded, current_user).call
       next if file.persisted?
 

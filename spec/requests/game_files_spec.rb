@@ -162,5 +162,36 @@ describe "the game file Explorer", :type => :request do
       expect { upload("photo.jpg") }.not_to change { GameFile.count }
       expect(response).to have_http_status(:unauthorized)
     end
+
+    # files[] is attacker-controlled independently of the HTML form: a
+    # hand-built multipart request can put a plain string, not an uploaded
+    # file, at any slot. These two guard against a 500 in that case rather
+    # than the graceful per-file rejection the rest of this batch gives every
+    # other kind of bad input.
+    it "rejects a malformed files[] entry without raising, and stores nothing" do
+      login_as(@author)
+
+      expect {
+        post game_game_files_path(@game), :params => { :files => [ "not-a-file-upload" ] }
+      }.not_to change { GameFile.count }
+
+      expect(response).to redirect_to(game_game_files_path(@game))
+    end
+
+    it "keeps an earlier valid file when a later entry is malformed, and names the failure" do
+      # Order matters: the valid file's GameFileUpload#call commits its own
+      # transaction before the malformed entry is even looked at, so a naive
+      # fix could still let that commit ride behind an unhandled 500 the
+      # author never sees resolved.
+      login_as(@author)
+
+      expect {
+        post game_game_files_path(@game),
+             :params => { :files => [ fixture_upload("photo.jpg"), "not-a-file-upload" ] }
+      }.to change { GameFile.count }.by(1)
+
+      expect(response).to redirect_to(game_game_files_path(@game))
+      expect(flash[:alert]).to include("not-a-file-upload")
+    end
   end
 end

@@ -232,6 +232,22 @@ game keeps working. Any future change that makes a read path allocate disk break
 
 **I2 — Nothing in this feature may depend on a background job.** See §1. There is no durable queue.
 
+**I3 — A missing blob is an expected state, not an exception.** The database and the storage volume
+are separate things that can drift apart, and every way they do leaves a `GameFile` row whose bytes
+are gone: a database restored without its volume (see `docs/runbooks/restore.md` — it restores
+Postgres and nothing else), an upload interrupted between the row and the write, a purge against a
+stale row, a half-finished `azcopy sync` in phase 4. None of those is a programming error, so none
+of them may surface as a 500 — on the play screen, mid-race, a 500 takes the whole level down
+rather than one image. The delivery route answers **404 for that one file**, logs the blob key and
+the ids (never the exception message, which embeds the absolute storage path), and leaves every
+other file on the level serving. The rescue is narrow by design: catching `StandardError` here
+would turn a genuine storage misconfiguration into a 404 on every file at once, which is
+indistinguishable from an authorization bug and would be debugged as one.
+
+This was added on 2026-08-13, during phase 3A, after review found three shipped comments citing a
+"§7" that never contained this rule. The principle had been agreed and acted on; it had simply
+never been written down where the citations pointed.
+
 ### Concurrency
 
 The quota check is a time-of-check/time-of-use race: two uploads both read "38 MB used of 50", both

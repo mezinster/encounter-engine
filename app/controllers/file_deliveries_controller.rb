@@ -121,7 +121,7 @@ class FileDeliveriesController < ApplicationController
     # test run catching the NoMethodError after a Rails bump; noted so it's
     # not a mystery why this line broke, if it ever does.
     #
-    # A missing blob is an expected state, not an exception (design §7): the
+    # A missing blob is an expected state, not an exception (design §3, I3): the
     # database row can outlive the bytes -- a database restored without its
     # storage volume, an interrupted upload, a purge_orphans run against a
     # stale row, a half-finished azcopy sync. path_for above is a pure string

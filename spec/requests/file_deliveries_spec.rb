@@ -22,7 +22,7 @@ require "rails_helper"
 #   * "Response headers" subsection -- the "response headers" describe block
 #   * design §3 invariant I1 (a read must never allocate disk) -- "the read
 #     path never allocates disk (design invariant I1)" describe block
-#   * design §7 (a missing blob is an expected state, not an exception),
+#   * design §3 invariant I3 (a missing blob is an expected state, not an exception),
 #     Task 4 -- "a missing blob" describe block
 describe "file delivery", :type => :request do
   # Defined here, not shared: Phase 2B's spec/requests/game_files_spec.rb
@@ -171,7 +171,7 @@ describe "file delivery", :type => :request do
     end
   end
 
-  describe "a missing blob (design §7: an expected state, not an exception)" do
+  describe "a missing blob (design §3, I3: an expected state, not an exception)" do
     # Files can vanish from disk without the GameFile row noticing: a database
     # restored without its storage volume, an interrupted upload, a
     # purge_orphans run against a stale row, a half-finished azcopy sync

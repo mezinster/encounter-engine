@@ -97,6 +97,29 @@ describe "the results page across runs", type: :request do
     expect(response.body).to include(new_team.name)
   end
 
+  # Pre-existing bug, not introduced by this branch (see
+  # FileDeliveriesController#requested_run's comment for the same shape on
+  # the route that DOES carry an id-enumeration risk; this one doesn't, but
+  # a mistyped URL still shouldn't 500 here either). `?run[x]=1` arrives as
+  # an ActionController::Parameters, which #to_i raised NoMethodError on
+  # past GamePassingsController#find_run's old `params[:run].to_i` --
+  # #run_ordinal now returns nil for anything that isn't a String, so this
+  # falls through to latest_started_run exactly like the malformed-ordinal
+  # example above.
+  it "falls back to the default run for a hash-shaped :run, without raising" do
+    finished_team(game.current_run, 2.days.ago)
+    open_second_run
+    start_the_current_run
+    new_team = finished_team(game.current_run, 30.minutes.ago)
+
+    expect {
+      get game_passings_show_results_path(:game_id => game.id, :run => { :x => "1" })
+    }.not_to raise_error
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(new_team.name)
+  end
+
   it "ranks within the run being shown" do
     first  = finished_team(game.current_run, 3.days.ago)
     second = finished_team(game.current_run, 2.days.ago)

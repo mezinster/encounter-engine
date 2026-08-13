@@ -76,7 +76,24 @@ class FileDeliveriesController < ApplicationController
   # ordinal can never grant more than omitting :run entirely; it is never
   # treated as "a real run the team has no passing in" (which is refused
   # outright by GameFileAccess, not silently downgraded to "unspecified").
+  #
+  # `is_a?(String)` is load-bearing, not a style choice: an ordinary
+  # `?run=2` arrives as a String, but `?run[x]=1` arrives as an
+  # ActionController::Parameters and `?run[]=1` as an Array -- neither
+  # responds to #to_i, and `params[:run].blank?` is false for both (a
+  # non-empty Parameters/Array is not blank), so `.to_i` used to raise
+  # NoMethodError past that guard. On this PUBLIC, unauthenticated route
+  # that difference was an oracle: a raise on a real file id but a plain
+  # :not_found on a nonexistent one told an id-enumerating attacker which
+  # guesses were right -- exactly what the "One refusal for every remaining
+  # failure" comment on #show exists to prevent. Rejecting anything that
+  # isn't a String routes both shapes through the SAME nil -> "no run
+  # named" -> current-run fallback as a blank or nonsense value, so the two
+  # cases the finding measured (existing file id, nonexistent file id) now
+  # both 404 identically. See spec/requests/file_deliveries_spec.rb's
+  # "?run=N, given a malformed shape" examples.
   def requested_run(file)
+    return nil unless params[:run].is_a?(String)
     return nil if params[:run].blank?
 
     file.game.runs.find_by(:ordinal => params[:run].to_i)

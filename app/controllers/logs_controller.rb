@@ -107,7 +107,21 @@ class LogsController < ApplicationController
   # guard applies to these screens, so there is no run this can choose that the
   # filters would then refuse.
   def find_run
-    @run = @game.runs.find_by(:ordinal => params[:run].to_i) || @game.current_run
+    @run = @game.runs.find_by(:ordinal => run_ordinal) || @game.current_run
+  end
+
+  # `?run=2` arrives as a String; `?run[x]=1`/`?run[]=1` arrive as an
+  # ActionController::Parameters/Array, neither of which responds to #to_i --
+  # pre-existing 500 on a mistyped URL here, same bug as
+  # FileDeliveriesController#requested_run (review fix, Task 5 round; see
+  # that method's comment for the full reasoning). This route carries no id
+  # to enumerate, so it was never an oracle, but a malformed :run shouldn't
+  # 500 any more than a malformed one should here either. nil for anything
+  # that isn't a String: find_by(:ordinal => nil) matches no run (ordinal is
+  # a required column), so this falls through to @game.current_run exactly
+  # as a blank/bogus ordinal already did.
+  def run_ordinal
+    params[:run].to_i if params[:run].is_a?(String)
   end
 
   # Two COUNTs on every log screen, for the header shared/_run_context renders.

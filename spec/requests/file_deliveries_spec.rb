@@ -535,4 +535,50 @@ describe "file delivery", :type => :request do
       expect(response).to have_http_status(:ok)
     end
   end
+
+  describe "?run=, given a malformed shape (Task 5 review fix)" do
+    # `?run[x]=1` arrives as an ActionController::Parameters and `?run[]=1`
+    # as an Array -- neither responds to #to_i, and #requested_run's
+    # `.blank?` guard is false for both, so `.to_i` raised NoMethodError past
+    # it, UNAUTHENTICATED, before this fix. Measured before the fix: an
+    # existing file id 500'd while a nonexistent one still 404'd -- that
+    # difference is an id-enumeration oracle on a public route, exactly what
+    # the "One refusal for every remaining failure" comment on #show exists
+    # to prevent. Same bug class ab740c2 already fixed once for the picker's
+    # game_file_ids param (spec/requests/picker_malformed_params_spec.rb).
+    it "does not raise for a hash-shaped :run, anonymous" do
+      expect {
+        get game_file_delivery_path(@game, @file, "original"), :params => { :run => { :x => "1" } }
+      }.not_to raise_error
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "does not raise for an array-shaped :run, anonymous" do
+      expect {
+        get game_file_delivery_path(@game, @file, "original"), :params => { :run => [ "1" ] }
+      }.not_to raise_error
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "answers a hash-shaped :run identically for an existing file and a nonexistent one -- the oracle is closed" do
+      get game_file_delivery_path(@game, @file, "original"), :params => { :run => { :x => "1" } }
+      existing_status = response.status
+
+      get game_file_delivery_path(@game, GameFile.maximum(:id).to_i + 1, "original"),
+          :params => { :run => { :x => "1" } }
+      nonexistent_status = response.status
+
+      expect(existing_status).to eq(nonexistent_status)
+      expect(existing_status).to eq(404)
+    end
+
+    it "falls back to current_run rather than refusing outright -- a malformed :run is treated as none, not as a real one the requester lacks a passing in" do
+      login_as @author
+      get game_file_delivery_path(@game, @file, "original"), :params => { :run => { :x => "1" } }
+
+      expect(response).to have_http_status(:ok)
+    end
+  end
 end

@@ -147,6 +147,111 @@ describe "file delivery", :type => :request do
     end
   end
 
+  describe "response headers" do
+    before(:each) { login_as @author }
+
+    it "takes the content type from the stored column, not the filename" do
+      # The filename says .png; the sniffed, stored value says jpeg (photo.jpg
+      # really is a JPEG). The stored value wins. A Content-Type derived from
+      # an author-supplied filename is how an "image" gets served as
+      # text/html.
+      @file.update_column(:filename, "photo.png")
+      deliver
+
+      expect(response.headers["Content-Type"]).to include("image/jpeg")
+    end
+
+    it "sets nosniff on a served file" do
+      deliver
+      expect(response.headers["X-Content-Type-Options"]).to eq("nosniff")
+    end
+
+    it "sets nosniff on a refusal too" do
+      # A genuine 404, not a routing failure: an out-of-whitelist :variant
+      # never reaches the controller at all (see "never routes a variant
+      # name outside the whitelist" above, and the route :constraints regex
+      # in config/routes.rb) -- there is no response to assert a header on
+      # for that case. This exercises the controller's own head(:not_found)
+      # instead, via a file id that does not exist.
+      get game_file_delivery_path(@game, -1, "original")
+
+      expect(response).to have_http_status(:not_found)
+      expect(response.headers["X-Content-Type-Options"]).to eq("nosniff")
+    end
+
+    it "forces a PDF to download" do
+      pdf = GameFileUpload.new(@game, fixture_upload("map.pdf"), @author).call
+      get game_file_delivery_path(@game, pdf, "original")
+
+      expect(response.headers["Content-Disposition"]).to start_with("attachment")
+    end
+
+    it "serves an image inline" do
+      deliver
+      expect(response.headers["Content-Disposition"]).to start_with("inline")
+    end
+
+    it "RFC 5987-encodes a Cyrillic filename" do
+      @file.update_column(:filename, "схема.jpg")
+      deliver
+
+      expect(response.headers["Content-Disposition"]).to include("filename*=UTF-8''")
+    end
+
+    it "marks the response private, never public" do
+      # The one header whose mistake is invisible in every local test and
+      # catastrophic behind a shared cache: a `public` response to an
+      # authorized request can be replayed by the proxy to someone who never
+      # passed the §4 authorization check.
+      deliver
+
+      expect(response.headers["Cache-Control"]).to include("private")
+      expect(response.headers["Cache-Control"]).not_to include("public")
+    end
+
+    it "answers 304 to a conditional request carrying the same ETag" do
+      deliver
+      etag = response.headers["ETag"]
+
+      get game_file_delivery_path(@game, @file, "original"), :headers => { "If-None-Match" => etag }
+
+      expect(response).to have_http_status(:not_modified)
+      expect(response.body).to be_empty
+    end
+
+    it "gives a variant a different ETag from the original" do
+      # The trap: an ETag built from the checksum alone is identical across
+      # variants, so a client holding the 320px thumbnail is told its copy of
+      # the full-size original is fresh -- and renders the thumbnail
+      # everywhere.
+      deliver
+      original_etag = response.headers["ETag"]
+
+      get game_file_delivery_path(@game, @file, "thumb")
+
+      expect(response.headers["ETag"]).not_to eq(original_etag)
+    end
+
+    it "delivers the original byte-for-byte" do
+      # Against the stored blob, not the raw fixture: the upload pipeline
+      # canonicalises images (strips EXIF/GPS, see design §2), so the bytes
+      # actually served are not expected to equal spec/fixtures/files/photo.jpg.
+      expected = @file.file.download
+      deliver
+
+      expect(response.body.bytesize).to eq(expected.bytesize)
+      expect(response.body).to eq(expected)
+    end
+
+    it "delivers the thumb variant byte-for-byte against the stored blob" do
+      deliver("thumb")
+
+      expected = @file.existing_thumb_variant.download
+      expect(response.body.bytesize).to eq(expected.bytesize)
+      expect(response.body).to eq(expected)
+    end
+  end
+
   describe "a playing team" do
     before(:each) do
       @team_user = create_user

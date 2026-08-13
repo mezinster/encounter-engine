@@ -377,6 +377,10 @@ pl:
       size: "Rozmiar"
       used_in: "Gdzie jest używany"
       hint: "podpowiedź"
+      no_thumbnail: "Brak podglądu"
+    picker:
+      heading: "Załączone pliki"
+      empty: "W bibliotece gry nie ma jeszcze plików"
   options:
     index:
       title: "Warianty odpowiedzi do zadania"

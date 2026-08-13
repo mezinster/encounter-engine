@@ -57,6 +57,22 @@ module FileAttachable
       .map(&:game_file)
   end
 
+  # The ids attached in exactly ONE slot -- unlike attached_files_for, which
+  # unions the neutral strip with a language for what a PLAYER sees, the
+  # picker's pre-checked state must reflect only the slot the active tab is
+  # about to replace, nothing more. Same `.strip.presence` folding as
+  # replace_attached_files, so a picker rendered for locale "" (the primary
+  # tab) reads the same slot that locale nil/"" writes to.
+  #
+  # Works on an unsaved record too -- a new Hint's form renders this picker
+  # via the shared _form partial -- because a has_many association on a
+  # not-yet-persisted owner starts as an empty in-memory collection rather
+  # than issuing a query.
+  def attached_file_ids_in_slot(locale)
+    slot = locale.to_s.strip.presence
+    file_attachments.select { |a| a.locale == slot }.map(&:game_file_id)
+  end
+
   private
 
   # Level has a game; a Hint reaches it through its level. Both can be nil on

@@ -44,6 +44,8 @@
     <label><%= f.radio_button :any_code_passes, true %> <%= t("levels.codes_rule_any") %></label>
     <label><%= f.radio_button :any_code_passes, false %> <%= t("levels.codes_rule_all") %></label>
   </fieldset>
+  <%= render "game_files/picker", :game => @level.game, :attachable => @level,
+                                  :param_key => "level", :active_locale => active_locale %>
   <%= f.submit t("levels.edit.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), game_level_path(@level.game, @level) %></em>
 <% end %>

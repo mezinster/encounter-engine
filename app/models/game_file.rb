@@ -110,14 +110,31 @@ class GameFile < ApplicationRecord
   # not to touch those two methods at all -- see the class-level warning
   # against changing them. Keep the two pairs of hashes in sync by hand if
   # either transformation ever changes.
+  # The `file.attached?` guard is Task 2's addition, for a case neither
+  # caller had exercised before: a GameFile with NO blob attached at all --
+  # not "variant missing", the base file itself. `file.variant(transformations)`
+  # is `Attached::One#variant`, delegated via `delegate_missing_to :attachment,
+  # allow_nil: true` -- when there is no attachment, THAT call correctly
+  # short-circuits to nil, exactly like the rest of this comment describes.
+  # But the code below then calls `.image` ON that nil, which is not
+  # short-circuited by anything -- NoMethodError, not a graceful nil. Design
+  # §3 invariant I3 calls a missing blob an EXPECTED state (a database
+  # restored without its storage volume, a purge_orphans run against a stale
+  # row), so a file with nothing attached must degrade the same way a file
+  # with no matching variant record already does: nil, not a crash. Proven by
+  # the level/hint picker (Task 2), which lists a game's WHOLE library and so
+  # is the first caller to render a row for a file it did not just deliver
+  # bytes for.
   def existing_web_variant
     return nil unless content_type.in?(%w[image/jpeg image/png])
+    return nil unless file.attached?
 
     file.variant(:resize_to_limit => [ 1600, 1600 ]).image
   end
 
   def existing_thumb_variant
     return nil if content_type == "application/pdf"
+    return nil unless file.attached?
 
     file.variant(:resize_to_limit => [ 320, 320 ]).image
   end

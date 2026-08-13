@@ -1,0 +1,51 @@
+<%# app/views/game_files/_picker.html.erb
+
+    Locals:
+      game          - the Game whose file library this picker lists (a
+                      gallery, not merely what is already attached)
+      attachable    - the Level or Hint being edited; may be a new, unsaved
+                      record (hints/_form is shared between new and edit)
+      param_key     - "level" or "hint", the top-level param key the
+                      enclosing form posts under, matching level_params/
+                      hint_params
+      active_locale - the tab currently open, computed by the CALLER with
+                      the same expression used for the language tabs
+                      (params[:tab].presence_in(game.available_locale_list)
+                      || game.primary_locale) -- not recomputed here, so
+                      there is exactly one place that expression lives per
+                      request.
+
+    Posts <param_key>[game_file_ids][] for the checkboxes, plus a top-level
+    "tab" hidden field carrying active_locale forward -- the controller reruns
+    the identical expression on params[:tab] to learn which slot this save is
+    meant to touch (see LevelsController/HintsController#attachment_slot_locale).
+    The primary tab manages the language-neutral slot (locale nil); every
+    other tab manages its own locale's slot 1:1.
+
+    The hidden fallback field with the SAME array name, emitted before the
+    checkboxes, guarantees the array key survives to params even when every
+    box ends up unticked -- an unchecked checkbox sends nothing at all, so
+    without this, "unticked everything" and "this tab's picker was never on
+    the page" would look identical over HTTP. The controller tells them apart
+    the other way: "key absent from params entirely" is a no-op, never a
+    wipe -- see apply_attached_files. That is what protects every locale tab
+    the author did not open this request; this form only ever renders ONE
+    tab's picker, so a save must only ever touch that one slot.
+%>
+<div class="field attachment-picker">
+  <h3><%= t("game_files.picker.heading") %></h3>
+
+  <%= hidden_field_tag :tab, active_locale %>
+  <%= hidden_field_tag "#{param_key}[game_file_ids][]", "" %>
+
+  <% library = GameFile.of_game(game).with_attached_file.order(:filename) %>
+  <% if library.empty? %>
+    <p class="hint-text"><%= t("game_files.picker.empty") %></p>
+  <% else %>
+    <% slot = active_locale == game.primary_locale ? nil : active_locale %>
+    <% checked_ids = attachable.attached_file_ids_in_slot(slot) %>
+    <%= render "game_files/file_table", :files => library, :mode => :picker,
+                                        :field_name => "#{param_key}[game_file_ids]",
+                                        :checked_ids => checked_ids %>
+  <% end %>
+</div>

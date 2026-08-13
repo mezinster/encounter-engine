@@ -21,6 +21,7 @@ class HintsController < ApplicationController
 
   def create
     if @hint.save
+      apply_attached_files
       redirect_to [@game, @level]
     else
       render :new, status: :unprocessable_entity
@@ -32,6 +33,7 @@ class HintsController < ApplicationController
 
   def update
     if @hint.update(hint_attributes)
+      apply_attached_files
       redirect_to [@level.game, @level]
     else
       render :edit, status: :unprocessable_entity
@@ -74,7 +76,7 @@ class HintsController < ApplicationController
   # see app/models/hint.rb).
   def hint_params
     params.fetch(:hint, ActionController::Parameters.new)
-          .permit(:text, :delay_in_minutes,
+          .permit(:text, :delay_in_minutes, :game_file_ids => [],
                   :translations => translation_params_shape(Hint::TRANSLATABLE_FIELDS))
   end
 
@@ -86,9 +88,43 @@ class HintsController < ApplicationController
 
   # translations_attributes= is the concern's writer; the form posts
   # `translations` because that is what reads naturally in the markup.
+  #
+  # game_file_ids is deleted here, NOT merely left unmerged: this same method
+  # feeds both Hint.new (build_hint, for :new AND :create) and Hint#update, and
+  # passing it straight through would resolve to the through-association's own
+  # generated game_file_ids=, which writes every row with NO locale --
+  # collapsing every language's strip into one, silently. It is applied
+  # separately, after a successful save, by apply_attached_files below.
   def hint_attributes
     attributes = hint_params.to_h
+    attributes.delete("game_file_ids")
     translations = attributes.delete("translations")
     attributes.merge("translations_attributes" => translations)
+  end
+
+  # Unlike LevelsController, this runs on BOTH create and update: hints/_form
+  # is one partial shared by hints/new and hints/edit, so the picker (and its
+  # game_file_ids param) can arrive from either action.
+  #
+  # `hint_params.key?(:game_file_ids)` is the load-bearing check, not merely a
+  # nil-guard -- see the identical comment on LevelsController#apply_attached_files
+  # for why "key absent from params" must be a no-op rather than a wipe: the
+  # picker always posts an array via its hidden fallback field, but a request
+  # missing the key entirely (this tab's picker never rendered, or never
+  # submitted) must leave every existing slot untouched.
+  def apply_attached_files
+    return unless hint_params.key?(:game_file_ids)
+
+    @hint.replace_attached_files(hint_params[:game_file_ids], attachment_slot_locale)
+  end
+
+  # The exact expression hints/_form.html.erb uses to pick the active tab,
+  # rerun here on the SAME params[:tab] the form's hidden field carried
+  # forward. The primary tab manages the language-neutral slot (locale nil);
+  # every other tab maps straight through as that locale's own slot.
+  def attachment_slot_locale
+    active_locale = params[:tab].presence_in(@level.game.available_locale_list) ||
+                    @level.game.primary_locale
+    active_locale == @level.game.primary_locale ? nil : active_locale
   end
 end

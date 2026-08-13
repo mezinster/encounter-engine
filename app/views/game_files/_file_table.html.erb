@@ -18,7 +18,20 @@
 
   <% files.each do |file| %>
     <tr>
-      <td class="file-thumb"><%= file.content_type == "application/pdf" ? "PDF" : "IMG" %></td>
+      <td class="file-thumb">
+        <%# GameFile#existing_thumb_variant, deliberately NOT #thumb_variant --
+            the latter GENERATES the variant on a miss (design invariant I1: a
+            read must never allocate disk). existing_thumb_variant is nil for
+            a PDF by design, and also nil for an image whose variant record is
+            missing -- both degrade to the same generic indicator rather than
+            a broken <img>. %>
+        <% if file.existing_thumb_variant.present? %>
+          <%= image_tag game_file_delivery_path(file.game, file, "thumb"),
+                        :alt => file.filename, :class => "file-thumb-image" %>
+        <% else %>
+          <span class="file-thumb-generic"><%= t("game_files.table.no_thumbnail") %></span>
+        <% end %>
+      </td>
       <td><%= file.filename %></td>
       <td><%= number_to_human_size(file.total_byte_size) %></td>
       <td>
@@ -27,7 +40,13 @@
       </td>
       <td>
         <% if mode == :picker %>
-          <%= check_box_tag "#{field_name}[]", file.id, false, :id => "game_file_#{file.id}" %>
+          <%# local_assigns, not a plain local -- same guard as
+              typed_confirmation_ids uses in the :manage branch below:
+              :manage mode never passes checked_ids, and this branch must
+              not raise for it. %>
+          <%= check_box_tag "#{field_name}[]", file.id,
+                            local_assigns[:checked_ids].to_a.include?(file.id),
+                            :id => "game_file_#{file.id}" %>
         <% else %>
           <%= form_with url: game_game_file_path(file.game, file), method: :delete do %>
             <% if local_assigns[:typed_confirmation_ids].to_a.include?(file.id) %>

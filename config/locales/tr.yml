@@ -404,6 +404,10 @@ tr:
       size: "Boyut"
       used_in: "Nerede kullanılıyor"
       hint: "ipucu"
+      no_thumbnail: "Önizleme yok"
+    picker:
+      heading: "Ekli dosyalar"
+      empty: "Bu oyunun kütüphanesinde henüz dosya yok"
   options:
     index:
       title: "Görev için cevap seçenekleri"

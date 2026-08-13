@@ -17,3 +17,6 @@
   <%= f.label :delay_in_minutes, t("hints.form.delay_label") %>
   <%= f.text_field :delay_in_minutes %> <%= t("hints.form.minutes_suffix") %>
 </div>
+
+<%= render "game_files/picker", :game => @game, :attachable => @hint,
+                                :param_key => "hint", :active_locale => active_locale %>

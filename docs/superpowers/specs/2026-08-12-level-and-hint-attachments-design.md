@@ -232,6 +232,22 @@ game keeps working. Any future change that makes a read path allocate disk break
 
 **I2 — Nothing in this feature may depend on a background job.** See §1. There is no durable queue.
 
+**I3 — A missing blob is an expected state, not an exception.** The database and the storage volume
+are separate things that can drift apart, and every way they do leaves a `GameFile` row whose bytes
+are gone: a database restored without its volume (see `docs/runbooks/restore.md` — it restores
+Postgres and nothing else), an upload interrupted between the row and the write, a purge against a
+stale row, a half-finished `azcopy sync` in phase 4. None of those is a programming error, so none
+of them may surface as a 500 — on the play screen, mid-race, a 500 takes the whole level down
+rather than one image. The delivery route answers **404 for that one file**, logs the blob key and
+the ids (never the exception message, which embeds the absolute storage path), and leaves every
+other file on the level serving. The rescue is narrow by design: catching `StandardError` here
+would turn a genuine storage misconfiguration into a 404 on every file at once, which is
+indistinguishable from an authorization bug and would be debugged as one.
+
+This was added on 2026-08-13, during phase 3A, after review found three shipped comments citing a
+"§7" that never contained this rule. The principle had been agreed and acted on; it had simply
+never been written down where the citations pointed.
+
 ### Concurrency
 
 The quota check is a time-of-check/time-of-use race: two uploads both read "38 MB used of 50", both
@@ -278,12 +294,42 @@ becomes a path component.
 | Requester | May fetch |
 |---|---|
 | Game author, superadmin | any file in the game |
-| Playing team | files on the level they are currently on; on any level they have already passed; on hints that have fired for them |
+| Playing team | files on the level they are currently on; on any level they have already passed; on hints that have fired for them, **and every hint on a level they have already passed, fired or not** |
 | Everyone else | **404** |
 
 Already-passed levels are allowed because the team has demonstrably seen them, and the log and
 results screens show past levels. The `locale` column does not affect authorization — a Russian
 player fetching the English map is harmless.
+
+**The passed-level exception covers hints too, deliberately.** A hint that never fired on a level
+the team has already passed can no longer tell them anything they still need — they solved the
+level without it — so gating it behind "did it fire" would refuse a file the team has already, in
+effect, earned the right to see, for no security benefit. `GameFileAccess#hint_visible?` implements
+this as: any hint is visible once its level is a passed level, and only a *fired* hint is visible
+while the team is still on that level. `spec/models/game_file_access_spec.rb` pins both halves.
+
+**Open question for Phase 3B: attachments on a PAST run's log/results screen 404 once a later run
+opens.** `GameFileAccess#passing_for_game` resolves only `game.current_run.passing_for(team)` — the
+LIVE run. But `LogsController#find_run` and `GamePassingsController#find_run` both accept `?run=N`
+and deliberately serve a team's log or results from an *earlier* run too. So: a team finishes run
+1, the author opens run 2, and every attachment on the team's own run-1 log now 404s, permanently
+— `spec/models/game_file_access_spec.rb`, "REFUSES a file on a level the team already passed, once
+a LATER run has opened and the team has no passing there yet", pins this as the current, deliberate
+behaviour.
+
+This is a false DENY, not a hole, and Phase 3A leaves it that way on purpose: the file library is
+per-GAME (see `GameFile`'s class comment) while progress is per-RUN, and authors edit content
+between runs — resolving "the team's passing in this game" across every run instead would let a
+team that finished run 1 see run 2's still-unreached photographs, which is a real authorization
+hole this file has already had to close once (the "team with a passing in more than one run of the
+same game" specs exist for exactly that regression). Between a false deny and re-opening that hole,
+the false deny is the safe direction to be wrong in, so Phase 3A ships with it.
+
+Phase 3B is the phase that actually renders these past-run log/results screens, so it is the right
+place to decide with full context — e.g. by resolving the *specific* run the screen is already
+showing (the `?run=N`/`@run` the controller already found) rather than asking `GameFileAccess` to
+infer "current" from the team alone. The tension to resolve: per-game library, per-run progress,
+and content an author may have edited between runs.
 
 ### Response headers
 

@@ -83,4 +83,42 @@ class GameFile < ApplicationRecord
 
     file.variant(:resize_to_limit => [ 320, 320 ]).processed
   end
+
+  # Read-only counterparts to web_variant/thumb_variant, for the delivery path
+  # (FileDeliveriesController) -- design invariant I1: serving an existing
+  # file and its variants must be a pure read, never something that allocates
+  # disk. The two methods above call `.processed`, which GENERATES the
+  # variant when it is absent; that is correct for the two callers that need
+  # it (GameFileUpload builds variants eagerly at upload, and
+  # lib/tasks/game_files.rake's regenerate_variants exists to (re)generate
+  # them) and wrong for a GET, which must 404 instead of running libvips and
+  # writing to disk.
+  #
+  # `.image`, called on the variant transform WITHOUT `.processed`, is the
+  # read-only half of the same object. ActiveStorage::VariantWithRecord#image
+  # is `record&.image`, and #record (private) only ever READS --
+  # `blob.variant_records.find_by(variation_digest: variation.digest)` --
+  # never `create_or_find_by!`. Only `#processed` calls `#process`, which is
+  # what creates the row. So `.variant(transformations).image` resolves an
+  # EXISTING ActiveStorage::VariantRecord if one exists and returns nil
+  # otherwise, without ever writing anything -- confirmed empirically: wiping
+  # a file's variant_records and calling `.variant(...).image` left the count
+  # at 0 and returned nil, while `.variant(...).processed` recreated a row.
+  #
+  # The transformation hashes are intentionally duplicated from web_variant/
+  # thumb_variant above rather than extracted into a shared constant, so as
+  # not to touch those two methods at all -- see the class-level warning
+  # against changing them. Keep the two pairs of hashes in sync by hand if
+  # either transformation ever changes.
+  def existing_web_variant
+    return nil unless content_type.in?(%w[image/jpeg image/png])
+
+    file.variant(:resize_to_limit => [ 1600, 1600 ]).image
+  end
+
+  def existing_thumb_variant
+    return nil if content_type == "application/pdf"
+
+    file.variant(:resize_to_limit => [ 320, 320 ]).image
+  end
 end

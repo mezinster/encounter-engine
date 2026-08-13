@@ -144,6 +144,23 @@ Rails.application.routes.draw do
     # delivery route, which authorises per level/hint rather than per game.
     resources :game_files, :only => [ :index, :create, :destroy ]
 
+    # Phase 3's delivery route. Deliberately NOT `resources :game_files, :only
+    # => [:show]`: that controller is author-only, and this path must admit
+    # playing teams. :variant never becomes a path component -- the matched
+    # value only ever selects a METHOD in the controller.
+    #
+    # The :constraints regex below is the control that actually runs: it
+    # rejects an out-of-whitelist :variant before routing even reaches
+    # FileDeliveriesController, which is why the controller's own
+    # FileDeliveriesController::VARIANTS.include? check can never be
+    # exercised by an HTTP request as long as the two lists agree (see the
+    # comment on VARIANTS there). Both are kept: this regex is the one
+    # request-facing guard; the controller's array is defence-in-depth against
+    # the two ever drifting apart, e.g. if this regex is loosened without the
+    # array changing to match -- guarded by a spec asserting they stay equal.
+    get "files/:id/:variant", :to => "file_deliveries#show", :as => :file_delivery,
+                              :constraints => { :variant => /original|web|thumb/ }
+
     resources :levels do
       member do
         delete :delete

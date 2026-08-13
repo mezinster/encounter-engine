@@ -3,6 +3,15 @@ source "https://rubygems.org"
 ruby "3.3.12"
 
 gem "rails", "8.0.5.1"
+# Floor, not a feature pin: rack 3.2.6 is the version whose Rack::Sendfile
+# stopped reading the client-supplied X-Sendfile-Type header (see the comment
+# at the send_file call in app/controllers/file_deliveries_controller.rb) --
+# below that version, a client claiming X-Sendfile-Type: X-Accel-Redirect
+# gets the absolute storage path back instead of the file's bytes. This app
+# sets no config.action_dispatch.x_sendfile_header, so rack's own fix is the
+# only thing standing in the way of that; a plain rails dependency floor
+# would let a future `bundle update` silently drop below it.
+gem "rack", ">= 3.2.6"
 # Rails' own per-locale defaults: date and time formats, ActiveRecord
 # validation messages, and -- the reason this became urgent -- CLDR
 # pluralisation rules. Without it Rails' built-in pluralizer knows one/other

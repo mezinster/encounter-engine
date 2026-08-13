@@ -75,6 +75,29 @@ describe GameFileUpload do
     end
   end
 
+  # The read-only counterparts FileDeliveriesController uses (design invariant
+  # I1: serving an existing file and its variants is a pure read). Unlike
+  # web_variant/thumb_variant, these must never generate a variant record --
+  # only resolve one that already exists.
+  describe "existing_web_variant / existing_thumb_variant" do
+    it "resolve the same variant records web_variant/thumb_variant already generated at upload" do
+      file = upload("photo.jpg")
+
+      expect(file.existing_web_variant.blob).to eq(file.web_variant.image.blob)
+      expect(file.existing_thumb_variant.blob).to eq(file.thumb_variant.image.blob)
+    end
+
+    it "return nil, and create no record, when the variant record has been wiped" do
+      file = upload("photo.jpg")
+      file.file.blob.variant_records.destroy_all
+
+      expect {
+        expect(file.existing_web_variant).to be_nil
+        expect(file.existing_thumb_variant).to be_nil
+      }.not_to change { file.file.blob.variant_records.reload.count }.from(0)
+    end
+  end
+
   describe "rejecting" do
     it "a file whose bytes are HTML however it is named" do
       file = upload("not-really.jpg", "image/jpeg")

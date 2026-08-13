@@ -64,9 +64,18 @@
         fallback field survives reject(&:blank?) as a no-op, so an
         all-unticked submission correctly redisplays as fully unticked
         rather than falling back to the stale saved state. %>
+    <%# is_a?(Array), not a truthiness check: params carry whatever the URL
+        said, and the shape is not guaranteed. `?level[game_file_ids]=` sends a
+        String (String#reject takes no block arity we want -- it raised
+        NoMethodError on a plain GET), and `level[game_file_ids][x]=1` sends
+        ActionController::Parameters (its #reject raised ArgumentError). Both
+        were unhandled 500s on an author's own edit page, reachable by
+        mistyping a URL rather than by attacking anything.
+        A malformed shape is not a submission, so it falls back to what is
+        actually attached -- the same answer an ordinary GET gets. %>
     <% submitted_ids = params.dig(param_key, :game_file_ids) %>
-    <% checked_ids = submitted_ids ? submitted_ids.reject(&:blank?).map(&:to_i) :
-                                     attachable.attached_file_ids_in_slot(slot) %>
+    <% checked_ids = submitted_ids.is_a?(Array) ? submitted_ids.reject(&:blank?).map(&:to_i) :
+                                                  attachable.attached_file_ids_in_slot(slot) %>
     <%= render "game_files/file_table", :files => library, :mode => :picker,
                                         :field_name => "#{param_key}[game_file_ids]",
                                         :checked_ids => checked_ids %>

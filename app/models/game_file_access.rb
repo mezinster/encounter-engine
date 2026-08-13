@@ -21,7 +21,7 @@ class GameFileAccess
     passing = passing_for_game
     return false if passing.nil?
 
-    @game_file.file_attachments.any? { |attachment| visible_to?(passing, attachment) }
+    @game_file.file_attachments.includes(:attachable).any? { |attachment| visible_to?(passing, attachment) }
   end
 
   private
@@ -34,15 +34,33 @@ class GameFileAccess
     @user.superadmin? || @user.author_of?(game)
   end
 
-  # Resolved BY GAME. "The user's current passing" would authorise a file in
-  # game A using the team's progress in game B.
+  # Resolved BY GAME, and within the game, by RUN. "The user's current
+  # passing" would authorise a file in game A using the team's progress in
+  # game B; game-scoped alone would authorise it using a DIFFERENT RUN's
+  # progress, since a team has one passing per run and may have played this
+  # game before. GameRun#passing_for is the established lookup for "this
+  # team's passing in this run" -- see the comment on GameRun#passing_for and
+  # its other callers (GamePassingsController, GamePassingsHelper,
+  # InterventionsController). game.current_run autobuilds an unsaved run
+  # rather than returning nil (see its comment); an unsaved run has no
+  # persisted passings, so passing_for correctly answers nil there.
   def passing_for_game
     return nil if game.nil?
 
     team = @user.team
     return nil if team.nil?
 
-    GamePassing.find_by(:game_id => game.id, :team_id => team.id)
+    game.current_run.passing_for(team)
+  end
+
+  # finished? alone is also true for a passing ended by exit!, which is a
+  # team that QUIT mid-course, not one that completed it -- GamePassing#exit!
+  # stamps finished_at as well as status "exited". Without the exited? check,
+  # a team could exit on level 1 and then fetch every level's file: this is
+  # the same threat LogsController#ensure_full_log_access and GamePassing's
+  # own `completed` scope guard against, for the same reason.
+  def completed?(passing)
+    passing.finished? && !passing.exited?
   end
 
   def visible_to?(passing, attachment)
@@ -58,7 +76,7 @@ class GameFileAccess
   # level and everything at or before it in position order.
   def level_visible?(passing, level)
     return false unless level.game_id == game.id
-    return true  if passing.finished?
+    return true  if completed?(passing)
 
     current = passing.current_level
     return false if current.nil?
@@ -73,10 +91,18 @@ class GameFileAccess
     level = hint.level
     return false if level.nil?
     return false unless level_visible?(passing, level)
-    return true  if passing.finished?
+    return true  if completed?(passing)
 
     current = passing.current_level
     return true if current.nil? || level.id != current.id   # a passed level
+
+    # hints_to_show reads current_level_entered_at unconditionally --
+    # Hint#ready_to_show? subtracts it from `now`, which raises TypeError on
+    # nil rather than returning false. Nil here means "no hint has ever been
+    # timed for this passing"; refusing is the safe reading, and it keeps
+    # this route's contract (everything not permitted is a 404, never a 500
+    # an id-enumerator could distinguish).
+    return false if passing.current_level_entered_at.nil?
 
     passing.hints_to_show.include?(hint)
   end

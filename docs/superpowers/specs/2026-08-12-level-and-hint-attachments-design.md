@@ -278,12 +278,19 @@ becomes a path component.
 | Requester | May fetch |
 |---|---|
 | Game author, superadmin | any file in the game |
-| Playing team | files on the level they are currently on; on any level they have already passed; on hints that have fired for them |
+| Playing team | files on the level they are currently on; on any level they have already passed; on hints that have fired for them, **and every hint on a level they have already passed, fired or not** |
 | Everyone else | **404** |
 
 Already-passed levels are allowed because the team has demonstrably seen them, and the log and
 results screens show past levels. The `locale` column does not affect authorization — a Russian
 player fetching the English map is harmless.
+
+**The passed-level exception covers hints too, deliberately.** A hint that never fired on a level
+the team has already passed can no longer tell them anything they still need — they solved the
+level without it — so gating it behind "did it fire" would refuse a file the team has already, in
+effect, earned the right to see, for no security benefit. `GameFileAccess#hint_visible?` implements
+this as: any hint is visible once its level is a passed level, and only a *fired* hint is visible
+while the team is still on that level. `spec/models/game_file_access_spec.rb` pins both halves.
 
 ### Response headers
 

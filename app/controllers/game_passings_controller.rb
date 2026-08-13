@@ -402,12 +402,25 @@ class GamePassingsController < ApplicationController
   # nesting preloaded_level uses, but only under :hints -- this route never
   # renders the LEVEL's own attachment strip (that already reached the page
   # at load time, in show_current_level.html.erb), only whichever hint just
-  # fired. Same four things it buys there, per hint: attached_files_for reads
-  # the loaded array instead of re-querying, game_file_delivery_path's
-  # file.game is free, GameFileAccess#permitted?'s file.game.current_run is
-  # free, and existing_web_variant's variant-record lookup is free. See
-  # preloaded_level's comment for the measured query counts this pattern
-  # produces.
+  # fired. Three things it buys here, per hint: attached_files_for reads the
+  # loaded array instead of re-querying, game_file_delivery_path's file.game
+  # is free, and existing_web_variant's variant-record lookup is free.
+  #
+  # NOT free, despite the same nesting: GameFileAccess#permitted?'s OWN
+  # `file.game.current_run` read (game_file_access.rb's passing_for_game) is
+  # free, but permitted? goes on to call hint_visible?, which reads
+  # `passing.hints_to_show` -- and that `passing` is a GamePassing fetched
+  # fresh by passing_for_game, whose OWN game (reached through its game_run,
+  # not through this preloaded tree) is a separate, unpreloaded object. Its
+  # `effective_now` calls `game.paused_at`, which Game delegates to
+  # `current_run`, and THAT current_run re-queries game_runs -- once per
+  # attached file, confirmed empirically (game_runs went from 4 to 8 queries
+  # between 1 and 5 attachments on an otherwise-identical request). This is
+  # why this route measures ~8 queries/attachment rather than the ~4/file
+  # preloaded_level reaches for show_current_level -- see
+  # spec/requests/attachment_query_cost_spec.rb's /tip guard, which pins the
+  # ~8/file rate this preload does achieve (down from ~14/file without it)
+  # rather than a number this preload was never going to reach alone.
   def preloaded_level_for_tip(level)
     Level.includes(:game,
                     :hints => [ :content_translations,
@@ -434,6 +447,15 @@ class GamePassingsController < ApplicationController
   # design invariant I1). level_hint_updater.js's appendHint reads image_url
   # to decide whether to build an <img> or a generic link, matching that
   # same degradation client-side.
+  #
+  # KNOWN LIMITATION, not fixed here: only the LAST fired hint's attachments
+  # are ever returned, same as hint_text above it in the render call. If two
+  # hints fire between polls (a short delay on one, a slow poll interval, a
+  # tab left in the background), the earlier hint's photographs never reach
+  # the page -- not late, not on the next poll, not until the player reloads.
+  # This has always been true of hint_text; it now also applies to
+  # attachments, where the photograph is frequently the hint that actually
+  # matters. Pre-existing shape, carried forward rather than restructured.
   def hint_attachments_json(hint, content_locale)
     return [] if hint.nil?
 

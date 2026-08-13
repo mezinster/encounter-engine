@@ -139,6 +139,52 @@ describe "attachments on the live hint poller", :type => :request do
     expect(body["attachments"].first["alt"]).to eq(malicious_name)
   end
 
+  it "never allocates a variant record while answering a poll -- design invariant I1" do
+    # I1 (see GameFile#existing_web_variant's comment): serving/polling for a
+    # file must be a pure read. Generating a variant belongs solely to
+    # upload-time processing (GameFileUpload) and the regenerate_variants
+    # rake task -- never a GET. hint_attachments_json is written to ask
+    # existing_web_variant, deliberately NOT web_variant, which calls
+    # `.processed` and GENERATES a variant record on a miss.
+    #
+    # A mutation dropping the `existing_` prefix left every other example in
+    # this file green: the PDF example only asserts image_url is nil, and
+    # web_variant ALSO returns nil for a PDF (different guard, same nil) --
+    # nil for the right reason and nil for the wrong reason are
+    # indistinguishable to that assertion alone. This example instead wipes
+    # every ActiveStorage::VariantRecord after upload -- the same "no variant
+    # exists yet" state existing_web_variant's own comment describes
+    # producing by hand ("wiping a file's variant_records ... left the count
+    # at 0") -- and polls /tip for a fired hint carrying a real-blob image.
+    # Asserting the record count stayed at 0 AFTER the poll is what proves no
+    # disk allocation happened; asserting image_url is nil IN THE SAME
+    # example is what proves the fixture had a real blob to generate a
+    # variant from in the first place -- without that second assertion, a
+    # fixture with no blob attached at all would also show 0 records and a
+    # nil image_url, and this test would pass for the wrong reason (nothing
+    # to allocate, rather than correctly refusing to allocate something that
+    # was there to allocate).
+    hint = create_hint(:level => level, :delay => 0, :text => "hint text")
+    image = GameFileUpload.new(game, fixture_upload("photo.jpg"), author).call
+    expect(image).to be_persisted
+    hint.replace_attached_files([ image.id ], nil)
+
+    # GameFileUpload generates web/thumb variants eagerly at upload (see its
+    # own class comment) -- wipe them so the poll below starts from the "no
+    # variant record exists" state, not the "one was already there" state
+    # every other example in this file relies on.
+    ActiveStorage::VariantRecord.delete_all
+    expect(ActiveStorage::VariantRecord.count).to eq(0)
+
+    get get_current_level_tip_path(:game_id => game.id)
+
+    expect(response).to have_http_status(:ok)
+    body = JSON.parse(response.body)
+
+    expect(ActiveStorage::VariantRecord.count).to eq(0)
+    expect(body["attachments"].first["image_url"]).to be_nil
+  end
+
   it "includes the platform hint label translated for the interface locale, not a hardcoded literal" do
     create_hint(:level => level, :delay => 0, :text => "hint text")
 

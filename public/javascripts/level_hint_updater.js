@@ -102,6 +102,16 @@ var LevelHintUpdater = function() {
             for ( var i = 0; i < attachments.length; i++ ) {
                 var attachment = attachments[i];
 
+                // No scheme check on url/image_url before setAttribute below:
+                // both are built server-side by game_file_delivery_path (a
+                // Rails named-route helper -- see hint_attachments_json),
+                // never by concatenating anything author-supplied into a
+                // URL. The only per-attachment value an author controls is
+                // alt (the filename), which never reaches href/src. If this
+                // payload ever grows a field that puts user input INTO a
+                // URL -- a linked external source, say -- this comment stops
+                // being true and a same-origin/scheme allowlist check
+                // belongs here before that field is trusted.
                 var link = document.createElement("a");
                 link.setAttribute("href", attachment.url);
 

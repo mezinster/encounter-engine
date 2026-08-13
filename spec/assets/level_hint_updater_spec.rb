@@ -10,22 +10,29 @@ require "rails_helper"
 describe "the level hint updater", type: :model do
   let(:source) { Rails.root.join("public/javascripts/level_hint_updater.js").read }
 
-  it "does not concatenate hint text into an HTML string" do
+  it "does not concatenate untrusted data into an HTML string" do
+    # Identifier-agnostic, deliberately: an earlier version of every regex
+    # below was anchored to the literal variable name `hintText`. That left
+    # a hole exactly at the new attack surface the attachments feature
+    # added -- `attachment.alt` (an author-supplied filename, exactly as
+    # untrusted as hintText) is never mentioned by name in any of these
+    # patterns, so a mutation collapsing the icon/filename spans into one
+    # unsafe write --
+    #   filenameSpan.innerHTML = "<b>" + attachment.alt + "</b>"
+    # -- left all 11 examples in this file green. These guards instead
+    # forbid the SINK outright, no matter which variable feeds it: any
+    # innerHTML/outerHTML assignment at all, and any of jQuery's
+    # markup-mutating methods fed string concatenation. A future untrusted
+    # value -- a level title, a team name, anything else this function ever
+    # grows to render -- is covered the same way without this file needing
+    # another line.
+    #
     # Bounded by the statement terminator, not the first ")" -- a naive
     # [^)]*  gives up as soon as it meets any nested call's own closing paren,
-    # e.g. append(wrapper() + hintText) would slip straight past it.
-    expect(source).not_to match(/append\([^;]*\+\s*hintText/)
-    expect(source).not_to include("</legend>' + hintText")
-    # These three catch sinks an ADDED line could introduce without touching
-    # createTextNode/textContent at all: a raw innerHTML assignment, any
-    # other jQuery markup-mutating method (.html/.prepend/.after/.before) fed
-    # a concatenated string, or a bare jQuery-constructor concatenation like
-    # $('<p>' + hintText + '</p>'). A guard that only inspects append() and
-    # one exact legend literal would wave all of these through even with the
-    # safe createTextNode/textContent lines left in place.
-    expect(source).not_to match(/innerHTML\s*=[^;]*hintText/)
-    expect(source).not_to match(/\.(?:html|prepend|after|before)\([^;]*\+\s*hintText/)
-    expect(source).not_to match(/\$\(\s*["'][^"']*["']\s*\+\s*hintText/)
+    # e.g. append(wrapper() + x) would slip straight past it.
+    expect(source).not_to match(/(?:inner|outer)HTML\s*=/)
+    expect(source).not_to match(/\.(?:append|html|prepend|after|before)\([^;]*\+/)
+    expect(source).not_to match(/\$\(\s*["'][^"']*["']\s*\+/)
   end
 
   it "builds the hint node as text" do

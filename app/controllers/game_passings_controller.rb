@@ -89,6 +89,22 @@ class GamePassingsController < ApplicationController
 
     render json: { hint_num: @game_passing.hints_to_show.length,
                     hint_text: hint&.translated(:text, content_locale),
+                    # Platform chrome, so it goes through t() like the
+                    # server-rendered legend does -- NOT hardcoded in
+                    # level_hint_updater.js. Fixes a pre-existing bug: the JS
+                    # used to hardcode the Russian literal "Подсказка"
+                    # regardless of the interface locale, so a hint that
+                    # unlocked after page load showed one Russian word to
+                    # every non-Russian player. See appendHint in
+                    # public/javascripts/level_hint_updater.js.
+                    hint_label: t("game_passings.show_current_level.hint_label"),
+                    # For the attachment strip's aria-label, matching
+                    # shared/_attachment_strip.html.erb's role="group" +
+                    # aria-label pairing -- same reasoning as hint_label
+                    # above: platform chrome, translated server-side, never
+                    # hardcoded in the JS that renders it.
+                    attachments_label: t("game_passings.show_current_level.attachments_label"),
+                    attachments: hint_attachments_json(hint, content_locale),
                     next_available_in: next_hint&.available_in(@game_passing.current_level_entered_at, @game_passing.effective_now) }
   end
 
@@ -381,8 +397,53 @@ class GamePassingsController < ApplicationController
   # never includes level or question text, so there's no reason to pay for
   # loading (or translating) either -- just the hints and the :game a
   # translated() call on one of them needs to resolve primary_locale.
+  #
+  # Task 4 addition: the same :file_attachments => { :game_file => [...] }
+  # nesting preloaded_level uses, but only under :hints -- this route never
+  # renders the LEVEL's own attachment strip (that already reached the page
+  # at load time, in show_current_level.html.erb), only whichever hint just
+  # fired. Same four things it buys there, per hint: attached_files_for reads
+  # the loaded array instead of re-querying, game_file_delivery_path's
+  # file.game is free, GameFileAccess#permitted?'s file.game.current_run is
+  # free, and existing_web_variant's variant-record lookup is free. See
+  # preloaded_level's comment for the measured query counts this pattern
+  # produces.
   def preloaded_level_for_tip(level)
-    Level.includes(:game, :hints => :content_translations).find(level.id)
+    Level.includes(:game,
+                    :hints => [ :content_translations,
+                                { :file_attachments => { :game_file => [
+                                  { :game => :runs },
+                                  { :file_attachment => { :blob => { :variant_records => { :image_attachment => :blob } } } }
+                                ] } } ]).find(level.id)
+  end
+
+  # The attachments the JSON poller may hand the just-fired hint --
+  # exactly the files the server-rendered strip would show, gated by the
+  # same GameFileAccess#permitted? question (see shared/_attachment_strip.html.erb's
+  # comment on why that check runs per file rather than being trusted from
+  # further up the call chain). `hint` here is ALWAYS
+  # @game_passing.hints_to_show.last -- the hint that just fired -- never a
+  # hint from upcoming_hints, so a hint's files become visible in this
+  # payload exactly when the hint itself does, not before.
+  #
+  # {url:, alt:} at minimum per the task brief; image_url is added and left
+  # nil for a PDF, a GIF, or an image with no existing web variant -- the
+  # same three cases shared/_attachment_strip.html.erb degrades to a
+  # generic link for, via existing_web_variant (deliberately NOT
+  # web_variant, which GENERATES on a miss -- see that method's comment and
+  # design invariant I1). level_hint_updater.js's appendHint reads image_url
+  # to decide whether to build an <img> or a generic link, matching that
+  # same degradation client-side.
+  def hint_attachments_json(hint, content_locale)
+    return [] if hint.nil?
+
+    hint.attached_files_for(content_locale)
+        .select { |file| GameFileAccess.new(current_user, file).permitted? }
+        .map do |file|
+          { url: game_file_delivery_path(@game, file, "original"),
+            image_url: (game_file_delivery_path(@game, file, "web") if file.existing_web_variant.present?),
+            alt: file.filename }
+        end
   end
 
   # TODO: must be a critical section, double creation is possible!

@@ -218,6 +218,31 @@ describe GameFileAccess do
       end
     end
 
+    it "REFUSES a file on a level the team already passed, once a LATER run has opened and the team has no passing there yet" do
+      # KNOWN, DELIBERATE LIMITATION -- see the comment on level_visible? and
+      # the design doc's "Open question for Phase 3B" (docs/superpowers/specs/
+      # 2026-08-12-level-and-hint-attachments-design.md §4). passing_for_game
+      # resolves ONLY game.current_run's passing, so once run 2 opens, this
+      # team's finished run-1 passing is no longer "the" passing for this
+      # game -- every attachment on the run-1 log 404s, permanently, even
+      # though the team demonstrably saw @l1 and its file during run 1.
+      #
+      # This is pinned, not just documented, so a change to this behaviour is
+      # a decision, not an accident: resolving across every run instead would
+      # re-open the exact hole the two specs above this one exist to guard
+      # against (a finished passing in an EARLIER run authorising content in
+      # a LATER one). A false deny is the safe direction to be wrong in until
+      # Phase 3B can resolve the SPECIFIC run a log/results screen is
+      # already showing, instead of asking this policy to infer "current"
+      # from the team alone.
+      attach!(@l1)
+      @passing.update!(:current_level => nil, :finished_at => Time.now) # run 1, genuinely finished
+      create_next_run(@game) # run 2 opens; team has no passing there yet
+
+      file = GameFile.find(@file.id)
+      expect(GameFileAccess.new(@team_user, file).permitted?).to be false
+    end
+
     it "REFUSES a file beyond the current level for a team that EXITED, even though exit! sets finished_at" do
       # GamePassing#exit! stamps finished_at AND status "exited" -- a naive
       # `finished?` check reads a team that walked off the course as one
@@ -276,6 +301,79 @@ describe GameFileAccess do
       hint = create_hint(:level => @l2, :delay => 0)
       @passing.update_column(:current_level_entered_at, nil)
       attach!(hint)
+
+      expect { GameFileAccess.new(@team_user, @file).permitted? }.not_to raise_error
+      expect(GameFileAccess.new(@team_user, @file).permitted?).to be false
+    end
+
+    it "REFUSES a file on a level that merely shares a POSITION with the team's current level, when it is a DIFFERENT level" do
+      # Corruption-only, like the game_id belt-and-braces above: acts_as_list
+      # keeps positions unique per game in normal use. Mutation guard for
+      # level_visible?'s comparison -- @l1.position <= current.position would
+      # be true here even for a different level once @l3 is forced onto @l1's
+      # position, which is what made the OLD `<=` comparison a false PERMIT
+      # (measured on this branch before the fix: 200). The team is on @l1
+      # (position 1); @l3 is force-moved to that same position and attached.
+      @passing.update!(:current_level => @l1)
+      @l3.update_column(:position, @l1.position)
+      attach!(@l3)
+
+      expect(GameFileAccess.new(@team_user, @file).permitted?).to be false
+    end
+
+    it "still permits a file on the team's OWN current level when checked by id, regardless of position" do
+      # The other half of the same fix: level_visible? now returns true for
+      # the current level via an id check BEFORE the position comparison, so
+      # a legitimate request for the current level's own file is unaffected
+      # by the corruption-guard above.
+      attach!(@l1)
+      @passing.update!(:current_level => @l1)
+
+      expect(GameFileAccess.new(@team_user, @file).permitted?).to be true
+    end
+
+    it "REFUSES rather than raises when the requested Level's position is nil" do
+      # Corruption-only (position has no NOT NULL / presence validation
+      # enforcing this) -- acts_as_list always sets one in normal use.
+      # Left unguarded, `level.position <= current.position` raises
+      # NoMethodError ("undefined method '<=' for nil") when level.position
+      # is nil, which is the receiver of the comparison -- a 500 an
+      # id-enumerator could distinguish from every ordinary 404.
+      attach!(@l3)
+      @l3.update_column(:position, nil)
+
+      expect { GameFileAccess.new(@team_user, @file).permitted? }.not_to raise_error
+      expect(GameFileAccess.new(@team_user, @file).permitted?).to be false
+    end
+
+    it "REFUSES rather than raises when the team's CURRENT level's position is nil" do
+      # Same shape, the other operand: `level.position <= current.position`
+      # raises ArgumentError ("comparison of Integer with nil failed") when
+      # current.position is nil instead.
+      attach!(@l3)
+      @l2.update_column(:position, nil) # @l2 is @passing's current level
+
+      expect { GameFileAccess.new(@team_user, @file).permitted? }.not_to raise_error
+      expect(GameFileAccess.new(@team_user, @file).permitted?).to be false
+    end
+
+    it "REFUSES rather than raises when a hint on the current level has a nil delay" do
+      # Corruption-only (delay has no presence validation). GamePassing#
+      # hints_to_show calls Hint#ready_to_show? for EVERY hint on the current
+      # level -- not just the one being checked -- so a nil delay on ANY
+      # hint on that level raises ArgumentError ("comparison of Float with
+      # nil failed") before the enumeration ever reaches the target hint,
+      # even when the target hint's OWN delay is fine. This is pre-existing
+      # in the play screen (show_current_level.html.erb and
+      # GamePassingsController#get_current_level_tip both call hints_to_show
+      # unguarded) -- out of scope to fix there; this guards only the
+      # delivery route's own contract, that everything not permitted is a
+      # 404, never a distinguishable 500.
+      broken_hint = create_hint(:level => @l2, :delay => 1800)
+      broken_hint.update_column(:delay, nil)
+      target_hint = create_hint(:level => @l2, :delay => 0)
+      @passing.update!(:current_level_entered_at => 1.hour.ago)
+      attach!(target_hint)
 
       expect { GameFileAccess.new(@team_user, @file).permitted? }.not_to raise_error
       expect(GameFileAccess.new(@team_user, @file).permitted?).to be false

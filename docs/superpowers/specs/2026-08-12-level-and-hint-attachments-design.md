@@ -308,6 +308,29 @@ effect, earned the right to see, for no security benefit. `GameFileAccess#hint_v
 this as: any hint is visible once its level is a passed level, and only a *fired* hint is visible
 while the team is still on that level. `spec/models/game_file_access_spec.rb` pins both halves.
 
+**Open question for Phase 3B: attachments on a PAST run's log/results screen 404 once a later run
+opens.** `GameFileAccess#passing_for_game` resolves only `game.current_run.passing_for(team)` — the
+LIVE run. But `LogsController#find_run` and `GamePassingsController#find_run` both accept `?run=N`
+and deliberately serve a team's log or results from an *earlier* run too. So: a team finishes run
+1, the author opens run 2, and every attachment on the team's own run-1 log now 404s, permanently
+— `spec/models/game_file_access_spec.rb`, "REFUSES a file on a level the team already passed, once
+a LATER run has opened and the team has no passing there yet", pins this as the current, deliberate
+behaviour.
+
+This is a false DENY, not a hole, and Phase 3A leaves it that way on purpose: the file library is
+per-GAME (see `GameFile`'s class comment) while progress is per-RUN, and authors edit content
+between runs — resolving "the team's passing in this game" across every run instead would let a
+team that finished run 1 see run 2's still-unreached photographs, which is a real authorization
+hole this file has already had to close once (the "team with a passing in more than one run of the
+same game" specs exist for exactly that regression). Between a false deny and re-opening that hole,
+the false deny is the safe direction to be wrong in, so Phase 3A ships with it.
+
+Phase 3B is the phase that actually renders these past-run log/results screens, so it is the right
+place to decide with full context — e.g. by resolving the *specific* run the screen is already
+showing (the `?run=N`/`@run` the controller already found) rather than asking `GameFileAccess` to
+infer "current" from the team alone. The tension to resolve: per-game library, per-run progress,
+and content an author may have edited between runs.
+
 ### Response headers
 
 * `Content-Type` from our stored, sniffed value. Never from the request, never derived from the

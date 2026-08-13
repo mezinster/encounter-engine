@@ -103,11 +103,17 @@ describe "file delivery", :type => :request do
   end
 
   it "never routes a variant name outside the whitelist" do
-    # The route's own :constraints regex (config/routes.rb) is anchored to the
-    # whole :variant segment -- confirmed via
+    # The route's own :constraints regex (config/routes.rb) rejects a bad
+    # :variant segment outright -- confirmed via
     # Rails.application.routes.recognize_path, which raises RoutingError for
-    # a single bad segment like "nope". So this can never reach
-    # FileDeliveriesController#show at all: config.action_dispatch.show_exceptions
+    # a segment like "nope". It is NOT anchored to the whole segment, though:
+    # Rails splits an optional trailing ".format" off before the constraint
+    # ever sees it, so "original.json" and "original.png" both still route
+    # successfully as variant "original" (confirmed the same way -- neither
+    # raises). Harmless here -- Content-Type still comes from the stored
+    # column below, never the request -- but worth not overstating: the regex
+    # only ever sees the segment with any trailing .ext already removed. So
+    # this can never reach FileDeliveriesController#show at all: config.action_dispatch.show_exceptions
     # is :none in the test environment (config/environments/test.rb), so an
     # unmatched route raises here rather than rendering a 404 response -- there
     # is no HTTP-level response to assert :not_found against, only a routing
@@ -227,6 +233,44 @@ describe "file delivery", :type => :request do
 
       expect(response).to have_http_status(:ok)
     end
+
+    it "does NOT cache the missing-blob 404 for an hour" do
+      # stale? runs BEFORE send_file and already set Cache-Control to
+      # "max-age=3600, private" on this response before send_file ever had
+      # the chance to fail -- it has no way to know the byte stream is about
+      # to come up empty. Left alone, a client honouring that max-age never
+      # asks again: ops restores the volume, and every client that hit the
+      # file while it was gone keeps rendering a broken image for up to an
+      # hour with no request reaching the (now healthy) server. Contrast the
+      # AUTHORIZATION 404 (e.g. "404s for a logged-out requester" above),
+      # which carries no such promise to begin with.
+      login_as @author
+      @file.file.blob.service.delete(@file.file.blob.key)
+
+      deliver
+
+      expect(response).to have_http_status(:not_found)
+      expect(response.headers["Cache-Control"]).to include("no-cache")
+      expect(response.headers["Cache-Control"]).not_to include("max-age=3600")
+    end
+
+    it "leaves the healthy 200 and its 304 still carrying max-age=3600 (the missing-blob fix is scoped to its own path)" do
+      # Guards against over-correcting Important 2: the fix belongs ONLY in
+      # the rescue clause, not as a change to stale?'s :cache_control
+      # argument or a blanket after_action -- either of those would also
+      # defeat max-age on every healthy response, re-breaking the very
+      # capacity guarantee "pins max-age on both a 200 and a 304" (above)
+      # exists to protect.
+      login_as @author
+      deliver
+      expect(response.headers["Cache-Control"]).to include("max-age=3600")
+      etag = response.headers["ETag"]
+
+      get game_file_delivery_path(@game, @file, "original"), :headers => { "If-None-Match" => etag }
+
+      expect(response).to have_http_status(:not_modified)
+      expect(response.headers["Cache-Control"]).to include("max-age=3600")
+    end
   end
 
   describe "response headers" do
@@ -274,6 +318,22 @@ describe "file delivery", :type => :request do
       pdf = GameFileUpload.new(@game, fixture_upload("map.pdf"), @author).call
       get game_file_delivery_path(@game, pdf, "original")
 
+      expect(response.headers["Content-Disposition"]).to start_with("attachment")
+    end
+
+    it "does NOT serve an unexpected content type inline (fails closed, not open)" do
+      # GameFile only validates content_type's PRESENCE (app/models/game_file.rb),
+      # not its value -- GameFileUpload is the sole writer today and only ever
+      # emits four values, but nothing in the model stops a row from carrying
+      # anything else. disposition_for used to be `== "application/pdf" ?
+      # attachment : inline` -- everything NOT a PDF served inline, including
+      # a value like this one. Measured on this branch before the whitelist
+      # existed: 200 inline text/html -- stored XSS, since nosniff cannot help
+      # when the Content-Type genuinely says text/html.
+      @file.update_column(:content_type, "text/html")
+      deliver
+
+      expect(response).to have_http_status(:ok)
       expect(response.headers["Content-Disposition"]).to start_with("attachment")
     end
 

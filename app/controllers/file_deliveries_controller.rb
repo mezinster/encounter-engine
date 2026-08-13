@@ -136,6 +136,20 @@ class FileDeliveriesController < ApplicationController
     # narrowly, never StandardError: a blanket rescue here would turn a real
     # storage misconfiguration into a silent 404 on every file at once, which
     # looks exactly like an authorization bug.
+    # send_file hands the absolute path to Rack::Sendfile, which is capable of
+    # returning an X-Accel-Redirect/X-Sendfile response instead of streaming
+    # the bytes itself, IF something tells it to. config.action_dispatch.
+    # x_sendfile_header is unset in this app (grep config/ -- nothing sets
+    # it), so Rack::Sendfile's own @variation is nil here. What actually keeps
+    # a client from choosing that behaviour itself, by sending its own
+    # `X-Sendfile-Type: X-Accel-Redirect` request header, is NOT this app's
+    # config -- it's rack 3.2.6+: Rack::Sendfile#variation's comment reads
+    # "HTTP_X_SENDFILE_TYPE is intentionally NOT read for security reasons"
+    # (lib/rack/sendfile.rb). A rack downgrade past that fix would let any
+    # client ask for X-Accel-Redirect and receive the absolute storage path
+    # back instead of the file's bytes. See the Gemfile's `gem "rack"` floor,
+    # added for this reason -- this app has no config-level defence of its
+    # own against that regression.
     begin
       send_file attachment.service.path_for(attachment.key),
                 :type => file.content_type,
@@ -150,17 +164,51 @@ class FileDeliveriesController < ApplicationController
         "GameFile blob missing from disk: game_id=#{file.game_id} file_id=#{file.id} " \
         "variant=#{variant} key=#{attachment.key}"
       )
+
+      # stale? above already ran and set Cache-Control to "max-age=3600,
+      # private" on THIS response before we ever got here -- it has no idea
+      # send_file is about to fail. Left alone, that header ships on a 404
+      # for a file that is a design §3 invariant I3 EXPECTED transient state
+      # (a database restored without its storage volume, a half-finished
+      # azcopy sync): ops restores the volume, and every client that hit the
+      # file while it was gone keeps rendering a broken image for up to an
+      # hour, making no request the restored server could ever answer.
+      # Overwrite it here, on the one path where the byte stream never
+      # shipped. expires_now is ActionController::ConditionalGet's own helper
+      # for exactly this -- `response.cache_control.replace(:no_cache =>
+      # true)` -- so this replaces the whole hash stale? populated (dropping
+      # its :max_age/:public) rather than merging into it. The 200 and 304
+      # above are untouched -- this rescue clause is the only place that runs
+      # on the missing-blob path.
+      expires_now
       head :not_found
     end
   end
+
+  # The whitelist of content types actually served inline -- the four values
+  # GameFileUpload (the sole writer of GameFile#content_type) ever produces,
+  # minus application/pdf. Same shape as GameFile::PERMITTED / the svg
+  # exclusion reasoning at app/models/game_file.rb:20-23: a permit-list, not
+  # a deny-list, because GameFile only validates content_type's PRESENCE, not
+  # its value, so this is the one place standing between an unexpected value
+  # reaching this row (a hand-crafted update_column today; a future writer
+  # tomorrow) and it being served `inline`. Proven reachable: forcing
+  # content_type to "text/html" and requesting the file served it 200 inline
+  # text/html before this whitelist existed -- stored XSS, since `nosniff`
+  # cannot help when the type genuinely says text/html.
+  INLINE_CONTENT_TYPES = %w[image/jpeg image/png image/gif].freeze
 
   # PDF is always a download, never inline: the browser's PDF viewer is a
   # scripting environment this app does not control, and unlike an image a
   # PDF cannot be re-encoded into inert bytes by the upload pipeline (§2).
   # Every other permitted type (jpg/png/gif, heic canonicalised to jpg) is an
-  # image and renders inline.
+  # image and renders inline -- but the default is `attachment`, not
+  # `inline`: anything NOT in INLINE_CONTENT_TYPES (including a PDF, and
+  # including any value this method has never seen) downloads instead of
+  # rendering. Fails closed, deliberately, in the direction of "content type
+  # we don't recognise" rather than "type we didn't explicitly forbid".
   def disposition_for(file)
-    file.content_type == "application/pdf" ? "attachment" : "inline"
+    INLINE_CONTENT_TYPES.include?(file.content_type) ? "inline" : "attachment"
   end
 
   # Returns nil rather than raising when the variant does not apply to this

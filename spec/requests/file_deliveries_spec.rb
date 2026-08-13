@@ -162,6 +162,14 @@ describe "file delivery", :type => :request do
     end
 
     it "sets nosniff on a served file" do
+      # Not a pin on this controller: nosniff comes from Rails' own
+      # ActionDispatch::Response.default_headers, applied to every response
+      # app-wide, before this controller's action ever runs. This and the
+      # refusal example below pin the CONTRACT a MIME-sniffing browser
+      # depends on -- that the header is actually present on what this
+      # controller sends -- not any code here that produces it. (There isn't
+      # any: a `before_action` used to set this header explicitly, and
+      # removing it left both examples, and all 24 in this file, green.)
       deliver
       expect(response.headers["X-Content-Type-Options"]).to eq("nosniff")
     end
@@ -172,7 +180,8 @@ describe "file delivery", :type => :request do
       # name outside the whitelist" above, and the route :constraints regex
       # in config/routes.rb) -- there is no response to assert a header on
       # for that case. This exercises the controller's own head(:not_found)
-      # instead, via a file id that does not exist.
+      # instead, via a file id that does not exist. Same CONTRACT pin as
+      # above, not a controller-specific one -- see that example's comment.
       get game_file_delivery_path(@game, -1, "original")
 
       expect(response).to have_http_status(:not_found)
@@ -192,10 +201,22 @@ describe "file delivery", :type => :request do
     end
 
     it "RFC 5987-encodes a Cyrillic filename" do
+      # The literal percent-encoded bytes, not just the parameter's presence:
+      # "filename*=UTF-8''" alone is satisfied by ANY value at all -- a future
+      # change that sanitises or transliterates the filename (e.g. via
+      # ActiveSupport::Inflector.transliterate, producing
+      # "filename*=UTF-8''shema%20otelya.jpg") would still match that fragment
+      # and this spec would stay green while every player's download name
+      # came out mangled. Computed once via actionpack's own
+      # ActionDispatch::Http::ContentDisposition::RFC_5987_ESCAPED_CHAR
+      # pattern against "схема.jpg" (UTF-8 percent-escaped, uppercase hex),
+      # not hand-derived -- confirmed against a real response before being
+      # pinned here.
       @file.update_column(:filename, "схема.jpg")
       deliver
 
-      expect(response.headers["Content-Disposition"]).to include("filename*=UTF-8''")
+      expect(response.headers["Content-Disposition"])
+        .to include("filename*=UTF-8''%D1%81%D1%85%D0%B5%D0%BC%D0%B0.jpg")
     end
 
     it "marks the response private, never public" do
@@ -217,6 +238,35 @@ describe "file delivery", :type => :request do
 
       expect(response).to have_http_status(:not_modified)
       expect(response.body).to be_empty
+    end
+
+    it "pins max-age on both a 200 and a 304" do
+      # Deleting the explicit Cache-Control line entirely survives the
+      # "marks the response private" example above -- stale?(:public =>
+      # false) alone yields "max-age=0, private, must-revalidate", which
+      # still contains "private" and still excludes "public". That example
+      # guards the security half of the contract; this one guards the
+      # performance half it leaves unguarded: the actual max-age=3600 this
+      # host relies on to avoid a conditional round trip per image on every
+      # later view of the play screen.
+      #
+      # And a 200 alone isn't enough either: max-age has to survive
+      # revalidation too, or every second-and-later view degrades to a
+      # conditional request regardless of what the first response promised.
+      # A version of the controller that set Cache-Control on
+      # response.headers AFTER stale?'s early return -- rather than passing
+      # :cache_control into stale? itself -- passed the 200 half of this
+      # example and failed the 304 half, because that line never executes on
+      # the path stale? takes for a 304.
+      deliver
+      expect(response.headers["Cache-Control"]).to include("max-age=3600")
+      etag = response.headers["ETag"]
+
+      get game_file_delivery_path(@game, @file, "original"), :headers => { "If-None-Match" => etag }
+
+      expect(response).to have_http_status(:not_modified)
+      expect(response.headers["Cache-Control"]).to include("max-age=3600")
+      expect(response.headers["Cache-Control"]).to include("private")
     end
 
     it "gives a variant a different ETag from the original" do

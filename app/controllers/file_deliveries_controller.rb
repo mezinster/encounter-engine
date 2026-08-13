@@ -17,13 +17,19 @@ class FileDeliveriesController < ApplicationController
   # array changing to match.
   VARIANTS = %w[original web thumb].freeze
 
-  # Runs before every action, so it also covers every head(:not_found)
-  # refusal in #show below, not just a successful #deliver -- a MIME-sniffing
-  # browser must not second-guess a refusal body any more than a real file.
-  # Proven in spec/requests/file_deliveries_spec.rb: nosniff is asserted on
-  # both a served file and on a plain 404.
-  before_action :set_nosniff_header
-
+  # X-Content-Type-Options: nosniff is on every response here -- success or
+  # refusal -- but not because of anything in this file. It comes from
+  # ActionDispatch::Response.default_headers, applied app-wide before this
+  # controller ever runs (confirmed with `bin/rails runner`). A `before_action`
+  # setting it here used to exist; it was dead code -- deleting it, and
+  # separately deleting only its success-path use, both left all 24 examples
+  # in spec/requests/file_deliveries_spec.rb green, because the framework
+  # default already covers every branch below. Deleting the header outright
+  # (`headers.delete`) is what actually turns two examples red, which is what
+  # they pin: the CONTRACT that a MIME-sniffing browser must not second-guess
+  # a refusal body any more than a real file, not this controller's
+  # (nonexistent) contribution to it. See "sets nosniff on a served file" /
+  # "sets nosniff on a refusal too" below.
   def show
     # Checked first, before either DB lookup below: it costs nothing, and it
     # means a junk variant name never spends a query if the route's own
@@ -50,10 +56,6 @@ class FileDeliveriesController < ApplicationController
 
   private
 
-  def set_nosniff_header
-    response.headers["X-Content-Type-Options"] = "nosniff"
-  end
-
   def deliver(file, variant)
     attachment = blob_for(file, variant)
     return head(:not_found) if attachment.nil?
@@ -65,17 +67,26 @@ class FileDeliveriesController < ApplicationController
     # original. stale? sets the 304 itself (via fresh_when's `head
     # :not_modified`, which renders no body) and returns false when the
     # client's copy is current, so the download below never runs.
-    return unless stale?(:etag => [ file.checksum, variant ], :public => false)
-
-    # AFTER stale?, deliberately: stale?/fresh_when write Cache-Control from
-    # their :public argument (false above -> "private"), so setting this
-    # header any earlier would get silently overwritten. Verified against a
-    # real response rather than trusted from this ordering alone --
-    # send_data used to touch Cache-Control too; see
-    # spec/requests/file_deliveries_spec.rb's "marks the response private"
-    # example, which pins the header on the response Rails actually sends,
-    # not on this line's position.
-    response.headers["Cache-Control"] = "private, max-age=3600"
+    #
+    # :cache_control is passed IN to stale? rather than set on response.headers
+    # afterward, and that is load-bearing, not style: fresh_when (which stale?
+    # calls first, before checking freshness) merges :cache_control into
+    # response.cache_control unconditionally, so it lands on the early
+    # `head :not_modified` return below exactly as it lands on a 200. Setting
+    # response.headers["Cache-Control"] after this line, as a previous version
+    # of this method did, only ever executes on the 200 path -- the 304 return
+    # happens first -- so a revalidated response fell through to Rails'
+    # etag-driven default of "max-age=0, private, must-revalidate" (confirmed
+    # on a real 304). That silently defeated the point of max-age=3600: once a
+    # client revalidates once, its cached copy's freshness drops to zero and
+    # every later view of the play screen makes a conditional request per
+    # image -- exactly the round trip max-age exists to avoid on this 1-vCPU
+    # host. :public => false keeps the "private" half either way. Both the 200
+    # and the 304 carrying "private, max-age=3600" is pinned in
+    # spec/requests/file_deliveries_spec.rb ("marks the response private,
+    # never public" and "pins max-age on both a 200 and a 304").
+    return unless stale?(:etag => [ file.checksum, variant ], :public => false,
+                          :cache_control => { :max_age => 3600 })
 
     # Streams straight off disk instead of loading the whole blob into the
     # Ruby heap the way `send_data blob.download` (Task 1's original shape)
@@ -94,6 +105,13 @@ class FileDeliveriesController < ApplicationController
     # storage service loses the concept of a local path entirely -- this is
     # the line to find and replace with a streaming download at that point,
     # not a mystery to rediscover.
+    #
+    # #path_for is also not public API -- it's marked `# :nodoc:` on
+    # ActiveStorage::Service::DiskService in activestorage 8.0.5.1, so a Rails
+    # upgrade could rename or remove it with no deprecation cycle, unlike a
+    # documented method. Nothing here can guard against that beyond a normal
+    # test run catching the NoMethodError after a Rails bump; noted so it's
+    # not a mystery why this line broke, if it ever does.
     send_file attachment.service.path_for(attachment.key),
               :type => file.content_type,
               :filename => file.filename,

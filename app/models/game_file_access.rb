@@ -8,6 +8,24 @@
 # phase 3B's play screen needs the same answer BEFORE rendering, to decide
 # whether a strip appears at all -- a view that renders <img> tags the
 # delivery route will 404 is worse than one that renders nothing.
+#
+# This class does NOT read a FileAttachment's locale at all, and that is
+# deliberate scope, not an oversight: an attachment's locale slot governs
+# which player RENDERS it (FileAttachable#attached_files_for(locale), asked
+# by the play screen and the poller, only reads the neutral slot plus the
+# player's own), never whether that player is AUTHORIZED to fetch it. So a
+# file living only in level 1's "en" slot is correctly absent from a `ru`
+# player's rendered strip, but is served a plain 200 if that player's
+# browser requests it directly through the delivery route by id -- the same
+# level/hint visibility answer any OTHER file on level 1 would get,
+# regardless of locale. That is consistent with the rest of this class's
+# design (visibility is scoped by LEVEL and by RUN, never by anything
+# finer-grained within a level), not a privilege escalation -- every file in
+# a slot for a level/hint a team can see was authored for that SAME game by
+# its author, who could put it in any locale's slot or none. Pinned in
+# spec/models/game_file_access_spec.rb ("permits a file regardless of which
+# locale slot it sits in") so a future change to either half of this split
+# is a deliberate decision, not a gap nobody noticed.
 class GameFileAccess
   # :run -- optional, a GameRun (never an id/ordinal: resolving one from a raw
   # parameter is the CALLER's job, e.g. FileDeliveriesController#requested_run
@@ -126,6 +144,18 @@ class GameFileAccess
   # a team could exit on level 1 and then fetch every level's file: this is
   # the same threat LogsController#ensure_full_log_access and GamePassing's
   # own `completed` scope guard against, for the same reason.
+  #
+  # This check does NOT cut an exited team off from the level it exited ON --
+  # level_visible? still treats their (now frozen) current_level exactly as
+  # it would for an actively playing team, so the delivery route keeps
+  # serving files on that one level after exit!. That is by design, not a
+  # gap this method is meant to close: GamePassingsController's
+  # ensure_team_not_exited before_action is what stops an exited team from
+  # reaching the PLAY SCREEN at all (see that controller), and it has no
+  # equivalent here because there is nothing left to protect -- a file the
+  # team could already see while playing tells them nothing new once they've
+  # quit. Only levels BEYOND the exit point stay hidden, exactly as
+  # completed?/level_visible? already guard.
   def completed?(passing)
     passing.finished? && !passing.exited?
   end

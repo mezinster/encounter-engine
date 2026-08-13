@@ -101,6 +101,18 @@ describe GameFileAccess do
       expect(GameFileAccess.new(@team_user, @file).permitted?).to be true
     end
 
+    it "permits a file regardless of which locale slot it sits in -- locale governs RENDERING, not access (see the class comment)" do
+      # FileAttachable#attached_files_for(locale) is what keeps an "en"-slot
+      # file out of a ru player's rendered strip -- GameFileAccess never
+      # reads an attachment's locale at all, so a request that reaches this
+      # class directly (as the delivery route does, via a file id in the
+      # URL) is authorized purely by level/hint visibility, same as any
+      # other file on the same level. Pinned so a change to either side of
+      # that split is a deliberate decision.
+      attach!(@l2, "en")
+      expect(GameFileAccess.new(@team_user, @file).permitted?).to be true
+    end
+
     it "permits a file on a level the team has already passed" do
       attach!(@l1)
       expect(GameFileAccess.new(@team_user, @file).permitted?).to be true

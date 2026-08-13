@@ -116,4 +116,31 @@ describe "logs scoped to a run", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("новыйкод")
   end
+
+  # A scalar ordinal is not the only shape a URL can carry: ?run[x]=1 arrives
+  # as ActionController::Parameters and ?run[]=1 as an Array, and #to_i raises
+  # NoMethodError on both. That was a 500 from a mistyped URL. On the file
+  # DELIVERY route the same bug was worse -- it 500'd for a real file id and
+  # 404'd for a fake one, which told an id-enumerating attacker which guesses
+  # were right -- and this controller carries the identical line, so it gets
+  # the identical guard and a test of its own.
+  it "falls back for a non-scalar run param rather than raising" do
+    team_playing(game.current_run, "новыйкод")
+    sign_in(author)
+
+    get show_live_channel_path(:game_id => game.id), :params => { :run => { "x" => "1" } }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("новыйкод")
+  end
+
+  it "falls back for an array run param rather than raising" do
+    team_playing(game.current_run, "новыйкод")
+    sign_in(author)
+
+    get show_live_channel_path(:game_id => game.id), :params => { :run => [ "1" ] }
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("новыйкод")
+  end
 end

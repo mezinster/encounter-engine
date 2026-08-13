@@ -217,6 +217,69 @@ describe "the level/hint attachment picker", :type => :request do
     end
   end
 
+  # Important 2 (Task 5 review fix): HintsController#attachment_slot_locale is
+  # the byte-identical twin of LevelsController#attachment_slot_locale --
+  # same expression, same params[:tab] contract -- but only the level side
+  # had a multilingual example. Replacing the whole method body with `nil`
+  # left every example in this file green (verified): a hint holding
+  # `neutral.jpg` in the language-neutral slot, author opens the hint's
+  # English tab, ticks `english.jpg`, saves -- and the mutated code writes
+  # `{nil=>["english.jpg"]}` instead of `{nil=>["neutral.jpg"],
+  # "en"=>["english.jpg"]}`, destroying the strip every player reads in
+  # every language. Mirrors "on a level, multilingual game" above,
+  # one-for-one, on a hint instead of a level.
+  describe "on a hint, multilingual game" do
+    let(:game) do
+      g = create_game(:author => author, :is_draft => true)
+      g.available_locale_list = %w[ru en]
+      g.save!
+      g
+    end
+    let(:level) { create_level(:game => game) }
+    let(:hint)  { create_hint(:level => level) }
+    let(:neutral_file) { create_game_file(:game => game, :filename => "neutral.jpg") }
+    let(:english_file)  { create_game_file(:game => game, :filename => "english.jpg") }
+
+    before do
+      hint.replace_attached_files([ neutral_file.id ], nil)
+      login_as(author)
+    end
+
+    it "writes the non-primary tab's own slot, and leaves the neutral slot untouched" do
+      patch game_level_hint_path(game, level, hint),
+            :params => { :hint => { :text => hint.text, :delay_in_minutes => 1,
+                                     :game_file_ids => [ english_file.id.to_s ] },
+                         :tab => "en" }
+
+      neutral = hint.file_attachments.reload.where(:locale => nil)
+      english = hint.file_attachments.where(:locale => "en")
+
+      expect(neutral.map(&:game_file_id)).to eq([ neutral_file.id ])
+      expect(english.map(&:game_file_id)).to eq([ english_file.id ])
+    end
+
+    it "pre-checks only the active tab's own files, not the neutral strip's" do
+      hint.replace_attached_files([ english_file.id ], "en")
+
+      get edit_game_level_hint_path(game, level, hint), :params => { :tab => "en" }
+
+      expect(checked?(response.body, english_file)).to be(true)
+      expect(checked?(response.body, neutral_file)).to be(false)
+    end
+
+    it "does not touch the English slot when only the primary tab is saved" do
+      hint.replace_attached_files([ english_file.id ], "en")
+
+      patch game_level_hint_path(game, level, hint),
+            :params => { :hint => { :text => hint.text, :delay_in_minutes => 1,
+                                     :game_file_ids => [ neutral_file.id.to_s ] },
+                         :tab => "ru" }
+
+      english = hint.file_attachments.reload.where(:locale => "en")
+      expect(english.map(&:game_file_id)).to eq([ english_file.id ])
+    end
+  end
+
   # Important 1 (Task 2 fix round): _picker.html.erb read
   # attachable.attached_file_ids_in_slot(slot) UNCONDITIONALLY, so a 422 --
   # the SAME request re-rendering :edit -- redisplayed the picker from the

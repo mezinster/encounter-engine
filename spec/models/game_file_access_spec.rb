@@ -54,6 +54,28 @@ describe GameFileAccess do
     expect(GameFileAccess.new(user, @file).permitted?).to be false
   end
 
+  it "REFUSES a passing that this game's run hands back but that belongs to another game" do
+    # Corruption-only: a passing reached through game.current_run should
+    # already be this game's. The check exists because both Critical holes
+    # this file has shipped were the same shape -- a lookup that LOOKED
+    # correctly scoped handing back a passing from somewhere else, silently.
+    # update_column to write the state no validated path can produce.
+    user = create_user
+    team = create_team(:members => [ user ])
+    user.reload
+    l1 = create_level(:game => @game)
+    passing = create_game_passing(:level => l1, :team => team)
+    FileAttachment.create!(:game_file => @file, :attachable => l1)
+
+    # Sanity: this is permitted before the row is corrupted, so the example
+    # cannot pass merely because something else refuses it.
+    expect(GameFileAccess.new(user, @file).permitted?).to be true
+
+    passing.update_column(:game_id, create_game(:author => create_user).id)
+
+    expect(GameFileAccess.new(user, @file).permitted?).to be false
+  end
+
   describe "a playing team" do
     before(:each) do
       @team_user = create_user

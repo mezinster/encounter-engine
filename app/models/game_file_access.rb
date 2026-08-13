@@ -21,6 +21,18 @@ class GameFileAccess
     passing = passing_for_game
     return false if passing.nil?
 
+    # includes(:attachable) batches the polymorphic load by type instead of
+    # one query per attachment.
+    #
+    # NOTE FOR PHASE 3B: calling .includes on the association DISCARDS an
+    # already-loaded cache, so this re-queries file_attachments even when the
+    # caller preloaded them. Harmless here -- the delivery controller loads one
+    # file per request -- but 3B's play screen calls permitted? once per file
+    # on a page it will want to preload, and would pay a query per file for the
+    # privilege. Read the preloaded association there rather than re-scoping it.
+    #
+    # Still one query per HINT attachment, for hint.level inside hint_visible?.
+    # Bounded by the attachments on a single file; left as is.
     @game_file.file_attachments.includes(:attachable).any? { |attachment| visible_to?(passing, attachment) }
   end
 
@@ -50,7 +62,17 @@ class GameFileAccess
     team = @user.team
     return nil if team.nil?
 
-    game.current_run.passing_for(team)
+    passing = game.current_run.passing_for(team)
+
+    # Belt and braces on the run lookup above. A passing reached through
+    # game.current_run should already belong to this game, so this can only
+    # fire on a corrupted row -- but the two Critical holes this file has
+    # already shipped were BOTH "the right-looking lookup returned a passing
+    # from somewhere else", and neither announced itself. The cost of
+    # re-asserting the thing we just navigated by is one comparison.
+    return nil unless passing&.game_id == game.id
+
+    passing
   end
 
   # finished? alone is also true for a passing ended by exit!, which is a

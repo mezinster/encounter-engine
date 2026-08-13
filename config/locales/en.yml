@@ -112,6 +112,11 @@ en:
         all_games: "All games"
         all_teams: "All teams"
         audit_log: "Action log"
+        storage: "Storage"
+        storage_used: "Used (MB)"
+        storage_cap: "Total server limit (MB)"
+        disk_free: "Free disk space (MB)"
+        disk_floor: "Free disk space floor (MB)"
         status:
           withdrawn: "Withdrawn"
           draft: "Draft"
@@ -332,6 +337,22 @@ en:
       quota_full: "Not enough room in the game's quota: %{left} MB left of %{quota} MB"
       instance_full: "The server has run out of room for files"
       disk_full: "The server disk is low on space, uploads are temporarily unavailable"
+      uploaded: "Files uploaded: %{count}"
+    index:
+      title: "Files for the game “%{game}”"
+      title_short: "Files"
+      quota: "%{used} MB of %{quota} MB used"
+      unused: "not used"
+      delete: "Delete"
+      deleted: "File deleted"
+      type_the_filename: "The game is running. To delete the file, type its name: %{filename}"
+      upload: "Upload"
+      limits: "Up to %{max} MB per file, no more than %{count} files at a time"
+    table:
+      name: "File name"
+      size: "Size"
+      used_in: "Used in"
+      hint: "hint"
   options:
     index:
       title: "Answer options for task"
@@ -771,6 +792,20 @@ en:
       password_label: "Password"
       submit: "Log in"
   activerecord:
+    # human_attribute_name overrides -- see the matching comment in ru.yml.
+    # Kept for ru/en key parity (spec/i18n_spec.rb); English's default
+    # humanized names already read fine, so these mostly restate them.
+    attributes:
+      file_attachment:
+        # "Object", not the default humanisation "Attachable": that is the
+        # polymorphic association's internal name, and the thing it points at
+        # is a level or a hint. Matches ru.yml's "Объект".
+        attachable: "Object"
+        game_file: "File"
+      game_file:
+        game: "Game"
+        filename: "Filename"
+        content_type: "Content type"
     errors:
       messages:
         blank: "can't be blank"
@@ -783,6 +818,14 @@ en:
             value:
               blank: "You didn't enter an answer code"
               taken: "That code is already used in this task"
+        file_attachment:
+          attributes:
+            attachable:
+              blank: "is not specified"
+              inclusion: "belongs to a different game"
+            game_file:
+              blank: "is not selected"
+              inclusion: "belongs to a different game"
         game:
           attributes:
             name:
@@ -811,6 +854,15 @@ en:
               blank: "You didn't select a game"
             team_id:
               blank: "You didn't specify a team"
+        game_file:
+          attributes:
+            content_type:
+              blank: "could not be determined"
+            filename:
+              blank: "is not specified"
+              taken: "is already used in this game"
+            game:
+              blank: "is not selected"
         invitation:
           attributes:
             for_user:

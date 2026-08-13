@@ -131,6 +131,11 @@ be:
         all_games: "Усе гульні"
         all_teams: "Усе каманды"
         audit_log: "Журнал дзеянняў"
+        storage: "Сховішча"
+        storage_used: "Занята (МБ)"
+        storage_cap: "Агульны ліміт на сервер (МБ)"
+        disk_free: "Вольна на дыску (МБ)"
+        disk_floor: "Незніжальны астатак на дыску (МБ)"
         status:
           withdrawn: "Знята з публікацыі"
           draft: "Чарнавік"
@@ -351,6 +356,22 @@ be:
       quota_full: "Не хапае месца ў квоце гульні: засталося %{left} МБ з %{quota} МБ"
       instance_full: "На серверы скончылася месца для файлаў"
       disk_full: "На дыску сервера мала месца, загрузка часова недаступная"
+      uploaded: "Загружана файлаў: %{count}"
+    index:
+      title: "Файлы гульні «%{game}»"
+      title_short: "Файлы"
+      quota: "Занята %{used} МБ з %{quota} МБ"
+      unused: "не выкарыстоўваецца"
+      delete: "Выдаліць"
+      deleted: "Файл выдалены"
+      type_the_filename: "Гульня ідзе. Каб выдаліць файл, увядзіце яго імя: %{filename}"
+      upload: "Загрузіць"
+      limits: "Да %{max} МБ на файл, не больш за %{count} файлаў за раз"
+    table:
+      name: "Імя файла"
+      size: "Памер"
+      used_in: "Дзе выкарыстоўваецца"
+      hint: "падказка"
   options:
     index:
       title: "Варыянты адказу для задання"
@@ -790,6 +811,14 @@ be:
       password_label: "Пароль"
       submit: "Увайсці"
   activerecord:
+    attributes:
+      file_attachment:
+        attachable: "Аб'ект"
+        game_file: "Файл"
+      game_file:
+        game: "Гульня"
+        filename: "Імя файла"
+        content_type: "Тып файла"
     errors:
       messages:
         blank: "не можа быць пустым"
@@ -802,6 +831,14 @@ be:
             value:
               blank: "Вы не ўвялі варыянт кода"
               taken: "Такі код ужо ёсць у заданні"
+        file_attachment:
+          attributes:
+            attachable:
+              blank: "не ўказаны"
+              inclusion: "належыць іншай гульні"
+            game_file:
+              blank: "не выбраны"
+              inclusion: "належыць іншай гульні"
         game:
           attributes:
             name:
@@ -830,6 +867,15 @@ be:
               blank: "Вы не выбралі гульню"
             team_id:
               blank: "Вы не ўказалі каманду"
+        game_file:
+          attributes:
+            content_type:
+              blank: "не вызначаны"
+            filename:
+              blank: "не ўказана"
+              taken: "ужо выкарыстоўваецца ў гэтай гульні"
+            game:
+              blank: "не выбрана"
         invitation:
           attributes:
             for_user:

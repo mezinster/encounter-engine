@@ -17,6 +17,20 @@ jobs:
       - name: Install bundler
         run: gem install bundler --no-document
 
+      # Same step, same reason, as the RSpec job below — and it is needed HERE
+      # for a reason that is easy to miss: this job also runs in
+      # container: ruby:3.3.12, a Debian image with no libvips, and the
+      # attachments Explorer scenarios drive a real upload through
+      # GameFileUpload, which requires ruby-vips at load time. Every scenario
+      # that uploads dies with "Could not open library 'libvips.so.42'" without
+      # it. The Cucumber job needed no such step until the day a feature file
+      # first exercised the upload path, so its absence looked deliberate right
+      # up to the moment it wasn't.
+      - name: Install libvips (the upload scenarios drive real image processing)
+        run: |
+          apt-get update -qq
+          apt-get install --no-install-recommends -y libvips42 libheif1
+
       - name: Cache gems
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -33,10 +47,13 @@ jobs:
       - name: Prepare test database
         run: bin/rails db:test:prepare
 
-      # The authoritative suite: features/**/*.feature is the contract this
-      # port was validated against, byte-identical to what the Merb app
-      # passed. 234 scenarios covering signup, teams, invitations, game
-      # creation, levels, hints, the game-passing loop and i18n.
+      # The authoritative suite. features/**/*.feature holds two things that
+      # must not be conflated: the INHERITED contract — 232 scenarios / 2342
+      # steps, byte-identical to what the Merb app passed, covering signup,
+      # teams, invitations, game creation, levels, hints, the game-passing loop
+      # and i18n — and port-authored feature files added by ordinary work since.
+      # A rising total is not evidence the contract held; see CLAUDE.md for how
+      # to measure the inherited set on its own.
       - name: Cucumber
         run: bundle exec cucumber --format progress
 

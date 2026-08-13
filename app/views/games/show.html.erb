@@ -103,6 +103,7 @@
       the one the author meant to press. %>
   <div class="game-control">
     <%= link_to t("games.show.edit_link"), edit_game_path(@game), class: "btn" if ! @game.started? %>
+    <%= link_to t("game_files.index.title_short"), game_game_files_path(@game), class: "btn" %>
   </div>
 
   <p class="danger-row">

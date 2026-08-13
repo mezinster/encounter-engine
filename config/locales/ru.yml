@@ -112,6 +112,11 @@ ru:
         all_games: "Все игры"
         all_teams: "Все команды"
         audit_log: "Журнал действий"
+        storage: "Хранилище"
+        storage_used: "Занято (МБ)"
+        storage_cap: "Общий лимит на сервер (МБ)"
+        disk_free: "Свободно на диске (МБ)"
+        disk_floor: "Неснижаемый остаток на диске (МБ)"
         status:
           withdrawn: "Снята с публикации"
           draft: "Черновик"
@@ -332,6 +337,25 @@ ru:
       quota_full: "Не хватает места в квоте игры: осталось %{left} МБ из %{quota} МБ"
       instance_full: "На сервере закончилось место для файлов"
       disk_full: "На диске сервера мало места, загрузка временно недоступна"
+      # A count, not a filename. Turkish and Georgian would have to put a case
+      # suffix on an interpolated name (see the header comments in tr.yml and
+      # ka.yml); a number needs none in any of the seven.
+      uploaded: "Загружено файлов: %{count}"
+    index:
+      title: "Файлы игры «%{game}»"
+      title_short: "Файлы"
+      quota: "Занято %{used} МБ из %{quota} МБ"
+      unused: "не используется"
+      delete: "Удалить"
+      deleted: "Файл удалён"
+      type_the_filename: "Игра идёт. Чтобы удалить файл, введите его имя: %{filename}"
+      upload: "Загрузить"
+      limits: "До %{max} МБ на файл, не больше %{count} файлов за раз"
+    table:
+      name: "Имя файла"
+      size: "Размер"
+      used_in: "Где используется"
+      hint: "подсказка"
   options:
     index:
       title: "Варианты ответа для задания"
@@ -785,6 +809,21 @@ ru:
       password_label: "Пароль"
       submit: "Войти"
   activerecord:
+    # human_attribute_name overrides. Rails' full_message concatenates this
+    # noun with an errors.models.*.attributes.*.blank message below as
+    # "%{attribute} %{message}" (see error_messages_for,
+    # app/helpers/application_helper.rb), so each blank message here is
+    # written as a short predicate that AGREES IN GENDER with the noun it
+    # follows, not a standalone sentence -- "Игра" is feminine, "Файл" is
+    # masculine, and Russian predicate participles inflect for that.
+    attributes:
+      file_attachment:
+        attachable: "Объект"
+        game_file: "Файл"
+      game_file:
+        game: "Игра"
+        filename: "Имя файла"
+        content_type: "Тип файла"
     errors:
       messages:
         blank: "не может быть пустым"
@@ -797,6 +836,14 @@ ru:
             value:
               blank: "Вы не ввели вариант кода"
               taken: "Такой код уже есть в задании"
+        file_attachment:
+          attributes:
+            attachable:
+              blank: "не указан"
+              inclusion: "принадлежит другой игре"
+            game_file:
+              blank: "не выбран"
+              inclusion: "принадлежит другой игре"
         game:
           attributes:
             name:
@@ -825,6 +872,15 @@ ru:
               blank: "Вы не выбрали игру"
             team_id:
               blank: "Вы не указали команду"
+        game_file:
+          attributes:
+            content_type:
+              blank: "не определён"
+            filename:
+              blank: "не указано"
+              taken: "уже используется в этой игре"
+            game:
+              blank: "не выбрана"
         invitation:
           attributes:
             for_user:

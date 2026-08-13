@@ -135,6 +135,11 @@ ka:
         entries_by_status: "განაცხადები სტატუსის მიხედვით"
         all_games: "ყველა თამაში"
         all_teams: "ყველა გუნდი"
+        storage: "საცავი"
+        storage_used: "დაკავებულია (მბ)"
+        storage_cap: "საერთო ლიმიტი სერვერზე (მბ)"
+        disk_free: "თავისუფალია დისკზე (მბ)"
+        disk_floor: "დისკზე შენარჩუნებული თავისუფალი ადგილი (მბ)"
         status:
           withdrawn: "მოხსნილია გამოქვეყნებიდან"
           draft: "მონახაზი"
@@ -355,6 +360,29 @@ ka:
       quota_full: "თამაშის ლიმიტში საკმარისი ადგილი არ არის: დარჩენილია %{left} მბ %{quota} მბ-დან"
       instance_full: "სერვერზე ფაილებისთვის ადგილი ამოიწურა"
       disk_full: "სერვერის დისკზე ცოტა ადგილია დარჩენილი, ატვირთვა დროებით მიუწვდომელია"
+      # A numeral takes the singular noun in Georgian, and neither needs a case
+      # suffix here -- which is why the app interpolates a count, not a name.
+      uploaded: "ატვირთულია %{count} ფაილი"
+    # The genitive suffix goes on "თამაშის" (the game), never on %{game} --
+    # same rule as the other interpolated-name titles in this file (see the
+    # header comment).
+    index:
+      title: "თამაშის «%{game}» ფაილები"
+      title_short: "ფაილები"
+      quota: "გამოყენებულია %{used} მბ %{quota} მბ-დან"
+      unused: "არ გამოიყენება"
+      delete: "წაშლა"
+      deleted: "ფაილი წაშლილია"
+      # No suffix on %{filename} -- the value is simply presented after the
+      # colon, the same shape ru/en use, so nothing needs reworking here.
+      type_the_filename: "თამაში მიმდინარეობს. ფაილის წასაშლელად შეიყვანეთ მისი სახელი: %{filename}"
+      upload: "ატვირთვა"
+      limits: "თითო ფაილზე მაქსიმუმ %{max} მბ, ერთდროულად მაქსიმუმ %{count} ფაილი"
+    table:
+      name: "ფაილის სახელი"
+      size: "ზომა"
+      used_in: "სად გამოიყენება"
+      hint: "მინიშნება"
   options:
     index:
       title: "პასუხის ვარიანტები დავალებისთვის"
@@ -815,6 +843,14 @@ ka:
       password_label: "პაროლი"
       submit: "შესვლა"
   activerecord:
+    attributes:
+      file_attachment:
+        attachable: "ობიექტი"
+        game_file: "ფაილი"
+      game_file:
+        game: "თამაში"
+        filename: "ფაილის სახელი"
+        content_type: "ფაილის ტიპი"
     errors:
       messages:
         blank: "არ შეიძლება იყოს ცარიელი"
@@ -827,6 +863,14 @@ ka:
             value:
               blank: "თქვენ არ შეიყვანეთ კოდის ვარიანტი"
               taken: "ასეთი კოდი უკვე არის დავალებაში"
+        file_attachment:
+          attributes:
+            attachable:
+              blank: "არ არის მითითებული"
+              inclusion: "სხვა თამაშს ეკუთვნის"
+            game_file:
+              blank: "არ არის არჩეული"
+              inclusion: "სხვა თამაშს ეკუთვნის"
         game:
           attributes:
             name:
@@ -855,6 +899,15 @@ ka:
               blank: "თქვენ არ აირჩიეთ თამაში"
             team_id:
               blank: "თქვენ არ მიუთითეთ გუნდი"
+        game_file:
+          attributes:
+            content_type:
+              blank: "ვერ დადგინდა"
+            filename:
+              blank: "არ არის მითითებული"
+              taken: "უკვე გამოიყენება ამ თამაშში"
+            game:
+              blank: "არ არის არჩეული"
         invitation:
           attributes:
             for_user:

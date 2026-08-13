@@ -185,4 +185,34 @@ module ApplicationHelper
     rule = COUNTDOWN_PLURAL_RULES.fetch(locale.to_sym, :one_other)
     COUNTDOWN_PLURAL_FUNCTIONS.fetch(rule).html_safe
   end
+
+  # "Уровень 3" or "Ур. 3 → подсказка 2". Returns nil for an attachment whose
+  # owner has been destroyed, so a stale row renders as nothing rather than
+  # raising on a live page.
+  def attachment_place(attachment)
+    case attachment.attachable
+    when Level then attachment.attachable.name
+    when Hint  then "#{attachment.attachable.level&.name} → #{t("game_files.table.hint")}"
+    end
+  end
+
+  # The quota bar's fill, as a whole-number percentage, clamped to 100.
+  #
+  # A zero quota is NOT hypothetical: Setting's own comment calls zero the
+  # documented "off" switch an operator reaches for during an incident, the
+  # validation is greater_than_or_equal_to: 0, and the key sits on the admin
+  # settings page. Written inline in the view as
+  # `[ (used * 100.0 / quota).round, 100 ].min`, zero produced NaN.round with
+  # no files and Infinity.round with any -- BOTH raise FloatDomainError, and
+  # they took down the very page every author is redirected to after every
+  # upload and every delete. The upload path already degrades correctly at
+  # zero (it refuses with «осталось 0 МБ из 0 МБ»); only the page was broken.
+  #
+  # 100, not 0, is the honest answer at a zero quota: there is no room, so the
+  # bar is full. Reading it as empty would invite an author to keep trying.
+  def quota_bar_percentage(used_megabytes, quota_megabytes)
+    return 100 if quota_megabytes.to_i.zero?
+
+    [ (used_megabytes * 100.0 / quota_megabytes).round, 100 ].min
+  end
 end

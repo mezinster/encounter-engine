@@ -25,5 +25,19 @@ class Admin::DashboardController < ApplicationController
       :passings_interrupted => GamePassing.interrupted.count,
       :passings_in_progress => GamePassing.in_progress.count
     }
+
+    @storage_used_megabytes = GameFile.storage_used_everywhere / 1024 / 1024
+    @storage_cap_megabytes = Setting.integer("instance_cap_megabytes")
+    # GameFileUpload.storage_root, NOT Rails.root: the figure below it on this
+    # page is free_space_floor_megabytes, the threshold the upload guard
+    # compares against, and the guard measures the Active Storage service root.
+    # Rails.root here put two numbers side by side, labelled as if they were
+    # comparable, taken from two different filesystems. They resolve to the
+    # same device today, so the bug was invisible -- and stops being invisible
+    # the day /rails/storage becomes the separate partition config/storage.yml
+    # recommends, at which point this panel reads healthy while every upload is
+    # being refused.
+    @disk_free_megabytes = DiskSpace.available_megabytes(GameFileUpload.storage_root)
+    @disk_floor_megabytes = Setting.integer("free_space_floor_megabytes")
   end
 end

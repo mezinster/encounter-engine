@@ -136,6 +136,11 @@ pl:
         all_games: "Wszystkie gry"
         all_teams: "Wszystkie drużyny"
         audit_log: "Dziennik działań"
+        storage: "Magazyn"
+        storage_used: "Zajęte (MB)"
+        storage_cap: "Łączny limit serwera (MB)"
+        disk_free: "Wolne miejsce na dysku (MB)"
+        disk_floor: "Nienaruszalny zapas miejsca na dysku (MB)"
         status:
           withdrawn: "Wycofana z publikacji"
           draft: "Szkic"
@@ -356,6 +361,22 @@ pl:
       quota_full: "Za mało miejsca w limicie gry: pozostało %{left} MB z %{quota} MB"
       instance_full: "Na serwerze skończyło się miejsce na pliki"
       disk_full: "Na dysku serwera jest mało miejsca, przesyłanie jest tymczasowo niedostępne"
+      uploaded: "Przesłano plików: %{count}"
+    index:
+      title: "Pliki gry „%{game}”"
+      title_short: "Pliki"
+      quota: "Wykorzystano %{used} MB z %{quota} MB"
+      unused: "nie jest używany"
+      delete: "Usuń"
+      deleted: "Plik usunięty"
+      type_the_filename: "Gra trwa. Aby usunąć plik, wpisz jego nazwę: %{filename}"
+      upload: "Prześlij"
+      limits: "Do %{max} MB na plik, nie więcej niż %{count} plików naraz"
+    table:
+      name: "Nazwa pliku"
+      size: "Rozmiar"
+      used_in: "Gdzie jest używany"
+      hint: "podpowiedź"
   options:
     index:
       title: "Warianty odpowiedzi do zadania"
@@ -803,6 +824,14 @@ pl:
       password_label: "Hasło"
       submit: "Zaloguj się"
   activerecord:
+    attributes:
+      file_attachment:
+        attachable: "Obiekt"
+        game_file: "Plik"
+      game_file:
+        game: "Gra"
+        filename: "Nazwa pliku"
+        content_type: "Typ pliku"
     errors:
       messages:
         blank: "nie może być puste"
@@ -815,6 +844,14 @@ pl:
             value:
               blank: "Nie wpisano wariantu kodu"
               taken: "Taki kod już jest w zadaniu"
+        file_attachment:
+          attributes:
+            attachable:
+              blank: "nie wskazany"
+              inclusion: "należy do innej gry"
+            game_file:
+              blank: "nie wybrany"
+              inclusion: "należy do innej gry"
         game:
           attributes:
             name:
@@ -843,6 +880,15 @@ pl:
               blank: "Nie wybrano gry"
             team_id:
               blank: "Nie wskazano drużyny"
+        game_file:
+          attributes:
+            content_type:
+              blank: "nie określony"
+            filename:
+              blank: "nie podana"
+              taken: "jest już używana w tej grze"
+            game:
+              blank: "nie wybrana"
         invitation:
           attributes:
             for_user:

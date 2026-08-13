@@ -37,6 +37,26 @@
   <% end %>
 </div>
 
+<h2><%= t("admin.dashboard.show.storage") %></h2>
+<div class="stat-grid">
+  <div class="stat">
+    <div class="stat-value"><%= @storage_used_megabytes %></div>
+    <div class="stat-label"><%= t("admin.dashboard.show.storage_used") %></div>
+  </div>
+  <div class="stat">
+    <div class="stat-value"><%= @storage_cap_megabytes %></div>
+    <div class="stat-label"><%= t("admin.dashboard.show.storage_cap") %></div>
+  </div>
+  <div class="stat">
+    <div class="stat-value"><%= @disk_free_megabytes %></div>
+    <div class="stat-label"><%= t("admin.dashboard.show.disk_free") %></div>
+  </div>
+  <div class="stat">
+    <div class="stat-value"><%= @disk_floor_megabytes %></div>
+    <div class="stat-label"><%= t("admin.dashboard.show.disk_floor") %></div>
+  </div>
+</div>
+
 <p><%= link_to t("admin.dashboard.show.all_games"), admin_games_path %></p>
 <p><%= link_to t("admin.dashboard.show.all_teams"), admin_teams_path %></p>
 <p><%= link_to t("admin.dashboard.show.audit_log"), admin_audit_index_path %></p>

@@ -157,6 +157,11 @@ tr:
         all_games: "Tüm oyunlar"
         all_teams: "Tüm takımlar"
         audit_log: "İşlem günlüğü"
+        storage: "Depolama"
+        storage_used: "Kullanılan (MB)"
+        storage_cap: "Sunucu genelinde toplam sınır (MB)"
+        disk_free: "Diskte boş alan (MB)"
+        disk_floor: "Diskte korunacak minimum boş alan (MB)"
         status:
           withdrawn: "Yayından kaldırıldı"
           draft: "Taslak"
@@ -378,6 +383,27 @@ tr:
       quota_full: "Oyunun kotasında yeterli alan yok: %{quota} MB'nin %{left} MB'si kaldı"
       instance_full: "Sunucuda dosyalar için yer kalmadı"
       disk_full: "Sunucu diskinde az yer var, yükleme geçici olarak kullanılamıyor"
+      # "Number of uploaded files: N" -- a count carries no case suffix, which
+      # is why the app interpolates one here rather than a filename.
+      uploaded: "Yüklenen dosya sayısı: %{count}"
+    # The genitive suffix goes on "oyun", never on %{game}.
+    index:
+      title: "«%{game}» adlı oyunun dosyaları"
+      title_short: "Dosyalar"
+      quota: "%{quota} MB'nin %{used} MB'si kullanıldı"
+      unused: "kullanılmıyor"
+      delete: "Sil"
+      deleted: "Dosya silindi"
+      # %{filename} IS user-authored here, unlike the two lines above -- the
+      # case suffix goes on "dosya" (a common noun), never on the placeholder.
+      type_the_filename: "Oyun devam ediyor. Dosyayı silmek için dosyanın adını yazın: %{filename}"
+      upload: "Yükle"
+      limits: "Dosya başına en fazla %{max} MB, bir seferde en fazla %{count} dosya"
+    table:
+      name: "Dosya adı"
+      size: "Boyut"
+      used_in: "Nerede kullanılıyor"
+      hint: "ipucu"
   options:
     index:
       title: "Görev için cevap seçenekleri"
@@ -824,6 +850,14 @@ tr:
       password_label: "Parola"
       submit: "Giriş yap"
   activerecord:
+    attributes:
+      file_attachment:
+        attachable: "Nesne"
+        game_file: "Dosya"
+      game_file:
+        game: "Oyun"
+        filename: "Dosya adı"
+        content_type: "Dosya türü"
     errors:
       messages:
         blank: "boş olamaz"
@@ -836,6 +870,14 @@ tr:
             value:
               blank: "Kod seçeneğini girmediniz"
               taken: "Bu kod görevde zaten var"
+        file_attachment:
+          attributes:
+            attachable:
+              blank: "belirtilmedi"
+              inclusion: "başka bir oyuna ait"
+            game_file:
+              blank: "seçilmedi"
+              inclusion: "başka bir oyuna ait"
         game:
           attributes:
             name:
@@ -864,6 +906,15 @@ tr:
               blank: "Oyunu seçmediniz"
             team_id:
               blank: "Takımı belirtmediniz"
+        game_file:
+          attributes:
+            content_type:
+              blank: "belirlenemedi"
+            filename:
+              blank: "girilmedi"
+              taken: "bu oyunda zaten kullanılıyor"
+            game:
+              blank: "seçilmedi"
         invitation:
           attributes:
             for_user:

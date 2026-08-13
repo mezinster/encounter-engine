@@ -444,7 +444,31 @@ class Game < ApplicationRecord
 
 protected
 
+  # Drafts are exempt, for the reason #started? already gives twenty lines
+  # above: "the start date on an unpublished game is a plan, not an event."
+  # A draft ages past its own start date with no action from anyone, so that
+  # state is reachable and tolerated either way -- this validation only ever
+  # stopped an author reaching it DELIBERATELY, while the clock reached it
+  # for them.
+  #
+  # Publication is still gated. `draft?` reads the value being saved, so a
+  # game going from draft to published (is_draft true -> false) is not a
+  # draft by the time this runs, and a past start date is refused there --
+  # which is the moment that matters, and the same moment
+  # declared_locales_are_translated_before_publication guards.
+  #
+  # Reported from production 2026-08-13: an author could not leave test mode.
+  # start_test parks the real start in test_date and sets starts_at to now;
+  # finish_test swaps them back AND clears author_finished_at, the only other
+  # thing suppressing this check -- so once the parked date had passed, the
+  # save was refused and the game was stuck in testing permanently. The
+  # parked date sits still while the clock moves, so the longer the test ran
+  # the likelier it got, and test_date is in no permitted-params list, so
+  # nothing the author could type would fix it. finish_test sets is_draft
+  # first, which is what makes this exemption cover it.
   def game_starts_in_the_future
+    return if self.draft?
+
     if self.author_finished_at.nil? and self.starts_at and self.starts_at < Time.now
       self.errors.add(:starts_at, :in_the_past)
     end
@@ -457,7 +481,18 @@ protected
       end
     end
   end
+  # Exempt for drafts on the same reading as game_starts_in_the_future above:
+  # an unpublished game's registration deadline is a plan too, it ages past
+  # on its own, and publication still refuses a stale one.
+  #
+  # Not reachable through finish_test, which never restores a deadline
+  # (start_test nils it and finish_test leaves it nil) -- included because
+  # splitting the pair would leave an author able to save a draft whose start
+  # has slipped but not one whose deadline has, which is a distinction with
+  # no reason behind it.
   def deadline_is_in_future
+    return if self.draft?
+
     if self.author_finished_at.nil? and self.registration_deadline and self.registration_deadline < Time.now
         self.errors.add(:registration_deadline, :in_the_past)
     end

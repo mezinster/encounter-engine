@@ -16,8 +16,12 @@ describe "a draft whose start date has passed", type: :request do
   let(:author)     { create_user }
   let(:superadmin) { u = create_user; u.update!(:is_superadmin => true); u }
 
-  # The only way into this state is the clock moving, which is why the column
-  # is written directly -- game_starts_in_the_future refuses it on save.
+  # Written directly rather than through a normal save. That used to be the
+  # only way in at all -- game_starts_in_the_future refused a past start on
+  # save -- and since 2026-08-13 drafts are exempt from that check, so an
+  # ordinary save would work too. Kept as a direct write because "the clock
+  # moved" is what this spec is reproducing, and arranging it by the same
+  # route the app uses would blur arrangement into behaviour.
   #
   # Through set_game_schedule! rather than game.update_column: starts_at now
   # lives on the game's run, and update_column writes the game's own column,
@@ -70,6 +74,21 @@ describe "a draft whose start date has passed", type: :request do
       }
 
       expect(game.reload.draft?).to be_falsey
+    end
+
+    # The counterpart, and the property that makes the 2026-08-13 draft
+    # exemption safe rather than a hole: a draft may CARRY a past start date,
+    # but it may not be PUBLISHED with one. game_starts_in_the_future reads
+    # the value being saved, so a game going draft -> published is not a draft
+    # by the time the check runs.
+    #
+    # Without this, the exemption would silently let a game go live already
+    # started, which is the state the validation existed to prevent in the
+    # first place.
+    it "cannot publish it WITHOUT moving the start date" do
+      patch game_path(game), :params => { :game => { :is_draft => "0" } }
+
+      expect(game.reload.draft?).to be_truthy
     end
   end
 

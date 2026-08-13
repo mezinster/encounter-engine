@@ -724,8 +724,13 @@ tr:
       answer_label: "Kod"
       submit: "Gönder!"
       exit_game: "Yarıştan çekil"
-      attachments_label: "Ekli dosyalar"
       finish_testing: "Testi bitir"
+      # aria-label on shared/_attachment_strip's container -- announced once
+      # per strip by a screen reader, ahead of the photos/links it contains.
+      # A static noun phrase, no interpolation, so none of the
+      # Turkish/Georgian case-suffix concerns elsewhere in this file apply
+      # to it.
+      attachments_label: "Ekli dosyalar"
     show_results:
       congrats: "Tebrikler, oyunu bitirdiniz!"
       place: "Sıra"

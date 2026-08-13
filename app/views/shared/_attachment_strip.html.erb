@@ -39,7 +39,11 @@
   visible_files = files.select { |file| GameFileAccess.new(current_user, file).permitted? }
 %>
 <% if visible_files.present? %>
-  <div class="attachment-strip" aria-label="<%= t("game_passings.show_current_level.attachments_label") %>">
+  <%# role="group" is not decorative: a bare <div> has the implicit "generic"
+      role, and ARIA-in-HTML prohibits naming a generic element -- assistive
+      tech drops aria-label on one entirely. Without this, the whole
+      seven-locale attachments_label effort above reaches no user. %>
+  <div class="attachment-strip" role="group" aria-label="<%= t("game_passings.show_current_level.attachments_label") %>">
     <% visible_files.each do |file| %>
       <%# existing_web_variant, deliberately NOT web_variant -- the latter
           GENERATES the variant on a miss, and a render path that allocates

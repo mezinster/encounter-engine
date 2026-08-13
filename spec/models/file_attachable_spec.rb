@@ -80,12 +80,30 @@ describe FileAttachable do
     expect(hint.file_attachments.reload.map(&:game_file_id)).to eq([ @a.id ])
   end
 
+  # attached_files_for has two branches (see the method's own comment):
+  # read the already-loaded file_attachments array in Ruby when the caller
+  # preloaded it (the play screen, game_passings_controller.rb -- the branch
+  # PRODUCTION actually takes for this method), or fall back to the original
+  # .for_locale(...).includes(:game_file) query when nothing was preloaded
+  # (every OTHER caller: the picker, and @level itself here, whose
+  # file_attachments association is never eager-loaded by anything above).
+  # Both examples below are parameterised over the two, so neither branch is
+  # asserted only by "does not raise": swapping the loaded branch's
+  # `file_attachments.select { ... }` for a bare `file_attachments.to_a` (no
+  # locale filter at all) passes the fallback half and fails the preloaded
+  # half.
+  def preloaded(level)
+    Level.includes(:file_attachments => :game_file).find(level.id)
+  end
+
   it "returns neutral plus the player's language, in position order" do
     @level.replace_attached_files([ @a.id ], nil)
     @level.replace_attached_files([ @b.id ], "en")
 
-    expect(@level.attached_files_for("en").map(&:id)).to eq([ @a.id, @b.id ])
-    expect(@level.attached_files_for("ru").map(&:id)).to eq([ @a.id ])
+    [ @level, preloaded(@level) ].each do |level|
+      expect(level.attached_files_for("en").map(&:id)).to eq([ @a.id, @b.id ])
+      expect(level.attached_files_for("ru").map(&:id)).to eq([ @a.id ])
+    end
   end
 
   it "puts the whole neutral strip before the whole language strip, deterministically" do
@@ -101,7 +119,9 @@ describe FileAttachable do
     @level.replace_attached_files([ @a.id, extra.id ], nil) # only extra is new -> deterministically position 2
     @level.replace_attached_files([ @b.id ], "en")
 
-    expect(@level.attached_files_for("en").map(&:id)).to eq([ @a.id, extra.id, @b.id ])
+    [ @level, preloaded(@level) ].each do |level|
+      expect(level.attached_files_for("en").map(&:id)).to eq([ @a.id, extra.id, @b.id ])
+    end
   end
 
   describe "locale handling on the way in, as defensive as file-id handling" do

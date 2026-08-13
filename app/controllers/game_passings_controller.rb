@@ -330,9 +330,9 @@ class GamePassingsController < ApplicationController
     # question and another per option, which is exactly what
     # spec/requests/translated_level_spec.rb's query-count guard exists to catch.
     #
-    # :file_attachments => { :game_file => { :game => :runs } }, added for
-    # the attachment strip (Task 3), on both the level and each hint. Three
-    # things this feeds, all otherwise N+1 across hints:
+    # :file_attachments => { :game_file => [...] }, added for the attachment
+    # strip (Task 3), on both the level and each hint. Four things this
+    # feeds, all otherwise N+1 across hints and across files:
     #   1. FileAttachable#attached_files_for reads the loaded
     #      `file_attachments` array in Ruby instead of re-querying, when it
     #      finds one preloaded -- see that method's comment. Without this,
@@ -348,12 +348,30 @@ class GamePassingsController < ApplicationController
     #      queries file_attachments+attachable and passing_for(team) itself
     #      on every call (its own class comment explains why: `.includes`
     #      called on an association always discards a preload, so this is
-    #      NOT avoidable from the caller's side) -- see task-3-report.md for
-    #      the measured total.
+    #      NOT avoidable from the caller's side).
+    #   4. GameFile#existing_web_variant's `file.attached?` and
+    #      `file.variant(...).image` -- Attached::One#attached? reads
+    #      `file_attachment`, and ActiveStorage::VariantWithRecord#record
+    #      (private) checks `blob.variant_records.loaded?` and, when true,
+    #      resolves via Ruby #find instead of #find_by -- see that method in
+    #      the activestorage gem. `:file_attachment => { :blob =>
+    #      { :variant_records => { :image_attachment => :blob } } }` is what
+    #      makes both loaded: the attachment itself, its blob, that blob's
+    #      variant records, and each variant record's own image attachment
+    #      (+ blob), which is what url/key generation for the <img> reads.
+    #      Measured over real HTTP (task-3-report.md, Important 3 follow-up):
+    #      10 files on one level went from 103 to 68 queries; an 11-file page
+    #      (10 hints x 1 file + 1 level file) went from 153 to 114.
     Level.includes(:game, :content_translations,
-                   :file_attachments => { :game_file => { :game => :runs } },
+                   :file_attachments => { :game_file => [
+                     { :game => :runs },
+                     { :file_attachment => { :blob => { :variant_records => { :image_attachment => :blob } } } }
+                   ] },
                    :hints => [ :content_translations,
-                               { :file_attachments => { :game_file => { :game => :runs } } } ],
+                               { :file_attachments => { :game_file => [
+                                 { :game => :runs },
+                                 { :file_attachment => { :blob => { :variant_records => { :image_attachment => :blob } } } }
+                               ] } } ],
                    :questions => [ :content_translations,
                                    { :options => :content_translations } ]).find(level.id)
   end

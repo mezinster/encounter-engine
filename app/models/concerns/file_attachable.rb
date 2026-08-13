@@ -94,6 +94,22 @@ module FileAttachable
   # via the shared _form partial -- because a has_many association on a
   # not-yet-persisted owner starts as an empty in-memory collection rather
   # than issuing a query.
+  #
+  # COUPLING WITH attached_files_for, worth knowing before combining the two
+  # in one request: `.select { ... }` here is Enumerable#select (a block was
+  # given), which loads the WHOLE file_attachments association into memory
+  # as a side effect -- `file_attachments.loaded?` is true afterwards. If
+  # something later in the same request then calls attached_files_for, it
+  # takes that method's PRELOADED branch (reads the now-loaded array in
+  # Ruby) rather than its query-based fallback, exactly as if the caller had
+  # preloaded on purpose. That is not a correctness problem -- the preloaded
+  # branch's filter-and-sort gives the same result either way -- but it is a
+  # performance one if :game_file was not ALSO preloaded: `.map(&:game_file)`
+  # on an unpreloaded loaded association is one query per attachment, worse
+  # than the fallback branch's flat two. No page does both today (this picker
+  # never renders the player-facing strip in the same request), so nothing
+  # observes it -- but a future caller that does both without preloading
+  # :game_file would get a silent N+1 rather than a wrong answer.
   def attached_file_ids_in_slot(locale)
     slot = locale.to_s.strip.presence
     file_attachments.select { |a| a.locale == slot }.map(&:game_file_id)

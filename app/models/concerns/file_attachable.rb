@@ -17,8 +17,26 @@ module FileAttachable
   # hand-edited form could post whitespace padding or a locale this app does
   # not serve. `.strip.presence` folds "" and "  " onto nil (so padding
   # doesn't create a THIRD slot that `for_locale` can never match), and an
-  # unserved locale is refused the same way a foreign file id is refused
-  # below: no slot is touched and nothing raises.
+  # unserved locale is refused OUTRIGHT: the guard clause below returns
+  # before `wanted` is even computed, so no slot is touched and nothing
+  # raises.
+  #
+  # A foreign file id is NOT refused the same way, despite reading similarly
+  # at a glance -- fixed here after a review caught this comment claiming
+  # otherwise. `wanted` (below) silently drops any id `game.game_files`
+  # doesn't own, same as it drops any id that doesn't exist at all -- so a
+  # submission containing ONLY foreign ids resolves to `wanted = []`, and
+  # `where.not(:game_file_id => [])` is `1=1`: every existing row in the
+  # slot is destroyed. That is the same "clear on empty" behaviour a
+  # genuinely empty submission gets (see "clears the slot when every box is
+  # unticked" in attachment_picker_spec.rb) -- correct and intentional, since
+  # this method cannot distinguish "nothing was picked" from "everything
+  # picked turned out to be unowned" -- but it is a WIPE, not a no-op.
+  # Unreachable from the shipped picker (its checkboxes only ever list the
+  # owning game's own files), so this was a comment bug, not a behaviour
+  # bug -- see "clears the slot when the only ids submitted belong to
+  # another game's library" in attachment_picker_spec.rb for what it looks
+  # like when triggered directly.
   def replace_attached_files(game_file_ids, locale)
     slot = locale.to_s.strip.presence
     return if slot && !I18n.available_locales.map(&:to_s).include?(slot)
@@ -26,6 +44,9 @@ module FileAttachable
     game = owning_game
     return if game.nil?
 
+    # Ids that don't belong to `game` (or don't exist at all) are silently
+    # dropped here, not refused -- see this method's class comment above for
+    # what that means when EVERY submitted id is foreign.
     wanted = game.game_files.where(:id => Array(game_file_ids)).pluck(:id)
 
     transaction do

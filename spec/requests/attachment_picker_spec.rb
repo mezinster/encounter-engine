@@ -108,7 +108,12 @@ describe "the level/hint attachment picker", :type => :request do
       expect(level.file_attachments.reload).to be_empty
     end
 
-    it "refuses a file id from another game's library, without raising" do
+    it "clears the slot when the only ids submitted belong to another game's library, without raising -- same as an empty submission (see FileAttachable#replace_attached_files)" do
+      # Attach a real file FIRST: a slot that starts empty can't tell "refused,
+      # untouched" from "wiped to empty" -- both look identical afterwards.
+      # Starting non-empty is what makes the assertion below actually prove
+      # the foreign-only submission is treated as an empty one, not a no-op.
+      level.replace_attached_files([ a.id ], nil)
       foreign = create_game_file(:game => create_game)
 
       expect {

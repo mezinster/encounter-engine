@@ -216,25 +216,94 @@ describe GameFileAccess do
         file = GameFile.find(@file.id)
         expect(GameFileAccess.new(@team_user, file).permitted?).to be true
       end
+
+      describe "naming the run explicitly, via :run (Phase 3B: a past-run log/results screen)" do
+        # Same fixture as the two specs above: @passing (run 1, this describe
+        # block's own outer before(:each)) is FINISHED; @passing2 (run 2,
+        # this describe block's before(:each)) sits on @l1. This is exactly
+        # "a team that finished run 1 and is on level 1 of run 2" from the
+        # design's §4 resolution.
+        it "naming run 1 permits run 1's passed levels" do
+          # @l3 was never reached in EITHER run's current_level -- only run
+          # 1's `finished?` (every level visible) explains a permit here, so
+          # this proves the answer really came from run 1's own passing.
+          attach!(@l3)
+          run1 = @passing.game_run
+
+          expect(GameFileAccess.new(@team_user, @file, :run => run1).permitted?).to be true
+        end
+
+        it "naming run 2 permits only its own current level" do
+          attach!(@l1)
+
+          expect(GameFileAccess.new(@team_user, @file, :run => @run2).permitted?).to be true
+        end
+
+        it "naming run 2 does NOT permit a level run 2 has not reached, even though run 1 (finished) would permit it" do
+          attach!(@l3)
+
+          expect(GameFileAccess.new(@team_user, @file, :run => @run2).permitted?).to be false
+        end
+
+        it "naming a run the team has no passing in permits nothing" do
+          run3 = create_next_run(@game) # opened; team never played it
+          attach!(@l1)
+
+          expect(GameFileAccess.new(@team_user, @file, :run => run3).permitted?).to be false
+        end
+
+        it "omitting the run keeps today's current-run behaviour (falls back to game.current_run, i.e. run 2)" do
+          attach!(@l1)
+
+          expect(GameFileAccess.new(@team_user, @file).permitted?).to be true
+        end
+      end
     end
 
-    it "REFUSES a file on a level the team already passed, once a LATER run has opened and the team has no passing there yet" do
-      # KNOWN, DELIBERATE LIMITATION -- see the comment on level_visible? and
-      # the design doc's "Open question for Phase 3B" (docs/superpowers/specs/
-      # 2026-08-12-level-and-hint-attachments-design.md §4). passing_for_game
-      # resolves ONLY game.current_run's passing, so once run 2 opens, this
-      # team's finished run-1 passing is no longer "the" passing for this
-      # game -- every attachment on the run-1 log 404s, permanently, even
-      # though the team demonstrably saw @l1 and its file during run 1.
-      #
-      # This is pinned, not just documented, so a change to this behaviour is
-      # a decision, not an accident: resolving across every run instead would
-      # re-open the exact hole the two specs above this one exist to guard
-      # against (a finished passing in an EARLIER run authorising content in
-      # a LATER one). A false deny is the safe direction to be wrong in until
-      # Phase 3B can resolve the SPECIFIC run a log/results screen is
-      # already showing, instead of asking this policy to infer "current"
-      # from the team alone.
+    describe "the run named via :run must answer from ITS OWN passing, never a different run's progress" do
+      # This is the guard that keeps the Critical closed: naming a run must
+      # never permit a level the team never reached IN THAT RUN, even when
+      # some OTHER run the team also played got further. Deliberately the
+      # opposite shape from the finished-run-1 fixture above (where "every
+      # level" is the CORRECT answer for a finished run) -- here run 1 is
+      # still in progress, genuinely short of @l3, while run 2 is already
+      # past where run 1 ever got.
+      before(:each) do
+        # @passing (outer before(:each)) is run 1, current level @l2 --
+        # NOT finished, so it has demonstrably not reached @l3.
+        @run1 = @passing.game_run
+        @run2 = create_next_run(@game)
+        # Run 2's passing is AHEAD of anywhere run 1's passing ever reached.
+        @passing2 = create_game_passing(:level => @l3, :team => @team, :game_run => @run2)
+      end
+
+      it "naming run 1 permits a level within what run 1's OWN passing reached" do
+        attach!(@l1)
+        expect(GameFileAccess.new(@team_user, @file, :run => @run1).permitted?).to be true
+      end
+
+      it "naming run 1 must NOT permit a level it never reached in run 1, even though run 2 (a different run) reached it" do
+        attach!(@l3)
+        expect(GameFileAccess.new(@team_user, @file, :run => @run1).permitted?).to be false
+      end
+
+      it "naming run 2 permits its own current level" do
+        attach!(@l3)
+        expect(GameFileAccess.new(@team_user, @file, :run => @run2).permitted?).to be true
+      end
+    end
+
+    it "REFUSES a file on a level the team already passed, once a LATER run has opened and the team has no passing there yet, WHEN NO RUN IS NAMED" do
+      # This is the "omitting the run keeps today's current-run behaviour"
+      # contract, pinned on its own: passing_for_game with no :run still
+      # falls back to game.current_run, so a team whose ONLY passing is a
+      # finished run 1 gets refused the moment run 2 opens and it has no
+      # passing there yet -- exactly Phase 3A's shipped behaviour. The false
+      # deny this test pins is no longer permanent, though: Phase 3B lets the
+      # SAME screen that is showing run 1 pass :run => run_1 explicitly (see
+      # "naming the run explicitly" above), which is how the false deny
+      # actually gets fixed -- by naming the run, not by changing what
+      # omitting it means.
       attach!(@l1)
       @passing.update!(:current_level => nil, :finished_at => Time.now) # run 1, genuinely finished
       create_next_run(@game) # run 2 opens; team has no passing there yet

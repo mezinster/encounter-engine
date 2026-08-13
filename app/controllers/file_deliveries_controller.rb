@@ -49,12 +49,38 @@ class FileDeliveriesController < ApplicationController
     # permitted. A distinct status for any of them tells an id-enumerating
     # attacker which guesses were right.
     return head(:not_found) if file.nil?
-    return head(:not_found) unless GameFileAccess.new(current_user, file).permitted?
+    return head(:not_found) unless GameFileAccess.new(current_user, file, :run => requested_run(file)).permitted?
 
     deliver(file, params[:variant])
   end
 
   private
+
+  # Phase 3B: a past-run log/results screen (LogsController#find_run,
+  # GamePassingsController#find_run) already resolved which run it is
+  # showing from the SAME ?run=N shape, and links its attachments through
+  # here carrying it -- so this route authorises against that run's
+  # passing, not always game.current_run's. See GameFileAccess's :run
+  # parameter and its resolved_run/passing_for_game comments for what
+  # happens once it gets there: the team still has to actually HAVE a
+  # passing in the named run, so this parameter is never trusted on its
+  # own, only used to pick WHICH run gets asked.
+  #
+  # Scoped to file.game.runs, exactly like LogsController#find_run and
+  # GamePassingsController#find_run scope to @game.runs -- a run id from a
+  # different game can never reach GameFileAccess through this path.
+  #
+  # Blank/absent :run and an ordinal that names no run at all both resolve
+  # to nil here. GameFileAccess reads nil as "none was named" and falls
+  # back to game.current_run -- today's pre-3B behaviour -- so a bogus
+  # ordinal can never grant more than omitting :run entirely; it is never
+  # treated as "a real run the team has no passing in" (which is refused
+  # outright by GameFileAccess, not silently downgraded to "unspecified").
+  def requested_run(file)
+    return nil if params[:run].blank?
+
+    file.game.runs.find_by(:ordinal => params[:run].to_i)
+  end
 
   def deliver(file, variant)
     attachment = blob_for(file, variant)

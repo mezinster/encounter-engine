@@ -308,28 +308,50 @@ effect, earned the right to see, for no security benefit. `GameFileAccess#hint_v
 this as: any hint is visible once its level is a passed level, and only a *fired* hint is visible
 while the team is still on that level. `spec/models/game_file_access_spec.rb` pins both halves.
 
-**Open question for Phase 3B: attachments on a PAST run's log/results screen 404 once a later run
-opens.** `GameFileAccess#passing_for_game` resolves only `game.current_run.passing_for(team)` — the
-LIVE run. But `LogsController#find_run` and `GamePassingsController#find_run` both accept `?run=N`
-and deliberately serve a team's log or results from an *earlier* run too. So: a team finishes run
-1, the author opens run 2, and every attachment on the team's own run-1 log now 404s, permanently
-— `spec/models/game_file_access_spec.rb`, "REFUSES a file on a level the team already passed, once
-a LATER run has opened and the team has no passing there yet", pins this as the current, deliberate
-behaviour.
+**Resolved in Phase 3B: attachments on a PAST run's log/results screen no longer 404 once a later
+run opens.** Phase 3A shipped `GameFileAccess#passing_for_game` resolving only
+`game.current_run.passing_for(team)` — the LIVE run — so once a later run opened, every attachment
+on a team's own earlier-run log or results screen 404'd, permanently, even though the team
+genuinely earned that access. That was a known, deliberate false DENY, not a hole: the file library
+is per-GAME (see `GameFile`'s class comment) while progress is per-RUN, and authors edit content
+between runs, so resolving "the team's passing in this game" across every run instead would let a
+team that finished run 1 see run 2's still-unreached photographs — a real authorization hole this
+file had already had to close once (the "team with a passing in more than one run of the same
+game" specs exist for exactly that regression). Between a false deny and re-opening that hole, the
+false deny was the safe direction to be wrong in, so Phase 3A shipped it that way and left the
+decision to the phase that actually renders these screens.
 
-This is a false DENY, not a hole, and Phase 3A leaves it that way on purpose: the file library is
-per-GAME (see `GameFile`'s class comment) while progress is per-RUN, and authors edit content
-between runs — resolving "the team's passing in this game" across every run instead would let a
-team that finished run 1 see run 2's still-unreached photographs, which is a real authorization
-hole this file has already had to close once (the "team with a passing in more than one run of the
-same game" specs exist for exactly that regression). Between a false deny and re-opening that hole,
-the false deny is the safe direction to be wrong in, so Phase 3A ships with it.
+**The decision:** `GameFileAccess.new(user, game_file, run: nil)` takes an optional `GameRun`.
+`LogsController#find_run` and `GamePassingsController#find_run` already resolve `?run=N` into the
+exact run object a log/results screen is showing (`@run`); `FileDeliveriesController` accepts the
+same `?run=N` shape on the delivery route itself and resolves it, scoped to the file's own game
+(`file.game.runs.find_by(:ordinal => ...)`), before ever constructing a `GameFileAccess`. Passing
+that run in changes *which run's passing* answers the visibility question — `passing_for_game` asks
+`run.passing_for(team)` for whichever run was resolved (the named one, or `game.current_run` when
+none was given) instead of always asking `game.current_run`.
 
-Phase 3B is the phase that actually renders these past-run log/results screens, so it is the right
-place to decide with full context — e.g. by resolving the *specific* run the screen is already
-showing (the `?run=N`/`@run` the controller already found) rather than asking `GameFileAccess` to
-infer "current" from the team alone. The tension to resolve: per-game library, per-run progress,
-and content an author may have edited between runs.
+**Why this does not re-open the Critical.** The run parameter is never trusted on its own — naming
+a run only selects *which run gets asked*, and that run still has to answer with a passing that
+actually belongs to the requesting team. `GameRun#passing_for(team)` is inherently scoped to the
+named run: a team that never played run 2 gets `nil` back from `run_2.passing_for(team)`, refused
+exactly like a team with no live passing is refused today. There is no code path where naming run 1
+can read run 2's progress, or vice versa — each run answers only from its own passing, never from
+"whichever of the team's passings looks most current." Concretely: a team that finished run 1 and
+is mid-run-2 gets run 1's full (finished) level set when it names run 1, and only run 2's current
+level when it names run 2 — even if run 2 is a completely different shape (further along, or not,
+than run 1 ever got). A team naming a run it never played, or an ordinal that names no run at all,
+gets nothing beyond what omitting `?run=` already grants.
+
+**The tension this had to hold:** per-game library, per-run progress, and content an author may
+edit between runs. Resolving *the specific run already on screen* is what makes all three true at
+once — the library stays per-game (nothing here changes which `GameFile`s a `Level`/`Hint` points
+at), progress stays strictly per-run (a run only ever answers from its own passing), and a screen
+showing run 1 can never accidentally show run 2's edited content, because run 2's passing is never
+consulted for a request that named run 1. `spec/models/game_file_access_spec.rb` pins both directions
+explicitly — naming run 1 must not leak run 2's (further) progress, and naming run 2 must not fall
+back to run 1's (finished, therefore maximally permissive) passing — and a mutation that trusted the
+named run without checking the team's own passing in it failed five specs across the model and
+request suites, confirming the guard is load-bearing, not incidental.
 
 ### Response headers
 

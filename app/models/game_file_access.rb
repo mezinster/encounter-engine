@@ -9,9 +9,24 @@
 # whether a strip appears at all -- a view that renders <img> tags the
 # delivery route will 404 is worse than one that renders nothing.
 class GameFileAccess
-  def initialize(user, game_file)
+  # :run -- optional, a GameRun (never an id/ordinal: resolving one from a raw
+  # parameter is the CALLER's job, e.g. FileDeliveriesController#requested_run
+  # -- so this class only ever handles an object already scoped to a real
+  # row). Phase 3B: a past-run log/results screen already knows which run it
+  # is showing (LogsController#find_run / GamePassingsController#find_run),
+  # and passes it here so visibility is decided against THAT run's passing
+  # instead of always "current". nil (the default) keeps every pre-3B caller
+  # -- the live play screen, the delivery route with no ?run= -- working
+  # exactly as before: resolved_run below reads nil as "game.current_run".
+  #
+  # Passing a run object here is NOT the same as trusting it: see
+  # passing_for_game/resolved_run below. The run only ever gets to ask ITS
+  # OWN passing_for(team) -- if the team has none there, this denies exactly
+  # as it would for a team with no current-run passing.
+  def initialize(user, game_file, run: nil)
     @user = user
     @game_file = game_file
+    @run = run
   end
 
   def permitted?
@@ -53,19 +68,27 @@ class GameFileAccess
   # game before. GameRun#passing_for is the established lookup for "this
   # team's passing in this run" -- see the comment on GameRun#passing_for and
   # its other callers (GamePassingsController, GamePassingsHelper,
-  # InterventionsController). game.current_run autobuilds an unsaved run
-  # rather than returning nil (see its comment); an unsaved run has no
-  # persisted passings, so passing_for correctly answers nil there.
+  # InterventionsController).
+  #
+  # WHICH run: resolved_run below -- either the caller's explicit :run
+  # (Phase 3B, a past-run log/results screen) or, when none was given,
+  # game.current_run, same as before Phase 3B existed. game.current_run
+  # autobuilds an unsaved run rather than returning nil (see its comment); an
+  # unsaved run has no persisted passings, so passing_for correctly answers
+  # nil there.
   def passing_for_game
     return nil if game.nil?
 
     team = @user.team
     return nil if team.nil?
 
-    passing = game.current_run.passing_for(team)
+    run = resolved_run
+    return nil if run.nil?
+
+    passing = run.passing_for(team)
 
     # Belt and braces on the run lookup above. A passing reached through
-    # game.current_run should already belong to this game, so this can only
+    # a resolved run should already belong to this game, so this can only
     # fire on a corrupted row -- but the two Critical holes this file has
     # already shipped were BOTH "the right-looking lookup returned a passing
     # from somewhere else", and neither announced itself. The cost of
@@ -73,6 +96,28 @@ class GameFileAccess
     return nil unless passing&.game_id == game.id
 
     passing
+  end
+
+  # The run passing_for_game asks for ITS passing_for(team) -- never trusted
+  # past that. A caller-supplied @run (Phase 3B) still has to answer THIS
+  # team's own passing_for(team) query above; if the team has no passing in
+  # the named run, passing_for returns nil there exactly as game.current_run
+  # would for a team with no live passing, and permitted? denies. Naming a
+  # run is "which run may answer", never "grant regardless of whether this
+  # team actually played it".
+  #
+  # game_id re-check for the same reason passing_for_game re-checks its own
+  # result: an explicitly-passed run is exactly the kind of "looks correctly
+  # scoped" input the class's Critical-hole history (see passing_for_game's
+  # comment) warns about. In normal use @run is always resolved scoped to
+  # this game already (FileDeliveriesController#requested_run does
+  # `file.game.runs.find_by(...)`), so this can only fire on a caller that
+  # skipped that scoping -- defense in depth, not the primary guard.
+  def resolved_run
+    return game.current_run if @run.nil?
+    return nil unless @run.game_id == game.id
+
+    @run
   end
 
   # finished? alone is also true for a passing ended by exit!, which is a
@@ -97,23 +142,18 @@ class GameFileAccess
   # levels and the team has completed all of them. Otherwise: the current
   # level and everything at or before it in position order.
   #
-  # KNOWN LIMITATION, not fixed here: passing_for_game (above) resolves only
-  # the CURRENT run's passing. The log and results screens this comment
-  # mentions can also show a PAST run (LogsController#find_run and
-  # GamePassingsController#find_run both accept ?run=N for exactly that), and
-  # once a later run opens, a team's own finished passing from an earlier run
-  # is no longer "the" passing for this game -- passing_for_game returns nil
-  # for it, and every attachment on that past run's log 404s, permanently.
-  # This is a false DENY, not a hole: resolving across every run instead would
-  # let a team that finished run 1 see run 2's still-unreached photographs,
-  # which is a real authorization hole this file has already had to close
-  # once (see the "team with a passing in more than one run" specs). A false
-  # deny is the safe direction to be wrong in. Recorded as an open question
-  # for Phase 3B in docs/superpowers/specs/2026-08-12-level-and-hint-attachments-design.md
-  # §4, which is the phase that actually renders those past-run screens and
-  # has the context to decide (e.g. resolving the SPECIFIC run named by
-  # ?run=N, once this policy has a run to be given rather than inferring
-  # "current" from the team alone).
+  # RESOLVED in Phase 3B (previously a known, documented limitation -- see
+  # docs/superpowers/specs/2026-08-12-level-and-hint-attachments-design.md
+  # §4): a PAST run's log/results screen (LogsController#find_run,
+  # GamePassingsController#find_run, both ?run=N) now passes that SAME run
+  # to GameFileAccess.new(..., :run => @run), so `passing` above comes from
+  # the run the screen is actually showing, not always game.current_run. A
+  # team's finished run-1 passing authorises run-1's own attachments again
+  # once run 2 has opened, without resolving "the team's passing in this
+  # game" across every run -- which stays refused, deliberately: see
+  # resolved_run's comment and the "team with a passing in more than one
+  # run" specs, which pin that a LATER run's progress must never leak into
+  # an EARLIER run's answer, or vice versa.
   def level_visible?(passing, level)
     return false unless level.game_id == game.id
     return true  if completed?(passing)

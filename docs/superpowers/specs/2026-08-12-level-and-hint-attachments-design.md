@@ -479,7 +479,13 @@ independently shippable and green:
 | **1** | Migrations, `GameFile`/`FileAttachment` models, Active Storage wiring, `Setting` string support, Dockerfile + CI libvips | Yes — nothing user-visible, all specs |
 | **2** | Upload pipeline (§2) and disk protection (§3), Explorer page (§5) | Yes — authors can manage a library that nothing consumes yet |
 | **3** | Picker in level/hint forms, play-screen rendering, serving controller + authorization matrix (§4) | Yes — the feature becomes real |
-| **4** | Reclaim tooling (L6), admin dashboard usage (L7), `azcopy sync` backup | Yes — operational hardening |
+| **4** | Reclaim tooling (L6), admin dashboard usage (L7), offsite backup | Yes — operational hardening |
+
+Phases 1, 2 and 3 shipped, and the table above no longer describes how. Reclaim tooling and the
+dashboard usage rows (L6/L7) were pulled forward into **phase 2B** rather than waiting for 4, so
+phase 4 is now the backup work alone — redesigned in
+`docs/superpowers/specs/2026-08-13-offsite-backup-design.md`. Phase 3 was also split: **3A** the
+delivery route and §4 authorization matrix, **3B** the picker, play screen and live hints.
 
 Phase 3 is where the frozen acceptance suite is most at risk, since it touches the level and hint
 edit forms and the play screen. Run the full suite at the end of every phase, not only at the end.
@@ -494,6 +500,15 @@ edit forms and the play screen. Run the full suite at the end of every phase, no
 * Backup: the volume is **not** covered by wal-g, which backs up Postgres only. Losing the VM loses
   every author's uploads. A periodic `azcopy sync` of the volume to the existing storage account,
   using the same managed identity, closes this without introducing an access key.
+
+  **SUPERSEDED 2026-08-13 — see `docs/superpowers/specs/2026-08-13-offsite-backup-design.md`.**
+  The premise above was wrong in the author's favour: an Azure Backup vault (`vault712`) already
+  protects the VM weekly with 12 weeks of geo-redundant retention and no disk exclusion, so the
+  uploads were never as exposed as this paragraph says. What is real is a **seven-day RPO** on
+  them against continuous WAL on the database, and a fixed per-instance vault fee that no amount
+  of retention or redundancy tuning reduces. Phase 4 therefore replaces the vault rather than
+  supplementing it, and covers the ~2.2 GB of irreplaceable state on the machine rather than the
+  uploads volume alone — the VM hosts more than this application.
 
 ## 9. Open inputs
 

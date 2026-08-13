@@ -58,7 +58,15 @@ class FileDeliveriesController < ApplicationController
 
   def deliver(file, variant)
     attachment = blob_for(file, variant)
-    return head(:not_found) if attachment.nil?
+    # attachment.nil? alone is NOT enough for "original": file.file (an
+    # ActiveStorage::Attached::One) is never nil, purged or not -- #attached?
+    # is what actually reflects a purged blob. Without this half, `file.purge`
+    # followed by a GET returned 200 with an empty body instead of 404
+    # (measured on this branch before this line existed). blob_for's other two
+    # branches (existing_web_variant/existing_thumb_variant) already return
+    # nil outright when no variant record exists, so attachment.nil? still
+    # carries its own weight for those.
+    return head(:not_found) if attachment.nil? || !attachment.attached?
 
     # Variant-scoped, deliberately not checksum-only: a checksum-only ETag is
     # identical for original/web/thumb, so a client holding the 320px
@@ -112,10 +120,38 @@ class FileDeliveriesController < ApplicationController
     # documented method. Nothing here can guard against that beyond a normal
     # test run catching the NoMethodError after a Rails bump; noted so it's
     # not a mystery why this line broke, if it ever does.
-    send_file attachment.service.path_for(attachment.key),
-              :type => file.content_type,
-              :filename => file.filename,
-              :disposition => disposition_for(file)
+    #
+    # A missing blob is an expected state, not an exception (design §7): the
+    # database row can outlive the bytes -- a database restored without its
+    # storage volume, an interrupted upload, a purge_orphans run against a
+    # stale row, a half-finished azcopy sync. path_for above is a pure string
+    # join (confirmed against activestorage 8.0.5.1's DiskService#path_for) --
+    # it never touches the filesystem and cannot raise for a missing file.
+    # send_file is what actually opens the path, and
+    # ActionController::MissingFile is the class it raises when that open
+    # fails (confirmed empirically on this branch: File.file?(path) is false
+    # for a service-deleted key, and MissingFile is what came out -- NOT
+    # ActiveStorage::FileNotFoundError, which only Service#download/
+    # #download_chunk raise, and this method never calls either). Rescued
+    # narrowly, never StandardError: a blanket rescue here would turn a real
+    # storage misconfiguration into a silent 404 on every file at once, which
+    # looks exactly like an authorization bug.
+    begin
+      send_file attachment.service.path_for(attachment.key),
+                :type => file.content_type,
+                :filename => file.filename,
+                :disposition => disposition_for(file)
+    rescue ActionController::MissingFile
+      # Never log e.message here: ActionController::MissingFile's message is
+      # "Cannot read file #{path}" -- the ABSOLUTE STORAGE PATH -- which does
+      # not belong in a production log. Log the identifiers instead: enough
+      # to find and investigate the row, nothing that leaks filesystem layout.
+      Rails.logger.warn(
+        "GameFile blob missing from disk: game_id=#{file.game_id} file_id=#{file.id} " \
+        "variant=#{variant} key=#{attachment.key}"
+      )
+      head :not_found
+    end
   end
 
   # PDF is always a download, never inline: the browser's PDF viewer is a

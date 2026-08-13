@@ -1,5 +1,29 @@
 require "rails_helper"
 
+# Maps every example below to the row it exercises in §4's authorization
+# table (docs/superpowers/specs/2026-08-12-level-and-hint-attachments-design.md,
+# "## 4. Serving and authorization" -- read the CURRENT text: the hint
+# sub-clause of the "Playing team" row was amended in Task 2's fix round to
+# document the passed-level exception). Kept here so coverage can be checked
+# against the contract without cross-referencing prose.
+#
+# | §4 row                    | May fetch                                    | Covered by |
+# |----------------------------|-----------------------------------------------|------------|
+# | Game author, superadmin    | any file in the game                          | "serves the original to the game's author", "serves the original to a superadmin who is not the author", "serves the web variant to the game's author", "serves the thumb variant to the game's author" |
+# | Playing team                | current level; already-passed levels; fired hints, and every hint on an already-passed level (fired or not) | "a playing team" describe block: "serves a file on the level the team is on" (current level), "404s for a file on a level the team has not reached" (negative boundary). The passed-level and hint-fired/hint-on-passed-level sub-clauses are NOT re-tested here -- they are the unit-level contract of GameFileAccess#level_visible?/#hint_visible? and are pinned directly, without an HTTP round trip, in spec/models/game_file_access_spec.rb (see that file and the class comment on GameFileAccess). |
+# | Everyone else               | 404, never 403                                | "404s for a logged-out requester", "404s for a signed-in user with no connection to the game", "404s for a file id belonging to a different game" |
+#
+# Cross-cutting, not tied to one row (apply once a requester has already
+# cleared the table above):
+#   * the :variant whitelist (§4 intro, "matched against a hard-coded
+#     whitelist before anything touches storage") -- "never routes a variant
+#     name outside the whitelist", "keeps the route constraint and the
+#     controller whitelist in agreement"
+#   * "Response headers" subsection -- the "response headers" describe block
+#   * design §3 invariant I1 (a read must never allocate disk) -- "the read
+#     path never allocates disk (design invariant I1)" describe block
+#   * design §7 (a missing blob is an expected state, not an exception),
+#     Task 4 -- "a missing blob" describe block
 describe "file delivery", :type => :request do
   # Defined here, not shared: Phase 2B's spec/requests/game_files_spec.rb
   # defines its own copy at line 4 and there is no shared request-spec login
@@ -144,6 +168,64 @@ describe "file delivery", :type => :request do
 
       expect(response).to have_http_status(:not_found)
       expect(@file.file.blob.variant_records.reload.count).to eq(0)
+    end
+  end
+
+  describe "a missing blob (design §7: an expected state, not an exception)" do
+    # Files can vanish from disk without the GameFile row noticing: a database
+    # restored without its storage volume, an interrupted upload, a
+    # purge_orphans run against a stale row, a half-finished azcopy sync
+    # (Phase 4). The wrong behaviour is a 500 on the play screen mid-game; the
+    # right one is a 404 for that one file, logged, with the rest of the
+    # level intact.
+    it "404s, and does not 500, when the blob is gone from disk" do
+      login_as @author
+      # Delete the stored bytes while leaving every database row intact -- the
+      # exact shape of a database restored without its storage volume. This is
+      # what actually raises ActionController::MissingFile from send_file
+      # (confirmed on this branch); it is a different code path from the purge
+      # example below, which never reaches send_file at all.
+      @file.file.blob.service.delete(@file.file.blob.key)
+
+      deliver
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "404s when the variant's blob is gone but the original survives" do
+      login_as @author
+      variant = @file.thumb_variant
+      variant.image.blob.service.delete(variant.image.blob.key)
+
+      deliver("thumb")
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "404s when the attachment has been purged outright, not merely deleted from the service" do
+      # A second, different path from "gone from disk" above. blob_for's
+      # "original" branch returns file.file, an ActiveStorage::Attached::One,
+      # which is NEVER nil -- so an attachment.nil? guard alone cannot catch
+      # this. Measured on this branch before the #attached? check existed:
+      # file.purge followed by this GET returned 200 with an EMPTY body, not
+      # 404.
+      login_as @author
+      @file.file.purge
+
+      deliver
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "still serves a healthy file in the same game" do
+      # The blast radius test: one dead file must not take the others with it.
+      healthy = GameFileUpload.new(@game, fixture_upload("map.pdf"), @author).call
+      login_as @author
+      @file.file.blob.service.delete(@file.file.blob.key)
+
+      get game_file_delivery_path(@game, healthy, "original")
+
+      expect(response).to have_http_status(:ok)
     end
   end
 

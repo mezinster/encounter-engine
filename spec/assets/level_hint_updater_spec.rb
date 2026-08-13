@@ -10,22 +10,74 @@ require "rails_helper"
 describe "the level hint updater", type: :model do
   let(:source) { Rails.root.join("public/javascripts/level_hint_updater.js").read }
 
-  it "does not concatenate hint text into an HTML string" do
+  it "does not concatenate untrusted data into an HTML string" do
+    # Identifier-agnostic, deliberately: an earlier version of every regex
+    # below was anchored to the literal variable name `hintText`. That left
+    # a hole exactly at the new attack surface the attachments feature
+    # added -- `attachment.alt` (an author-supplied filename, exactly as
+    # untrusted as hintText) is never mentioned by name in any of these
+    # patterns, so a mutation collapsing the icon/filename spans into one
+    # unsafe write --
+    #   filenameSpan.innerHTML = "<b>" + attachment.alt + "</b>"
+    # -- left all 11 examples in this file green. These guards instead
+    # forbid the SINK outright, no matter which variable feeds it: any
+    # innerHTML/outerHTML assignment at all, and any of jQuery's
+    # markup-mutating methods fed string concatenation. A future untrusted
+    # value -- a level title, a team name, anything else this function ever
+    # grows to render -- is covered the same way without this file needing
+    # another line.
+    #
     # Bounded by the statement terminator, not the first ")" -- a naive
     # [^)]*  gives up as soon as it meets any nested call's own closing paren,
-    # e.g. append(wrapper() + hintText) would slip straight past it.
-    expect(source).not_to match(/append\([^;]*\+\s*hintText/)
-    expect(source).not_to include("</legend>' + hintText")
-    # These three catch sinks an ADDED line could introduce without touching
-    # createTextNode/textContent at all: a raw innerHTML assignment, any
-    # other jQuery markup-mutating method (.html/.prepend/.after/.before) fed
-    # a concatenated string, or a bare jQuery-constructor concatenation like
-    # $('<p>' + hintText + '</p>'). A guard that only inspects append() and
-    # one exact legend literal would wave all of these through even with the
-    # safe createTextNode/textContent lines left in place.
-    expect(source).not_to match(/innerHTML\s*=[^;]*hintText/)
-    expect(source).not_to match(/\.(?:html|prepend|after|before)\([^;]*\+\s*hintText/)
-    expect(source).not_to match(/\$\(\s*["'][^"']*["']\s*\+\s*hintText/)
+    # e.g. append(wrapper() + x) would slip straight past it.
+    expect(source).not_to match(/(?:inner|outer)HTML\s*=/)
+    expect(source).not_to match(/\$\(\s*["'][^"']*["']\s*\+/)
+
+    # Two more markup sinks, added in the Task 5 review-fix round after
+    # mutation testing found both survived the checks above:
+    #
+    #   filenameSpan.insertAdjacentHTML("beforeend", "<b>" + attachment.alt + "</b>")
+    #
+    # matches none of the innerHTML/outerHTML/append-with-`+` regexes above --
+    # insertAdjacentHTML is a distinct method name and a distinct sink, parsing
+    # its second argument as markup exactly like innerHTML= does. Forbidden
+    # outright, same reasoning as document.write (never legitimately needed
+    # here either, and an equally direct markup sink).
+    expect(source).not_to match(/insertAdjacentHTML/)
+    expect(source).not_to match(/document\.write/)
+
+    # jQuery's .html() setter parses ANY argument as markup, including a
+    # single untrusted variable with no concatenation at all --
+    #   $(filenameSpan).html(attachment.alt);
+    # -- which the old `\+` requirement on the combined append/html/prepend/
+    # after/before regex missed entirely (no `+` present). Nothing in this
+    # file has a legitimate reason to call .html() -- every real write goes
+    # through createElement/setAttribute/textContent -- so this forbids the
+    # method outright, not just a concatenated form of it.
+    expect(source).not_to match(/\.html\(/)
+
+    # append/prepend/after/before are still legitimate when fed a NODE --
+    # $hintsContainer.append(fieldset) below passes a DOM element it just
+    # built, and jQuery never parses a Node argument as markup regardless of
+    # what the node contains. What is never legitimate is feeding one of
+    # these a value that LOOKS like it was built from a string: a quote, a
+    # `+`, or a property/method access such as `attachment.alt` (a dot).
+    # `fieldset` alone (the one real call in this file) has none of those,
+    # so it still passes; `attachment.alt`, `"<b>" + x`, and `'<img>' + y`
+    # all trip on the dot/plus/quote check. This deliberately does NOT catch
+    # `.appendChild(` -- a different, always-safe DOM method -- because the
+    # regex requires "append(" with no "Child" in between.
+    #
+    # Bounded by the LINE, not just the statement terminator: this file's
+    # class comment (just above appendHint) narrates ".append() with a
+    # string parses it as markup" across several comment lines with no `;`
+    # anywhere in them, so a `[^;]*` window starting there ran straight
+    # through the comment and matched the quote in the next real statement's
+    # `document.createElement("fieldset")` -- a false positive on a file
+    # with no bug, caught by running this suite against the unmodified
+    # source before trusting the regex. `[^;\n]*` keeps the window on one
+    # line, where every real statement in this file already lives.
+    expect(source).not_to match(/\.(?:append|prepend|after|before)\([^;\n]*[.+"']/)
   end
 
   it "builds the hint node as text" do
@@ -38,6 +90,23 @@ describe "the level hint updater", type: :model do
 
   it "keeps the pinned playbar hint on textContent" do
     expect(source).to match(/^\s*pinnedText\.textContent = hintText;\s*$/)
+  end
+
+  # Positive assertions, added in the Task 5 review-fix round: the negative
+  # checks above prove the DOM is never fed a markup string, but nothing
+  # before this required the attachment-rendering code to exist AT ALL --
+  # deleting the whole `if ( attachments && attachments.length > 0 ) { ... }`
+  # block out of appendHint left every example in this file (and in
+  # spec/requests/live_hint_attachments_spec.rb) green, because an absent
+  # sink is trivially not an unsafe one. Anchoring to the specific safe
+  # writes closes that: both lines can only exist if the block that builds
+  # them still does.
+  it "sets the generic-attachment image's alt via setAttribute, never a markup sink" do
+    expect(source).to match(/^\s*img\.setAttribute\("alt", attachment\.alt\);\s*$/)
+  end
+
+  it "sets the generic-attachment filename via textContent, never a markup sink" do
+    expect(source).to match(/^\s*filenameSpan\.textContent = attachment\.alt;\s*$/)
   end
 end
 

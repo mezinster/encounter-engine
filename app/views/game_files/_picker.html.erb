@@ -1,0 +1,83 @@
+<%# app/views/game_files/_picker.html.erb
+
+    Locals:
+      game          - the Game whose file library this picker lists (a
+                      gallery, not merely what is already attached)
+      attachable    - the Level or Hint being edited; may be a new, unsaved
+                      record (hints/_form is shared between new and edit)
+      param_key     - "level" or "hint", the top-level param key the
+                      enclosing form posts under, matching level_params/
+                      hint_params
+      active_locale - the tab currently open, computed by the CALLER with
+                      the same expression used for the language tabs
+                      (params[:tab].presence_in(game.available_locale_list)
+                      || game.primary_locale) -- not recomputed here, so
+                      there is exactly one place that expression lives per
+                      request.
+
+    Posts <param_key>[game_file_ids][] for the checkboxes, plus a top-level
+    "tab" hidden field carrying active_locale forward -- the controller reruns
+    the identical expression on params[:tab] to learn which slot this save is
+    meant to touch (see LevelsController/HintsController#attachment_slot_locale).
+    The primary tab manages the language-neutral slot (locale nil); every
+    other tab manages its own locale's slot 1:1.
+
+    The hidden fallback field with the SAME array name, emitted before the
+    checkboxes, guarantees the array key survives to params even when every
+    box ends up unticked -- an unchecked checkbox sends nothing at all, so
+    without this, "unticked everything" and "this tab's picker was never on
+    the page" would look identical over HTTP. The controller tells them apart
+    the other way: "key absent from params entirely" is a no-op, never a
+    wipe -- see apply_attached_files. That is what protects every locale tab
+    the author did not open this request; this form only ever renders ONE
+    tab's picker, so a save must only ever touch that one slot.
+%>
+<div class="field attachment-picker">
+  <h3><%= t("game_files.picker.heading") %></h3>
+
+  <%= hidden_field_tag :tab, active_locale %>
+  <%= hidden_field_tag "#{param_key}[game_file_ids][]", "" %>
+
+  <%# :file_attachments => :attachable, matching GameFilesController#index's
+      own preload -- _file_table's "used in" column reads
+      file.file_attachments for EVERY row (attachment_place needs the
+      polymorphic attachable to name the level/hint). Left unpreloaded, that
+      is +2 queries per row: one for file_attachments, one more for each
+      attachable it resolves. .with_attached_file (already here) is a
+      SEPARATE preload -- it covers the attachment/blob chain the thumbnail
+      cell's existing_thumb_variant reads, not this column. %>
+  <% library = GameFile.of_game(game).includes(:file_attachments => :attachable)
+                       .with_attached_file.order(:filename) %>
+  <% if library.empty? %>
+    <p class="hint-text"><%= t("game_files.picker.empty") %></p>
+  <% else %>
+    <% slot = active_locale == game.primary_locale ? nil : active_locale %>
+    <%# On a validation failure the controller re-renders this same form
+        (never a redirect), so params[param_key][:game_file_ids] -- when
+        present -- is exactly what the author just picked, before the
+        failed save discarded it. Preferring it over the saved slot is what
+        makes the picker survive a 422 the same way the name/text fields
+        already do (they read back from the assigned-but-unsaved record;
+        this field has no column to be assigned to, so it reads back from
+        params instead). Absent entirely (an ordinary GET) falls back to
+        what is actually attached. The "" from the picker's own hidden
+        fallback field survives reject(&:blank?) as a no-op, so an
+        all-unticked submission correctly redisplays as fully unticked
+        rather than falling back to the stale saved state. %>
+    <%# is_a?(Array), not a truthiness check: params carry whatever the URL
+        said, and the shape is not guaranteed. `?level[game_file_ids]=` sends a
+        String (String#reject takes no block arity we want -- it raised
+        NoMethodError on a plain GET), and `level[game_file_ids][x]=1` sends
+        ActionController::Parameters (its #reject raised ArgumentError). Both
+        were unhandled 500s on an author's own edit page, reachable by
+        mistyping a URL rather than by attacking anything.
+        A malformed shape is not a submission, so it falls back to what is
+        actually attached -- the same answer an ordinary GET gets. %>
+    <% submitted_ids = params.dig(param_key, :game_file_ids) %>
+    <% checked_ids = submitted_ids.is_a?(Array) ? submitted_ids.reject(&:blank?).map(&:to_i) :
+                                                  attachable.attached_file_ids_in_slot(slot) %>
+    <%= render "game_files/file_table", :files => library, :mode => :picker,
+                                        :field_name => "#{param_key}[game_file_ids]",
+                                        :checked_ids => checked_ids %>
+  <% end %>
+</div>

@@ -121,6 +121,35 @@ th {
   }
 }
 
+/* --- File table thumbnails ------------------------------------------------
+ * game_files/_file_table.html.erb (both :manage and :picker modes) renders
+ * the thumbnail cell as a real <img> at the "thumb" variant -- up to 320px
+ * wide, the variant's own resize_to_limit, with nothing here to constrain
+ * it. Left alone that is one unconstrained image per row, on a form this
+ * project measures at a 390px viewport (see the .playbar comment in
+ * screens.css for how layout is measured here). Fixed box regardless of the
+ * source photo's aspect ratio; object-fit crops rather than distorting. */
+.file-table .file-thumb { width: 56px; }
+.file-table .file-thumb-image {
+  display: block;
+  width: 48px;
+  height: 48px;
+  max-width: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+}
+.file-table .file-thumb-generic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 /* --- Flash, cards, panels, tags ------------------------------------------ */
 .flash {
   padding: var(--space-3) var(--space-4);

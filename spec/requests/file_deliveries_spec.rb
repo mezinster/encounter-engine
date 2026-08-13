@@ -39,8 +39,9 @@ describe "file delivery", :type => :request do
     @file   = GameFileUpload.new(@game, fixture_upload("photo.jpg"), @author).call
   end
 
-  def deliver(variant = "original")
-    get game_file_delivery_path(@game, @file, variant)
+  def deliver(variant = "original", run: nil)
+    params = run.nil? ? {} : { :run => run }
+    get game_file_delivery_path(@game, @file, variant), :params => params
   end
 
   it "serves the original to the game's author" do
@@ -468,6 +469,116 @@ describe "file delivery", :type => :request do
       deliver
 
       expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe "?run=N -- Phase 3B, a past-run log/results screen" do
+    # See GameFileAccess's :run parameter and spec/models/game_file_access_spec.rb
+    # for the full unit-level matrix; this end-to-end slice proves the query
+    # param actually reaches it and the same guarantees hold over HTTP.
+    before(:each) do
+      @team_user = create_user
+      @team = create_team(:members => [ @team_user ])
+      @team_user.reload
+      @l1 = create_level(:game => @game, :name => "L1")
+      @l2 = create_level(:game => @game, :name => "L2")
+      @l3 = create_level(:game => @game, :name => "L3")
+      @passing = create_game_passing(:level => @l2, :team => @team)
+      @run1 = @passing.game_run
+      @run2 = create_next_run(@game)
+    end
+
+    it "serves a file on the NAMED run's own current level" do
+      @passing2 = create_game_passing(:level => @l1, :team => @team, :game_run => @run2)
+      FileAttachment.create!(:game_file => @file, :attachable => @l1)
+
+      login_as @team_user
+      deliver("original", :run => @run2.ordinal)
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "404s naming run 1 for a level only run 2's passing reached (the run named must not leak a different run's progress)" do
+      # Run 2's passing is AHEAD of anywhere run 1 (still in progress, current
+      # level @l2) ever got -- this is the guard that keeps the Critical
+      # closed. Trusting the ?run= parameter without checking the team's OWN
+      # passing in it would grant this.
+      create_game_passing(:level => @l3, :team => @team, :game_run => @run2)
+      FileAttachment.create!(:game_file => @file, :attachable => @l3)
+
+      login_as @team_user
+      deliver("original", :run => @run1.ordinal)
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "404s naming a run the team has no passing in" do
+      FileAttachment.create!(:game_file => @file, :attachable => @l1)
+
+      login_as @team_user
+      deliver("original", :run => @run2.ordinal) # team has no passing in run 2 yet
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "serves a past run's own attachment once a later run has opened, when that run is named explicitly" do
+      # The false deny Phase 3A shipped on purpose: without :run this 404s
+      # forever once run 2 opens (still pinned in
+      # spec/models/game_file_access_spec.rb). Naming run 1 explicitly is
+      # the fix.
+      @passing.update!(:current_level => nil, :finished_at => Time.now) # run 1, finished
+      FileAttachment.create!(:game_file => @file, :attachable => @l1)
+
+      login_as @team_user
+      deliver("original", :run => @run1.ordinal)
+
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
+  describe "?run=, given a malformed shape (Task 5 review fix)" do
+    # `?run[x]=1` arrives as an ActionController::Parameters and `?run[]=1`
+    # as an Array -- neither responds to #to_i, and #requested_run's
+    # `.blank?` guard is false for both, so `.to_i` raised NoMethodError past
+    # it, UNAUTHENTICATED, before this fix. Measured before the fix: an
+    # existing file id 500'd while a nonexistent one still 404'd -- that
+    # difference is an id-enumeration oracle on a public route, exactly what
+    # the "One refusal for every remaining failure" comment on #show exists
+    # to prevent. Same bug class ab740c2 already fixed once for the picker's
+    # game_file_ids param (spec/requests/picker_malformed_params_spec.rb).
+    it "does not raise for a hash-shaped :run, anonymous" do
+      expect {
+        get game_file_delivery_path(@game, @file, "original"), :params => { :run => { :x => "1" } }
+      }.not_to raise_error
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "does not raise for an array-shaped :run, anonymous" do
+      expect {
+        get game_file_delivery_path(@game, @file, "original"), :params => { :run => [ "1" ] }
+      }.not_to raise_error
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "answers a hash-shaped :run identically for an existing file and a nonexistent one -- the oracle is closed" do
+      get game_file_delivery_path(@game, @file, "original"), :params => { :run => { :x => "1" } }
+      existing_status = response.status
+
+      get game_file_delivery_path(@game, GameFile.maximum(:id).to_i + 1, "original"),
+          :params => { :run => { :x => "1" } }
+      nonexistent_status = response.status
+
+      expect(existing_status).to eq(nonexistent_status)
+      expect(existing_status).to eq(404)
+    end
+
+    it "falls back to current_run rather than refusing outright -- a malformed :run is treated as none, not as a real one the requester lacks a passing in" do
+      login_as @author
+      get game_file_delivery_path(@game, @file, "original"), :params => { :run => { :x => "1" } }
+
+      expect(response).to have_http_status(:ok)
     end
   end
 end

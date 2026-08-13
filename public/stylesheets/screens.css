@@ -325,6 +325,67 @@ ul.language-tabs .missing-count {
 .play-scroll > * + *,
 .play-pinned > * + * { margin-top: var(--space-4); }
 
+/* --- Attachment strip (play screen) --------------------------------------
+ * shared/_attachment_strip.html.erb, rendered once inside the level's card
+ * and once inside each fired hint's fieldset -- both live inside
+ * .play-scroll. An image displays at the "web" ActiveStorage variant, which
+ * is resized to at most 1600x1600 (GameFile#web_variant) -- nowhere near
+ * bounded for a 390px viewport (this project measures layout there, see the
+ * .playbar comment above), so it needs its own cap rather than inheriting
+ * one. Fixed box regardless of the source photo's aspect ratio, same
+ * approach as .file-table .file-thumb-image in components.css; object-fit
+ * crops rather than distorting. */
+.attachment-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.attachment-item { display: block; }
+
+.attachment-image {
+  display: block;
+  width: 96px;
+  height: 96px;
+  max-width: 96px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+/* A PDF, a GIF (never resized -- see the comment in the partial), or an
+   image with no existing variant record: same generic indicator, so a
+   missing thumbnail never reads as a broken <img>. */
+.attachment-item--generic {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 96px;
+  height: 96px;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-align: left;
+}
+
+.attachment-generic-icon { font-size: 1.1rem; line-height: 1; flex: 0 0 auto; }
+
+.attachment-generic-filename {
+  overflow-wrap: anywhere;
+  /* Clamped rather than left to grow the box -- a long author-chosen
+     filename must not stretch the strip past the fixed-size image tiles
+     beside it. */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Never shrinks: this is the guarantee. */
 .play-pinned { flex: 0 0 auto; }
 

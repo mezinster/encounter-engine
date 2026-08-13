@@ -377,6 +377,10 @@ pl:
       size: "Rozmiar"
       used_in: "Gdzie jest używany"
       hint: "podpowiedź"
+      no_thumbnail: "Brak podglądu"
+    picker:
+      heading: "Biblioteka gry"
+      empty: "W bibliotece gry nie ma jeszcze plików"
   options:
     index:
       title: "Warianty odpowiedzi do zadania"
@@ -696,6 +700,7 @@ pl:
       submit: "Wyślij!"
       exit_game: "Zrezygnuj z gry"
       finish_testing: "Zakończ testowanie"
+      attachments_label: "Załączone pliki"
     show_results:
       congrats: "Gratulacje, gra ukończona!"
       place: "Miejsce"

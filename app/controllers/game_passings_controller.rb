@@ -89,6 +89,22 @@ class GamePassingsController < ApplicationController
 
     render json: { hint_num: @game_passing.hints_to_show.length,
                     hint_text: hint&.translated(:text, content_locale),
+                    # Platform chrome, so it goes through t() like the
+                    # server-rendered legend does -- NOT hardcoded in
+                    # level_hint_updater.js. Fixes a pre-existing bug: the JS
+                    # used to hardcode the Russian literal "Подсказка"
+                    # regardless of the interface locale, so a hint that
+                    # unlocked after page load showed one Russian word to
+                    # every non-Russian player. See appendHint in
+                    # public/javascripts/level_hint_updater.js.
+                    hint_label: t("game_passings.show_current_level.hint_label"),
+                    # For the attachment strip's aria-label, matching
+                    # shared/_attachment_strip.html.erb's role="group" +
+                    # aria-label pairing -- same reasoning as hint_label
+                    # above: platform chrome, translated server-side, never
+                    # hardcoded in the JS that renders it.
+                    attachments_label: t("game_passings.show_current_level.attachments_label"),
+                    attachments: hint_attachments_json(hint, content_locale),
                     next_available_in: next_hint&.available_in(@game_passing.current_level_entered_at, @game_passing.effective_now) }
   end
 
@@ -292,7 +308,21 @@ class GamePassingsController < ApplicationController
   # run rather than 404ing -- a stale bookmark should show the current
   # standings, not an error.
   def find_run
-    @run = @game.runs.find_by(:ordinal => params[:run].to_i) || latest_started_run
+    @run = @game.runs.find_by(:ordinal => run_ordinal) || latest_started_run
+  end
+
+  # `?run=2` arrives as a String; `?run[x]=1`/`?run[]=1` arrive as an
+  # ActionController::Parameters/Array, neither of which responds to #to_i --
+  # pre-existing 500 on a mistyped URL here, same bug as
+  # FileDeliveriesController#requested_run (review fix, Task 5 round; see
+  # that method's comment for the full reasoning). This route carries no id
+  # to enumerate, so it was never an oracle, but a malformed :run shouldn't
+  # 500 any more than a malformed one should here either. nil for anything
+  # that isn't a String: find_by(:ordinal => nil) matches no run (ordinal is
+  # a required column), so this falls through to latest_started_run exactly
+  # as a blank/bogus ordinal already did.
+  def run_ordinal
+    params[:run].to_i if params[:run].is_a?(String)
   end
 
   # The latest run that has actually STARTED, not simply the current one.
@@ -329,8 +359,49 @@ class GamePassingsController < ApplicationController
     # through translated(). Without this the play view fires one query per
     # question and another per option, which is exactly what
     # spec/requests/translated_level_spec.rb's query-count guard exists to catch.
+    #
+    # :file_attachments => { :game_file => [...] }, added for the attachment
+    # strip (Task 3), on both the level and each hint. Four things this
+    # feeds, all otherwise N+1 across hints and across files:
+    #   1. FileAttachable#attached_files_for reads the loaded
+    #      `file_attachments` array in Ruby instead of re-querying, when it
+    #      finds one preloaded -- see that method's comment. Without this,
+    #      the play screen paid one extra query per HINT (confirmed:
+    #      spec/requests/translated_level_spec.rb's flat-query-count guard
+    #      went from equal to +9 on a 10-hint page the moment this render was
+    #      added, before this preload existed).
+    #   2. game_file_delivery_path (shared/_attachment_strip.html.erb) reads
+    #      file.game for the URL -- free once nested here.
+    #   3. GameFileAccess#permitted? reads file.game.current_run
+    #      (game.rb's `runs.to_a.last`) as part of its own authorization
+    #      check -- free once `:runs` is nested this deep. permitted? still
+    #      queries file_attachments+attachable and passing_for(team) itself
+    #      on every call (its own class comment explains why: `.includes`
+    #      called on an association always discards a preload, so this is
+    #      NOT avoidable from the caller's side).
+    #   4. GameFile#existing_web_variant's `file.attached?` and
+    #      `file.variant(...).image` -- Attached::One#attached? reads
+    #      `file_attachment`, and ActiveStorage::VariantWithRecord#record
+    #      (private) checks `blob.variant_records.loaded?` and, when true,
+    #      resolves via Ruby #find instead of #find_by -- see that method in
+    #      the activestorage gem. `:file_attachment => { :blob =>
+    #      { :variant_records => { :image_attachment => :blob } } }` is what
+    #      makes both loaded: the attachment itself, its blob, that blob's
+    #      variant records, and each variant record's own image attachment
+    #      (+ blob), which is what url/key generation for the <img> reads.
+    #      Measured over real HTTP (task-3-report.md, Important 3 follow-up):
+    #      10 files on one level went from 103 to 68 queries; an 11-file page
+    #      (10 hints x 1 file + 1 level file) went from 153 to 114.
     Level.includes(:game, :content_translations,
-                   :hints => :content_translations,
+                   :file_attachments => { :game_file => [
+                     { :game => :runs },
+                     { :file_attachment => { :blob => { :variant_records => { :image_attachment => :blob } } } }
+                   ] },
+                   :hints => [ :content_translations,
+                               { :file_attachments => { :game_file => [
+                                 { :game => :runs },
+                                 { :file_attachment => { :blob => { :variant_records => { :image_attachment => :blob } } } }
+                               ] } } ],
                    :questions => [ :content_translations,
                                    { :options => :content_translations } ]).find(level.id)
   end
@@ -340,8 +411,75 @@ class GamePassingsController < ApplicationController
   # never includes level or question text, so there's no reason to pay for
   # loading (or translating) either -- just the hints and the :game a
   # translated() call on one of them needs to resolve primary_locale.
+  #
+  # Task 4 addition: the same :file_attachments => { :game_file => [...] }
+  # nesting preloaded_level uses, but only under :hints -- this route never
+  # renders the LEVEL's own attachment strip (that already reached the page
+  # at load time, in show_current_level.html.erb), only whichever hint just
+  # fired. Three things it buys here, per hint: attached_files_for reads the
+  # loaded array instead of re-querying, game_file_delivery_path's file.game
+  # is free, and existing_web_variant's variant-record lookup is free.
+  #
+  # NOT free, despite the same nesting: GameFileAccess#permitted?'s OWN
+  # `file.game.current_run` read (game_file_access.rb's passing_for_game) is
+  # free, but permitted? goes on to call hint_visible?, which reads
+  # `passing.hints_to_show` -- and that `passing` is a GamePassing fetched
+  # fresh by passing_for_game, whose OWN game (reached through its game_run,
+  # not through this preloaded tree) is a separate, unpreloaded object. Its
+  # `effective_now` calls `game.paused_at`, which Game delegates to
+  # `current_run`, and THAT current_run re-queries game_runs -- once per
+  # attached file, confirmed empirically (game_runs went from 4 to 8 queries
+  # between 1 and 5 attachments on an otherwise-identical request). This is
+  # why this route measures ~8 queries/attachment rather than the ~4/file
+  # preloaded_level reaches for show_current_level -- see
+  # spec/requests/attachment_query_cost_spec.rb's /tip guard, which pins the
+  # ~8/file rate this preload does achieve (down from ~14/file without it)
+  # rather than a number this preload was never going to reach alone.
   def preloaded_level_for_tip(level)
-    Level.includes(:game, :hints => :content_translations).find(level.id)
+    Level.includes(:game,
+                    :hints => [ :content_translations,
+                                { :file_attachments => { :game_file => [
+                                  { :game => :runs },
+                                  { :file_attachment => { :blob => { :variant_records => { :image_attachment => :blob } } } }
+                                ] } } ]).find(level.id)
+  end
+
+  # The attachments the JSON poller may hand the just-fired hint --
+  # exactly the files the server-rendered strip would show, gated by the
+  # same GameFileAccess#permitted? question (see shared/_attachment_strip.html.erb's
+  # comment on why that check runs per file rather than being trusted from
+  # further up the call chain). `hint` here is ALWAYS
+  # @game_passing.hints_to_show.last -- the hint that just fired -- never a
+  # hint from upcoming_hints, so a hint's files become visible in this
+  # payload exactly when the hint itself does, not before.
+  #
+  # {url:, alt:} at minimum per the task brief; image_url is added and left
+  # nil for a PDF, a GIF, or an image with no existing web variant -- the
+  # same three cases shared/_attachment_strip.html.erb degrades to a
+  # generic link for, via existing_web_variant (deliberately NOT
+  # web_variant, which GENERATES on a miss -- see that method's comment and
+  # design invariant I1). level_hint_updater.js's appendHint reads image_url
+  # to decide whether to build an <img> or a generic link, matching that
+  # same degradation client-side.
+  #
+  # KNOWN LIMITATION, not fixed here: only the LAST fired hint's attachments
+  # are ever returned, same as hint_text above it in the render call. If two
+  # hints fire between polls (a short delay on one, a slow poll interval, a
+  # tab left in the background), the earlier hint's photographs never reach
+  # the page -- not late, not on the next poll, not until the player reloads.
+  # This has always been true of hint_text; it now also applies to
+  # attachments, where the photograph is frequently the hint that actually
+  # matters. Pre-existing shape, carried forward rather than restructured.
+  def hint_attachments_json(hint, content_locale)
+    return [] if hint.nil?
+
+    hint.attached_files_for(content_locale)
+        .select { |file| GameFileAccess.new(current_user, file).permitted? }
+        .map do |file|
+          { url: game_file_delivery_path(@game, file, "original"),
+            image_url: (game_file_delivery_path(@game, file, "web") if file.existing_web_variant.present?),
+            alt: file.filename }
+        end
   end
 
   # TODO: must be a critical section, double creation is possible!

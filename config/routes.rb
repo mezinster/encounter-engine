@@ -144,6 +144,13 @@ Rails.application.routes.draw do
     # delivery route, which authorises per level/hint rather than per game.
     resources :game_files, :only => [ :index, :create, :destroy ]
 
+    # Phase 3's delivery route. Deliberately NOT `resources :game_files, :only
+    # => [:show]`: that controller is author-only, and this path must admit
+    # playing teams. :variant is matched against a hard-coded whitelist in the
+    # controller and never becomes a path component.
+    get "files/:id/:variant", :to => "file_deliveries#show", :as => :file_delivery,
+                              :constraints => { :variant => /original|web|thumb/ }
+
     resources :levels do
       member do
         delete :delete

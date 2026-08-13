@@ -372,7 +372,7 @@ uk:
       hint: "підказка"
       no_thumbnail: "Немає прев'ю"
     picker:
-      heading: "Прикріплені файли"
+      heading: "Бібліотека гри"
       empty: "У бібліотеці гри поки немає файлів"
   options:
     index:

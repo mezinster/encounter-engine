@@ -406,7 +406,7 @@ tr:
       hint: "ipucu"
       no_thumbnail: "Önizleme yok"
     picker:
-      heading: "Ekli dosyalar"
+      heading: "Oyun kütüphanesi"
       empty: "Bu oyunun kütüphanesinde henüz dosya yok"
   options:
     index:

@@ -374,7 +374,7 @@ be:
       hint: "падказка"
       no_thumbnail: "Няма прэв'ю"
     picker:
-      heading: "Прымацаваныя файлы"
+      heading: "Бібліятэка гульні"
       empty: "У бібліятэцы гульні пакуль няма файлаў"
   options:
     index:

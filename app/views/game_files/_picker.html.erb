@@ -38,12 +38,35 @@
   <%= hidden_field_tag :tab, active_locale %>
   <%= hidden_field_tag "#{param_key}[game_file_ids][]", "" %>
 
-  <% library = GameFile.of_game(game).with_attached_file.order(:filename) %>
+  <%# :file_attachments => :attachable, matching GameFilesController#index's
+      own preload -- _file_table's "used in" column reads
+      file.file_attachments for EVERY row (attachment_place needs the
+      polymorphic attachable to name the level/hint). Left unpreloaded, that
+      is +2 queries per row: one for file_attachments, one more for each
+      attachable it resolves. .with_attached_file (already here) is a
+      SEPARATE preload -- it covers the attachment/blob chain the thumbnail
+      cell's existing_thumb_variant reads, not this column. %>
+  <% library = GameFile.of_game(game).includes(:file_attachments => :attachable)
+                       .with_attached_file.order(:filename) %>
   <% if library.empty? %>
     <p class="hint-text"><%= t("game_files.picker.empty") %></p>
   <% else %>
     <% slot = active_locale == game.primary_locale ? nil : active_locale %>
-    <% checked_ids = attachable.attached_file_ids_in_slot(slot) %>
+    <%# On a validation failure the controller re-renders this same form
+        (never a redirect), so params[param_key][:game_file_ids] -- when
+        present -- is exactly what the author just picked, before the
+        failed save discarded it. Preferring it over the saved slot is what
+        makes the picker survive a 422 the same way the name/text fields
+        already do (they read back from the assigned-but-unsaved record;
+        this field has no column to be assigned to, so it reads back from
+        params instead). Absent entirely (an ordinary GET) falls back to
+        what is actually attached. The "" from the picker's own hidden
+        fallback field survives reject(&:blank?) as a no-op, so an
+        all-unticked submission correctly redisplays as fully unticked
+        rather than falling back to the stale saved state. %>
+    <% submitted_ids = params.dig(param_key, :game_file_ids) %>
+    <% checked_ids = submitted_ids ? submitted_ids.reject(&:blank?).map(&:to_i) :
+                                     attachable.attached_file_ids_in_slot(slot) %>
     <%= render "game_files/file_table", :files => library, :mode => :picker,
                                         :field_name => "#{param_key}[game_file_ids]",
                                         :checked_ids => checked_ids %>

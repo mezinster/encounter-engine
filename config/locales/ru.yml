@@ -358,7 +358,7 @@ ru:
       hint: "подсказка"
       no_thumbnail: "Нет превью"
     picker:
-      heading: "Прикреплённые файлы"
+      heading: "Библиотека игры"
       empty: "В библиотеке игры пока нет файлов"
   options:
     index:

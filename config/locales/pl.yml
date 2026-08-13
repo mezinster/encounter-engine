@@ -379,7 +379,7 @@ pl:
       hint: "podpowiedź"
       no_thumbnail: "Brak podglądu"
     picker:
-      heading: "Załączone pliki"
+      heading: "Biblioteka gry"
       empty: "W bibliotece gry nie ma jeszcze plików"
   options:
     index:

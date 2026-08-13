@@ -355,7 +355,7 @@ en:
       hint: "hint"
       no_thumbnail: "No preview"
     picker:
-      heading: "Attached files"
+      heading: "Game library"
       empty: "This game's library has no files yet"
   options:
     index:

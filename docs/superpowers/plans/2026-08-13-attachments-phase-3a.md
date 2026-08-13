@@ -531,11 +531,18 @@ git commit -m "The rows that say no"
 
 ---
 
-### Task 3: Response headers
+### Task 3: Response headers, and how the bytes actually leave
 
 **Files:**
 - Modify: `app/controllers/file_deliveries_controller.rb`
 - Modify: `spec/requests/file_deliveries_spec.rb`
+
+**RULING (repository owner, 2026-08-13) — replace `send_data` with `send_file`.**
+Task 1 shipped `send_data blob.download`, which loads the whole file into the Ruby heap before a byte is written. With `file_max_megabytes` at 25 and the 1-vCPU host this design keeps citing, several players fetching a large original at once each hold their own 25 MB copy, for as long as the slowest mobile connection takes. The ETag work below turns *repeat* views into 304s but does nothing for the first fetch per client.
+
+Resolve the blob's path on the Disk service and hand it to `send_file`, so the web server streams from disk and the bytes never enter the Ruby heap. This couples the controller to the storage service being local — true today and under the Kamal deployment, and the design's §"Why not Azure Blob" section explains why that is not expected to change. **Record that coupling in a comment**, so a future move to a remote service finds a note rather than a mystery.
+
+Keep the failure behaviour identical: a path that does not exist must still 404, never 500. Task 4 owns the missing-blob case in full, but do not regress it here.
 
 **Requirements, verbatim from design §4:**
 

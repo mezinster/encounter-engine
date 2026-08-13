@@ -146,4 +146,31 @@ describe "file delivery", :type => :request do
       expect(@file.file.blob.variant_records.reload.count).to eq(0)
     end
   end
+
+  describe "a playing team" do
+    before(:each) do
+      @team_user = create_user
+      @team = create_team(:members => [ @team_user ])
+      @team_user.reload
+      @l1 = create_level(:game => @game, :name => "L1")
+      @l2 = create_level(:game => @game, :name => "L2")
+      @passing = create_game_passing(:level => @l1, :team => @team)
+    end
+
+    it "serves a file on the level the team is on" do
+      FileAttachment.create!(:game_file => @file, :attachable => @l1)
+      login_as @team_user
+      deliver
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "404s for a file on a level the team has not reached" do
+      FileAttachment.create!(:game_file => @file, :attachable => @l2)
+      login_as @team_user
+      deliver
+
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end

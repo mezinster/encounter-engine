@@ -42,6 +42,7 @@ describe "the play screen in every shipped locale" do
     game_passings.show_current_level.answer_missing_code
     game_passings.show_current_level.hint_label
     game_passings.show_current_level.choose
+    game_passings.show_current_level.attachments_label
   ].freeze
 
   SHIPPED_LOCALES.each do |locale|

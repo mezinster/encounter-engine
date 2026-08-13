@@ -691,6 +691,7 @@ uk:
       submit: "Надіслати!"
       exit_game: "Зійти з дистанції"
       finish_testing: "Завершити тестування"
+      attachments_label: "Прикріплені файли"
     show_results:
       congrats: "Вітаємо, ви завершили гру!"
       place: "Місце"

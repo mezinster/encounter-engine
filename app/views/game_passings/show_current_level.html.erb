@@ -24,6 +24,12 @@
   <% end %>
 
   <%= @game_passing.current_level.translated(:text, content_locale) %>
+
+  <%# Below the task text, never inside it -- see the comment on
+      shared/_attachment_strip for why that placement is load-bearing. %>
+  <%= render "shared/attachment_strip",
+             :files => @game_passing.current_level.attached_files_for(content_locale),
+             :game => @game %>
 </fieldset>
 
 <div id="LevelHintsContainer">
@@ -33,6 +39,10 @@
         <%= t("game_passings.show_current_level.hint_label") %> #<%= index + 1 %>
       </legend>
       <%= hint.translated(:text, content_locale) %>
+
+      <%= render "shared/attachment_strip",
+                 :files => hint.attached_files_for(content_locale),
+                 :game => @game %>
     </fieldset>
   <% end %>
 </div>

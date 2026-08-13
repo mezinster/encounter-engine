@@ -683,6 +683,11 @@ ru:
       submit: "Отправить!"
       exit_game: "Сойти с дистанции"
       finish_testing: "Завершить тестирование"
+      # aria-label on shared/_attachment_strip's container -- announced once
+      # per strip by a screen reader, ahead of the photos/links it contains.
+      # A static noun phrase, no interpolation, so none of the
+      # Turkish/Georgian case-suffix concerns below apply to it.
+      attachments_label: "Прикреплённые файлы"
     show_results:
       congrats: "Поздравляем, вы закончили игру!"
       place: "Место"

@@ -51,10 +51,36 @@ module FileAttachable
   # keyed on (slot, position, id), gives one order on both engines without
   # fighting NULLS FIRST portability, and these lists are tiny (a level has a
   # handful of files) so sorting after loading costs nothing worth avoiding.
+  # Task 3B addition: when the caller has already preloaded file_attachments
+  # (Level.includes(:file_attachments => ...) / :hints => {:file_attachments
+  # => ...}), reading through .for_locale(locale).includes(:game_file) below
+  # would still hit the database -- calling ANY scope method (.for_locale,
+  # .includes) on a has_many association proxy builds a fresh relation and
+  # ignores the association's own loaded target, regardless of what was
+  # preloaded upstream. Confirmed empirically: even with
+  # `association(:file_attachments).loaded? == true`, `.includes(:x)` still
+  # issued 2 queries. On the play screen (game_passings_controller.rb) that
+  # turns into one query per HINT rendered -- exactly the N+1
+  # spec/requests/translated_level_spec.rb's flat-query-count guard exists to
+  # catch, and it did (a 10-hint page cost 9 more queries than a 1-hint page
+  # before this branch was added).
+  #
+  # So: filter and sort in Ruby against the ALREADY-LOADED array when one
+  # exists, which costs nothing extra as long as the caller also preloaded
+  # :game_file (as game_passings_controller.rb now does) -- and fall back to
+  # the original query-based path, unchanged, when nothing was preloaded.
+  # Every existing caller (the picker, this file's own spec) never preloads
+  # file_attachments before calling this, so they all keep taking the
+  # original path with identical output.
   def attached_files_for(locale)
-    file_attachments.for_locale(locale).includes(:game_file)
-      .sort_by { |a| [ a.locale.nil? ? 0 : 1, a.position, a.id ] }
-      .map(&:game_file)
+    rows = if file_attachments.loaded?
+             file_attachments.select { |a| a.locale.nil? || a.locale == locale.to_s }
+           else
+             file_attachments.for_locale(locale).includes(:game_file).to_a
+           end
+
+    rows.sort_by { |a| [ a.locale.nil? ? 0 : 1, a.position, a.id ] }
+        .map(&:game_file)
   end
 
   # The ids attached in exactly ONE slot -- unlike attached_files_for, which

@@ -668,6 +668,7 @@ en:
       submit: "Submit!"
       exit_game: "Leave the race"
       finish_testing: "Finish testing"
+      attachments_label: "Attached files"
     show_results:
       congrats: "Congratulations, you finished the game!"
       place: "Place"

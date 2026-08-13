@@ -724,6 +724,7 @@ tr:
       answer_label: "Kod"
       submit: "Gönder!"
       exit_game: "Yarıştan çekil"
+      attachments_label: "Ekli dosyalar"
       finish_testing: "Testi bitir"
     show_results:
       congrats: "Tebrikler, oyunu bitirdiniz!"

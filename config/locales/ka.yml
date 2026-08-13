@@ -713,6 +713,7 @@ ka:
       submit: "გაგზავნა!"
       exit_game: "დისტანციიდან გასვლა"
       finish_testing: "ტესტირების დასრულება"
+      attachments_label: "მიმაგრებული ფაილები"
     show_results:
       congrats: "გილოცავთ, თქვენ დაასრულეთ თამაში!"
       place: "ადგილი"

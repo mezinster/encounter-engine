@@ -329,8 +329,31 @@ class GamePassingsController < ApplicationController
     # through translated(). Without this the play view fires one query per
     # question and another per option, which is exactly what
     # spec/requests/translated_level_spec.rb's query-count guard exists to catch.
+    #
+    # :file_attachments => { :game_file => { :game => :runs } }, added for
+    # the attachment strip (Task 3), on both the level and each hint. Three
+    # things this feeds, all otherwise N+1 across hints:
+    #   1. FileAttachable#attached_files_for reads the loaded
+    #      `file_attachments` array in Ruby instead of re-querying, when it
+    #      finds one preloaded -- see that method's comment. Without this,
+    #      the play screen paid one extra query per HINT (confirmed:
+    #      spec/requests/translated_level_spec.rb's flat-query-count guard
+    #      went from equal to +9 on a 10-hint page the moment this render was
+    #      added, before this preload existed).
+    #   2. game_file_delivery_path (shared/_attachment_strip.html.erb) reads
+    #      file.game for the URL -- free once nested here.
+    #   3. GameFileAccess#permitted? reads file.game.current_run
+    #      (game.rb's `runs.to_a.last`) as part of its own authorization
+    #      check -- free once `:runs` is nested this deep. permitted? still
+    #      queries file_attachments+attachable and passing_for(team) itself
+    #      on every call (its own class comment explains why: `.includes`
+    #      called on an association always discards a preload, so this is
+    #      NOT avoidable from the caller's side) -- see task-3-report.md for
+    #      the measured total.
     Level.includes(:game, :content_translations,
-                   :hints => :content_translations,
+                   :file_attachments => { :game_file => { :game => :runs } },
+                   :hints => [ :content_translations,
+                               { :file_attachments => { :game_file => { :game => :runs } } } ],
                    :questions => [ :content_translations,
                                    { :options => :content_translations } ]).find(level.id)
   end

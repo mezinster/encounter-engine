@@ -687,6 +687,7 @@ be:
       submit: "Адправіць!"
       exit_game: "Сысці з дыстанцыі"
       finish_testing: "Завяршыць тэставанне"
+      attachments_label: "Прыкладзеныя файлы"
     show_results:
       congrats: "Віншуем, вы скончылі гульню!"
       place: "Месца"

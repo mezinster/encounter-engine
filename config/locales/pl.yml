@@ -700,6 +700,7 @@ pl:
       submit: "Wyślij!"
       exit_game: "Zrezygnuj z gry"
       finish_testing: "Zakończ testowanie"
+      attachments_label: "Załączone pliki"
     show_results:
       congrats: "Gratulacje, gra ukończona!"
       place: "Miejsce"

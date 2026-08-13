@@ -1,0 +1,67 @@
+<%# app/views/shared/_attachment_strip.html.erb
+    Locals: files (Array<GameFile>, e.g. Level#attached_files_for/Hint#attached_files_for),
+            game  (the Game every file in `files` belongs to).
+
+    Shared between show_current_level.html.erb's level card and each fired
+    hint's fieldset -- one partial, so the two never drift.
+
+    BELOW the caller's task text, always -- never inside it. That placement is
+    the whole reason author text needs no sanitisation of its own: the design
+    ("Renderer never parses author text, so the app's absolute HTML-escaping
+    guarantee is untouched. No new injection surface at all.",
+    docs/superpowers/specs/2026-08-12-level-and-hint-attachments-design.md)
+    depends on this partial never being rendered FROM WITHIN a translated()
+    call. Render it as a sibling, after the text, not inside it.
+
+    Authorization: GameFileAccess#permitted? is asked for every file before
+    any tag is emitted -- its class comment says the play screen must, so
+    this view never renders an <img>/<a> the delivery route would turn around
+    and 404 for. A file the requester may not see is filtered out entirely,
+    before the container is even considered -- see visible_files below.
+
+    Query cost: permitted? always re-queries file_attachments (and the
+    attachable it points at) for its own authorization check -- its class
+    comment explains why: .includes() called on an association discards
+    whatever the caller preloaded, so that part of the cost is NOT avoidable
+    from here. What IS avoidable is everything else permitted? would
+    otherwise ALSO query per file: it also reads file.game and, through that,
+    file.game.current_run. Both are free here as long as the caller preloaded
+    `file` with `:game_file => { :game => :runs }` nested under
+    file_attachments -- see game_passings_controller.rb#preloaded_level and
+    FileAttachable#attached_files_for's own comment on why a plain
+    Level.includes(:file_attachments => ...) does not reach this method
+    unless it does. DO NOT reassign `file.game` here to "help" -- doing so
+    would replace the deeply-preloaded object (with :runs already loaded)
+    with the `game` local, which does not carry that nested preload, turning
+    a free read back into a query per file. See task-3-report.md for the
+    measured query count. %>
+<%
+  visible_files = files.select { |file| GameFileAccess.new(current_user, file).permitted? }
+%>
+<% if visible_files.present? %>
+  <div class="attachment-strip" aria-label="<%= t("game_passings.show_current_level.attachments_label") %>">
+    <% visible_files.each do |file| %>
+      <%# existing_web_variant, deliberately NOT web_variant -- the latter
+          GENERATES the variant on a miss, and a render path that allocates
+          disk breaks design invariant I1 (a full disk must not break the
+          play screen mid-race). existing_web_variant is nil for a PDF by
+          design, nil for a GIF (web_variant never resizes one, so no "web"
+          derivative ever exists to read), and nil for an image whose variant
+          record is missing -- all three degrade to the same generic
+          indicator rather than a broken <img>. %>
+      <% if file.existing_web_variant.present? %>
+        <%= link_to game_file_delivery_path(game, file, "original"), :class => "attachment-item" do %>
+          <%# Alt text is the filename -- author content, escaped by ERB like
+              any other interpolation, never run through t(). %>
+          <%= image_tag game_file_delivery_path(game, file, "web"),
+                        :alt => file.filename, :class => "attachment-image" %>
+        <% end %>
+      <% else %>
+        <%= link_to game_file_delivery_path(game, file, "original"), :class => "attachment-item attachment-item--generic" do %>
+          <span class="attachment-generic-icon" aria-hidden="true">&#128206;</span>
+          <span class="attachment-generic-filename"><%= file.filename %></span>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

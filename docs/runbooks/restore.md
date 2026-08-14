@@ -286,6 +286,15 @@ ssh mezin 'systemctl list-timers encounter-engine-backup.timer'
 ssh mezin 'journalctl -u encounter-engine-backup.service -n 40 --no-pager'
 ```
 
+The same is true of the offsite archive timer, and it has no `OnFailure=` either — check it the
+same way:
+
+```bash
+ssh mezin 'systemctl status encounter-engine-archive.timer'
+ssh mezin 'systemctl list-timers encounter-engine-archive.timer'
+ssh mezin 'journalctl -u encounter-engine-archive.service -n 40 --no-pager'
+```
+
 **A backup list is not a working backup.** Only a rehearsed restore proves
 recoverability. Re-run §3 after any change to the database image, wal-g, or the
 storage account — it costs a few minutes and needs no downtime.
@@ -311,6 +320,22 @@ ssh mezin 'sudo systemctl daemon-reload && sudo systemctl enable --now encounter
 ssh mezin 'sudo systemctl start encounter-engine-backup.service && journalctl -u encounter-engine-backup.service -n 20 --no-pager'
 ```
 
+The offsite archive script, unit and timer are tracked the same way, at `ops/host/`, and need
+installing too — a rebuild that stops here gets the Postgres schedule back with no host-state
+archive, and nothing says so:
+
+```bash
+scp ops/host/encounter-engine-archive mezin:/tmp/
+ssh mezin 'sudo install -m 755 /tmp/encounter-engine-archive /usr/local/bin/encounter-engine-archive'
+scp ops/host/encounter-engine-archive.{service,timer} mezin:/tmp/
+ssh mezin 'sudo install -m 644 /tmp/encounter-engine-archive.service /tmp/encounter-engine-archive.timer /etc/systemd/system/'
+ssh mezin 'sudo systemctl daemon-reload && sudo systemctl enable --now encounter-engine-archive.timer'
+ssh mezin 'sudo systemctl start encounter-engine-archive.service && journalctl -u encounter-engine-archive.service -n 20 --no-pager'
+```
+
+It also needs `/etc/encounter-engine/archive-recipients.txt` back in place before that last command
+can succeed — see §7.
+
 ---
 
 ## 7. Decrypting an archive
@@ -333,6 +358,10 @@ writes.
 Written once on 2026-08-14 to `archive-once/2026-08-14/`. Never updated, never expires — the
 lifecycle rule applies only to `archive-daily/`. Nothing regenerates these.
 
+> **NOT YET EXECUTED.** Nothing below has happened; `ops/archive-once.sh` has never run. The
+> table and the paragraph after it describe what this section will record once it has, not
+> anything that is true yet — do not cite them as current.
+
 | Blob | sha256 (ciphertext) |
 |---|---|
 | `wordpress-tree.tar.zst.age` | <fill in> |
@@ -340,8 +369,9 @@ lifecycle rule applies only to `archive-daily/`. Nothing regenerates these.
 | `home-mezinster.tar.zst.age` | <fill in> |
 | `system-2026-08-04.fsa.age` | <fill in> |
 
-The MySQL copy was taken cold (server stopped since 2026-08-04) and verified on 2026-08-14 by
-restoring it into a throwaway `mysql:8` container and counting `wordpress.wp_posts`. The
+The MySQL copy is meant to be taken cold (server stopped since 2026-08-04) and, once
+`ops/archive-once.sh` has actually run, verified by restoring it into a throwaway `mysql:8`
+container and counting `wordpress.wp_posts` — see the offsite-backup plan, Task 5 Step 5. The
 fsarchiver image is a bare-metal image of the OS only: it predates the MySQL shutdown by
 fifteen hours, so the database inside it is torn. Use `mysql-datadir.tar.zst.age` for the
-database, always.
+database, always, once it exists.

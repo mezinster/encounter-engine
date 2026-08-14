@@ -21,16 +21,39 @@ set -euo pipefail
 
 RECIPIENTS=/etc/encounter-engine/archive-recipients.txt
 CONTAINER=archive-daily
-STAGE=$(mktemp -d /tmp/ee-archive.XXXXXX)
+
+# /var/tmp, not /tmp, same reasoning as ops/archive-once.sh: the uploads
+# volume staged below is user-uploaded game files, actively growing, and /tmp
+# may be a tmpfs on a 1 GB box. Refuse up front, on our own terms, rather than
+# filling the disk mid-tar -- this box's / also holds the production Postgres
+# data directory (see the Global Constraints in the offsite-backup plan).
+MIN_FREE_MB=1024
+FREE_MB=$(df --output=avail -m /var/tmp | tail -1 | tr -d ' ')
+if [ "$FREE_MB" -lt "$MIN_FREE_MB" ]; then
+  echo "FATAL: only ${FREE_MB} MiB free on /var/tmp; refusing to stage (need at least ${MIN_FREE_MB} MiB)" >&2
+  exit 1
+fi
+
+STAGE=$(mktemp -d /var/tmp/ee-archive.XXXXXX)
 trap 'rm -rf "$STAGE"' EXIT
 
 DATE=$(date -u +%Y-%m-%d)
 ARCHIVE="$STAGE/host-state.tar.zst"
 
-ACCT=$(systemctl show encounter-engine-backup.service -p Environment --value \
-       | tr ' ' '\n' | grep '^AZURE_STORAGE_ACCOUNT=' | cut -d= -f2)
+# AZURE_STORAGE_ACCOUNT lives on the encounter-engine-db container's
+# environment (set from config/deploy.yml), not on the encounter-engine-backup
+# systemd unit -- that unit carries no Environment= line at all, it works by
+# `docker exec`-ing into the container, which already has these values.
+# Follow ops/db-restore-scratch.sh's pattern: read them off the running
+# container rather than repeating them here.
+DB_CONTAINER=encounter-engine-db
+env_of() { docker inspect "$DB_CONTAINER" --format '{{range .Config.Env}}{{println .}}{{end}}' | grep "^$1=" | head -1 | cut -d= -f2-; }
+# The `|| true` matters: under pipefail, env_of's internal grep exits 1 when
+# nothing matches, which would otherwise fail this assignment and terminate
+# the script here -- before the FATAL message below ever runs.
+ACCT=$(env_of AZURE_STORAGE_ACCOUNT) || true
 if [ -z "$ACCT" ]; then
-  echo "FATAL: could not read AZURE_STORAGE_ACCOUNT from the wal-g unit" >&2
+  echo "FATAL: could not read AZURE_STORAGE_ACCOUNT off the ${DB_CONTAINER} container" >&2
   exit 1
 fi
 
@@ -38,16 +61,40 @@ if [ ! -s "$RECIPIENTS" ]; then
   echo "FATAL: no age recipients at $RECIPIENTS; refusing to write a plaintext archive" >&2
   exit 1
 fi
+# Two recipients is the whole point -- so losing one key does not make every
+# backup worthless. A recipients file with only one line satisfies -s above
+# and would silently defeat that.
+RECIPIENT_COUNT=$(grep -c '^age1' "$RECIPIENTS" || true)
+if [ "$RECIPIENT_COUNT" -lt 2 ]; then
+  echo "FATAL: only ${RECIPIENT_COUNT} age1 recipient(s) in $RECIPIENTS; need at least two" >&2
+  exit 1
+fi
 
 # The uploads volume is read out of Docker rather than from /var/lib/docker
 # directly: the volume's on-disk path is an implementation detail Docker is
 # entitled to change, and reading it live risks catching a half-written file.
+#
+# `docker run -v <name>:/from:ro` auto-creates a named volume that does not
+# exist, even read-only -- on a rebuilt host before the first Kamal deploy, or
+# if the volume is ever renamed, that would copy nothing and every check below
+# would still pass: the tar builds, the encryption succeeds, the upload
+# succeeds, the read-back matches. Both checks below exist because that
+# failure is otherwise invisible all the way to restore time.
+if ! docker volume inspect encounter_engine_storage >/dev/null 2>&1; then
+  echo "FATAL: docker volume encounter_engine_storage does not exist; refusing to let" >&2
+  echo "       'docker run -v ...:ro' silently create an empty one in its place" >&2
+  exit 1
+fi
 UPLOADS="$STAGE/uploads"
 mkdir -p "$UPLOADS"
 docker run --rm \
   -v encounter_engine_storage:/from:ro \
   -v "$UPLOADS":/to \
   alpine:3 sh -c 'cp -a /from/. /to/'
+if [ -z "$(ls -A "$UPLOADS" 2>/dev/null)" ]; then
+  echo "FATAL: the uploads copy produced nothing from encounter_engine_storage" >&2
+  exit 1
+fi
 
 # /etc/ssh whole rather than an enumerated list of host keys: this box has FOUR
 # pairs (dsa, ecdsa, ed25519, rsa), and naming three of them would archive three
@@ -58,6 +105,11 @@ docker run --rm \
 # /etc/letsencrypt is included although certificates are reissuable: 1.7 MB, and
 # it avoids hitting Let's Encrypt rate limits during a rebuild, which is exactly
 # when a rate limit is least welcome.
+#
+# etc/encounter-engine/archive-recipients.txt (the age recipients file itself)
+# is included too: it is the one host-side file the archive system needs to
+# keep working after a rebuild, and it is public keys, not a secret -- there
+# is no reason to make a rebuilt host depend on someone remembering it.
 echo "building archive"
 tar --create --zstd --file "$ARCHIVE" \
     --directory / \
@@ -71,6 +123,7 @@ tar --create --zstd --file "$ARCHIVE" \
     usr/local/bin/encounter-engine-backup \
     usr/local/bin/encounter-engine-archive \
     etc/ddclient.conf \
+    etc/encounter-engine/archive-recipients.txt \
     etc/ssh \
     etc/letsencrypt \
     etc/crontab etc/cron.d \

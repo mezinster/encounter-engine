@@ -9,9 +9,13 @@
 // requires it on the advanced page. So it is rendered, labelled with the task
 // it belongs to, and removed here a few seconds later.
 //
-// Removing it rather than hiding it: .play-pinned never shrinks (screens.css),
-// so a hidden-but-present flash would go on reserving its height in the one
-// column that must not waste any.
+// Removing it rather than hiding it: `visibility: hidden` leaves the box, and
+// the flash is a block at the very top of the page, so a hidden-but-present
+// one would go on pushing the task text -- and everything under it -- down by
+// its own height for the rest of the level. (This comment used to justify
+// itself by .play-pinned never shrinking; that class was deleted with the
+// viewport-height shell in #98. The conclusion survived the reason, which is
+// exactly the kind of comment worth re-deriving rather than trusting.)
 //
 // Plain DOM and no jQuery even though the play screen loads jQuery 1.3.2 for
 // the hint poller -- there is nothing here that needs it, and this file is

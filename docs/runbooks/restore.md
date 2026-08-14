@@ -463,10 +463,10 @@ applies only to `archive-daily/`. Nothing regenerates these.
 
 | Blob | sha256 (ciphertext) |
 |---|---|
-| `wordpress-tree.tar.zst.age` | <fill in> |
-| `mysql-datadir.tar.zst.age` | <fill in> |
-| `home-mezinster.tar.zst.age` | <fill in> |
-| `system-2026-08-04.fsa.age` | <fill in> |
+| `wordpress-tree.tar.zst.age` | `8a3669510da80ba81ab2b86b443c24efdfec5a00f425cd145310d4fa127e7edb` |
+| `mysql-datadir.tar.zst.age` | `bbd530db5ff151f4556912d8024927ea81633235e4105071b69ffd1e178ae59e` |
+| `home-mezinster.tar.zst.age` | `405c8501357a579ef47197c6daf3ce1ed18bfb16cd955aa91647b10506396cf4` |
+| `system-2026-08-04.fsa.age` | `f5a238e816ac7cc327c6d96a286547c9df4d6208bddbd4a2bc90dc454837fdcd` |
 
 The MySQL copy is meant to be taken cold (server stopped since 2026-08-04) and, once
 `ops/archive-once.sh` has actually run, verified by restoring it into a throwaway `mysql:8`

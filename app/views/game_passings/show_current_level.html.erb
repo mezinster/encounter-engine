@@ -3,32 +3,80 @@
 <script language="javascript" src="/javascripts/flash_dismiss.js"></script>
 
 <% content_locale = content_locale_for(@game_passing.game) %>
+<% level = @game_passing.current_level %>
+<%# One form, and every control that submits to it names it by id rather than
+    nesting inside it. That is what lets the quiz options sit with the question
+    they belong to while the submit button stays in the bar at the bottom: a
+    <form> cannot wrap the options AND the bar without also wrapping the
+    captain's exit button, and a <form> inside a <form> is not valid HTML.
+
+    Safe for the frozen acceptance suite, which is the only reason this is
+    available: Capybara's rack_test driver implements the HTML5 form attribute
+    on both sides -- RackTest::Node#form (node.rb) resolves form="..." for the
+    button being clicked, and RackTest::Form#params (form.rb) collects
+    //*[@form = <id>] alongside its own descendants. So `нажимаю "Отправить!"`
+    still submits the options, with no .feature file touched. %>
+<% answer_form_id = "answer-form" %>
 
 <h2>
-  <%= t("game_passings.show_current_level.title_prefix") %> "<strong><%= @game.translated(:name, content_locale) %></strong>", <%= t("game_passings.show_current_level.level_label") %> #<%= @game_passing.current_level.position %>
+  <%= t("game_passings.show_current_level.title_prefix") %> "<strong><%= @game.translated(:name, content_locale) %></strong>", <%= t("game_passings.show_current_level.level_label") %> #<%= level.position %>
 </h2>
 
-<%# Everything that may grow without bound -- task text, an accumulating pile
-    of hints -- scrolls in here, so it can never push the two things below it
-    off the screen. See .play-scroll in screens.css. %>
-<div class="play-scroll">
+<%# Answer feedback goes FIRST now, not into a pinned block between the task
+    and the bar. It used to be pinned because the page could not scroll: a
+    message below the fold was a message the team never saw. The page scrolls
+    now, and posting an answer is a full page load that lands at scroll 0 --
+    so the top of the document is exactly where this is guaranteed to be read.
+    features/game-passing/stepping-next-level.feature:26-27 is frozen and needs
+    this message and "Задание #2" on the same page; both still are. %>
+<% if answer_posted? %>
+  <% if answer_was_correct? %>
+    <%# data-dismiss-after only when the answer moved the team on. Then, and
+        only then, this message is about a question the page no longer shows,
+        so it names that question and takes itself off the screen a few
+        seconds later (flash_dismiss.js). A correct code on a level with
+        another code still to find is feedback on the question in front of
+        the team and stays put. %>
+    <div class="flash"<%= ' data-dismiss-after="8000"'.html_safe if level_passed %>>
+      <% if level_passed %>
+        <strong><%= t("game_passings.show_current_level.level_passed", position: level_passed.position) %></strong>
+      <% end %>
+      <%= answer_feedback_message %>
+    </div>
+  <% else %>
+    <p class="flash flash--alert">
+      <%= answer_feedback_message %>
+    </p>
+  <% end %>
+<% elsif answer_rejected? %>
+  <p class="flash flash--alert">
+    <%= rejected_answer_message %>
+  </p>
+<% end %>
+
+<%# Ordinary flow, no scroll container of its own. Everything a team reads --
+    task text, its photographs, every hint that has fired and its photographs,
+    and the answer options -- is one document scroll. See the .play-body block
+    in screens.css for why the viewport-height column this replaced could not
+    survive attachments. %>
+<div class="play-body">
 <%= render "shared/content_language_switcher", :game => @game_passing.game %>
 
 <fieldset class="card">
   <legend>
-    <%= @game_passing.current_level.translated(:name, content_locale) %>
+    <%= level.translated(:name, content_locale) %>
   </legend>
 
-  <% if @game_passing.current_level.missing_translated_fields(Level::TRANSLATABLE_FIELDS, content_locale).any? %>
+  <% if level.missing_translated_fields(Level::TRANSLATABLE_FIELDS, content_locale).any? %>
     <p class="notice"><%= t("game_passings.content_not_translated") %></p>
   <% end %>
 
-  <%= @game_passing.current_level.translated(:text, content_locale) %>
+  <%= level.translated(:text, content_locale) %>
 
   <%# Below the task text, never inside it -- see the comment on
       shared/_attachment_strip for why that placement is load-bearing. %>
   <%= render "shared/attachment_strip",
-             :files => @game_passing.current_level.attached_files_for(content_locale),
+             :files => level.attached_files_for(content_locale),
              :game => @game %>
 </fieldset>
 
@@ -49,62 +97,76 @@
 
 <%# Counting toward a total is meaningless when any single code suffices --
     showing "0 из 3" to a team that needs only one is actively misleading. %>
-<% if @game_passing.current_level.multi_question? && !@game_passing.current_level.any_code_passes? %>
+<% if level.multi_question? && !level.any_code_passes? %>
   <div>
-    <%= t("game_passings.show_current_level.multi_question_progress", answered: @game_passing.answered_questions.size, total: @game_passing.current_level.questions.count) %>
+    <%= t("game_passings.show_current_level.multi_question_progress", answered: @game_passing.answered_questions.size, total: level.questions.count) %>
+  </div>
+<% end %>
+
+<%# The options read as part of the question, because they are. They spent one
+    release inside the pinned bar, where the bar's floor gave the whole list
+    exactly one option's worth of height -- measured at 390x680: a 76px window
+    over 228px of options, with 0 of 4 answers tappable without scrolling
+    inside it. Nothing about that was fixable from inside the bar; a list that
+    grows with the author's question does not belong in a fixed-height strip.
+
+    Still suppressed while paused, exactly as before: codes are refused by
+    ensure_game_not_paused, and controls that still looked usable would be a
+    lie. This is also why the form= attribute is safe here -- when the form is
+    not rendered, neither are the controls naming it. %>
+<% unless @game.paused? %>
+  <%# unanswered_questions, not questions: an answered question that is still
+      on the form can be submitted again, and a wrong pick charges the penalty
+      a second time for a question the team already got right. %>
+  <% @game_passing.unanswered_questions.select(&:quiz?).each do |quiz_question| %>
+    <fieldset class="quiz-question">
+      <legend><%= t("game_passings.show_current_level.choose") %></legend>
+      <% quiz_question.ordered_options.each do |option| %>
+        <label class="quiz-option">
+          <%# Both controls use the [] name so the params shape is identical
+              either way: radios sharing a name submit only the selected one,
+              giving the same { question_id => [option_id] } the controller
+              expects. %>
+          <% if quiz_question.single_choice? %>
+            <%= radio_button_tag "option_ids[#{quiz_question.id}][]", option.id, false, id: "option_#{option.id}", form: answer_form_id %>
+          <% else %>
+            <%= check_box_tag "option_ids[#{quiz_question.id}][]", option.id, false, id: "option_#{option.id}", form: answer_form_id %>
+          <% end %>
+          <%# Author content -- rendered verbatim, never through t(). %>
+          <%= option.translated(:text, content_locale) %>
+        </label>
+      <% end %>
+    </fieldset>
+  <% end %>
+<% end %>
+
+<%# Last in the document and deliberately not in the bar. A control that ends
+    a team's game must never be the neighbour of the button they are pressing
+    over and over under time pressure -- the same reasoning .danger-row is
+    built on. It no longer needs pinning to stay reachable: the whole page
+    scrolls, so there is no longer any position at which it can be buried,
+    which is the failure the pinned block existed to prevent. %>
+<% if current_user.captain? || @game.is_testing? %>
+  <div class="play-exit">
+    <% if current_user.captain? %>
+      <%= button_to t("game_passings.show_current_level.exit_game"), exit_game_path(:game_id => @game_passing.game_id), :class => "btn" %>
+    <% end %>
+    <% if @game.is_testing? %>
+      <%= button_to t("game_passings.show_current_level.finish_testing"), finish_test_game_path(@game), :class => "btn" %>
+    <% end %>
   </div>
 <% end %>
 </div>
 
-<%# Outside the scrolling region on purpose: whether the last answer was
-    refused, and the captain's way out of the game, are the two things that
-    must be on screen no matter how long the task text runs or how many
-    hints have landed. Both are short and fixed-height, so pinning them costs
-    a bounded amount of room. %>
-<div class="play-pinned">
-  <% if answer_posted? %>
-    <% if answer_was_correct? %>
-      <%# data-dismiss-after only when the answer moved the team on. Then, and
-          only then, this message is about a question the page no longer shows,
-          so it names that question and takes itself off the screen a few
-          seconds later (flash_dismiss.js). A correct code on a level with
-          another code still to find is feedback on the question in front of
-          the team and stays put.
-          Suppressing it outright on advance is not available:
-          features/game-passing/stepping-next-level.feature:26-27 is frozen and
-          requires this message and "Задание #2" on the same page. %>
-      <div class="flash"<%= ' data-dismiss-after="8000"'.html_safe if level_passed %>>
-        <% if level_passed %>
-          <strong><%= t("game_passings.show_current_level.level_passed", position: level_passed.position) %></strong>
-        <% end %>
-        <%= answer_feedback_message %>
-      </div>
-    <% else %>
-      <p class="flash flash--alert">
-        <%= answer_feedback_message %>
-      </p>
-    <% end %>
-  <% elsif answer_rejected? %>
-    <p class="flash flash--alert">
-      <%= rejected_answer_message %>
-    </p>
-  <% end %>
+<%# The bar: the countdown to the next hint, and the controls that submit an
+    answer. Nothing that grows with the author's content lives here any more --
+    that is the whole point, and it is what keeps the bar a bounded strip
+    rather than something that has to be capped, floored and scrolled.
 
-  <% if current_user.captain? || @game.is_testing? %>
-    <p>
-      <% if current_user.captain? %>
-        <%= button_to t("game_passings.show_current_level.exit_game"), exit_game_path(:game_id => @game_passing.game_id), :class => "btn" %>
-      <% end %>
-      <% if @game.is_testing? %>
-        <%= button_to t("game_passings.show_current_level.finish_testing"), finish_test_game_path(@game), :class => "btn" %>
-      <% end %>
-    </p>
-  <% end %>
-</div>
-
-<%# The pinned bar: the code field, the countdown to the next hint and the
-    newest hint text, so the distance from "stuck" to "trying again" never
-    grows as task text and hints accumulate above.
+    position: sticky rather than a row of a viewport-height grid (screens.css).
+    An earlier design pinned it by making the shell exactly one screen tall,
+    which meant every other region had to shrink to fit around it; a photograph
+    in the task text has a floor of its own and that premise stopped holding.
 
     Paused: no FORM at all, since codes are refused while paused
     (ensure_game_not_paused) and a field that still looked usable would be a
@@ -128,15 +190,6 @@
     </p>
   <% end %>
 
-  <% newest = @game_passing.hints_to_show.last %>
-  <%# Rendered even when empty: the poller needs an element to write into when
-      the first hint fires, and a team that loaded the page before any hint
-      would otherwise never get a pinned one. %>
-  <div class="playbar-hint" id="PlaybarHint"<%= " hidden".html_safe if newest.nil? %>>
-    <span class="playbar-hint-label"><%= t("game_passings.show_current_level.hint_label") %></span>
-    <span class="playbar-hint-text" id="PlaybarHintText"><%= newest&.translated(:text, content_locale) %></span>
-  </div>
-
   <% unless @game_passing.upcoming_hints.empty?  %>
     <div id="LevelHintCountdownContainer" class="countdown"><%= t("game_passings.show_current_level.until_next_hint") %> <span id="LevelHintCountdownTimerText"><%= t("game_passings.show_current_level.countdown_placeholder") %></span></div>
     <div id="LevelHintCountdownLoadIndicator" class="countdown" style="display: none;"><%= t("game_passings.show_current_level.loading") %></div>
@@ -154,59 +207,17 @@
   <% end %>
 
   <% unless @game.paused? %>
-    <% if @game_passing.current_level.quiz? %>
-      <%= form_with url: post_answer_path(game_id: @game.id), method: :post, html: { class: "playbar-form playbar-form--quiz" } do %>
-        <%# The ONLY scrolling part of the bar. Everything else in here -- the
-            hint, the countdown, the code field on a mixed level, the submit
-            button -- must stay put, and the task text, any flash and the
-            captain's exit button must keep the top half of the screen. A
-            quiz's option list is the one piece that can grow without bound,
-            so it is the one piece that yields. See .playbar-questions in
-            screens.css. %>
-        <div class="playbar-questions">
-        <%# unanswered_questions, not questions: an answered question that is
-            still on the form can be submitted again, and a wrong pick charges
-            the penalty a second time for a question the team already got
-            right. %>
-        <% @game_passing.unanswered_questions.select(&:quiz?).each do |quiz_question| %>
-          <fieldset class="quiz-question">
-            <legend><%= t("game_passings.show_current_level.choose") %></legend>
-            <% quiz_question.ordered_options.each do |option| %>
-              <label class="quiz-option">
-                <%# Both controls use the [] name so the params shape is
-                    identical either way: radios sharing a name submit only the
-                    selected one, giving the same { question_id => [option_id] }
-                    the controller expects. %>
-                <% if quiz_question.single_choice? %>
-                  <%= radio_button_tag "option_ids[#{quiz_question.id}][]", option.id, false, id: "option_#{option.id}" %>
-                <% else %>
-                  <%= check_box_tag "option_ids[#{quiz_question.id}][]", option.id, false, id: "option_#{option.id}" %>
-                <% end %>
-                <%# Author content -- rendered verbatim, never through t(). %>
-                <%= option.translated(:text, content_locale) %>
-              </label>
-            <% end %>
-          </fieldset>
-        <% end %>
-        </div>
-
-        <%# A level may mix a quiz question with a code question. Without this
-            the code field simply never renders on such a level and it becomes
-            unwinnable -- see finding 1 of the whole-branch review. Same
-            markup as the code branch below: same name, same attributes. %>
-        <% if @game_passing.current_level.questions.any? { |q| !q.quiz? } %>
-          <%= label_tag :answer, t("game_passings.show_current_level.answer_label") %>
-          <%= text_field_tag :answer, nil, autocapitalize: "off", autocorrect: "off", spellcheck: "false" %>
-        <% end %>
-
-        <%= submit_tag t("game_passings.show_current_level.submit"), class: "btn btn--go" %>
-      <% end %>
-    <% else %>
-      <%= form_with url: post_answer_path(game_id: @game.id), method: :post, html: { class: "playbar-form" } do %>
+    <%= form_with url: post_answer_path(game_id: @game.id), method: :post, html: { class: "playbar-form", id: answer_form_id } do %>
+      <%# A level may mix a quiz question with a code question. Without this the
+          code field simply never renders on such a level and it becomes
+          unwinnable -- see finding 1 of the whole-branch review. A pure quiz
+          level is the only case with no field at all. %>
+      <% if !level.quiz? || level.questions.any? { |q| !q.quiz? } %>
         <%= label_tag :answer, t("game_passings.show_current_level.answer_label") %>
         <%= text_field_tag :answer, nil, autocapitalize: "off", autocorrect: "off", spellcheck: "false" %>
-        <%= submit_tag t("game_passings.show_current_level.submit"), class: "btn btn--go" %>
       <% end %>
+
+      <%= submit_tag t("game_passings.show_current_level.submit"), class: "btn btn--go" %>
     <% end %>
   <% end %>
 </div>

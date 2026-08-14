@@ -6,10 +6,22 @@
      lets an unshrinkable child set the track's width. The header's locale
      switcher did exactly that, forcing 454px of scroll on a 390px viewport. */
   grid-template-columns: minmax(0, 1fr);
-  min-height: 100vh;
+  /* svh, NOT vh, and this one line is a fix rather than a preference.
+     min-height clamps height, so `.page { min-height: 100vh }` beat
+     `.page--focused { height: 100dvh }` on the very device that rule was
+     written for: on an iPhone (390x844, ~680px actually visible in Safari)
+     100vh is the URL-bar-HIDDEN height, so the play shell computed to 844 and
+     hung 164px below the screen -- measured, with the answer bar's submit
+     button at y=764..808 against a fold at 680. Every earlier measurement
+     missed it because in a headless browser at a fixed window size 100vh and
+     100dvh are the same number, and Capybara parses no CSS at all.
+     100svh is the SMALL viewport -- browser chrome showing, the smallest the
+     visible area ever gets -- which is what "fill the screen when the content
+     is short" actually means, and it can never clamp a dvh height upward. */
+  min-height: 100svh;
   /* Rows size to content. Without this, align-content defaults to `normal`
      (= stretch for grid), so on any page shorter than the viewport the
-     min-height:100vh free space inflates the topbar into a slab -- 386px, half
+     min-height free space above inflates the topbar into a slab -- 386px, half
      the screen, on the landing page at 390px. */
   align-content: start;
 }
@@ -273,28 +285,19 @@
 .page--focused {
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas: "top" "main";
-  /* The one shell that must fill the viewport EXACTLY rather than grow with
-     its content: the bar sits at the bottom, the task area scrolls between
-     it and the header. So .page's `align-content: start` is undone here and
-     the main row takes whatever is left.
-     100dvh, not 100vh: on a phone 100vh is the height with the browser's
-     URL bar hidden, which is taller than what you can actually see -- the
-     precise error that let the bar overhang the visible screen. */
-  /* minmax(0, 1fr), not 1fr -- the same trap this file documents for columns
-     at the top, in the other axis. A bare 1fr is minmax(auto, 1fr), and that
-     auto floor lets the row grow to its content, so .main is never actually
-     constrained to the viewport, the flex children below never see a
-     shortage, and nothing shrinks: the bar stayed at its full height and the
-     page just overflowed instead. */
-  grid-template-rows: auto minmax(0, 1fr);
-  align-content: stretch;
-  /* height, not min-height, and the distinction is load-bearing: min-height
-     leaves the grid's height INDEFINITE, and against an indefinite height an
-     fr track sizes to its content -- so .main was never constrained, the
-     flex children below never saw a shortage, and nothing shrank. The
-     too-short-viewport case is handled by .main's own overflow instead of by
-     letting the shell grow. */
-  height: 100dvh;
+  /* This shell used to be exactly one viewport tall -- `height: 100dvh`, rows
+     `auto minmax(0, 1fr)`, `align-content: stretch` -- so the answer bar could
+     sit at the bottom while the task area scrolled between it and the header.
+     Every one of those is gone, and it grows with its content like every other
+     page in the app.
+     The premise was that each region could be squeezed to a floor and scroll
+     inside itself, which is true of text and false of a photograph. With
+     attachments on a task and on a hint, measured at 390x680: the task area
+     held 479px of content in 170px, the option list 228px in 76px, and none of
+     the four answers could be tapped without scrolling a third nested
+     scrollport. See the .playbar comment in screens.css for the full history
+     -- it matters, because two earlier designs were reactions to a bar that
+     was OUT of flow, and reintroducing either one would be a regression. */
 }
 
 /* A race, not a browsing session. The theme toggle and the language switcher
@@ -321,105 +324,74 @@
    comment in screens.css. */
 .page--focused .main {
   max-width: 44rem;
-  /* Column of three: title, the scrolling task area, then the pinned
-     controls and the bar. min-height: 0 because a flex/grid child's auto
-     floor refuses to shrink below its content, which would push the bar off
-     the bottom instead of letting .play-scroll scroll. */
+  /* A column still, so the bar is reliably the last box and .play-body
+     reliably the one above it -- but no longer a column that rations a fixed
+     height. `min-height: 0` and `overflow-y: auto` are gone with the shell
+     that needed them: the second was documented as a last resort that "should
+     never fire on a real phone" and fired on every iPhone SE (553px of visible
+     viewport against the ~595px the note assumed). */
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  /* Last resort, and it should never fire on a real phone: below roughly
-     595px of viewport even the floors do not fit, and this scrolls the
-     column rather than clipping the bar off the bottom of a shell that
-     cannot grow. */
-  overflow-y: auto;
 }
 
 /* --- The play shell where there is room for two columns -----------------
- * Everything above this point is measured against 390x660 and 375x553 and
- * exists to ration a viewport with nothing to spare: the shell is exactly
- * one viewport tall, the bar takes at most half of it, and the task area
- * scrolls in what is left.
+ * Below this width the play screen is one column that scrolls, with the
+ * answer bar stuck to the bottom of the viewport.
  *
- * That rationing applied at EVERY width, because .page--focused sits outside
- * the 48rem query above. On a desktop window it produced the bug it was
- * written to prevent, inverted: measured at 1920x780, the bar claimed 316px,
- * .play-scroll was squeezed to 106px and clipped 29px of a two-line
- * question, and the option list clipped 81px more -- while roughly 1200px of
- * horizontal space sat empty either side of the 44rem column. Nothing was in
- * danger of being covered. There was no shortage to negotiate; the layout
- * invented one.
+ * Letting the page scroll was measured and REJECTED once, when the shell was
+ * a viewport-height column: content ~890px tall against a 780px window
+ * scrolled the page 110px and put «Отправить!» below the fold, at 1920x780,
+ * 1440x800, 1024x600 and 845x600. That finding was about a bar that scrolled
+ * away with everything else. A sticky bar cannot leave the bottom edge, so
+ * the failure it describes is not reachable from the current design -- which
+ * is why the same approach is now the right one, and why this note stays
+ * rather than being deleted as obsolete.
  *
- * Simply switching the rationing off was measured first and is NOT what
- * this does. It moves the scroll rather than removing it: the content is
- * ~890px tall against a 780px window, so the page itself scrolls 110px and
- * «Отправить!» lands below the fold -- worse than the inner scrollbar it
- * replaces, on the one screen where the submit button matters most. It fails
- * that way at 1920x780, 1440x800, 1024x600 and 845x600.
- *
- * Using the idle horizontal space is what actually resolves it. Task text
- * and the captain's controls take the left column, the answer bar the right,
- * and each column is roughly half as tall as the stack was. Measured with
- * the worst content state (quiz options, a pinned hint and a wrong-answer
- * flash), page scroll and every clip are 0 and the submit button is hit-
- * testable at 1920x780, 1440x800, 1280x845, 845x600 and 800x900; 1024x600
- * leaves 2px of page scroll.
+ * The two columns are still worth having here: at 1920x780 the single stack
+ * left roughly 1200px of horizontal space idle either side of a 44rem column
+ * while the answer bar and the question competed for vertical room. Task
+ * text and the captain's controls take the left column, the answer bar the
+ * right. Measured with the worst content state (quiz options and a
+ * wrong-answer flash), page scroll and every clip are 0 and the submit button
+ * is hit-testable at 1920x780, 1440x800, 1280x845, 845x600 and 800x900;
+ * 1024x600 leaves 2px of page scroll.
  *
  * 52rem (832px), one threshold and not two: it is where two readable columns
  * first fit (24rem of task + 20rem of bar + the gap), and it catches a
  * scaled-down laptop viewport at 845px, which a 48rem or 60rem line would
- * have left on one or the other side of the fix. Below it nothing changes at
- * all -- the phone measurements above are untouched rather than re-tuned.
+ * have left on one or the other side of the fix.
  *
  * A width query rather than a height one: a height query would flip the
- * whole layout when someone opened dev tools. The case it gets wrong is a
- * narrow, short window (800x600), which keeps the phone pinning it can still
- * use.
+ * whole layout when someone opened dev tools.
  *
- * The companion half of this block -- the three scroll containers and the
- * bar's full-bleed margins -- is in screens.css, next to the rules it
- * undoes. */
+ * The companion half of this block -- the bar's full-bleed margins and its
+ * stickiness -- is in screens.css, next to the rules it undoes. */
 @media (min-width: 52rem) {
-  .page--focused {
-    /* auto, not 100dvh: with no fixed height there is no shortage, and with
-       no shortage nothing below ever shrinks or scrolls. */
-    height: auto;
-    grid-template-rows: auto auto;
-    /* Undoes the align-content: stretch above, restoring .page's own value --
-       otherwise the rows stretch to fill a grid with no definite height. */
-    align-content: start;
-  }
 
   .page--focused .main {
     /* 44rem is a single column of prose. Two columns need the room the rest
        of the app already takes (.main's own 72rem). */
     max-width: 72rem;
-    /* Replaces the flex column below 52rem. Named areas rather than
-       auto-placement because the source order is title, task, pinned, bar --
-       the bar must jump the pinned block to reach the right column, and it
-       has to span both content rows so a tall option list is not limited to
-       the height of the task text beside it. */
+    /* Replaces the flex column below 52rem. Auto-placement rather than named
+       areas: the full-width items are the title and any number of flashes
+       (the layout renders one per Rails flash entry, and the view adds answer
+       feedback of its own), and two items sharing one named area would stack
+       on top of each other instead of taking a row each. Spanning both
+       columns and letting the grid place them keeps that correct for any
+       count. The two single-column items follow, so they land side by side in
+       the next row. */
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
-    grid-template-areas: "title title"
-                         "task  bar"
-                         "pinned bar";
-    grid-template-rows: auto auto 1fr;
-    /* Each area at its natural height; the 1fr row absorbs the slack so
-       neither column is stretched to match the other. */
+    /* Each item at its natural height; without this the two columns stretch
+       to match each other. */
     align-items: start;
-    /* Column gap only -- the row rhythm is .play-scroll's and .play-pinned's
-       own margins (screens.css), and a row gap here would double it. */
+    /* Column gap only -- the row rhythm is each block's own margin
+       (screens.css), and a row gap here would double it. */
     gap: 0 var(--space-5);
-    /* Both go with the flex column they belonged to. */
-    min-height: auto;
-    overflow-y: visible;
   }
 
-  .page--focused .main > h2 { grid-area: title; }
-  .play-scroll { grid-area: task; }
-  .play-pinned { grid-area: pinned; }
-  .playbar     { grid-area: bar; }
+  .page--focused .main > h2,
+  .page--focused .main > .flash { grid-column: 1 / -1; }
 }
 
 @media (prefers-reduced-motion: reduce) {

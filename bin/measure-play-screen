@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Measures the play screen in a real headless browser at phone and desktop
+# sizes. Run it after ANY change to .playbar, .play-body, .play-exit or
+# .page--focused: neither RSpec nor Cucumber can see layout here (Capybara's
+# rack_test driver parses no CSS), so a green suite is no evidence at all that
+# this screen is on the screen.
+#
+# Needs chrome-headless-shell:  npx playwright install chromium
+# The full chromium build is not a substitute -- it clamps windows to 500px
+# wide, which turns every phone measurement into a 500px one.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+exec env LAYOUT_SPECS=1 bundle exec rspec spec/layout "$@"

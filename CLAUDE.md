@@ -303,9 +303,47 @@ the home page at 390×660 with seven locales registered, header height went **22
 the switcher **88px → 44px**; at 375×553 the same 225px was 41% of the visible screen. Desktop
 (1280×800) is unchanged at 69px. Horizontal overflow is 0 at every size, and the open menu is
 absolutely positioned, so it overlays the page instead of growing the header (verified: header
-stays 125px with the menu forced open). Layout is not visible to either suite — re-measure with the
-headless-browser procedure recorded in the `.playbar` comment in `public/stylesheets/screens.css`
-before changing any of this.
+stays 125px with the menu forced open). Layout is not visible to either suite — re-measure with
+`bin/measure-play-screen` (see **Layout is invisible to both suites** below) before changing any
+of this.
+
+## Layout is invisible to both suites, and that is how a broken screen shipped
+
+Capybara's rack-test driver parses no stylesheet and computes no style, and RSpec request specs
+only see markup. So every assertion either suite can make about a page is satisfied by markup that
+is entirely below the bottom of the phone. This is not hypothetical:
+
+`public/stylesheets/layout.css` set `min-height: 100vh` on `.page` and `height: 100dvh` on
+`.page--focused`, the same element. **`min-height` clamps `height`**, so the `dvh` — chosen
+deliberately, with a comment explaining that `100vh` on a phone is the URL-bar-*hidden* height —
+never took effect. On a 390×844 iPhone with ~680px actually visible, the play shell computed to
+844: the answer bar's submit button sat at y=764–808 against a fold at 680, at every scroll
+position. Both suites were green throughout, and it reached production.
+
+What made it invisible to the *measuring* that this repository does do is worth knowing too: in a
+headless browser at a fixed window size, `100vh`, `100svh` and `100dvh` are all the same number.
+Every measurement recorded in these stylesheets' comments was taken in the one environment where
+this class of bug cannot appear.
+
+So:
+
+- **`bin/measure-play-screen`** drives a real headless browser at 390×680, 375×553 and 1280×800 and
+  asserts the properties that survive a redesign: the submit button is *hit-testable* (not merely
+  present) at both ends of the scroll, the captain's exit and the last answer are reachable,
+  nothing scrolls inside anything else, and horizontal overflow is 0. Run it after **any** change
+  to `.playbar`, `.play-body`, `.play-exit` or `.page--focused`. It is mutation-tested: un-sticking
+  the bar, re-capping it into a scrollport, and forcing horizontal overflow each fail it.
+- The examples live in `spec/layout` and are **excluded** from an ordinary `bundle exec rspec` —
+  `config.filter_run_excluding :layout` in `spec/rails_helper.rb` — because they need a browser
+  binary CI does not install. *Excluded*, not skipped: a skipped example reports as pending, which
+  reads like a pass, which is exactly how the countdown examples went unnoticed for a fortnight
+  (see the `shared.countdown.*` note above). When they are asked to run, a missing browser
+  **raises**.
+- It needs `chrome-headless-shell` (`npx playwright install chromium`). The full `chromium-*` build
+  is **not** a substitute — it clamps windows to 500px wide, so every phone size silently measures
+  as 500.
+- **Measure at the visible viewport, not the device height.** An iPhone 14 Pro is 390×844; Safari
+  leaves roughly 680. That ~164px gap is where these bugs live.
 
 ## Known, deliberate wart: `GET /logout`
 
@@ -320,18 +358,40 @@ deliberately; this is documented in `config/routes.rb` too.
 ## Testing
 
 - **Cucumber** — `features/**/*.feature`, Russian Gherkin. **Two numbers, and the difference is the
-  whole point.** The *inherited contract* is **232 scenarios (230 passed, 2 undefined) / 2342 steps**
-  — the frozen files, byte-identical to what the Merb app passed, and the figure that must never
+  whole point.** The *inherited contract* is **228 scenarios (226 passed, 2 undefined) / 2325 steps**
+  — the 58 frozen files, byte-identical to what the Merb app passed, and the figure that must never
   move (the 2 undefined are pre-existing empty placeholders, not a regression). The *whole suite* is
-  larger, because port-authored feature files are added by ordinary feature work: as of the phase-2B
-  attachments branch it is 238 scenarios / 2386 steps. When you change something, check the
-  inherited 232/2342 specifically — a total that went up is not evidence the contract held. Measure
-  it directly (run the suite over every file except the port-authored ones) rather than subtracting
-  the number you expect to have added.
+  larger, because port-authored feature files are added by ordinary feature work: 238 scenarios /
+  2386 steps, the extra 10/61 being `features/i18n/switch-language.feature` (4/17) and
+  `features/games/game-files.feature` (6/44).
+
+  **This entry said 232/2342 until 2026-08-14, and that was wrong** — in exactly the way the
+  paragraph below warns against, which is why the warning stays. 232/2342 was the *whole suite*
+  before `game-files.feature` landed on 2026-08-13; it already included `switch-language.feature`,
+  port-authored since 2026-08-04. When the total moved to 238/2386 the old total was relabelled as
+  the inherited contract and its 6/44 difference booked against the new file alone. Measured
+  directly, per file: 228/2325 inherited, 10/61 port-authored, 238/2386 together, and the three
+  add up.
+
+  So: **measure it directly** — run Cucumber over every file that existed pre-port, and get that
+  list from git rather than from memory:
+
+  ```bash
+  git ls-tree -r --name-only d035146 | grep '\.feature$' | sort > /tmp/inherited   # last Merb-era tree
+  git ls-files 'features/**/*.feature' | sort > /tmp/current
+  bundle exec cucumber $(comm -12 /tmp/inherited /tmp/current | tr '\n' ' ')
+  ```
+
+  A total that went up is not evidence the contract held, and neither is subtracting the number you
+  expect to have added. Note also that **counts cannot move unless a `.feature` file changed** —
+  they are a function of those files alone — so for any ordinary change the real question is whether
+  the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 1603 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+- **RSpec** — 1751 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+  This figure was 1603 here while the real number was 1751, alongside a Cucumber figure that was
+  also wrong — which is the point of the sentence that follows.
   **Do not trust a quoted RSpec count** — this number has moved seven times in a week and stale
-  copies have been cited as current twice. Re-run it. The inherited 232/2342 is the stable figure.
+  copies have been cited as current twice. Re-run it. The inherited 228/2325 is the stable figure.
   `spec/rails_helper.rb` enables the legacy `should` syntax
   (`config.expect_with :rspec do |c| c.syntax = [:should, :expect] end`) because roughly 140
   assertions ported from the Merb-era RSpec 1.x suite still use `x.should == y`; new specs may use

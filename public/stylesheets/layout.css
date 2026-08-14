@@ -6,10 +6,22 @@
      lets an unshrinkable child set the track's width. The header's locale
      switcher did exactly that, forcing 454px of scroll on a 390px viewport. */
   grid-template-columns: minmax(0, 1fr);
-  min-height: 100vh;
+  /* svh, NOT vh, and this one line is a fix rather than a preference.
+     min-height clamps height, so `.page { min-height: 100vh }` beat
+     `.page--focused { height: 100dvh }` on the very device that rule was
+     written for: on an iPhone (390x844, ~680px actually visible in Safari)
+     100vh is the URL-bar-HIDDEN height, so the play shell computed to 844 and
+     hung 164px below the screen -- measured, with the answer bar's submit
+     button at y=764..808 against a fold at 680. Every earlier measurement
+     missed it because in a headless browser at a fixed window size 100vh and
+     100dvh are the same number, and Capybara parses no CSS at all.
+     100svh is the SMALL viewport -- browser chrome showing, the smallest the
+     visible area ever gets -- which is what "fill the screen when the content
+     is short" actually means, and it can never clamp a dvh height upward. */
+  min-height: 100svh;
   /* Rows size to content. Without this, align-content defaults to `normal`
      (= stretch for grid), so on any page shorter than the viewport the
-     min-height:100vh free space inflates the topbar into a slab -- 386px, half
+     min-height free space above inflates the topbar into a slab -- 386px, half
      the screen, on the landing page at 390px. */
   align-content: start;
 }

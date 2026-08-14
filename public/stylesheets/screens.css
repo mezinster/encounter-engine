@@ -279,8 +279,13 @@ ul.language-tabs .missing-count {
      50vh is measured against the worst case, not chosen for looks: title,
      task card, an incorrect-answer flash and the exit button come to ~290px,
      which the other half covers on every phone viewport tested down to
-     375x600. */
-  max-height: 50vh;
+     375x600.
+     dvh, not vh: "half the screen" has to mean half of what the player can
+     see. On a 390x844 phone with ~680px visible, 50vh is 422px -- 62% of the
+     real screen, not 50% -- so the cap was quietly a fifth larger than the
+     promise this comment makes. Same unit bug as .page in layout.css; see the
+     comment there for how it stayed invisible to both suites. */
+  max-height: 50dvh;
   /* A floor as well as a cap, and the floor is the newer half. overflow-y
      below sets this flex item's AUTOMATIC minimum size to zero -- that is what
      the spec says an item with a scroll overflow gets -- so nothing stopped

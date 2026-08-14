@@ -6,7 +6,21 @@ body, h1, h2, h3, h4, p, ul, ol, figure, fieldset, legend {
   padding: 0;
 }
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  /* No visible scrollbar anywhere. On a phone this changes nothing -- iOS and
+     Android already draw an overlay bar that only appears while you drag --
+     so it is really a desktop rule, and there it removes the drag handle as
+     well as the stripe. Scrolling still works by wheel, trackpad, touch,
+     keyboard (Space/PgDn/arrows on a focused document) and the scrollbar
+     keyboard shortcuts; what is lost is the visual indication of how far
+     through a long page you are. Requested deliberately -- it is not a tidy-up
+     to reapply if it ever gets reverted. */
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar { display: none; }
 
 body {
   background: var(--bg);

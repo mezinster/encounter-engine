@@ -23,12 +23,34 @@ describe "the play screen", type: :request do
 
   # The code field is the thing players came to use, and task text plus
   # accumulating hints otherwise push it further down exactly as the game gets
-  # more stressful.
-  it "pins the code field, the countdown and the newest hint" do
+  # more stressful. The bar is sticky rather than a row of a viewport-height
+  # grid now, but this assertion is about the bar existing at all -- whether it
+  # is actually ON SCREEN is a layout question no request spec can answer, and
+  # is measured in a browser instead (bin/measure-play-screen).
+  it "keeps the code field and the countdown in a bar of their own" do
     get show_current_level_path(:game_id => game.id)
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include('class="playbar"')
+  end
+
+  # The options moved out of the bar and in with the question, which only works
+  # because every control names the form by id instead of nesting inside it.
+  # Drop the form: attribute and a quiz becomes unanswerable -- the browser and
+  # Capybara alike submit nothing for a control that belongs to no form -- so
+  # this pins the wiring rather than the placement.
+  it "binds a quiz option to the answer form by id, not by nesting" do
+    question = create_question(:level => level)
+    create_option(:question => question, :text => "Первый", :is_correct => true)
+    create_option(:question => question, :text => "Второй", :is_correct => false)
+
+    get show_current_level_path(:game_id => game.id)
+
+    expect(response.body).to include('id="answer-form"')
+    expect(response.body).to match(/<input[^>]*type="radio"[^>]*form="answer-form"/)
+    # And the options are NOT inside the bar: the bar opens after them.
+    expect(response.body.index('class="quiz-option"'))
+      .to be < response.body.index('class="playbar"')
   end
 
   # A phone helpfully capitalising or autocorrecting a code is a real way to
@@ -69,8 +91,6 @@ describe "the play screen", type: :request do
       LevelHintCountdownContainer
       LevelHintCountdownTimerText
       LevelHintCountdownLoadIndicator
-      PlaybarHint
-      PlaybarHintText
     ].each do |dom_id|
       expect(response.body.scan(%(id="#{dom_id}")).size).to eq(1),
         "expected exactly one ##{dom_id}; hints break silently if it is renamed, dropped or duplicated"

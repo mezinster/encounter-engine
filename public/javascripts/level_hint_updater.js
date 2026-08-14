@@ -152,17 +152,12 @@ var LevelHintUpdater = function() {
             fieldset.appendChild(strip);
         }
 
+        // The whole page scrolls now, so a hint that fires lands in the list
+        // with every other hint and needs no second copy. This used to also
+        // write hintText into #PlaybarHintText, a clamped duplicate in the
+        // answer bar, which existed because the task area was a fixed-height
+        // scrollport a stuck player would otherwise have had to scroll.
         $hintsContainer.append(fieldset);
-
-        // The playbar shows the newest hint so a stuck player does not have to
-        // scroll for it. Guarded: this element only exists on the play screen,
-        // and the poller must keep working if it is ever absent.
-        var pinnedText = document.getElementById("PlaybarHintText");
-        if (pinnedText) {
-            pinnedText.textContent = hintText;
-            var pinnedWrap = document.getElementById("PlaybarHint");
-            if (pinnedWrap) { pinnedWrap.removeAttribute("hidden"); }
-        }
     }
 
     ,loadHint = function() {

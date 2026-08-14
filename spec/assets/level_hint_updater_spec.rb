@@ -88,8 +88,16 @@ describe "the level hint updater", type: :model do
     expect(source).to match(/^\s*fieldset\.appendChild\(document\.createTextNode\(hintText\)\);\s*$/)
   end
 
-  it "keeps the pinned playbar hint on textContent" do
-    expect(source).to match(/^\s*pinnedText\.textContent = hintText;\s*$/)
+  # The bar's clamped copy of the newest hint is gone -- it duplicated a hint
+  # already on the page, and it existed only because the task area was a
+  # fixed-height scrollport. What replaces this example is the negative: no
+  # write to that element should come back, because the element does not.
+  # Matches the CODE, not the identifier: the comment left in appendHint names
+  # the element it used to write into, and that comment is the thing telling a
+  # future reader why the copy is not coming back.
+  it "no longer writes a second copy of the hint into the bar" do
+    expect(source).not_to match(/getElementById\(\s*"Playbar/)
+    expect(source).not_to match(/pinnedText\s*\.\s*textContent/)
   end
 
   # Positive assertions, added in the Task 5 review-fix round: the negative

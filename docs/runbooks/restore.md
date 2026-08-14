@@ -368,26 +368,50 @@ accessory). Read it from there, not from the `encounter-engine-db` container: `o
 it off that container because they run beside it, but the disaster this section is written for is
 the one where that container — and the host under it — is gone.
 
-**Retrieve, decrypt, unpack.** `az login` with an account that can read the storage account, then:
+**Retrieve, decrypt, unpack.**
 
 ```bash
+az login                                # an account with Storage Blob Data Reader on the account
+export AZCOPY_AUTO_LOGIN_TYPE=AZCLI     # azcopy does NOT use the az CLI token unless told to
 azcopy list "https://eewalxypkl1ft.blob.core.windows.net/archive-daily/"   # pick a date
 azcopy copy "https://eewalxypkl1ft.blob.core.windows.net/archive-daily/2026-08-14/host-state.tar.zst.age" .
 age -d -i <private key file> host-state.tar.zst.age > host-state.tar.zst
 tar --zstd -xf host-state.tar.zst
 ```
 
+Keep the `export`. AzCopy does not pick up an Azure CLI session implicitly, so without it every
+command above fails on authorization even though `az login` succeeded — and it fails in the one
+section written for the case where the VM is gone. (`AZCOPY_AUTO_LOGIN_TYPE` is azcopy 10.22+; the
+host uses the same variable with `MSI` instead, from
+`ops/host/encounter-engine-archive.service`.)
+
 That unpacks to the paths as they were on the host, relative to the current directory:
-`var/www/Keys`, `etc/ssh`, `etc/letsencrypt`, `etc/ddclient.conf`, the systemd units, and
-`uploads/` (the `encounter_engine_storage` Docker volume). Unpack into an empty directory and copy
-out what you need — do not extract over `/`.
+
+- `var/www/Keys` — three private keys
+- `etc/ssh` — all four host key pairs, and `sshd_config`
+- `etc/letsencrypt`
+- `etc/ddclient.conf` — contains the dynamic-DNS credentials
+- `etc/encounter-engine/archive-recipients.txt` — the age recipients file (see below)
+- `etc/systemd/system/` — `encounter-engine-backup.{service,timer}`,
+  `encounter-engine-archive.{service,timer}`, `ddclient.service`
+- `usr/local/bin/` — `encounter-engine-backup`, `encounter-engine-archive`
+- `etc/crontab`, `etc/cron.d`, `etc/fstab`, `etc/hosts`
+- `uploads/` — the `encounter_engine_storage` Docker volume
+
+Unpack into an empty directory and copy out what you need — do not extract over `/`.
 
 The one-off archive works identically; only the container, prefix and blob names differ (§8).
 
-**Reconstructing `/etc/encounter-engine/archive-recipients.txt`** (needed by §6 after a rebuild,
-before the archive service can start): one `age1…` public recipient per line, plain text, at least
-two lines — the scripts refuse to run with fewer. Recover each public recipient from its private
-key rather than trying to remember it:
+**Getting `/etc/encounter-engine/archive-recipients.txt` back** (needed by §6 after a rebuild,
+before the archive service can start): **it is inside the archive** — `etc/encounter-engine/archive-recipients.txt`
+in the listing above. If you have unpacked any daily archive, copy it out and you are done. It is
+public keys, not a secret, which is why it is in the tar at all.
+
+Reconstruct it by hand only when you have the private keys but no archive to unpack yet — a
+first-ever run, or a loss of every blob. Format: one `age1…` public recipient per line, plain
+text. The scripts require **two distinct recipients**, not two lines: they strip carriage returns
+and trailing whitespace and then de-duplicate, so the same key entered twice is counted once and
+refused. Recover each public recipient from its private key rather than trying to remember it:
 
     age-keygen -y <private key file>
 

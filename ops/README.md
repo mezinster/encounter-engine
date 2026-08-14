@@ -23,6 +23,20 @@ ssh mezin 'sudo bash -s' < ops/archive-once.sh   # this one needs root
 its own root check rather than failing later as something that looks like a
 disk problem.
 
+**Anything added here that calls `azcopy` must redirect its stdin.** `bash -s`
+reads the script *from stdin*, and **`azcopy` consumes stdin** — so the first
+`azcopy` call swallows the remainder of the script, bash reaches end-of-input,
+and the run **exits 0 having done part of the work**. This is not hypothetical:
+the first real run of `archive-once.sh` archived one of its four items and
+reported success, with a genuine digest and a correctly-sized blob in the right
+container. Nothing looked wrong except a log that stopped early, which on an
+unattended run nobody reads.
+
+Both scripts now pass `</dev/null` on every `azcopy` invocation, so the pattern
+above is safe again. Keep it that way: the alternative — "copy the script to the
+host and run it as a file" — makes correctness depend on how someone happens to
+invoke it, and this file documents the other way.
+
 The `Database` GitHub Actions workflow does exactly that. Running them by hand
 and running them through the workflow execute the same code — which is the
 point of keeping the logic here rather than inline in the YAML.

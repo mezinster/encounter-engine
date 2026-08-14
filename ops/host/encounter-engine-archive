@@ -154,7 +154,14 @@ fi
 # worth anything if ALL of it landed.
 azcopy_quiet() {
   local out status=0
-  out=$(azcopy "$@" 2>&1) || status=$?
+  # </dev/null is load-bearing, not hygiene. azcopy CONSUMES STDIN, and these
+  # scripts are documented as runnable via `ssh host 'bash -s' < script` -- so
+  # the first azcopy call eats the remainder of the script, bash reaches
+  # end-of-input, and the run exits 0 having done part of the work. That is
+  # exactly what happened on the first real run of archive-once.sh: it archived
+  # 1 of 4 items and reported success. Detaching stdin makes the script correct
+  # under any invocation rather than only when copied to the host first.
+  out=$(azcopy "$@" </dev/null 2>&1) || status=$?
   if [ "$status" -ne 0 ] || printf '%s\n' "$out" | grep -qE 'Final Job Status: (Failed|CompletedWithErrors)'; then
     echo "FATAL: azcopy $1 reported failure (exit ${status}); its full output follows" >&2
     printf '%s\n' "$out" >&2

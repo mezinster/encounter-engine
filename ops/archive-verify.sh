@@ -31,7 +31,10 @@ fi
 # below can be printed. Discarding its output would leave this diagnostic tool
 # exiting silently in the exact state it exists to diagnose. One INFO line on a
 # good run is a small price; this one is read by a person, not a timer.
-azcopy login --identity
+# </dev/null on every azcopy call: azcopy consumes stdin, and this script is
+# documented as `ssh host 'bash -s' < ops/archive-verify.sh` -- without it the
+# first call swallows the rest of the script and the run exits 0 half-done.
+azcopy login --identity </dev/null
 
 # Capture and test the output rather than relying on exit status. `azcopy
 # list` exits 0 on an existing-but-empty container, so a plain
@@ -42,7 +45,7 @@ azcopy login --identity
 # into the same "nothing listed" message rather than pinned to a specific
 # cause it cannot actually distinguish -- see the message text below.
 echo "daily archives (newest last):"
-DAILY_LIST=$(azcopy list "https://${ACCT}.blob.core.windows.net/archive-daily/" --output-type text \
+DAILY_LIST=$(azcopy list "https://${ACCT}.blob.core.windows.net/archive-daily/" --output-type text </dev/null \
   | grep -E 'host-state\.tar\.zst\.age') || true
 if [ -z "$DAILY_LIST" ]; then
   echo "NO DAILY ARCHIVES LISTED -- either none exist yet, or azcopy could not reach the container (check the azcopy login above)"
@@ -52,7 +55,7 @@ fi
 
 echo
 echo "one-off archive:"
-ONCE_LIST=$(azcopy list "https://${ACCT}.blob.core.windows.net/archive-once/" --output-type text) || true
+ONCE_LIST=$(azcopy list "https://${ACCT}.blob.core.windows.net/archive-once/" --output-type text </dev/null) || true
 if [ -z "$ONCE_LIST" ]; then
   echo "NO ONE-OFF ARCHIVE LISTED -- ops/archive-once.sh has not run yet, or azcopy could not reach the container"
 else

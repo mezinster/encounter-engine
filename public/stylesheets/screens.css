@@ -273,6 +273,14 @@ ul.language-tabs .missing-count {
 .playbar {
   position: sticky;
   bottom: 0;
+  /* Cancels .main's bottom padding, which sits INSIDE the sticky element's
+     containing block. A sticky box stops at the end of its containing block,
+     so at maximum scroll the bar came to rest 23px above the viewport's bottom
+     edge with a strip of page background showing beneath it -- measured at
+     390x680, bar top 554 + height 103 against a 680 viewport. The bar carries
+     its own padding (including the iOS home-indicator inset below), so it
+     needs none from .main. */
+  margin-bottom: calc(-1 * var(--space-5));
   z-index: 15;
   padding: var(--space-3) var(--space-4);
   /* Keeps the bar clear of the iOS home indicator. */
@@ -395,9 +403,12 @@ ul.language-tabs .missing-count {
     /* The negative margins above cancel .main's padding so the bar reaches
        both edges of a phone screen. In the right-hand column it is a panel
        beside the task, not a bar under it, so it takes an edge of its own
-       instead of bleeding into the gutter. */
+       instead of bleeding into the gutter. The bottom one goes too: it exists
+       to close the gap a sticky box leaves at the end of its containing block,
+       and nothing is sticky here. */
     margin-left: 0;
     margin-right: 0;
+    margin-bottom: 0;
     border: 1px solid var(--border);
     border-radius: var(--radius);
   }

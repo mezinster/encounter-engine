@@ -119,7 +119,11 @@ RSpec.configure do |config|
   # CLAUDE.md). When they DO run, a missing browser raises.
   #
   #   bin/measure-play-screen        # or: LAYOUT_SPECS=1 bundle exec rspec spec/layout
-  config.filter_run_excluding :layout => true unless ENV["LAYOUT_SPECS"]
+  # .present?, not mere truthiness: "" is truthy in Ruby, so a CI job that
+  # exported LAYOUT_SPECS= or LAYOUT_SPECS=0 -- the ordinary way to say "off" in
+  # a shell -- would un-exclude these and take the whole suite red on the
+  # deliberate "no chrome-headless-shell found" raise.
+  config.filter_run_excluding :layout => true unless ENV["LAYOUT_SPECS"].present?
 
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!

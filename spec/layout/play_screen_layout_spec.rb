@@ -24,7 +24,13 @@ require "shellwords"
 # sideways, and the controls a player needs are hit-testable rather than merely
 # present. It does NOT pin heights. A number here would fail on the next
 # harmless copy change and teach everyone to update it without looking.
-describe "the play screen, measured", :layout, type: :request do
+# Namespaced, NOT constants in the describe block. Ruby's lexical scope puts a
+# constant assigned inside `describe` onto Object, and this file is LOADED on
+# every ordinary rspec run -- only its examples are filtered out -- so a name as
+# generic as VIEWPORTS would collide with any other file that wanted it, warn
+# about an already-initialized constant, and clobber one of the two. Locals
+# would not work either: `def` bodies below do not close over them.
+module PlayScreenLayoutHarness
   # 390x680: an iPhone 14 Pro is 390x844, and Safari's chrome leaves ~680.
   # Measuring at 844 is what let the original bug through -- see the note in
   # CLAUDE.md. 375x553 is an iPhone SE, the tightest real case. 1280x800 is
@@ -36,15 +42,18 @@ describe "the play screen, measured", :layout, type: :request do
   CHROME_GLOB = File.expand_path(
     "~/.cache/ms-playwright/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell"
   )
+end
+
+describe "the play screen, measured", :layout, type: :request do
 
   # The full chromium build clamps windows to 500px wide, which silently turns
   # every phone measurement into a 500px one; headless_shell honours narrow
   # sizes. Raise rather than skip: a measurement that quietly did not happen is
   # worse than no measurement, because it reports as a pass.
   def chrome
-    @chrome ||= Dir.glob(CHROME_GLOB).max ||
+    @chrome ||= Dir.glob(PlayScreenLayoutHarness::CHROME_GLOB).max ||
       raise(<<~MSG)
-        No chrome-headless-shell found at #{CHROME_GLOB}
+        No chrome-headless-shell found at #{PlayScreenLayoutHarness::CHROME_GLOB}
 
         Install it with:  npx playwright install chromium
         The full `chromium-*/chrome-linux64/chrome` build is NOT a substitute --
@@ -52,14 +61,29 @@ describe "the play screen, measured", :layout, type: :request do
       MSG
   end
 
-  # Rewrites the stylesheet links to absolute file:// paths so the page can be
-  # opened straight off disk. A static HTTP server would work too and is what
-  # earlier ad-hoc runs used; this removes a moving part (a port, a process to
-  # reap) from something that has to be trustworthy to be worth running.
+  # Rewrites the stylesheet links AND the attachment images to absolute file://
+  # paths so the page can be opened straight off disk. A static HTTP server
+  # would work too and is what earlier ad-hoc runs used; this removes a moving
+  # part (a port, a process to reap) from something that has to be trustworthy
+  # to be worth running.
+  #
+  # The images matter and were missed the first time round. Left as
+  # `/games/1/files/1/web`, they resolve against file:// to `file:///games/...`
+  # and never load -- so this harness measured two BROKEN images while claiming
+  # to measure photographs, which is the entire content class it exists for.
+  # They occupied the right 96x96 anyway, but only because .attachment-image
+  # hard-codes width and height; the day that becomes an intrinsic size, a
+  # harness that silently measures nothing would have gone on passing.
+  # `imagesLoaded` in the probe is what stops that happening again.
   def measure(html, width, height, script)
     page = html.gsub(%r{href="/(stylesheets/[^"]+)"}) do
       %(href="file://#{Rails.root.join('public', Regexp.last_match(1))}")
     end
+    # The delivery route is dynamic (variant, authorization, streaming); none of
+    # that is layout. What layout needs is a real decoded image of a real size,
+    # which is the fixture the upload was built from in the first place.
+    photo = Rails.root.join("spec/fixtures/files/photo.jpg")
+    page = page.gsub(%r{src="/games/\d+/files/\d+/\w+"}, %(src="file://#{photo}"))
     page = page.sub("</body>", <<~PROBE + "</body>")
       <script>
       window.addEventListener("load", function () {
@@ -92,10 +116,26 @@ describe "the play screen, measured", :layout, type: :request do
     function hit(sel) {
       var e = document.querySelector(sel);
       if (!e) return "ABSENT";
+
+      // Rendered at all? checkVisibility catches display:none, visibility:
+      // hidden, content-visibility and opacity:0 -- none of which the point
+      // test below can tell apart from "painted and pressable". This used to
+      // rely on the point test alone plus an `at.contains(e)` fallback, and
+      // that combination reported OK for a `visibility: hidden` control:
+      // elementFromPoint returns the nearest painted ANCESTOR (.playbar), the
+      // fallback accepted an ancestor, and a button nobody could see passed.
+      // Verified by injecting `.btn--go { visibility: hidden !important }`.
+      if (!e.checkVisibility({ checkVisibilityCSS: true, checkOpacity: true })) return "NOT-VISIBLE";
+
       var r = e.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) return "ZERO-SIZE";
+
       var at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
       if (!at) return "NOT-IN-VIEWPORT";
-      return (at === e || e.contains(at) || at.contains(e)) ? "OK" : "COVERED-BY-" + at.tagName;
+      // e === at, or a descendant of e was hit (a button's inner text node's
+      // parent, a label's input). An ANCESTOR is deliberately NOT accepted --
+      // that is the signature of e not being painted where it claims to be.
+      return (at === e || e.contains(at)) ? "OK" : "COVERED-BY-" + at.tagName;
     }
     function scrolls(sel) {
       var e = document.querySelector(sel);
@@ -104,12 +144,25 @@ describe "the play screen, measured", :layout, type: :request do
     var RESULT = {
       submitAtTop: hit(".btn--go"),
       hOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      innerScroll: [".main", ".play-body", ".playbar"].filter(scrolls)
+      innerScroll: [".main", ".play-body", ".playbar"].filter(scrolls),
+      // Proves the photographs this screen was redesigned around are really
+      // being rendered and measured, rather than being broken <img>s holding
+      // a hard-coded box. naturalWidth is 0 for an image that failed to load.
+      images: Array.prototype.map.call(
+        document.querySelectorAll(".attachment-image"),
+        function (i) { return i.naturalWidth > 0 ? Math.round(i.getBoundingClientRect().height) : "BROKEN"; }
+      )
     };
     window.scrollTo(0, document.documentElement.scrollHeight);
     RESULT.submitAtBottom = hit(".btn--go");
     RESULT.exitAtBottom = hit(".play-exit .btn");
     RESULT.lastOptionAtBottom = hit(".quiz-option:last-of-type");
+    // The sticky bar must come to rest ON the bottom edge at maximum scroll,
+    // not short of it: .main's bottom padding sits inside the bar's containing
+    // block, and a sticky box stops at the end of that block, which left a
+    // 23px strip of page background under the bar at the end of the scroll.
+    var bar = document.querySelector(".playbar").getBoundingClientRect();
+    RESULT.barGapAtBottom = Math.round(window.innerHeight - bar.bottom);
   JS
 
   # The worst real content state: a quiz whose options run past one screen, a
@@ -147,7 +200,7 @@ describe "the play screen, measured", :layout, type: :request do
     response.body
   end
 
-  VIEWPORTS.each do |name, (width, height)|
+  PlayScreenLayoutHarness::VIEWPORTS.each do |name, (width, height)|
     context "at #{width}x#{height} -- #{name}" do
       let(:m) { measure(page_html, width, height, PROBE_SCRIPT) }
 
@@ -173,6 +226,25 @@ describe "the play screen, measured", :layout, type: :request do
 
       it "does not overflow sideways" do
         expect(m["hOverflow"]).to eq(0)
+      end
+
+      # Without this the harness happily measures broken <img>s that occupy the
+      # right box only because .attachment-image hard-codes 96x96 -- which is
+      # what it was doing until this example existed.
+      it "really renders the photographs it claims to be measuring" do
+        expect(m["images"]).to eq([ 96, 96 ])
+      end
+
+      # Phone widths only. From 52rem up the bar is a panel in the right-hand
+      # column and deliberately not sticky at all, so "flush with the bottom
+      # edge" is not a claim about it -- asserting it there would pin the
+      # length of the left column, which is content.
+      if width < 832
+        # Sticky, and flush with the bottom edge at maximum scroll rather than
+        # stopping short of it with page background showing underneath.
+        it "rests the bar on the bottom edge at maximum scroll" do
+          expect(m["barGapAtBottom"]).to eq(0)
+        end
       end
     end
   end

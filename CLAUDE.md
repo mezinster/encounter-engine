@@ -387,7 +387,9 @@ deliberately; this is documented in `config/routes.rb` too.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 1603 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+- **RSpec** — 1751 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+  This figure was 1603 here while the real number was 1751, alongside a Cucumber figure that was
+  also wrong — which is the point of the sentence that follows.
   **Do not trust a quoted RSpec count** — this number has moved seven times in a week and stale
   copies have been cited as current twice. Re-run it. The inherited 228/2325 is the stable figure.
   `spec/rails_helper.rb` enables the legacy `should` syntax

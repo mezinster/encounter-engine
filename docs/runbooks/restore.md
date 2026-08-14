@@ -286,6 +286,15 @@ ssh mezin 'systemctl list-timers encounter-engine-backup.timer'
 ssh mezin 'journalctl -u encounter-engine-backup.service -n 40 --no-pager'
 ```
 
+The same is true of the offsite archive timer, and it has no `OnFailure=` either — check it the
+same way:
+
+```bash
+ssh mezin 'systemctl status encounter-engine-archive.timer'
+ssh mezin 'systemctl list-timers encounter-engine-archive.timer'
+ssh mezin 'journalctl -u encounter-engine-archive.service -n 40 --no-pager'
+```
+
 **A backup list is not a working backup.** Only a rehearsed restore proves
 recoverability. Re-run §3 after any change to the database image, wal-g, or the
 storage account — it costs a few minutes and needs no downtime.
@@ -293,6 +302,18 @@ storage account — it costs a few minutes and needs no downtime.
 ---
 
 ## 6. Reinstalling the schedule on a rebuilt host
+
+Beyond the units and script below, a rebuilt host also needs:
+
+- `age` (`apt-get install -y age`) — required to decrypt any archive written after 2026-08-14.
+- `azcopy` (`https://aka.ms/downloadazcopy-v10-linux`, installed to `/usr/local/bin`) — the
+  archive scripts' only route to blob storage. wal-g does not use it and does not install it.
+
+Both `encounter-engine-archive` and `archive-verify.sh` read `AZURE_STORAGE_ACCOUNT` off the
+**`encounter-engine-db`** container, and the daily archive also reads the **`encounter_engine_storage`**
+Docker volume — neither exists on a freshly rebuilt host. Starting the archive service therefore
+has to wait until **after** `kamal deploy` has brought the app up, not before, even though the
+commands below look independent of it.
 
 The units and script are tracked at `ops/host/`:
 
@@ -304,3 +325,152 @@ ssh mezin 'sudo install -m 644 /tmp/encounter-engine-backup.service /tmp/encount
 ssh mezin 'sudo systemctl daemon-reload && sudo systemctl enable --now encounter-engine-backup.timer'
 ssh mezin 'sudo systemctl start encounter-engine-backup.service && journalctl -u encounter-engine-backup.service -n 20 --no-pager'
 ```
+
+The offsite archive script, unit and timer are tracked the same way, at `ops/host/`, and need
+installing too — a rebuild that stops here gets the Postgres schedule back with no host-state
+archive, and nothing says so:
+
+```bash
+scp ops/host/encounter-engine-archive mezin:/tmp/
+ssh mezin 'sudo install -m 755 /tmp/encounter-engine-archive /usr/local/bin/encounter-engine-archive'
+scp ops/host/encounter-engine-archive.{service,timer} mezin:/tmp/
+ssh mezin 'sudo install -m 644 /tmp/encounter-engine-archive.service /tmp/encounter-engine-archive.timer /etc/systemd/system/'
+ssh mezin 'sudo systemctl daemon-reload && sudo systemctl enable --now encounter-engine-archive.timer'
+ssh mezin 'sudo systemctl start encounter-engine-archive.service && journalctl -u encounter-engine-archive.service -n 20 --no-pager'
+```
+
+It also needs `/etc/encounter-engine/archive-recipients.txt` back in place before that last command
+can succeed — see §7.
+
+---
+
+## 7. Retrieving and decrypting an archive
+
+Archives written after 2026-08-14 are encrypted with `age` to two recipients. The host holds
+only the public keys (`/etc/encounter-engine/archive-recipients.txt`) and cannot read what it
+writes. Everything in this section is done **on a laptop that holds a private key**, not on the
+VM — and it must work when the VM no longer exists, which is what this whole system is for.
+
+| Key | Held where | Retrieved how |
+|---|---|---|
+| **secondary** | Azure Key Vault `ee-backup-keys` (resource group `mezineu`, West Europe), secret `age-backup-secondary` | `Get-AzKeyVaultSecret -VaultName ee-backup-keys -Name age-backup-secondary -AsPlainText`, or `az keyvault secret show --vault-name ee-backup-keys --name age-backup-secondary --query value -o tsv` |
+| **primary** | the operator's laptop, `~/.age-keys/primary.key` — **and nowhere else as of 2026-08-15** | it is a file; copy it |
+
+The secret holds the whole `age` identity file, comments included, which is the format
+`age -d -i` expects. Stored and verified on 2026-08-15: retrieved, compared byte-for-byte against
+the original, and used to decrypt a canary. The vault has purge protection on, so neither an
+accident nor a stolen credential can permanently delete it inside 90 days.
+
+**Two things about this table that matter more than the table.**
+
+**The primary key has no second home.** Losing that laptop loses it. That is survivable — the
+secondary in Key Vault is a full recipient and can decrypt everything on its own — but it means
+the redundancy is currently *one deep in each direction* rather than two. Give the primary a
+second home (printed, or a password manager) and this stops being a single point of anything.
+
+**A third copy existed in GitHub Actions secrets and was deliberately deleted on 2026-08-15.**
+Recorded so nobody helpfully puts it back. Two reasons:
+
+*It was not a recovery path.* **A GitHub Actions secret cannot be read back** — the API returns
+the name and timestamps only. The value is injectable into a workflow and retrievable by no human,
+so as a recovery key it provided the appearance of redundancy and none of the substance. Key Vault
+replaced it precisely because a person can read that one.
+
+*Making it useful would have made it dangerous.* The obvious repair — a workflow that decrypts an
+archive — turns repository write access into read-access over every backup, including the four
+SSH host keys and the three private keys in `/var/www/Keys`. This repository is **public**, so
+workflow artifacts are downloadable by anyone with read access; a decrypt-to-artifact workflow
+would publish the host's entire state. Restores are rare, and they already work from a laptop.
+
+Note what this does and does not buy. GitHub already holds `SSH_PRIVATE_KEY` in the `production`
+environment, so a GitHub compromise already implies host compromise — that is not what the
+deletion protects. What it protects is **backup history**: the host cannot decrypt its own
+archives either, so neither GitHub nor the VM can read what was written before today. Keep it that
+way. Decryption belongs on a laptop, with a key from Key Vault or from wherever the primary lives.
+
+**Where the archives are.** Storage account `eewalxypkl1ft`, two containers:
+
+| Container | Blob | Written by |
+|---|---|---|
+| `archive-daily` | `<YYYY-MM-DD>/host-state.tar.zst.age` | `encounter-engine-archive`, daily |
+| `archive-once` | `2026-08-14/<name>.age` — see §8 for the four names | `ops/archive-once.sh`, once |
+
+The account name is **also** in `config/deploy.yml` (`AZURE_STORAGE_ACCOUNT`, under the `db`
+accessory). Read it from there, not from the `encounter-engine-db` container: `ops/` scripts read
+it off that container because they run beside it, but the disaster this section is written for is
+the one where that container — and the host under it — is gone.
+
+**Retrieve, decrypt, unpack.**
+
+```bash
+az login                                # an account with Storage Blob Data Reader on the account
+export AZCOPY_AUTO_LOGIN_TYPE=AZCLI     # azcopy does NOT use the az CLI token unless told to
+azcopy list "https://eewalxypkl1ft.blob.core.windows.net/archive-daily/"   # pick a date
+azcopy copy "https://eewalxypkl1ft.blob.core.windows.net/archive-daily/2026-08-14/host-state.tar.zst.age" .
+age -d -i <private key file> host-state.tar.zst.age > host-state.tar.zst
+tar --zstd -xf host-state.tar.zst
+```
+
+Keep the `export`. AzCopy does not pick up an Azure CLI session implicitly, so without it every
+command above fails on authorization even though `az login` succeeded — and it fails in the one
+section written for the case where the VM is gone. (`AZCOPY_AUTO_LOGIN_TYPE` is azcopy 10.22+; the
+host uses the same variable with `MSI` instead, from
+`ops/host/encounter-engine-archive.service`.)
+
+That unpacks to the paths as they were on the host, relative to the current directory:
+
+- `var/www/Keys` — three private keys
+- `etc/ssh` — all four host key pairs, and `sshd_config`
+- `etc/letsencrypt`
+- `etc/ddclient.conf` — contains the dynamic-DNS credentials
+- `etc/encounter-engine/archive-recipients.txt` — the age recipients file (see below)
+- `etc/systemd/system/` — `encounter-engine-backup.{service,timer}`,
+  `encounter-engine-archive.{service,timer}`, `ddclient.service`
+- `usr/local/bin/` — `encounter-engine-backup`, `encounter-engine-archive`
+- `etc/crontab`, `etc/cron.d`, `etc/fstab`, `etc/hosts`
+- `uploads/` — the `encounter_engine_storage` Docker volume
+
+Unpack into an empty directory and copy out what you need — do not extract over `/`.
+
+The one-off archive works identically; only the container, prefix and blob names differ (§8).
+
+**Getting `/etc/encounter-engine/archive-recipients.txt` back** (needed by §6 after a rebuild,
+before the archive service can start): **it is inside the archive** — `etc/encounter-engine/archive-recipients.txt`
+in the listing above. If you have unpacked any daily archive, copy it out and you are done. It is
+public keys, not a secret, which is why it is in the tar at all.
+
+Reconstruct it by hand only when you have the private keys but no archive to unpack yet — a
+first-ever run, or a loss of every blob. Format: one `age1…` public recipient per line, plain
+text. The scripts require **two distinct recipients**, not two lines: they strip carriage returns
+and trailing whitespace and then de-duplicate, so the same key entered twice is counted once and
+refused. Recover each public recipient from its private key rather than trying to remember it:
+
+    age-keygen -y <private key file>
+
+Run that against both the primary and secondary private keys above and put both `age1…` outputs,
+one per line, into the file.
+
+---
+
+## 8. The one-off archive (the frozen WordPress estate)
+
+> **NOT YET EXECUTED.** Nothing in this section has happened; `ops/archive-once.sh` has never run.
+> Everything below, including the opening sentence, describes what this section will record once
+> it has, not anything that is true yet — do not cite it as current.
+
+Written once to `archive-once/2026-08-14/`. Never updated, never expires — the lifecycle rule
+applies only to `archive-daily/`. Nothing regenerates these.
+
+| Blob | sha256 (ciphertext) |
+|---|---|
+| `wordpress-tree.tar.zst.age` | `8a3669510da80ba81ab2b86b443c24efdfec5a00f425cd145310d4fa127e7edb` |
+| `mysql-datadir.tar.zst.age` | `bbd530db5ff151f4556912d8024927ea81633235e4105071b69ffd1e178ae59e` |
+| `home-mezinster.tar.zst.age` | `405c8501357a579ef47197c6daf3ce1ed18bfb16cd955aa91647b10506396cf4` |
+| `system-2026-08-04.fsa.age` | `f5a238e816ac7cc327c6d96a286547c9df4d6208bddbd4a2bc90dc454837fdcd` |
+
+The MySQL copy is meant to be taken cold (server stopped since 2026-08-04) and, once
+`ops/archive-once.sh` has actually run, verified by restoring it into a throwaway `mysql:8`
+container and counting `wordpress.wp_posts` — see the offsite-backup plan, Task 5 Step 5. The
+fsarchiver image is a bare-metal image of the OS only: it predates the MySQL shutdown by
+fifteen hours, so the database inside it is torn. Use `mysql-datadir.tar.zst.age` for the
+database, always, once it exists.

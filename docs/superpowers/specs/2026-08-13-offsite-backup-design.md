@@ -137,8 +137,27 @@ OS and is archived on that basis; it is not a source for the WordPress database.
 It also replaces the draft's *quarterly* fsarchiver job. A machine whose extra services are
 switched off, and whose application is rebuilt from CI, does not drift enough between quarters
 to justify a recurring image. One push of the image that exists covers the bare-metal case, and
-that image is currently stored on `sdc1` — a disk that dies with the VM, and therefore worthless
-for the only event it exists for.
+that image is currently stored on `sdc1`, where it is protected against less than it looks.
+
+**Correction, 2026-08-15.** Both earlier drafts of this document said `sdc1` "dies with the VM,
+and is therefore worthless for the only event it exists for". **That is false, and it was never
+checked.** `web-datadisk` carries `deleteOption: Detach` — the Azure default for a data disk — so
+deleting the VM leaves it behind as an independent resource with both fsarchiver images intact.
+Verified with `az vm show`.
+
+The conclusion survives; the reasoning does not, so here is the reasoning that actually holds.
+`sdc1` protects the image against losing the **VM**: an accidental `az vm delete`, a reimage, a
+botched rebuild — which is the common case and real protection. It does not protect against
+losing the **resource group** (which takes the disk with it), losing the **region** (the disk is
+`Standard_LRS`: three replicas in one datacentre, the same one the VM is in), or a deletion of the
+disk itself. The offsite copy buys geographic redundancy and independence from the resource group,
+not survival of `az vm delete`.
+
+Recorded at this length because the false version was load-bearing — it was the entire stated
+justification for archiving a 5 GB image — and because two other claims in this project failed the
+same way in the same week: a viewport measured in the one browser where the bug cannot appear, and
+a systemd unit validated in the one shell where its environment is set. An unchecked premise that
+happens to support the right conclusion is still an unchecked premise.
 
 ### Tier 2 — daily
 

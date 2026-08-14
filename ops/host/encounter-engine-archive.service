@@ -1,0 +1,8 @@
+[Unit]
+Description=encounter-engine daily host-state archive to Azure Blob
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/encounter-engine-archive

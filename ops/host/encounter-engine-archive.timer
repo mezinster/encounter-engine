@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily encounter-engine host-state archive
+
+[Timer]
+# 03:40, deliberately after the 03:00 wal-g base backup and its randomised
+# 15-minute delay. This box has 1 vCPU; the two jobs overlapping would make
+# both slower and neither more useful.
+OnCalendar=*-*-* 03:40:00
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

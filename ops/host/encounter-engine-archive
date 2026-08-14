@@ -1,0 +1,104 @@
+#!/bin/bash
+# Daily archive of the small, live, irreplaceable set on this host.
+#
+# Deliberately NOT the whole filesystem: the OS, Docker images and /opt are
+# rebuilt by CI or by apt, and the WordPress estate is frozen and archived once
+# (see ops/archive-once.sh). What is left is single-digit megabytes -- which is
+# what makes the staging and read-back below affordable.
+#
+# STAGED AND VERIFIED, not streamed. An earlier draft piped tar straight to
+# blob. At this size the "don't compete for disk" argument does not apply, and
+# streaming has a real cost: a truncated archive uploads and is
+# indistinguishable from a good one -- the timer succeeds, the blob exists, the
+# size looks plausible. The design's own standard is that a procedure nobody has
+# executed is a hypothesis; that is as true of a backup nobody has read back.
+#
+# ENCRYPTED to public keys only. This archive contains three private keys
+# (/var/www/Keys) and the dynamic-DNS credentials in /etc/ddclient.conf, so an
+# unencrypted copy in blob storage is an offsite copy of the machine's
+# credentials. The host cannot decrypt what it writes -- see Task 2's canary.
+set -euo pipefail
+
+RECIPIENTS=/etc/encounter-engine/archive-recipients.txt
+CONTAINER=archive-daily
+STAGE=$(mktemp -d /tmp/ee-archive.XXXXXX)
+trap 'rm -rf "$STAGE"' EXIT
+
+DATE=$(date -u +%Y-%m-%d)
+ARCHIVE="$STAGE/host-state.tar.zst"
+
+ACCT=$(systemctl show encounter-engine-backup.service -p Environment --value \
+       | tr ' ' '\n' | grep '^AZURE_STORAGE_ACCOUNT=' | cut -d= -f2)
+if [ -z "$ACCT" ]; then
+  echo "FATAL: could not read AZURE_STORAGE_ACCOUNT from the wal-g unit" >&2
+  exit 1
+fi
+
+if [ ! -s "$RECIPIENTS" ]; then
+  echo "FATAL: no age recipients at $RECIPIENTS; refusing to write a plaintext archive" >&2
+  exit 1
+fi
+
+# The uploads volume is read out of Docker rather than from /var/lib/docker
+# directly: the volume's on-disk path is an implementation detail Docker is
+# entitled to change, and reading it live risks catching a half-written file.
+UPLOADS="$STAGE/uploads"
+mkdir -p "$UPLOADS"
+docker run --rm \
+  -v encounter_engine_storage:/from:ro \
+  -v "$UPLOADS":/to \
+  alpine:3 sh -c 'cp -a /from/. /to/'
+
+# /etc/ssh whole rather than an enumerated list of host keys: this box has FOUR
+# pairs (dsa, ecdsa, ed25519, rsa), and naming three of them would archive three
+# quarters of the machine's identity WITHOUT tar complaining -- the omission is
+# only visible at restore time, which is the worst time to find it. 560 KB, and
+# it brings sshd_config along.
+#
+# /etc/letsencrypt is included although certificates are reissuable: 1.7 MB, and
+# it avoids hitting Let's Encrypt rate limits during a rebuild, which is exactly
+# when a rate limit is least welcome.
+echo "building archive"
+tar --create --zstd --file "$ARCHIVE" \
+    --directory / \
+    --warning=no-file-changed \
+    var/www/Keys \
+    etc/systemd/system/encounter-engine-backup.service \
+    etc/systemd/system/encounter-engine-backup.timer \
+    etc/systemd/system/encounter-engine-archive.service \
+    etc/systemd/system/encounter-engine-archive.timer \
+    etc/systemd/system/ddclient.service \
+    usr/local/bin/encounter-engine-backup \
+    usr/local/bin/encounter-engine-archive \
+    etc/ddclient.conf \
+    etc/ssh \
+    etc/letsencrypt \
+    etc/crontab etc/cron.d \
+    etc/fstab etc/hosts \
+    --directory "$STAGE" uploads
+
+PLAIN_SUM=$(sha256sum "$ARCHIVE" | cut -d' ' -f1)
+echo "archive: $(stat -c%s "$ARCHIVE") bytes, sha256 $PLAIN_SUM"
+
+echo "encrypting"
+age -R "$RECIPIENTS" -o "$ARCHIVE.age" "$ARCHIVE"
+
+URL="https://${ACCT}.blob.core.windows.net/${CONTAINER}/${DATE}/host-state.tar.zst.age"
+echo "uploading to $URL"
+azcopy login --identity >/dev/null
+azcopy copy "$ARCHIVE.age" "$URL" --overwrite=true >/dev/null
+
+# Read it back. Not "does the blob exist" -- does the blob, once downloaded,
+# have the same bytes we uploaded. Decryption cannot be checked here by design
+# (no private key on this host), so the ciphertext digest is what we compare.
+echo "verifying by read-back"
+UP_SUM=$(sha256sum "$ARCHIVE.age" | cut -d' ' -f1)
+azcopy copy "$URL" "$STAGE/roundtrip.age" >/dev/null
+DOWN_SUM=$(sha256sum "$STAGE/roundtrip.age" | cut -d' ' -f1)
+
+if [ "$UP_SUM" != "$DOWN_SUM" ]; then
+  echo "FATAL: read-back mismatch. uploaded $UP_SUM, downloaded $DOWN_SUM" >&2
+  exit 1
+fi
+
+echo "OK: ${DATE} archive verified, ciphertext sha256 $UP_SUM"

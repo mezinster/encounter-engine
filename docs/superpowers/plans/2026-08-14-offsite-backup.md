@@ -85,7 +85,7 @@ Expected: a version string, e.g. `azcopy version 10.x.x`.
 
 ```bash
 ssh mezin 'set -euo pipefail
-  ACCT=$(sudo systemctl show encounter-engine-backup.service -p Environment --value | tr " " "\n" | grep ^AZURE_STORAGE_ACCOUNT= | cut -d= -f2)
+  ACCT=$(sudo docker inspect encounter-engine-db --format "{{range .Config.Env}}{{println .}}{{end}}" | grep "^AZURE_STORAGE_ACCOUNT=" | head -1 | cut -d= -f2-)
   echo "account: $ACCT"
   sudo azcopy login --identity >/dev/null
   sudo azcopy list "https://${ACCT}.blob.core.windows.net/" | head -5'
@@ -229,8 +229,9 @@ Run from **Windows PowerShell with the Az module** (see Global Constraints).
 The storage account is whichever one wal-g already uses; there must not be a second. Read it off the host, then find its resource group:
 
 ```bash
-ssh mezin 'sudo systemctl show encounter-engine-backup.service -p Environment --value \
-           | tr " " "\n" | grep ^AZURE_STORAGE_ACCOUNT= | cut -d= -f2'
+ssh mezin 'sudo docker inspect encounter-engine-db \
+           --format "{{range .Config.Env}}{{println .}}{{end}}" \
+           | grep "^AZURE_STORAGE_ACCOUNT=" | head -1 | cut -d= -f2-'
 ```
 
 Then in PowerShell, using that name:
@@ -302,6 +303,18 @@ No repo change. Note the date and the confirmed SKU in the PR description for th
 
 ### Task 4: The daily archive (tier 2)
 
+> **The scripts below are the original draft, and are no longer authoritative.**
+> They were implemented, reviewed twice and corrected on branch
+> `feature/offsite-backup-ops`; the reviewed versions live in `ops/host/` and
+> `ops/`, and those are what gets installed. Two review rounds found defects in
+> what is written here — a storage-account lookup that returned empty on the
+> real host, guards made unreachable by `set -euo pipefail`, an uploads check
+> that would have discarded the irreplaceable set to protect the reconstructible
+> one, and a disk-space guard that failed open. The account lookup is corrected
+> in place below so nobody re-derives the original mistake; the rest is fixed in
+> the tracked files, not here. **Read `ops/` for what to install.**
+
+
 **Files:**
 - Create: `ops/host/encounter-engine-archive`
 - Create: `ops/host/encounter-engine-archive.service`
@@ -347,10 +360,19 @@ trap 'rm -rf "$STAGE"' EXIT
 DATE=$(date -u +%Y-%m-%d)
 ARCHIVE="$STAGE/host-state.tar.zst"
 
-ACCT=$(systemctl show encounter-engine-backup.service -p Environment --value \
-       | tr ' ' '\n' | grep '^AZURE_STORAGE_ACCOUNT=' | cut -d= -f2)
+# Read off the RUNNING container, not the systemd unit. The unit carries no
+# Environment= at all -- AZURE_STORAGE_ACCOUNT is set on the db accessory in
+# config/deploy.yml, because encounter-engine-backup works by docker exec into
+# that container. Same pattern, and the same reason, as ops/db-restore-scratch.sh.
+#
+# `|| true` is load-bearing: under `set -euo pipefail` a grep that matches
+# nothing fails the pipeline, which fails this assignment, which terminates the
+# script BEFORE the guard below can print anything -- a non-zero exit and an
+# empty journal, which is the silent failure this design exists to eliminate.
+env_of() { docker inspect encounter-engine-db --format '{{range .Config.Env}}{{println .}}{{end}}' | grep "^$1=" | head -1 | cut -d= -f2-; }
+ACCT=$(env_of AZURE_STORAGE_ACCOUNT) || true
 if [ -z "$ACCT" ]; then
-  echo "FATAL: could not read AZURE_STORAGE_ACCOUNT from the wal-g unit" >&2
+  echo "FATAL: could not read AZURE_STORAGE_ACCOUNT off the encounter-engine-db container" >&2
   exit 1
 fi
 
@@ -521,8 +543,17 @@ Create `ops/archive-verify.sh`:
 # see docs/runbooks/restore.md §7.
 set -euo pipefail
 
-ACCT=$(systemctl show encounter-engine-backup.service -p Environment --value \
-       | tr ' ' '\n' | grep '^AZURE_STORAGE_ACCOUNT=' | cut -d= -f2)
+# Read off the RUNNING container, not the systemd unit. The unit carries no
+# Environment= at all -- AZURE_STORAGE_ACCOUNT is set on the db accessory in
+# config/deploy.yml, because encounter-engine-backup works by docker exec into
+# that container. Same pattern, and the same reason, as ops/db-restore-scratch.sh.
+#
+# `|| true` is load-bearing: under `set -euo pipefail` a grep that matches
+# nothing fails the pipeline, which fails this assignment, which terminates the
+# script BEFORE the guard below can print anything -- a non-zero exit and an
+# empty journal, which is the silent failure this design exists to eliminate.
+env_of() { docker inspect encounter-engine-db --format '{{range .Config.Env}}{{println .}}{{end}}' | grep "^$1=" | head -1 | cut -d= -f2-; }
+ACCT=$(env_of AZURE_STORAGE_ACCOUNT) || true
 
 azcopy login --identity >/dev/null
 echo "daily archives (newest last):"
@@ -569,6 +600,18 @@ git commit -m "Daily host-state archive, staged and read back rather than stream
 ---
 
 ### Task 5: The one-off archive (tier 1)
+
+> **The scripts below are the original draft, and are no longer authoritative.**
+> They were implemented, reviewed twice and corrected on branch
+> `feature/offsite-backup-ops`; the reviewed versions live in `ops/host/` and
+> `ops/`, and those are what gets installed. Two review rounds found defects in
+> what is written here — a storage-account lookup that returned empty on the
+> real host, guards made unreachable by `set -euo pipefail`, an uploads check
+> that would have discarded the irreplaceable set to protect the reconstructible
+> one, and a disk-space guard that failed open. The account lookup is corrected
+> in place below so nobody re-derives the original mistake; the rest is fixed in
+> the tracked files, not here. **Read `ops/` for what to install.**
+
 
 **Files:**
 - Create: `ops/archive-once.sh`
@@ -622,8 +665,17 @@ DATE=2026-08-14
 STAGE=$(mktemp -d /var/tmp/ee-once.XXXXXX)
 trap 'rm -rf "$STAGE"' EXIT
 
-ACCT=$(systemctl show encounter-engine-backup.service -p Environment --value \
-       | tr ' ' '\n' | grep '^AZURE_STORAGE_ACCOUNT=' | cut -d= -f2)
+# Read off the RUNNING container, not the systemd unit. The unit carries no
+# Environment= at all -- AZURE_STORAGE_ACCOUNT is set on the db accessory in
+# config/deploy.yml, because encounter-engine-backup works by docker exec into
+# that container. Same pattern, and the same reason, as ops/db-restore-scratch.sh.
+#
+# `|| true` is load-bearing: under `set -euo pipefail` a grep that matches
+# nothing fails the pipeline, which fails this assignment, which terminates the
+# script BEFORE the guard below can print anything -- a non-zero exit and an
+# empty journal, which is the silent failure this design exists to eliminate.
+env_of() { docker inspect encounter-engine-db --format '{{range .Config.Env}}{{println .}}{{end}}' | grep "^$1=" | head -1 | cut -d= -f2-; }
+ACCT=$(env_of AZURE_STORAGE_ACCOUNT) || true
 BASE="https://${ACCT}.blob.core.windows.net/${CONTAINER}/${DATE}"
 azcopy login --identity >/dev/null
 

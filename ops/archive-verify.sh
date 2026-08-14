@@ -27,12 +27,29 @@ if [ -z "$ACCT" ]; then
 fi
 
 azcopy login --identity >/dev/null
+
+# Capture and test the output rather than relying on exit status. `azcopy
+# list` exits 0 on an existing-but-empty container, so a plain
+# `cmd || echo "not found"` never fires in exactly the state it exists to
+# report -- it only catches the container not existing at all, which is a
+# different failure. Testing the captured text catches both, and the `|| true`
+# on each assignment means a genuine azcopy error (auth, network) is folded
+# into the same "nothing listed" message rather than pinned to a specific
+# cause it cannot actually distinguish -- see the message text below.
 echo "daily archives (newest last):"
-azcopy list "https://${ACCT}.blob.core.windows.net/archive-daily/" --output-type text \
-  | grep -E 'host-state\.tar\.zst\.age' | tail -10 \
-  || echo "NO DAILY ARCHIVES FOUND -- the timer has never succeeded"
+DAILY_LIST=$(azcopy list "https://${ACCT}.blob.core.windows.net/archive-daily/" --output-type text \
+  | grep -E 'host-state\.tar\.zst\.age') || true
+if [ -z "$DAILY_LIST" ]; then
+  echo "NO DAILY ARCHIVES LISTED -- either none exist yet, or azcopy could not reach the container (check the azcopy login above)"
+else
+  echo "$DAILY_LIST" | tail -10
+fi
 
 echo
 echo "one-off archive:"
-azcopy list "https://${ACCT}.blob.core.windows.net/archive-once/" --output-type text | tail -10 \
-  || echo "NO ONE-OFF ARCHIVE FOUND -- ops/archive-once.sh has not run yet"
+ONCE_LIST=$(azcopy list "https://${ACCT}.blob.core.windows.net/archive-once/" --output-type text) || true
+if [ -z "$ONCE_LIST" ]; then
+  echo "NO ONE-OFF ARCHIVE LISTED -- ops/archive-once.sh has not run yet, or azcopy could not reach the container"
+else
+  echo "$ONCE_LIST" | tail -10
+fi

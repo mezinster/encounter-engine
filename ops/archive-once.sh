@@ -39,10 +39,49 @@ if [ ! -s "$RECIPIENTS" ]; then
 fi
 # Two recipients is the whole point -- so losing one key does not make every
 # backup worthless. A recipients file with only one line satisfies -s above
-# and would silently defeat that.
-RECIPIENT_COUNT=$(grep -c '^age1' "$RECIPIENTS" || true)
+# and would silently defeat that; counting DISTINCT age1 lines also catches
+# the same key listed twice, which would otherwise pass a plain line count.
+RECIPIENT_COUNT=$(grep '^age1' "$RECIPIENTS" | sort -u | wc -l) || true
 if [ "$RECIPIENT_COUNT" -lt 2 ]; then
-  echo "FATAL: only ${RECIPIENT_COUNT} age1 recipient(s) in $RECIPIENTS; need at least two" >&2
+  echo "FATAL: only ${RECIPIENT_COUNT} distinct age1 recipient(s) in $RECIPIENTS; need at least two" >&2
+  exit 1
+fi
+
+# Free-space gate, sized in gigabytes: push() holds a source tar, its .age
+# encryption and a downloaded read-back copy at once, and the fsarchiver step
+# encrypts a ~5.1 GB file then downloads it back -- peak usage is roughly 2-3x
+# whatever the largest single item turns out to be, on a 13 GB-free root that
+# also holds the production Postgres data directory (Global Constraints in the
+# offsite-backup plan). Filling that disk is a production outage, not a failed
+# backup, so measure the actual candidates rather than guess: `du` each source
+# directory and `stat` the fsarchiver image, take the largest, and require
+# free space at 3x it plus margin.
+#
+# `|| true` plus the numeric-only `case` below matter the same way they do for
+# ACCT further down: under pipefail a `du`/`stat`/`df` failure would otherwise
+# kill the script at the assignment before either FATAL message can run, and a
+# non-numeric value would make the `-lt` comparison error out and the guard
+# fail OPEN -- the worst direction for a disk-space check.
+LARGEST_MB=0
+for p in /var/www/root /var/lib/mysql /home/mezinster; do
+  [ -e "$p" ] || continue
+  SZ=$(du -sm "$p" 2>/dev/null | cut -f1) || true
+  case "$SZ" in ''|*[!0-9]*) SZ=0 ;; esac
+  [ "$SZ" -gt "$LARGEST_MB" ] && LARGEST_MB=$SZ
+done
+FSA=/backup/system-2026-08-04.fsa
+if [ -e "$FSA" ]; then
+  FSA_BYTES=$(stat -c%s "$FSA" 2>/dev/null) || true
+  case "$FSA_BYTES" in ''|*[!0-9]*) FSA_BYTES=0 ;; esac
+  FSA_MB=$(( FSA_BYTES / 1024 / 1024 ))
+  [ "$FSA_MB" -gt "$LARGEST_MB" ] && LARGEST_MB=$FSA_MB
+fi
+MARGIN_MB=2048
+REQUIRED_MB=$(( LARGEST_MB * 3 + MARGIN_MB ))
+FREE_MB=$(df --output=avail -m /var/tmp 2>/dev/null | tail -1 | tr -d ' ') || true
+case "$FREE_MB" in ''|*[!0-9]*) FREE_MB=0 ;; esac
+if [ "$FREE_MB" -lt "$REQUIRED_MB" ]; then
+  echo "FATAL: only ${FREE_MB} MiB free on /var/tmp; need at least ${REQUIRED_MB} MiB (largest item ~${LARGEST_MB} MiB x3 + ${MARGIN_MB} MiB margin)" >&2
   exit 1
 fi
 

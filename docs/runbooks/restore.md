@@ -309,6 +309,12 @@ Beyond the units and script below, a rebuilt host also needs:
 - `azcopy` (`https://aka.ms/downloadazcopy-v10-linux`, installed to `/usr/local/bin`) — the
   archive scripts' only route to blob storage. wal-g does not use it and does not install it.
 
+Both `encounter-engine-archive` and `archive-verify.sh` read `AZURE_STORAGE_ACCOUNT` off the
+**`encounter-engine-db`** container, and the daily archive also reads the **`encounter_engine_storage`**
+Docker volume — neither exists on a freshly rebuilt host. Starting the archive service therefore
+has to wait until **after** `kamal deploy` has brought the app up, not before, even though the
+commands below look independent of it.
+
 The units and script are tracked at `ops/host/`:
 
 ```bash
@@ -351,16 +357,26 @@ writes.
 
     age -d -i <private key file> archive.tar.zst.age > archive.tar.zst
 
+**Reconstructing `/etc/encounter-engine/archive-recipients.txt`** (needed by §6 after a rebuild,
+before the archive service can start): one `age1…` public recipient per line, plain text, at least
+two lines — the scripts refuse to run with fewer. Recover each public recipient from its private
+key rather than trying to remember it:
+
+    age-keygen -y <private key file>
+
+Run that against both the primary and secondary private keys above and put both `age1…` outputs,
+one per line, into the file.
+
 ---
 
 ## 8. The one-off archive (the frozen WordPress estate)
 
-Written once on 2026-08-14 to `archive-once/2026-08-14/`. Never updated, never expires — the
-lifecycle rule applies only to `archive-daily/`. Nothing regenerates these.
+> **NOT YET EXECUTED.** Nothing in this section has happened; `ops/archive-once.sh` has never run.
+> Everything below, including the opening sentence, describes what this section will record once
+> it has, not anything that is true yet — do not cite it as current.
 
-> **NOT YET EXECUTED.** Nothing below has happened; `ops/archive-once.sh` has never run. The
-> table and the paragraph after it describe what this section will record once it has, not
-> anything that is true yet — do not cite them as current.
+Written once to `archive-once/2026-08-14/`. Never updated, never expires — the lifecycle rule
+applies only to `archive-daily/`. Nothing regenerates these.
 
 | Blob | sha256 (ciphertext) |
 |---|---|

@@ -48,6 +48,162 @@
         cmd: docker volume create encounter_engine_pg_data
       changed_when: false
 
+    # Kamal creates this from config/deploy.yml on the first deploy, so on a
+    # freshly-rebuilt host it does not exist until then. That ordering matters
+    # here: /usr/local/bin/encounter-engine-archive FATALs on a missing volume
+    # (deliberately -- `docker run -v name:/x` AUTO-CREATES a missing named
+    # volume, which would otherwise produce a fully-verified EMPTY backup). So
+    # between provisioning and the first deploy the nightly archive would fail
+    # loudly every night. Creating it here closes that window.
+    - name: Create the uploads volume
+      ansible.builtin.command:
+        cmd: docker volume create encounter_engine_storage
+      changed_when: false
+
+    # --- Offsite backup ---------------------------------------------------
+    # Without these a rebuilt host comes up with Docker and no backup at all:
+    # no binaries, no recipients, no schedule. Nothing would say so, which is
+    # the failure this whole system exists to prevent.
+
+    - name: Install age (archive encryption)
+      ansible.builtin.apt:
+        name: age
+        state: present
+
+    # NOT from apt. packages.microsoft.com is configured on this host and does
+    # carry azcopy, but its only candidate is 10.33.0-beta, and a beta has no
+    # business being the thing that uploads the only offsite copy. The stable
+    # tarball is pinned by checking the installed version afterwards; re-run
+    # this play to pick up a newer stable release.
+    - name: Check for azcopy
+      ansible.builtin.stat:
+        path: /usr/local/bin/azcopy
+      register: azcopy_bin
+
+    - name: Install azcopy (stable release, not the apt beta)
+      when: not azcopy_bin.stat.exists
+      block:
+        - name: Download azcopy
+          ansible.builtin.get_url:
+            url: https://aka.ms/downloadazcopy-v10-linux
+            dest: /tmp/azcopy.tar.gz
+            mode: "0644"
+
+        - name: Unpack azcopy
+          ansible.builtin.unarchive:
+            src: /tmp/azcopy.tar.gz
+            dest: /tmp
+            remote_src: true
+            extra_opts: [--strip-components=1, --wildcards, "*/azcopy"]
+
+        - name: Install the azcopy binary
+          ansible.builtin.copy:
+            src: /tmp/azcopy
+            dest: /usr/local/bin/azcopy
+            remote_src: true
+            owner: root
+            group: root
+            mode: "0755"
+
+        - name: Remove the azcopy download
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+          loop: [/tmp/azcopy.tar.gz, /tmp/azcopy]
+
+    - name: Create the archive config directory
+      ansible.builtin.file:
+        path: /etc/encounter-engine
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    # The recipients file holds PUBLIC age keys only, but they are specific to
+    # this deployment's key pair, so it is not committed here. Absent, the
+    # archive script refuses to write a plaintext archive -- correct, and loud.
+    # docs/runbooks/restore.md section 7 says how to reconstruct it.
+    - name: Check the age recipients file
+      ansible.builtin.stat:
+        path: /etc/encounter-engine/archive-recipients.txt
+      register: age_recipients
+
+    - name: Warn if the age recipients file is missing
+      when: not age_recipients.stat.exists
+      ansible.builtin.debug:
+        msg: >-
+          /etc/encounter-engine/archive-recipients.txt is MISSING. The nightly
+          archive will refuse to run until it exists (two distinct age1
+          recipients, one per line). See docs/runbooks/restore.md section 7.
+
+    - name: Install the archive script
+      ansible.builtin.copy:
+        src: ../ops/host/encounter-engine-archive
+        dest: /usr/local/bin/encounter-engine-archive
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install the archive unit and timer
+      ansible.builtin.copy:
+        src: "../ops/host/{{ item }}"
+        dest: /etc/systemd/system/{{ item }}
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - encounter-engine-archive.service
+        - encounter-engine-archive.timer
+      notify: Reload systemd
+
+    - name: Enable the nightly archive timer
+      ansible.builtin.systemd:
+        name: encounter-engine-archive.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    # --- The parked site --------------------------------------------------
+    # mezin.by, www.mezin.by, mezin.eu and www.mezin.eu are served by a
+    # hand-run nginx container, NOT by Kamal -- it carries no Kamal labels and
+    # appears nowhere in config/deploy.yml, which documents at length why those
+    # four hostnames must not be claimed by the Rails app. So a rebuilt host
+    # loses four live domains and nothing reports it.
+    #
+    # This creates the container. It does NOT register the kamal-proxy route,
+    # because kamal-proxy does not exist until the first deploy. After that,
+    # once per rebuild:
+    #
+    #   docker exec kamal-proxy kamal-proxy deploy parked \
+    #     --target parked:80 --tls --health-check-path / \
+    #     --host mezin.by --host www.mezin.by --host mezin.eu --host www.mezin.eu
+    #
+    # --health-check-path / is not optional: kamal-proxy defaults to /up, which
+    # Rails serves and a plain nginx container does not. Verify with
+    # `docker exec kamal-proxy kamal-proxy list`.
+
+    - name: Ensure the kamal network exists
+      ansible.builtin.command:
+        cmd: docker network create kamal
+      register: kamal_net
+      changed_when: kamal_net.rc == 0
+      failed_when: kamal_net.rc != 0 and 'already exists' not in kamal_net.stderr
+
+    - name: Check for the parked container
+      ansible.builtin.command:
+        cmd: docker container inspect parked
+      register: parked_state
+      changed_when: false
+      failed_when: false
+
+    - name: Create the parked site container
+      when: parked_state.rc != 0
+      ansible.builtin.command:
+        cmd: >-
+          docker run -d --name parked --network kamal --restart unless-stopped
+          -v /var/www/parked:/usr/share/nginx/html:ro nginx:alpine
+      changed_when: true
+
     - name: Enable unattended security upgrades
       ansible.builtin.apt:
         name: unattended-upgrades
@@ -58,3 +214,8 @@
       register: ufw_state
       changed_when: false
       failed_when: "'inactive' not in ufw_state.stdout"
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true

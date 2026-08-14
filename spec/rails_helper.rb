@@ -106,6 +106,21 @@ RSpec.configure do |config|
   # To enable this behaviour uncomment the line below.
   # config.infer_spec_type_from_file_location!
 
+  # Layout examples drive a real headless browser (spec/layout), because
+  # neither suite can see layout: Capybara's rack_test driver parses no CSS at
+  # all, so a play screen can be "green" while half of it hangs below the
+  # phone's screen -- which is exactly what shipped. They are excluded from an
+  # ordinary run because the browser binary is a developer-machine dependency
+  # (~/.cache/ms-playwright) that CI does not install.
+  #
+  # Excluded, NOT skipped, and the difference is the point: an excluded example
+  # is not counted or reported, so it cannot masquerade as a pass the way the
+  # countdown examples did for a fortnight (see the shared.countdown note in
+  # CLAUDE.md). When they DO run, a missing browser raises.
+  #
+  #   bin/measure-play-screen        # or: LAYOUT_SPECS=1 bundle exec rspec spec/layout
+  config.filter_run_excluding :layout => true unless ENV["LAYOUT_SPECS"]
+
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:

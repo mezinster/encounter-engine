@@ -10,7 +10,23 @@
 # /var/lib/mysql is a consistent database. A live InnoDB directory copies torn.
 # The guard below is not paranoia -- it is the entire reason this is safe
 # without a mysqldump step.
+#
+# RUN AS ROOT:  ssh mezin 'sudo bash -s' < ops/archive-once.sh
 set -euo pipefail
+
+# Root is required, and without it the first failure is misleading rather than
+# obvious: /var/lib/mysql is 0700 mysql:mysql, so `du -sm` on it exits non-zero
+# and trips the fail-closed measurement check below as "FATAL: du failed on
+# /var/lib/mysql" -- which reads as a disk or mount problem, not as "you forgot
+# sudo". The mktemp on /backup and the tar of the datadir need root too. The
+# documented invocation (ops/README.md, and the plan) pipes this over ssh, which
+# connects as mezinster, so the sudo is easy to leave off; say so here rather
+# than let it surface three checks later as something else.
+if [ "$(id -u)" -ne 0 ]; then
+  echo "FATAL: this script must run as root -- it reads /var/lib/mysql (0700) and stages on /backup." >&2
+  echo "       Run it as:  ssh mezin 'sudo bash -s' < ops/archive-once.sh" >&2
+  exit 1
+fi
 
 if systemctl is-active --quiet mysql || systemctl is-active --quiet mariadb; then
   echo "FATAL: MySQL is running. A file-level copy would be torn." >&2
@@ -64,6 +80,28 @@ fi
 # reappears the moment somebody edits four of the five.
 STAGE_ROOT=/backup
 
+# The four sources, named once. TAR_SOURCES is exactly the three push() calls at
+# the bottom of this script, in the same order -- keep them in step.
+TAR_SOURCES=(/var/www/root /var/lib/mysql /home/mezinster)
+FSA=/backup/system-2026-08-04.fsa
+
+# Every source checked HERE, up front, before the free-space gate and before
+# anything is staged. Tolerating a missing one and discovering it later buys
+# nothing: this archive is written once, and a run that uploads three of four
+# members is not a partial success, it is a job somebody has to do again. The
+# earlier shape was actively misleading -- a missing fsarchiver image sized as
+# FSA_MB=0, sailed through the gate, and FATALed only after three multi-GB
+# tar/encrypt/upload/read-back cycles had already run. This script gets one
+# supervised run on a production host, at night; precondition failures belong at
+# precondition time.
+for p in "${TAR_SOURCES[@]}" "$FSA"; do
+  if [ ! -e "$p" ]; then
+    echo "FATAL: $p does not exist; refusing to write a one-off archive that is" >&2
+    echo "       missing one of its four members -- fix the path or the mount first" >&2
+    exit 1
+  fi
+done
+
 # Free-space gate, sized in gigabytes. Measure the actual candidates rather
 # than guess: `du` each source directory and `stat` the fsarchiver image.
 #
@@ -107,8 +145,7 @@ STAGE_ROOT=/backup
 # the name of the path that could not be read, which is the one thing the
 # operator needs to see when this FATALs.
 TAR_LARGEST_MB=0
-for p in /var/www/root /var/lib/mysql /home/mezinster; do
-  [ -e "$p" ] || continue
+for p in "${TAR_SOURCES[@]}"; do
   if ! DU_OUT=$(du -sm "$p"); then
     echo "FATAL: du failed on $p (see its error above); its total would be an" >&2
     echo "       under-count, not a measurement -- refusing to size the gate on it" >&2
@@ -123,18 +160,14 @@ for p in /var/www/root /var/lib/mysql /home/mezinster; do
   esac
   if [ "$SZ" -gt "$TAR_LARGEST_MB" ]; then TAR_LARGEST_MB=$SZ; fi
 done
-FSA=/backup/system-2026-08-04.fsa
-FSA_MB=0
-if [ -e "$FSA" ]; then
-  FSA_BYTES=$(stat -c%s "$FSA" 2>/dev/null) || true
-  case "$FSA_BYTES" in
-    ''|*[!0-9]*)
-      echo "FATAL: could not measure the size of $FSA; refusing to stage an unmeasured payload" >&2
-      exit 1
-      ;;
-  esac
-  FSA_MB=$(( FSA_BYTES / 1024 / 1024 ))
-fi
+FSA_BYTES=$(stat -c%s "$FSA" 2>/dev/null) || true
+case "$FSA_BYTES" in
+  ''|*[!0-9]*)
+    echo "FATAL: could not measure the size of $FSA; refusing to stage an unmeasured payload" >&2
+    exit 1
+    ;;
+esac
+FSA_MB=$(( FSA_BYTES / 1024 / 1024 ))
 MARGIN_MB=2048
 PEAK_MB=$(( TAR_LARGEST_MB * 2 ))
 if [ "$FSA_MB" -gt "$PEAK_MB" ]; then PEAK_MB=$FSA_MB; fi
@@ -166,7 +199,33 @@ if [ -z "$ACCT" ]; then
   exit 1
 fi
 BASE="https://${ACCT}.blob.core.windows.net/${CONTAINER}/${DATE}"
-azcopy login --identity >/dev/null
+
+# azcopy reports what a transfer actually did on STDOUT -- per-transfer errors
+# and a closing "Final Job Status:" line. Sending that to /dev/null leaves a
+# failure with nothing but a non-zero exit status to investigate, and this
+# script is watched once, at night, by someone who will not run it again. So:
+# capture it, stay silent when it worked, print all of it to stderr when it did
+# not. The status line is checked as well as the exit status because a job can
+# end CompletedWithErrors -- some transfers failed -- and a partial upload here
+# is exactly what the read-back below exists to refuse.
+azcopy_quiet() {
+  local out status=0
+  out=$(azcopy "$@" 2>&1) || status=$?
+  if [ "$status" -ne 0 ] || printf '%s\n' "$out" | grep -qE 'Final Job Status: (Failed|CompletedWithErrors)'; then
+    echo "FATAL: azcopy $1 reported failure (exit ${status}); its full output follows" >&2
+    printf '%s\n' "$out" >&2
+    return 1
+  fi
+  return 0
+}
+azcopy_quiet login --identity
+
+# --block-blob-tier=Cool on every upload: the spec puts this tier-1 archive on
+# Cool (about 7 GB, written once, read only in a disaster), and the account
+# default is Hot. Setting it at upload time avoids a second pass to re-tier
+# blobs nobody will look at again, and Cool's higher read cost is irrelevant for
+# something read once or never.
+BLOB_TIER=Cool
 
 # Everything below stages under $STAGE, i.e. on $STAGE_ROOT -- see the comment
 # above the free-space gate for why that is /backup and not anywhere on /.
@@ -182,11 +241,12 @@ push() {  # push <name> <tar-source-dir> <tar-target>
   # sized assuming it doesn't.
   rm -f "$STAGE/$name.tar.zst"
   local up; up=$(sha256sum "$STAGE/$name.tar.zst.age" | cut -d' ' -f1)
-  azcopy copy "$STAGE/$name.tar.zst.age" "$BASE/$name.tar.zst.age" --overwrite=true >/dev/null
+  azcopy_quiet copy "$STAGE/$name.tar.zst.age" "$BASE/$name.tar.zst.age" \
+    --overwrite=true --block-blob-tier="$BLOB_TIER"
   # Dead once uploaded -- what's compared below is the read-back, not this
   # local copy.
   rm -f "$STAGE/$name.tar.zst.age"
-  azcopy copy "$BASE/$name.tar.zst.age" "$STAGE/rt.age" >/dev/null
+  azcopy_quiet copy "$BASE/$name.tar.zst.age" "$STAGE/rt.age"
   local down; down=$(sha256sum "$STAGE/rt.age" | cut -d' ' -f1)
   [ "$up" = "$down" ] || { echo "FATAL: read-back mismatch for $name" >&2; exit 1; }
   echo "$name verified, sha256 $up"
@@ -203,17 +263,18 @@ push home-mezinster  /home     mezinster
 # 21:36, so the database inside it was captured live and is torn. The
 # mysql-datadir archive above is the trustworthy copy of that database.
 #
-# "$FSA", not the path spelled out again: the gate above sized the fsarchiver
-# term from that variable, and a second literal is how the file that gets
-# measured stops being the file that gets encrypted.
+# "$FSA" and "$FSA_BLOB", not either path spelled out again: the gate above
+# sized this term from $FSA, and the upload and the read-back below must name
+# one and the same blob. A second literal is how the file that gets measured
+# stops being the file that gets encrypted, and how a blob gets uploaded under
+# one name and verified under another. Existence was checked with the other
+# three sources, before the gate.
+FSA_BLOB="$(basename "$FSA").age"
 echo "=== fsarchiver image"
-if [ ! -e "$FSA" ]; then
-  echo "FATAL: $FSA does not exist; the one-off archive would be missing its largest member" >&2
-  exit 1
-fi
 age -R "$RECIPIENTS" -o "$STAGE/system.fsa.age" "$FSA"
 UP=$(sha256sum "$STAGE/system.fsa.age" | cut -d' ' -f1)
-azcopy copy "$STAGE/system.fsa.age" "$BASE/system-2026-08-04.fsa.age" --overwrite=true >/dev/null
+azcopy_quiet copy "$STAGE/system.fsa.age" "$BASE/$FSA_BLOB" \
+  --overwrite=true --block-blob-tier="$BLOB_TIER"
 # Dead once uploaded, same reasoning as push(). The source file it was
 # encrypted from is pre-existing space on $STAGE_ROOT -- already counted as
 # used, not free -- so this .age, and then rt.age after it, is the only copy
@@ -221,7 +282,7 @@ azcopy copy "$STAGE/system.fsa.age" "$BASE/system-2026-08-04.fsa.age" --overwrit
 # the gate above sizes the fsarchiver shape at, and this `rm -f` is what makes
 # it true.
 rm -f "$STAGE/system.fsa.age"
-azcopy copy "$BASE/system-2026-08-04.fsa.age" "$STAGE/rt.age" >/dev/null
+azcopy_quiet copy "$BASE/$FSA_BLOB" "$STAGE/rt.age"
 DOWN=$(sha256sum "$STAGE/rt.age" | cut -d' ' -f1)
 [ "$UP" = "$DOWN" ] || { echo "FATAL: read-back mismatch for fsarchiver image" >&2; exit 1; }
 echo "fsarchiver image verified, sha256 $UP"

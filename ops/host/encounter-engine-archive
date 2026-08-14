@@ -51,7 +51,8 @@ if ! docker volume inspect encounter_engine_storage >/dev/null 2>&1; then
 fi
 
 # /var/tmp, not /tmp: what is staged below is user-uploaded game files, actively
-# growing, and /tmp may be a tmpfs on a 1 GB box. (ops/archive-once.sh stages on
+# growing, and /tmp is the one directory a distribution is entitled to mount as
+# a tmpfs or clear underneath a long-running job. (ops/archive-once.sh stages on
 # /backup instead -- it moves gigabytes and can afford to be nowhere near /. This
 # archive is single-digit megabytes, so /var/tmp is proportionate; the gate below
 # is what keeps it honest if that ever stops being true.)
@@ -72,10 +73,12 @@ STAGE_ROOT=/var/tmp
 #
 # Sized at ~2x SRC_MB, not 3x, because $UPLOADS and $ARCHIVE are each deleted
 # below as soon as they are dead (right after the tar, and right after the
-# encryption, respectively -- see the comments at those two `rm` lines). That
-# leaves TWO moments of equal magnitude, not one, and 2x covers both:
-#   * during `tar`, $UPLOADS and the $ARCHIVE being written from it coexist;
-#   * during the read-back compare, $ARCHIVE.age and roundtrip.age coexist.
+# encryption, respectively -- see the comments at those two `rm` lines). What is
+# left is THREE moments at which two copies coexist, never more, and 2x covers
+# all of them:
+#   * during `tar`, $UPLOADS and the $ARCHIVE being written from it;
+#   * during `age`, $ARCHIVE and $ARCHIVE.age;
+#   * during the read-back compare, $ARCHIVE.age and roundtrip.age.
 # Each pair is at most ~2x the uploads volume -- everything else in the tar
 # (/etc/ssh, letsencrypt, the units) is a fixed couple of megabytes, and both
 # $ARCHIVE and its .age are compressed, so 2x the uncompressed `du` figure is
@@ -141,12 +144,36 @@ if [ -z "$ACCT" ]; then
   exit 1
 fi
 
+# azcopy reports what a transfer actually did on STDOUT -- per-transfer errors
+# and a closing "Final Job Status:" line. Sending that to /dev/null leaves an
+# unattended failure with nothing in the journal but a non-zero exit status, on
+# a host with no monitoring, where the journal is the entire investigation.
+# So: capture it, stay silent when it worked, print all of it to stderr when it
+# did not. The status line is checked as well as the exit status because a job
+# can end CompletedWithErrors -- some transfers failed, and this archive is only
+# worth anything if ALL of it landed.
+azcopy_quiet() {
+  local out status=0
+  out=$(azcopy "$@" 2>&1) || status=$?
+  if [ "$status" -ne 0 ] || printf '%s\n' "$out" | grep -qE 'Final Job Status: (Failed|CompletedWithErrors)'; then
+    echo "FATAL: azcopy $1 reported failure (exit ${status}); its full output follows" >&2
+    printf '%s\n' "$out" >&2
+    return 1
+  fi
+  return 0
+}
+
 # Log in HERE, before anything is staged, not just before the upload. A broken
 # or unassigned managed identity is a precondition failure, and discovering it
 # after the tar means the whole archive was built for nothing -- including
 # writing the plaintext tar of three private keys and the ddclient credentials
 # to disk. ops/archive-once.sh logs in at the same point, for the same reason.
-azcopy login --identity >/dev/null
+#
+# This is a probe, not the mechanism: encounter-engine-archive.service sets
+# AZCOPY_AUTO_LOGIN_TYPE=MSI so each azcopy call authenticates itself, because
+# the token cache this login writes lives under $HOME -- which systemd does not
+# set for a unit with no User=. See the comments in that unit file.
+azcopy_quiet login --identity
 
 # The uploads volume is read out of Docker rather than from /var/lib/docker
 # directly: the volume's on-disk path is an implementation detail Docker is
@@ -188,10 +215,20 @@ fi
 # is included too: it is the one host-side file the archive system needs to
 # keep working after a rebuild, and it is public keys, not a secret -- there
 # is no reason to make a rebuilt host depend on someone remembering it.
+#
+# tar's exit status is handled explicitly, and --warning=no-file-changed is
+# deliberately NOT set. GNU tar exits 1 when a file changed while it was being
+# read -- a tolerable event here, and a likely one: /etc/letsencrypt is in the
+# set above and certbot renews on its own timer. Warnings never affect the exit
+# status, so suppressing the message did not suppress the exit 1; under `set -e`
+# the run died at this line having printed "building archive" and nothing else,
+# and the one line naming the file was the line the flag had suppressed. Exit 1
+# is now a loud WARNING (the archive is otherwise complete and worth uploading),
+# anything else is FATAL.
 echo "building archive"
+TAR_STATUS=0
 tar --create --zstd --file "$ARCHIVE" \
     --directory / \
-    --warning=no-file-changed \
     var/www/Keys \
     etc/systemd/system/encounter-engine-backup.service \
     etc/systemd/system/encounter-engine-backup.timer \
@@ -206,7 +243,14 @@ tar --create --zstd --file "$ARCHIVE" \
     etc/letsencrypt \
     etc/crontab etc/cron.d \
     etc/fstab etc/hosts \
-    --directory "$STAGE" uploads
+    --directory "$STAGE" uploads || TAR_STATUS=$?
+if [ "$TAR_STATUS" -eq 1 ]; then
+  echo "WARNING: tar exited 1 -- a file changed while being read (tar named it above)." >&2
+  echo "         Every other member was archived; continuing with this archive." >&2
+elif [ "$TAR_STATUS" -ne 0 ]; then
+  echo "FATAL: tar failed with exit ${TAR_STATUS}; the archive is not trustworthy" >&2
+  exit 1
+fi
 
 PLAIN_SUM=$(sha256sum "$ARCHIVE" | cut -d' ' -f1)
 echo "archive: $(stat -c%s "$ARCHIVE") bytes, sha256 $PLAIN_SUM"
@@ -227,14 +271,14 @@ rm -f "$ARCHIVE"
 
 URL="https://${ACCT}.blob.core.windows.net/${CONTAINER}/${DATE}/host-state.tar.zst.age"
 echo "uploading to $URL"
-azcopy copy "$ARCHIVE.age" "$URL" --overwrite=true >/dev/null
+azcopy_quiet copy "$ARCHIVE.age" "$URL" --overwrite=true
 
 # Read it back. Not "does the blob exist" -- does the blob, once downloaded,
 # have the same bytes we uploaded. Decryption cannot be checked here by design
 # (no private key on this host), so the ciphertext digest is what we compare.
 echo "verifying by read-back"
 UP_SUM=$(sha256sum "$ARCHIVE.age" | cut -d' ' -f1)
-azcopy copy "$URL" "$STAGE/roundtrip.age" >/dev/null
+azcopy_quiet copy "$URL" "$STAGE/roundtrip.age"
 DOWN_SUM=$(sha256sum "$STAGE/roundtrip.age" | cut -d' ' -f1)
 
 if [ "$UP_SUM" != "$DOWN_SUM" ]; then

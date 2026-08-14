@@ -26,7 +26,12 @@ if [ -z "$ACCT" ]; then
   exit 1
 fi
 
-azcopy login --identity >/dev/null
+# Not `>/dev/null`: azcopy reports on stdout, and under `set -e` a failed login
+# ends the script here -- before either "could not reach the container" message
+# below can be printed. Discarding its output would leave this diagnostic tool
+# exiting silently in the exact state it exists to diagnose. One INFO line on a
+# good run is a small price; this one is read by a person, not a timer.
+azcopy login --identity
 
 # Capture and test the output rather than relying on exit status. `azcopy
 # list` exits 0 on an existing-but-empty container, so a plain

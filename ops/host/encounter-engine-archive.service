@@ -5,4 +5,31 @@ Requires=docker.service
 
 [Service]
 Type=oneshot
+
+# Environment=HOME=/root is not decoration. azcopy caches its OAuth token
+# per-user under $HOME, and systemd sets $HOME/$USER only for units that
+# specify User=, DynamicUser= or PAMName= -- this unit specifies none of them.
+# Verified on this host: a transient oneshot with no User= reports
+# HOME=<UNSET> USER=<UNSET>, while an interactive `sudo` reports HOME=/root.
+# That difference is why hand-testing the script over ssh with sudo passes
+# while the timer fails, which is the worst possible shape for a backup bug:
+# `azcopy login` prints success either way, and the `copy` that follows runs
+# as Anonymous and 404s.
+Environment=HOME=/root
+
+# AZCOPY_AUTO_LOGIN_TYPE=MSI is the actual fix rather than the workaround: with
+# it set, every azcopy invocation authenticates itself against the VM's
+# system-assigned managed identity, so no cached token has to survive between
+# processes at all. (`azcopy login` has been deprecated in favour of this
+# variable since azcopy 10.22; the script keeps its login call as a cheap
+# precondition probe -- fail before staging if the identity is broken -- not as
+# the thing that makes the upload work.)
+Environment=AZCOPY_AUTO_LOGIN_TYPE=MSI
+
+# Type=oneshot disables the start timeout by default. Without this, a hung
+# azcopy holds the unit in "activating" forever, and `systemctl list-timers`
+# keeps looking healthy while no archive is being produced. An hour is far
+# beyond what a single-digit-megabyte archive needs.
+TimeoutStartSec=1h
+
 ExecStart=/usr/local/bin/encounter-engine-archive

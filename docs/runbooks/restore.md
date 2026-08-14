@@ -344,18 +344,45 @@ can succeed — see §7.
 
 ---
 
-## 7. Decrypting an archive
+## 7. Retrieving and decrypting an archive
 
 Archives written after 2026-08-14 are encrypted with `age` to two recipients. The host holds
 only the public keys (`/etc/encounter-engine/archive-recipients.txt`) and cannot read what it
-writes.
+writes. Everything in this section is done **on a laptop that holds a private key**, not on the
+VM — and it must work when the VM no longer exists, which is what this whole system is for.
 
 | Key | Held where |
 |---|---|
 | primary | <fill in: password manager entry name> |
 | secondary | <fill in: must survive losing both the VM and the laptop> |
 
-    age -d -i <private key file> archive.tar.zst.age > archive.tar.zst
+**Where the archives are.** Storage account `eewalxypkl1ft`, two containers:
+
+| Container | Blob | Written by |
+|---|---|---|
+| `archive-daily` | `<YYYY-MM-DD>/host-state.tar.zst.age` | `encounter-engine-archive`, daily |
+| `archive-once` | `2026-08-14/<name>.age` — see §8 for the four names | `ops/archive-once.sh`, once |
+
+The account name is **also** in `config/deploy.yml` (`AZURE_STORAGE_ACCOUNT`, under the `db`
+accessory). Read it from there, not from the `encounter-engine-db` container: `ops/` scripts read
+it off that container because they run beside it, but the disaster this section is written for is
+the one where that container — and the host under it — is gone.
+
+**Retrieve, decrypt, unpack.** `az login` with an account that can read the storage account, then:
+
+```bash
+azcopy list "https://eewalxypkl1ft.blob.core.windows.net/archive-daily/"   # pick a date
+azcopy copy "https://eewalxypkl1ft.blob.core.windows.net/archive-daily/2026-08-14/host-state.tar.zst.age" .
+age -d -i <private key file> host-state.tar.zst.age > host-state.tar.zst
+tar --zstd -xf host-state.tar.zst
+```
+
+That unpacks to the paths as they were on the host, relative to the current directory:
+`var/www/Keys`, `etc/ssh`, `etc/letsencrypt`, `etc/ddclient.conf`, the systemd units, and
+`uploads/` (the `encounter_engine_storage` Docker volume). Unpack into an empty directory and copy
+out what you need — do not extract over `/`.
+
+The one-off archive works identically; only the container, prefix and blob names differ (§8).
 
 **Reconstructing `/etc/encounter-engine/archive-recipients.txt`** (needed by §6 after a rebuild,
 before the archive service can start): one `age1…` public recipient per line, plain text, at least

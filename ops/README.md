@@ -11,11 +11,17 @@ diffable and recoverable. Nothing in this directory is loaded by the Rails app.
 | `archive-once.sh` | Run ONCE, by hand. Archives the frozen WordPress estate. Refuses to run if MySQL is up. |
 | `host/` | Files that live on the host outside Docker (see below). |
 
-Both scripts run **on the host** and are piped over ssh:
+These scripts run **on the host** and are piped over ssh:
 
 ```bash
 ssh mezin 'bash -s' < ops/db-list.sh
+ssh mezin 'sudo bash -s' < ops/archive-once.sh   # this one needs root
 ```
+
+`archive-once.sh` is the exception that needs `sudo`: it reads `/var/lib/mysql`
+(mode 0700) and stages gigabytes on `/backup`. Without it the script stops on
+its own root check rather than failing later as something that looks like a
+disk problem.
 
 The `Database` GitHub Actions workflow does exactly that. Running them by hand
 and running them through the workflow execute the same code — which is the

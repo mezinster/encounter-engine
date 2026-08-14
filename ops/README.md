@@ -7,6 +7,8 @@ diffable and recoverable. Nothing in this directory is loaded by the Rails app.
 |---|---|
 | `db-list.sh` | Read-only. What can be restored, and to when. Safe during a game. |
 | `db-restore-scratch.sh` | Restores into a throwaway container beside production and destroys it. Never touches the live database. |
+| `archive-verify.sh` | Read-only. What has been archived and when. Safe during a game. |
+| `archive-once.sh` | Run ONCE, by hand. Archives the frozen WordPress estate. Refuses to run if MySQL is up. |
 | `host/` | Files that live on the host outside Docker (see below). |
 
 Both scripts run **on the host** and are piped over ssh:
@@ -33,6 +35,9 @@ backup schedule with no record of what it had been.
 | `encounter-engine-backup` | `/usr/local/bin/encounter-engine-backup` (mode 755, root) |
 | `encounter-engine-backup.service` | `/etc/systemd/system/` |
 | `encounter-engine-backup.timer` | `/etc/systemd/system/` |
+| `encounter-engine-archive` | `/usr/local/bin/encounter-engine-archive` (mode 755, root) |
+| `encounter-engine-archive.service` | `/etc/systemd/system/` |
+| `encounter-engine-archive.timer` | `/etc/systemd/system/` |
 
 They are on the **host** rather than in the database container on purpose:
 Kamal recreates that container on every deploy, so a crontab installed inside

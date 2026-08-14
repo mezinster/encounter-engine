@@ -294,6 +294,12 @@ storage account — it costs a few minutes and needs no downtime.
 
 ## 6. Reinstalling the schedule on a rebuilt host
 
+Beyond the units and script below, a rebuilt host also needs:
+
+- `age` (`apt-get install -y age`) — required to decrypt any archive written after 2026-08-14.
+- `azcopy` (`https://aka.ms/downloadazcopy-v10-linux`, installed to `/usr/local/bin`) — the
+  archive scripts' only route to blob storage. wal-g does not use it and does not install it.
+
 The units and script are tracked at `ops/host/`:
 
 ```bash
@@ -304,3 +310,38 @@ ssh mezin 'sudo install -m 644 /tmp/encounter-engine-backup.service /tmp/encount
 ssh mezin 'sudo systemctl daemon-reload && sudo systemctl enable --now encounter-engine-backup.timer'
 ssh mezin 'sudo systemctl start encounter-engine-backup.service && journalctl -u encounter-engine-backup.service -n 20 --no-pager'
 ```
+
+---
+
+## 7. Decrypting an archive
+
+Archives written after 2026-08-14 are encrypted with `age` to two recipients. The host holds
+only the public keys (`/etc/encounter-engine/archive-recipients.txt`) and cannot read what it
+writes.
+
+| Key | Held where |
+|---|---|
+| primary | <fill in: password manager entry name> |
+| secondary | <fill in: must survive losing both the VM and the laptop> |
+
+    age -d -i <private key file> archive.tar.zst.age > archive.tar.zst
+
+---
+
+## 8. The one-off archive (the frozen WordPress estate)
+
+Written once on 2026-08-14 to `archive-once/2026-08-14/`. Never updated, never expires — the
+lifecycle rule applies only to `archive-daily/`. Nothing regenerates these.
+
+| Blob | sha256 (ciphertext) |
+|---|---|
+| `wordpress-tree.tar.zst.age` | <fill in> |
+| `mysql-datadir.tar.zst.age` | <fill in> |
+| `home-mezinster.tar.zst.age` | <fill in> |
+| `system-2026-08-04.fsa.age` | <fill in> |
+
+The MySQL copy was taken cold (server stopped since 2026-08-04) and verified on 2026-08-14 by
+restoring it into a throwaway `mysql:8` container and counting `wordpress.wp_posts`. The
+fsarchiver image is a bare-metal image of the OS only: it predates the MySQL shutdown by
+fifteen hours, so the database inside it is torn. Use `mysql-datadir.tar.zst.age` for the
+database, always.

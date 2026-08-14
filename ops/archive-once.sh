@@ -50,44 +50,81 @@ if [ "$RECIPIENT_COUNT" -lt 2 ]; then
   exit 1
 fi
 
-# Free-space gate, sized in gigabytes: on a 13 GB-free root that also holds
-# the production Postgres data directory (Global Constraints in the
-# offsite-backup plan), filling it is a production outage, not a failed
-# backup. Measure the actual candidates rather than guess: `du` each source
-# directory and `stat` the fsarchiver image, and take the largest.
+# Stage on /backup, not on / (/tmp or /var/tmp). / is the filesystem that also
+# holds the production Postgres data directory, and filling it is a production
+# outage rather than a failed backup; /backup is a separate 30 GB filesystem
+# whose only contents are two fsarchiver images, i.e. scratch by definition,
+# and the 5.1 GB image this script encrypts already lives there. Staging here
+# keeps the database's filesystem out of the blast radius entirely.
 #
-# Sized at ~2x the largest item, not 3x: push() and the fsarchiver step below
-# both delete each intermediate the moment it is dead (the plaintext tar right
-# after encryption, the uploaded .age right after azcopy confirms it landed --
-# see the `rm -f` lines below), so at most one item's compressed/encrypted
-# size is ever on disk at a time, plus a brief second copy while the next
-# stage is being written or the read-back is being downloaded. 2x the largest
-# candidate's UNCOMPRESSED size is a safe upper bound for that -- tar --zstd
-# only shrinks from there, and the fsarchiver image is already compressed, so
-# its own size is exact rather than an overestimate. The previous 3x, measured
-# the same way, required ~17 GiB against 13 GB free and made this script
-# unrunnable on the host it targets.
+# ONE variable for both the `df` target and the `mktemp` template, deliberately.
+# These were two independent literals across five sites; a free-space gate that
+# measures a different filesystem from the one being written to is the same
+# class of defect as reading a storage-account name off the wrong place, and it
+# reappears the moment somebody edits four of the five.
+STAGE_ROOT=/backup
+
+# Free-space gate, sized in gigabytes. Measure the actual candidates rather
+# than guess: `du` each source directory and `stat` the fsarchiver image.
 #
-# The two measurements below need opposite treatment on failure, the same way
-# as the daily script's equivalent gate. FREE_MB coerces an unreadable `df` to
-# 0 and fails CLOSED (0 free is always less than any positive requirement).
-# LARGEST_MB's inputs (SZ, FSA_BYTES) FATAL instead of coercing to 0 on
-# failure: a 0 there would fail OPEN, collapsing REQUIRED_MB to just the
-# margin and staging a payload nobody actually measured -- exactly backwards
-# for a check whose entire job is refusing to stage something too big.
-LARGEST_MB=0
+# The two staging shapes have DIFFERENT peaks, so they are sized separately and
+# the larger of the two results wins. Applying one multiplier to the max of both
+# sets (what this did before) charges the fsarchiver image the tar shape's 2x and
+# inflates the requirement by a spurious ~5 GB -- the term that dominates the
+# measurement is exactly the term that needs the smallest multiplier.
+#
+#   TAR_LARGEST_MB -> 2x. push() tars the directory, then encrypts it, so
+#     $name.tar.zst and $name.tar.zst.age both exist at the peak. Both are
+#     compressed, so 2x the UNCOMPRESSED `du` figure is a safe upper bound --
+#     tar --zstd only shrinks from there.
+#
+#   FSA_MB -> 1x. The fsarchiver step has no tar intermediate; it encrypts the
+#     image in place. The source is already on /backup and already counted as
+#     used space, so it costs nothing against `df --output=avail`, and
+#     system.fsa.age is deleted before rt.age is downloaded -- at no instant is
+#     more than one 5.1 GB derived file present. The image is already
+#     compressed, so its size is exact rather than an overestimate.
+#
+# Sizing them separately also keeps the gate satisfiable as the tar candidates
+# grow: /home/mezinster has no stated bound, and folding it into a single
+# fsa-dominated maximum hides the moment it becomes the real constraint.
+#
+# The two sides of the comparison need opposite treatment on failure, the same
+# way as the daily script's equivalent gate. FREE_MB coerces an unreadable `df`
+# to 0 and fails CLOSED (0 free is always less than any positive requirement).
+# The requirement side (SZ, FSA_BYTES) FATALs instead of coercing to 0: a 0
+# there would fail OPEN, collapsing REQUIRED_MB to just the margin and staging a
+# payload nobody actually measured -- exactly backwards for a check whose entire
+# job is refusing to stage something too big.
+#
+# `du` is checked on its EXIT STATUS, not only on whether its output parses.
+# It prints a total AND exits non-zero when a subdirectory is unreadable, so a
+# swallowed status yields a real number that is too small -- a guard that fails
+# open while looking like it measured something. Running as root makes that
+# unlikely, not impossible (a stale NFS mount, a broken bind mount, an
+# immutable/permission oddity under /home). stderr is deliberately NOT
+# redirected: `du` is silent on a clean run, so the only thing it can print is
+# the name of the path that could not be read, which is the one thing the
+# operator needs to see when this FATALs.
+TAR_LARGEST_MB=0
 for p in /var/www/root /var/lib/mysql /home/mezinster; do
   [ -e "$p" ] || continue
-  SZ=$(du -sm "$p" 2>/dev/null | cut -f1) || true
+  if ! DU_OUT=$(du -sm "$p"); then
+    echo "FATAL: du failed on $p (see its error above); its total would be an" >&2
+    echo "       under-count, not a measurement -- refusing to size the gate on it" >&2
+    exit 1
+  fi
+  SZ=$(printf '%s\n' "$DU_OUT" | tail -1 | cut -f1)
   case "$SZ" in
     ''|*[!0-9]*)
       echo "FATAL: could not measure the size of $p; refusing to stage an unmeasured payload" >&2
       exit 1
       ;;
   esac
-  [ "$SZ" -gt "$LARGEST_MB" ] && LARGEST_MB=$SZ
+  if [ "$SZ" -gt "$TAR_LARGEST_MB" ]; then TAR_LARGEST_MB=$SZ; fi
 done
 FSA=/backup/system-2026-08-04.fsa
+FSA_MB=0
 if [ -e "$FSA" ]; then
   FSA_BYTES=$(stat -c%s "$FSA" 2>/dev/null) || true
   case "$FSA_BYTES" in
@@ -97,20 +134,22 @@ if [ -e "$FSA" ]; then
       ;;
   esac
   FSA_MB=$(( FSA_BYTES / 1024 / 1024 ))
-  [ "$FSA_MB" -gt "$LARGEST_MB" ] && LARGEST_MB=$FSA_MB
 fi
 MARGIN_MB=2048
-REQUIRED_MB=$(( LARGEST_MB * 2 + MARGIN_MB ))
-FREE_MB=$(df --output=avail -m /var/tmp 2>/dev/null | tail -1 | tr -d ' ') || true
+PEAK_MB=$(( TAR_LARGEST_MB * 2 ))
+if [ "$FSA_MB" -gt "$PEAK_MB" ]; then PEAK_MB=$FSA_MB; fi
+REQUIRED_MB=$(( PEAK_MB + MARGIN_MB ))
+FREE_MB=$(df --output=avail -m "$STAGE_ROOT" 2>/dev/null | tail -1 | tr -d ' ') || true
 case "$FREE_MB" in ''|*[!0-9]*) FREE_MB=0 ;; esac
 if [ "$FREE_MB" -lt "$REQUIRED_MB" ]; then
-  echo "FATAL: only ${FREE_MB} MiB free on /var/tmp; need at least ${REQUIRED_MB} MiB (largest item ~${LARGEST_MB} MiB x2 + ${MARGIN_MB} MiB margin)" >&2
+  echo "FATAL: only ${FREE_MB} MiB free on ${STAGE_ROOT}; need at least ${REQUIRED_MB} MiB" >&2
+  echo "       (peak ${PEAK_MB} MiB = max of tar shape ~${TAR_LARGEST_MB} MiB x2 and fsarchiver ~${FSA_MB} MiB x1, plus ${MARGIN_MB} MiB margin)" >&2
   exit 1
 fi
 
 CONTAINER=archive-once
 DATE=2026-08-14
-STAGE=$(mktemp -d /var/tmp/ee-once.XXXXXX)
+STAGE=$(mktemp -d "${STAGE_ROOT}/ee-once.XXXXXX")
 trap 'rm -rf "$STAGE"' EXIT
 
 # AZURE_STORAGE_ACCOUNT lives on the encounter-engine-db container's
@@ -129,7 +168,8 @@ fi
 BASE="https://${ACCT}.blob.core.windows.net/${CONTAINER}/${DATE}"
 azcopy login --identity >/dev/null
 
-# /var/tmp, not /tmp: these are gigabytes and /tmp may be a tmpfs on a 1 GB box.
+# Everything below stages under $STAGE, i.e. on $STAGE_ROOT -- see the comment
+# above the free-space gate for why that is /backup and not anywhere on /.
 push() {  # push <name> <tar-source-dir> <tar-target>
   local name="$1" dir="$2" target="$3"
   echo "=== $name"
@@ -162,13 +202,24 @@ push home-mezinster  /home     mezinster
 # ONLY -- it was written at 06:11 on 4 August against a MySQL shutdown at
 # 21:36, so the database inside it was captured live and is torn. The
 # mysql-datadir archive above is the trustworthy copy of that database.
+#
+# "$FSA", not the path spelled out again: the gate above sized the fsarchiver
+# term from that variable, and a second literal is how the file that gets
+# measured stops being the file that gets encrypted.
 echo "=== fsarchiver image"
-age -R "$RECIPIENTS" -o "$STAGE/system.fsa.age" /backup/system-2026-08-04.fsa
+if [ ! -e "$FSA" ]; then
+  echo "FATAL: $FSA does not exist; the one-off archive would be missing its largest member" >&2
+  exit 1
+fi
+age -R "$RECIPIENTS" -o "$STAGE/system.fsa.age" "$FSA"
 UP=$(sha256sum "$STAGE/system.fsa.age" | cut -d' ' -f1)
 azcopy copy "$STAGE/system.fsa.age" "$BASE/system-2026-08-04.fsa.age" --overwrite=true >/dev/null
-# Dead once uploaded, same reasoning as push(): the source file it was
-# encrypted from lives on /backup, not /var/tmp, so this is the only copy of
-# it counting against the free-space gate above.
+# Dead once uploaded, same reasoning as push(). The source file it was
+# encrypted from is pre-existing space on $STAGE_ROOT -- already counted as
+# used, not free -- so this .age, and then rt.age after it, is the only copy
+# charged against the free-space gate at any instant. That is exactly the 1x
+# the gate above sizes the fsarchiver shape at, and this `rm -f` is what makes
+# it true.
 rm -f "$STAGE/system.fsa.age"
 azcopy copy "$BASE/system-2026-08-04.fsa.age" "$STAGE/rt.age" >/dev/null
 DOWN=$(sha256sum "$STAGE/rt.age" | cut -d' ' -f1)

@@ -351,10 +351,29 @@ only the public keys (`/etc/encounter-engine/archive-recipients.txt`) and cannot
 writes. Everything in this section is done **on a laptop that holds a private key**, not on the
 VM — and it must work when the VM no longer exists, which is what this whole system is for.
 
-| Key | Held where |
-|---|---|
-| primary | <fill in: password manager entry name> |
-| secondary | <fill in: must survive losing both the VM and the laptop> |
+| Key | Held where | Retrieved how |
+|---|---|---|
+| **secondary** | Azure Key Vault `ee-backup-keys` (resource group `mezineu`, West Europe), secret `age-backup-secondary` | `Get-AzKeyVaultSecret -VaultName ee-backup-keys -Name age-backup-secondary -AsPlainText`, or `az keyvault secret show --vault-name ee-backup-keys --name age-backup-secondary --query value -o tsv` |
+| **primary** | the operator's laptop, `~/.age-keys/primary.key` — **and nowhere else as of 2026-08-15** | it is a file; copy it |
+
+The secret holds the whole `age` identity file, comments included, which is the format
+`age -d -i` expects. Stored and verified on 2026-08-15: retrieved, compared byte-for-byte against
+the original, and used to decrypt a canary. The vault has purge protection on, so neither an
+accident nor a stolen credential can permanently delete it inside 90 days.
+
+**Two things about this table that matter more than the table.**
+
+**The primary key has no second home.** Losing that laptop loses it. That is survivable — the
+secondary in Key Vault is a full recipient and can decrypt everything on its own — but it means
+the redundancy is currently *one deep in each direction* rather than two. Give the primary a
+second home (printed, or a password manager) and this stops being a single point of anything.
+
+**There is a third copy, and it is NOT a recovery path.** The secondary key is also in this
+repository's GitHub Actions secrets as `AGE_BACKUP_KEY_SECONDARY`. **A GitHub Actions secret
+cannot be read back** — the API returns only the name and timestamps, and the value is injectable
+into a workflow but retrievable by nobody. Do not reach for it in an emergency; you will lose time
+discovering it is unreadable. It is recorded here only so that its existence is not mistaken for
+redundancy it does not provide.
 
 **Where the archives are.** Storage account `eewalxypkl1ft`, two containers:
 

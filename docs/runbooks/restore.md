@@ -368,12 +368,25 @@ secondary in Key Vault is a full recipient and can decrypt everything on its own
 the redundancy is currently *one deep in each direction* rather than two. Give the primary a
 second home (printed, or a password manager) and this stops being a single point of anything.
 
-**There is a third copy, and it is NOT a recovery path.** The secondary key is also in this
-repository's GitHub Actions secrets as `AGE_BACKUP_KEY_SECONDARY`. **A GitHub Actions secret
-cannot be read back** — the API returns only the name and timestamps, and the value is injectable
-into a workflow but retrievable by nobody. Do not reach for it in an emergency; you will lose time
-discovering it is unreadable. It is recorded here only so that its existence is not mistaken for
-redundancy it does not provide.
+**A third copy existed in GitHub Actions secrets and was deliberately deleted on 2026-08-15.**
+Recorded so nobody helpfully puts it back. Two reasons:
+
+*It was not a recovery path.* **A GitHub Actions secret cannot be read back** — the API returns
+the name and timestamps only. The value is injectable into a workflow and retrievable by no human,
+so as a recovery key it provided the appearance of redundancy and none of the substance. Key Vault
+replaced it precisely because a person can read that one.
+
+*Making it useful would have made it dangerous.* The obvious repair — a workflow that decrypts an
+archive — turns repository write access into read-access over every backup, including the four
+SSH host keys and the three private keys in `/var/www/Keys`. This repository is **public**, so
+workflow artifacts are downloadable by anyone with read access; a decrypt-to-artifact workflow
+would publish the host's entire state. Restores are rare, and they already work from a laptop.
+
+Note what this does and does not buy. GitHub already holds `SSH_PRIVATE_KEY` in the `production`
+environment, so a GitHub compromise already implies host compromise — that is not what the
+deletion protects. What it protects is **backup history**: the host cannot decrypt its own
+archives either, so neither GitHub nor the VM can read what was written before today. Keep it that
+way. Decryption belongs on a laptop, with a key from Key Vault or from wherever the primary lives.
 
 **Where the archives are.** Storage account `eewalxypkl1ft`, two containers:
 

@@ -151,6 +151,18 @@ module FixturesHelper
     GameEntry.create! creation_params
   end
 
+  # The run must already be testing -- TestAdmission refuses otherwise -- so
+  # this flips the flag rather than making every caller remember to. Pass
+  # :user to build a SOLO admission; :team then names the disposable team.
+  def create_test_admission(options={})
+    run = options[:run] || create_game.current_run
+    run.update_column(:is_testing, true) unless run.is_testing?
+
+    TestAdmission.create!(:game_run => run,
+                          :team     => options[:team] || create_team,
+                          :user     => options[:user])
+  end
+
   def create_option(options={})
     creation_params = {
       :text => random_string,

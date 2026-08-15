@@ -64,6 +64,13 @@ class GameRun < ApplicationRecord
 
   has_many :passings, :class_name => "GamePassing", :foreign_key => "game_run_id"
 
+  # dependent: :destroy so admissions cascade through
+  # Game has_many :runs, dependent: :destroy when a game is deleted. Unlike
+  # :passings above -- which deliberately carries no dependent: option because
+  # a passing is a record of a race somebody ran -- an admission is permission,
+  # meaningless once the run it names is gone.
+  has_many :test_admissions, :dependent => :destroy
+
   # Replaces GamePassing.of(team, game). A team has at most one passing per
   # run; in phase 3 it may have one in each of several runs of the same game,
   # which is exactly what the old game-scoped lookup could not express.

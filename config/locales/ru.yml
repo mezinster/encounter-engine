@@ -920,6 +920,10 @@ ru:
               blank: "Название команды должно быть непустым"
             captain:
               belongs_to_another_team: "уже состоит в другой команде"
+        test_admission:
+          attributes:
+            game_run:
+              not_testing: "не находится в режиме тестирования"
         user:
           attributes:
             email:

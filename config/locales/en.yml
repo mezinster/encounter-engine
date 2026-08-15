@@ -898,6 +898,10 @@ en:
               blank: "Team name cannot be empty"
             captain:
               belongs_to_another_team: "already belongs to another team"
+        test_admission:
+          attributes:
+            game_run:
+              not_testing: "is not in testing mode"
         user:
           attributes:
             email:

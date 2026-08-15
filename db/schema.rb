@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_12_130000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_15_100000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -142,7 +142,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_12_130000) do
     t.datetime "paused_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "test_token"
     t.index ["game_id", "ordinal"], name: "index_game_runs_on_game_id_and_ordinal", unique: true
+    t.index ["test_token"], name: "index_game_runs_on_test_token", unique: true
   end
 
   create_table "games", force: :cascade do |t|
@@ -238,6 +240,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_12_130000) do
     t.integer "captain_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
+  end
+
+  create_table "test_admissions", force: :cascade do |t|
+    t.integer "game_run_id", null: false
+    t.integer "team_id", null: false
+    t.integer "user_id"
+    t.datetime "created_at", null: false
+    t.index ["game_run_id", "team_id"], name: "index_test_admissions_on_run_and_team", unique: true
+    t.index ["game_run_id", "user_id"], name: "index_test_admissions_on_run_and_user", unique: true, where: "user_id IS NOT NULL"
   end
 
   create_table "users", force: :cascade do |t|

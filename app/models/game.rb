@@ -47,6 +47,7 @@ class Game < ApplicationRecord
            :author_finished_at, :author_finished_at=,
            :is_testing, :is_testing=,
            :test_date, :test_date=,
+           :test_token, :test_token=,
            :paused_at, :paused_at=,
            :to => :current_run
   has_many :logs, -> { order('time') }

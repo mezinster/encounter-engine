@@ -91,7 +91,30 @@ class Game < ApplicationRecord
   # it is -- other callers use it for its literal meaning -- and this composes
   # on top, so a future caller that forgets `visible` is a visible mistake
   # rather than a silent leak.
-  scope :visible, -> { non_drafts.where(:withdrawn_at => nil) }
+  #
+  # A game in TEST mode is excluded, and that clause is why this comment grew.
+  # start_test clears is_draft so the game behaves as live, which silently
+  # retires the non_drafts protection above at exactly the moment the game is
+  # an unpublished rehearsal -- it was listed on the public home page as
+  # RUNNING, reported from production 2026-08-15. shared/_current_games.html
+  # .erb had always skipped testing games by hand; this makes the whole
+  # application agree with that partial instead of only one screen doing so.
+  #
+  # A SUBQUERY, not with_current_run's LEFT JOIN, and the difference is
+  # practical rather than stylistic: `visible` is composed freely -- merged
+  # into another relation in GamesController#index, chained with includes(:runs)
+  # in .started and .notstarted -- and a second join on game_runs from any of
+  # those directions raises "table name game_runs specified more than once".
+  # A subquery composes with anything.
+  #
+  # "Any run is testing", not "the current run is testing": only the current
+  # run can carry the flag, because start_test and finish_test are its only
+  # writers and both act on current_run. Where the two could ever differ, this
+  # form hides the game and the other would expose it -- the safe direction.
+  scope :visible, -> {
+    non_drafts.where(:withdrawn_at => nil)
+              .where.not(:id => GameRun.where(:is_testing => true).select(:game_id))
+  }
 
   # includes(:runs) because started? now reads the run. Without it this issues
   # one SELECT per game -- and both callers render a list, so the cost scales

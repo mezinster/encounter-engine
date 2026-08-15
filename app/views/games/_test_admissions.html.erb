@@ -1,46 +1,79 @@
-<%# Author/superadmin only, and only while the game is in test mode. Rendered
-    from games/show inside the existing is_testing? block. %>
-<fieldset class="card">
-  <legend><%= t("test_admissions.panel.legend") %></legend>
+<%# The whole test-run surface for one game: the play link everyone allowed on
+    this page may use, and -- for the author or a superadmin -- the finish
+    button and the admissions list.
 
-  <%= form_tag test_admit_team_path(:game_id => @game.id) do %>
-    <%= label_tag :name, t("test_admissions.panel.team_label") %>
-    <%= text_field_tag :name %>
-    <%= submit_tag t("test_admissions.panel.admit_team"), :class => "btn" %>
-  <% end %>
+    Rendered from TWO mutually exclusive places in games/show, and that is not
+    duplication to tidy away. User#author_of? is strict (game.author_id ==
+    id, no superadmin clause), so the author block does not render for an
+    operator working on somebody else's game; putting this inside it would take
+    the panel away from exactly the people the invitations feature exists to
+    serve. The author gets it from inside that block, right after «Участвуют
+    команды»; everyone else gets it from the call below the block, which for
+    them also falls directly after «Участвуют команды».
 
-  <%= form_tag test_admit_player_path(:game_id => @game.id) do %>
-    <%= label_tag :nickname, t("test_admissions.panel.player_label") %>
-    <%= text_field_tag :nickname %>
-    <%= submit_tag t("test_admissions.panel.admit_player"), :class => "btn" %>
-  <% end %>
+    It used to sit last on the page, under «Удалить эту игру», where an author
+    who had just invited someone could not find it -- reported 2026-08-15. %>
+<% may_manage = logged_in? &&
+                (@game.created_by?(current_user) || current_user.superadmin?) %>
 
-  <p>
-    <%= t("test_admissions.panel.link_label") %>
-    <%# Rendered as text, not as an anchor: the author's job is to copy it into
-        a chat, and a clickable link on their own page only invites them to
-        follow it themselves -- which #invite handles, but pointlessly. %>
-    <code><%= test_invite_url(:game_id => @game.id,
-                              :token => @game.current_run.test_token) %></code>
-    <%= button_to t("test_admissions.panel.reset_token"),
-                  reset_test_token_path(:game_id => @game.id), :class => "btn" %>
-  </p>
+<div class="game-control">
+  <%# Unguarded deliberately: ensure_author_if_game_is_testing means only the
+      author, a superadmin or an admitted tester can be reading this page, and
+      all three may legitimately open the play screen. %>
+  <%= link_to t("games.show.start"), show_current_level_path(game_id: @game.id), class: "btn" %>
+  <%# finish_test is behind ensure_author and deletes every passing and log
+      line in the run, so a tester pressing it gets a 401. A button that
+      cannot work should not be drawn. %>
+  <%= button_to t("games.show.finish_test"), finish_test_game_path(@game), :class => "btn" if may_manage %>
+</div>
 
-  <% admissions = TestAdmission.of_run(@game.current_run).includes(:team, :user) %>
-  <% if admissions.any? %>
-    <ul>
-      <% admissions.each do |admission| %>
-        <li>
-          <%= admission.solo? ? admission.user&.nickname : admission.team.name %>
-          <%= t("test_admissions.panel.solo_marker") if admission.solo? %>
-          <%= button_to t("test_admissions.panel.revoke"),
-                        revoke_test_admission_path(:game_id => @game.id,
-                                                   :id => admission.id),
-                        :class => "btn" %>
-        </li>
-      <% end %>
-    </ul>
-  <% else %>
-    <p><%= t("test_admissions.panel.nobody_yet") %></p>
-  <% end %>
-</fieldset>
+<% if may_manage %>
+  <fieldset class="card">
+    <legend>
+      <%= t("test_admissions.panel.legend") %>
+    </legend>
+
+    <%= form_tag test_admit_team_path(:game_id => @game.id) do %>
+      <%= label_tag :name, t("test_admissions.panel.team_label") %>
+      <%= text_field_tag :name %>
+      <%= submit_tag t("test_admissions.panel.admit_team"), :class => "btn" %>
+    <% end %>
+
+    <%= form_tag test_admit_player_path(:game_id => @game.id) do %>
+      <%= label_tag :nickname, t("test_admissions.panel.player_label") %>
+      <%= text_field_tag :nickname %>
+      <%= submit_tag t("test_admissions.panel.admit_player"), :class => "btn" %>
+    <% end %>
+
+    <p>
+      <%= t("test_admissions.panel.link_label") %>
+      <%# Rendered as text, not as an anchor: the author's job is to copy it
+          into a chat, and a clickable link on their own page only invites them
+          to follow it themselves. %>
+      <code><%= test_invite_url(:game_id => @game.id,
+                                :token => @game.current_run.test_token) %></code>
+      <%= button_to t("test_admissions.panel.reset_token"),
+                    reset_test_token_path(:game_id => @game.id), :class => "btn" %>
+    </p>
+
+    <%# Same shape as games/_teams and games/_game_entries -- fieldset.card,
+        legend, ul.game-list, a strong name and its actions in em -- so the
+        admitted testers read as the same kind of list as the teams above. %>
+    <% admissions = TestAdmission.of_run(@game.current_run).includes(:team, :user) %>
+    <% if admissions.any? %>
+      <ul class="game-list">
+        <% admissions.each do |admission| %>
+          <li>
+            <strong><%= admission.solo? ? admission.user&.nickname : admission.team.name %></strong>
+            <%= t("test_admissions.panel.solo_marker") if admission.solo? %>
+            <em><%= button_to t("test_admissions.panel.revoke"),
+                              revoke_test_admission_path(:game_id => @game.id,
+                                                         :id => admission.id) %></em>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p><%= t("test_admissions.panel.nobody_yet") %></p>
+    <% end %>
+  </fieldset>
+<% end %>

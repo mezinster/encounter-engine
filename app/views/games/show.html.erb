@@ -139,11 +139,20 @@
 <% end %>
 
 <% if @game.is_testing? %>
+   <% may_manage_test = logged_in? &&
+                        (@game.created_by?(current_user) || current_user.superadmin?) %>
    <div class="game-control">
+     <%# Unguarded deliberately: ensure_author_if_game_is_testing already means
+         only the author, a superadmin or an admitted tester can be reading
+         this page, and all three may legitimately open the play screen. %>
      <%= link_to t("games.show.start"), show_current_level_path(game_id: @game.id), class: "btn" %>
-     <%= button_to t("games.show.finish_test"), finish_test_game_path(@game), :class => "btn" %>
+     <%# finish_test is behind ensure_author and deletes every passing and log
+         line in the run, so a tester pressing it gets a 401. A button that
+         cannot work should not be drawn. This pair used to have no guard at
+         all and was rendered to logged-off visitors -- reported from
+         production 2026-08-15. %>
+     <%= button_to t("games.show.finish_test"), finish_test_game_path(@game), :class => "btn" if may_manage_test %>
    </div>
 
-   <%= render "test_admissions" if logged_in? &&
-                                   (@game.created_by?(current_user) || current_user.superadmin?) %>
+   <%= render "test_admissions" if may_manage_test %>
 <% end %>

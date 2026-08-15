@@ -9,6 +9,7 @@ class GamesController < ApplicationController
   before_action :ensure_author_if_game_is_draft, only: [:show]
   before_action :ensure_author_if_no_start_time, only: [:show]
   before_action :ensure_author_if_game_is_withdrawn, only: [:show]
+  before_action :ensure_author_if_game_is_testing, only: [:show]
   # hand_over is deliberately NOT on ensure_editing_not_locked below: that
   # filter answers with 401, and the lock refusal here is a sentence the author
   # can act on. See the action.
@@ -331,5 +332,34 @@ class GamesController < ApplicationController
     return if logged_in? && (current_user.superadmin? || current_user.author_of?(@game))
 
     raise Authentication::Unauthorized, t("errors.game_is_withdrawn")
+  end
+
+  # The fourth sibling, and it exists because the first one stops working.
+  # ensure_author_if_game_is_draft keeps non-authors off an unpublished game --
+  # but start_test clears is_draft, so from the moment a rehearsal begins that
+  # guard lapses and the page becomes world-readable. Reported from production
+  # 2026-08-15, together with the listing leak Game.visible now closes.
+  #
+  # Wider than its siblings by one case: an admitted TESTER must reach the game
+  # they were invited to. That is the only widening -- a stranger with the URL
+  # is refused exactly as a stranger visiting a withdrawn game is.
+  #
+  # Solo admissions only need the user lookup; a member of an admitted real
+  # team is covered by the team clause. Both are asked because an admission
+  # names a team either way, but only a solo one names a user.
+  def ensure_author_if_game_is_testing
+    return unless @game.is_testing?
+    return if logged_in? && (current_user.superadmin? || current_user.author_of?(@game))
+    return if logged_in? && admitted_to_test?
+
+    raise Authentication::Unauthorized, t("errors.game_is_not_testing")
+  end
+
+  def admitted_to_test?
+    run = @game.current_run
+
+    TestAdmission.exists?(:game_run_id => run.id, :user_id => current_user.id) ||
+      (current_user.team_id.present? &&
+       TestAdmission.exists?(:game_run_id => run.id, :team_id => current_user.team_id))
   end
 end

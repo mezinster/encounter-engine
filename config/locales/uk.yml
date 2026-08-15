@@ -90,6 +90,10 @@ uk:
           end_game: "Завершив гру"
           start_test: "Запустив тестування"
           finish_test: "Завершив тестування"
+          test_admit_team: "Допустив команду до тестування"
+          test_admit_player: "Допустив гравця до тестування"
+          test_revoke_admission: "Відкликав допуск до тестування"
+          test_reset_token: "Змінив посилання на тестування"
           grant_superadmin: "Надав права адміністратора"
           revoke_superadmin: "Зняв права адміністратора"
           allow_any_code: "Дозволив будь-який код на рівні"
@@ -235,6 +239,8 @@ uk:
     team_exited: "Команда зійшла з дистанції"
     game_is_locked: "Редагування гри заморожено адміністратором"
     game_is_withdrawn: "Гру знято з публікації"
+    game_is_not_testing: "Гра не в режимі тестування"
+    bad_test_token: "Посилання на тестування недійсне"
     must_be_superadmin: "Доступ лише для адміністратора"
     too_many_requests: "Забагато спроб. Спробуйте пізніше."
     game_is_not_live: "Гра зараз не триває"
@@ -343,6 +349,31 @@ uk:
       start_test: "Почати тестування"
       start: "Старт"
       finish_test: "Завершити тестування"
+  test_admissions:
+    team_not_found: "Команду «%{name}» не знайдено"
+    already_admitted: "«%{name}» вже допущені до тестування"
+    team_admitted: "Команду «%{name}» допущено до тестування"
+    player_not_found: "Гравця «%{name}» не знайдено"
+    player_admitted: "Гравця %{name} допущено до тестування"
+    author_needs_no_admission: "Автор і так може тестувати свою гру"
+    revoked: "%{name} більше не бере участі в тестуванні"
+    joined: "Вас допущено до тестування гри «%{game}»"
+    token_reset: "Попереднє посилання більше не діє"
+    invite:
+      legend: "Запрошення на тестування"
+      explanation: "Вас запрошують протестувати гру «%{game}». Це чернетка: результати не збережуться."
+      confirm: "Приєднатися до тестування"
+    panel:
+      legend: "Допуск до тестування"
+      team_label: "Назва команди"
+      admit_team: "Допустити команду"
+      player_label: "Нік гравця"
+      admit_player: "Допустити гравця"
+      link_label: "Посилання для тестувальників:"
+      reset_token: "Змінити посилання"
+      revoke: "Відкликати"
+      solo_marker: "(наодинці)"
+      nobody_yet: "Поки нікого не допущено"
   game_files:
     upload:
       unsupported_type: "Такий тип файлу не підтримується"
@@ -603,6 +634,9 @@ uk:
       signup: "Зареєструватися"
   shared:
     times_in_zone: "Час показано в поясі %{zone}"
+    test_runs:
+      legend: "Тестування"
+      play: "Грати"
     run_switcher:
       heading: "Забіги:"
       run_label: "Забіг №%{ordinal} — %{date}"
@@ -920,6 +954,10 @@ uk:
               blank: "Назва команди має бути непорожньою"
             captain:
               belongs_to_another_team: "вже перебуває в іншій команді"
+        test_admission:
+          attributes:
+            game_run:
+              not_testing: "не в режимі тестування"
         user:
           attributes:
             email:

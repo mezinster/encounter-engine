@@ -64,6 +64,44 @@ class GameRun < ApplicationRecord
 
   has_many :passings, :class_name => "GamePassing", :foreign_key => "game_run_id"
 
+  # dependent: :destroy so admissions cascade through
+  # Game has_many :runs, dependent: :destroy when a game is deleted. Unlike
+  # :passings above -- which deliberately carries no dependent: option because
+  # a passing is a record of a race somebody ran -- an admission is permission,
+  # meaningless once the run it names is gone.
+  has_many :test_admissions, :dependent => :destroy
+
+  # Everything a test run created, removed. Called by
+  # GamesController#finish_test AFTER it has deleted the run's passings and
+  # logs, and the order is not interchangeable -- see below.
+  def sweep_test_admissions!
+    admissions = TestAdmission.where(:game_run_id => id)
+
+    # Collected BEFORE the admissions go, destroyed AFTER: destroying a team
+    # first would leave a dangling team_id, and deleting the admissions first
+    # would lose the list.
+    solo_teams = admissions.where.not(:user_id => nil).map(&:team)
+
+    # TestAdmission.where(...), NOT test_admissions.delete_all. delete_all on a
+    # has_many proxy NULLIFIES the foreign key unless the association declares
+    # dependent: :delete_all -- the same trap finish_test's own comment records
+    # about GameRun#passings. game_run_id is NOT NULL so this would raise
+    # rather than corrupt, but relying on a constraint to catch a known mistake
+    # is one migration away from not catching it.
+    admissions.delete_all
+
+    # deletable? is evaluated here, after the caller has deleted the passings
+    # and logs: these team objects were loaded fresh above with unloaded
+    # associations, so game_passings.empty? and Log.where(team_id:) query their
+    # post-deletion state. A team cached earlier in the request would report
+    # stale associations and be spared. The guard also makes this safe against
+    # an admission pointing at a REAL team -- deletable? refuses anything with
+    # members, a captain, entries, passings or logs.
+    solo_teams.each { |team| team.destroy if team.deletable? }
+
+    update_column(:test_token, nil)
+  end
+
   # Replaces GamePassing.of(team, game). A team has at most one passing per
   # run; in phase 3 it may have one in each of several runs of the same game,
   # which is exactly what the old game-scoped lookup could not express.

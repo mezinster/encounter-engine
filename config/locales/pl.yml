@@ -97,6 +97,10 @@ pl:
           end_game: "Zakończył grę"
           start_test: "Uruchomił testowanie"
           finish_test: "Zakończył testowanie"
+          test_admit_team: "Dopuścił drużynę do testów"
+          test_admit_player: "Dopuścił gracza do testów"
+          test_revoke_admission: "Odwołał dostęp do testów"
+          test_reset_token: "Zmienił link do testów"
           grant_superadmin: "Nadał uprawnienia administratora"
           revoke_superadmin: "Odebrał uprawnienia administratora"
           allow_any_code: "Zezwolił na dowolny kod na poziomie"
@@ -240,6 +244,8 @@ pl:
     game_already_started: "Nie można edytować gry po jej rozpoczęciu"
     game_is_locked: "Edycja gry została zablokowana przez administratora"
     game_is_withdrawn: "Gra została wycofana z publikacji"
+    game_is_not_testing: "Gra nie jest w trybie testowym"
+    bad_test_token: "Link do testów jest nieprawidłowy"
     must_be_recipient: "Musisz być odbiorcą zaproszenia, aby wykonać to działanie"
     cannot_play_own_game: "Nie można grać we własne gry, sorry :-)"
     game_finished_by_author: "Gra została zakończona przez autora i nie możesz już w nią grać"
@@ -350,6 +356,31 @@ pl:
       start_test: "Rozpocznij testowanie"
       start: "Start"
       finish_test: "Zakończ testowanie"
+  test_admissions:
+    team_not_found: "Nie znaleziono drużyny «%{name}»"
+    already_admitted: "«%{name}» ma już dostęp do testów"
+    team_admitted: "Drużyna «%{name}» została dopuszczona do testów"
+    player_not_found: "Nie znaleziono gracza «%{name}»"
+    player_admitted: "Gracz %{name} został dopuszczony do testów"
+    author_needs_no_admission: "Autor i tak może testować swoją grę"
+    revoked: "%{name} nie bierze już udziału w testach"
+    token_reset: "Poprzedni link przestał działać"
+    joined: "Masz dostęp do testów gry «%{game}»"
+    invite:
+      legend: "Zaproszenie do testów"
+      explanation: "Zapraszamy Cię do przetestowania gry «%{game}». To wersja robocza: wyniki nie zostaną zachowane."
+      confirm: "Dołącz do testów"
+    panel:
+      legend: "Dostęp do testów"
+      team_label: "Nazwa drużyny"
+      admit_team: "Dopuść drużynę"
+      player_label: "Nick gracza"
+      admit_player: "Dopuść gracza"
+      link_label: "Link dla testerów:"
+      reset_token: "Zmień link"
+      revoke: "Odwołaj"
+      solo_marker: "(samodzielnie)"
+      nobody_yet: "Nikt jeszcze nie został dopuszczony"
   game_files:
     upload:
       unsupported_type: "Ten typ pliku nie jest obsługiwany"
@@ -603,6 +634,9 @@ pl:
       signup: "Zarejestruj się"
   shared:
     times_in_zone: "Czas podano w strefie %{zone}"
+    test_runs:
+      legend: "Testowanie"
+      play: "Graj"
     run_switcher:
       heading: "Biegi:"
       run_label: "Bieg nr %{ordinal} — %{date}"
@@ -924,6 +958,10 @@ pl:
               blank: "Nazwa drużyny nie może być pusta"
             captain:
               belongs_to_another_team: "należy już do innej drużyny"
+        test_admission:
+          attributes:
+            game_run:
+              not_testing: "nie jest w trybie testowym"
         user:
           attributes:
             email:

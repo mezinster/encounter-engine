@@ -117,6 +117,15 @@ class GamesController < ApplicationController
       redirect_to @game, :alert => @game.errors.full_messages.to_sentence and return
     end
 
+    # After the save, not before: the save can legitimately fail on the
+    # translation-completeness gate above, and a token minted for a test that
+    # never started would be a live credential to an unpublished game.
+    #
+    # update_column for the same reason every other lifecycle writer on this
+    # model uses it -- a game mid-test does not pass its own validations, so
+    # update! would raise and update would fail silently.
+    @game.current_run.update_column(:test_token, SecureRandom.urlsafe_base64(24))
+
     record_admin_action("start_test", @game) if acting_as_operator?(@game)
     redirect_to @game
   end
@@ -228,6 +237,11 @@ class GamesController < ApplicationController
     # looks identical to a successful wipe from any run-scoped count.
     GamePassing.where(:game_run_id => @game.current_run.id).delete_all
     Log.of_run(@game.current_run).delete_all
+
+    # After the two deletions above, deliberately: Team#deletable? refuses a
+    # team that still holds a passing or a log line, so sweeping first would
+    # spare every disposable team this test created.
+    @game.current_run.sweep_test_admissions!
 
     record_admin_action("finish_test", @game) if acting_as_operator?(@game)
     redirect_to @game

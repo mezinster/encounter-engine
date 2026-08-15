@@ -73,6 +73,10 @@ en:
           end_game: "Ended the game"
           start_test: "Started testing"
           finish_test: "Finished testing"
+          test_admit_team: "Admitted a team to the test"
+          test_admit_player: "Admitted a player to the test"
+          test_revoke_admission: "Revoked test access"
+          test_reset_token: "Replaced the test link"
           grant_superadmin: "Granted administrator rights"
           revoke_superadmin: "Revoked administrator rights"
           allow_any_code: "Allowed any one code on a level"
@@ -216,6 +220,8 @@ en:
     game_already_started: "You can't edit a game after it has started"
     game_is_locked: "Editing this game has been frozen by an administrator"
     game_is_withdrawn: "This game has been withdrawn"
+    game_is_not_testing: "This game is not in testing mode"
+    bad_test_token: "This test link is not valid"
     must_be_recipient: "You must be the invitation's recipient to perform this action"
     cannot_play_own_game: "You can't play your own games, sorry :-)"
     game_finished_by_author: "The game was ended by its author, you can no longer play it"
@@ -326,6 +332,31 @@ en:
       start_test: "Start testing"
       start: "Start"
       finish_test: "Finish testing"
+  test_admissions:
+    team_not_found: "Team «%{name}» was not found"
+    already_admitted: "«%{name}» is already admitted to the test"
+    team_admitted: "Team «%{name}» has been admitted to the test"
+    player_not_found: "Player «%{name}» was not found"
+    player_admitted: "Player %{name} has been admitted to the test"
+    author_needs_no_admission: "The author can already test their own game"
+    revoked: "%{name} is no longer part of the test"
+    joined: "You have been admitted to the test of «%{game}»"
+    token_reset: "The previous link no longer works"
+    invite:
+      legend: "Test invitation"
+      explanation: "You have been invited to test «%{game}». It is a draft: results will not be kept."
+      confirm: "Join the test"
+    panel:
+      legend: "Test access"
+      team_label: "Team name"
+      admit_team: "Admit team"
+      player_label: "Player nickname"
+      admit_player: "Admit player"
+      link_label: "Link for testers:"
+      reset_token: "Replace the link"
+      revoke: "Revoke"
+      solo_marker: "(solo)"
+      nobody_yet: "Nobody admitted yet"
   game_files:
     upload:
       unsupported_type: "This file type is not supported"
@@ -584,6 +615,9 @@ en:
       signup: "Sign up"
   shared:
     times_in_zone: "Times shown in %{zone}"
+    test_runs:
+      legend: "Testing"
+      play: "Play"
     run_switcher:
       heading: "Runs:"
       run_label: "Run №%{ordinal} — %{date}"
@@ -898,6 +932,10 @@ en:
               blank: "Team name cannot be empty"
             captain:
               belongs_to_another_team: "already belongs to another team"
+        test_admission:
+          attributes:
+            game_run:
+              not_testing: "is not in testing mode"
         user:
           attributes:
             email:

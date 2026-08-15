@@ -118,6 +118,10 @@ tr:
           end_game: "Oyunu bitirdi"
           start_test: "Test başlattı"
           finish_test: "Testi bitirdi"
+          test_admit_team: "Bir takımı teste kabul etti"
+          test_admit_player: "Bir oyuncuyu teste kabul etti"
+          test_revoke_admission: "Test erişimini geri aldı"
+          test_reset_token: "Test bağlantısını değiştirdi"
           grant_superadmin: "Yönetici yetkileri verdi"
           revoke_superadmin: "Yönetici yetkilerini aldı"
           allow_any_code: "Seviyede herhangi bir koda izin verdi"
@@ -262,6 +266,8 @@ tr:
     game_already_started: "Oyun başladıktan sonra düzenlenemez"
     game_is_locked: "Oyunun düzenlenmesi yönetici tarafından donduruldu"
     game_is_withdrawn: "Oyun yayından kaldırıldı"
+    game_is_not_testing: "Oyun test modunda değil"
+    bad_test_token: "Test bağlantısı geçersiz"
     must_be_recipient: "Bu işlemi yapmak için davetin alıcısı olmalısınız"
     cannot_play_own_game: "Kendi oyunlarınızı oynayamazsınız, kusura bakmayın :-)"
     game_finished_by_author: "Oyun yazarı tarafından bitirildi, artık oynayamazsınız"
@@ -372,6 +378,35 @@ tr:
       start_test: "Testi başlat"
       start: "Başla"
       finish_test: "Testi bitir"
+  # Every key below carrying %{name} or %{game} puts the case suffix on a
+  # common noun (adlı takım / adlı oyuncu / adlı katılımcı / adlı oyunun),
+  # never on the placeholder: the correct suffix depends on the value's final
+  # vowel, and the value is a name a player typed.
+  test_admissions:
+    team_not_found: "«%{name}» adlı takım bulunamadı"
+    already_admitted: "«%{name}» adlı katılımcı teste zaten kabul edilmiş"
+    team_admitted: "«%{name}» adlı takım teste kabul edildi"
+    player_not_found: "«%{name}» adlı oyuncu bulunamadı"
+    player_admitted: "%{name} adlı oyuncu teste kabul edildi"
+    author_needs_no_admission: "Yazar kendi oyununu zaten test edebilir"
+    revoked: "%{name} adlı katılımcı artık testte yer almıyor"
+    joined: "«%{game}» adlı oyunun testine kabul edildiniz"
+    token_reset: "Önceki bağlantı artık geçerli değil"
+    invite:
+      legend: "Test daveti"
+      explanation: "«%{game}» adlı oyunu test etmeye davet edildiniz. Bu bir taslak: sonuçlar saklanmayacak."
+      confirm: "Teste katıl"
+    panel:
+      legend: "Test erişimi"
+      team_label: "Takım adı"
+      admit_team: "Takımı kabul et"
+      player_label: "Oyuncu takma adı"
+      admit_player: "Oyuncuyu kabul et"
+      link_label: "Testçiler için bağlantı:"
+      reset_token: "Bağlantıyı değiştir"
+      revoke: "Geri al"
+      solo_marker: "(tek başına)"
+      nobody_yet: "Henüz kimse kabul edilmedi"
   game_files:
     upload:
       unsupported_type: "Bu dosya türü desteklenmiyor"
@@ -630,6 +665,9 @@ tr:
       signup: "Kaydol"
   shared:
     times_in_zone: "Saatler %{zone} saat diliminde gösterilmiştir"
+    test_runs:
+      legend: "Test"
+      play: "Oyna"
     run_switcher:
       heading: "Koşular:"
       run_label: "%{ordinal}. koşu — %{date}"
@@ -955,6 +993,10 @@ tr:
               blank: "Takımın adı boş olamaz"
             captain:
               belongs_to_another_team: "zaten başka bir takımda"
+        test_admission:
+          attributes:
+            game_run:
+              not_testing: "test modunda değil"
         user:
           attributes:
             email:

@@ -73,6 +73,10 @@ ru:
           end_game: "Завершил игру"
           start_test: "Запустил тестирование"
           finish_test: "Завершил тестирование"
+          test_admit_team: "Допустил команду к тестированию"
+          test_admit_player: "Допустил игрока к тестированию"
+          test_revoke_admission: "Отозвал допуск к тестированию"
+          test_reset_token: "Сменил ссылку на тестирование"
           grant_superadmin: "Выдал права администратора"
           revoke_superadmin: "Снял права администратора"
           allow_any_code: "Разрешил любой код на уровне"
@@ -216,6 +220,8 @@ ru:
     game_already_started: "Нельзя редактировать игру после её начала"
     game_is_locked: "Редактирование игры заморожено администратором"
     game_is_withdrawn: "Игра снята с публикации"
+    game_is_not_testing: "Игра не находится в режиме тестирования"
+    bad_test_token: "Ссылка на тестирование недействительна"
     must_be_recipient: "Вы должны быть получателем приглашения чтобы выполнить это действие"
     cannot_play_own_game: "Нельзя играть в собственные игры, сорри :-)"
     game_finished_by_author: "Игра была завершена автором, и вы не можете в нее больше играть"
@@ -326,6 +332,31 @@ ru:
       start_test: "Начать тестирование"
       start: "Старт"
       finish_test: "Завершить тестирование"
+  test_admissions:
+    team_not_found: "Команда «%{name}» не найдена"
+    already_admitted: "«%{name}» уже допущены к тестированию"
+    team_admitted: "Команда «%{name}» допущена к тестированию"
+    player_not_found: "Игрок «%{name}» не найден"
+    player_admitted: "Игрок %{name} допущен к тестированию"
+    author_needs_no_admission: "Автор уже может тестировать свою игру"
+    revoked: "%{name} больше не участвует в тестировании"
+    joined: "Вы допущены к тестированию игры «%{game}»"
+    token_reset: "Прежняя ссылка больше не действует"
+    invite:
+      legend: "Приглашение на тестирование"
+      explanation: "Вас приглашают протестировать игру «%{game}». Это черновик: результаты не сохранятся."
+      confirm: "Присоединиться к тестированию"
+    panel:
+      legend: "Допуск к тестированию"
+      team_label: "Название команды"
+      admit_team: "Допустить команду"
+      player_label: "Ник игрока"
+      admit_player: "Допустить игрока"
+      link_label: "Ссылка для тестировщиков:"
+      reset_token: "Сменить ссылку"
+      revoke: "Отозвать"
+      solo_marker: "(в одиночку)"
+      nobody_yet: "Пока никто не допущен"
   game_files:
     upload:
       unsupported_type: "Такой тип файла не поддерживается"
@@ -599,6 +630,9 @@ ru:
       signup: "Зарегистрироваться"
   shared:
     times_in_zone: "Время показано в поясе %{zone}"
+    test_runs:
+      legend: "Тестирование"
+      play: "Играть"
     run_switcher:
       heading: "Забеги:"
       run_label: "Забег №%{ordinal} — %{date}"
@@ -920,6 +954,10 @@ ru:
               blank: "Название команды должно быть непустым"
             captain:
               belongs_to_another_team: "уже состоит в другой команде"
+        test_admission:
+          attributes:
+            game_run:
+              not_testing: "не находится в режиме тестирования"
         user:
           attributes:
             email:

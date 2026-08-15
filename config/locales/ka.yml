@@ -96,6 +96,10 @@ ka:
           end_game: "დაასრულა თამაში"
           start_test: "დაიწყო ტესტირება"
           finish_test: "დაასრულა ტესტირება"
+          test_admit_team: "დაუშვა გუნდი ტესტირებაზე"
+          test_admit_player: "დაუშვა მოთამაშე ტესტირებაზე"
+          test_revoke_admission: "გააუქმა დაშვება ტესტირებაზე"
+          test_reset_token: "შეცვალა ტესტირების ბმული"
           grant_superadmin: "მიანიჭა ადმინისტრატორის უფლებები"
           revoke_superadmin: "ჩამოართვა ადმინისტრატორის უფლებები"
           allow_any_code: "დაუშვა ნებისმიერი კოდი დონეზე"
@@ -241,6 +245,8 @@ ka:
     team_exited: "გუნდი გავიდა დისტანციიდან"
     game_is_locked: "თამაშის რედაქტირება ადმინისტრატორმა გაყინა"
     game_is_withdrawn: "თამაში მოხსნილია გამოქვეყნებიდან"
+    game_is_not_testing: "თამაში არ არის ტესტირების რეჟიმში"
+    bad_test_token: "ტესტირების ბმული არასწორია"
     must_be_superadmin: "წვდომა მხოლოდ ადმინისტრატორისთვის"
     too_many_requests: "ძალიან ბევრი მცდელობა. სცადეთ მოგვიანებით."
     game_is_not_live: "თამაში ამჟამად არ მიმდინარეობს"
@@ -349,6 +355,33 @@ ka:
       start_test: "ტესტირების დაწყება"
       start: "სტარტი"
       finish_test: "ტესტირების დასრულება"
+  # Same treatment as tr: the case ending sits on a preceding common noun
+  # (გუნდი / მოთამაშე / მონაწილე / თამაშის), never on %{name} or %{game}.
+  test_admissions:
+    team_not_found: "გუნდი «%{name}» ვერ მოიძებნა"
+    already_admitted: "მონაწილე «%{name}» უკვე დაშვებულია ტესტირებაზე"
+    team_admitted: "გუნდი «%{name}» დაშვებულია ტესტირებაზე"
+    player_not_found: "მოთამაშე «%{name}» ვერ მოიძებნა"
+    player_admitted: "მოთამაშე %{name} დაშვებულია ტესტირებაზე"
+    author_needs_no_admission: "ავტორს უკვე შეუძლია საკუთარი თამაშის ტესტირება"
+    revoked: "მონაწილე %{name} აღარ მონაწილეობს ტესტირებაში"
+    joined: "თქვენ დაშვებული ხართ თამაშის «%{game}» ტესტირებაზე"
+    token_reset: "წინა ბმული აღარ მოქმედებს"
+    invite:
+      legend: "მოწვევა ტესტირებაზე"
+      explanation: "თქვენ გეპატიჟებით თამაშის «%{game}» ტესტირებაზე. ეს არის მონახაზი: შედეგები არ შეინახება."
+      confirm: "ტესტირებაში ჩართვა"
+    panel:
+      legend: "დაშვება ტესტირებაზე"
+      team_label: "გუნდის სახელი"
+      admit_team: "გუნდის დაშვება"
+      player_label: "მოთამაშის მეტსახელი"
+      admit_player: "მოთამაშის დაშვება"
+      link_label: "ბმული ტესტერებისთვის:"
+      reset_token: "ბმულის შეცვლა"
+      revoke: "გაუქმება"
+      solo_marker: "(მარტო)"
+      nobody_yet: "ჯერ არავინ არის დაშვებული"
   game_files:
     upload:
       unsupported_type: "ამ ტიპის ფაილი მხარდაუჭერელია"
@@ -623,6 +656,9 @@ ka:
       signup: "რეგისტრაცია"
   shared:
     times_in_zone: "დრო ნაჩვენებია სარტყელში %{zone}"
+    test_runs:
+      legend: "ტესტირება"
+      play: "თამაში"
     run_switcher:
       heading: "გარბენები:"
       run_label: "გარბენი №%{ordinal} — %{date}"
@@ -943,6 +979,10 @@ ka:
               blank: "გუნდის დასახელება არ უნდა იყოს ცარიელი"
             captain:
               belongs_to_another_team: "უკვე სხვა გუნდის წევრია"
+        test_admission:
+          attributes:
+            game_run:
+              not_testing: "არ არის ტესტირების რეჟიმში"
         user:
           attributes:
             email:

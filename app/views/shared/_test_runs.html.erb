@@ -1,0 +1,19 @@
+<%# Cannot live in shared/_current_games: that partial is wrapped in
+    `if current_user.member_of_any_team?`, which is false for exactly the
+    people this section exists for, and it skips testing games outright. %>
+<% runs = GameRun.where(:is_testing => true)
+                 .where(:id => TestAdmission.where(:user_id => current_user.id)
+                                            .select(:game_run_id))
+                 .includes(:game) %>
+<% if runs.any? %>
+  <fieldset class="card">
+    <legend><%= t("shared.test_runs.legend") %></legend>
+    <% runs.each do |run| %>
+      <p>
+        <%= run.game.name %> |
+        <%= link_to t("shared.test_runs.play"),
+                    show_current_level_path(:game_id => run.game_id) %>
+      </p>
+    <% end %>
+  </fieldset>
+<% end %>

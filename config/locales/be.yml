@@ -92,6 +92,10 @@ be:
           end_game: "Завяршыў гульню"
           start_test: "Запусціў тэставанне"
           finish_test: "Завяршыў тэставанне"
+          test_admit_team: "Дапусціў каманду да тэставання"
+          test_admit_player: "Дапусціў гульца да тэставання"
+          test_revoke_admission: "Адклікаў допуск да тэставання"
+          test_reset_token: "Змяніў спасылку на тэставанне"
           grant_superadmin: "Выдаў правы адміністратара"
           revoke_superadmin: "Зняў правы адміністратара"
           allow_any_code: "Дазволіў любы код на ўзроўні"
@@ -235,6 +239,8 @@ be:
     game_already_started: "Нельга рэдагаваць гульню пасля яе пачатку"
     game_is_locked: "Рэдагаванне гульні замарожана адміністратарам"
     game_is_withdrawn: "Гульня знята з публікацыі"
+    game_is_not_testing: "Гульня не ў рэжыме тэставання"
+    bad_test_token: "Спасылка на тэставанне несапраўдная"
     must_be_recipient: "Вы павінны быць атрымальнікам запрашэння, каб выканаць гэта дзеянне"
     cannot_play_own_game: "Нельга гуляць ва ўласныя гульні, соры :-)"
     game_finished_by_author: "Гульня была завершана аўтарам, і вы больш не можаце ў яе гуляць"
@@ -345,6 +351,31 @@ be:
       start_test: "Пачаць тэставанне"
       start: "Старт"
       finish_test: "Завяршыць тэставанне"
+  test_admissions:
+    team_not_found: "Каманда «%{name}» не знойдзена"
+    already_admitted: "«%{name}» ужо дапушчаны да тэставання"
+    team_admitted: "Каманда «%{name}» дапушчана да тэставання"
+    player_not_found: "Гулец «%{name}» не знойдзены"
+    player_admitted: "Гулец %{name} дапушчаны да тэставання"
+    author_needs_no_admission: "Аўтар і так можа тэставаць сваю гульню"
+    revoked: "%{name} больш не ўдзельнічае ў тэставанні"
+    joined: "Вы дапушчаны да тэставання гульні «%{game}»"
+    token_reset: "Ранейшая спасылка больш не дзейнічае"
+    invite:
+      legend: "Запрашэнне на тэставанне"
+      explanation: "Вас запрашаюць пратэставаць гульню «%{game}». Гэта чарнавік: вынікі не захаваюцца."
+      confirm: "Далучыцца да тэставання"
+    panel:
+      legend: "Допуск да тэставання"
+      team_label: "Назва каманды"
+      admit_team: "Дапусціць каманду"
+      player_label: "Нік гульца"
+      admit_player: "Дапусціць гульца"
+      link_label: "Спасылка для тэсціроўшчыкаў:"
+      reset_token: "Змяніць спасылку"
+      revoke: "Адклікаць"
+      solo_marker: "(у адзіночку)"
+      nobody_yet: "Пакуль нікога не дапушчана"
   game_files:
     upload:
       unsupported_type: "Такі тып файла не падтрымліваецца"
@@ -598,6 +629,9 @@ be:
       signup: "Зарэгістравацца"
   shared:
     times_in_zone: "Час паказаны ў поясе %{zone}"
+    test_runs:
+      legend: "Тэставанне"
+      play: "Гуляць"
     run_switcher:
       heading: "Забегі:"
       run_label: "Забег №%{ordinal} — %{date}"
@@ -911,6 +945,10 @@ be:
               blank: "Назва каманды павінна быць непустой"
             captain:
               belongs_to_another_team: "ужо ўваходзіць у іншую каманду"
+        test_admission:
+          attributes:
+            game_run:
+              not_testing: "не ў рэжыме тэставання"
         user:
           attributes:
             email:

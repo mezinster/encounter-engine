@@ -1,0 +1,11 @@
+<%# The GET half of the test link. Renders a button and grants nothing -- see
+    TestAdmissionsController#invite for why a GET must not admit. %>
+<fieldset class="card">
+  <legend><%= t("test_admissions.invite.legend") %></legend>
+
+  <p><%= t("test_admissions.invite.explanation", :game => @game.name) %></p>
+
+  <%= button_to t("test_admissions.invite.confirm"),
+                join_test_path(:game_id => @game.id, :token => params[:token]),
+                :class => "btn" %>
+</fieldset>

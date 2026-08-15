@@ -143,4 +143,7 @@
      <%= link_to t("games.show.start"), show_current_level_path(game_id: @game.id), class: "btn" %>
      <%= button_to t("games.show.finish_test"), finish_test_game_path(@game), :class => "btn" %>
    </div>
+
+   <%= render "test_admissions" if logged_in? &&
+                                   (@game.created_by?(current_user) || current_user.superadmin?) %>
 <% end %>

@@ -121,6 +121,48 @@ describe "a game in test mode is not public", type: :request do
 
       response.should have_http_status(:ok)
     end
+
+    # A member of an admitted team, the other admission shape. Their row
+    # carries user_id NULL, so a filter matching on user_id alone refuses
+    # them -- which is what the dashboard block did until 2026-08-15.
+    it "admits a member of an admitted team" do
+      captain = create_user
+      create_test_admission(:run => game.current_run,
+                            :team => create_team(:captain => captain))
+      sign_in(captain)
+
+      get game_path(game)
+
+      response.should have_http_status(:ok)
+    end
+
+    # An admission is permission to read ONE run, not every rehearsal on the
+    # instance. Nothing pinned this before: the filter's run scoping could be
+    # deleted and the whole suite stayed green. Mutation-tested both ways --
+    # by team, and by the solo shape below.
+    # create_test_admission marks its own run is_testing, so the other game
+    # needs no start_test of its own.
+    it "refuses a tester admitted to a different game's test run" do
+      captain = create_user
+      create_test_admission(:run => create_game.current_run,
+                            :team => create_team(:captain => captain))
+      sign_in(captain)
+
+      get game_path(game)
+
+      response.should have_http_status(:unauthorized)
+    end
+
+    it "refuses a solo tester admitted to a different game's test run" do
+      tester = create_user
+      create_test_admission(:run => create_game.current_run,
+                            :team => create_team, :user => tester)
+      sign_in(tester)
+
+      get game_path(game)
+
+      response.should have_http_status(:unauthorized)
+    end
   end
 
   describe "the in-test controls" do

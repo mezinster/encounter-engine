@@ -63,6 +63,43 @@ describe "the test-run screens", type: :request do
     response.body.should include(show_current_level_path(:game_id => game.id))
   end
 
+  # The other admission shape, and the one that had no example until a real
+  # author admitted two teams and neither could find the game (reported
+  # 2026-08-15). A team's admission carries user_id NULL, so a reader that
+  # matches on user_id alone finds every solo tester and no team at all --
+  # while the game page, the play screen and may_start_passing? all said yes.
+  # Nothing was wrong with the permission; there was simply nowhere to click.
+  it "offers a member of an admitted team a way into the game from the dashboard" do
+    captain = create_user
+    team    = create_team(:captain => captain)
+    create_test_admission(:run => game.current_run, :team => team)
+
+    delete logout_path
+    sign_in(captain)
+    get dashboard_path
+
+    response.body.should include(game.name)
+    response.body.should include(show_current_level_path(:game_id => game.id))
+  end
+
+  # The widening stops at the admitted team. Somebody else's admission has to
+  # exist for this to mean anything: with no admission in the run at all, the
+  # block is empty for every implementation and the example proves nothing.
+  # Mutation-tested against a held_by whose team clause matched any admission
+  # rather than the user's own.
+  it "shows a member of an unadmitted team nothing" do
+    create_test_admission(:run => game.current_run, :team => create_team(:captain => create_user))
+
+    outsider = create_user
+    create_team(:captain => outsider)
+
+    delete logout_path
+    sign_in(outsider)
+    get dashboard_path
+
+    response.body.should_not include(show_current_level_path(:game_id => game.id))
+  end
+
   # Scoped to the test-runs section rather than the whole page. A testing game
   # is not a draft, so it is `visible` and appears in dashboard/_coming_games
   # for the 0.1s between start_test's `starts_at = Time.now + 0.1.second` and

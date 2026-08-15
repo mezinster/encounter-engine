@@ -19,6 +19,60 @@ describe TestAdmission do
     end
   end
 
+  describe ".held_by" do
+    it "finds a solo admission" do
+      tester    = create_user
+      admission = TestAdmission.admit_player!(run, tester)
+
+      TestAdmission.held_by(tester).should == [admission]
+    end
+
+    # The shape the dashboard could not see. A team's admission names no user,
+    # so only the team_id clause can ever match it.
+    it "finds the admission of the team the user belongs to" do
+      captain   = create_user
+      team      = create_team(:captain => captain)
+      admission = TestAdmission.create!(:game_run => run, :team => team)
+
+      TestAdmission.held_by(captain.reload).should == [admission]
+    end
+
+    it "finds nothing for a member of a team that was never admitted" do
+      outsider = create_user
+      create_team(:captain => outsider)
+      TestAdmission.create!(:game_run => run, :team => create_team)
+
+      TestAdmission.held_by(outsider.reload).should be_empty
+    end
+
+    # A teamless user is the solo tester's starting state, and this pins that
+    # holding no admission means seeing nothing. It does NOT prove held_by's
+    # user.team_id.blank? guard is needed: team_id is NOT NULL, so the
+    # unguarded form matches nothing here either and this example stays green
+    # against it. Mutation-tested, and recorded because the opposite claim is
+    # the easy one to write.
+    it "finds nothing for a teamless user who holds no admission" do
+      TestAdmission.create!(:game_run => run, :team => create_team)
+
+      TestAdmission.held_by(create_user).should be_empty
+    end
+
+    # Both shapes at once, because a solo tester keeps their real membership
+    # (admit_player! is careful never to write users.team_id) and can therefore
+    # hold one admission of each kind.
+    it "finds both kinds at once" do
+      user = create_user
+      team = create_team(:captain => user)
+      user.reload
+
+      team_admission = TestAdmission.create!(:game_run => run, :team => team)
+      solo_admission = TestAdmission.admit_player!(run, user)
+
+      TestAdmission.held_by(user.reload).to_a
+                   .should match_array([team_admission, solo_admission])
+    end
+  end
+
   it "refuses creation on a run that is not testing" do
     run.update_column(:is_testing, false)
 

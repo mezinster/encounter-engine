@@ -78,6 +78,37 @@ module ApplicationHelper
     markup.html_safe
   end
 
+  # Renders author-written free text -- a game description, a level text, a
+  # hint -- preserving the line breaks the author typed.
+  #
+  # These fields never go through t(): they are content a game creator wrote,
+  # rendered verbatim (see the i18n note in CLAUDE.md). HTML folds newlines,
+  # so a text deliberately laid out in paragraphs arrived as one wall of
+  # prose, and an author had no way to structure it.
+  #
+  # simple_format is the idiomatic Rails answer and is deliberately NOT used:
+  # it runs sanitize, which PERMITS a tag whitelist through, and that would
+  # quietly promote these fields from plain text to limited HTML. Anyone can
+  # create a game, so an author is a registered user rather than a trusted
+  # party. Here the only markup that reaches the page is the <br> below.
+  #
+  # CGI.escapeHTML, not ERB::Util.html_escape, carrying exactly the reasoning
+  # recorded on error_messages_for above: html_escape is a no-op on a string
+  # that already answers true to html_safe?, and escaping author content has
+  # to be unconditional.
+  #
+  # The \r? is not cosmetic -- a browser submits textarea content with CRLF
+  # line endings, so splitting on "\n" alone leaves a stray \r ending every
+  # line. split also drops trailing empties, so a text ending in newlines
+  # produces no dangling breaks.
+  #
+  # Text containing no newline yields one element and comes out exactly as
+  # <%= %> rendered it before, which is what makes this safe to apply to every
+  # game already on the instance.
+  def with_newlines(text)
+    text.to_s.split(/\r?\n/).map { |line| CGI.escapeHTML(line) }.join("<br>").html_safe
+  end
+
   # Each link opens the right form on the right language tab, so the author
   # goes from "what is missing" to "fixing it" in one click.
   #

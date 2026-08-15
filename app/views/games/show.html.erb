@@ -34,7 +34,7 @@
   </p>
 
   <p>
-    <%= @game.translated(:description, content_locale) %>
+    <%= with_newlines(@game.translated(:description, content_locale)) %>
   </p>
   <p>
     <em><%= t("games.show.max_team_number_label") %></em>

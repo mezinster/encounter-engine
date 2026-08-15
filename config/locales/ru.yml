@@ -332,6 +332,9 @@ ru:
     team_not_found: "Команда «%{name}» не найдена"
     already_admitted: "«%{name}» уже допущены к тестированию"
     team_admitted: "Команда «%{name}» допущена к тестированию"
+    player_not_found: "Игрок «%{name}» не найден"
+    player_admitted: "Игрок %{name} допущен к тестированию"
+    author_needs_no_admission: "Автор уже может тестировать свою игру"
   game_files:
     upload:
       unsupported_type: "Такой тип файла не поддерживается"

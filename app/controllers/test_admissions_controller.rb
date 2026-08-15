@@ -38,6 +38,35 @@ class TestAdmissionsController < ApplicationController
                 :notice => t("test_admissions.team_admitted", :name => team.name)
   end
 
+  def create_player
+    nickname = params[:nickname].to_s.strip
+    user     = User.find_by(:nickname => nickname)
+
+    if user.nil?
+      return redirect_to game_path(@game),
+                         :alert => t("test_admissions.player_not_found", :name => nickname)
+    end
+
+    # The author plays a test run through may_start_passing?'s own exemption.
+    # An admission would be a second, redundant grant -- and a disposable team
+    # nobody ever uses for teardown to sweep.
+    if @game.created_by?(user)
+      return redirect_to game_path(@game),
+                         :notice => t("test_admissions.author_needs_no_admission")
+    end
+
+    if TestAdmission.exists?(:game_run_id => run.id, :user_id => user.id)
+      return redirect_to game_path(@game),
+                         :notice => t("test_admissions.already_admitted", :name => user.nickname)
+    end
+
+    TestAdmission.admit_player!(run, user)
+    record_admin_action("test_admit_player", @game, user.nickname) if acting_as_operator?(@game)
+
+    redirect_to game_path(@game),
+                :notice => t("test_admissions.player_admitted", :name => user.nickname)
+  end
+
   private
 
   def find_game

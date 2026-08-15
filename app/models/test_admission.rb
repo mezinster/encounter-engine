@@ -30,6 +30,37 @@ class TestAdmission < ApplicationRecord
     self.user_id.present?
   end
 
+  # The one place a disposable team is created. Transactional because a team
+  # without its admission is an orphan nothing will ever sweep: teardown finds
+  # disposable teams THROUGH their admissions.
+  #
+  # Team.create! with only a name, deliberately -- no captain and no members.
+  # Team#adopt_captain writes users.team_id, so naming a captain here would
+  # move the tester out of their real team. See the class comment.
+  def self.admit_player!(run, user)
+    transaction do
+      team = Team.create!(:name => disposable_team_name(user, run))
+      create!(:game_run => run, :team => team, :user => user)
+    end
+  end
+
+  # teams.name is unique, so this must be collision-proof rather than
+  # decorative. Untranslated and ASCII on purpose: it is stored data, read by
+  # everyone in the run and shown in its log lines, and an i18n'd name would
+  # freeze whichever locale the inviting author happened to be using into a row
+  # that outlives their session.
+  def self.disposable_team_name(user, run)
+    base = "#{user.nickname} (test ##{run.id})"
+    return base unless Team.exists?(:name => base)
+
+    (2..10).each do |n|
+      candidate = "#{base}-#{n}"
+      return candidate unless Team.exists?(:name => candidate)
+    end
+
+    raise ArgumentError, "cannot find a free disposable team name for #{base}"
+  end
+
   private
 
   def run_is_testing

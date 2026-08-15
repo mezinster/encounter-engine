@@ -332,6 +332,9 @@ en:
     team_not_found: "Team «%{name}» was not found"
     already_admitted: "«%{name}» is already admitted to the test"
     team_admitted: "Team «%{name}» has been admitted to the test"
+    player_not_found: "Player «%{name}» was not found"
+    player_admitted: "Player %{name} has been admitted to the test"
+    author_needs_no_admission: "The author can already test their own game"
   game_files:
     upload:
       unsupported_type: "This file type is not supported"

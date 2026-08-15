@@ -491,14 +491,40 @@ protected
   # splitting the pair would leave an author able to save a draft whose start
   # has slipped but not one whose deadline has, which is a distinction with
   # no reason behind it.
+  # Both deadline rules stand down during a test run, and that exemption is
+  # what lets the author's deadline survive one.
+  #
+  # start_test moves starts_at to Time.now, so a deadline set for any future
+  # date is then "after the game starts" and a deadline already past is "in the
+  # past" -- during a test EVERY non-nil deadline is invalid, and start_test
+  # could not save at all. It used to buy the save by blanking the column,
+  # which worked and destroyed the value: unlike starts_at, stashed in
+  # test_date and restored by finish_test, the deadline was never brought back.
+  # An author who rehearsed their game silently lost the cutoff they had set,
+  # and because shared/_game_entry_controls.html.erb needs a NON-NIL deadline
+  # to report registration closed, registration then never closed.
+  #
+  # Skipping is safe rather than merely convenient: a testing game is started
+  # (start_test clears is_draft and moves starts_at into the past), and
+  # ensure_game_was_not_started already covers edit and update, so an author
+  # cannot reach these validations mid-test to write a nonsensical deadline.
+  # The only writers during a test are start_test and finish_test themselves.
+  #
+  # finish_test restores starts_at before clearing is_testing, so the rules
+  # apply again on the very save that ends the test -- a deadline that has
+  # since fallen into the past is reported then, which is correct: it really
+  # has passed, and losing it silently was the worse answer.
   def deadline_is_in_future
     return if self.draft?
+    return if self.is_testing?
 
     if self.author_finished_at.nil? and self.registration_deadline and self.registration_deadline < Time.now
         self.errors.add(:registration_deadline, :in_the_past)
     end
   end
   def deadline_is_before_game_start
+    return if self.is_testing?
+
     if self.registration_deadline and
         self.starts_at and self.registration_deadline > self.starts_at
       self.errors.add(:registration_deadline, :after_game_start)

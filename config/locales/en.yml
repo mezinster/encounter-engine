@@ -335,6 +335,7 @@ en:
     player_not_found: "Player «%{name}» was not found"
     player_admitted: "Player %{name} has been admitted to the test"
     author_needs_no_admission: "The author can already test their own game"
+    revoked: "%{name} is no longer part of the test"
   game_files:
     upload:
       unsupported_type: "This file type is not supported"

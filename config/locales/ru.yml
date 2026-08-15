@@ -335,6 +335,7 @@ ru:
     player_not_found: "Игрок «%{name}» не найден"
     player_admitted: "Игрок %{name} допущен к тестированию"
     author_needs_no_admission: "Автор уже может тестировать свою игру"
+    revoked: "%{name} больше не участвует в тестировании"
   game_files:
     upload:
       unsupported_type: "Такой тип файла не поддерживается"

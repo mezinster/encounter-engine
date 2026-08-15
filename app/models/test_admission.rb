@@ -44,6 +44,30 @@ class TestAdmission < ApplicationRecord
     end
   end
 
+  # Removing the row is NOT enough, and the difference is the whole point of
+  # this method. GamePassingsController#find_or_create_game_passing returns an
+  # existing passing before it ever calls may_start_passing?, so a tester who
+  # has already opened the game keeps playing no matter what this table says.
+  # The passing is the live grant; the admission only decides who may get one.
+  #
+  # Log rows go too, and not merely for tidiness: Team#deletable? refuses a
+  # team that still holds one, so a disposable team whose tester answered
+  # anything would survive revocation. (finish_test needs no equivalent -- it
+  # already deletes the whole run's logs.)
+  #
+  # Same ordering as GameRun#sweep_test_admissions!: passing and logs first,
+  # then the row, then the team.
+  def revoke!
+    self.class.transaction do
+      GamePassing.where(:game_run_id => game_run_id, :team_id => team_id).delete_all
+      Log.where(:game_run_id => game_run_id, :team_id => team_id).delete_all
+
+      doomed = solo? ? team : nil
+      destroy
+      doomed.destroy if doomed && doomed.reload.deletable?
+    end
+  end
+
   # teams.name is unique, so this must be collision-proof rather than
   # decorative. Untranslated and ASCII on purpose: it is stored data, read by
   # everyone in the run and shown in its log lines, and an i18n'd name would

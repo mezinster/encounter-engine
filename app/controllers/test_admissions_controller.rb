@@ -67,6 +67,25 @@ class TestAdmissionsController < ApplicationController
                 :notice => t("test_admissions.player_admitted", :name => user.nickname)
   end
 
+  def revoke
+    # Scoped to THIS run, not TestAdmission.find(params[:id]). An unscoped
+    # lookup paired with an authorization check that never names the record is
+    # the shape of the cross-tenant hole fixed in the level, question, answer,
+    # option and hint controllers: the author of game A would otherwise be able
+    # to revoke an admission belonging to game B.
+    admission = TestAdmission.find_by(:id => params[:id], :game_run_id => run.id)
+
+    raise ActiveRecord::RecordNotFound if admission.nil?
+
+    # Read BEFORE the revoke: afterwards the row is gone and the disposable
+    # team with it, so neither the notice nor the audit entry could say who.
+    label = admission.solo? ? admission.user&.nickname : admission.team.name
+    admission.revoke!
+    record_admin_action("test_revoke_admission", @game, label) if acting_as_operator?(@game)
+
+    redirect_to game_path(@game), :notice => t("test_admissions.revoked", :name => label)
+  end
+
   private
 
   def find_game

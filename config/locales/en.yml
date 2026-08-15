@@ -346,6 +346,8 @@ en:
       legend: "Test invitation"
       explanation: "You have been invited to test «%{game}». It is a draft: results will not be kept."
       confirm: "Join the test"
+    participants:
+      legend: "Taking part in the test"
     panel:
       legend: "Test access"
       team_label: "Team name"

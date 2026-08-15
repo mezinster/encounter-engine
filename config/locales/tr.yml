@@ -396,6 +396,8 @@ tr:
       legend: "Test daveti"
       explanation: "«%{game}» adlı oyunu test etmeye davet edildiniz. Bu bir taslak: sonuçlar saklanmayacak."
       confirm: "Teste katıl"
+    participants:
+      legend: "Teste katılanlar"
     panel:
       legend: "Test erişimi"
       team_label: "Takım adı"

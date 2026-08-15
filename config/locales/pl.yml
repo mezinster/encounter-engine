@@ -370,6 +370,8 @@ pl:
       legend: "Zaproszenie do testów"
       explanation: "Zapraszamy Cię do przetestowania gry «%{game}». To wersja robocza: wyniki nie zostaną zachowane."
       confirm: "Dołącz do testów"
+    participants:
+      legend: "Biorą udział w testach"
     panel:
       legend: "Dostęp do testów"
       team_label: "Nazwa drużyny"

@@ -71,7 +71,7 @@
     <p class="notice"><%= t("game_passings.content_not_translated") %></p>
   <% end %>
 
-  <%= level.translated(:text, content_locale) %>
+  <%= with_newlines(level.translated(:text, content_locale)) %>
 
   <%# Below the task text, never inside it -- see the comment on
       shared/_attachment_strip for why that placement is load-bearing. %>
@@ -86,7 +86,7 @@
       <legend>
         <%= t("game_passings.show_current_level.hint_label") %> #<%= index + 1 %>
       </legend>
-      <%= hint.translated(:text, content_locale) %>
+      <%= with_newlines(hint.translated(:text, content_locale)) %>
 
       <%= render "shared/attachment_strip",
                  :files => hint.attached_files_for(content_locale),

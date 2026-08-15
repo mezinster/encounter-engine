@@ -5,11 +5,14 @@
 
 <div class="field">
   <%= f.label :text, t("hints.form.text_label") %>
+  <%# text_area, not text_field: a hint is author-written prose that may need
+      more than one line, and a single-line <input> cannot accept a newline at
+      all. Matches the shape levels/new.html.erb already uses for level text. %>
   <% if active_locale == @level.game.primary_locale %>
-    <%= f.text_field :text %>
+    <%= f.text_area :text %>
   <% else %>
-    <%= text_field_tag "hint[translations][#{active_locale}][text]",
-                       @hint.translation_draft(:text, active_locale) %>
+    <%= text_area_tag "hint[translations][#{active_locale}][text]",
+                      @hint.translation_draft(:text, active_locale) %>
   <% end %>
 </div>
 

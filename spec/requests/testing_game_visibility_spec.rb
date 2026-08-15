@@ -136,6 +136,41 @@ describe "a game in test mode is not public", type: :request do
     # finish_test is behind ensure_author and deletes every passing and log
     # line in the run. A tester pressing it gets a 401 -- a button that cannot
     # work should not be drawn.
+    # It used to be the last thing on the page, under «Удалить эту игру», which
+    # is where an author who had just admitted someone went looking for them
+    # and did not find them. Asserted as an ordering rather than a presence,
+    # because presence was already true when the bug was reported.
+    it "puts the admissions panel above the delete button for the author" do
+      sign_in(author)
+
+      get game_path(game)
+
+      panel  = response.body.index("Допуск к тестированию")
+      delete = response.body.index(delete_game_path(game))
+
+      panel.should_not be_nil
+      delete.should_not be_nil
+      panel.should be < delete
+    end
+
+    it "renders the panel exactly once for the author" do
+      sign_in(author)
+
+      get game_path(game)
+
+      response.body.scan("Допуск к тестированию").size.should == 1
+    end
+
+    # author_of? is strict, so the author block does not render for an operator
+    # on somebody else's game -- the panel has to reach them the other way.
+    it "still reaches a superadmin who is not the author" do
+      sign_in(superadmin)
+
+      get game_path(game)
+
+      response.body.scan("Допуск к тестированию").size.should == 1
+    end
+
     it "offers a tester the play link but not the finish button" do
       tester = create_user
       create_test_admission(:run => game.current_run, :team => create_team,

@@ -340,8 +340,27 @@ class GamePassingsController < ApplicationController
       @game.current_run
   end
 
+  # A solo test participant plays in a DISPOSABLE team they are not a member
+  # of, so current_user.team -- which reads users.team_id -- is the wrong
+  # answer for them and the right one for everybody else.
+  #
+  # Safe to consult @game.current_run here: find_game already runs first (:5
+  # before :9), so this needs no change to the filter order, whose comment
+  # documents a hint-clock bug caused by moving a filter in this chain.
   def find_team
-    @team = current_user.team
+    @team = test_admission&.team || current_user.team
+  end
+
+  # nil unless this game is in test mode AND the current user holds a SOLO
+  # admission in its current run. Memoised because find_team and
+  # ensure_team_member each ask, and a real team's admission (user_id NULL)
+  # deliberately does not match -- its members already resolve through
+  # current_user.team.
+  def test_admission
+    return nil unless @game&.is_testing?
+
+    @test_admission ||= TestAdmission.find_by(:game_run_id => @game.current_run.id,
+                                              :user_id     => current_user.id)
   end
 
   # translated() searches the loaded association rather than querying, so this
@@ -530,7 +549,30 @@ class GamePassingsController < ApplicationController
     return false if @team.nil?
     return true if @game.is_testing? && @game.created_by?(current_user)
 
+    # Covers BOTH invitee kinds with one lookup, because an admission always
+    # names a team: a real team's admission names itself, a solo admission
+    # names the disposable team find_team has already resolved into @team.
+    return true if @game.is_testing? &&
+                   TestAdmission.exists?(:game_run_id => @game.current_run.id,
+                                         :team_id     => @team.id)
+
     GameEntry.of(@team, @game.current_run)&.status == "accepted"
+  end
+
+  # SecurityFilters#ensure_team_member asks users.team_id, which is exactly
+  # what a solo test participant does not have and must not be given -- so
+  # without this it 401s them AFTER the admission, the disposable team and
+  # find_team have all worked correctly.
+  #
+  # This method overrides the module's (a class's own method wins over an
+  # included module's) and `super` reaches it for everyone else. Scoped to
+  # "holds an admission in this testing run", never to is_testing? broadly:
+  # the latter would drop the check for every stranger the moment a game
+  # entered test mode.
+  def ensure_team_member
+    return if test_admission
+
+    super
   end
 
   # Shared by post_answer and post_options: a submission with nothing typed

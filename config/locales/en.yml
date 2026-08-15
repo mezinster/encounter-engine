@@ -336,6 +336,12 @@ en:
     player_admitted: "Player %{name} has been admitted to the test"
     author_needs_no_admission: "The author can already test their own game"
     revoked: "%{name} is no longer part of the test"
+    joined: "You have been admitted to the test of «%{game}»"
+    token_reset: "The previous link no longer works"
+    invite:
+      legend: "Test invitation"
+      explanation: "You have been invited to test «%{game}». It is a draft: results will not be kept."
+      confirm: "Join the test"
   game_files:
     upload:
       unsupported_type: "This file type is not supported"

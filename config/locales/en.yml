@@ -216,6 +216,8 @@ en:
     game_already_started: "You can't edit a game after it has started"
     game_is_locked: "Editing this game has been frozen by an administrator"
     game_is_withdrawn: "This game has been withdrawn"
+    game_is_not_testing: "This game is not in testing mode"
+    bad_test_token: "This test link is not valid"
     must_be_recipient: "You must be the invitation's recipient to perform this action"
     cannot_play_own_game: "You can't play your own games, sorry :-)"
     game_finished_by_author: "The game was ended by its author, you can no longer play it"
@@ -326,6 +328,10 @@ en:
       start_test: "Start testing"
       start: "Start"
       finish_test: "Finish testing"
+  test_admissions:
+    team_not_found: "Team «%{name}» was not found"
+    already_admitted: "«%{name}» is already admitted to the test"
+    team_admitted: "Team «%{name}» has been admitted to the test"
   game_files:
     upload:
       unsupported_type: "This file type is not supported"

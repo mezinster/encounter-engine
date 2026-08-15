@@ -235,6 +235,23 @@ Rails.application.routes.draw do
   post "/games/finish_test/:id", to: "games#finish_test", as: :finish_test_game
   post "/games/end_game/:id",    to: "games#end_game",    as: :end_game_game
 
+  # Test-run invitations. All mutations are POST driven by button_to/form_tag,
+  # for the same reason recorded just above for start_test/finish_test/
+  # end_game: this app has no Turbo and no rails-ujs, so a GET link_to would
+  # leave them reachable, unprotected by CSRF, from any crafted or prefetched
+  # link.
+  post "/games/:game_id/test_admissions/team",       to: "test_admissions#create_team",   as: :test_admit_team
+  post "/games/:game_id/test_admissions/player",     to: "test_admissions#create_player", as: :test_admit_player
+  post "/games/:game_id/test_admissions/:id/revoke", to: "test_admissions#revoke",        as: :revoke_test_admission
+  post "/games/:game_id/test_token",                 to: "test_admissions#reset_token",   as: :reset_test_token
+
+  # The link half. GET only CONFIRMS -- it renders a page carrying a POST
+  # button -- because this URL is designed to be pasted into a chat, where a
+  # link-preview bot that follows it would otherwise silently admit whatever
+  # account it is authenticated as.
+  get  "/games/:game_id/test/:token", to: "test_admissions#invite", as: :test_invite
+  post "/games/:game_id/test/:token", to: "test_admissions#join",   as: :join_test
+
   post "/game_passings/exit_game/:game_id", to: "game_passings#exit_game", as: :exit_game
 
   # app/views/dashboard/_finished_games.html.erb:7 and

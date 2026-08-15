@@ -171,6 +171,56 @@ describe "a game in test mode is not public", type: :request do
       response.body.scan("Допуск к тестированию").size.should == 1
     end
 
+    # The admitted testers are their own participants list, a sibling of
+    # «Заявки на регистрацию» and «Участвуют команды» -- not a line tacked onto
+    # the bottom of the admission form, which is where an author went looking
+    # for a tester they had just invited and did not find one.
+    it "lists testers in their own block, before the admission controls" do
+      # create_team ignores an :name option and generates its own, so the
+      # assertion below reads the name off the record rather than passing one.
+      team = create_team
+      create_test_admission(:run => game.current_run, :team => team)
+      sign_in(author)
+
+      get game_path(game)
+
+      participants = response.body.index("Участвуют в тестировании")
+      controls     = response.body.index("Допуск к тестированию")
+      name         = response.body.index(team.name)
+
+      participants.should_not be_nil
+      controls.should_not be_nil
+      name.should_not be_nil
+      participants.should be < controls
+      # The team is listed in the participants block, not down in the controls.
+      name.should be > participants
+      name.should be < controls
+    end
+
+    it "puts the testers block directly after the teams list" do
+      sign_in(author)
+
+      get game_path(game)
+
+      teams        = response.body.index("Участвуют команды")
+      participants = response.body.index("Участвуют в тестировании")
+      files        = response.body.index(game_game_files_path(game))
+
+      teams.should be < participants
+      participants.should be < files
+    end
+
+    # Only during a test -- unlike «Участвуют команды», which is always drawn.
+    it "does not render the testers block outside a test" do
+      sign_in(author)
+      post finish_test_game_path(game)
+
+      get game_path(game)
+
+      response.body.should_not include("Участвуют в тестировании")
+      response.body.should_not include("Допуск к тестированию")
+    end
+
     it "offers a tester the play link but not the finish button" do
       tester = create_user
       create_test_admission(:run => game.current_run, :team => create_team,

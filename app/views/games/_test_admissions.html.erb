@@ -1,6 +1,5 @@
-<%# The whole test-run surface for one game: the play link everyone allowed on
-    this page may use, and -- for the author or a superadmin -- the finish
-    button and the admissions list.
+<%# The whole test-run surface for one game, in the order the author reads it:
+    who is testing, how to admit more, and then the actions.
 
     Rendered from TWO mutually exclusive places in games/show, and that is not
     duplication to tidy away. User#author_of? is strict (game.author_id ==
@@ -11,23 +10,44 @@
     команды»; everyone else gets it from the call below the block, which for
     them also falls directly after «Участвуют команды».
 
-    It used to sit last on the page, under «Удалить эту игру», where an author
-    who had just invited someone could not find it -- reported 2026-08-15. %>
+    None of it exists outside a test: the caller guards on is_testing?, so
+    unlike «Участвуют команды» -- which is always drawn, empty or not -- these
+    blocks are absent rather than empty when no test is running. %>
 <% may_manage = logged_in? &&
                 (@game.created_by?(current_user) || current_user.superadmin?) %>
 
-<div class="game-control">
-  <%# Unguarded deliberately: ensure_author_if_game_is_testing means only the
-      author, a superadmin or an admitted tester can be reading this page, and
-      all three may legitimately open the play screen. %>
-  <%= link_to t("games.show.start"), show_current_level_path(game_id: @game.id), class: "btn" %>
-  <%# finish_test is behind ensure_author and deletes every passing and log
-      line in the run, so a tester pressing it gets a 401. A button that
-      cannot work should not be drawn. %>
-  <%= button_to t("games.show.finish_test"), finish_test_game_path(@game), :class => "btn" if may_manage %>
-</div>
-
 <% if may_manage %>
+  <% admissions = TestAdmission.of_run(@game.current_run).includes(:team, :user) %>
+
+  <%# A participants list in its own right, a sibling of «Заявки на
+      регистрацию» and «Участвуют команды» rather than a line at the bottom of
+      the admission form -- which is where an author went looking for a tester
+      they had just invited and did not find one (reported 2026-08-15).
+      Same shape as games/_teams and games/_game_entries: fieldset.card,
+      legend, ul.game-list, a strong name with its actions in em. %>
+  <fieldset class="card">
+    <legend>
+      <%= t("test_admissions.participants.legend") %>
+    </legend>
+
+    <% if admissions.any? %>
+      <ul class="game-list">
+        <% admissions.each do |admission| %>
+          <li>
+            <strong><%= admission.solo? ? admission.user&.nickname : admission.team.name %></strong>
+            <%= t("test_admissions.panel.solo_marker") if admission.solo? %>
+            <em><%= button_to t("test_admissions.panel.revoke"),
+                              revoke_test_admission_path(:game_id => @game.id,
+                                                         :id => admission.id) %></em>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p><%= t("test_admissions.panel.nobody_yet") %></p>
+    <% end %>
+  </fieldset>
+
+  <%# Controls only -- the list above is where their result shows up. %>
   <fieldset class="card">
     <legend>
       <%= t("test_admissions.panel.legend") %>
@@ -55,25 +75,18 @@
       <%= button_to t("test_admissions.panel.reset_token"),
                     reset_test_token_path(:game_id => @game.id), :class => "btn" %>
     </p>
-
-    <%# Same shape as games/_teams and games/_game_entries -- fieldset.card,
-        legend, ul.game-list, a strong name and its actions in em -- so the
-        admitted testers read as the same kind of list as the teams above. %>
-    <% admissions = TestAdmission.of_run(@game.current_run).includes(:team, :user) %>
-    <% if admissions.any? %>
-      <ul class="game-list">
-        <% admissions.each do |admission| %>
-          <li>
-            <strong><%= admission.solo? ? admission.user&.nickname : admission.team.name %></strong>
-            <%= t("test_admissions.panel.solo_marker") if admission.solo? %>
-            <em><%= button_to t("test_admissions.panel.revoke"),
-                              revoke_test_admission_path(:game_id => @game.id,
-                                                         :id => admission.id) %></em>
-          </li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p><%= t("test_admissions.panel.nobody_yet") %></p>
-    <% end %>
   </fieldset>
 <% end %>
+
+<%# Last, because these are actions on the test rather than part of reading it.
+    A tester sees only this row: both blocks above are may_manage only. %>
+<div class="game-control">
+  <%# Unguarded deliberately: ensure_author_if_game_is_testing means only the
+      author, a superadmin or an admitted tester can be reading this page, and
+      all three may legitimately open the play screen. %>
+  <%= link_to t("games.show.start"), show_current_level_path(game_id: @game.id), class: "btn" %>
+  <%# finish_test is behind ensure_author and deletes every passing and log
+      line in the run, so a tester pressing it gets a 401. A button that
+      cannot work should not be drawn. %>
+  <%= button_to t("games.show.finish_test"), finish_test_game_path(@game), :class => "btn" if may_manage %>
+</div>

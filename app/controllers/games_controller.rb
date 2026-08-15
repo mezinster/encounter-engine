@@ -343,10 +343,6 @@ class GamesController < ApplicationController
   # Wider than its siblings by one case: an admitted TESTER must reach the game
   # they were invited to. That is the only widening -- a stranger with the URL
   # is refused exactly as a stranger visiting a withdrawn game is.
-  #
-  # Solo admissions only need the user lookup; a member of an admitted real
-  # team is covered by the team clause. Both are asked because an admission
-  # names a team either way, but only a solo one names a user.
   def ensure_author_if_game_is_testing
     return unless @game.is_testing?
     return if logged_in? && (current_user.superadmin? || current_user.author_of?(@game))
@@ -355,11 +351,12 @@ class GamesController < ApplicationController
     raise Authentication::Unauthorized, t("errors.game_is_not_testing")
   end
 
+  # This filter had the both-shapes rule right while the dashboard block had it
+  # wrong, and they disagreed from the day test-run invitations landed: an
+  # admitted team was let onto the game page and shown no way to reach it.
+  # Sharing one definition is the actual fix -- restating the rule in each
+  # reader is what let them drift apart.
   def admitted_to_test?
-    run = @game.current_run
-
-    TestAdmission.exists?(:game_run_id => run.id, :user_id => current_user.id) ||
-      (current_user.team_id.present? &&
-       TestAdmission.exists?(:game_run_id => run.id, :team_id => current_user.team_id))
+    TestAdmission.held_by(current_user).of_run(@game.current_run).exists?
   end
 end

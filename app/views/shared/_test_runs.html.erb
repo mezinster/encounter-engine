@@ -1,8 +1,11 @@
 <%# Cannot live in shared/_current_games: that partial is wrapped in
     `if current_user.member_of_any_team?`, which is false for exactly the
     people this section exists for, and it skips testing games outright. %>
+<%# held_by, not a user_id lookup: a real team's admission carries user_id NULL,
+    so matching on that column alone showed this block to solo testers only and
+    left an admitted team with nowhere to click. See TestAdmission.held_by. %>
 <% runs = GameRun.where(:is_testing => true)
-                 .where(:id => TestAdmission.where(:user_id => current_user.id)
+                 .where(:id => TestAdmission.held_by(current_user)
                                             .select(:game_run_id))
                  .includes(:game) %>
 <% if runs.any? %>

@@ -21,6 +21,41 @@ class TestAdmission < ApplicationRecord
   scope :of_run, ->(run) { where(:game_run_id => run.id) }
   scope :solo,   ->      { where.not(:user_id => nil) }
 
+  # "Which admissions does this person hold?" -- and it must ask about BOTH
+  # shapes, because the two are stored in different columns and a reader that
+  # remembers only one is wrong for exactly half the people it serves.
+  #
+  # That is not hypothetical. shared/_test_runs.html.erb, the dashboard block
+  # whose entire job is giving a tester somewhere to click, matched on user_id
+  # alone -- so it listed every solo tester's run and no team's, and two teams
+  # admitted to a real test run could not find the game anywhere. Reported
+  # 2026-08-15. Every other reader on the path (ensure_author_if_game_is_testing,
+  # may_start_passing?) already handled both, which is why the game page and the
+  # play screen answered 200 to people the dashboard showed nothing.
+  #
+  # A method rather than a scope because the team clause has to disappear
+  # entirely when the user has no team. `where(:team_id => nil)` would not do:
+  # it is a live condition matching any admission whose team_id IS NULL, not an
+  # absent one.
+  #
+  # Be honest about what that guard is worth today: team_id is NOT NULL and
+  # belongs_to :team is required, so no such row can exist and the unguarded
+  # form behaves identically. Mutation-tested, and removing the guard leaves
+  # the suite green -- deliberately recorded here rather than papered over with
+  # a test that cannot fail. The guard is kept because it costs one line and
+  # states the intent ("this person has no team, so no team matches") in a form
+  # that stays correct if the column ever becomes nullable. It is not load-
+  # bearing now, and a future reader deleting it will not break anything.
+  #
+  # `.or` requires both sides to differ only in their where clauses, which two
+  # bare `where`s on the same model satisfy.
+  def self.held_by(user)
+    scope = where(:user_id => user.id)
+    return scope if user.team_id.blank?
+
+    scope.or(where(:team_id => user.team_id))
+  end
+
   # :on => :create deliberately. Teardown clears is_testing before it sweeps,
   # and a validation firing on every save would make the sweep unable to touch
   # the very rows it exists to remove.

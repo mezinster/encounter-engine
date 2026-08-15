@@ -180,7 +180,7 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **690 leaf
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **725 leaf
   keys** each: `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
@@ -219,7 +219,7 @@ add steps there or Cucumber will auto-require them a second time.
   involved. `rails-i18n` supplies the CLDR rules, so pluralised keys are now safe to write.
 - **Five of the seven locales are machine-produced and unreviewed: `uk`, `ka`, `be`, `pl`, `tr`.**
   Only `ru` and `en` have been read by a speaker. All five are complete and structurally verified —
-  every interpolation variable matches and all 690 keys resolve at runtime — but the *wording* has
+  every interpolation variable matches and all 725 keys resolve at runtime — but the *wording* has
   not been checked by anyone. This is a known, recorded state rather than an oversight, and the
   bottleneck on fixing it is native review, not engineering. Each file says so in its own header
   comment too. **Turkish is the one to get reviewed first** if only one can be: it needed
@@ -387,10 +387,11 @@ deliberately; this is documented in `config/routes.rb` too.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 1751 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
-  This figure was 1603 here while the real number was 1751, alongside a Cucumber figure that was
-  also wrong — which is the point of the sentence that follows.
-  **Do not trust a quoted RSpec count** — this number has moved seven times in a week and stale
+- **RSpec** — 1829 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+  This figure was 1603 here while the real number was 1751, and then 1751 while the real number was
+  1829, alongside a Cucumber figure that was also wrong — which is the point of the sentence that
+  follows.
+  **Do not trust a quoted RSpec count** — this number has moved eight times in a week and stale
   copies have been cited as current twice. Re-run it. The inherited 228/2325 is the stable figure.
   `spec/rails_helper.rb` enables the legacy `should` syntax
   (`config.expect_with :rspec do |c| c.syntax = [:should, :expect] end`) because roughly 140

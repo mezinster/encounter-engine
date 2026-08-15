@@ -111,7 +111,12 @@ class GamesController < ApplicationController
     @game.is_testing = true
     @game.test_date = @game.starts_at
     @game.starts_at = Time.now + 0.1.second
-    @game.registration_deadline = nil
+    # The deadline is deliberately LEFT ALONE. It used to be blanked here,
+    # because moving starts_at to now makes any future deadline violate
+    # deadline_is_before_game_start -- but unlike starts_at, which is stashed
+    # in test_date and restored by finish_test, it was simply destroyed, and
+    # an author who rehearsed their game silently lost the cutoff they had
+    # set. Game skips both deadline validations while is_testing? instead.
 
     unless @game.save
       redirect_to @game, :alert => @game.errors.full_messages.to_sentence and return

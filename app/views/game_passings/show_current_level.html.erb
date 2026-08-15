@@ -151,7 +151,13 @@
     <% if current_user.captain? %>
       <%= button_to t("game_passings.show_current_level.exit_game"), exit_game_path(:game_id => @game_passing.game_id), :class => "btn" %>
     <% end %>
-    <% if @game.is_testing? %>
+    <%# created_by? as well as is_testing?, and the addition is not cosmetic.
+        finish_test sits behind ensure_author and deletes every passing and log
+        line in the run. is_testing? alone was a sound proxy for "you are the
+        author" only while the author's team was the only team that could ever
+        be in a test run -- test-run invitations end that, so every admitted
+        tester would otherwise see a button that answers 401. %>
+    <% if @game.is_testing? && @game.created_by?(current_user) %>
       <%= button_to t("game_passings.show_current_level.finish_testing"), finish_test_game_path(@game), :class => "btn" %>
     <% end %>
   </div>

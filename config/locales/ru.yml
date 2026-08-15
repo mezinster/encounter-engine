@@ -342,6 +342,17 @@ ru:
       legend: "Приглашение на тестирование"
       explanation: "Вас приглашают протестировать игру «%{game}». Это черновик: результаты не сохранятся."
       confirm: "Присоединиться к тестированию"
+    panel:
+      legend: "Допуск к тестированию"
+      team_label: "Название команды"
+      admit_team: "Допустить команду"
+      player_label: "Ник игрока"
+      admit_player: "Допустить игрока"
+      link_label: "Ссылка для тестировщиков:"
+      reset_token: "Сменить ссылку"
+      revoke: "Отозвать"
+      solo_marker: "(в одиночку)"
+      nobody_yet: "Пока никто не допущен"
   game_files:
     upload:
       unsupported_type: "Такой тип файла не поддерживается"
@@ -615,6 +626,9 @@ ru:
       signup: "Зарегистрироваться"
   shared:
     times_in_zone: "Время показано в поясе %{zone}"
+    test_runs:
+      legend: "Тестирование"
+      play: "Играть"
     run_switcher:
       heading: "Забеги:"
       run_label: "Забег №%{ordinal} — %{date}"

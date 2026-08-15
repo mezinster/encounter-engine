@@ -342,6 +342,17 @@ en:
       legend: "Test invitation"
       explanation: "You have been invited to test «%{game}». It is a draft: results will not be kept."
       confirm: "Join the test"
+    panel:
+      legend: "Test access"
+      team_label: "Team name"
+      admit_team: "Admit team"
+      player_label: "Player nickname"
+      admit_player: "Admit player"
+      link_label: "Link for testers:"
+      reset_token: "Replace the link"
+      revoke: "Revoke"
+      solo_marker: "(solo)"
+      nobody_yet: "Nobody admitted yet"
   game_files:
     upload:
       unsupported_type: "This file type is not supported"
@@ -600,6 +611,9 @@ en:
       signup: "Sign up"
   shared:
     times_in_zone: "Times shown in %{zone}"
+    test_runs:
+      legend: "Testing"
+      play: "Play"
     run_switcher:
       heading: "Runs:"
       run_label: "Run №%{ordinal} — %{date}"

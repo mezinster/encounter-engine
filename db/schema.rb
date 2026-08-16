@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_15_100000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_16_100000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -249,6 +249,45 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_15_100000) do
     t.datetime "created_at", null: false
     t.index ["game_run_id", "team_id"], name: "index_test_admissions_on_run_and_team", unique: true
     t.index ["game_run_id", "user_id"], name: "index_test_admissions_on_run_and_user", unique: true, where: "user_id IS NOT NULL"
+  end
+
+  create_table "translation_proposals", force: :cascade do |t|
+    t.integer "translation_run_id", null: false
+    t.string "translatable_type", null: false
+    t.integer "translatable_id", null: false
+    t.string "field", null: false
+    t.string "locale", null: false
+    t.text "source_text", null: false
+    t.text "proposed_text", null: false
+    t.string "flags"
+    t.string "state", default: "pending", null: false
+    t.integer "reviewed_by_id"
+    t.datetime "reviewed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["translation_run_id", "state"], name: "index_translation_proposals_on_translation_run_id_and_state"
+    t.index ["translation_run_id", "translatable_type", "translatable_id", "field", "locale"], name: "index_translation_proposals_unique_field", unique: true
+  end
+
+  create_table "translation_runs", force: :cascade do |t|
+    t.integer "game_id", null: false
+    t.integer "actor_id", null: false
+    t.string "model", null: false
+    t.string "state", default: "pending", null: false
+    t.string "target_locales", default: "", null: false
+    t.integer "fields_total", default: 0, null: false
+    t.integer "fields_done", default: 0, null: false
+    t.integer "fields_failed", default: 0, null: false
+    t.integer "estimated_input_tokens", default: 0, null: false
+    t.integer "input_tokens", default: 0, null: false
+    t.integer "output_tokens", default: 0, null: false
+    t.integer "cache_read_tokens", default: 0, null: false
+    t.text "error_message"
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "state"], name: "index_translation_runs_on_game_id_and_state"
   end
 
   create_table "users", force: :cascade do |t|

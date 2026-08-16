@@ -122,6 +122,21 @@ describe "auditing administrative changes", type: :request do
       expect(entry.target_type).to eq("Game")
       expect(entry.details).to include("model=")
     end
+
+    it "records an acceptance of translation proposals against the game" do
+      run = TranslationRun.create!(:game => game, :actor => superadmin,
+                                   :model => "claude-opus-5", :state => "succeeded")
+      level = create_level(:game => game, :name => "Первый", :text => "Найдите табличку")
+      TranslationProposal.create!(:translation_run => run, :translatable => level,
+                                  :field => "name", :locale => "en",
+                                  :source_text => "Первый", :proposed_text => "The first",
+                                  :state => "pending")
+
+      expect { post accept_all_game_translation_run_proposals_path(game, run) }
+        .to change { AdminAction.count }.by(1)
+
+      expect(AdminAction.newest_first.first.action).to eq("translation_proposals_accepted")
+    end
   end
 
   describe "the inherited actions, performed on someone else's game" do

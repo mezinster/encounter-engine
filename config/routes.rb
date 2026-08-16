@@ -215,6 +215,15 @@ Rails.application.routes.draw do
     # the view drives it with a real button_to form.
     resources :translation_runs, :only => [ :new, :create, :show ] do
       post :cancel, :on => :member
+
+      resources :proposals, :only => [ :index ],
+                            :controller => "translation_proposals" do
+        member do
+          post :accept
+          post :reject
+        end
+        post :accept_all, :on => :collection
+      end
     end
   end
 

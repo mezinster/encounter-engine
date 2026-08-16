@@ -102,4 +102,29 @@ describe "reviewing translation proposals", type: :request do
     # Authentication::Unauthorized this app raises. See Task 7's spec.
     expect(response).to have_http_status(:unauthorized)
   end
+
+  # The review record and the game must never disagree about whether the
+  # machine text was accepted. This app installs no rescue_from for
+  # RecordNotFound (see level_authorization_spec.rb and five other files), so
+  # a request spec sees the exception itself rather than a rendered 404.
+  it "refuses to reject a proposal that was already accepted, leaving its translation intact" do
+    proposal = proposal_for(level, "name", "The first")
+    post accept_game_translation_run_proposal_path(game, run, proposal)
+
+    expect { post reject_game_translation_run_proposal_path(game, run, proposal) }
+      .to raise_error(ActiveRecord::RecordNotFound)
+
+    expect(proposal.reload.state).to eq(TranslationProposal::ACCEPTED)
+    expect(level.reload.translated("name", "en")).to eq("The first")
+  end
+
+  it "refuses to accept the same proposal twice" do
+    proposal = proposal_for(level, "name", "The first")
+    post accept_game_translation_run_proposal_path(game, run, proposal)
+
+    expect {
+      expect { post accept_game_translation_run_proposal_path(game, run, proposal) }
+        .to raise_error(ActiveRecord::RecordNotFound)
+    }.not_to change { AdminAction.count }
+  end
 end

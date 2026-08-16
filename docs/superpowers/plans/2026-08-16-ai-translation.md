@@ -472,12 +472,13 @@ describe Game, "#missing_translated_fields_in" do
   # Regression guard on the extraction: missing_translations must keep
   # answering exactly as before, because the publish gate depends on it.
   it "leaves missing_translations answering for declared locales only" do
-    # Draft first, and it has to bypass validation to get there: create_game
-    # leaves is_draft false, and declared_locales_are_translated_before_publication
-    # refuses to let a PUBLISHED game declare a locale it has not translated --
-    # which is the gate working correctly, and nothing to do with this
-    # extraction. A draft is exempt (`return if self.draft?`).
-    game.update_column(:is_draft, true)
+    # Draft first: create_game leaves is_draft false, and
+    # declared_locales_are_translated_before_publication refuses to let a
+    # PUBLISHED game declare a locale it has not translated -- the gate working
+    # correctly, and nothing to do with this extraction. A draft is exempt
+    # (`return if self.draft?`), and that guard reads the value being saved, so
+    # this first update! passes validation on its own.
+    game.update!(:is_draft => true)
     game.update!(:available_locale_list => %w[ru pl])
 
     expect(game.missing_translations.map(&:locale).uniq).to eq([ "pl" ])

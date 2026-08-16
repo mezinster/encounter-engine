@@ -874,8 +874,13 @@ describe Translation::Flags do
     expect(flags_for("Да", "Yes")).not_to include("length")
   end
 
+  # The source here is deliberately free of digits and Latin: an empty
+  # proposal against a source containing a code would also raise lost_digits,
+  # and a source under MIN_LENGTH_FOR_RATIO characters cannot raise length at
+  # all. Both traps have to be avoided for this example to demonstrate what it
+  # claims to.
   it "can return several flags at once" do
-    expect(flags_for("Код 4417", "")).to match_array(%w[empty length])
+    expect(flags_for("Найдите табличку на стене подъезда", "")).to match_array(%w[empty length])
   end
 end
 ```
@@ -953,7 +958,7 @@ end
 bundle exec rspec spec/services/translation/flags_spec.rb
 ```
 
-Expected: PASS, 12 examples, 0 failures.
+Expected: PASS, 11 examples, 0 failures.
 
 - [ ] **Step 5: Mutation-test the checks**
 

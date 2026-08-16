@@ -827,6 +827,14 @@ ru:
     new:
       name_label: "Название"
       submit: "Создать команду"
+  translations:
+    runs:
+      already_running: "Для этой игры уже выполняется перевод."
+      too_large: "Слишком много полей за один раз (максимум %{count})."
+      empty: "Нечего переводить: для выбранных языков переводы уже есть."
+    new:
+      heading: "Перевод игры «%{game}»"
+      submit: "Перевести"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

@@ -206,6 +206,16 @@ Rails.application.routes.draw do
         end
       end
     end
+
+    # AI translation of author-written content. Superadmin-only; nested under
+    # the game because every action needs the game in scope and the redirect
+    # target is the game's edit screen.
+    #
+    # POST for cancel, not DELETE: this app has no Turbo and no rails-ujs, so
+    # the view drives it with a real button_to form.
+    resources :translation_runs, :only => [ :new, :create, :show ] do
+      post :cancel, :on => :member
+    end
   end
 
   # Live-game interventions. Team-scoped ones carry both ids because the

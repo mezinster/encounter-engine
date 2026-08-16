@@ -856,6 +856,14 @@ ka:
     new:
       name_label: "დასახელება"
       submit: "გუნდის შექმნა"
+  translations:
+    runs:
+      already_running: "ამ თამაშისთვის თარგმანი უკვე მიმდინარეობს."
+      too_large: "ერთ ჯერზე ძალიან ბევრი ველია (მაქსიმუმ %{count})."
+      empty: "სათარგმნი არაფერია: არჩეული ენებისთვის თარგმანები უკვე არსებობს."
+    new:
+      heading: "თამაშის «%{game}» თარგმანი"
+      submit: "თარგმნა"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

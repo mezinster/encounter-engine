@@ -806,6 +806,14 @@ en:
     new:
       name_label: "Title"
       submit: "Create team"
+  translations:
+    runs:
+      already_running: "A translation is already running for this game."
+      too_large: "Too many fields for one run (maximum %{count})."
+      empty: "Nothing to translate: the selected languages are already complete."
+    new:
+      heading: "Translating “%{game}”"
+      submit: "Translate"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

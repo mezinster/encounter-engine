@@ -108,6 +108,20 @@ describe "auditing administrative changes", type: :request do
 
       expect(AdminAction.newest_first.first.action).to eq("accept_entry")
     end
+
+    it "records the start of a translation run against the game" do
+      allow(Translation::Client).to receive(:configured?).and_return(true)
+      allow(Translation::Runner).to receive(:new).and_return(double(:call => nil))
+      create_level(:game => game, :name => "Первый", :text => "Найдите табличку")
+
+      expect { post game_translation_runs_path(game), :params => { :locales => [ "en" ] } }
+        .to change { AdminAction.count }.by(1)
+
+      entry = AdminAction.newest_first.first
+      expect(entry.action).to eq("translation_run_started")
+      expect(entry.target_type).to eq("Game")
+      expect(entry.details).to include("model=")
+    end
   end
 
   describe "the inherited actions, performed on someone else's game" do

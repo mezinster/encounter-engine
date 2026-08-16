@@ -1,0 +1,13 @@
+<h2><%= t("translations.new.heading", :game => @game.name) %></h2>
+
+<%= form_with url: game_translation_runs_path(@game), method: :post do %>
+  <% @locales.each do |locale| %>
+    <label>
+      <%= check_box_tag "locales[]", locale, false %>
+      <%= t("locales.#{locale}") %>
+    </label>
+  <% end %>
+  <%= submit_tag t("translations.new.submit"), :class => "btn btn--go" %>
+<% end %>
+
+<em><%= link_to t("shared.cancel"), edit_game_path(@game) %></em>

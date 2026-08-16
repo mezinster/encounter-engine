@@ -832,6 +832,14 @@ uk:
     new:
       name_label: "Назва"
       submit: "Створити команду"
+  translations:
+    runs:
+      already_running: "Для цієї гри вже виконується переклад."
+      too_large: "Забагато полів за один раз (максимум %{count})."
+      empty: "Нічого перекладати: для обраних мов переклади вже є."
+    new:
+      heading: "Переклад гри «%{game}»"
+      submit: "Перекласти"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

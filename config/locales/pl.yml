@@ -838,6 +838,14 @@ pl:
     new:
       name_label: "Nazwa"
       submit: "Utwórz drużynę"
+  translations:
+    runs:
+      already_running: "Dla tej gry już trwa tłumaczenie."
+      too_large: "Zbyt wiele pól na jedno uruchomienie (maksimum %{count})."
+      empty: "Nie ma czego tłumaczyć: dla wybranych języków tłumaczenia już istnieją."
+    new:
+      heading: "Tłumaczenie gry „%{game}”"
+      submit: "Przetłumacz"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

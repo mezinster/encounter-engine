@@ -873,6 +873,15 @@ tr:
     new:
       name_label: "Ad"
       submit: "Takım oluştur"
+  # The case suffix goes on "oyun" (the game), never on %{game}.
+  translations:
+    runs:
+      already_running: "Bu oyun için zaten bir çeviri çalışıyor."
+      too_large: "Tek seferde çok fazla alan var (en fazla %{count})."
+      empty: "Çevrilecek bir şey yok: seçilen diller için çeviriler zaten tamam."
+    new:
+      heading: "«%{game}» adlı oyunun çevirisi"
+      submit: "Çevir"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

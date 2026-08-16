@@ -825,6 +825,14 @@ be:
     new:
       name_label: "Назва"
       submit: "Стварыць каманду"
+  translations:
+    runs:
+      already_running: "Для гэтай гульні ужо выконваецца пераклад."
+      too_large: "Занадта шмат палёў за адзін раз (максімум %{count})."
+      empty: "Няма чаго перакладаць: для абраных моў пераклады ужо ёсць."
+    new:
+      heading: "Пераклад гульні «%{game}»"
+      submit: "Перакласці"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

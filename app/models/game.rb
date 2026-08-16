@@ -54,6 +54,7 @@ class Game < ApplicationRecord
   has_many :game_entries, :class_name => "GameEntry", :dependent => :destroy
   has_many :game_passings, :class_name => "GamePassing"
   has_many :game_files, :dependent => :destroy
+  has_many :translation_runs, :dependent => :destroy
 
   validates :name, presence: true, uniqueness: true
   validates :description, presence: true

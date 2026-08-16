@@ -748,26 +748,34 @@ and add the enum branch inside the transaction, **before** the string branch:
           elsif Setting::STRING_DEFAULTS.key?(name)
 ```
 
-and widen `#current_values`:
+**Leave `#current_values` alone.** It must keep returning integer settings only:
 
 ```ruby
   def current_values
     Setting::INTEGER_DEFAULTS.keys.index_with { |name| Setting.integer(name) }
-      .merge(Setting::ENUM_DEFAULTS.keys.index_with { |name| Setting.enum(name) })
   end
 ```
 
-In `app/views/admin/settings/show.html.erb`, add a select beside the existing numeric fields (place it inside the same form, after the integer loop):
+Merging the enum into it looks harmless and is not: the view's pre-existing loop iterates `@values` to render **number fields**, so a merged enum renders `translation_model` twice — once as a numeric input holding a model name, once as the correct select — with a duplicate DOM id and two controls fighting over one form parameter.
+
+In `app/views/admin/settings/show.html.erb`, add a select after the existing loops, reading the setting **directly**, exactly as the `STRING_DEFAULTS` loop immediately above it already does:
 
 ```erb
   <% Setting::ENUM_DEFAULTS.each_key do |name| %>
     <div class="field">
       <%= label_tag "settings_#{name}", t("admin.settings.names.#{name}") %>
+      <%# Read directly rather than through @values, exactly as the
+          STRING_DEFAULTS loop above does. Merging enums into @values would
+          also feed them to the number-field loop, which renders a numeric
+          input for a model name and duplicates the id and the form field. %>
       <%= select_tag "settings[#{name}]",
-                     options_for_select(Setting::ENUM_ALLOWED.fetch(name), @values[name]) %>
+                     options_for_select(Setting::ENUM_ALLOWED.fetch(name), Setting.enum(name)),
+                     :id => "settings_#{name}" %>
     </div>
   <% end %>
 ```
+
+Add one example to `spec/requests/admin_settings_spec.rb` asserting the page renders exactly one control per setting name — `translation_model` as a select, not also as a number field. Nothing in the existing suite catches a duplicated form field, which is how the merged-`current_values` version got as far as a rendered page before anyone noticed.
 
 - [ ] **Step 6: Add the two label keys to all seven locales**
 

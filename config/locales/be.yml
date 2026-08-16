@@ -108,6 +108,10 @@ be:
           reset_clock: "Скінуў адлік часу на ўзроўні"
           accept_entry: "Прыняў заяўку каманды"
           reject_entry: "Адхіліў заяўку каманды"
+          translation_run_started: "Запусціў пераклад"
+          translation_run_cancelled: "Спыніў пераклад"
+          translation_run_retried: "Паўтарыў пераклад"
+          translation_proposals_accepted: "Прыняў пераклады"
     settings:
       title: "Налады абмежаванняў"
       explanation: "Абмежаванні на рэгістрацыю дзейнічаюць на адзін IP-адрас за пазначаны перыяд; 0 адключае абмежаванне. Абмежаванні на файлы дзейнічаюць на гульню і на ўвесь сервер."
@@ -125,6 +129,8 @@ be:
         instance_cap_megabytes: "Агульны ліміт на сервер (МБ)"
         free_space_floor_megabytes: "Незніжальны астатак на дыску (МБ)"
         allowed_extensions: "Дазволеныя пашырэнні файлаў"
+        translation_model: "Мадэль для перакладу"
+        translation_max_fields_per_run: "Максімум палёў за адзін пераклад"
     dashboard:
       show:
         title: "Агляд"
@@ -232,6 +238,7 @@ be:
     not_team_member: "Вы не аўтарызаваны для наведвання гэтай старонкі"
     must_be_captain: "Вы павінны быць капітанам, каб выканаць гэта дзеянне"
     must_be_author: "Вы павінны быць аўтарам гульні, каб бачыць гэту старонку"
+    translation_key_missing: "Пераклад пры дапамозе ШІ недаступны: не наладжаны ключ API."
     not_registered_for_game: "Ваша каманда не зарэгістравана на гэту гульню."
     must_be_superadmin: "Доступ толькі для адміністратара"
     too_many_requests: "Занадта шмат спробаў. Паспрабуйце пазней."
@@ -825,6 +832,64 @@ be:
     new:
       name_label: "Назва"
       submit: "Стварыць каманду"
+  translations:
+    runs:
+      already_running: "Для гэтай гульні ужо выконваецца пераклад."
+      already_finished: "Гэты пераклад ужо завершаны — спыняць няма чаго."
+      not_retryable: "Паўтарыць можна толькі пераклад, які завершыўся памылкай."
+      too_large: "Занадта шмат палёў за адзін раз (максімум %{count})."
+      empty: "Няма чаго перакладаць: для абраных моў пераклады ужо ёсць."
+    new:
+      heading: "Пераклад гульні «%{game}»"
+      submit: "Перакласці"
+    confirm:
+      heading: "Пераклад гульні «%{game}»: пацвярджэнне"
+      locales: "Мовы"
+      fields: "Палёў да перакладу"
+      model: "Мадэль"
+      estimate: "Ацэнка ўваходных токенаў"
+      estimate_unknown: "не ўдалося падлічыць"
+      submit: "Пачаць пераклад"
+    edit:
+      heading: "Пераклад пры дапамозе ШІ"
+      translate: "Перакласці"
+      translate_multiple: "Перакласці на некалькі моў…"
+    show:
+      heading: "Пераклад гульні «%{game}»"
+      progress: "%{done} з %{total}"
+      model: "Мадэль"
+      locales: "Мовы"
+      tokens: "Токены"
+      token_counts: "уваход %{input}, выхад %{output}, з кэша %{cached}"
+      failed: "Не перакладзена"
+      cancel: "Спыніць"
+      retry: "Паўтарыць"
+      review: "Праверыць пераклад"
+      estimate: "Ацэнка ўваходных токенаў"
+      state:
+        pending: "Чакае"
+        running: "Выконваецца"
+        succeeded: "Завершана"
+        failed: "Памылка"
+        cancelled: "Спынена"
+    review:
+      heading: "Праверка перакладу гульні «%{game}»"
+      accept_all: "Прыняць усё без заўваг"
+      accept: "Прыняць"
+      reject: "Адхіліць"
+      edited: "Адрэдагавана:"
+      blank_text: "Пераклад не можа быць пустым. Каб не выкарыстоўваць яго, націсніце «Адхіліць»."
+      invalid: "Не ўдалося захаваць пераклад: %{message}"
+      state:
+        pending: "Чакае"
+        accepted: "Прынята"
+        rejected: "Адхілена"
+    flags:
+      empty: "Пусты пераклад"
+      identical: "Супадае з арыгіналам — магчыма, не перакладзена"
+      lost_digits: "Страчаны код або лік"
+      lost_latin: "Страчана лацінскае слова або спасылка"
+      length: "Падазроная даўжыня"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

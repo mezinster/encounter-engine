@@ -108,6 +108,53 @@ describe "auditing administrative changes", type: :request do
 
       expect(AdminAction.newest_first.first.action).to eq("accept_entry")
     end
+
+    # :confirmed, because the first POST is now the count_tokens pre-flight --
+    # it prices the work, creates nothing, and audits nothing. Only the
+    # confirmed POST starts a run, so only it writes an entry.
+    it "records the start of a translation run against the game" do
+      allow(Translation::Client).to receive(:configured?).and_return(true)
+      allow(Translation::Runner).to receive(:new).and_return(double(:call => nil))
+      create_level(:game => game, :name => "Первый", :text => "Найдите табличку")
+
+      expect {
+        post game_translation_runs_path(game),
+             :params => { :locales => [ "en" ], :confirmed => "1" }
+      }.to change { AdminAction.count }.by(1)
+
+      entry = AdminAction.newest_first.first
+      expect(entry.action).to eq("translation_run_started")
+      expect(entry.target_type).to eq("Game")
+      expect(entry.details).to include("model=")
+    end
+
+    it "records a retry against the game" do
+      allow(Translation::Client).to receive(:configured?).and_return(true)
+      allow(Translation::Runner).to receive(:new).and_return(double(:call => nil))
+      run = TranslationRun.create!(:game => game, :actor => superadmin,
+                                   :model => "claude-opus-5",
+                                   :state => TranslationRun::FAILED)
+
+      expect { post retry_game_translation_run_path(game, run) }
+        .to change { AdminAction.count }.by(1)
+
+      expect(AdminAction.newest_first.first.action).to eq("translation_run_retried")
+    end
+
+    it "records an acceptance of translation proposals against the game" do
+      run = TranslationRun.create!(:game => game, :actor => superadmin,
+                                   :model => "claude-opus-5", :state => "succeeded")
+      level = create_level(:game => game, :name => "Первый", :text => "Найдите табличку")
+      TranslationProposal.create!(:translation_run => run, :translatable => level,
+                                  :field => "name", :locale => "en",
+                                  :source_text => "Первый", :proposed_text => "The first",
+                                  :state => "pending")
+
+      expect { post accept_all_game_translation_run_proposals_path(game, run) }
+        .to change { AdminAction.count }.by(1)
+
+      expect(AdminAction.newest_first.first.action).to eq("translation_proposals_accepted")
+    end
   end
 
   describe "the inherited actions, performed on someone else's game" do

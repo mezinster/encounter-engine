@@ -173,6 +173,12 @@ jobs:
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+          # Claude API key for superadmin-triggered translation. This step
+          # enumerates every secret rather than inheriting them, so a secret
+          # added to `.kamal/secrets` and `config/deploy.yml` but not here
+          # expands to empty at deploy time -- the feature would simply be
+          # absent in production, with nothing failing to say so.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: bundle exec kamal ${{ inputs.command }}
 
       # `always()` matters more than it looks: without it a failed deploy leaves

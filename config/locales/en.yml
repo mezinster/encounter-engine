@@ -89,6 +89,10 @@ en:
           reset_clock: "Reset the level clock"
           accept_entry: "Accepted a team's application"
           reject_entry: "Rejected a team's application"
+          translation_run_started: "Started a translation"
+          translation_run_cancelled: "Stopped a translation"
+          translation_run_retried: "Retried a translation"
+          translation_proposals_accepted: "Accepted translations"
     settings:
       title: "Rate limits"
       explanation: "Signup limits apply per IP address per window; 0 disables the limit. File limits apply per game and across the whole server."
@@ -106,6 +110,8 @@ en:
         instance_cap_megabytes: "Total server limit (MB)"
         free_space_floor_megabytes: "Free disk space floor (MB)"
         allowed_extensions: "Allowed file extensions"
+        translation_model: "Translation model"
+        translation_max_fields_per_run: "Maximum fields per translation run"
     dashboard:
       show:
         title: "Overview"
@@ -213,6 +219,7 @@ en:
     not_team_member: "You are not authorized to visit this page"
     must_be_captain: "You must be the team captain to perform this action"
     must_be_author: "You must be the game's author to view this page"
+    translation_key_missing: "AI translation is unavailable: no API key is configured."
     not_registered_for_game: "Your team is not registered for this game."
     must_be_superadmin: "Administrator access only"
     too_many_requests: "Too many attempts. Please try again later."
@@ -806,6 +813,64 @@ en:
     new:
       name_label: "Title"
       submit: "Create team"
+  translations:
+    runs:
+      already_running: "A translation is already running for this game."
+      already_finished: "This translation has already finished — there is nothing to stop."
+      not_retryable: "Only a translation that ended in an error can be retried."
+      too_large: "Too many fields for one run (maximum %{count})."
+      empty: "Nothing to translate: the selected languages are already complete."
+    new:
+      heading: "Translating “%{game}”"
+      submit: "Translate"
+    confirm:
+      heading: "Translating “%{game}”: confirmation"
+      locales: "Languages"
+      fields: "Fields to translate"
+      model: "Model"
+      estimate: "Estimated input tokens"
+      estimate_unknown: "could not be counted"
+      submit: "Start the translation"
+    edit:
+      heading: "AI translation"
+      translate: "Translate"
+      translate_multiple: "Translate into several languages…"
+    show:
+      heading: "Translating “%{game}”"
+      progress: "%{done} of %{total}"
+      model: "Model"
+      locales: "Languages"
+      tokens: "Tokens"
+      token_counts: "input %{input}, output %{output}, from cache %{cached}"
+      failed: "Not translated"
+      cancel: "Stop"
+      retry: "Retry"
+      review: "Review the translation"
+      estimate: "Estimated input tokens"
+      state:
+        pending: "Waiting"
+        running: "Running"
+        succeeded: "Finished"
+        failed: "Failed"
+        cancelled: "Stopped"
+    review:
+      heading: "Reviewing the translation of “%{game}”"
+      accept_all: "Accept everything unflagged"
+      accept: "Accept"
+      reject: "Reject"
+      edited: "Edited:"
+      blank_text: "A translation cannot be empty. To discard it, press “Reject”."
+      invalid: "The translation could not be saved: %{message}"
+      state:
+        pending: "Waiting"
+        accepted: "Accepted"
+        rejected: "Rejected"
+    flags:
+      empty: "Empty translation"
+      identical: "Identical to the source — possibly untranslated"
+      lost_digits: "A code or number was lost"
+      lost_latin: "A Latin-script word or link was lost"
+      length: "Implausible length"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

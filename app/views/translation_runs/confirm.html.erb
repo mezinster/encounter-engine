@@ -1,0 +1,34 @@
+<%# The cost guard, as a screen. Nothing has been spent at this point: the
+    estimate comes from count_tokens, which is free and exact, and no run row
+    exists yet. The second POST carries `confirmed` plus the measured figure,
+    because this app has no JavaScript to hold it client-side. %>
+<h2><%= t("translations.confirm.heading", :game => @game.name) %></h2>
+
+<dl>
+  <dt><%= t("translations.confirm.locales") %></dt>
+  <dd><%= @locales.map { |l| t("locales.#{l}") }.join(", ") %></dd>
+
+  <dt><%= t("translations.confirm.fields") %></dt>
+  <dd><%= @work.size %></dd>
+
+  <dt><%= t("translations.confirm.model") %></dt>
+  <dd><%= @model %></dd>
+
+  <dt><%= t("translations.confirm.estimate") %></dt>
+  <dd>
+    <%# nil when the pre-flight itself failed. Saying so is better than
+        printing a zero the operator would read as "this is free". %>
+    <%= @estimate ? number_with_delimiter(@estimate) : t("translations.confirm.estimate_unknown") %>
+  </dd>
+</dl>
+
+<%= form_with url: game_translation_runs_path(@game), method: :post do %>
+  <% @locales.each do |locale| %>
+    <%= hidden_field_tag "locales[]", locale, :id => nil %>
+  <% end %>
+  <%= hidden_field_tag "estimated_input_tokens", @estimate.to_i %>
+  <%= hidden_field_tag "confirmed", "1" %>
+  <%= submit_tag t("translations.confirm.submit"), :class => "btn btn--go" %>
+<% end %>
+
+<em><%= link_to t("shared.cancel"), edit_game_path(@game) %></em>

@@ -76,6 +76,7 @@ env:
     - SMTP_PASSWORD
     # Derived from SMTP_USERNAME rather than set here — see .kamal/secrets.
     - MAIL_FROM
+    - ANTHROPIC_API_KEY
 
 accessories:
   db:

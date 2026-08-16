@@ -180,13 +180,14 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **725 leaf
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **780 leaf
   keys** each: `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
   live in `config/locales/{en,ru,uk,ka,tr,be,pl}.yml`. **Count the keys rather than trusting this
-  number**; it was documented as 489 for some time after it was 587.
+  number**; it was documented as 489 for some time after it was 587, and as 725 for some time
+  after it was 764 — this entry has now been stale twice, in the file that warns about it.
 - **Subset-of-`ru` is not completeness, and the gap is invisible.** A locale file carrying nothing
   but its seven endonyms satisfies every check in `spec/i18n_spec.rb`, and fallbacks then render
   the *Russian* play screen mid-game to a player who chose another language — nothing raises,
@@ -219,7 +220,7 @@ add steps there or Cucumber will auto-require them a second time.
   involved. `rails-i18n` supplies the CLDR rules, so pluralised keys are now safe to write.
 - **Five of the seven locales are machine-produced and unreviewed: `uk`, `ka`, `be`, `pl`, `tr`.**
   Only `ru` and `en` have been read by a speaker. All five are complete and structurally verified —
-  every interpolation variable matches and all 725 keys resolve at runtime — but the *wording* has
+  every interpolation variable matches and all 780 keys resolve at runtime — but the *wording* has
   not been checked by anyone. This is a known, recorded state rather than an oversight, and the
   bottleneck on fixing it is native review, not engineering. Each file says so in its own header
   comment too. **Turkish is the one to get reviewed first** if only one can be: it needed
@@ -355,6 +356,45 @@ drives logout with a raw `GET /logout` (Capybara `#visit`), and feature files ar
 above). The GET route has to stay for that scenario to keep passing. Both routes are kept
 deliberately; this is documented in `config/routes.rb` too.
 
+## AI translation of game content
+
+A superadmin can translate a game's author-written content via the Claude API
+(`app/services/translation/`, `TranslationRunsController`,
+`TranslationProposalsController`). Four things about it are non-obvious:
+
+- **It is staged.** The runner writes `translation_proposals`, never
+  `content_translations`. Accepting a proposal goes through
+  `TranslatableContent#translations_attributes=` — the same setter the
+  authoring form uses — so the stored row is byte-identical to a hand-typed
+  one and the game cannot tell the difference. Provenance lives only in
+  `translation_proposals`.
+- **The loop order is cost-critical: units outer, locales inner.** Prompt
+  caching is a strict prefix match and the prompt is
+  `[rules][this unit's source][translate into X]`. Holding the unit still
+  while the locales vary means every locale after the first reads a cached
+  prefix. Reversing the loops makes every call a cache miss. The locale calls
+  must also stay sequential — a cache entry is only readable once the first
+  response begins streaming. `spec/services/translation/runner_spec.rb` pins
+  the order.
+- **`Translation::Flags` is the safety story, not a nicety.** A superadmin
+  reviewing Polish cannot evaluate Polish. Five mechanical checks —
+  `empty`, `identical`, `lost_digits`, `lost_latin`, `length` — catch what
+  they can still act on. `identical` guards the exact failure documented in
+  `TranslatableContent#translation_draft`: text saved unchanged into another
+  language's slot, which then satisfies the publish gate.
+- **The run is a bare `Thread`, wrapped in `Rails.application.executor.wrap`.**
+  There is no ActiveJob backend here and the host has one vCPU. The wrap is
+  load-bearing: an unwrapped thread leaks a connection from the pool.
+  `TranslationRun.sweep_stale!` exists because a thread killed by a deploy
+  would otherwise leave the game locked out of translation forever.
+
+`ANTHROPIC_API_KEY` is an env var via the Kamal secret, not Azure Key Vault —
+Kamal 2.12 ships no Azure adapter, so Key Vault would mean a custom adapter or
+an entrypoint shim, and a new boot-time failure mode for the whole app, for one
+key. With the variable unset the feature is entirely absent, so development and
+CI need no credential. See
+`docs/superpowers/specs/2026-08-16-ai-translation-design.md`.
+
 ## Testing
 
 - **Cucumber** — `features/**/*.feature`, Russian Gherkin. **Two numbers, and the difference is the
@@ -387,10 +427,11 @@ deliberately; this is documented in `config/routes.rb` too.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 1829 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
-  This figure was 1603 here while the real number was 1751, and then 1751 while the real number was
-  1829, alongside a Cucumber figure that was also wrong — which is the point of the sentence that
-  follows.
+- **RSpec** — 1934 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+  This figure has now been wrong four times: 1603 while the real number was 1751, then 1751 while
+  it was 1829, then 1829 while it was 1851 — measured on 2026-08-16 before the AI translation
+  work began — and the Cucumber figure beside it was wrong once too. Which is the point of the
+  sentence that follows.
   **Do not trust a quoted RSpec count** — this number has moved eight times in a week and stale
   copies have been cited as current twice. Re-run it. The inherited 228/2325 is the stable figure.
   `spec/rails_helper.rb` enables the legacy `should` syntax

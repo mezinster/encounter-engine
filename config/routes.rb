@@ -206,6 +206,30 @@ Rails.application.routes.draw do
         end
       end
     end
+
+    # AI translation of author-written content. Superadmin-only; nested under
+    # the game because every action needs the game in scope and the redirect
+    # target is the game's edit screen.
+    #
+    # POST for cancel, not DELETE: this app has no Turbo and no rails-ujs, so
+    # the view drives it with a real button_to form.
+    resources :translation_runs, :only => [ :new, :create, :show ] do
+      post :cancel, :on => :member
+      # Re-enters the SAME run rather than creating a second one. The runner's
+      # resumability is scoped to a run's own proposals, so this is the only
+      # route that can pick up where a failed run stopped instead of paying
+      # for the whole game a second time.
+      post :retry,  :on => :member
+
+      resources :proposals, :only => [ :index ],
+                            :controller => "translation_proposals" do
+        member do
+          post :accept
+          post :reject
+        end
+        post :accept_all, :on => :collection
+      end
+    end
   end
 
   # Live-game interventions. Team-scoped ones carry both ids because the

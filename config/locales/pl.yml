@@ -113,6 +113,10 @@ pl:
           reset_clock: "Zresetował odliczanie czasu na poziomie"
           accept_entry: "Przyjął zgłoszenie drużyny"
           reject_entry: "Odrzucił zgłoszenie drużyny"
+          translation_run_started: "Uruchomił tłumaczenie"
+          translation_run_cancelled: "Zatrzymał tłumaczenie"
+          translation_run_retried: "Powtórzył tłumaczenie"
+          translation_proposals_accepted: "Przyjął tłumaczenia"
     settings:
       title: "Ustawienia limitów"
       explanation: "Limity rejestracji obowiązują dla jednego adresu IP w podanym okresie; 0 wyłącza limit. Limity plików obowiązują dla gry i dla całego serwera."
@@ -130,6 +134,8 @@ pl:
         instance_cap_megabytes: "Łączny limit serwera (MB)"
         free_space_floor_megabytes: "Nienaruszalny zapas miejsca na dysku (MB)"
         allowed_extensions: "Dozwolone rozszerzenia plików"
+        translation_model: "Model do tłumaczenia"
+        translation_max_fields_per_run: "Maksimum pól na jedno tłumaczenie"
     dashboard:
       show:
         title: "Przegląd"
@@ -237,6 +243,7 @@ pl:
     not_team_member: "Nie masz uprawnień, aby odwiedzić tę stronę"
     must_be_captain: "Musisz być kapitanem, aby wykonać to działanie"
     must_be_author: "Musisz być autorem gry, aby zobaczyć tę stronę"
+    translation_key_missing: "Tłumaczenie przy pomocy AI jest niedostępne: nie skonfigurowano klucza API."
     not_registered_for_game: "Twoja drużyna nie jest zapisana na tę grę."
     must_be_superadmin: "Dostęp tylko dla administratora"
     too_many_requests: "Zbyt wiele prób. Spróbuj później."
@@ -838,6 +845,64 @@ pl:
     new:
       name_label: "Nazwa"
       submit: "Utwórz drużynę"
+  translations:
+    runs:
+      already_running: "Dla tej gry już trwa tłumaczenie."
+      already_finished: "To tłumaczenie już się zakończyło — nie ma czego zatrzymywać."
+      not_retryable: "Powtórzyć można tylko tłumaczenie zakończone błędem."
+      too_large: "Zbyt wiele pól na jedno uruchomienie (maksimum %{count})."
+      empty: "Nie ma czego tłumaczyć: dla wybranych języków tłumaczenia już istnieją."
+    new:
+      heading: "Tłumaczenie gry „%{game}”"
+      submit: "Przetłumacz"
+    confirm:
+      heading: "Tłumaczenie gry „%{game}”: potwierdzenie"
+      locales: "Języki"
+      fields: "Pól do przetłumaczenia"
+      model: "Model"
+      estimate: "Szacowana liczba tokenów wejściowych"
+      estimate_unknown: "nie udało się policzyć"
+      submit: "Rozpocznij tłumaczenie"
+    edit:
+      heading: "Tłumaczenie przy pomocy AI"
+      translate: "Przetłumacz"
+      translate_multiple: "Przetłumacz na kilka języków…"
+    show:
+      heading: "Tłumaczenie gry „%{game}”"
+      progress: "%{done} z %{total}"
+      model: "Model"
+      locales: "Języki"
+      tokens: "Tokeny"
+      token_counts: "wejście %{input}, wyjście %{output}, z pamięci podręcznej %{cached}"
+      failed: "Nieprzetłumaczone"
+      cancel: "Zatrzymaj"
+      retry: "Powtórz"
+      review: "Sprawdź tłumaczenie"
+      estimate: "Szacowana liczba tokenów wejściowych"
+      state:
+        pending: "Oczekuje"
+        running: "W toku"
+        succeeded: "Zakończone"
+        failed: "Błąd"
+        cancelled: "Zatrzymane"
+    review:
+      heading: "Sprawdzanie tłumaczenia gry „%{game}”"
+      accept_all: "Zaakceptuj wszystko bez uwag"
+      accept: "Zaakceptuj"
+      reject: "Odrzuć"
+      edited: "Zredagowano:"
+      blank_text: "Tłumaczenie nie może być puste. Aby go nie używać, naciśnij „Odrzuć”."
+      invalid: "Nie udało się zapisać tłumaczenia: %{message}"
+      state:
+        pending: "Oczekuje"
+        accepted: "Zaakceptowano"
+        rejected: "Odrzucono"
+    flags:
+      empty: "Puste tłumaczenie"
+      identical: "Identyczne z oryginałem — mogło nie zostać przetłumaczone"
+      lost_digits: "Zgubiono kod lub liczbę"
+      lost_latin: "Zgubiono słowo lub link w alfabecie łacińskim"
+      length: "Podejrzana długość"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

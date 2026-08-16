@@ -18,7 +18,8 @@ class Admin::SettingsController < ApplicationController
   # written, and the whole submission is applied in one transaction: a form
   # that half saved would leave the operator with no way to tell which half.
   def update
-    permitted = Setting::INTEGER_DEFAULTS.keys + Setting::STRING_DEFAULTS.keys
+    permitted = Setting::INTEGER_DEFAULTS.keys + Setting::STRING_DEFAULTS.keys +
+                Setting::ENUM_DEFAULTS.keys
     submitted = params.fetch(:settings, {}).to_unsafe_h.slice(*permitted)
 
     begin
@@ -26,9 +27,11 @@ class Admin::SettingsController < ApplicationController
         submitted.each do |name, value|
           # Integer(value, 10) rather than to_i for integer keys: "abc".to_i is
           # 0, which here means "disable this limit" -- a typo must not silently
-          # switch a limit off. A string key is passed through untouched and
-          # validated by the model.
-          if Setting::STRING_DEFAULTS.key?(name)
+          # switch a limit off. A string or enum key is passed through
+          # untouched and validated by the model.
+          if Setting::ENUM_DEFAULTS.key?(name)
+            Setting.put(name, value)
+          elsif Setting::STRING_DEFAULTS.key?(name)
             Setting.put(name, value)
           else
             Setting.put(name, Integer(value, 10))

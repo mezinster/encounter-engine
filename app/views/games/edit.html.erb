@@ -80,6 +80,27 @@
   <em><%= link_to t("shared.cancel"), game_path(@game) %></em>
 <% end %>
 
+<%# AI translation. Superadmin-only and hidden entirely without an API key, so
+    an author never sees a control they cannot use. Outside the form above:
+    button_to renders its own <form>, and forms do not nest. %>
+<% if logged_in? && current_user.superadmin? && Translation::Client.configured? %>
+  <div class="translate-panel">
+    <h3><%= t("translations.edit.heading") %></h3>
+    <ul class="translate-locales">
+      <% (I18n.available_locales.map(&:to_s) - [ @game.primary_locale.to_s ]).each do |locale| %>
+        <li>
+          <%= t("locales.#{locale}") %>
+          <%= button_to t("translations.edit.translate"),
+                        game_translation_runs_path(@game),
+                        :params => { :"locales[]" => locale },
+                        :class => "btn" %>
+        </li>
+      <% end %>
+    </ul>
+    <%= link_to t("translations.edit.translate_multiple"), new_game_translation_run_path(@game) %>
+  </div>
+<% end %>
+
 <script type="text/javascript">
   Calendar.setup(
     {

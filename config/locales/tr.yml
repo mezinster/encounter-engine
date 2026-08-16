@@ -134,6 +134,10 @@ tr:
           reset_clock: "Seviyedeki süre sayacını sıfırladı"
           accept_entry: "Bir takımın başvurusunu kabul etti"
           reject_entry: "Bir takımın başvurusunu reddetti"
+          translation_run_started: "Çeviri başlattı"
+          translation_run_cancelled: "Çeviriyi durdurdu"
+          translation_run_retried: "Çeviriyi yeniden denedi"
+          translation_proposals_accepted: "Çevirileri kabul etti"
     settings:
       title: "Sınırlama ayarları"
       explanation: "Kayıt sınırlamaları belirtilen süre içinde tek bir IP adresi için geçerlidir; 0 sınırlamayı kapatır. Dosya sınırlamaları oyun başına ve sunucu genelinde geçerlidir."
@@ -151,6 +155,8 @@ tr:
         instance_cap_megabytes: "Sunucu genelinde toplam sınır (MB)"
         free_space_floor_megabytes: "Diskte korunacak minimum boş alan (MB)"
         allowed_extensions: "İzin verilen dosya uzantıları"
+        translation_model: "Çeviri modeli"
+        translation_max_fields_per_run: "Çeviri başına maksimum alan sayısı"
     dashboard:
       show:
         title: "Genel bakış"
@@ -259,6 +265,7 @@ tr:
     not_team_member: "Bu sayfayı görüntüleme yetkiniz yok"
     must_be_captain: "Bu işlemi yapmak için kaptan olmalısınız"
     must_be_author: "Bu sayfayı görmek için oyunun yazarı olmalısınız"
+    translation_key_missing: "Yapay zeka ile çeviri kullanılamıyor: API anahtarı ayarlanmamış."
     not_registered_for_game: "Takımınız bu oyuna kayıtlı değil."
     must_be_superadmin: "Erişim yalnızca yöneticiye açıktır"
     too_many_requests: "Çok fazla deneme yapıldı. Daha sonra tekrar deneyin."
@@ -873,6 +880,68 @@ tr:
     new:
       name_label: "Ad"
       submit: "Takım oluştur"
+  # The case suffix goes on "oyun" (the game), never on %{game}.
+  translations:
+    runs:
+      already_running: "Bu oyun için zaten bir çeviri çalışıyor."
+      already_finished: "Bu çeviri zaten bitti — durdurulacak bir şey yok."
+      not_retryable: "Yalnızca hatayla biten bir çeviri yeniden denenebilir."
+      too_large: "Tek seferde çok fazla alan var (en fazla %{count})."
+      empty: "Çevrilecek bir şey yok: seçilen diller için çeviriler zaten tamam."
+    new:
+      heading: "«%{game}» adlı oyunun çevirisi"
+      submit: "Çevir"
+    confirm:
+      # The case suffix sits on `oyunun`, never on %{game} -- see the Turkish
+      # note in CLAUDE.md. Reads correctly for both consonant- and vowel-final
+      # game names.
+      heading: "«%{game}» adlı oyunun çevirisi: onay"
+      locales: "Diller"
+      fields: "Çevrilecek alan sayısı"
+      model: "Model"
+      estimate: "Tahmini giriş token sayısı"
+      estimate_unknown: "sayılamadı"
+      submit: "Çeviriyi başlat"
+    edit:
+      heading: "Yapay zeka ile çeviri"
+      translate: "Çevir"
+      translate_multiple: "Birden fazla dile çevir…"
+    show:
+      heading: "«%{game}» adlı oyunun çevirisi"
+      progress: "%{total} içinden %{done}"
+      model: "Model"
+      locales: "Diller"
+      tokens: "Token"
+      token_counts: "giriş %{input}, çıkış %{output}, önbellekten %{cached}"
+      failed: "Çevrilmedi"
+      cancel: "Durdur"
+      retry: "Yeniden dene"
+      review: "Çeviriyi incele"
+      estimate: "Tahmini giriş token sayısı"
+      state:
+        pending: "Bekliyor"
+        running: "Çalışıyor"
+        succeeded: "Tamamlandı"
+        failed: "Başarısız"
+        cancelled: "Durduruldu"
+    review:
+      heading: "«%{game}» adlı oyunun çevirisinin incelenmesi"
+      accept_all: "Sorunsuz olanların tümünü kabul et"
+      accept: "Kabul et"
+      reject: "Reddet"
+      edited: "Düzenlendi:"
+      blank_text: "Çeviri boş olamaz. Kullanmak istemiyorsanız «Reddet» düğmesine basın."
+      invalid: "Çeviri kaydedilemedi: %{message}"
+      state:
+        pending: "Bekliyor"
+        accepted: "Kabul edildi"
+        rejected: "Reddedildi"
+    flags:
+      empty: "Boş çeviri"
+      identical: "Kaynakla aynı — çevrilmemiş olabilir"
+      lost_digits: "Bir kod veya sayı kayboldu"
+      lost_latin: "Latin harfli bir kelime veya bağlantı kayboldu"
+      length: "Şüpheli uzunluk"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

@@ -1,0 +1,127 @@
+# app/services/translation/client.rb
+#
+# The ONLY place in this application that touches the Anthropic SDK. Every spec
+# in the feature stubs this seam, so no spec needs a network or a key.
+module Translation
+  class Client
+    Error = Class.new(StandardError)
+
+    Result = Struct.new(:texts, :input_tokens, :output_tokens, :cache_read_tokens,
+                        :keyword_init => true)
+
+    # An array of {key, text} rather than an object with dynamic property
+    # names: JSON Schema cannot express "one property per field", and a fixed
+    # schema is what lets strict validation happen at the tool-call layer --
+    # so a malformed response is retried by the API, not by a parse-failure
+    # loop here that would burn a second full call.
+    RESPONSE_SCHEMA = {
+      "type" => "object",
+      "properties" => {
+        "translations" => {
+          "type"  => "array",
+          "items" => {
+            "type" => "object",
+            "properties" => {
+              "key"  => { "type" => "string" },
+              "text" => { "type" => "string" }
+            },
+            "required" => [ "key", "text" ],
+            "additionalProperties" => false
+          }
+        }
+      },
+      "required" => [ "translations" ],
+      "additionalProperties" => false
+    }.freeze
+
+    # The rule that matters most is about codes, not language. Answer is not a
+    # translatable model, so answers are never sent -- but a level's text or a
+    # hint can QUOTE a code the player must type, and translating one silently
+    # breaks the game for every team.
+    RULES = <<~PROMPT.freeze
+      You translate content for an urban puzzle game. Each input line is
+      "KEY: TEXT". Return one entry per key, translating only TEXT.
+
+      Rules:
+      - Copy verbatim, never translate: digit sequences, codes, coordinates,
+        times, house numbers, URLs, and Latin-script proper nouns. A player
+        types these exactly as printed; a translated code breaks the game.
+      - Preserve line breaks and paragraph structure exactly.
+      - Keep the register of the original. This is read under time pressure.
+      - Translate every key you are given, and invent no keys.
+    PROMPT
+
+    def self.configured?
+      ENV["ANTHROPIC_API_KEY"].present?
+    end
+
+    def initialize(api_key:, model:)
+      @api_key = api_key
+      @model   = model
+    end
+
+    def translate(unit:, locale:)
+      response = messages.create(
+        :model      => @model,
+        :max_tokens => 8_000,
+        :output_config => {
+          # The single largest cost lever after model choice. NOT
+          # thinking: {type: "disabled"} -- on Claude Opus 5 that has a
+          # documented tendency to leak <thinking> tags into the visible
+          # response, which here would land verbatim inside a game level.
+          :effort => "low",
+          :format => { :type => "json_schema", :schema => RESPONSE_SCHEMA }
+        },
+        :system_ => [
+          { :type => "text", :text => RULES },
+          # The breakpoint. Everything up to and including this block is
+          # identical across every target locale for this unit, so the first
+          # locale writes the cache at 1.25x and the rest read it at 0.1x.
+          { :type => "text", :text => unit.source_text,
+            :cache_control => { :type => "ephemeral" } }
+        ],
+        :messages => [
+          { :role => "user", :content => "Translate the above into #{language_name(locale)}." }
+        ]
+      )
+
+      # Before content, always.
+      raise Error, "model refused: #{response.stop_reason}" if response.stop_reason == :refusal
+
+      build_result(response)
+    rescue Error
+      raise
+    rescue StandardError => e
+      raise Error, "#{e.class}: #{e.message}"
+    end
+
+    private
+
+    def messages
+      @messages ||= ::Anthropic::Client.new(:api_key => @api_key).messages
+    end
+
+    # The language's own name, which is what the locale switcher already shows.
+    def language_name(locale)
+      I18n.t("locales.#{locale}", :locale => locale)
+    end
+
+    def build_result(response)
+      block = response.content.find { |b| b.type == :text }
+      raise Error, "no text block in response" if block.nil?
+
+      payload = JSON.parse(block.text)
+      texts   = payload.fetch("translations", []).each_with_object({}) do |entry, acc|
+        acc[entry["key"]] = entry["text"]
+      end
+
+      usage = response.usage
+      Result.new(
+        :texts             => texts,
+        :input_tokens      => usage&.input_tokens.to_i,
+        :output_tokens     => usage&.output_tokens.to_i,
+        :cache_read_tokens => usage&.cache_read_input_tokens.to_i
+      )
+    end
+  end
+end

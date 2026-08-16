@@ -33,6 +33,10 @@ gem "acts_as_list"
 # upload. See spec/image_processing_spec.rb.
 gem "image_processing", "~> 1.13", require: false
 gem "bcrypt", "~> 3.1"
+# Claude API, for superadmin-triggered translation of author-written game
+# content. Loaded only when a translation run actually starts -- see
+# Translation::Client.
+gem "anthropic", "~> 1.0"
 
 group :development, :test do
   gem "rspec-rails", "~> 7.0"

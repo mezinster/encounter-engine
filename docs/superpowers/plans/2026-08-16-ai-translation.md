@@ -1775,7 +1775,7 @@ git commit -m "Translate a game unit by unit, locales inner"
 - Test: `spec/requests/translation_runs_spec.rb`
 - Modify: `spec/requests/admin_audit_spec.rb`
 
-**Note on the view:** `new.html.erb` lands here, not in Task 9, because this task's own authorization spec does `get new_game_translation_runs_path(game)` and expects 200 — which renders it. A task whose tests render a template owns that template.
+**Note on the view:** `new.html.erb` lands here, not in Task 9, because this task's own authorization spec does `get new_game_translation_run_path(game)` and expects 200 — which renders it. A task whose tests render a template owns that template.
 
 **Interfaces:**
 - Consumes: `Translation::Runner.plan` and `Translation::Runner` (Task 6), `Translation::Client.configured?` (Task 5), `Setting.enum` / `Setting.integer` (Task 3), `TranslationRun.active_for` (Task 1).
@@ -1803,39 +1803,57 @@ describe "translation run authorization", type: :request do
   # marked security chokepoint that already admits superadmins to author
   # actions; this feature spends real money against a shared API key, so the
   # author of a game must not reach it.
+  #
+  # Status is :unauthorized (401), not 403: ApplicationController's
+  # deny_unauthorized renders status: :unauthorized for every
+  # Authentication::Unauthorized this app raises (see
+  # spec/requests/superadmin_authorization_spec.rb, "refuses a stranger"), and
+  # require_superadmin! raises exactly that. Asserting 403 here would diverge
+  # from every other superadmin-gated action in the app for no reason specific
+  # to this controller.
   it "refuses the game's own author" do
     sign_in(author)
 
     post game_translation_runs_path(game), :params => { :locales => [ "en" ] }
-    expect(response.status).to eq(403)
+    expect(response).to have_http_status(:unauthorized)
 
-    get new_game_translation_runs_path(game)
-    expect(response.status).to eq(403)
+    get new_game_translation_run_path(game)
+    expect(response).to have_http_status(:unauthorized)
   end
 
+  # A guest is refused earlier and differently, same as every other
+  # authenticated-only action: require_authentication! runs before
+  # require_superadmin!, raises Authentication::Unauthenticated, and
+  # deny_unauthenticated redirects to the login form (302), not a 401/403 --
+  # see superadmin_authorization_spec.rb's "still refuses an anonymous
+  # visitor" for the same pattern on ensure_author.
   it "refuses a guest" do
     post game_translation_runs_path(game), :params => { :locales => [ "en" ] }
-    expect(response.status).to eq(403)
+    expect(response).to have_http_status(:found)
+    expect(response).to redirect_to(login_path)
   end
 
   it "admits a superadmin" do
     sign_in(superadmin)
-    get new_game_translation_runs_path(game)
+    get new_game_translation_run_path(game)
 
     expect(response.status).to eq(200)
   end
 
   # With no key the feature does not exist at all -- development and CI need
-  # no credential.
+  # no credential. require_api_key! raises the same Authentication::Unauthorized
+  # as require_superadmin!, so the status matches (401, not 403).
   it "refuses everyone when no API key is configured" do
     allow(Translation::Client).to receive(:configured?).and_return(false)
     sign_in(superadmin)
 
     post game_translation_runs_path(game), :params => { :locales => [ "en" ] }
-    expect(response.status).to eq(403)
+    expect(response).to have_http_status(:unauthorized)
   end
 end
 ```
+
+**Route helper names are singular for `new`.** Rails generates `new_game_translation_run_path`, not `new_game_translation_run_path` — the plural form appears nowhere. Check `bin/rails routes | grep translation_run` rather than guessing; the same slip appears in Task 8's spec and Task 9's view if copied from here.
 
 - [ ] **Step 2: Write the failing behaviour spec**
 
@@ -2497,7 +2515,7 @@ In `app/views/games/edit.html.erb`, the `available_locale_list` field currently 
         </li>
       <% end %>
     </ul>
-    <%= link_to t("translations.edit.translate_multiple"), new_game_translation_runs_path(@game) %>
+    <%= link_to t("translations.edit.translate_multiple"), new_game_translation_run_path(@game) %>
   </div>
 <% end %>
 ```

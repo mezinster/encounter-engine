@@ -846,6 +846,41 @@ pl:
     new:
       heading: "Tłumaczenie gry „%{game}”"
       submit: "Przetłumacz"
+    edit:
+      heading: "Tłumaczenie przy pomocy AI"
+      translate: "Przetłumacz"
+      translate_multiple: "Przetłumacz na kilka języków…"
+    show:
+      heading: "Tłumaczenie gry „%{game}”"
+      progress: "%{done} z %{total}"
+      model: "Model"
+      locales: "Języki"
+      tokens: "Tokeny"
+      token_counts: "wejście %{input}, wyjście %{output}, z pamięci podręcznej %{cached}"
+      failed: "Nieprzetłumaczone"
+      cancel: "Zatrzymaj"
+      review: "Sprawdź tłumaczenie"
+      state:
+        pending: "Oczekuje"
+        running: "W toku"
+        succeeded: "Zakończone"
+        failed: "Błąd"
+        cancelled: "Zatrzymane"
+    review:
+      heading: "Sprawdzanie tłumaczenia gry „%{game}”"
+      accept_all: "Zaakceptuj wszystko bez uwag"
+      accept: "Zaakceptuj"
+      reject: "Odrzuć"
+      state:
+        pending: "Oczekuje"
+        accepted: "Zaakceptowano"
+        rejected: "Odrzucono"
+    flags:
+      empty: "Puste tłumaczenie"
+      identical: "Identyczne z oryginałem — mogło nie zostać przetłumaczone"
+      lost_digits: "Zgubiono kod lub liczbę"
+      lost_latin: "Zgubiono słowo lub link w alfabecie łacińskim"
+      length: "Podejrzana długość"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

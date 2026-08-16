@@ -814,6 +814,41 @@ en:
     new:
       heading: "Translating “%{game}”"
       submit: "Translate"
+    edit:
+      heading: "AI translation"
+      translate: "Translate"
+      translate_multiple: "Translate into several languages…"
+    show:
+      heading: "Translating “%{game}”"
+      progress: "%{done} of %{total}"
+      model: "Model"
+      locales: "Languages"
+      tokens: "Tokens"
+      token_counts: "input %{input}, output %{output}, from cache %{cached}"
+      failed: "Not translated"
+      cancel: "Stop"
+      review: "Review the translation"
+      state:
+        pending: "Waiting"
+        running: "Running"
+        succeeded: "Finished"
+        failed: "Failed"
+        cancelled: "Stopped"
+    review:
+      heading: "Reviewing the translation of “%{game}”"
+      accept_all: "Accept everything unflagged"
+      accept: "Accept"
+      reject: "Reject"
+      state:
+        pending: "Waiting"
+        accepted: "Accepted"
+        rejected: "Rejected"
+    flags:
+      empty: "Empty translation"
+      identical: "Identical to the source — possibly untranslated"
+      lost_digits: "A code or number was lost"
+      lost_latin: "A Latin-script word or link was lost"
+      length: "Implausible length"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

@@ -864,6 +864,41 @@ ka:
     new:
       heading: "თამაშის «%{game}» თარგმანი"
       submit: "თარგმნა"
+    edit:
+      heading: "თარგმანი ხელოვნური ინტელექტით"
+      translate: "თარგმნა"
+      translate_multiple: "თარგმნა რამდენიმე ენაზე…"
+    show:
+      heading: "თამაშის «%{game}» თარგმანი"
+      progress: "%{done} %{total}-დან"
+      model: "მოდელი"
+      locales: "ენები"
+      tokens: "ტოკენები"
+      token_counts: "შეყვანა %{input}, გამოტანა %{output}, კეშიდან %{cached}"
+      failed: "არ ითარგმნა"
+      cancel: "შეჩერება"
+      review: "თარგმანის შემოწმება"
+      state:
+        pending: "მოლოდინში"
+        running: "მიმდინარეობს"
+        succeeded: "დასრულდა"
+        failed: "შეცდომა"
+        cancelled: "შეჩერდა"
+    review:
+      heading: "თამაშის «%{game}» თარგმანის განხილვა"
+      accept_all: "ყველას მიღება შენიშვნების გარეშე"
+      accept: "მიღება"
+      reject: "უარყოფა"
+      state:
+        pending: "მოლოდინში"
+        accepted: "მიღებულია"
+        rejected: "უარყოფილია"
+    flags:
+      empty: "ცარიელი თარგმანი"
+      identical: "ემთხვევა ორიგინალს — შესაძლოა არ ითარგმნა"
+      lost_digits: "დაიკარგა კოდი ან რიცხვი"
+      lost_latin: "დაიკარგა ლათინური სიტყვა ან ბმული"
+      length: "საეჭვო სიგრძე"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

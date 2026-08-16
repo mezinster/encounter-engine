@@ -1,0 +1,36 @@
+<h2><%= t("translations.review.heading", :game => @game.name) %></h2>
+
+<%= button_to t("translations.review.accept_all"),
+              accept_all_game_translation_run_proposals_path(@game, @run),
+              :class => "btn btn--go" %>
+
+<table class="proposals">
+  <% @proposals.each do |proposal| %>
+    <tr class="<%= "flagged" if proposal.flagged? %>">
+      <td><%= t("locales.#{proposal.locale}") %></td>
+      <td><%= @game.label_for(proposal.translatable, proposal.field) %></td>
+      <%# Rendered as text, never as HTML. Author-written game content is
+          escaped everywhere in this application and a translation of it is
+          no different. %>
+      <td class="source"><%= proposal.source_text %></td>
+      <td>
+        <%= form_with url: accept_game_translation_run_proposal_path(@game, @run, proposal),
+                      method: :post do %>
+          <%= text_area_tag "proposed_text", proposal.proposed_text, :rows => 3 %>
+          <% if proposal.flagged? %>
+            <ul class="flags">
+              <% proposal.flag_list.each do |flag| %>
+                <li><%= t("translations.flags.#{flag}") %></li>
+              <% end %>
+            </ul>
+          <% end %>
+          <%= submit_tag t("translations.review.accept"), :class => "btn btn--go" %>
+        <% end %>
+        <%= button_to t("translations.review.reject"),
+                      reject_game_translation_run_proposal_path(@game, @run, proposal),
+                      :class => "btn" %>
+      </td>
+      <td><%= t("translations.review.state.#{proposal.state}") %></td>
+    </tr>
+  <% end %>
+</table>

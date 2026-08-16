@@ -882,6 +882,41 @@ tr:
     new:
       heading: "«%{game}» adlı oyunun çevirisi"
       submit: "Çevir"
+    edit:
+      heading: "Yapay zeka ile çeviri"
+      translate: "Çevir"
+      translate_multiple: "Birden fazla dile çevir…"
+    show:
+      heading: "«%{game}» adlı oyunun çevirisi"
+      progress: "%{total} içinden %{done}"
+      model: "Model"
+      locales: "Diller"
+      tokens: "Token"
+      token_counts: "giriş %{input}, çıkış %{output}, önbellekten %{cached}"
+      failed: "Çevrilmedi"
+      cancel: "Durdur"
+      review: "Çeviriyi incele"
+      state:
+        pending: "Bekliyor"
+        running: "Çalışıyor"
+        succeeded: "Tamamlandı"
+        failed: "Başarısız"
+        cancelled: "Durduruldu"
+    review:
+      heading: "«%{game}» adlı oyunun çevirisinin incelenmesi"
+      accept_all: "Sorunsuz olanların tümünü kabul et"
+      accept: "Kabul et"
+      reject: "Reddet"
+      state:
+        pending: "Bekliyor"
+        accepted: "Kabul edildi"
+        rejected: "Reddedildi"
+    flags:
+      empty: "Boş çeviri"
+      identical: "Kaynakla aynı — çevrilmemiş olabilir"
+      lost_digits: "Bir kod veya sayı kayboldu"
+      lost_latin: "Latin harfli bir kelime veya bağlantı kayboldu"
+      length: "Şüpheli uzunluk"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

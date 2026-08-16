@@ -840,6 +840,41 @@ uk:
     new:
       heading: "Переклад гри «%{game}»"
       submit: "Перекласти"
+    edit:
+      heading: "Переклад за допомогою ШІ"
+      translate: "Перекласти"
+      translate_multiple: "Перекласти на кілька мов…"
+    show:
+      heading: "Переклад гри «%{game}»"
+      progress: "%{done} з %{total}"
+      model: "Модель"
+      locales: "Мови"
+      tokens: "Токени"
+      token_counts: "вхід %{input}, вихід %{output}, з кешу %{cached}"
+      failed: "Не перекладено"
+      cancel: "Зупинити"
+      review: "Перевірити переклад"
+      state:
+        pending: "Очікує"
+        running: "Виконується"
+        succeeded: "Завершено"
+        failed: "Помилка"
+        cancelled: "Зупинено"
+    review:
+      heading: "Перевірка перекладу гри «%{game}»"
+      accept_all: "Прийняти все без зауважень"
+      accept: "Прийняти"
+      reject: "Відхилити"
+      state:
+        pending: "Очікує"
+        accepted: "Прийнято"
+        rejected: "Відхилено"
+    flags:
+      empty: "Порожній переклад"
+      identical: "Збігається з оригіналом — можливо, не перекладено"
+      lost_digits: "Втрачено код або число"
+      lost_latin: "Втрачено латинське слово або посилання"
+      length: "Підозріла довжина"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

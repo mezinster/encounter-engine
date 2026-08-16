@@ -1,0 +1,45 @@
+<% content_for :head do %>
+  <%# Polling with no JavaScript. This app has no Turbo and no rails-ujs, and
+      adopting either is an explicit non-goal -- rack-test executes no
+      JavaScript, so the acceptance suite would be blind to it. Removed the
+      moment the run is terminal, or a finished page reloads forever. %>
+  <% unless @run.terminal? %>
+    <meta http-equiv="refresh" content="3">
+  <% end %>
+<% end %>
+
+<h2><%= t("translations.show.heading", :game => @game.name) %></h2>
+
+<p>
+  <%= t("translations.show.state.#{@run.state}") %> —
+  <%= t("translations.show.progress", :done => @run.fields_done, :total => @run.fields_total) %>
+</p>
+
+<dl>
+  <dt><%= t("translations.show.model") %></dt><dd><%= @run.model %></dd>
+  <dt><%= t("translations.show.locales") %></dt>
+  <dd><%= @run.target_locale_list.map { |l| t("locales.#{l}") }.join(", ") %></dd>
+  <dt><%= t("translations.show.tokens") %></dt>
+  <dd><%= t("translations.show.token_counts", :input => @run.input_tokens,
+                                              :output => @run.output_tokens,
+                                              :cached => @run.cache_read_tokens) %></dd>
+  <% if @run.fields_failed.to_i > 0 %>
+    <dt><%= t("translations.show.failed") %></dt><dd><%= @run.fields_failed %></dd>
+  <% end %>
+</dl>
+
+<%# Beyond the brief's template: offered whenever the run is not terminal, not
+    only while RUNNING. A background thread that dies before its own rescue
+    block runs leaves a run stuck PENDING, and PENDING counts as an active
+    state (TranslationRun::ACTIVE_STATES) -- which blocks the game from
+    starting any new run. This page is the only place a human can act on
+    that today; Task 10 adds an automatic sweep for it. %>
+<% if !@run.terminal? %>
+  <%= button_to t("translations.show.cancel"), cancel_game_translation_run_path(@game, @run),
+                :class => "btn" %>
+<% else %>
+  <%= link_to t("translations.show.review"),
+              game_translation_run_proposals_path(@game, @run), :class => "btn btn--go" %>
+<% end %>
+
+<em><%= link_to t("shared.cancel"), edit_game_path(@game) %></em>

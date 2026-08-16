@@ -835,6 +835,41 @@ ru:
     new:
       heading: "Перевод игры «%{game}»"
       submit: "Перевести"
+    edit:
+      heading: "Перевод с помощью ИИ"
+      translate: "Перевести"
+      translate_multiple: "Перевести на несколько языков…"
+    show:
+      heading: "Перевод игры «%{game}»"
+      progress: "%{done} из %{total}"
+      model: "Модель"
+      locales: "Языки"
+      tokens: "Токены"
+      token_counts: "ввод %{input}, вывод %{output}, из кэша %{cached}"
+      failed: "Не переведено"
+      cancel: "Остановить"
+      review: "Проверить перевод"
+      state:
+        pending: "Ожидает"
+        running: "Выполняется"
+        succeeded: "Завершён"
+        failed: "Ошибка"
+        cancelled: "Остановлен"
+    review:
+      heading: "Проверка перевода игры «%{game}»"
+      accept_all: "Принять всё без замечаний"
+      accept: "Принять"
+      reject: "Отклонить"
+      state:
+        pending: "Ожидает"
+        accepted: "Принято"
+        rejected: "Отклонено"
+    flags:
+      empty: "Пустой перевод"
+      identical: "Совпадает с оригиналом — возможно, не переведено"
+      lost_digits: "Потерян код или число"
+      lost_latin: "Потеряно латинское слово или ссылка"
+      length: "Подозрительная длина"
   time:
     formats:
       short: "%Y-%m-%d %H:%M"

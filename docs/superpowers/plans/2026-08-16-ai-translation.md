@@ -2214,7 +2214,14 @@ require "rails_helper"
 
 describe "reviewing translation proposals", type: :request do
   let(:superadmin) { u = create_user; u.update!(:is_superadmin => true); u }
-  let(:game)       { create_game(:primary_locale => "ru", :available_locale_list => %w[ru en]) }
+
+  # :is_draft is load-bearing in this fixture, not decoration. create_game
+  # leaves a game PUBLISHED, and declared_locales_are_translated_before_publication
+  # refuses to let a published game declare a locale it has not translated --
+  # so a `ru en` game blows up on save! before any example body runs. A draft
+  # is exempt (`return if self.draft?`), which is what these specs want anyway.
+  let(:game)       { create_game(:is_draft => true, :primary_locale => "ru",
+                                 :available_locale_list => %w[ru en]) }
   let!(:level)     { create_level(:game => game, :name => "Первый", :text => "Найдите табличку") }
   let(:run) do
     TranslationRun.create!(:game => game, :actor => superadmin, :model => "claude-opus-5",
@@ -2471,7 +2478,14 @@ require "rails_helper"
 describe "translation screens", type: :request do
   let(:superadmin) { u = create_user; u.update!(:is_superadmin => true); u }
   let(:author)     { create_user }
-  let(:game)       { create_game(:author => author, :primary_locale => "ru",
+
+  # :is_draft is load-bearing in this fixture, not decoration. create_game
+  # leaves a game PUBLISHED, and declared_locales_are_translated_before_publication
+  # refuses to let a published game declare a locale it has not translated --
+  # so a `ru en` game blows up on save! before any example body runs. A draft
+  # is exempt (`return if self.draft?`), which is what these specs want anyway.
+  let(:game)       { create_game(:author => author, :is_draft => true,
+                                 :primary_locale => "ru",
                                  :available_locale_list => %w[ru en]) }
   let!(:level)     { create_level(:game => game, :name => "Первый", :text => "Найдите табличку") }
 

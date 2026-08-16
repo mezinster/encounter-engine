@@ -83,6 +83,61 @@ describe "translation screens", type: :request do
   # human can act on that, so Cancel must be offered on a pending run too,
   # not only a running one. Task 10 adds an automatic sweep; this is the
   # manual escape hatch until then.
+  # Retry is what makes the runner's resumability reachable. Without the
+  # button, a run that failed at 90% could only be redone as a NEW run, whose
+  # already_proposed? scope is empty -- everything re-translated, everything
+  # re-paid for.
+  it "offers Retry on a failed run" do
+    run = TranslationRun.create!(:game => game, :actor => superadmin,
+                                 :model => "claude-opus-5", :state => TranslationRun::FAILED,
+                                 :fields_total => 4, :fields_done => 3)
+    sign_in(superadmin)
+
+    get game_translation_run_path(game, run)
+
+    expect(response.body).to include(retry_game_translation_run_path(game, run))
+    expect(response.body).to include(I18n.t("translations.show.retry"))
+  end
+
+  it "offers no Retry on a succeeded or cancelled run" do
+    sign_in(superadmin)
+
+    [ TranslationRun::SUCCEEDED, TranslationRun::CANCELLED ].each do |state|
+      run = TranslationRun.create!(:game => game, :actor => superadmin,
+                                   :model => "claude-opus-5", :state => state)
+      get game_translation_run_path(game, run)
+
+      expect(response.body).not_to include(retry_game_translation_run_path(game, run))
+      run.destroy!
+    end
+  end
+
+  # estimated_input_tokens was a dead column until the pre-flight landed.
+  it "shows the pre-flight estimate beside the real spend, when there is one" do
+    run = TranslationRun.create!(:game => game, :actor => superadmin,
+                                 :model => "claude-opus-5", :state => TranslationRun::SUCCEEDED,
+                                 :estimated_input_tokens => 12_345)
+    sign_in(superadmin)
+
+    get game_translation_run_path(game, run)
+
+    expect(response.body).to include(I18n.t("translations.show.estimate"))
+    expect(response.body)
+      .to include(ActionController::Base.helpers.number_with_delimiter(12_345))
+  end
+
+  # A zero is not an estimate of zero, it is the absence of one -- runs made
+  # before the pre-flight existed all carry it.
+  it "shows no estimate row when the run was never priced" do
+    run = TranslationRun.create!(:game => game, :actor => superadmin,
+                                 :model => "claude-opus-5", :state => TranslationRun::SUCCEEDED)
+    sign_in(superadmin)
+
+    get game_translation_run_path(game, run)
+
+    expect(response.body).not_to include(I18n.t("translations.show.estimate"))
+  end
+
   it "offers Cancel on a pending run, not only a running one" do
     run = TranslationRun.create!(:game => game, :actor => superadmin,
                                  :model => "claude-opus-5", :state => TranslationRun::PENDING,

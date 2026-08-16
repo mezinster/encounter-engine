@@ -61,7 +61,36 @@ module Translation
     end
 
     def translate(unit:, locale:)
-      response = messages.create(
+      response = messages.create(**request_body(unit, locale))
+
+      # Before content, always.
+      raise Error, "model refused: #{response.stop_reason}" if response.stop_reason == :refusal
+
+      build_result(response)
+    rescue Error
+      raise
+    rescue StandardError => e
+      raise Error, "#{e.class}: #{e.message}"
+    end
+
+    # The pre-flight. Free, exact, and -- crucially -- built from the SAME
+    # request body #translate will send, so the figure on the confirmation
+    # screen prices the run that actually happens rather than a second,
+    # hand-rolled approximation of it. Kept behind this seam like everything
+    # else that touches the SDK, so no spec needs a network or a key.
+    def count_input_tokens(unit:, locale:)
+      response = messages.count_tokens(**request_body(unit, locale).except(:max_tokens))
+      response.input_tokens.to_i
+    rescue StandardError => e
+      raise Error, "#{e.class}: #{e.message}"
+    end
+
+    private
+
+    # One body, two callers. If the two ever diverge the estimate silently
+    # stops describing the run, and nothing would fail to say so.
+    def request_body(unit, locale)
+      {
         :model      => @model,
         :max_tokens => 8_000,
         :output_config => {
@@ -83,19 +112,8 @@ module Translation
         :messages => [
           { :role => "user", :content => "Translate the above into #{language_name(locale)}." }
         ]
-      )
-
-      # Before content, always.
-      raise Error, "model refused: #{response.stop_reason}" if response.stop_reason == :refusal
-
-      build_result(response)
-    rescue Error
-      raise
-    rescue StandardError => e
-      raise Error, "#{e.class}: #{e.message}"
+      }
     end
-
-    private
 
     def messages
       @messages ||= ::Anthropic::Client.new(:api_key => @api_key).messages

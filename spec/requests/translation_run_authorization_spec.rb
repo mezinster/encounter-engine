@@ -33,6 +33,19 @@ describe "translation run authorization", type: :request do
     expect(response).to have_http_status(:unauthorized)
   end
 
+  # Retry re-enters a run, i.e. spends money, so it is gated exactly like
+  # create. A new action added to this controller inherits the before_action
+  # chain, but "inherits it" is a claim worth an assertion.
+  it "refuses the game's own author on retry" do
+    run = TranslationRun.create!(:game => game, :actor => superadmin,
+                                 :model => "claude-opus-5", :state => TranslationRun::FAILED)
+    sign_in(author)
+
+    post retry_game_translation_run_path(game, run)
+    expect(response).to have_http_status(:unauthorized)
+    expect(run.reload.state).to eq(TranslationRun::FAILED)
+  end
+
   # A guest is refused earlier and differently, same as every other
   # authenticated-only action: require_authentication! runs before
   # require_superadmin!, raises Authentication::Unauthenticated, and

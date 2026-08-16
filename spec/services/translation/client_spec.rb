@@ -71,6 +71,42 @@ describe Translation::Client do
       .to raise_error(Translation::Client::Error, /refus/i)
   end
 
+  # The pre-flight. Free and exact -- the design names it first among three
+  # cost guards -- and it prices the request that will actually be sent, not a
+  # second approximation of it.
+  describe "#count_input_tokens" do
+    it "returns the measured input-token count" do
+      allow(messages).to receive(:count_tokens)
+        .and_return(double("count", :input_tokens => 1_234))
+
+      expect(client.count_input_tokens(:unit => unit, :locale => "pl")).to eq(1_234)
+    end
+
+    # If the estimate were built from a different body it would price a run
+    # nobody is going to make, and nothing would fail to say so.
+    it "counts exactly the body #translate would send, minus max_tokens" do
+      expect(messages).to receive(:count_tokens) do |args|
+        expect(args[:model]).to eq("claude-opus-5")
+        expect(args[:system_].last[:text]).to include("Ночной город")
+        expect(args[:system_].last[:cache_control]).to eq({ :type => "ephemeral" })
+        expect(args[:messages].first[:content]).to include("Polski")
+        expect(args[:output_config][:effort]).to eq("low")
+        # count_tokens takes no max_tokens; sending one is a 400.
+        expect(args).not_to have_key(:max_tokens)
+        double("count", :input_tokens => 1)
+      end
+
+      client.count_input_tokens(:unit => unit, :locale => "pl")
+    end
+
+    it "raises the seam's own error rather than leaking an SDK exception" do
+      allow(messages).to receive(:count_tokens).and_raise(RuntimeError, "boom")
+
+      expect { client.count_input_tokens(:unit => unit, :locale => "pl") }
+        .to raise_error(Translation::Client::Error, /boom/)
+    end
+  end
+
   it "knows whether an API key is configured at all" do
     allow(ENV).to receive(:[]).with("ANTHROPIC_API_KEY").and_return(nil)
     expect(described_class.configured?).to be false

@@ -23,6 +23,13 @@
   <dd><%= t("translations.show.token_counts", :input => @run.input_tokens,
                                               :output => @run.output_tokens,
                                               :cached => @run.cache_read_tokens) %></dd>
+  <%# The pre-flight figure, beside the real one. Shown only when there is one:
+      runs created before the pre-flight existed carry a zero, and a zero here
+      reads as "estimated free" rather than "never estimated". %>
+  <% if @run.estimated_input_tokens.to_i > 0 %>
+    <dt><%= t("translations.show.estimate") %></dt>
+    <dd><%= number_with_delimiter(@run.estimated_input_tokens) %></dd>
+  <% end %>
   <% if @run.fields_failed.to_i > 0 %>
     <dt><%= t("translations.show.failed") %></dt><dd><%= @run.fields_failed %></dd>
   <% end %>
@@ -38,6 +45,16 @@
   <%= button_to t("translations.show.cancel"), cancel_game_translation_run_path(@game, @run),
                 :class => "btn" %>
 <% else %>
+  <%# Retry re-enters THIS run. Offered on a failed run only -- see the
+      controller's guard for why cancelled is deliberately not retryable.
+      Without this button the runner's resumability had no caller at all, and
+      a run that died at 90% could only be redone as a new run, whose
+      already_proposed? scope is empty: everything re-translated, everything
+      re-paid for. %>
+  <% if @run.state == TranslationRun::FAILED %>
+    <%= button_to t("translations.show.retry"), retry_game_translation_run_path(@game, @run),
+                  :class => "btn btn--go" %>
+  <% end %>
   <%= link_to t("translations.show.review"),
               game_translation_run_proposals_path(@game, @run), :class => "btn btn--go" %>
 <% end %>

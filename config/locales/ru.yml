@@ -91,6 +91,7 @@ ru:
           reject_entry: "Отклонил заявку команды"
           translation_run_started: "Запустил перевод"
           translation_run_cancelled: "Остановил перевод"
+          translation_run_retried: "Повторил перевод"
           translation_proposals_accepted: "Принял переводы"
     settings:
       title: "Настройки ограничений"
@@ -218,6 +219,7 @@ ru:
     not_team_member: "Вы не авторизованы для посещения этой страницы"
     must_be_captain: "Вы должны быть капитаном чтобы выполнить это действие"
     must_be_author: "Вы должны быть автором игры, чтобы видеть эту страницу"
+    translation_key_missing: "Перевод с помощью ИИ недоступен: не настроен ключ API."
     not_registered_for_game: "Ваша команда не зарегистрирована на эту игру."
     must_be_superadmin: "Доступ только для администратора"
     too_many_requests: "Слишком много попыток. Попробуйте позже."
@@ -833,11 +835,21 @@ ru:
   translations:
     runs:
       already_running: "Для этой игры уже выполняется перевод."
+      already_finished: "Этот перевод уже завершён — останавливать нечего."
+      not_retryable: "Повторить можно только перевод, завершившийся ошибкой."
       too_large: "Слишком много полей за один раз (максимум %{count})."
       empty: "Нечего переводить: для выбранных языков переводы уже есть."
     new:
       heading: "Перевод игры «%{game}»"
       submit: "Перевести"
+    confirm:
+      heading: "Перевод игры «%{game}»: подтверждение"
+      locales: "Языки"
+      fields: "Полей к переводу"
+      model: "Модель"
+      estimate: "Оценка входных токенов"
+      estimate_unknown: "не удалось подсчитать"
+      submit: "Начать перевод"
     edit:
       heading: "Перевод с помощью ИИ"
       translate: "Перевести"
@@ -851,7 +863,9 @@ ru:
       token_counts: "ввод %{input}, вывод %{output}, из кэша %{cached}"
       failed: "Не переведено"
       cancel: "Остановить"
+      retry: "Повторить"
       review: "Проверить перевод"
+      estimate: "Оценка входных токенов"
       state:
         pending: "Ожидает"
         running: "Выполняется"
@@ -863,6 +877,9 @@ ru:
       accept_all: "Принять всё без замечаний"
       accept: "Принять"
       reject: "Отклонить"
+      edited: "Отредактировано:"
+      blank_text: "Перевод не может быть пустым. Чтобы не использовать его, нажмите «Отклонить»."
+      invalid: "Не удалось сохранить перевод: %{message}"
       state:
         pending: "Ожидает"
         accepted: "Принято"

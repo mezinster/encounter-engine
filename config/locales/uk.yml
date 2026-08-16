@@ -108,6 +108,7 @@ uk:
           reject_entry: "Відхилив заявку команди"
           translation_run_started: "Запустив переклад"
           translation_run_cancelled: "Зупинив переклад"
+          translation_run_retried: "Повторив переклад"
           translation_proposals_accepted: "Прийняв переклади"
     settings:
       title: "Налаштування обмежень"
@@ -235,6 +236,7 @@ uk:
     not_team_member: "Ви не авторизовані для відвідування цієї сторінки"
     must_be_captain: "Ви маєте бути капітаном, щоб виконати цю дію"
     must_be_author: "Ви маєте бути автором гри, щоб бачити цю сторінку"
+    translation_key_missing: "Переклад за допомогою ШІ недоступний: не налаштовано ключ API."
     not_registered_for_game: "Ваша команда не зареєстрована на цю гру."
     must_be_author_or_finished_player: "Повний лог відповідей доступний лише автору гри або гравцеві з команди, яка завершила гру"
     game_already_started: "Не можна редагувати гру після її початку"
@@ -838,11 +840,21 @@ uk:
   translations:
     runs:
       already_running: "Для цієї гри вже виконується переклад."
+      already_finished: "Цей переклад уже завершено — зупиняти нема чого."
+      not_retryable: "Повторити можна лише переклад, що завершився помилкою."
       too_large: "Забагато полів за один раз (максимум %{count})."
       empty: "Нічого перекладати: для обраних мов переклади вже є."
     new:
       heading: "Переклад гри «%{game}»"
       submit: "Перекласти"
+    confirm:
+      heading: "Переклад гри «%{game}»: підтвердження"
+      locales: "Мови"
+      fields: "Полів до перекладу"
+      model: "Модель"
+      estimate: "Оцінка вхідних токенів"
+      estimate_unknown: "не вдалося підрахувати"
+      submit: "Почати переклад"
     edit:
       heading: "Переклад за допомогою ШІ"
       translate: "Перекласти"
@@ -856,7 +868,9 @@ uk:
       token_counts: "вхід %{input}, вихід %{output}, з кешу %{cached}"
       failed: "Не перекладено"
       cancel: "Зупинити"
+      retry: "Повторити"
       review: "Перевірити переклад"
+      estimate: "Оцінка вхідних токенів"
       state:
         pending: "Очікує"
         running: "Виконується"
@@ -868,6 +882,9 @@ uk:
       accept_all: "Прийняти все без зауважень"
       accept: "Прийняти"
       reject: "Відхилити"
+      edited: "Відредаговано:"
+      blank_text: "Переклад не може бути порожнім. Щоб не використовувати його, натисніть «Відхилити»."
+      invalid: "Не вдалося зберегти переклад: %{message}"
       state:
         pending: "Очікує"
         accepted: "Прийнято"

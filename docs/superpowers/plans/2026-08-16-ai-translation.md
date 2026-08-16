@@ -1522,6 +1522,56 @@ describe Translation::Runner do
     expect(cancelling.calls.size).to eq(1)
   end
 
+  # Both counters describe THIS pass. Without the reset, a run that fails and
+  # then succeeds on retry keeps reporting failures that no longer exist.
+  it "clears the previous pass's failure count and message on a clean retry" do
+    create_level(:game => game, :name => "Второй", :text => "Идите дальше")
+    run.update!(:fields_total => described_class.plan(game, %w[en pl]).size)
+
+    boom = FakeClient.new do |unit, _locale|
+      raise Translation::Client::Error, "429" if unit.key.start_with?("Level")
+    end
+    described_class.new(run, :client => boom).call
+    expect(run.reload.fields_failed).to be > 0
+    expect(run.error_message).to be_present
+
+    run.update!(:state => TranslationRun::RUNNING)
+    described_class.new(run, :client => FakeClient.new).call
+
+    expect(run.reload.fields_failed).to eq(0)
+    expect(run.error_message).to be_nil
+    expect(run.fields_done).to eq(run.fields_total)
+  end
+
+  it "counts a field the model omitted as failed rather than losing it" do
+    omitted_key = Translation::Unit.field_key(game, "description")
+
+    # Drop one key from whatever FakeClient would otherwise return -- but
+    # only for one locale, so exactly one (record, field, locale) triple is
+    # missing rather than one per locale.
+    partial = Class.new(FakeClient) do
+      define_method(:translate) do |unit:, locale:|
+        result = super(:unit => unit, :locale => locale)
+        result.texts.delete(omitted_key) if locale == "en"
+        result
+      end
+    end.new
+
+    described_class.new(run, :client => partial).call
+
+    expect(run.reload.fields_failed).to eq(1)
+    # The invariant that makes a run's self-report trustworthy: every field is
+    # accounted for exactly once, either done or failed, never neither.
+    expect(run.fields_done + run.fields_failed).to eq(run.fields_total)
+    expect(run.translation_proposals.count).to eq(run.fields_total - 1)
+    # No proposal row for the omitted field -- that is what lets the
+    # resumability rule retry exactly it on a later pass.
+    expect(
+      run.translation_proposals.exists?(:translatable_type => "Game",
+                                        :field => "description", :locale => "en")
+    ).to eq(false)
+  end
+
   it "never proposes for the game's primary locale" do
     run.update!(:target_locale_list => %w[ru en])
     described_class.new(run, :client => FakeClient.new).call
@@ -1702,7 +1752,7 @@ end
 bundle exec rspec spec/services/translation/runner_spec.rb
 ```
 
-Expected: PASS, 8 examples.
+Expected: PASS, 10 examples.
 
 **One subtlety to expect while reading `#units`:** the work-list is deduplicated with `uniq { [class, id, field] }`, which collapses the per-locale copies of the same field down to one `MissingTranslation`. The surviving struct still carries *a* locale — whichever came first — and that value is **deliberately ignored**. A `Unit` is locale-agnostic by construction: `source_text` reads `missing.record[missing.field]`, the primary-language column, and the target locale enters only through the user turn. That is exactly what makes one unit reusable across every locale, which is the entire basis of the caching structure.
 

@@ -2635,7 +2635,11 @@ Create `app/views/translation_runs/show.html.erb`:
   <% end %>
 </dl>
 
-<% if @run.running? %>
+<%# Not @run.running?: a background thread that dies before its own rescue can
+    run leaves the run PENDING, and PENDING counts as active, so that game is
+    then blocked from starting any new run. Task 10's sweep catches it
+    eventually; this button is the only place a human can act now. %>
+<% unless @run.terminal? %>
   <%= button_to t("translations.show.cancel"), cancel_game_translation_run_path(@game, @run),
                 :class => "btn" %>
 <% else %>

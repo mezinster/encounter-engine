@@ -1987,15 +1987,25 @@ class TranslationRunsController < ApplicationController
     return refuse("too_large", :count => Setting.integer("translation_max_fields_per_run")) if
       work.size > Setting.integer("translation_max_fields_per_run")
 
-    run = TranslationRun.create!(
-      :game => @game, :actor => current_user,
-      # Frozen here, deliberately: reading the Setting live would let a change
-      # mid-run produce proposals from two models with no way to tell which.
-      :model => Setting.enum("translation_model"),
-      :state => TranslationRun::PENDING,
-      :target_locale_list => locales,
-      :fields_total => work.size
-    )
+    run = begin
+            TranslationRun.create!(
+              :game => @game, :actor => current_user,
+              # Frozen here, deliberately: reading the Setting live would let a
+              # change mid-run produce proposals from two models with no way to
+              # tell which.
+              :model => Setting.enum("translation_model"),
+              :state => TranslationRun::PENDING,
+              :target_locale_list => locales,
+              :fields_total => work.size
+            )
+          rescue ActiveRecord::RecordNotUnique
+            # Lost the race against a concurrent POST. The guard above is
+            # check-then-act and cannot be sufficient on its own; the partial
+            # unique index is what enforces the invariant, and this is where
+            # losing lands. Same message either way -- the operator does not
+            # need to know which of the two paths refused them.
+            return refuse("already_running")
+          end
 
     start(run)
     record_admin_action("translation_run_started", @game,
@@ -2053,6 +2063,48 @@ Add the association to `app/models/game.rb`, beside the other `has_many` declara
 ```ruby
   has_many :translation_runs, :dependent => :destroy
 ```
+
+- [ ] **Step 5b: Enforce one active run per game in the database**
+
+The guard in `#create` is check-then-act: `active_for(@game).exists?` and
+`create!` are two statements, and under Puma's multi-threaded default two
+concurrent POSTs both pass it. That is not exotic input — `new.html.erb` is a
+plain submit a browser double-posts on a double-click, and Task 9 puts one
+`button_to` per locale on the edit screen. What is at stake is a duplicate
+**bill**, not a duplicate row: `Runner#already_proposed?` de-duplicates within
+a run, so a second run re-translates every field the first is already paying
+for.
+
+Create `db/migrate/20260816110000_add_one_active_run_per_game_index.rb`:
+
+```ruby
+# One active translation run per game, enforced by the database.
+#
+# Partial index, not a plain unique index on game_id: a game legitimately
+# accumulates many terminal (succeeded/failed/cancelled) runs over time, and
+# only the active ones (pending/running) must be mutually exclusive.
+#
+# Partial indexes work on both SQLite (dev/test) and Postgres (production), so
+# this is enforced everywhere, not just where a lock happens to be honoured.
+class AddOneActiveRunPerGameIndex < ActiveRecord::Migration[8.0]
+  def change
+    add_index :translation_runs, :game_id, :unique => true,
+              :where => "state IN (\'pending\', \'running\')",
+              :name => "index_translation_runs_one_active_per_game"
+  end
+end
+```
+
+```bash
+bin/rails db:migrate && bin/rails db:test:prepare
+```
+
+Add three examples to `spec/requests/translation_runs_spec.rb`: that a second
+active run for one game raises `ActiveRecord::RecordNotUnique`; that a
+**terminal** run does not block a new one (the index is partial for exactly
+that reason); and that losing the race refuses with the same flash rather than
+500ing. Stub `TranslationRun.active_for` to return `TranslationRun.none` to
+simulate the interleaving in that last one.
 
 - [ ] **Step 6: Write the locale-picker template**
 

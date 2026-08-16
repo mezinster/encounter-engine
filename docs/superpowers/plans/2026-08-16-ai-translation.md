@@ -1666,7 +1666,7 @@ end
 bundle exec rspec spec/services/translation/runner_spec.rb
 ```
 
-Expected: PASS, 9 examples.
+Expected: PASS, 8 examples.
 
 **One subtlety to expect while reading `#units`:** the work-list is deduplicated with `uniq { [class, id, field] }`, which collapses the per-locale copies of the same field down to one `MissingTranslation`. The surviving struct still carries *a* locale — whichever came first — and that value is **deliberately ignored**. A `Unit` is locale-agnostic by construction: `source_text` reads `missing.record[missing.field]`, the primary-language column, and the target locale enters only through the user turn. That is exactly what makes one unit reusable across every locale, which is the entire basis of the caching structure.
 

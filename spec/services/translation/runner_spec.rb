@@ -146,6 +146,39 @@ describe Translation::Runner do
     expect(run.fields_done).to eq(run.fields_total)
   end
 
+  # A model that silently omits a field must not vanish from the accounting.
+  # Without this, the run ends SUCCEEDED with fields_done + fields_failed
+  # short of fields_total and zero failures shown -- "47 of 50", with nothing
+  # anywhere naming the three.
+  it "counts a field the model omitted as failed rather than losing it" do
+    omitted_key = Translation::Unit.field_key(game, "description")
+
+    # Drop one key from whatever FakeClient would otherwise return -- but
+    # only for one locale, so exactly one (record, field, locale) triple is
+    # missing rather than one per locale.
+    partial = Class.new(FakeClient) do
+      define_method(:translate) do |unit:, locale:|
+        result = super(:unit => unit, :locale => locale)
+        result.texts.delete(omitted_key) if locale == "en"
+        result
+      end
+    end.new
+
+    described_class.new(run, :client => partial).call
+
+    expect(run.reload.fields_failed).to eq(1)
+    # The invariant that makes a run's self-report trustworthy: every field is
+    # accounted for exactly once, either done or failed, never neither.
+    expect(run.fields_done + run.fields_failed).to eq(run.fields_total)
+    expect(run.translation_proposals.count).to eq(run.fields_total - 1)
+    # No proposal row for the omitted field -- that is what lets the
+    # resumability rule retry exactly it on a later pass.
+    expect(
+      run.translation_proposals.exists?(:translatable_type => "Game",
+                                        :field => "description", :locale => "en")
+    ).to eq(false)
+  end
+
   it "never proposes for the game's primary locale" do
     run.update!(:target_locale_list => %w[ru en])
     described_class.new(run, :client => FakeClient.new).call

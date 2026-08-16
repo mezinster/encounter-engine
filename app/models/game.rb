@@ -442,18 +442,46 @@ class Game < ApplicationRecord
     self.available_locale_list.size > 1
   end
 
+  # Split out of missing_translations so a locale that is not declared yet can
+  # still produce a work-list: the AI translation feature translates first and
+  # declares second, and the publish gate then passes. missing_translations
+  # keeps its exact former behaviour, expressed in terms of this.
+  def missing_translated_fields_in(locale)
+    translatable_records.flat_map do |record|
+      record.class::TRANSLATABLE_FIELDS.map do |field|
+        next if record.translated?(field, locale)
+
+        MissingTranslation.new(record, field, locale, label_for(record, field))
+      end.compact
+    end
+  end
+
   def missing_translations
-    non_primary = self.available_locale_list - [self.primary_locale.to_s]
+    non_primary = self.available_locale_list - [ self.primary_locale.to_s ]
     return [] if non_primary.empty?
 
-    non_primary.flat_map do |locale|
-      translatable_records.flat_map do |record|
-        record.class::TRANSLATABLE_FIELDS.map do |field|
-          next if record.translated?(field, locale)
+    non_primary.flat_map { |locale| missing_translated_fields_in(locale) }
+  end
 
-          MissingTranslation.new(record, field, locale, label_for(record, field))
-        end.compact
-      end
+  # Public because the AI-translation review screen renders it from a view: a
+  # proposal needs a human-readable name for the field it translates ("Level 3,
+  # task text"), and this already computes exactly that. Deliberately not
+  # snapshotted onto translation_proposals -- the label is derived from
+  # position and field name, so it should render in the READER's locale, not in
+  # whichever locale the run happened to start in.
+  def label_for(record, field)
+    field_name = I18n.t("games.translations.fields.#{field}")
+    case record
+    when Game     then I18n.t("games.translations.game_field",  :field => field_name)
+    when Level    then I18n.t("games.translations.level_field", :position => record.position, :field => field_name)
+    when Hint     then I18n.t("games.translations.hint_field",  :position => record.level&.position,
+                                                                :minutes => record.delay_in_minutes)
+    when Question then I18n.t("games.translations.question_field", :position => record.level&.position)
+    # Without a branch here the case returns nil, putting a blank entry in the
+    # author's to-do list -- an instruction to translate something unnamed.
+    when Option   then I18n.t("games.translations.option_field",
+                              :position => record.question&.level&.position,
+                              :text => record.text)
     end
   end
 
@@ -633,21 +661,5 @@ private
       end
     end
     records
-  end
-
-  def label_for(record, field)
-    field_name = I18n.t("games.translations.fields.#{field}")
-    case record
-    when Game     then I18n.t("games.translations.game_field",  :field => field_name)
-    when Level    then I18n.t("games.translations.level_field", :position => record.position, :field => field_name)
-    when Hint     then I18n.t("games.translations.hint_field",  :position => record.level&.position,
-                                                                :minutes => record.delay_in_minutes)
-    when Question then I18n.t("games.translations.question_field", :position => record.level&.position)
-    # Without a branch here the case returns nil, putting a blank entry in the
-    # author's to-do list -- an instruction to translate something unnamed.
-    when Option   then I18n.t("games.translations.option_field",
-                              :position => record.question&.level&.position,
-                              :text => record.text)
-    end
   end
 end

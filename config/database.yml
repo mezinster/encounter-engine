@@ -15,5 +15,22 @@ test:
 production:
   adapter: postgresql
   encoding: unicode
+  # Explicit, and sized ABOVE the web concurrency on purpose.
+  #
+  # Rails' default is 5. An AI-translation run holds one pooled connection for
+  # its whole duration -- Rails.application.executor.wrap releases pooled
+  # connections only at the end of the block, and the runner touches the
+  # database immediately -- so a 30-60 minute run parks 20% of a default pool
+  # at roughly zero utilisation. With no config/puma.rb, Puma's own threads
+  # compete for the same five, and the sixth lease waits 5 seconds and then
+  # raises ConnectionTimeoutError: a 500 on a live page, during a live game,
+  # on a one-vCPU host.
+  #
+  # This is the chosen fix of the two on offer. Releasing the connection
+  # around each API call would work too, but it means restructuring the
+  # runner's executor scope, whereas this costs a few idle Postgres backends
+  # on a host that can afford them. RAILS_MAX_THREADS + 3 leaves headroom for
+  # one run, one opportunistic sweep, and one console.
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5).to_i + 3 %>
   url: <%= ENV["DATABASE_URL"] %>
 

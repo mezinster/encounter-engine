@@ -1442,8 +1442,24 @@ describe Translation::Runner do
     described_class.new(run, :client => client).call
 
     units = client.calls.map(&:first)
-    expect(units).to eq(units.chunk_while { |a, b| a == b }.flat_map { |c| c })
-    expect(client.calls.each_slice(2).map { |pair| pair.map(&:last) }.uniq).to eq([ %w[en pl] ])
+
+    # Contiguity IS the property. A unit's calls must not be interrupted by
+    # another unit's: the cached prefix is that unit's source text, so once
+    # another unit's prompt has replaced it, coming back costs full price.
+    # chunk collapses only CONSECUTIVE runs, so a unit reappearing later
+    # survives into the result and breaks this equality.
+    #
+    # Do NOT write this as `units.chunk_while { |a, b| a == b }.flat_map { |c| c }`.
+    # That round-trip is the identity function for every input — it compares an
+    # array to itself and asserts nothing whatsoever.
+    expect(units.chunk { |u| u }.map(&:first)).to eq(units.uniq)
+
+    # ...and each unit sees every target locale, in order. Expressed against the
+    # run's own locale list rather than a literal slice width, so adding a third
+    # target locale cannot silently misalign it. This second assertion does NOT
+    # catch a reversal on its own — group_by collapses non-contiguous calls.
+    per_unit = client.calls.group_by(&:first).values.map { |calls| calls.map(&:last) }
+    expect(per_unit.uniq).to eq([ run.target_locale_list ])
   end
 
   it "snapshots the source text and flags each proposal" do
@@ -1493,7 +1509,13 @@ describe Translation::Runner do
     create_level(:game => game, :name => "Второй", :text => "Идите дальше")
     run.update!(:fields_total => described_class.plan(game, %w[en pl]).size)
 
-    cancelling = FakeClient.new { run.update_column(:state, TranslationRun::CANCELLED) }
+    # update_all through a separate relation, deliberately. `run.update_column`
+    # would write the in-memory attribute too, so a naive in-memory
+    # `@run.state == CANCELLED` check — precisely the bug the runner's
+    # DB-backed `cancelled?` exists to avoid — would satisfy this example.
+    cancelling = FakeClient.new do
+      TranslationRun.where(:id => run.id).update_all(:state => TranslationRun::CANCELLED)
+    end
     described_class.new(run, :client => cancelling).call
 
     expect(run.reload.state).to eq(TranslationRun::CANCELLED)
@@ -1551,7 +1573,12 @@ module Translation
     end
 
     def call
-      @run.update!(:state => TranslationRun::RUNNING, :started_at => Time.now)
+      # fields_failed and error_message both describe THIS pass. Without the
+      # reset, a run that fails four fields and then succeeds them on a retry
+      # still reports four failures that no longer exist — and the failure
+      # count is what an author uses to decide whether another pass is needed.
+      @run.update!(:state => TranslationRun::RUNNING, :started_at => Time.now,
+                   :fields_failed => 0, :error_message => nil)
 
       units.each do |unit|
         locales.each do |locale|
@@ -1627,7 +1654,16 @@ module Translation
       TranslationProposal.transaction do
         outstanding.each do |missing|
           text = result.texts[Unit.field_key(missing.record, missing.field)]
-          next if text.nil?
+          # The model omitted this field. Counted as FAILED rather than
+          # silently skipped: with no proposal row it is retried by the
+          # resumability rule above, and a run must never report success over
+          # fields it never actually produced. Skipping it leaves
+          # fields_done + fields_failed < fields_total on a succeeded run —
+          # "47 of 50, no failures", with nothing anywhere naming the three.
+          if text.nil?
+            @run.increment!(:fields_failed)
+            next
+          end
 
           source = missing.record[missing.field].to_s
           TranslationProposal.create!(

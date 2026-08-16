@@ -106,6 +106,9 @@ uk:
           reset_clock: "Скинув відлік часу на рівні"
           accept_entry: "Прийняв заявку команди"
           reject_entry: "Відхилив заявку команди"
+          translation_run_started: "Запустив переклад"
+          translation_run_cancelled: "Зупинив переклад"
+          translation_proposals_accepted: "Прийняв переклади"
     settings:
       title: "Налаштування обмежень"
       explanation: "Обмеження на реєстрацію діють на одну IP-адресу за вказаний період; 0 вимикає обмеження. Обмеження на файли діють на гру та на весь сервер."

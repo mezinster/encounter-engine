@@ -134,6 +134,9 @@ tr:
           reset_clock: "Seviyedeki süre sayacını sıfırladı"
           accept_entry: "Bir takımın başvurusunu kabul etti"
           reject_entry: "Bir takımın başvurusunu reddetti"
+          translation_run_started: "Çeviri başlattı"
+          translation_run_cancelled: "Çeviriyi durdurdu"
+          translation_proposals_accepted: "Çevirileri kabul etti"
     settings:
       title: "Sınırlama ayarları"
       explanation: "Kayıt sınırlamaları belirtilen süre içinde tek bir IP adresi için geçerlidir; 0 sınırlamayı kapatır. Dosya sınırlamaları oyun başına ve sunucu genelinde geçerlidir."

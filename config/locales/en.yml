@@ -89,6 +89,9 @@ en:
           reset_clock: "Reset the level clock"
           accept_entry: "Accepted a team's application"
           reject_entry: "Rejected a team's application"
+          translation_run_started: "Started a translation"
+          translation_run_cancelled: "Stopped a translation"
+          translation_proposals_accepted: "Accepted translations"
     settings:
       title: "Rate limits"
       explanation: "Signup limits apply per IP address per window; 0 disables the limit. File limits apply per game and across the whole server."

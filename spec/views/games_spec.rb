@@ -206,12 +206,34 @@ RSpec.describe "games/edit", type: :view do
     game = create_game
 
     assign(:game, game)
+    # logged_in?/current_user are private ApplicationController methods, not
+    # helpers -- a bare view spec has neither, and the template's superadmin
+    # translation-panel guard (Task 9) needs both. A logged-out view is the
+    # right default here: this example is about the form and its cancel
+    # link, not the translation panel. See spec/views/layouts_spec.rb:10.
+    view.define_singleton_method(:logged_in?)   { false }
+    view.define_singleton_method(:current_user) { nil }
 
     render
 
     expect(rendered).to include(I18n.t("games.edit.submit"))
     expect(rendered).to include(ERB::Util.html_escape(I18n.t("shared.cancel")))
     expect(rendered).to include(game_path(game))
+  end
+
+  it "offers the translation panel to a superadmin" do
+    game = create_game
+    operator = create_user
+    operator.update!(:is_superadmin => true)
+
+    assign(:game, game)
+    view.define_singleton_method(:logged_in?)   { true }
+    view.define_singleton_method(:current_user) { operator }
+    allow(Translation::Client).to receive(:configured?).and_return(true)
+
+    render
+
+    expect(rendered).to include(I18n.t("translations.edit.translate"))
   end
 end
 

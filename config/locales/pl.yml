@@ -113,6 +113,9 @@ pl:
           reset_clock: "Zresetował odliczanie czasu na poziomie"
           accept_entry: "Przyjął zgłoszenie drużyny"
           reject_entry: "Odrzucił zgłoszenie drużyny"
+          translation_run_started: "Uruchomił tłumaczenie"
+          translation_run_cancelled: "Zatrzymał tłumaczenie"
+          translation_proposals_accepted: "Przyjął tłumaczenia"
     settings:
       title: "Ustawienia limitów"
       explanation: "Limity rejestracji obowiązują dla jednego adresu IP w podanym okresie; 0 wyłącza limit. Limity plików obowiązują dla gry i dla całego serwera."

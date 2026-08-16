@@ -180,13 +180,14 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **725 leaf
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **780 leaf
   keys** each: `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
   live in `config/locales/{en,ru,uk,ka,tr,be,pl}.yml`. **Count the keys rather than trusting this
-  number**; it was documented as 489 for some time after it was 587.
+  number**; it was documented as 489 for some time after it was 587, and as 725 for some time
+  after it was 764 — this entry has now been stale twice, in the file that warns about it.
 - **Subset-of-`ru` is not completeness, and the gap is invisible.** A locale file carrying nothing
   but its seven endonyms satisfies every check in `spec/i18n_spec.rb`, and fallbacks then render
   the *Russian* play screen mid-game to a player who chose another language — nothing raises,
@@ -219,7 +220,7 @@ add steps there or Cucumber will auto-require them a second time.
   involved. `rails-i18n` supplies the CLDR rules, so pluralised keys are now safe to write.
 - **Five of the seven locales are machine-produced and unreviewed: `uk`, `ka`, `be`, `pl`, `tr`.**
   Only `ru` and `en` have been read by a speaker. All five are complete and structurally verified —
-  every interpolation variable matches and all 725 keys resolve at runtime — but the *wording* has
+  every interpolation variable matches and all 780 keys resolve at runtime — but the *wording* has
   not been checked by anyone. This is a known, recorded state rather than an oversight, and the
   bottleneck on fixing it is native review, not engineering. Each file says so in its own header
   comment too. **Turkish is the one to get reviewed first** if only one can be: it needed

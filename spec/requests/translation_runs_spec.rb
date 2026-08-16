@@ -40,6 +40,42 @@ describe "starting a translation run", type: :request do
     expect(flash[:alert]).to eq(I18n.t("translations.runs.already_running"))
   end
 
+  # The database, not the controller, is what actually enforces this. The
+  # controller's TranslationRun.active_for(@game).exists? check is
+  # check-then-act and cannot, on its own, stop two concurrent POSTs.
+  it "cannot create a second active run for the same game at the database level" do
+    TranslationRun.create!(:game => game, :actor => superadmin,
+                           :model => "claude-opus-5", :state => TranslationRun::RUNNING)
+
+    expect {
+      TranslationRun.create!(:game => game, :actor => superadmin,
+                             :model => "claude-opus-5", :state => TranslationRun::PENDING)
+    }.to raise_error(ActiveRecord::RecordNotUnique)
+  end
+
+  # A terminal run must not block a new one -- the index is partial for
+  # exactly this reason.
+  it "allows a new run once the previous one is terminal" do
+    TranslationRun.create!(:game => game, :actor => superadmin,
+                           :model => "claude-opus-5", :state => TranslationRun::SUCCEEDED)
+
+    expect { post game_translation_runs_path(game), :params => { :locales => [ "en" ] } }
+      .to change { TranslationRun.count }.by(1)
+  end
+
+  # Losing the race must refuse the same way the guard does, not 500.
+  it "refuses gracefully when the database wins the race" do
+    # Simulate the interleaving: the guard sees nothing, then a row appears
+    # before our insert.
+    allow(TranslationRun).to receive(:active_for).and_return(TranslationRun.none)
+    TranslationRun.create!(:game => game, :actor => superadmin,
+                           :model => "claude-opus-5", :state => TranslationRun::RUNNING)
+
+    expect { post game_translation_runs_path(game), :params => { :locales => [ "en" ] } }
+      .not_to change { TranslationRun.count }
+    expect(flash[:alert]).to eq(I18n.t("translations.runs.already_running"))
+  end
+
   it "refuses a run larger than the configured cap" do
     Setting.put("translation_max_fields_per_run", 1)
 

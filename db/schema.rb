@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_16_100000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_16_110000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -288,6 +288,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_16_100000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["game_id", "state"], name: "index_translation_runs_on_game_id_and_state"
+    t.index ["game_id"], name: "index_translation_runs_one_active_per_game", unique: true, where: "state IN ('pending', 'running')"
   end
 
   create_table "users", force: :cascade do |t|

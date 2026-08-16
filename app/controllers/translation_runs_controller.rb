@@ -29,15 +29,26 @@ class TranslationRunsController < ApplicationController
     return refuse("too_large", :count => Setting.integer("translation_max_fields_per_run")) if
       work.size > Setting.integer("translation_max_fields_per_run")
 
-    run = TranslationRun.create!(
-      :game => @game, :actor => current_user,
-      # Frozen here, deliberately: reading the Setting live would let a change
-      # mid-run produce proposals from two models with no way to tell which.
-      :model => Setting.enum("translation_model"),
-      :state => TranslationRun::PENDING,
-      :target_locale_list => locales,
-      :fields_total => work.size
-    )
+    run = begin
+            TranslationRun.create!(
+              :game => @game, :actor => current_user,
+              # Frozen here, deliberately: reading the Setting live would let a
+              # change mid-run produce proposals from two models with no way
+              # to tell which.
+              :model => Setting.enum("translation_model"),
+              :state => TranslationRun::PENDING,
+              :target_locale_list => locales,
+              :fields_total => work.size
+            )
+          rescue ActiveRecord::RecordNotUnique
+            # Lost the race against a concurrent POST. The guard above passed
+            # because no active run existed when it looked; the partial
+            # unique index on translation_runs.game_id is what actually
+            # enforces the invariant, and this is where losing lands. Same
+            # message either way -- the operator does not need to know which
+            # of the two paths refused them.
+            return refuse("already_running")
+          end
 
     start(run)
     record_admin_action("translation_run_started", @game,

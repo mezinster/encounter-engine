@@ -56,6 +56,5 @@ class Admin::SettingsController < ApplicationController
 
   def current_values
     Setting::INTEGER_DEFAULTS.keys.index_with { |name| Setting.integer(name) }
-      .merge(Setting::ENUM_DEFAULTS.keys.index_with { |name| Setting.enum(name) })
   end
 end

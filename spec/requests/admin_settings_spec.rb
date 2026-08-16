@@ -93,6 +93,24 @@ describe "the superadmin settings screen", type: :request do
     expect(response.body).to include("settings_allowed_extensions")
   end
 
+  # Regression: current_values used to merge ENUM_DEFAULTS into the same hash
+  # the number-field loop iterates, so translation_model rendered TWICE --
+  # once as a number_field_tag holding a model name, once as the correct
+  # select_tag -- both sharing id="settings_translation_model". Nothing above
+  # asserted uniqueness, so a substring `include` check would pass either
+  # way; only counting the actual elements catches it.
+  it "renders exactly one control for the translation model, as a select" do
+    login_as(superadmin)
+
+    get admin_settings_path
+
+    matches = Nokogiri::HTML(response.body).css("#settings_translation_model")
+
+    expect(matches.size).to eq(1)
+    expect(matches.first.name).to eq("select")
+    expect(response.body).not_to include('type="number" name="settings[translation_model]"')
+  end
+
   it "stores a changed extension list" do
     login_as(superadmin)
 

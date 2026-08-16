@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_16_110000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_16_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -265,6 +265,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_16_110000) do
     t.datetime "reviewed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "accepted_text"
     t.index ["translation_run_id", "state"], name: "index_translation_proposals_on_translation_run_id_and_state"
     t.index ["translation_run_id", "translatable_type", "translatable_id", "field", "locale"], name: "index_translation_proposals_unique_field", unique: true
   end

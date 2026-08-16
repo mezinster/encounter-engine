@@ -14,21 +14,40 @@
           no different. %>
       <td class="source"><%= proposal.source_text %></td>
       <td>
-        <%= form_with url: accept_game_translation_run_proposal_path(@game, @run, proposal),
-                      method: :post do %>
-          <%= text_area_tag "proposed_text", proposal.proposed_text, :rows => 3 %>
-          <% if proposal.flagged? %>
-            <ul class="flags">
-              <% proposal.flag_list.each do |flag| %>
-                <li><%= t("translations.flags.#{flag}") %></li>
-              <% end %>
-            </ul>
+        <%# Accept and Reject are offered ONLY while the proposal is pending.
+            Both actions scope their lookup to .pending, so a button on an
+            already-reviewed row raises RecordNotFound -- and this app installs
+            no rescue_from for it, so that is a 404 in production reached by
+            clicking a control the page itself drew. A reviewed row shows what
+            was decided instead. %>
+        <% if proposal.state == TranslationProposal::PENDING %>
+          <%= form_with url: accept_game_translation_run_proposal_path(@game, @run, proposal),
+                        method: :post do %>
+            <%= text_area_tag "proposed_text", proposal.proposed_text, :rows => 3 %>
+            <% if proposal.flagged? %>
+              <ul class="flags">
+                <% proposal.flag_list.each do |flag| %>
+                  <li><%= t("translations.flags.#{flag}") %></li>
+                <% end %>
+              </ul>
+            <% end %>
+            <%= submit_tag t("translations.review.accept"), :class => "btn btn--go" %>
           <% end %>
-          <%= submit_tag t("translations.review.accept"), :class => "btn btn--go" %>
+          <%= button_to t("translations.review.reject"),
+                        reject_game_translation_run_proposal_path(@game, @run, proposal),
+                        :class => "btn" %>
+        <% else %>
+          <%# The machine's words stay visible after review. If the reviewer
+              edited before accepting, both are shown -- that pairing is the
+              audit trail the design says lives only in this table. %>
+          <p class="proposed"><%= proposal.proposed_text %></p>
+          <% if proposal.edited? %>
+            <p class="accepted">
+              <strong><%= t("translations.review.edited") %></strong>
+              <%= proposal.accepted_text %>
+            </p>
+          <% end %>
         <% end %>
-        <%= button_to t("translations.review.reject"),
-                      reject_game_translation_run_proposal_path(@game, @run, proposal),
-                      :class => "btn" %>
       </td>
       <td><%= t("translations.review.state.#{proposal.state}") %></td>
     </tr>

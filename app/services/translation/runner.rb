@@ -27,7 +27,10 @@ module Translation
     end
 
     def call
-      @run.update!(:state => TranslationRun::RUNNING, :started_at => Time.now)
+      @run.update!(:state => TranslationRun::RUNNING, :started_at => Time.now,
+                   # Both describe THIS pass. A re-entered run that succeeds
+                   # must not keep reporting the previous pass's failures.
+                   :fields_failed => 0, :error_message => nil)
 
       units.each do |unit|
         locales.each do |locale|
@@ -103,7 +106,14 @@ module Translation
       TranslationProposal.transaction do
         outstanding.each do |missing|
           text = result.texts[Unit.field_key(missing.record, missing.field)]
-          next if text.nil?
+          if text.nil?
+            # The model omitted this field. Counted as failed rather than
+            # skipped: with no proposal row it will be retried by the
+            # resumability rule, and a run must not report success over
+            # fields it never actually produced.
+            @run.increment!(:fields_failed)
+            next
+          end
 
           source = missing.record[missing.field].to_s
           TranslationProposal.create!(

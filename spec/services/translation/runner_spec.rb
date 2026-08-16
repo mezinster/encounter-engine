@@ -53,8 +53,19 @@ describe Translation::Runner do
     described_class.new(run, :client => client).call
 
     units = client.calls.map(&:first)
-    expect(units).to eq(units.chunk_while { |a, b| a == b }.flat_map { |c| c })
-    expect(client.calls.each_slice(2).map { |pair| pair.map(&:last) }.uniq).to eq([ %w[en pl] ])
+
+    # Contiguity IS the property. A unit's calls must not be interrupted by
+    # another unit's, because the cached prefix is that unit's source text --
+    # once another unit's prompt has replaced it, coming back costs full price.
+    # chunk collapses only CONSECUTIVE runs, so a unit reappearing later
+    # survives into the result and breaks this equality.
+    expect(units.chunk { |u| u }.map(&:first)).to eq(units.uniq)
+
+    # ...and each unit sees every target locale, in order. Expressed against the
+    # run's own locale list rather than a literal slice width, so adding a third
+    # target locale cannot silently misalign this.
+    per_unit = client.calls.group_by(&:first).values.map { |calls| calls.map(&:last) }
+    expect(per_unit.uniq).to eq([ run.target_locale_list ])
   end
 
   it "snapshots the source text and flags each proposal" do
@@ -104,11 +115,35 @@ describe Translation::Runner do
     create_level(:game => game, :name => "Второй", :text => "Идите дальше")
     run.update!(:fields_total => described_class.plan(game, %w[en pl]).size)
 
-    cancelling = FakeClient.new { run.update_column(:state, TranslationRun::CANCELLED) }
+    # Write through a SEPARATE row/instance, not run.update_column -- update_column
+    # also writes the in-memory attribute on `run`, which would let a naive
+    # `@run.state == CANCELLED` check pass this example for the wrong reason.
+    cancelling = FakeClient.new do
+      TranslationRun.where(:id => run.id).update_all(:state => TranslationRun::CANCELLED)
+    end
     described_class.new(run, :client => cancelling).call
 
     expect(run.reload.state).to eq(TranslationRun::CANCELLED)
     expect(cancelling.calls.size).to eq(1)
+  end
+
+  it "clears the previous pass's failure count and message on a clean retry" do
+    create_level(:game => game, :name => "Второй", :text => "Идите дальше")
+    run.update!(:fields_total => described_class.plan(game, %w[en pl]).size)
+
+    boom = FakeClient.new do |unit, _locale|
+      raise Translation::Client::Error, "429" if unit.key.start_with?("Level")
+    end
+    described_class.new(run, :client => boom).call
+    expect(run.reload.fields_failed).to be > 0
+    expect(run.error_message).to be_present
+
+    run.update!(:state => TranslationRun::RUNNING)
+    described_class.new(run, :client => FakeClient.new).call
+
+    expect(run.reload.fields_failed).to eq(0)
+    expect(run.error_message).to be_nil
+    expect(run.fields_done).to eq(run.fields_total)
   end
 
   it "never proposes for the game's primary locale" do

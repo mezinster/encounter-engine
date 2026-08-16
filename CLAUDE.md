@@ -355,6 +355,45 @@ drives logout with a raw `GET /logout` (Capybara `#visit`), and feature files ar
 above). The GET route has to stay for that scenario to keep passing. Both routes are kept
 deliberately; this is documented in `config/routes.rb` too.
 
+## AI translation of game content
+
+A superadmin can translate a game's author-written content via the Claude API
+(`app/services/translation/`, `TranslationRunsController`,
+`TranslationProposalsController`). Four things about it are non-obvious:
+
+- **It is staged.** The runner writes `translation_proposals`, never
+  `content_translations`. Accepting a proposal goes through
+  `TranslatableContent#translations_attributes=` — the same setter the
+  authoring form uses — so the stored row is byte-identical to a hand-typed
+  one and the game cannot tell the difference. Provenance lives only in
+  `translation_proposals`.
+- **The loop order is cost-critical: units outer, locales inner.** Prompt
+  caching is a strict prefix match and the prompt is
+  `[rules][this unit's source][translate into X]`. Holding the unit still
+  while the locales vary means every locale after the first reads a cached
+  prefix. Reversing the loops makes every call a cache miss. The locale calls
+  must also stay sequential — a cache entry is only readable once the first
+  response begins streaming. `spec/services/translation/runner_spec.rb` pins
+  the order.
+- **`Translation::Flags` is the safety story, not a nicety.** A superadmin
+  reviewing Polish cannot evaluate Polish. Five mechanical checks —
+  `empty`, `identical`, `lost_digits`, `lost_latin`, `length` — catch what
+  they can still act on. `identical` guards the exact failure documented in
+  `TranslatableContent#translation_draft`: text saved unchanged into another
+  language's slot, which then satisfies the publish gate.
+- **The run is a bare `Thread`, wrapped in `Rails.application.executor.wrap`.**
+  There is no ActiveJob backend here and the host has one vCPU. The wrap is
+  load-bearing: an unwrapped thread leaks a connection from the pool.
+  `TranslationRun.sweep_stale!` exists because a thread killed by a deploy
+  would otherwise leave the game locked out of translation forever.
+
+`ANTHROPIC_API_KEY` is an env var via the Kamal secret, not Azure Key Vault —
+Kamal 2.12 ships no Azure adapter, so Key Vault would mean a custom adapter or
+an entrypoint shim, and a new boot-time failure mode for the whole app, for one
+key. With the variable unset the feature is entirely absent, so development and
+CI need no credential. See
+`docs/superpowers/specs/2026-08-16-ai-translation-design.md`.
+
 ## Testing
 
 - **Cucumber** — `features/**/*.feature`, Russian Gherkin. **Two numbers, and the difference is the

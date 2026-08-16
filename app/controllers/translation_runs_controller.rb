@@ -14,6 +14,7 @@ class TranslationRunsController < ApplicationController
   before_action :require_authentication!
   before_action :require_superadmin!
   before_action :load_game
+  before_action :sweep_stale_runs
   before_action :require_api_key!
 
   def new
@@ -80,6 +81,12 @@ class TranslationRunsController < ApplicationController
   def require_api_key!
     raise Authentication::Unauthorized, t("errors.must_be_superadmin") unless
       Translation::Client.configured?
+  end
+
+  # Opportunistic, not scheduled. The only moment a stale run actually matters
+  # is when someone tries to start a new one, so that is where it is cleared.
+  def sweep_stale_runs
+    TranslationRun.sweep_stale!
   end
 
   def refuse(reason, options = {})

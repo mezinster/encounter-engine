@@ -22,6 +22,22 @@ class TranslationRun < ApplicationRecord
   scope :active_for, ->(game) { where(:game_id => game.id, :state => ACTIVE_STATES) }
   scope :newest_first, -> { order(:created_at => :desc) }
 
+  STALE_AFTER = 15.minutes
+
+  # A thread killed mid-run -- by a deploy, an OOM, a restart -- leaves its row
+  # in `running` forever, and the one-active-run-per-game rule then locks the
+  # game out of translation permanently. Called opportunistically from the
+  # controller rather than from a scheduler, because this application has no
+  # scheduler and adding one for this would cost more than it saves.
+  def self.sweep_stale!(older_than: STALE_AFTER)
+    where(:state => ACTIVE_STATES)
+      .where("updated_at < ?", older_than.ago)
+      .update_all(:state => FAILED,
+                  :error_message => "abandoned: no progress for #{older_than.inspect}",
+                  :finished_at => Time.now,
+                  :updated_at => Time.now)
+  end
+
   # Same shape as Game#available_locale_list, deliberately -- an operator
   # reading either column in a console should not have to learn two formats.
   def target_locale_list

@@ -390,7 +390,7 @@ bin/rails db:migrate && bin/rails db:test:prepare
 bundle exec rspec spec/models/translation_run_spec.rb spec/models/translation_proposal_spec.rb
 ```
 
-Expected: PASS, 9 examples, 0 failures.
+Expected: PASS, 10 examples (6 run + 4 proposal), 0 failures.
 
 - [ ] **Step 6: Check autoloading and commit**
 

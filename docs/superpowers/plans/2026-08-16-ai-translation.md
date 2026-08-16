@@ -48,9 +48,10 @@ The worktree has its own empty `db/` — neither sqlite file is in the repositor
 
 ```bash
 bundle exec rspec 2>&1 | tail -5
+bundle exec cucumber 2>&1 | tail -5
 ```
 
-Expected: `0 failures`. Record the example count — you will compare against it at the end. Do **not** trust any count quoted in `CLAUDE.md`; it has been stale twice.
+Expected: RSpec `0 failures`. **Write both counts into the ledger** — they are the only trustworthy baseline. Do not compare against any figure quoted in `CLAUDE.md` or in this plan's Task 10; both have been stale before, which is the documented reason this step exists.
 
 ---
 
@@ -1663,9 +1664,12 @@ git commit -m "Translate a game unit by unit, locales inner"
 **Files:**
 - Modify: `config/routes.rb` (inside the existing top-level `resources :games do ... end` block)
 - Create: `app/controllers/translation_runs_controller.rb`
+- Create: `app/views/translation_runs/new.html.erb`
 - Test: `spec/requests/translation_run_authorization_spec.rb`
 - Test: `spec/requests/translation_runs_spec.rb`
 - Modify: `spec/requests/admin_audit_spec.rb`
+
+**Note on the view:** `new.html.erb` lands here, not in Task 9, because this task's own authorization spec does `get new_game_translation_runs_path(game)` and expects 200 — which renders it. A task whose tests render a template owns that template.
 
 **Interfaces:**
 - Consumes: `Translation::Runner.plan` and `Translation::Runner` (Task 6), `Translation::Client.configured?` (Task 5), `Setting.enum` / `Setting.integer` (Task 3), `TranslationRun.active_for` (Task 1).
@@ -1926,9 +1930,31 @@ Add the association to `app/models/game.rb`, beside the other `has_many` declara
   has_many :translation_runs, :dependent => :destroy
 ```
 
-- [ ] **Step 6: Add the flash and page strings to all seven locales**
+- [ ] **Step 6: Write the locale-picker template**
 
-Add to each of `config/locales/{ru,en,uk,ka,tr,be,pl}.yml` under a new `translations:` top-level key. Russian and English shown; translate the other five:
+Create `app/views/translation_runs/new.html.erb`:
+
+```erb
+<h2><%= t("translations.new.heading", :game => @game.name) %></h2>
+
+<%= form_with url: game_translation_runs_path(@game), method: :post do %>
+  <% @locales.each do |locale| %>
+    <label>
+      <%= check_box_tag "locales[]", locale, false %>
+      <%= t("locales.#{locale}") %>
+    </label>
+  <% end %>
+  <%= submit_tag t("translations.new.submit"), :class => "btn btn--go" %>
+<% end %>
+
+<em><%= link_to t("shared.cancel"), edit_game_path(@game) %></em>
+```
+
+- [ ] **Step 7: Add the flash and picker strings to all seven locales**
+
+Add to each of `config/locales/{ru,en,uk,ka,tr,be,pl}.yml` under a new `translations:` top-level key. Russian and English shown; translate the other five (`uk ka tr be pl`).
+
+**Turkish note:** `translations.new.heading` interpolates `%{game}`, a name an author typed. Turkish cannot attach a case suffix to a placeholder — put the suffix on a common noun instead, as the other 37 such keys in this repository do: `«%{game}» adlı oyun`.
 
 ```yaml
 # ru.yml
@@ -1937,15 +1963,21 @@ Add to each of `config/locales/{ru,en,uk,ka,tr,be,pl}.yml` under a new `translat
       already_running: "Для этой игры уже выполняется перевод."
       too_large: "Слишком много полей за один раз (максимум %{count})."
       empty: "Нечего переводить: для выбранных языков переводы уже есть."
+    new:
+      heading: "Перевод игры «%{game}»"
+      submit: "Перевести"
 # en.yml
   translations:
     runs:
       already_running: "A translation is already running for this game."
       too_large: "Too many fields for one run (maximum %{count})."
       empty: "Nothing to translate: the selected languages are already complete."
+    new:
+      heading: "Translating “%{game}”"
+      submit: "Translate"
 ```
 
-- [ ] **Step 7: Run the request specs to verify they pass**
+- [ ] **Step 8: Run the request specs to verify they pass**
 
 ```bash
 bundle exec rspec spec/requests/translation_run_authorization_spec.rb \
@@ -1953,9 +1985,9 @@ bundle exec rspec spec/requests/translation_run_authorization_spec.rb \
                   spec/i18n_spec.rb
 ```
 
-Expected: PASS. `show` and `new` will fail to render until Task 9 adds the views — if so, stub the templates with a one-line placeholder now and complete them in Task 9, or reorder to do Task 9's views first.
+Expected: PASS. `show` has no template yet — that is fine, because no spec in this task renders it: `create` redirects and `cancel` redirects. Do **not** create `show.html.erb` here; it belongs to Task 9, which tests it.
 
-- [ ] **Step 8: Extend the audit spec deliberately**
+- [ ] **Step 9: Extend the audit spec deliberately**
 
 `spec/requests/admin_audit_spec.rb` enumerates the audited actions and is the guard that a new action was considered rather than forgotten. Add inside `describe "the explicitly superadmin actions"`:
 
@@ -1975,11 +2007,11 @@ Expected: PASS. `show` and `new` will fail to render until Task 9 adds the views
     end
 ```
 
-- [ ] **Step 9: Run the audit spec and commit**
+- [ ] **Step 10: Run the audit spec and commit**
 
 ```bash
 bundle exec rspec spec/requests/admin_audit_spec.rb
-git add config/routes.rb app/controllers/translation_runs_controller.rb app/models/game.rb config/locales spec/requests
+git add config/routes.rb app/controllers/translation_runs_controller.rb app/views/translation_runs app/models/game.rb config/locales spec/requests
 git commit -m "Start and cancel translation runs as a superadmin"
 ```
 
@@ -2207,7 +2239,7 @@ end
 bundle exec rspec spec/requests/translation_proposal_review_spec.rb
 ```
 
-Expected: PASS, 7 examples. The `index` action needs its view — add a one-line placeholder template if Task 9 has not run yet.
+Expected: PASS, 7 examples. No template is needed in this task: every example POSTs and asserts a redirect or a database change, and nothing here renders `index`. Do **not** create `translation_proposals/index.html.erb` — it belongs to Task 9, which is the first task to `GET` it.
 
 - [ ] **Step 6: Extend the audit spec and commit**
 
@@ -2242,7 +2274,6 @@ git commit -m "Review and accept translation proposals"
 
 **Files:**
 - Modify: `app/views/games/edit.html.erb:47-63`
-- Create: `app/views/translation_runs/new.html.erb`
 - Create: `app/views/translation_runs/show.html.erb`
 - Create: `app/views/translation_proposals/index.html.erb`
 - Modify: `config/locales/{ru,en,uk,ka,tr,be,pl}.yml`
@@ -2305,7 +2336,7 @@ describe "translation screens", type: :request do
 
     get game_translation_run_path(game, run)
     expect(response.body).to include("http-equiv=\"refresh\"")
-    expect(response.body).to include("1")
+    expect(response.body).to include(I18n.t("translations.show.progress", :done => 1, :total => 4))
 
     run.update!(:state => TranslationRun::SUCCEEDED)
     get game_translation_run_path(game, run)
@@ -2365,25 +2396,9 @@ In `app/views/games/edit.html.erb`, the `available_locale_list` field currently 
 <% end %>
 ```
 
-- [ ] **Step 4: Write the three templates**
+- [ ] **Step 4: Write the two templates**
 
-Create `app/views/translation_runs/new.html.erb`:
-
-```erb
-<h2><%= t("translations.new.heading", :game => @game.name) %></h2>
-
-<%= form_with url: game_translation_runs_path(@game), method: :post do %>
-  <% @locales.each do |locale| %>
-    <label>
-      <%= check_box_tag "locales[]", locale, false %>
-      <%= t("locales.#{locale}") %>
-    </label>
-  <% end %>
-  <%= submit_tag t("translations.new.submit"), :class => "btn btn--go" %>
-<% end %>
-
-<em><%= link_to t("shared.cancel"), edit_game_path(@game) %></em>
-```
+`app/views/translation_runs/new.html.erb` already exists — Task 7 created it, because Task 7's authorization spec renders it. Do not recreate it.
 
 Create `app/views/translation_runs/show.html.erb`:
 
@@ -2483,9 +2498,6 @@ Extend the `translations:` block in each of `config/locales/{ru,en,uk,ka,tr,be,p
       heading: "Перевод с помощью ИИ"
       translate: "Перевести"
       translate_multiple: "Перевести на несколько языков…"
-    new:
-      heading: "Перевод игры «%{game}»"
-      submit: "Перевести"
     show:
       heading: "Перевод игры «%{game}»"
       progress: "%{done} из %{total}"
@@ -2523,9 +2535,6 @@ Extend the `translations:` block in each of `config/locales/{ru,en,uk,ka,tr,be,p
       heading: "AI translation"
       translate: "Translate"
       translate_multiple: "Translate into several languages…"
-    new:
-      heading: "Translating “%{game}”"
-      submit: "Translate"
     show:
       heading: "Translating “%{game}”"
       progress: "%{done} of %{total}"
@@ -2798,7 +2807,8 @@ Checked against the spec, section by section:
 | §8 Testing | Every task; full gates in Task 10 |
 | §9 Non-goals | Task 9 (meta refresh, with the reasoning in the template comment) and Task 10 (`CLAUDE.md`) |
 
-**Two known soft spots the executor should watch:**
+**Template ownership, settled during the pre-flight scan:** a task that renders a template owns it. Task 7 renders `new.html.erb` (its authorization spec `GET`s the new action and expects 200), so Task 7 creates it along with the `translations.new.*` keys. Task 8 renders nothing — every one of its specs POSTs and asserts a redirect — so `translation_proposals/index.html.erb` belongs to Task 9, which is the first task to `GET` it. No placeholder templates are needed anywhere.
 
-1. **Task 7 Step 7 and Task 8 Step 5** render actions whose templates arrive in Task 9. If you execute strictly in order, add a one-line placeholder template at those points rather than reordering — the request specs assert status and flash, not markup.
-2. **The `anthropic` gem's exact Ruby binding** for `usage.cache_read_input_tokens` and the `system_:` keyword is taken from the SDK's documented Ruby surface. If `bundle install` resolves a version whose surface differs, fix `Translation::Client` — it is the only file that touches the SDK, which is the whole point of the seam — and leave every spec unchanged, since they all stub it.
+**One known soft spot the executor should watch:**
+
+1. **The `anthropic` gem's exact Ruby binding** for `usage.cache_read_input_tokens` and the `system_:` keyword is taken from the SDK's documented Ruby surface. If `bundle install` resolves a version whose surface differs, fix `Translation::Client` — it is the only file that touches the SDK, which is the whole point of the seam — and leave every spec unchanged, since they all stub it.

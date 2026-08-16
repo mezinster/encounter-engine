@@ -426,10 +426,11 @@ CI need no credential. See
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 1829 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
-  This figure was 1603 here while the real number was 1751, and then 1751 while the real number was
-  1829, alongside a Cucumber figure that was also wrong — which is the point of the sentence that
-  follows.
+- **RSpec** — 1934 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
+  This figure has now been wrong four times: 1603 while the real number was 1751, then 1751 while
+  it was 1829, then 1829 while it was 1851 — measured on 2026-08-16 before the AI translation
+  work began — and the Cucumber figure beside it was wrong once too. Which is the point of the
+  sentence that follows.
   **Do not trust a quoted RSpec count** — this number has moved eight times in a week and stale
   copies have been cited as current twice. Re-run it. The inherited 228/2325 is the stable figure.
   `spec/rails_helper.rb` enables the legacy `should` syntax

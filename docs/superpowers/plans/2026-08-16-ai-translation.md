@@ -2372,7 +2372,12 @@ class TranslationProposalsController < ApplicationController
   end
 
   def accept
-    proposal = @run.translation_proposals.find(params[:id])
+    # .pending, not a bare find: without it, rejecting an already-ACCEPTED
+    # proposal marks it rejected while leaving the ContentTranslation it wrote
+    # live in the game -- the review record and the game disagreeing about
+    # whether the machine text was accepted. Accepting twice would likewise
+    # write a second audit entry for one change.
+    proposal = @run.translation_proposals.pending.find(params[:id])
     apply(proposal, params[:proposed_text].presence || proposal.proposed_text)
 
     record_admin_action("translation_proposals_accepted", @game,
@@ -2381,7 +2386,12 @@ class TranslationProposalsController < ApplicationController
   end
 
   def reject
-    proposal = @run.translation_proposals.find(params[:id])
+    # .pending, not a bare find: without it, rejecting an already-ACCEPTED
+    # proposal marks it rejected while leaving the ContentTranslation it wrote
+    # live in the game -- the review record and the game disagreeing about
+    # whether the machine text was accepted. Accepting twice would likewise
+    # write a second audit entry for one change.
+    proposal = @run.translation_proposals.pending.find(params[:id])
     proposal.update!(:state => TranslationProposal::REJECTED,
                      :reviewed_by => current_user, :reviewed_at => Time.now)
 

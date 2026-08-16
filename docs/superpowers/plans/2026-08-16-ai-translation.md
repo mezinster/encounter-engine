@@ -1853,7 +1853,7 @@ describe "translation run authorization", type: :request do
 end
 ```
 
-**Route helper names are singular for `new`.** Rails generates `new_game_translation_run_path`, not `new_game_translation_run_path` — the plural form appears nowhere. Check `bin/rails routes | grep translation_run` rather than guessing; the same slip appears in Task 8's spec and Task 9's view if copied from here.
+**Route helper names are singular for `new`.** Rails generates `new_game_translation_run_path` (singular). The plural `new_game_translation_runs_path` does not exist and will raise `NoMethodError`. Check `bin/rails routes | grep translation_run` rather than guessing; the same slip appears in Task 8's spec and Task 9's view if copied from here.
 
 - [ ] **Step 2: Write the failing behaviour spec**
 
@@ -2250,7 +2250,9 @@ describe "reviewing translation proposals", type: :request do
     sign_in(create_user)
 
     post accept_game_translation_run_proposal_path(game, run, proposal)
-    expect(response.status).to eq(403)
+    # 401, not 403: deny_unauthorized renders :unauthorized for every
+    # Authentication::Unauthorized this app raises. See Task 7's spec.
+    expect(response).to have_http_status(:unauthorized)
   end
 end
 ```

@@ -52,11 +52,14 @@ describe Game, "#missing_translated_fields_in" do
   # PUBLISHED game from declaring a locale it hasn't translated yet -- that
   # gate is pre-existing behaviour, unrelated to this extraction, and exactly
   # what tests 1-3 above show being solved a different way (translate before
-  # declaring). update_column sidesteps it here so this example isolates the
-  # one thing it exists to check: that missing_translations still answers only
-  # for declared locales.
+  # declaring). Moving to a draft first, in its own update!, sidesteps it: the
+  # gate's `return if self.draft?` reads the value being saved, and this call
+  # changes only is_draft (no available_locales change), so it never reaches
+  # the branch that blocks on missing translations. That isolates the one
+  # thing this example exists to check: that missing_translations still
+  # answers only for declared locales.
   it "leaves missing_translations answering for declared locales only" do
-    game.update_column(:is_draft, true)
+    game.update!(:is_draft => true)
     game.update!(:available_locale_list => %w[ru pl])
 
     expect(game.missing_translations.map(&:locale).uniq).to eq([ "pl" ])

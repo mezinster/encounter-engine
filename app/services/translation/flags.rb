@@ -20,17 +20,28 @@ module Translation
     # Two or more Latin letters, so a stray initial does not trip the check.
     LATIN  = /[A-Za-z]{2,}/
 
+    # String#strip trims ASCII whitespace ONLY, so a proposal consisting of a
+    # single non-breaking space escaped `empty` and compared unequal in
+    # `identical` -- and NBSP is exactly the sort of character machine output
+    # plausibly contains. [[:space:]] is Unicode-aware on a UTF-8 string and
+    # does match U+00A0.
+    OUTER_SPACE = /\A[[:space:]]+|[[:space:]]+\z/
+
     def self.for(source:, proposed:)
-      source   = source.to_s
-      proposed = proposed.to_s
+      source   = trim(source)
+      proposed = trim(proposed)
 
       flags = []
-      flags << "empty"       if proposed.strip.empty?
-      flags << "identical"   if !proposed.strip.empty? && proposed.strip == source.strip
+      flags << "empty"       if proposed.empty?
+      flags << "identical"   if !proposed.empty? && proposed == source
       flags << "lost_digits" if lost?(DIGITS, source, proposed)
       flags << "lost_latin"  if lost?(LATIN,  source, proposed)
       flags << "length"      if implausible_length?(source, proposed)
       flags
+    end
+
+    def self.trim(text)
+      text.to_s.gsub(OUTER_SPACE, "")
     end
 
     # Asymmetric on purpose: a token the SOURCE contains and the proposal does
@@ -40,13 +51,14 @@ module Translation
       (source.scan(pattern) - proposed.scan(pattern)).any?
     end
 
+    # Both arguments arrive already trimmed from .for.
     def self.implausible_length?(source, proposed)
-      return false if source.strip.length < MIN_LENGTH_FOR_RATIO
+      return false if source.length < MIN_LENGTH_FOR_RATIO
 
-      ratio = proposed.strip.length.to_f / source.strip.length
+      ratio = proposed.length.to_f / source.length
       ratio < SHORT_RATIO || ratio > LONG_RATIO
     end
 
-    private_class_method :lost?, :implausible_length?
+    private_class_method :lost?, :implausible_length?, :trim
   end
 end

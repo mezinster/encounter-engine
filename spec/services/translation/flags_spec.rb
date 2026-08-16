@@ -66,4 +66,24 @@ describe Translation::Flags do
   it "can return several flags at once" do
     expect(flags_for("Найдите табличку на стене подъезда", "")).to match_array(%w[empty length])
   end
+
+  # String#strip trims ASCII whitespace only, so a lone non-breaking space --
+  # which machine output can plausibly contain -- escaped `empty` entirely and
+  # compared unequal in `identical`. Both are checks that exist to catch
+  # exactly this shape of output, and both let it through.
+  describe "whitespace that String#strip does not see" do
+    NBSP = " ".freeze
+
+    it "treats a lone non-breaking space as empty" do
+      expect(flags_for("Найдите табличку", NBSP)).to include("empty")
+    end
+
+    it "sees through non-breaking padding when comparing against the source" do
+      expect(flags_for("Найдите табличку", "#{NBSP}Найдите табличку#{NBSP}")).to include("identical")
+    end
+
+    it "does not call a real translation empty just because it is padded" do
+      expect(flags_for("Найдите табличку", "#{NBSP}Find the sign#{NBSP}")).not_to include("empty")
+    end
+  end
 end

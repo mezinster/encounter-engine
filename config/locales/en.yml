@@ -106,6 +106,8 @@ en:
         instance_cap_megabytes: "Total server limit (MB)"
         free_space_floor_megabytes: "Free disk space floor (MB)"
         allowed_extensions: "Allowed file extensions"
+        translation_model: "Translation model"
+        translation_max_fields_per_run: "Maximum fields per translation run"
     dashboard:
       show:
         title: "Overview"

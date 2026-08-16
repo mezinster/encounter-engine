@@ -106,6 +106,8 @@ ru:
         instance_cap_megabytes: "Общий лимит на сервер (МБ)"
         free_space_floor_megabytes: "Неснижаемый остаток на диске (МБ)"
         allowed_extensions: "Разрешённые расширения файлов"
+        translation_model: "Модель для перевода"
+        translation_max_fields_per_run: "Максимум полей за один перевод"
     dashboard:
       show:
         title: "Обзор"

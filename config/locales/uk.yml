@@ -123,6 +123,8 @@ uk:
         instance_cap_megabytes: "Загальний ліміт на сервер (МБ)"
         free_space_floor_megabytes: "Незнижуваний залишок на диску (МБ)"
         allowed_extensions: "Дозволені розширення файлів"
+        translation_model: "Модель для перекладу"
+        translation_max_fields_per_run: "Максимум полів за один переклад"
     dashboard:
       show:
         title: "Огляд"

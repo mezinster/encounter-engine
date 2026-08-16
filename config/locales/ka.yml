@@ -129,6 +129,8 @@ ka:
         instance_cap_megabytes: "საერთო ლიმიტი სერვერზე (მბ)"
         free_space_floor_megabytes: "დისკზე შენარჩუნებული თავისუფალი ადგილი (მბ)"
         allowed_extensions: "დაშვებული ფაილის გაფართოებები"
+        translation_model: "თარგმანის მოდელი"
+        translation_max_fields_per_run: "მაქსიმალური ველების რაოდენობა ერთ თარგმანზე"
     dashboard:
       show:
         title: "მიმოხილვა"

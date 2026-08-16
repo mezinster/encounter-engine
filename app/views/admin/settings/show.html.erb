@@ -17,5 +17,13 @@
     </div>
   <% end %>
 
+  <% Setting::ENUM_DEFAULTS.each_key do |name| %>
+    <div class="field">
+      <%= label_tag "settings_#{name}", t("admin.settings.names.#{name}") %>
+      <%= select_tag "settings[#{name}]",
+                     options_for_select(Setting::ENUM_ALLOWED.fetch(name), @values[name]) %>
+    </div>
+  <% end %>
+
   <%= submit_tag t("admin.settings.submit"), class: "btn btn--go" %>
 <% end %>

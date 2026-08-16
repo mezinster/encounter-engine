@@ -125,6 +125,8 @@ be:
         instance_cap_megabytes: "Агульны ліміт на сервер (МБ)"
         free_space_floor_megabytes: "Незніжальны астатак на дыску (МБ)"
         allowed_extensions: "Дазволеныя пашырэнні файлаў"
+        translation_model: "Мадэль для перакладу"
+        translation_max_fields_per_run: "Максімум палёў за адзін пераклад"
     dashboard:
       show:
         title: "Агляд"

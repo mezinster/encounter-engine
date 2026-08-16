@@ -130,6 +130,8 @@ pl:
         instance_cap_megabytes: "Łączny limit serwera (MB)"
         free_space_floor_megabytes: "Nienaruszalny zapas miejsca na dysku (MB)"
         allowed_extensions: "Dozwolone rozszerzenia plików"
+        translation_model: "Model do tłumaczenia"
+        translation_max_fields_per_run: "Maksimum pól na jedno tłumaczenie"
     dashboard:
       show:
         title: "Przegląd"

@@ -151,6 +151,8 @@ tr:
         instance_cap_megabytes: "Sunucu genelinde toplam sınır (MB)"
         free_space_floor_megabytes: "Diskte korunacak minimum boş alan (MB)"
         allowed_extensions: "İzin verilen dosya uzantıları"
+        translation_model: "Çeviri modeli"
+        translation_max_fields_per_run: "Çeviri başına maksimum alan sayısı"
     dashboard:
       show:
         title: "Genel bakış"

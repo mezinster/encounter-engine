@@ -37,9 +37,17 @@ class Setting < ApplicationRecord
     "free_space_floor_megabytes" => 3072
   }.freeze
 
+  # Blast radius for one AI translation run. A whole game into every registered
+  # locale is a few hundred fields; this is the ceiling that stops a mis-click
+  # on a very large game from becoming a very large bill.
+  TRANSLATION_DEFAULTS = {
+    "translation_max_fields_per_run" => 400
+  }.freeze
+
   # Every integer key that Setting.integer will answer for and that the
   # numericality validation applies to.
-  INTEGER_DEFAULTS = RATE_LIMIT_DEFAULTS.merge(STORAGE_DEFAULTS).freeze
+  INTEGER_DEFAULTS = RATE_LIMIT_DEFAULTS.merge(STORAGE_DEFAULTS)
+                                        .merge(TRANSLATION_DEFAULTS).freeze
 
   # List-of-strings keys. Stored space-separated in string_value.
   #
@@ -51,6 +59,24 @@ class Setting < ApplicationRecord
     "allowed_extensions" => %w[jpg jpeg png gif heic pdf]
   }.freeze
 
+  # Single-valued, chosen from a fixed set. A third category because neither
+  # existing one fits: INTEGER_DEFAULTS is numeric, and STRING_DEFAULTS is a
+  # LIST normalised by normalise_list and validated by ENTRY, which rejects
+  # hyphens and anything over ten characters -- "claude-opus-5" fails that
+  # twice over. Stored in string_value alongside the list keys; the two are
+  # told apart by which hash the name appears in.
+  ENUM_DEFAULTS = {
+    "translation_model" => "claude-opus-5"
+  }.freeze
+
+  # An allow-list, not free text, for the same reason allowed_extensions is
+  # intersected with a constant: a superadmin may choose among costed,
+  # supported models but must not be able to introduce one nobody has tested.
+  # Exact IDs -- never append a date suffix, which 404s.
+  ENUM_ALLOWED = {
+    "translation_model" => %w[claude-opus-5 claude-sonnet-5 claude-haiku-4-5].freeze
+  }.freeze
+
   # What the admin settings page renders. Phase 1 deliberately kept this to the
   # four rate limits, because a settings screen offering a quota that no code
   # obeys is worse than no screen at all. Phase 2 adds the enforcement, so the
@@ -59,7 +85,11 @@ class Setting < ApplicationRecord
   DEFAULTS = INTEGER_DEFAULTS
 
   validates :name, :presence => true, :uniqueness => true,
-                   :inclusion => { :in => INTEGER_DEFAULTS.keys + STRING_DEFAULTS.keys }
+                   :inclusion => { :in => INTEGER_DEFAULTS.keys +
+                                          STRING_DEFAULTS.keys +
+                                          ENUM_DEFAULTS.keys }
+
+  validate :enum_value_is_allowed, :if => :enum_key?
 
   # Conditional now, unconditional before: a string key legitimately has a nil
   # `value`. greater_than_or_equal_to, not greater_than -- zero is the
@@ -85,6 +115,13 @@ class Setting < ApplicationRecord
     find_by(:name => name)&.value || INTEGER_DEFAULTS.fetch(name)
   end
 
+  def self.enum(name)
+    record = find_by(:name => name)
+    return ENUM_DEFAULTS.fetch(name) if record.nil? || record.string_value.blank?
+
+    record.string_value
+  end
+
   def self.list(name)
     record = find_by(:name => name)
     # .dup, not the frozen array itself: STRING_DEFAULTS.freeze only froze the
@@ -103,7 +140,9 @@ class Setting < ApplicationRecord
   def self.put(name, value)
     record = find_or_initialize_by(:name => name)
 
-    if STRING_DEFAULTS.key?(name)
+    if ENUM_DEFAULTS.key?(name)
+      record.string_value = value.to_s.strip
+    elsif STRING_DEFAULTS.key?(name)
       record.string_value = normalise_list(value).join(" ")
     else
       record.value = value
@@ -140,5 +179,15 @@ class Setting < ApplicationRecord
 
   def integer_key?
     INTEGER_DEFAULTS.key?(name)
+  end
+
+  def enum_key?
+    ENUM_DEFAULTS.key?(name)
+  end
+
+  def enum_value_is_allowed
+    return if self.class::ENUM_ALLOWED.fetch(name, []).include?(string_value)
+
+    errors.add(:string_value, :inclusion)
   end
 end

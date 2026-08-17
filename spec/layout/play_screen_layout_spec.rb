@@ -143,6 +143,14 @@ describe "the play screen, measured", :layout, type: :request do
     }
     var RESULT = {
       submitAtTop: hit(".btn--go"),
+      // Both of these were painted out here by
+      // `.page--focused .topbar-chrome { display: none }` while staying in the
+      // DOM, so spec/requests/ui_shell_spec.rb and ui_contract_spec.rb -- which
+      // assert on the markup -- were green throughout. hit() is what tells the
+      // two apart: checkVisibility sees the external stylesheet, and nothing
+      // else in either suite can.
+      themeToggle: hit("#theme-toggle"),
+      localeTrigger: hit(".locale-trigger"),
       hOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       innerScroll: [".main", ".play-body", ".playbar"].filter(scrolls),
       // Proves the photographs this screen was redesigned around are really
@@ -209,6 +217,21 @@ describe "the play screen, measured", :layout, type: :request do
       it "puts the submit button where it can be pressed, at both ends of the scroll" do
         expect(m["submitAtTop"]).to eq("OK")
         expect(m["submitAtBottom"]).to eq("OK")
+      end
+
+      # Hidden here from dd1ee2f until 2026-08-17 on the grounds that they were
+      # "noise during a race". The original reason was height -- four flat
+      # locale links wrapped the header onto three rows -- and it expired when
+      # the switcher became a dropdown; the rule outlived it. An author testing
+      # their own game has no other way to check it in a second theme or a
+      # second language without abandoning the run, and a player mid-race has
+      # none at all. The cost is one extra header row on a phone (69px -> 121px
+      # at 390x680; desktop unchanged) -- deliberately not asserted here, since
+      # this file pins properties and not heights, but recorded against the
+      # deleted rule in public/stylesheets/layout.css.
+      it "keeps the theme toggle and the language switcher pressable" do
+        expect(m["themeToggle"]).to eq("OK")
+        expect(m["localeTrigger"]).to eq("OK")
       end
 
       it "leaves the captain's exit and the last answer reachable" do

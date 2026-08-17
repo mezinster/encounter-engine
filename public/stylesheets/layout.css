@@ -300,22 +300,43 @@
      was OUT of flow, and reintroducing either one would be a regression. */
 }
 
-/* A race, not a browsing session. The theme toggle and the language switcher
-   are chrome nobody adjusts while a clock is running, and at 390px they
-   wrapped the header onto three rows -- 181px with four locales, 27% of the
-   visible screen, more than the question itself. Hidden here only; every
-   other page keeps them, and a locale is still chosen from the profile form
-   or a ?locale= link.
+/* The play screen used to hide .topbar-chrome -- both the theme toggle and the
+   language switcher -- on the grounds that they were "a race, not a browsing
+   session". That rule is gone as of 2026-08-17, and it is worth knowing why so
+   it does not come back by reflex.
 
-   The switcher is a dropdown now (see .locale-menu below) and no longer
-   grows with the locale count, so this rule is no longer load-bearing for
-   height on the play screen -- it stays because the control is still noise
-   during a race.
+   Its real justification was height, and the height was real: with four flat
+   locale links the header wrapped onto three rows at 390px, 181px of a 680px
+   screen, more than the question itself. Then ed8ecc2 made the switcher a
+   dropdown, one 44px trigger that does not grow with the locale count, and the
+   number stopped being true -- the comment here was updated to admit as much
+   and the rule was kept anyway, on taste alone.
 
-   One selector rather than #theme-toggle + #locale-switcher: both now live
-   inside .topbar-chrome, and hiding the wrapper also removes its
-   margin-left: auto, which would otherwise be left behind pushing nothing. */
-.page--focused .topbar-chrome { display: none; }
+   What that cost: the controls were `display: none` while still in the DOM, so
+   every request spec asserting id="theme-toggle"/id="locale-switcher" stayed
+   green (spec/requests/ui_shell_spec.rb, ui_contract_spec.rb) and nothing in
+   either suite could see the difference. .page--focused is set by
+   layouts/in_game.html.erb, which GamePassingsController renders for EVERY
+   play screen, so this hit real scheduled runs exactly as hard as test runs --
+   an author testing their own game could not check it in a second theme or
+   language without leaving the run, and a player mid-race had no way at all.
+   Reported from a live test run against a quiz.
+
+   What it costs, measured rather than assumed -- the first draft of this
+   comment guessed "unchanged" and was wrong by a whole row. The header goes
+   69px -> 121px at 390x680 and at 375x553; desktop (1280x800) stays 69px,
+   where the row has width to spare. So the chrome does take a second row on a
+   phone: 52px, 7.6% of a 390x680 viewport and 9.4% of an iPhone SE's 553px.
+   That is the price of the fix and it is a real one -- but it is a third of
+   the 181px the original rule was written against, and the full harness stays
+   green at every size: the submit button is still hit-testable at both ends of
+   the scroll, nothing scrolls inside anything else, horizontal overflow is 0,
+   and the answer bar still rests flush on the bottom edge.
+
+   If that row ever needs to come back, shrink the controls on .page--focused
+   (an icon-only toggle, a two-letter locale trigger) rather than hiding them
+   again. spec/layout/play_screen_layout_spec.rb hit-tests both controls here
+   now, which is the check that would have caught the original regression. */
 /* No bottom reserve for the pinned answer bar: it is position: sticky, so it
    holds its own space in flow at whatever height its contents come to. The
    12rem/17rem constants that used to live here were measured against a bar

@@ -29,14 +29,26 @@ module Translation
       new("Level##{level.id}", fields)
     end
 
-    def initialize(key, fields)
+    # A unit whose source text is supplied directly rather than derived from
+    # fields. The estimator needs two shapes that correspond to no record set: a
+    # baseline carrying almost nothing, and a bulk unit carrying every source at
+    # once. Both go through the same Client#request_body as a real call, which
+    # is what keeps the estimate describing the run that will actually happen.
+    def self.raw(key, text)
+      new(key, [], :source => text)
+    end
+
+    def initialize(key, fields, source: nil)
       @key    = key
       @fields = fields
+      @source = source
     end
 
     # Every field is labelled with the key the model must echo back, so the
     # response maps to records without positional guessing.
     def source_text
+      return @source unless @source.nil?
+
       @fields.map do |missing|
         "#{self.class.field_key(missing.record, missing.field)}: #{missing.record[missing.field]}"
       end.join("\n\n")

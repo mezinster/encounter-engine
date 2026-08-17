@@ -61,21 +61,58 @@ module Translation
       end
     end
 
-    # A measured, per-unit-per-locale pre-flight. count_tokens is free and
-    # exact, which is the whole reason the design puts it here rather than
-    # guessing from character counts -- but it is one HTTP round trip per unit
-    # per locale, so it runs ONCE, on the first POST, and the figure is carried
-    # into the confirmed POST rather than recomputed.
+    # One character, not none: the Anthropic API rejects an empty text block and
+    # the unit source IS a text block. Costs roughly one token per baseline
+    # call, which is noise against a five-figure estimate.
+    BASELINE_SOURCE = ".".freeze
+
+    # A pre-flight whose cost does not grow with the game.
+    #
+    # Every call this run will make is [RULES][unit source][instruction] (see
+    # Client#request_body), so a call's input is CONST + tokens(source) +
+    # tokens(instruction for that locale), and the job total is:
+    #
+    #   n_units x SUM_locales baseline(locale) + n_locales x SUM_units tokens(source)
+    #
+    # Both terms are measurable in a constant number of calls: one baseline per
+    # locale -- a unit carrying only BASELINE_SOURCE, so the result is CONST
+    # plus that locale's instruction -- and one bulk call carrying every source
+    # at once, minus that baseline.
+    #
+    # This WAS one count_tokens per unit per locale, run synchronously inside
+    # the POST that renders the confirmation screen: 71 round trips for a
+    # 70-level quiz at one language and ~426 at six. It was never actually
+    # reached only because the 400-field cap refused such games before the
+    # confirmation screen was ever built -- so this had to be fixed before that
+    # cap could move.
+    #
+    # Approximate in two known ways, both far below the estimate's existing
+    # variance against real spend (prompt caching means billed input is a
+    # fraction of this figure): the baseline carries one character rather than
+    # none, and concatenating sources tokenises a few tokens differently at each
+    # boundary.
     def self.estimate_input_tokens(game, locales, client: nil)
       effective = locales.reject { |l| l.to_s == game.primary_locale.to_s }
       return 0 if effective.empty?
 
+      units = units_for(game, effective)
+      return 0 if units.empty?
+
       client ||= Client.new(:api_key => ENV["ANTHROPIC_API_KEY"],
                             :model   => Setting.enum("translation_model"))
 
-      units_for(game, effective).sum do |unit|
-        effective.sum { |locale| client.count_input_tokens(:unit => unit, :locale => locale) }
+      baselines = effective.map do |locale|
+        client.count_input_tokens(:unit   => Unit.raw("estimate:baseline", BASELINE_SOURCE),
+                                  :locale => locale)
       end
+
+      bulk = client.count_input_tokens(
+        :unit   => Unit.raw("estimate:bulk", units.map(&:source_text).join("\n\n")),
+        :locale => effective.first
+      )
+      sources = bulk - baselines.first
+
+      units.size * baselines.sum + effective.size * sources
     end
 
     def initialize(run, client: nil)

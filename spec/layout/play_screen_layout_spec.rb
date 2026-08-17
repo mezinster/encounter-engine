@@ -1,6 +1,5 @@
 require "rails_helper"
-require "json"
-require "shellwords"
+require_relative "../support/layout_measurement"
 
 # The play screen, measured in a real browser at real phone sizes.
 #
@@ -38,79 +37,11 @@ module PlayScreenLayoutHarness
   VIEWPORTS = { "iPhone 14 Pro (visible)" => [ 390, 680 ],
                 "iPhone SE (visible)"     => [ 375, 553 ],
                 "desktop"                 => [ 1280, 800 ] }.freeze
-
-  CHROME_GLOB = File.expand_path(
-    "~/.cache/ms-playwright/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell"
-  )
 end
 
 describe "the play screen, measured", :layout, type: :request do
 
-  # The full chromium build clamps windows to 500px wide, which silently turns
-  # every phone measurement into a 500px one; headless_shell honours narrow
-  # sizes. Raise rather than skip: a measurement that quietly did not happen is
-  # worse than no measurement, because it reports as a pass.
-  def chrome
-    @chrome ||= Dir.glob(PlayScreenLayoutHarness::CHROME_GLOB).max ||
-      raise(<<~MSG)
-        No chrome-headless-shell found at #{PlayScreenLayoutHarness::CHROME_GLOB}
-
-        Install it with:  npx playwright install chromium
-        The full `chromium-*/chrome-linux64/chrome` build is NOT a substitute --
-        it clamps the window to 500px wide, so every phone size measures as 500.
-      MSG
-  end
-
-  # Rewrites the stylesheet links AND the attachment images to absolute file://
-  # paths so the page can be opened straight off disk. A static HTTP server
-  # would work too and is what earlier ad-hoc runs used; this removes a moving
-  # part (a port, a process to reap) from something that has to be trustworthy
-  # to be worth running.
-  #
-  # The images matter and were missed the first time round. Left as
-  # `/games/1/files/1/web`, they resolve against file:// to `file:///games/...`
-  # and never load -- so this harness measured two BROKEN images while claiming
-  # to measure photographs, which is the entire content class it exists for.
-  # They occupied the right 96x96 anyway, but only because .attachment-image
-  # hard-codes width and height; the day that becomes an intrinsic size, a
-  # harness that silently measures nothing would have gone on passing.
-  # `imagesLoaded` in the probe is what stops that happening again.
-  def measure(html, width, height, script)
-    page = html.gsub(%r{href="/(stylesheets/[^"]+)"}) do
-      %(href="file://#{Rails.root.join('public', Regexp.last_match(1))}")
-    end
-    # The delivery route is dynamic (variant, authorization, streaming); none of
-    # that is layout. What layout needs is a real decoded image of a real size,
-    # which is the fixture the upload was built from in the first place.
-    photo = Rails.root.join("spec/fixtures/files/photo.jpg")
-    page = page.gsub(%r{src="/games/\d+/files/\d+/\w+"}, %(src="file://#{photo}"))
-    page = page.sub("</body>", <<~PROBE + "</body>")
-      <script>
-      window.addEventListener("load", function () {
-        #{script}
-        var pre = document.createElement("pre");
-        pre.textContent = "RESULT=" + JSON.stringify(RESULT);
-        document.body.appendChild(pre);
-      });
-      </script>
-    PROBE
-
-    file = Rails.root.join("tmp", "play-screen-measure.html")
-    FileUtils.mkdir_p(file.dirname)
-    File.write(file, page)
-
-    dom = `#{Shellwords.join([
-      chrome, "--no-sandbox", "--hide-scrollbars", "--allow-file-access-from-files",
-      "--window-size=#{width},#{height}", "--virtual-time-budget=4000",
-      "--dump-dom", "file://#{file}"
-    ])} 2>/dev/null`
-
-    # tail: the probe's own source contains the literal "RESULT=" too, and it
-    # is in the dumped DOM ahead of the value.
-    json = dom.scan(/RESULT=(\{.*?\})<\/pre>/m).last&.first ||
-      raise("the browser produced no measurement; dumped DOM was:\n#{dom[0, 2000]}")
-    JSON.parse(json)
-  end
+  include LayoutMeasurement
 
   PROBE_SCRIPT = <<~JS
     function hit(sel) {
@@ -202,7 +133,7 @@ describe "the play screen, measured", :layout, type: :request do
 
   PlayScreenLayoutHarness::VIEWPORTS.each do |name, (width, height)|
     context "at #{width}x#{height} -- #{name}" do
-      let(:m) { measure(page_html, width, height, PROBE_SCRIPT) }
+      let(:m) { measure(page_html, width, height, PROBE_SCRIPT, :tmp_name => "play-screen-measure.html") }
 
       # The one that shipped broken. "Present in the DOM" is what both suites
       # can check and is not the same claim at all.

@@ -28,7 +28,7 @@ describe Setting, "translation keys" do
   end
 
   it "caps the fields one run may translate" do
-    expect(Setting.integer("translation_max_fields_per_run")).to eq(400)
+    expect(Setting.integer("translation_max_fields_per_run")).to eq(5_000)
 
     Setting.put("translation_max_fields_per_run", 50)
     expect(Setting.integer("translation_max_fields_per_run")).to eq(50)

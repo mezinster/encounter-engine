@@ -37,11 +37,25 @@ class Setting < ApplicationRecord
     "free_space_floor_megabytes" => 3072
   }.freeze
 
-  # Blast radius for one AI translation run. A whole game into every registered
-  # locale is a few hundred fields; this is the ceiling that stops a mis-click
-  # on a very large game from becoming a very large bill.
+  # Blast radius for one AI translation run, counted in FIELDS x LOCALES --
+  # Runner.plan flattens the work-list across locales, so translating into six
+  # languages costs six times the fields.
+  #
+  # Raised from 400 on 2026-08-17. "A whole game into every registered locale is
+  # a few hundred fields", which is what the previous note here said, was simply
+  # wrong for a quiz: options are a translatable field each, so a ~70-question
+  # game is ~492 fields at ONE language and ~2952 at six. 400 was not a cost
+  # ceiling in practice, it was a wall -- that game could not be translated at
+  # all.
+  #
+  # 5000 clears it into every locale with headroom while still refusing
+  # something pathological. This is a backstop, not a working limit: the cost
+  # guard is the confirmation screen, which prices the run before anything is
+  # spent. Raising it was only safe once Runner.estimate_input_tokens stopped
+  # costing one API round trip per unit per locale, since this cap was the only
+  # thing keeping that pre-flight from ever being reached.
   TRANSLATION_DEFAULTS = {
-    "translation_max_fields_per_run" => 400
+    "translation_max_fields_per_run" => 5_000
   }.freeze
 
   # Every integer key that Setting.integer will answer for and that the

@@ -131,6 +131,24 @@ describe "starting a translation run", type: :request do
     expect(flash[:alert]).to be_present
   end
 
+  # The reported bug: a ~70-level quiz is ~492 fields at ONE language -- the cap
+  # is checked against Runner.plan's output, which is fields x locales -- and it
+  # was refused outright. The work-list is stubbed rather than built, because
+  # creating 500 records to exercise one integer comparison is a slow way to
+  # assert nothing extra; estimate_input_tokens is already stubbed for this
+  # whole file, so no network is involved either.
+  it "no longer refuses a game that is merely large" do
+    allow(Translation::Runner).to receive(:plan).and_return(Array.new(492, :field))
+
+    # Still creates nothing: an unconfirmed POST prices the work and stops,
+    # which is the behaviour being asserted.
+    expect { post game_translation_runs_path(game), :params => { :locales => %w[en] } }
+      .not_to change { TranslationRun.count }
+
+    expect(flash[:alert]).to be_nil
+    expect(response.body).to include(I18n.t("translations.confirm.submit"))
+  end
+
   it "refuses a run with nothing to do" do
     expect { post game_translation_runs_path(game), :params => { :locales => [ "ru" ] } }
       .not_to change { TranslationRun.count }

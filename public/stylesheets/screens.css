@@ -197,6 +197,51 @@ ul.language-tabs .missing-count {
 .missing-translations h3 { margin-bottom: var(--space-2); color: var(--danger); }
 .missing-translations ul { margin-left: var(--space-4); list-style: disc; }
 
+/* The AI-translation panel on the game edit screen (superadmin only). It
+   shipped with no rule at all, so a label followed by a button_to -- which
+   renders its own <form> -- laid out as a staircase: each row's button started
+   wherever that row's locale name happened to end. Measured before this rule,
+   at both 390px and 1280px: six buttons, six different left offsets.
+
+   Alignment across rows needs one shared column definition: a grid on each <li>
+   on its own cannot do it, because no li knows how wide its neighbours' labels
+   are. Two tools can, and this uses SUBGRID rather than `display: contents`.
+
+   Why not display: contents, which is the shorter spelling: it removes the <li>
+   from the box tree, and Chrome, Safari and Firefox all used to drop the list's
+   accessibility semantics along with it. That was fixed years ago, but it could
+   not be VERIFIED here -- chrome-headless-shell exposes no computedRole and
+   supports no --dump-accessibility-tree, so the measurement in
+   spec/layout/translate_panel_layout_spec.rb could report nothing better than
+   "unknown". Subgrid makes the question moot: every <li> stays a real, rendered
+   list item and simply borrows the parent's column tracks. Same alignment, one
+   fewer thing taken on trust.
+
+   max-content, not a fixed width: the label column has to fit the widest
+   endonym, and which one that is depends on the registered locale set and on
+   the font. Беларуская and ქართული are the long ones today; a hard-coded rem
+   value would silently clip or over-pad the day an eighth locale is added. */
+.translate-locales {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.translate-locales li {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: center;
+}
+
+/* button_to renders a <form>, and a form carries default margin in some UA
+   stylesheets. As a grid item that margin becomes visible column padding. */
+.translate-locales form { margin: 0; }
+
+.translate-panel { margin-top: var(--space-5); }
+.translate-panel h3 { margin-bottom: var(--space-2); }
+
 .is-draft-message {
   display: inline-block;
   margin-bottom: var(--space-4);

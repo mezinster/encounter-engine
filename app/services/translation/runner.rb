@@ -66,6 +66,12 @@ module Translation
     # call, which is noise against a five-figure estimate.
     BASELINE_SOURCE = ".".freeze
 
+    # How much source text goes into one bulk count_tokens call. Well under any
+    # model's input limit, and the only thing it bounds is the SIZE of a
+    # pre-flight call -- never how many of them there are per unit, which is the
+    # property this whole rewrite exists to hold.
+    BULK_SOURCE_CHARS = 200_000
+
     # A pre-flight whose cost does not grow with the game.
     #
     # Every call this run will make is [RULES][unit source][instruction] (see
@@ -106,13 +112,42 @@ module Translation
                                   :locale => locale)
       end
 
-      bulk = client.count_input_tokens(
-        :unit   => Unit.raw("estimate:bulk", units.map(&:source_text).join("\n\n")),
-        :locale => effective.first
-      )
-      sources = bulk - baselines.first
+      sources = source_tokens(units, effective.first, baselines.first, client)
 
       units.size * baselines.sum + effective.size * sources
+    end
+
+    # Sum of tokens across every unit's source, measured in as few calls as the
+    # size limit allows. Each piece's own baseline is subtracted, because every
+    # call carries the rules prefix and the instruction whether it is measuring
+    # one unit or a hundred.
+    def self.source_tokens(units, locale, baseline, client)
+      bulk_groups(units).sum do |group|
+        text = group.map(&:source_text).join("\n\n")
+        client.count_input_tokens(:unit   => Unit.raw("estimate:bulk", text),
+                                  :locale => locale) - baseline
+      end
+    end
+
+    # Greedy packing. A unit whose own source exceeds the limit still gets a
+    # group to itself rather than being dropped or split mid-text: an over-long
+    # single prompt is the API's problem to report, and silently omitting a
+    # level from the estimate would be worse than an estimate that failed.
+    def self.bulk_groups(units)
+      groups = []
+      size   = 0
+
+      units.each do |unit|
+        length = unit.source_text.length
+        if groups.empty? || (groups.last.any? && size + length > BULK_SOURCE_CHARS)
+          groups << []
+          size = 0
+        end
+        groups.last << unit
+        size += length
+      end
+
+      groups
     end
 
     def initialize(run, client: nil)

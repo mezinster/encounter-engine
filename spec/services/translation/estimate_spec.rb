@@ -89,4 +89,66 @@ describe Translation::Runner, ".estimate_input_tokens" do
       .to eq(0)
     expect(client.calls).to be_empty
   end
+
+  # One bulk call over every source concatenated is fine for a 70-level quiz and
+  # not fine without bound: a large enough game would exceed the model's input
+  # limit and the estimate would fail. Failing renders "unknown" rather than
+  # blocking the run, but it loses the cost guard, which is the point of the
+  # screen.
+  describe "very large games" do
+    # Forced small so the split is reachable without building a game carrying
+    # megabytes of source text.
+    before { stub_const("Translation::Runner::BULK_SOURCE_CHARS", 120) }
+
+    it "splits the bulk call rather than sending one unbounded prompt" do
+      client = CountingClient.new
+      described_class.estimate_input_tokens(game_with(:levels => 10), %w[en], :client => client)
+
+      bulk = client.calls.select { |key, _locale, _length| key == "estimate:bulk" }
+      expect(bulk.size).to be > 1
+      # No piece may exceed the limit, allowing for the "\n\n" joins between
+      # units within a piece.
+      expect(bulk.map(&:last)).to all(be <= 120 + 60)
+    end
+
+    it "still counts every source exactly once across the pieces" do
+      client = CountingClient.new
+      total  = described_class.estimate_input_tokens(game_with(:levels => 10), %w[en], :client => client)
+
+      # Each bulk piece returns BASELINE + SOURCES and contributes SOURCES once
+      # its baseline is subtracted, so the sources term is pieces x SOURCES.
+      pieces = client.calls.count { |key, _locale, _length| key == "estimate:bulk" }
+      units  = 11 # 1 game header + 10 levels
+      expect(total).to eq(units * CountingClient::BASELINE + pieces * CountingClient::SOURCES)
+    end
+
+    it "keeps the call count independent of unit count even when splitting" do
+      client = CountingClient.new
+      described_class.estimate_input_tokens(game_with(:levels => 10), %w[en], :client => client)
+
+      # One baseline plus a small number of pieces -- emphatically not 11.
+      expect(client.calls.size).to be < 11
+    end
+  end
+
+  describe ".bulk_groups" do
+    it "gives a unit larger than the limit a group of its own" do
+      stub_const("Translation::Runner::BULK_SOURCE_CHARS", 10)
+      units = [ Translation::Unit.raw("a", "x" * 50),
+                Translation::Unit.raw("b", "y" * 50) ]
+
+      groups = described_class.bulk_groups(units)
+
+      expect(groups.size).to eq(2)
+      expect(groups.map(&:size)).to eq([ 1, 1 ])
+    end
+
+    it "packs units that fit together into one group" do
+      stub_const("Translation::Runner::BULK_SOURCE_CHARS", 100)
+      units = [ Translation::Unit.raw("a", "x" * 10),
+                Translation::Unit.raw("b", "y" * 10) ]
+
+      expect(described_class.bulk_groups(units).size).to eq(1)
+    end
+  end
 end

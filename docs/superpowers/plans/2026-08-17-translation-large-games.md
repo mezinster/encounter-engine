@@ -43,7 +43,9 @@ The browser-driving helper currently lives inside `spec/layout/play_screen_layou
 - [ ] **Step 1: Confirm the existing layout suite is green before touching it**
 
 Run: `bin/measure-play-screen`
-Expected: `20 examples, 0 failures`. If it is not green, stop — do not start a refactor on a red suite.
+Expected: `17 examples, 0 failures`. If it is not green, stop — do not start a refactor on a red suite.
+
+**Note on this number.** It is 17 on a branch cut from `origin/master` at `8ca9b5c`, and 20 once PR #110 (play-screen theme/language controls) merges, which adds three examples to the same file. Whichever it is, what matters is that Step 4 reports **the same count as Step 1** — an extraction must not change it. Substitute accordingly below.
 
 - [ ] **Step 2: Create the support module**
 
@@ -144,7 +146,7 @@ In `spec/layout/play_screen_layout_spec.rb`:
 - [ ] **Step 4: Run the layout suite to verify the extraction changed nothing**
 
 Run: `bin/measure-play-screen`
-Expected: `20 examples, 0 failures` — the same 20 as Step 1.
+Expected: `0 failures` and **the same example count Step 1 reported** (17 on this branch, 20 after PR #110 merges). A changed count means the extraction dropped or duplicated examples.
 
 - [ ] **Step 5: Run the ordinary suite, because this file is loaded even when filtered out**
 

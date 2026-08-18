@@ -19,6 +19,31 @@ describe "issuing and revoking access passes", type: :request do
     expect(AccessPass.count).to eq(0)
   end
 
+  # An operator visiting this console has not violated any rule ABOUT a
+  # superadmin -- the old message named the wrong role entirely.
+  # ensure_commercial_operator's own predicate is may_operate_commercial?,
+  # which the message should actually describe.
+  it "gives an ordinary user the operator-specific message, not the superadmin one" do
+    sign_in(ordinary)
+    post game_access_passes_path(game), :params => { :team_name => team.name }
+    expect(response.body).to include(I18n.t("errors.must_operate_commercial"))
+    expect(response.body).not_to include(I18n.t("errors.must_be_superadmin"))
+  end
+
+  # ensure_game_is_gated has nothing to do with authorship -- an operator can
+  # be refused here on their OWN game, if it is merely scheduled.
+  it "gives an operator on a scheduled game the gated-only message, not the authorship one" do
+    scheduled = create_level.game
+    scheduled.update!(:author => operator)
+    sign_in(operator)
+
+    post game_access_passes_path(scheduled), :params => { :team_name => team.name }
+
+    expect(response).to have_http_status(:unauthorized)
+    expect(response.body).to include(I18n.t("errors.game_not_gated"))
+    expect(response.body).not_to include(I18n.t("errors.must_be_author"))
+  end
+
   it "refuses an anonymous visitor" do
     post game_access_passes_path(game), :params => { :team_name => team.name }
     expect(AccessPass.count).to eq(0)

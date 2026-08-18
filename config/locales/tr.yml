@@ -295,6 +295,8 @@ tr:
     not_registered_for_game: "Takımınız bu oyuna kayıtlı değil."
     no_access_pass: "Bu oyun için erişim gerekiyor. Düzenleyiciye başvurun."
     must_be_superadmin: "Erişim yalnızca yöneticiye açıktır"
+    must_operate_commercial: "Bu sayfa yalnızca operatörler ve yöneticiler içindir"
+    game_not_gated: "Bu sayfa yalnızca geçiş ile satılan bir oyun için kullanılabilir"
     too_many_requests: "Çok fazla deneme yapıldı. Daha sonra tekrar deneyin."
     must_be_author_or_finished_player: "Tam cevap günlüğü yalnızca oyunun yazarına ya da oyunu bitiren takımın oyuncusuna açıktır"
     game_already_started: "Oyun başladıktan sonra düzenlenemez"

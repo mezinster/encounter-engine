@@ -273,6 +273,8 @@ pl:
     not_registered_for_game: "Twoja drużyna nie jest zapisana na tę grę."
     no_access_pass: "Ta gra wymaga dostępu. Skontaktuj się z organizatorem."
     must_be_superadmin: "Dostęp tylko dla administratora"
+    must_operate_commercial: "Ta strona jest dostępna tylko dla operatorów i administratorów"
+    game_not_gated: "Ta strona jest dostępna tylko dla gry sprzedawanej za pomocą przepustek"
     too_many_requests: "Zbyt wiele prób. Spróbuj później."
     must_be_author_or_finished_player: "Pełny dziennik odpowiedzi jest dostępny tylko dla autora gry albo gracza z drużyny, która ukończyła grę"
     game_already_started: "Nie można edytować gry po jej rozpoczęciu"

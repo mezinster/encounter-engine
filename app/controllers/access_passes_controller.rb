@@ -56,12 +56,18 @@ class AccessPassesController < ApplicationController
     @game = Game.find(params[:game_id])
   end
 
+  # must_operate_commercial, not must_be_superadmin: an operator reaching this
+  # filter has violated no rule ABOUT a superadmin -- may_operate_commercial?
+  # is the actual predicate, and the message should name it.
   def ensure_commercial_operator
-    raise Authentication::Unauthorized, t("errors.must_be_superadmin") unless
+    raise Authentication::Unauthorized, t("errors.must_operate_commercial") unless
       current_user.may_operate_commercial?
   end
 
+  # game_not_gated, not must_be_author: nothing about authorship is at issue
+  # here -- an operator can be refused on a game they DID author, if it is
+  # merely scheduled.
   def ensure_game_is_gated
-    raise Authentication::Unauthorized, t("errors.must_be_author") unless @game.pass_required?
+    raise Authentication::Unauthorized, t("errors.game_not_gated") unless @game.pass_required?
   end
 end

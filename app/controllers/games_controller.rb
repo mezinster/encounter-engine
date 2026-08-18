@@ -102,13 +102,21 @@ class GamesController < ApplicationController
     # «проходится», and AccessPassesController#destroy refused to release the
     # pass because it still had an attempt.
     #
-    # Every passing gets end! called, not just the unfinished ones -- same as
-    # before this fix, for a single-run game #game_passings and
-    # #current_run.passings name the identical set, so this is unchanged for
-    # every scheduled game. end! itself skips only exited passings; a team
-    # that genuinely crossed the finish line also picks up status "ended"
-    # here, which is what let the admin overview's "in progress" count go to
-    # zero the moment the author closes the game (see
+    # Every passing gets end! called, not just the unfinished ones, and not
+    # just the CURRENT run's -- #game_passings names every run this game has
+    # ever had, not only #current_run.passings. That is deliberately wider
+    # than "every scheduled game today has a single run": Game#open_run! and
+    # Admin::GamesController#open_run both create a second one, so a game
+    # ended twice (once per run) sweeps an OLDER run's passings again here.
+    # That repeat sweep is safe, not merely unlikely to matter: finish_game!
+    # has exactly one caller (this action), so by the time a later run is
+    # being ended, an earlier run's passings were already swept by the call
+    # that ended IT -- every one of them is already "ended" or "exited".
+    # end! skips exited? outright and, for an already-ended row, re-writes
+    # the same status it already holds, so re-running it changes nothing.
+    # A team that genuinely crossed the finish line also picks up status
+    # "ended" here, which is what let the admin overview's "in progress"
+    # count go to zero the moment the author closes the game (see
     # spec/requests/admin_passing_outcomes_spec.rb).
     @game.game_passings.each(&:end!)
     record_admin_action("end_game", @game) if acting_as_operator?(@game)

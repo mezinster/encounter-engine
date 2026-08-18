@@ -249,6 +249,8 @@ en:
     not_registered_for_game: "Your team is not registered for this game."
     no_access_pass: "This game requires access. Contact the organiser."
     must_be_superadmin: "Administrator access only"
+    must_operate_commercial: "This page is available to operators and administrators only"
+    game_not_gated: "This page is only available for a game sold by access pass"
     too_many_requests: "Too many attempts. Please try again later."
     must_be_author_or_finished_player: "The full log is only available to the game's author or a player whose team has finished the game"
     game_already_started: "You can't edit a game after it has started"

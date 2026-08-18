@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_155000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_160000) do
   create_table "access_passes", force: :cascade do |t|
     t.integer "game_id", null: false
     t.integer "team_id", null: false
@@ -210,7 +210,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_155000) do
     t.integer "team_id"
     t.integer "level_id"
     t.integer "game_run_id"
+    t.integer "game_passing_id"
     t.index ["game_id", "team_id", "level_id"], name: "index_logs_on_game_id_and_team_id_and_level_id"
+    t.index ["game_passing_id"], name: "index_logs_on_game_passing_id"
     t.index ["game_run_id"], name: "index_logs_on_game_run_id"
   end
 

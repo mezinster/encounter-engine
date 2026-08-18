@@ -650,6 +650,7 @@ class GamePassingsController < ApplicationController
     # what this answer actually belongs to, and in phase 3 a team's passing may
     # be in a run that is no longer the current one.
     Log.create!(game_id: @game.id, game_run_id: @game_passing.game_run_id,
+                game_passing_id: @game_passing.id,
                 level: level.name, level_id: level.id,
                 team: @team.name,  team_id: @team.id,
                 time: Time.now, answer: @answer)

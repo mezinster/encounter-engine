@@ -35,7 +35,11 @@ class LogsController < ApplicationController
   # comparator returned 1 when left.time <= right.time, i.e. newest first.
   # Doing it in SQL is what lets the page stop loading every log for the run.
   def show_live_channel
-    scope = Log.of_run(@run).includes(:team_record, :level_record).order(:time => :desc)
+    # @run is nil for a gated game (find_run skips the lookup -- see its
+    # comment). This screen is operator tooling for a race in progress and
+    # stays scheduled-only (Task 9 is the gated equivalent), so a gated game
+    # simply gets an empty channel here rather than a 500.
+    scope = @run ? Log.of_run(@run).includes(:team_record, :level_record).order(:time => :desc) : Log.none
     @logs, @page, @total_pages = page_of(scope, params[:page], :per => 50)
   end
 
@@ -51,11 +55,12 @@ class LogsController < ApplicationController
     # break the next time this scope changes shape. Render the normal page
     # with an empty log (the view guards @level itself) rather than a blank
     # response.
-    @logs = @level ? Log.of_run(@run).of_team(@team).of_level(@level) : Log.none
+    @logs = (@level && @run) ? Log.of_run(@run).of_team(@team).of_level(@level) : Log.none
   end
 
   def show_game_log
-    @logs = Log.of_run(@run).of_team(@team)
+    # @run is nil for a gated game -- see show_live_channel's comment above.
+    @logs = @run ? Log.of_run(@run).of_team(@team) : Log.none
   end
 
   def show_full_log
@@ -75,22 +80,35 @@ class LogsController < ApplicationController
       page_of(Level.of_game(@game).includes(:questions => :answers).order(:position),
               params[:page], :per => 20)
 
-    # Loaded, not a relation, and only this page's levels. The view groups
-    # these in Ruby; leaving it lazy is what produced one query per level x
-    # team cell.
-    @logs = Log.of_run(@run).where(:level_id => @levels.map(&:id)).to_a
-    # Not find_by_sql("select * from teams t inner join game_passings gp ...")
-    # -- a bare `select *` across that join returns `id` twice (teams.id, then
-    # game_passings.id) and the later column wins, so every row would carry
-    # the game_passing's id, not the team's. `name` survived because
-    # game_passings has no name column, which is exactly why the old
-    # name-based of_team scope worked against these rows and the id-based one
-    # does not: of_team(team) filters on the wrong id and finds nothing.
-    #
-    # game_run_id, not game_id: scoped to the game this listed a column for
-    # every team that ever played it, whichever run was being shown.
-    @teams = Team.joins(:game_passings)
-                 .where(:game_passings => { :game_run_id => @run.id }).distinct
+    if @game.pass_required?
+      # No run to join through -- a commercial attempt's game_run_id is NULL.
+      # There is also no team_id param on this route (unlike show_level_log /
+      # show_game_log), so "whose attempt" can only mean the requesting
+      # user's own team. A private, paid-for run must never show a DIFFERENT
+      # team's answers on this screen, so this deliberately does not fall
+      # back to "every team that ever played the game" the way the
+      # scheduled branch below does.
+      passing = gated_passing_for(current_user.team)
+      @logs  = passing ? Log.of_attempt(passing).where(:level_id => @levels.map(&:id)).to_a : []
+      @teams = passing ? Team.where(:id => passing.team_id) : Team.none
+    else
+      # Loaded, not a relation, and only this page's levels. The view groups
+      # these in Ruby; leaving it lazy is what produced one query per level x
+      # team cell.
+      @logs = Log.of_run(@run).where(:level_id => @levels.map(&:id)).to_a
+      # Not find_by_sql("select * from teams t inner join game_passings gp ...")
+      # -- a bare `select *` across that join returns `id` twice (teams.id, then
+      # game_passings.id) and the later column wins, so every row would carry
+      # the game_passing's id, not the team's. `name` survived because
+      # game_passings has no name column, which is exactly why the old
+      # name-based of_team scope worked against these rows and the id-based one
+      # does not: of_team(team) filters on the wrong id and finds nothing.
+      #
+      # game_run_id, not game_id: scoped to the game this listed a column for
+      # every team that ever played it, whichever run was being shown.
+      @teams = Team.joins(:game_passings)
+                   .where(:game_passings => { :game_run_id => @run.id }).distinct
+    end
   end
 
   private
@@ -106,7 +124,15 @@ class LogsController < ApplicationController
   # Simply current_run as the default, unlike the results page: no started-run
   # guard applies to these screens, so there is no run this can choose that the
   # filters would then refuse.
+  # A gated game has no meaningful run -- a commercial attempt's game_run_id
+  # is NULL by design (Task 6), so there is nothing here to look up. @run
+  # stays nil; show_full_log drives itself from the requesting team's
+  # attempt instead (gated_passing_for), and the three screens that stay
+  # scheduled-only (show_live_channel, show_level_log, show_game_log) treat
+  # a nil @run as "nothing to show" rather than raising.
   def find_run
+    return if @game.pass_required?
+
     @run = @game.runs.find_by(:ordinal => run_ordinal) || @game.current_run
   end
 
@@ -133,7 +159,10 @@ class LogsController < ApplicationController
   # Teams are counted through the RUN; levels through the GAME, because levels
   # are the game's content and are shared by every running of it.
   def count_the_run
-    @run_team_count   = GamePassing.where(:game_run_id => @run.id).count
+    # @run is nil for a gated game (find_run skips the lookup) -- the header
+    # this feeds (shared/_run_context) is itself only rendered for a run, so
+    # this simply has nothing to report rather than counting anything.
+    @run_team_count   = @run ? GamePassing.where(:game_run_id => @run.id).count : nil
     @game_level_count = Level.of_game(@game).count
   end
 
@@ -162,9 +191,27 @@ class LogsController < ApplicationController
   def ensure_full_log_access
     return if @game.created_by?(current_user)
 
-    game_passing = current_user.team && @game.current_run.passing_for(current_user.team)
+    game_passing = current_user.team &&
+      (@game.pass_required? ? gated_passing_for(current_user.team) :
+                              @game.current_run.passing_for(current_user.team))
     unless game_passing&.finished? && !game_passing.exited?
       raise Authentication::Unauthorized, t("errors.must_be_author_or_finished_player")
     end
+  end
+
+  # The requesting team's attempt at a gated game. There is no run to
+  # resolve through -- every commercial attempt's game_run_id is NULL -- so
+  # this reads game_passings directly on (game, team), restricted to rows
+  # that actually hold an access pass (a stray runless passing that isn't a
+  # gated attempt must not match). Most recent first: a team that bought a
+  # second pass after finishing or abandoning the first is judged by its
+  # newest attempt, same as gated_passing in GamePassingsController prefers
+  # the live one.
+  def gated_passing_for(team)
+    return nil if team.nil?
+
+    GamePassing.where(:game_id => @game.id, :team_id => team.id)
+               .where.not(:access_pass_id => nil)
+               .order(:id => :desc).first
   end
 end

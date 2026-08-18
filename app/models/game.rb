@@ -69,6 +69,7 @@ class Game < ApplicationRecord
   # point it would silently destroy the one record proving what a customer
   # paid for.
   has_many :access_passes
+  has_many :point_transactions
 
   validates :name, presence: true, uniqueness: true
   validates :description, presence: true
@@ -356,7 +357,7 @@ class Game < ApplicationRecord
   # destroyed every purchase record silently -- no refusal, no audit of what
   # was lost.
   def deletable?
-    self.game_passings.empty? && self.access_passes.empty?
+    self.game_passings.empty? && self.access_passes.empty? && self.point_transactions.empty?
   end
 
   def created_by?(user)

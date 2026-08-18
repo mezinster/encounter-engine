@@ -3,6 +3,7 @@ class Team < ApplicationRecord
   has_many :game_entries, :class_name => "GameEntry"
   has_many :game_passings, :class_name => "GamePassing"
   has_many :access_passes
+  has_many :point_transactions
   has_many :members, :class_name => "User"
   belongs_to :captain, :class_name => "User", optional: true
 
@@ -19,6 +20,12 @@ class Team < ApplicationRecord
   has_many :invitations, :class_name => "Invitation", :foreign_key => "to_team_id",
                          :dependent => :destroy
   has_many :team_join_requests, :dependent => :destroy
+
+  # The ledger is the source of truth. A cached column may follow if this ever
+  # measurably hurts; it is not an optimisation to make in advance.
+  def balance
+    point_transactions.sum(:amount)
+  end
 
   validates :name, presence: true, uniqueness: true
   validate :captain_is_not_another_teams_member
@@ -86,6 +93,7 @@ class Team < ApplicationRecord
       game_entries.empty? &&
       game_passings.empty? &&
       access_passes.empty? &&
+      point_transactions.empty? &&
       Log.where(:team_id => id).empty?
   end
 

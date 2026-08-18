@@ -27,7 +27,11 @@ class Admin::GamesController < ApplicationController
     # and Game#deletable?'s own comment already explains why access_passes
     # belongs in that check. Leaving it unpreloaded here would reintroduce
     # exactly the per-row query game_passings was already preloaded to avoid.
-    @games = Game.includes(:author, :game_passings, :access_passes, :runs).order(:created_at => :desc)
+    #
+    # point_transactions joins the same preload for the same reason:
+    # Game#deletable? now reads it too, and this is evaluated once per row.
+    @games = Game.includes(:author, :game_passings, :access_passes, :point_transactions, :runs)
+                 .order(:created_at => :desc)
 
     # ONE grouped query for the whole page, not one per row. :runs is already
     # preloaded above, so current_run costs nothing here -- and the comment on

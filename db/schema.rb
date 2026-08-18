@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_160000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_170000) do
   create_table "access_passes", force: :cascade do |t|
     t.integer "game_id", null: false
     t.integer "team_id", null: false
@@ -224,6 +224,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_160000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["question_id"], name: "index_options_on_question_id"
+  end
+
+  create_table "point_transactions", force: :cascade do |t|
+    t.integer "team_id", null: false
+    t.integer "game_id", null: false
+    t.integer "game_passing_id", null: false
+    t.integer "level_id"
+    t.integer "amount", null: false
+    t.string "reason", null: false
+    t.integer "created_by_id"
+    t.datetime "created_at", null: false
+    t.index ["game_passing_id", "level_id", "reason"], name: "index_point_transactions_per_level", unique: true, where: "level_id IS NOT NULL"
+    t.index ["game_passing_id", "reason"], name: "index_point_transactions_per_attempt", unique: true, where: "level_id IS NULL"
+    t.index ["team_id"], name: "index_point_transactions_on_team_id"
   end
 
   create_table "questions", force: :cascade do |t|

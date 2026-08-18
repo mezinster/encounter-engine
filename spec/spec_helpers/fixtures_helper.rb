@@ -253,6 +253,14 @@ module FixturesHelper
                 :answer      => attrs[:answer] || "код")
   end
 
+  def create_point_transaction(options = {})
+    passing = options[:passing] || create_game_passing
+    PointTransaction.award!(:passing => passing,
+                            :reason  => options[:reason] || "level_completed",
+                            :level   => options.key?(:level) ? options[:level] : passing.current_level,
+                            :amount  => options[:amount] || 10)
+  end
+
   def set_game_schedule!(game, attrs)
     # The CURRENT run -- highest ordinal -- not runs.first. Those are the same
     # record until a game has a second run, and different the moment it does:

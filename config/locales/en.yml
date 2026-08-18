@@ -20,6 +20,7 @@ en:
     revoked_notice: "Codes revoked: %{count}"
     unrevoked_notice: "Codes restored: %{count}"
     expiry_notice: "Expiry changed on %{count} codes"
+    nothing_matched: "No matching codes found"
     generate:
       count: "How many codes"
       expires_at: "Valid until (optional)"

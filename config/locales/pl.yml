@@ -44,6 +44,7 @@ pl:
     revoked_notice: "Odebrano kodów: %{count}"
     unrevoked_notice: "Przywrócono kodów: %{count}"
     expiry_notice: "Zmieniono termin dla kodów: %{count}"
+    nothing_matched: "Nie znaleziono pasujących kodów"
     generate:
       count: "Ile kodów"
       expires_at: "Ważne do (opcjonalnie)"

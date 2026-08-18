@@ -86,6 +86,7 @@ describe "revoking and expiring access codes", type: :request do
 
     expect(pass.reload.revoked_at).to be_nil
     expect(code.reload.redeemed_at).to be_present
+    expect(code.reload.revoked_at).to be_nil
     expect(code.state).to eq(:redeemed)
   end
 
@@ -106,5 +107,14 @@ describe "revoking and expiring access codes", type: :request do
     expect { patch revoke_game_access_codes_path(game), :params => { :batch_key => key } }
       .to change { AdminAction.count }.by(1)
     expect(AdminAction.newest_first.first.action).to eq("revoke_access_codes")
+  end
+
+  # A no-op is not an administrative act worth recording -- AdminAudit's own
+  # rule is that a refused/no-effect action leaves no entry.
+  it "records no audit entry when a batch_key matches nothing" do
+    sign_in(operator)
+
+    expect { patch revoke_game_access_codes_path(game), :params => { :batch_key => "nonexistent" } }
+      .not_to change { AdminAction.count }
   end
 end

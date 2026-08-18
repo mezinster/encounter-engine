@@ -45,14 +45,23 @@ class AccessCodesController < ApplicationController
   # nothing else. Neither reaches a code that has already been redeemed: that
   # code has produced an AccessPass, and ending a run the customer paid for is
   # a separate, deliberate act through the pass. See the design, C10.
+  #
+  # This is enforced structurally in targeted_codes (redeemed_at => nil), not
+  # merely by AccessCode#state's redeemed-wins-over-revoked precedence -- a
+  # future reader who writes revoked_at/expires_at directly, without going
+  # through #state, must not see a redeemed code reported as revoked.
   def revoke
     n = targeted_codes.update_all(:revoked_at => Time.now, :updated_at => Time.now)
+    return nothing_matched if n.zero?
+
     record_admin_action("revoke_access_codes", @game, target_label(n))
     redirect_to game_access_codes_path(@game), :notice => t("access_codes.revoked_notice", :count => n)
   end
 
   def unrevoke
     n = targeted_codes.update_all(:revoked_at => nil, :updated_at => Time.now)
+    return nothing_matched if n.zero?
+
     record_admin_action("unrevoke_access_codes", @game, target_label(n))
     redirect_to game_access_codes_path(@game), :notice => t("access_codes.unrevoked_notice", :count => n)
   end
@@ -60,6 +69,8 @@ class AccessCodesController < ApplicationController
   def expiry
     when_ = params[:expires_at].presence
     n = targeted_codes.update_all(:expires_at => when_, :updated_at => Time.now)
+    return nothing_matched if n.zero?
+
     record_admin_action("set_access_code_expiry", @game, "#{target_label(n)} -> #{when_ || "-"}")
     redirect_to game_access_codes_path(@game), :notice => t("access_codes.expiry_notice", :count => n)
   end
@@ -69,11 +80,19 @@ class AccessCodesController < ApplicationController
   # ONE definition of "which codes is this operator acting on", used by all
   # three actions. Always scoped through @game, so a batch_key or id belonging
   # to another game resolves to nothing rather than to somebody else's codes.
+  # Excludes redeemed codes: those columns govern exchangeability only, and a
+  # redeemed row must never be written by any of the three actions above.
   def targeted_codes
-    scope = @game.access_codes
+    scope = @game.access_codes.where(:redeemed_at => nil)
     return scope.where(:id => params[:code_id]) if params[:code_id].present?
 
     scope.of_batch(params[:batch_key].to_s)
+  end
+
+  # A no-op is not an administrative act: AdminAudit's own rule is that a
+  # refused/ineffective action leaves no entry, so nothing is recorded here.
+  def nothing_matched
+    redirect_to game_access_codes_path(@game), :alert => t("access_codes.nothing_matched")
   end
 
   # The batch key or the code's id -- never the code itself, which this

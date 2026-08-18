@@ -65,6 +65,7 @@ tr:
     revoked_notice: "Geri alınan kod: %{count}"
     unrevoked_notice: "Geri verilen kod: %{count}"
     expiry_notice: "Süresi değişen kod: %{count}"
+    nothing_matched: "Eşleşen kod bulunamadı"
     generate:
       count: "Kaç kod"
       expires_at: "Geçerlilik tarihi (isteğe bağlı)"

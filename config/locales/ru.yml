@@ -20,6 +20,7 @@ ru:
     revoked_notice: "Отозвано кодов: %{count}"
     unrevoked_notice: "Возвращено кодов: %{count}"
     expiry_notice: "Изменён срок у кодов: %{count}"
+    nothing_matched: "Подходящих кодов не найдено"
     generate:
       count: "Сколько кодов"
       expires_at: "Действительны до (необязательно)"

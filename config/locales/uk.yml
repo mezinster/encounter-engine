@@ -37,6 +37,7 @@ uk:
     revoked_notice: "Відкликано кодів: %{count}"
     unrevoked_notice: "Повернено кодів: %{count}"
     expiry_notice: "Змінено термін у кодів: %{count}"
+    nothing_matched: "Відповідних кодів не знайдено"
     generate:
       count: "Скільки кодів"
       expires_at: "Дійсні до (необов'язково)"

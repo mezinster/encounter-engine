@@ -43,6 +43,7 @@ ka:
     revoked_notice: "ჩამორთმეულია კოდი: %{count}"
     unrevoked_notice: "დაბრუნებულია კოდი: %{count}"
     expiry_notice: "შეიცვალა ვადა კოდებზე: %{count}"
+    nothing_matched: "შესაბამისი კოდები ვერ მოიძებნა"
     generate:
       count: "რამდენი კოდი"
       expires_at: "ძალაშია (არასავალდებულო)"

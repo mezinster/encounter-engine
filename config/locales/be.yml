@@ -39,6 +39,7 @@ be:
     revoked_notice: "Адклікана кодаў: %{count}"
     unrevoked_notice: "Вернута кодаў: %{count}"
     expiry_notice: "Зменены тэрмін у кодаў: %{count}"
+    nothing_matched: "Адпаведных кодаў не знойдзена"
     generate:
       count: "Колькі кодаў"
       expires_at: "Дзейнічаюць да (неабавязкова)"

@@ -471,8 +471,9 @@ In `app/models/game.rb`:
 ```ruby
   # What passing this level is worth. The level's own value wins when it has
   # one -- INCLUDING zero, which is why this tests for nil rather than using
-  # `||`. `level.points_award || level_completion_points` would silently turn
-  # a deliberate zero into the game's default.
+  # `||`. NOTE: as shipped this comment was corrected -- `0` is truthy in Ruby,
+  # so `||` is in fact equivalent. What collapses nil and zero is a `.zero?` or
+  # `> 0` test. See app/models/game.rb for the accurate wording.
   def points_for_level(level)
     return level.points_award unless level&.points_award.nil?
 
@@ -549,7 +550,8 @@ its author's back.
 
 levels.points_award is nullable on purpose: nil means the game's value,
 zero means zero. points_for_level tests for nil rather than using ||,
-because || would silently turn a deliberate zero into the default.
+because a resolver testing for non-zero (`.zero?`, `to_i > 0`) would turn a
+deliberate zero into the default. (`||` would not -- 0 is truthy in Ruby.)
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 ```

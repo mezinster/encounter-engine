@@ -487,10 +487,17 @@ class Game < ApplicationRecord
     self.is_testing
   end
 
-  # What passing this level is worth. The level's own value wins when it has
-  # one -- INCLUDING zero, which is why this tests for nil rather than using
-  # `||`. `level.points_award || level_completion_points` would silently turn
-  # a deliberate zero into the game's default.
+  # What passing this level is worth. `nil` means "use the game's value"; `0`
+  # means zero, and an author must be able to make one level worth nothing
+  # without turning scoring off for the whole game.
+  #
+  # The explicit nil test is for the reader rather than for Ruby: `0` is truthy
+  # here, so `||` -- and `blank?`, and `present?` -- would all behave
+  # identically. What actually collapses the two is any test asking whether the
+  # number is non-zero (`.zero?`, `to_i > 0`, `&.positive?`), which reads as the
+  # natural thing to write and is wrong. The example in
+  # spec/models/game/scoring_spec.rb pins the distinction and fails against the
+  # `.zero?` form.
   def points_for_level(level)
     return level.points_award unless level&.points_award.nil?
 

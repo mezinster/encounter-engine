@@ -26,6 +26,10 @@ describe Game do
 
     # nil means "use the game's value"; 0 means zero. An author must be able
     # to make one level worth nothing without turning scoring off entirely.
+    # Mutation-tested: this fails against any resolver that treats zero as
+    # absent (`points_award.zero?`, `to_i > 0`, `&.positive?`). It does NOT
+    # discriminate `||` from the explicit nil test -- 0 is truthy in Ruby, so
+    # those two are the same program. See the comment on Game#points_for_level.
     it "treats an override of zero as zero, not as absent" do
       level.update!(:points_award => 0)
       expect(game.points_for_level(level)).to eq(0)

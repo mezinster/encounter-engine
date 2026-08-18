@@ -2,8 +2,12 @@ require "rails_helper"
 
 describe Game do
   describe "#visibility" do
-    it "defaults a new game to draft" do
-      expect(Game.new.visibility).to eq("draft")
+    # Parity with the column this replaced: is_draft was `default: false`,
+    # meaning a new Game was published, not a draft. visibility must keep
+    # that polarity -- see
+    # db/migrate/20260818155000_correct_visibility_default_on_games.rb.
+    it "defaults a new game to listed" do
+      expect(Game.new.visibility).to eq("listed")
     end
 
     it "refuses a value outside the enum" do

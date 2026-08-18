@@ -2148,12 +2148,34 @@ The remaining five locales, in the same order:
 
 **Note the Turkish `issued_notice`:** the suffix lands on `takım` (`«%{team}» adlı takıma`), never on the placeholder — a case suffix cannot attach to a name the operator typed. Verify by rendering with a consonant-final and a vowel-final team name; if only one reads naturally, the template is inflecting around the placeholder.
 
-- [ ] **Step 7: Run the specs**
+- [ ] **Step 7: Let operator interventions reach a runless attempt**
+
+`InterventionsController` is how an operator rescues a stuck team — `move_to_level!`,
+`reinstate!`, `reset_level_clock!`. It resolves the passing through
+`@game.current_run.passings.of_team(...)`, and `GameRun#passings` is scoped by `game_run_id`, so
+**a commercial attempt (game_run_id NULL) is unreachable by every one of those actions today.**
+
+That is load-bearing for this task rather than a nicety. `#destroy` above refuses to revoke a pass
+whose attempt has begun, on the stated grounds that a started run is an intervention problem — and
+without this step that sentence points at a tool which cannot touch the attempt. An operator would
+have no way to rescue a paying customer stuck on a broken level, and no way to release their pass.
+
+Read `InterventionsController`'s passing-resolution method, then widen it: for a game where
+`pass_required?`, resolve the team's attempt from the game's passings rather than the current run's.
+Keep the scheduled resolution exactly as it is — the change is an additional branch, not a
+replacement.
+
+Add request examples proving an operator can `move_to_level!` and `reinstate!` a runless attempt,
+and that doing so leaves its pass unspent (`reinstate!` clears `finished_at`, which is what
+`AccessPass#spent?` reads). Follow the existing intervention request specs' shape — read them
+first; `ls spec/requests | grep -i interven` finds them.
+
+- [ ] **Step 8: Run the specs**
 
 Run: `bundle exec rspec spec/requests/access_pass_issuing_spec.rb spec/requests/admin_audit_spec.rb spec/i18n_spec.rb spec/i18n_audit_actions_spec.rb`
 Expected: 0 failures. `spec/i18n_audit_actions_spec.rb` scrapes action names out of the controllers and asserts a translation in **every** available locale, so it will fail loudly if any of the seven is missing an audit label — unlike the `admin.users.*` keys, these are hard-covered.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add -A

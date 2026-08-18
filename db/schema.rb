@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_150000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_155000) do
   create_table "access_passes", force: :cascade do |t|
     t.integer "game_id", null: false
     t.integer "team_id", null: false
@@ -171,7 +171,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_150000) do
     t.string "available_locales", default: "ru", null: false
     t.datetime "editing_locked_at"
     t.datetime "withdrawn_at"
-    t.string "visibility", default: "draft", null: false
+    t.string "visibility", default: "listed", null: false
     t.string "access_mode", default: "scheduled", null: false
   end
 

@@ -226,11 +226,17 @@ class Game < ApplicationRecord
 
     transaction do
       held = Time.now - self.paused_at
-      # finished_at excludes both finished and exited teams; neither has a
-      # running clock. update_column because this is a mechanical bulk shift.
-      # The current run's passings: only they have running clocks to shift.
-      current_run.passings.where(:finished_at => nil).find_each do |gp|
+      # THE GAME's passings, not the current run's: a commercial attempt has
+      # game_run_id NULL and would be skipped, so its hints would jump forward
+      # by the length of the pause. Nothing raises; the team simply finds them
+      # spent.
+      #
+      # in_progress rather than where(finished_at: nil): end! sets status
+      # "ended" and leaves finished_at nil, so the old form shifted a clock
+      # that an operator-ended passing does not have.
+      game_passings.in_progress.find_each do |gp|
         gp.update_column(:current_level_entered_at, gp.current_level_entered_at + held)
+        gp.update_column(:paused_seconds, gp.paused_seconds + held.round)
       end
       current_run.update_column(:paused_at, nil)
     end

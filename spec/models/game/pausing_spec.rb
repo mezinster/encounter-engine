@@ -65,6 +65,72 @@ describe Game, "pausing" do
     end
   end
 
+  describe "runless commercial attempts" do
+    # Shadows the outer game/level: the outer game's starts_at is pinned to
+    # 1.hour.ago specifically so pause!/resume! have something to shift, but
+    # that also trips game_starts_in_the_future on a validated update!, which
+    # these examples need for access_mode/visibility. pause!/resume! do not
+    # depend on schedule validity either way, so a fresh (future-starting)
+    # game exercises the same resume! code path without that trap.
+    let(:level) { create_level }
+    let(:game)  { level.game }
+
+    # A commercial attempt is an ordinary GamePassing with game_run_id NULL
+    # and access_pass_id set. resume! used to shift clocks through
+    # current_run.passings, which does not include it, so its hints would
+    # jump forward by the length of the pause -- silently.
+    it "shifts the level clock of a runless commercial attempt" do
+      game.update!(:access_mode => "pass_required", :visibility => "listed")
+      pass    = create_access_pass(:game => game)
+      attempt = create_game_passing(:game => game, :team => pass.team, :level => level,
+                                    :game_run => nil, :access_pass => pass)
+      entered = attempt.current_level_entered_at
+
+      game.pause!
+      # Pretend the pause lasted a while.
+      game.current_run.update_column(:paused_at, 10.minutes.ago)
+      game.reload.resume!
+
+      expect(attempt.reload.current_level_entered_at).to be > entered
+    end
+
+    it "accumulates the held time on the attempt" do
+      game.update!(:access_mode => "pass_required", :visibility => "listed")
+      pass    = create_access_pass(:game => game)
+      attempt = create_game_passing(:game => game, :team => pass.team, :level => level,
+                                    :game_run => nil, :access_pass => pass)
+
+      game.pause!
+      game.current_run.update_column(:paused_at, 10.minutes.ago)
+      game.reload.resume!
+
+      expect(attempt.reload.paused_seconds).to be_within(5).of(600)
+    end
+
+    it "still shifts a scheduled run's passings" do
+      entered = passing.current_level_entered_at
+
+      game.pause!
+      game.current_run.update_column(:paused_at, 10.minutes.ago)
+      game.reload.resume!
+
+      expect(passing.reload.current_level_entered_at).to be > entered
+    end
+
+    # end! sets status "ended" WITHOUT finished_at, so the old
+    # `where(finished_at: nil)` shifted a clock this passing does not have.
+    it "does not shift a passing an operator has already ended" do
+      passing.end!
+      entered = passing.reload.current_level_entered_at
+
+      game.pause!
+      game.current_run.update_column(:paused_at, 10.minutes.ago)
+      game.reload.resume!
+
+      expect(passing.reload.current_level_entered_at).to eq(entered)
+    end
+  end
+
   describe "frozen hints" do
     # Not merely uncounted afterwards: level_hint_updater.js polls
     # get_current_level_tip throughout the pause, so a hint that becomes

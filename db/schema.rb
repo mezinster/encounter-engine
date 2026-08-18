@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_140000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_150000) do
   create_table "access_passes", force: :cascade do |t|
     t.integer "game_id", null: false
     t.integer "team_id", null: false
@@ -137,6 +137,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_140000) do
     t.integer "penalty_seconds", default: 0, null: false
     t.integer "game_run_id"
     t.integer "access_pass_id"
+    t.integer "paused_seconds", default: 0, null: false
     t.index ["access_pass_id"], name: "index_game_passings_on_access_pass_id", unique: true, where: "access_pass_id IS NOT NULL"
     t.index ["game_run_id"], name: "index_game_passings_on_game_run_id"
     t.index ["team_id", "game_run_id"], name: "index_game_passings_on_team_id_and_game_run_id", unique: true

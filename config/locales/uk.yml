@@ -34,12 +34,14 @@ uk:
   access_codes:
     title: "Коди доступу"
     bad_count: "Вкажіть від 1 до %{max} кодів"
+    bad_expiry: "Не вдалося розпізнати дату"
     revoked_notice: "Відкликано кодів: %{count}"
     unrevoked_notice: "Повернено кодів: %{count}"
     expiry_notice: "Змінено термін у кодів: %{count}"
     nothing_matched: "Відповідних кодів не знайдено"
     batch: "Партія"
     created_at: "Створена"
+    issuer: "Оператор"
     size: "Усього"
     outstanding: "Не використані"
     redeemed: "Використані"
@@ -446,6 +448,7 @@ uk:
       start: "Старт"
       finish_test: "Завершити тестування"
       manage_access: "Керування перепустками"
+      manage_access_codes: "Керування кодами доступу"
   test_admissions:
     team_not_found: "Команду «%{name}» не знайдено"
     already_admitted: "«%{name}» вже допущені до тестування"
@@ -762,6 +765,7 @@ uk:
     current_games_status:
       play: "Грати!"
       not_registered: "Ви не зареєстровані"
+      redeem_code_link: "Ввести код доступу"
     countdown:
       # Three-element arrays indexed by the hard-coded Slavic plural function
       # in app/views/shared/_countdown.html.erb: [n%10==1 and n%100!=11,

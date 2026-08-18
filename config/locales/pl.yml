@@ -41,12 +41,14 @@ pl:
   access_codes:
     title: "Kody dostępu"
     bad_count: "Podaj od 1 do %{max} kodów"
+    bad_expiry: "Nie udało się rozpoznać daty"
     revoked_notice: "Odebrano kodów: %{count}"
     unrevoked_notice: "Przywrócono kodów: %{count}"
     expiry_notice: "Zmieniono termin dla kodów: %{count}"
     nothing_matched: "Nie znaleziono pasujących kodów"
     batch: "Partia"
     created_at: "Utworzona"
+    issuer: "Operator"
     size: "Łącznie"
     outstanding: "Niewykorzystane"
     redeemed: "Wykorzystane"
@@ -453,6 +455,7 @@ pl:
       start: "Start"
       finish_test: "Zakończ testowanie"
       manage_access: "Zarządzaj przepustkami dostępu"
+      manage_access_codes: "Zarządzaj kodami dostępu"
   test_admissions:
     team_not_found: "Nie znaleziono drużyny «%{name}»"
     already_admitted: "«%{name}» ma już dostęp do testów"
@@ -762,6 +765,7 @@ pl:
     current_games_status:
       play: "Graj!"
       not_registered: "Nie jesteś zapisany"
+      redeem_code_link: "Wprowadź kod dostępu"
     countdown:
       # Three-element arrays indexed by the plural function hard-coded in
       # app/views/shared/_countdown.html.erb: [n%10==1 and n%100!=11,

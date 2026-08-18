@@ -62,12 +62,14 @@ tr:
   access_codes:
     title: "Erişim kodları"
     bad_count: "1 ile %{max} arasında kod belirtin"
+    bad_expiry: "Bu tarih anlaşılamadı"
     revoked_notice: "Geri alınan kod: %{count}"
     unrevoked_notice: "Geri verilen kod: %{count}"
     expiry_notice: "Süresi değişen kod: %{count}"
     nothing_matched: "Eşleşen kod bulunamadı"
     batch: "Parti"
     created_at: "Oluşturuldu"
+    issuer: "Operatör"
     size: "Toplam"
     outstanding: "Kullanılmadı"
     redeemed: "Kullanıldı"
@@ -475,6 +477,7 @@ tr:
       start: "Başla"
       finish_test: "Testi bitir"
       manage_access: "Erişim izinlerini yönet"
+      manage_access_codes: "Erişim kodlarını yönet"
   # Every key below carrying %{name} or %{game} puts the case suffix on a
   # common noun (adlı takım / adlı oyuncu / adlı katılımcı / adlı oyunun),
   # never on the placeholder: the correct suffix depends on the value's final
@@ -794,6 +797,7 @@ tr:
     current_games_status:
       play: "Oyna!"
       not_registered: "Kayıtlı değilsiniz"
+      redeem_code_link: "Erişim kodu girin"
     countdown:
       # Still three elements, even though Turkish has no plural agreement
       # after a numeral at all ("3 gün", "1 gün"):

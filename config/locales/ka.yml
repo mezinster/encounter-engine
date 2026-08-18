@@ -40,12 +40,14 @@ ka:
   access_codes:
     title: "წვდომის კოდები"
     bad_count: "მიუთითეთ 1-დან %{max}-მდე კოდი"
+    bad_expiry: "თარიღის ამოცნობა ვერ მოხერხდა"
     revoked_notice: "ჩამორთმეულია კოდი: %{count}"
     unrevoked_notice: "დაბრუნებულია კოდი: %{count}"
     expiry_notice: "შეიცვალა ვადა კოდებზე: %{count}"
     nothing_matched: "შესაბამისი კოდები ვერ მოიძებნა"
     batch: "პარტია"
     created_at: "შექმნილია"
+    issuer: "ოპერატორი"
     size: "სულ"
     outstanding: "გამოუყენებელი"
     redeemed: "გამოყენებული"
@@ -452,6 +454,7 @@ ka:
       start: "სტარტი"
       finish_test: "ტესტირების დასრულება"
       manage_access: "წვდომის ბილეთების მართვა"
+      manage_access_codes: "წვდომის კოდების მართვა"
   # Same treatment as tr: the case ending sits on a preceding common noun
   # (გუნდი / მოთამაშე / მონაწილე / თამაშის), never on %{name} or %{game}.
   test_admissions:
@@ -784,6 +787,7 @@ ka:
     current_games_status:
       play: "თამაში!"
       not_registered: "თქვენ არ ხართ დარეგისტრირებული"
+      redeem_code_link: "შეიყვანეთ წვდომის კოდი"
     countdown:
       # Still three elements, even though Georgian has only one/other in CLDR:
       # app/views/shared/_countdown.html.erb hard-codes a Slavic index

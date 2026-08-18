@@ -17,12 +17,14 @@ en:
   access_codes:
     title: "Access codes"
     bad_count: "Choose between 1 and %{max} codes"
+    bad_expiry: "That expiry date could not be understood"
     revoked_notice: "Codes revoked: %{count}"
     unrevoked_notice: "Codes restored: %{count}"
     expiry_notice: "Expiry changed on %{count} codes"
     nothing_matched: "No matching codes found"
     batch: "Batch"
     created_at: "Created"
+    issuer: "Operator"
     size: "Total"
     outstanding: "Outstanding"
     redeemed: "Redeemed"
@@ -429,6 +431,7 @@ en:
       start: "Start"
       finish_test: "Finish testing"
       manage_access: "Manage access passes"
+      manage_access_codes: "Manage access codes"
   test_admissions:
     team_not_found: "Team «%{name}» was not found"
     already_admitted: "«%{name}» is already admitted to the test"
@@ -743,6 +746,7 @@ en:
     current_games_status:
       play: "Play!"
       not_registered: "You are not registered"
+      redeem_code_link: "Enter an access code"
     countdown:
       prefix: "Time left: "
       years: ["year", "years", "years"]

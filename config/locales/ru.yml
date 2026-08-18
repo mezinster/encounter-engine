@@ -17,12 +17,14 @@ ru:
   access_codes:
     title: "Коды доступа"
     bad_count: "Укажите от 1 до %{max} кодов"
+    bad_expiry: "Не удалось распознать дату"
     revoked_notice: "Отозвано кодов: %{count}"
     unrevoked_notice: "Возвращено кодов: %{count}"
     expiry_notice: "Изменён срок у кодов: %{count}"
     nothing_matched: "Подходящих кодов не найдено"
     batch: "Партия"
     created_at: "Создана"
+    issuer: "Оператор"
     size: "Всего"
     outstanding: "Не использованы"
     redeemed: "Использованы"
@@ -429,6 +431,7 @@ ru:
       start: "Старт"
       finish_test: "Завершить тестирование"
       manage_access: "Управление пропусками"
+      manage_access_codes: "Управление кодами доступа"
   test_admissions:
     team_not_found: "Команда «%{name}» не найдена"
     already_admitted: "«%{name}» уже допущены к тестированию"
@@ -758,6 +761,7 @@ ru:
     current_games_status:
       play: "Играть!"
       not_registered: "Вы не зарегистрированы"
+      redeem_code_link: "Ввести код доступа"
     countdown:
       prefix: "Осталось: "
       years: ["год", "года", "лет"]

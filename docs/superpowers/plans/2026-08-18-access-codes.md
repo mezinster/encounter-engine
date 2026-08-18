@@ -941,6 +941,13 @@ Expected: FAIL — `undefined local variable or method 'redeem_access_code_path'
     "access_code_redemption_window_seconds" => 3600
 ```
 
+**Both keys also need a label under `admin.settings.names` in all seven locales.** The superadmin
+settings screen iterates the integer defaults and renders
+`t("admin.settings.names.#{name}")` for each, and the test environment raises on a missing
+translation — so an unlabelled setting does not merely look odd, it takes the whole screen down,
+in production as well as in test. Match the four sibling rate limits already there
+(`signup_max`, `signup_window_seconds`, `reset_max`, `reset_window_seconds`).
+
 `config/application.rb:62` — the raw code must never reach a log:
 
 ```ruby

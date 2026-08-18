@@ -221,20 +221,20 @@ describe "auditing administrative changes", type: :request do
     end
   end
 
-  # The condition is "superadmin AND not the author". Getting it wrong in the
-  # other direction floods the log with ordinary use and buries the entries
-  # anyone actually wants to find.
+  # The condition is "may_operate_commercial? (superadmin OR operator) AND
+  # not the author". Getting it wrong in the other direction floods the log
+  # with ordinary use and buries the entries anyone actually wants to find.
   describe "an author acting on their own game" do
     it "records nothing" do
       sign_in(author)
       expect { post end_game_game_path(game) }.not_to change { AdminAction.count }
     end
 
-    # acting_as_operator? is "superadmin AND not the author". The example
-    # above only exercises a non-superadmin author; this is the other half of
-    # the conjunction -- a superadmin who is ALSO the author must still record
-    # nothing, or the log would bury every superadmin's ordinary games under
-    # administrative noise.
+    # acting_as_operator? is "may_operate_commercial? AND not the author".
+    # The example above only exercises a non-superadmin author; this is the
+    # other half of the conjunction -- a superadmin who is ALSO the author
+    # must still record nothing, or the log would bury every superadmin's
+    # ordinary games under administrative noise.
     it "records nothing when the author is also a superadmin" do
       author.update!(:is_superadmin => true)
       sign_in(author)

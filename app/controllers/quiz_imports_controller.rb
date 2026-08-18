@@ -12,9 +12,10 @@ class QuizImportsController < ApplicationController
   include SecurityFilters
 
   # Exactly the chain LevelsController uses. ensure_author already admits
-  # superadmins, so both halves of the original request are covered by a
-  # filter that already existed; and an author who cannot add a level to a
-  # started game cannot bulk-import into one either.
+  # superadmins, and an operator on a gated game, so both halves of the
+  # original request are covered by a filter that already existed; and an
+  # author who cannot add a level to a started game cannot bulk-import into
+  # one either.
   before_action :find_game
   before_action :ensure_author
   before_action :ensure_editing_not_locked

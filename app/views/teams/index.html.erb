@@ -8,6 +8,11 @@
       <th><%= t("teams.index.name") %></th>
       <th><%= t("teams.index.captain") %></th>
       <th><%= t("teams.index.members") %></th>
+      <th><%= t("teams.index.games_started") %></th>
+      <th><%= t("teams.index.games_finished") %></th>
+      <th><%= t("teams.index.points_earned") %></th>
+      <th><%= t("teams.index.points_deducted") %></th>
+      <th><%= t("teams.index.balance") %></th>
       <th></th>
     </tr>
   </thead>
@@ -21,6 +26,11 @@
         <%= team.captain&.nickname || t("teams.index.no_captain") %>
       </td>
       <td data-label="<%= t("teams.index.members") %>"><%= team.members.size %></td>
+      <td data-label="<%= t("teams.index.games_started") %>"><%= @started.fetch(team.id, 0) %></td>
+      <td data-label="<%= t("teams.index.games_finished") %>"><%= @finished.fetch(team.id, 0) %></td>
+      <td data-label="<%= t("teams.index.points_earned") %>"><%= @earned.fetch(team.id, 0) %></td>
+      <td data-label="<%= t("teams.index.points_deducted") %>"><%= @deducted.fetch(team.id, 0).abs %></td>
+      <td data-label="<%= t("teams.index.balance") %>"><%= balance_of(team) %></td>
       <%# Hidden exactly where TeamJoinRequestsController#create refuses, so
           it is never a promise that cannot be kept: the viewer's own team, a
           viewer who captains a team (they must hand over or leave first),

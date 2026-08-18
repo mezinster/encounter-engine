@@ -17,6 +17,24 @@ class TeamsController < ApplicationController
     # One query for the viewer's pending applications rather than one per
     # row, for the same reason.
     @pending_team_ids = TeamJoinRequest.pending.of_user(current_user).pluck(:team_id)
+
+    # Four grouped queries for the whole page, whatever the number of teams.
+    # Never a lookup per row: teams_index_spec.rb pins a flat count, and this
+    # programme has broken that class of guard three times already.
+    @earned    = PointTransaction.where("amount > 0").group(:team_id).sum(:amount)
+    @deducted  = PointTransaction.where("amount < 0").group(:team_id).sum(:amount)
+    @started   = GamePassing.group(:team_id).count
+    @finished  = GamePassing.completed.group(:team_id).count
+
+    # Sorted in Ruby, from figures already loaded, rather than by adding a
+    # join and an ORDER BY to the relation above: the page renders tens of
+    # teams, and a join here would fight the preloads.
+    #
+    # Name is the tie-break, so teams on equal points -- which at launch is
+    # every team, all on zero -- keep the alphabetical order the relation
+    # already applied instead of coming back in whatever order the sort felt
+    # like.
+    @teams = @teams.to_a.sort_by { |t| [ -balance_of(t), t.name.to_s ] }
   end
 
   def new
@@ -117,6 +135,12 @@ class TeamsController < ApplicationController
   end
 
   private
+
+  # Earned is positive, deducted is negative, so the balance is their sum.
+  def balance_of(team)
+    @earned.fetch(team.id, 0) + @deducted.fetch(team.id, 0)
+  end
+  helper_method :balance_of
 
   def team_params
     params.fetch(:team, ActionController::Parameters.new).permit(:name)

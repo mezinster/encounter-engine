@@ -181,9 +181,17 @@ query-count example from the start rather than acquiring one after it breaks.
 Teams with no transactions appear with a balance of zero. It is a list of teams, not a list of
 scorers.
 
-**Per-team history** lives on the team's existing page: which games, when, whether finished, and
-what each run was worth in total. A reader following a name from the chart lands somewhere that
-already exists.
+**Per-team history** — which games, when, whether finished, and what each run was worth — needs a
+public page, and **there is not one today**. `TeamsController` has `index`, `new`, `create`,
+`hand_over` and `leave`; it has no `show`. `resources :teams` (`config/routes.rb:101`) routes one
+anyway, so `GET /teams/:id` currently reaches a missing action, exactly as `index` did before
+somebody filled that slot.
+
+`TeamRoomController` is not a substitute: it is the team's own room, behind `ensure_team_member`,
+and P9 makes this history public.
+
+So D1 adds `TeamsController#show` — a public page carrying the team's per-game history and its
+itemised ledger. Filling a routed-but-missing action, the same move `index` already made.
 
 ## 5. Visibility
 

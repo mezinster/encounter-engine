@@ -28,6 +28,22 @@ class PointTransaction < ApplicationRecord
   #
   # team_id and game_id are denormalised from the passing so the chart and the
   # per-team history can aggregate without joining through game_passings.
+  #
+  # This rescue assumes each `create!` owns its own transaction. On
+  # PostgreSQL, a unique violation aborts the enclosing transaction, not just
+  # the statement -- Rails' implicit save transaction is `requires_new:
+  # false`, so it is not a savepoint and simply joins whatever is already
+  # open. Called from inside a caller's `transaction do`, the rescued
+  # RecordNotUnique here would leave that outer transaction poisoned, taking
+  # the next statement in it down too -- including a second `award!` call, or
+  # the already-saved level pass, if either shares the transaction. SQLite has
+  # no aborted-transaction state, so this stays green in dev and test either
+  # way and only breaks in production. See the same trap, played out for real,
+  # at `GameFileUpload#save_with_collision_retry`
+  # (app/models/game_file_upload.rb:345-357). Task 3's call site
+  # (`GamePassing#pass_level!`) is safe today -- nothing wraps it in a
+  # transaction -- but any future caller that does must not rescue this
+  # method's `nil` from inside one.
   def self.award!(passing:, reason:, amount:, level: nil)
     create!(:team_id         => passing.team_id,
             :game_id         => passing.game_id,

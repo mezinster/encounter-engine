@@ -100,4 +100,20 @@ describe GamePassing do
 
     expect(passing.reload.current_level_id).not_to eq(first.id)
   end
+
+  # This is NOT redundant with "still advances ... duplicate" above: a
+  # duplicate is rescued inside award! and returns nil, so it can never
+  # distinguish an award called before the advance is saved from one called
+  # after. Only a raising award proves the ordering -- that award_points_for
+  # runs strictly after save!, so a ledger failure can never cost a team
+  # their accepted answer. Asserted against a reload: an in-memory attribute
+  # would still look advanced even if the save had been rolled back.
+  it "advances the team even when the ledger write raises" do
+    game, first, second = scoring_game
+    passing = create_game_passing(:game => game, :level => first)
+    allow(PointTransaction).to receive(:award!).and_raise(ActiveRecord::StatementInvalid, "boom")
+
+    expect { passing.pass_level! }.to raise_error(ActiveRecord::StatementInvalid)
+    expect(passing.reload.current_level_id).to eq(second.id)
+  end
 end

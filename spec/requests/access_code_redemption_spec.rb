@@ -162,4 +162,39 @@ describe "redeeming an access code", type: :request do
     expect { post redeem_access_code_path, :params => { :access_code => raw } }
       .not_to change { AccessPass.count }
   end
+
+  # F3: the controller's #claim wraps AccessPass.create! and code.claim! in
+  # `AccessCode.transaction do ... raise ActiveRecord::Rollback ... end`. That
+  # form only opens a real savepoint when it is the OUTERMOST transaction;
+  # nested inside another one, Rails joins it rather than opening a savepoint,
+  # and the Rollback is swallowed without undoing anything written inside.
+  #
+  # This example's own outer transaction is NOT what proves the bug --
+  # spec/rails_helper.rb's transactional fixtures wrap every example in a
+  # transaction opened with joinable: false specifically so ordinary nested
+  # `transaction do` blocks in application code still get a real savepoint
+  # under test (verified directly: a bare nested `transaction do ... raise
+  # Rollback end`, run with no requires_new, still rolls back cleanly here).
+  # So the bug needs a transaction that IS joinable wrapped around the
+  # request, standing in for "any future caller of #claim that itself runs
+  # inside one" -- exactly the risk the finding names.
+  #
+  # Before requires_new was added, this failed: the AccessPass created ahead
+  # of the lost claim survived the swallowed Rollback and was still there to
+  # count, even though #claim returned nil and the request reported a refusal.
+  it "leaves no orphaned pass when the claim loses the race, even when the caller runs inside its own transaction" do
+    raw = fresh_code
+    team
+    sign_in(captain)
+    # Simulates another request winning the race between the redeemable?
+    # check and the conditional UPDATE in AccessCode#claim! -- see C7's note
+    # above for why this cannot be reproduced with two sequential requests.
+    allow_any_instance_of(AccessCode).to receive(:claim!).and_return(false)
+
+    ActiveRecord::Base.transaction do
+      post redeem_access_code_path, :params => { :access_code => raw }
+    end
+
+    expect(AccessPass.count).to eq(0)
+  end
 end

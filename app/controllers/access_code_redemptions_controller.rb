@@ -54,9 +54,20 @@ class AccessCodeRedemptionsController < ApplicationController
   # another request won the race, so a lost race never leaves an orphaned
   # AccessPass with no code pointing at it.
   #
+  # :requires_new => true is required, not incidental: Rails joins a plain
+  # nested `transaction do` into whatever transaction is already open rather
+  # than opening a real savepoint, and `raise ActiveRecord::Rollback` inside a
+  # JOINED transaction is swallowed without issuing any rollback at all. In
+  # production there is no outer transaction around a request, so the plain
+  # form happened to work -- but a spec running under transactional fixtures
+  # (every request spec in this suite) supplies exactly that outer
+  # transaction, and so would any future caller of #claim that runs inside
+  # one. requires_new forces a real SAVEPOINT here, so the rollback on a lost
+  # race is unconditional rather than true by luck of who calls it.
+  #
   # Returns the pass, or nil when another request won the race.
   def claim(code)
-    AccessCode.transaction do
+    AccessCode.transaction(:requires_new => true) do
       pass = AccessPass.create!(:game => code.game, :team => current_user.team,
                                 :source => "access_code")
 

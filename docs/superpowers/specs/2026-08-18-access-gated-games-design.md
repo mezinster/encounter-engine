@@ -27,7 +27,8 @@ generation, digest storage or an export UI in the same diff.
 | # | Decision | Answer |
 |---|---|---|
 | B1 | What vocabulary does B introduce? | Two columns on `games`: `visibility` and `access_mode`. **Not** `scoring_mode` — that is sub-project D's. |
-| B2 | What are the values? | `visibility`: `draft` / `listed` / `hidden`. `access_mode`: `scheduled` / `pass_required`. |
+| B2 | What are the values? | `visibility`: `draft` / `listed`. `access_mode`: `scheduled` / `pass_required`. Withdrawal stays a separate fact — see B2a. |
+| B2a | Is `hidden` a visibility value? | **No.** `withdrawn_at` remains authoritative for it. Draft-ness and withdrawn-ness are orthogonal, and the suite pins their combination. |
 | B3 | Why `pass_required` rather than `access_code`? | The rule is "a team needs an entitlement"; a code is one way to get one, and in B the only way is an operator invitation. |
 | B4 | Where does the entitlement live? | A new `access_passes` table. Both `game_id` and `team_id` NOT NULL — a pass is always somebody's. |
 | B5 | What is a commercial attempt, physically? | A `GamePassing` with `game_run_id` NULL and `access_pass_id` set. Programme decision P5, unchanged. |
@@ -39,36 +40,62 @@ generation, digest storage or an export UI in the same diff.
 | B11 | What may an operator revoke? | A pass with **no attempt**. Revoking a started pass is refused; a started run is an intervention. |
 | B12 | Does anything about scoring, hints or answers change? | **No.** The gate stays at passing creation, so the whole play loop is indifferent to how the team got in. |
 
-### B1/B2 — why `visibility` replaces the implicit combination
+### B1/B2 — what `visibility` replaces, and what it deliberately does not
 
 Today "may a player see this?" is answered by `Game.visible` (`app/models/game.rb:115`) as three
 conditions: `is_draft = false`, `withdrawn_at IS NULL`, and no run with `is_testing`. That scope's
-own comment records the cost of the arrangement — `start_test` clears `is_draft` to make a test
-game behave as live, which silently retired the draft protection at the moment the game was an
-unpublished rehearsal, and the game appeared on the public home page as RUNNING (reported from
-production 2026-08-15).
+own comment records the cost of leaving the first one implicit — `start_test` clears `is_draft` to
+make a test game behave as live, which silently retired the draft protection at the moment the game
+was an unpublished rehearsal, and the game appeared on the public home page as RUNNING (reported
+from production 2026-08-15).
 
-`visibility` becomes the only column anything reads. `withdrawn_at` survives as a **timestamp
-only** — the audit trail and `restore!` need to know *when* — and stops being consulted for the
-visibility question. The testing clause stays separate, deliberately: that is run state, not a
-property of the game.
+`visibility` replaces **`is_draft` only**, as a named two-value column: `draft` / `listed`.
+
+### B2a — why `hidden` is not a third value
+
+The obvious next step is to fold withdrawal in as `visibility: hidden` and demote `withdrawn_at` to
+a timestamp. It cannot be done, and the codebase says so in two places.
+
+`spec/models/game/status_spec.rb:88` pins **"reports :withdrawn for a draft that has also been
+withdrawn"**, with a comment explaining that `Game#status` checks withdrawal before it looks at
+draft-ness, that the precedence is positional, and that swapping the two `return`s would make a
+withdrawn draft report `:draft` while `count_by_status` still counted it as `:withdrawn`. A
+precedence that has to be declared between two conditions is evidence that they are independent
+facts, not points on one scale.
+
+The practical consequence is `restore!`. With one column it has nothing to restore *to*: a
+withdrawn game may have been a draft or may have been listed, and `hidden` erases the difference.
+The alternatives were a second column existing only to undo the first, or refusing to withdraw a
+draft — which deletes a tested state to tidy a column.
+
+So withdrawal keeps its own column and its own meaning: `withdrawn_at` is an operator act with a
+timestamp the audit trail already reads, and it is orthogonal to whether the author has published
+the game.
 
 ```ruby
 scope :visible, -> {
   where(:visibility => "listed")
+    .where(:withdrawn_at => nil)
     .where.not(:id => GameRun.where(:is_testing => true).select(:game_id))
 }
 ```
 
-The riskiest single edit in this migration is `start_test`/`finish_test`, which currently flip
-`is_draft` as a side effect. Under the enum they perform an explicit visibility transition and
-restore the prior value — which is an improvement, and also the place a mistake is least visible.
+Three conditions still, one of them now named rather than inferred from a boolean called
+`is_draft`. `Game#status`'s ladder and its precedence comment are unchanged apart from the new
+`:available` rung (§7).
+
+The riskiest single edit in this migration is `start_test`/`finish_test`
+(`app/controllers/games_controller.rb:111`, `:222`), which flip `is_draft` as a side effect.
+Verified: `finish_test` sets it back to `true` **unconditionally** — a tested game always returns
+to draft, whatever it was before — so both become straight renames onto `visibility` with no
+restore-the-previous-value logic. Preserve that behaviour exactly; it is deliberate (you rehearse
+before publishing) and changing it would silently publish a game when its test ended.
 
 ### B3 — the two columns are independent
 
 A commercial game is `visibility: listed, access_mode: pass_required`: publicly listed, privately
-playable. `hidden` + `pass_required` is legal and useful (a game sold only by direct invitation),
-and no validation forbids any combination. `scheduled` games are every game that exists today; the
+playable. A withdrawn commercial game is legal and behaves as any withdrawn game does — pulled from the
+catalog, unplayable — and no validation forbids any combination of the two columns. `scheduled` games are every game that exists today; the
 migration backfills `access_mode = "scheduled"` for all of them.
 
 ### B6 — why no "one live pass" rule
@@ -103,9 +130,19 @@ add_column :games, :visibility,  :string, :default => "draft",     :null => fals
 add_column :games, :access_mode, :string, :default => "scheduled", :null => false
 ```
 
-Backfill: `visibility = 'draft'` where `is_draft`, `'hidden'` where `withdrawn_at IS NOT NULL`,
-`'listed'` otherwise — in that precedence, matching `Game#status`'s existing ladder. `is_draft` is
-dropped once every reader has moved (see §7 for the sequencing).
+Backfill: `visibility = 'draft'` where `is_draft`, `'listed'` otherwise. `withdrawn_at` is **not**
+consulted by the backfill and is not changed — it remains a separate, orthogonal fact (B2a). Every
+existing game gets `access_mode = 'scheduled'`.
+
+`is_draft` is dropped once every reader has moved. Fifteen files reference `is_draft` or `draft?`,
+including both author forms (`games/new.html.erb:67`, `games/edit.html.erb:76`), the permit list
+(`games_controller.rb:269`), `ensure_author_if_game_is_draft`, `SecurityFilters` (`:71`),
+`GameRun#results_visible?` and `shared/_countdown.html.erb`.
+
+**The author form keeps its checkbox.** Checked means `draft`, unchecked means `listed` — identical
+UX, so no author has to learn a new control and no locale needs a new set of option labels. The
+permit list takes `:visibility` in place of `:is_draft`, and the checkbox is bound with explicit
+checked/unchecked values.
 
 ### 2.2 `access_passes`
 
@@ -302,7 +339,7 @@ Confirmed **not** to need changes, because they read passings directly rather th
 
 `Game#status` (`:345`) gains `:available`:
 
-> hidden → draft → finished → **available** (when `pass_required`) → running → scheduled
+> withdrawn → draft → finished → **available** (when `pass_required`) → running → scheduled
 
 `Game.count_by_status` (`:366`) gains the same bucket in SQL. **These two move together or neither
 moves.** They are the two-definitions-of-one-idea pair the programme design names, and the file's

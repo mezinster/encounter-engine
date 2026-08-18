@@ -35,6 +35,17 @@ describe Game do
       game = create_game
       game.update!(:visibility => "listed")
       expect(game.reload.is_draft).to be false
+
+      # The discriminating direction: build_game now defaults :is_draft to
+      # false, and nothing else writes the raw is_draft column once the
+      # shim lands, so it sits at that DB default for every fixture-created
+      # row regardless of visibility. Setting visibility directly here --
+      # not through the is_draft= shim -- leaves the raw column false while
+      # visibility says draft. A reader that fell back to the raw column
+      # would still report false; only a reader that goes through
+      # visibility reports true, which is what must actually happen.
+      game.update!(:visibility => "draft")
+      expect(game.reload.is_draft).to be true
     end
 
     it "writes the new column when assigned true" do

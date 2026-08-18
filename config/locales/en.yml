@@ -28,6 +28,7 @@ en:
         signed_up: "Registered"
         role: "Role"
         superadmin: "administrator"
+        operator: "operator"
         back: "Back to overview"
       show:
         email: "Email"
@@ -43,6 +44,8 @@ en:
         back: "Back to players"
         grant: "Make administrator"
         revoke: "Revoke administrator rights"
+        grant_operator: "Make operator"
+        revoke_operator: "Revoke operator rights"
         move: "Move to team"
         delete: "Delete account"
         anonymise: "Anonymise account"

@@ -24,6 +24,7 @@
       <td data-label="<%= t("admin.users.index.signed_up") %>"><%= l(user.created_at, :format => :long) %></td>
       <td data-label="<%= t("admin.users.index.role") %>">
         <% if user.superadmin? %><span class="tag"><%= t("admin.users.index.superadmin") %></span><% end %>
+        <% if user.operator? %><span class="tag"><%= t("admin.users.index.operator") %></span><% end %>
       </td>
     </tr>
   <% end %>

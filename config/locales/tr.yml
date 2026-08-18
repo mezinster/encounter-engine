@@ -73,6 +73,7 @@ tr:
         signed_up: "Kayıt"
         role: "Rol"
         superadmin: "yönetici"
+        operator: "operatör"
         back: "Genel bakışa"
       show:
         email: "E-posta"
@@ -88,6 +89,8 @@ tr:
         back: "Oyuncu listesine"
         grant: "Yönetici yap"
         revoke: "Yönetici yetkilerini al"
+        grant_operator: "Operatör yap"
+        revoke_operator: "Operatör yetkilerini al"
         move: "Takıma taşı"
         delete: "Hesabı sil"
         anonymise: "Hesabı anonimleştir"

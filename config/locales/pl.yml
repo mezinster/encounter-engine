@@ -52,6 +52,7 @@ pl:
         signed_up: "Rejestracja"
         role: "Rola"
         superadmin: "administrator"
+        operator: "operator"
         back: "Do przeglądu"
       show:
         email: "E-mail"
@@ -67,6 +68,8 @@ pl:
         back: "Do listy graczy"
         grant: "Nadaj uprawnienia administratora"
         revoke: "Odbierz uprawnienia administratora"
+        grant_operator: "Nadaj uprawnienia operatora"
+        revoke_operator: "Odbierz uprawnienia operatora"
         move: "Przenieś do drużyny"
         delete: "Usuń konto"
         anonymise: "Zanonimizuj konto"

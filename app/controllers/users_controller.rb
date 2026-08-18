@@ -99,6 +99,12 @@ class UsersController < ApplicationController
     end
 
     if @user.update(profile_params)
+      # The profile is where a lasting choice of language is made, so saving it
+      # discards whatever ?locale= left in the session -- otherwise a preview
+      # taken earlier in the same session would outrank the preference just
+      # saved, and the form would look broken. See LocaleSelection#set_locale.
+      session.delete(:locale)
+
       if params.dig(:user, :password).present?
         reset_session
         session[:user_id] = @user.id

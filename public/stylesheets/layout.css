@@ -159,7 +159,8 @@
 /* flex rather than block so min-height takes effect -- the same reason
    .locale-switcher-link above needs inline-flex. */
 .locale-menu a,
-.locale-menu .locale-switcher-current {
+.locale-menu .locale-switcher-current,
+.locale-menu .locale-switcher-inert {
   display: flex;
   align-items: center;
   min-height: var(--tap);
@@ -168,6 +169,12 @@
 }
 
 .locale-menu .locale-switcher-current { font-weight: 600; }
+
+/* Rendered instead of a link on a page that came back from a POST or PATCH
+   (see app/views/layouts/_header.html.erb for why there is nothing safe to
+   link to there). Dimmed so it reads as unavailable rather than as a link
+   that ignores clicks. */
+.locale-menu .locale-switcher-inert { color: var(--text-dim); }
 
 /* The drawer is driven by a hidden checkbox so it opens with CSS alone.
    drawer.js only adds Escape-to-close and focus handling -- without it the

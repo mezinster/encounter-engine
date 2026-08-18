@@ -413,8 +413,15 @@ In `spec/spec_helpers/fixtures_helper.rb`, beside `create_access_pass`:
 
 - [ ] **Step 7: Run the specs**
 
-Run: `bundle exec rspec spec/models/access_code_spec.rb spec/models/game spec/requests/game_deletion_spec.rb spec/i18n_spec.rb`
+Run: `bundle exec rspec spec/models/access_code_spec.rb spec/models/game spec/requests/game_deletion_spec.rb spec/requests/admin_console_spec.rb spec/requests/admin_entries_console_spec.rb spec/i18n_spec.rb`
 Expected: 0 failures.
+
+The two admin-console specs are in that list deliberately. `Game#deletable?` is called **once per
+row** in the operator's game listings, so adding a conjunct that reads an association turns those
+screens into an N+1 unless the association is preloaded — and both specs exist precisely to pin a
+flat query count. The identical regression happened one sub-project ago when `access_passes` was
+added to the same method. `Admin::GamesController#index` already preloads `game_passings` and
+`access_passes`; add `access_codes` beside them, following that precedent.
 
 - [ ] **Step 8: Commit**
 

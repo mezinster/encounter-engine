@@ -129,6 +129,86 @@ describe "the points chart", type: :request do
     expect(response.body).to include("6")
   end
 
+  # The row for one team, bounded so the scan cannot cross into a neighbour
+  # before finding the name. Same shape as the zero-balance example above.
+  def row_for(team)
+    response.body[/<tr>(?:(?!<\/tr>).)*?#{Regexp.escape(team.name)}.*?<\/tr>/m]
+  end
+
+  def cells(row)
+    row.to_s.scan(/data-label="[^"]*">([^<]*)</).flatten.map(&:strip)
+  end
+
+  # The design's section 7 asks for a team with a mixture of finished and
+  # ABANDONED runs, and neither request spec had one -- which is why the two
+  # screens' disagreement about "finished" went unnoticed. exit! stamps
+  # finished_at as well as status "exited", so a chart reading finished_at
+  # alone would say 1 here.
+  it "counts an abandoned run as started but never completed" do
+    game, level = scoring_game
+    passing = create_game_passing(:game => game, :level => level)
+    PointTransaction.award!(:passing => passing, :reason => "level_completed",
+                            :level => level, :amount => 10)
+    passing.exit!
+    sign_in(viewer)
+
+    get teams_path
+
+    # No completion award was written, and none is owed: P4.
+    expect(PointTransaction.where(:reason => "game_completed")).to be_empty
+    # name, captain, members, started, finished, earned, deducted, balance
+    expect(cells(row_for(passing.team))[3, 5]).to eq(%w[1 0 10 0 10])
+  end
+
+  it "still counts a genuinely finished run as completed" do
+    game, level = scoring_game
+    passing = create_game_passing(:game => game, :level => level)
+    passing.update!(:finished_at => Time.now)
+    sign_in(viewer)
+
+    get teams_path
+
+    expect(cells(row_for(passing.team))[3, 2]).to eq(%w[1 1])
+  end
+
+  # A rehearsal writes no ledger row (GamePassing#award_points_for returns
+  # early on a testing run), so counting its passings here reported a team
+  # that has never played anything real as "1 started, 1 finished, 0 points".
+  it "does not count a run that was only a rehearsal" do
+    game, level = scoring_game
+    game.current_run.update_column(:is_testing, true)
+    passing = create_game_passing(:game => game, :level => level)
+    passing.update!(:finished_at => Time.now)
+    sign_in(viewer)
+
+    get teams_path
+
+    expect(cells(row_for(passing.team))[3, 5]).to eq(%w[0 0 0 0 0])
+  end
+
+  # game_run is :optional and nil means an ORDINARY run, so the testing filter
+  # must not swallow a run-less passing: `NOT IN (...)` is NULL, and so false,
+  # for a NULL column under SQL's three-valued logic.
+  #
+  # The rehearsal below is what gives this example teeth. `NULL IN (empty
+  # set)` is FALSE rather than NULL, so with no testing run in the database a
+  # bare NOT IN keeps the row anyway and the example cannot fail. Verified: it
+  # was written without these two lines and stayed green under the mutation.
+  it "counts a passing that belongs to no run at all" do
+    rehearsed, rehearsed_level = scoring_game
+    create_game_passing(:game => rehearsed, :level => rehearsed_level)
+    rehearsed.current_run.update_column(:is_testing, true)
+
+    game, level = scoring_game
+    passing = create_game_passing(:game => game, :level => level)
+    passing.update!(:game_run => nil, :finished_at => Time.now)
+    sign_in(viewer)
+
+    get teams_path
+
+    expect(cells(row_for(passing.team))[3, 2]).to eq(%w[1 1])
+  end
+
   # The chart's figures must be grouped queries. This programme has introduced
   # the same N+1 three times; the existing slope guard in teams_index_spec.rb
   # is what catches a fourth.

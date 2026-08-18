@@ -90,11 +90,26 @@ class TestAdmission < ApplicationRecord
   # anything would survive revocation. (finish_test needs no equivalent -- it
   # already deletes the whole run's logs.)
   #
-  # Same ordering as GameRun#sweep_test_admissions!: passing and logs first,
-  # then the row, then the team.
+  # Ledger rows go too, and BEFORE the passings that identify them --
+  # Team#deletable? refuses on point_transactions as well, so a tester who
+  # earned anything would otherwise survive revocation exactly as one who
+  # answered anything would, and the row would be left orphaned with nothing
+  # in any UI able to reach it. An append-only ledger may still lose rows
+  # here: append-only means it is never REVERSED (no compensating entry, no
+  # edit -- see PointTransaction's class comment), not that a row outlives the
+  # attempt it describes. start_test can turn an already-running REAL run into
+  # a testing one, so these are not always zero-value rehearsal rows. See the
+  # whole-branch review, F3, and the matching deletion in
+  # GamesController#finish_test.
+  #
+  # Same ordering as GameRun#sweep_test_admissions!: transactions, passings
+  # and logs first, then the row, then the team -- deletable? is consulted
+  # after all of them, deliberately.
   def revoke!
     self.class.transaction do
-      GamePassing.where(:game_run_id => game_run_id, :team_id => team_id).delete_all
+      passings = GamePassing.where(:game_run_id => game_run_id, :team_id => team_id)
+      PointTransaction.where(:game_passing_id => passings.select(:id)).delete_all
+      passings.delete_all
       Log.where(:game_run_id => game_run_id, :team_id => team_id).delete_all
 
       doomed = solo? ? team : nil

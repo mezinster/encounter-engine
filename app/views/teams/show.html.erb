@@ -17,10 +17,25 @@
   <tbody>
   <% @passings.each do |passing| %>
     <tr>
-      <td data-label="<%= t("teams.show.game") %>"><%= passing.game&.name %></td>
+      <%# Never `passing.game.name` directly: this page is public and a draft
+          or withdrawn game's title is not. See
+          TeamsController#nameable_game_ids -- the row stays either way, so
+          the totals below still add up in public. %>
+      <td data-label="<%= t("teams.show.game") %>"><%= game_title_for_viewer(passing.game) %></td>
       <td data-label="<%= t("teams.show.started") %>"><%= l(passing.created_at, :format => :long) %></td>
+      <%# `completed?`, not finished_at: exit! stamps finished_at AND status
+          "exited", so asking the column alone printed a finish time for a run
+          the chart counts as never completed -- and against which no
+          completion award was ever written (P4). The three branches are
+          GamePassing's three outcomes, in the same order. %>
       <td data-label="<%= t("teams.show.finished") %>">
-        <%= passing.finished_at ? l(passing.finished_at, :format => :long) : t("teams.show.unfinished") %>
+        <% if passing.completed? %>
+          <%= l(passing.finished_at, :format => :long) %>
+        <% elsif passing.interrupted? %>
+          <%= t("teams.show.abandoned") %>
+        <% else %>
+          <%= t("teams.show.unfinished") %>
+        <% end %>
       </td>
       <td data-label="<%= t("teams.show.points") %>"><%= @per_attempt.fetch(passing.id, 0) %></td>
     </tr>
@@ -45,7 +60,7 @@
   <% @transactions.each do |row| %>
     <tr>
       <td data-label="<%= t("teams.show.when") %>"><%= l(row.created_at, :format => :long) %></td>
-      <td data-label="<%= t("teams.show.game") %>"><%= row.game&.name %></td>
+      <td data-label="<%= t("teams.show.game") %>"><%= game_title_for_viewer(row.game) %></td>
       <%# Rendered from a fixed set, never interpolated from the column: an
           unrecognised reason must not print "translation missing" on a public
           page. See the design, §6. %>

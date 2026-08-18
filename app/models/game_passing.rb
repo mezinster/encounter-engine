@@ -119,6 +119,49 @@ class GamePassing < ApplicationRecord
     unfinished.where(:status => nil).or(unfinished.where.not(:status => %w[exited ended]))
   }
 
+  # The Ruby twins of `completed` and `interrupted`, for a view holding one
+  # loaded row rather than a relation. They exist so that "finished" is ONE
+  # notion in this application: the public team page used to ask
+  # `passing.finished_at` on its own and so printed a finish time for a run
+  # the chart, asking `GamePassing.completed`, counted as never completed --
+  # two screens one link apart disagreeing about the same row. See the
+  # whole-branch review, F2.
+  #
+  # Deliberately re-expressed rather than delegated to the scopes (which would
+  # cost a query per row on a page that renders a table of them); the pair is
+  # small enough to mirror by hand and
+  # spec/models/game_passing/outcome_scopes_spec.rb pins that each predicate
+  # agrees with its scope on the same row, so a change to one that is not made
+  # to the other goes red.
+  def completed?
+    finished? && !exited?
+  end
+
+  def interrupted?
+    exited? || (self.status == "ended" && !finished?)
+  end
+
+  # Passings on ORDINARY runs -- everything a rehearsal produced is left out.
+  #
+  # The counterpart of #award_points_for's `return if game_run&.is_testing?`:
+  # a testing run writes no ledger row, so counting its passings among a
+  # team's games started/finished made the public chart read "1 game started,
+  # 1 finished, 0 points" for a team that had never played anything real.
+  #
+  # game_run is :optional and nil means an ORDINARY run, so the nil branch is
+  # spelled out. A bare `where.not(:game_run_id => testing)` generates
+  # NOT IN, which is NULL -- and so false -- for a NULL game_run_id under
+  # SQL's three-valued logic, and would silently drop every run-less passing:
+  # the same three-valued trap the outcome scopes above document.
+  #
+  # A subquery rather than a join, for the same reason Game.visible uses one:
+  # this composes with `completed` and with `group(:team_id)` without a second
+  # reference to game_runs.
+  scope :not_testing, -> {
+    testing = GameRun.where(:is_testing => true).select(:id)
+    where(:game_run_id => nil).or(where.not(:game_run_id => testing))
+  }
+
   # THE single definition of "this team's current attempt at a gated game" --
   # finding 3 of the whole-branch review. Three call sites each invented
   # their own resolution: GamePassingsController#gated_passing (first

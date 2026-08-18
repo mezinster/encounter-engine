@@ -50,6 +50,31 @@ class Admin::UsersController < ApplicationController
     redirect_to admin_user_path(user), :notice => t("admin.users.revoked_notice")
   end
 
+  # The operator role (sub-project A of the commercial-games programme). It
+  # grants nothing yet: its authority clause lands in sub-project B, where
+  # Game#commercial? will exist to scope it.
+  #
+  # No self guard and no last-holder guard, unlike #revoke above. Both of that
+  # method's guards exist so the instance can never end up with nobody able to
+  # administer it; a superadmin can always grant this role back, so neither
+  # applies. See docs/superpowers/specs/2026-08-18-operator-role-design.md, D4.
+  #
+  # record_admin_action is called AFTER the change lands, matching the rule in
+  # AdminAudit: a refused action must leave no entry.
+  def grant_operator
+    user = User.find(params[:id])
+    user.update!(:is_operator => true)
+    record_admin_action("grant_operator", user)
+    redirect_to admin_user_path(user), :notice => t("admin.users.operator_granted_notice")
+  end
+
+  def revoke_operator
+    user = User.find(params[:id])
+    user.update!(:is_operator => false)
+    record_admin_action("revoke_operator", user)
+    redirect_to admin_user_path(user), :notice => t("admin.users.operator_revoked_notice")
+  end
+
   # Housekeeping -- spam and test accounts. Every refusal exists because the
   # alternative damages something the deleted user does not own. See
   # docs/superpowers/specs/2026-08-08-team-membership-programme-design.md, S5.

@@ -3,6 +3,8 @@ en:
     users:
       granted_notice: "Administrator rights granted"
       revoked_notice: "Administrator rights revoked"
+      operator_granted_notice: "Operator rights granted"
+      operator_revoked_notice: "Operator rights revoked"
       cannot_revoke_self: "You cannot revoke your own rights"
       cannot_revoke_last: "You cannot revoke the last administrator"
       moved_notice: "The player has been moved to “%{team}”"
@@ -79,6 +81,8 @@ en:
           test_reset_token: "Replaced the test link"
           grant_superadmin: "Granted administrator rights"
           revoke_superadmin: "Revoked administrator rights"
+          grant_operator: "Granted operator rights"
+          revoke_operator: "Revoked operator rights"
           allow_any_code: "Allowed any one code on a level"
           require_all_codes: "Required all codes on a level"
           update_settings: "Changed the settings"

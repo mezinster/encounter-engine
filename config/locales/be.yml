@@ -22,6 +22,8 @@ be:
     users:
       granted_notice: "Правы адміністратара выдадзены"
       revoked_notice: "Правы адміністратара адкліканы"
+      operator_granted_notice: "Правы аператара выдадзены"
+      operator_revoked_notice: "Правы аператара знятыя"
       cannot_revoke_self: "Нельга зняць правы з самога сябе"
       cannot_revoke_last: "Нельга зняць правы з апошняга адміністратара"
       moved_notice: "Гулец пераведзены ў каманду «%{team}»"
@@ -98,6 +100,8 @@ be:
           test_reset_token: "Змяніў спасылку на тэставанне"
           grant_superadmin: "Выдаў правы адміністратара"
           revoke_superadmin: "Зняў правы адміністратара"
+          grant_operator: "Выдаў правы аператара"
+          revoke_operator: "Зняў правы аператара"
           allow_any_code: "Дазволіў любы код на ўзроўні"
           require_all_codes: "Запатрабаваў усе коды на ўзроўні"
           update_settings: "Змяніў налады"

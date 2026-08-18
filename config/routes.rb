@@ -39,6 +39,11 @@ Rails.application.routes.draw do
     resources :users, only: [ :index, :show ] do
       post "grant",  on: :member
       post "revoke", on: :member
+      # The operator role. Separate actions rather than a parameterised one:
+      # grant/revoke above are superadmin's and have guards these must not
+      # inherit -- see the operator-role design, D4.
+      post "grant_operator",  on: :member
+      post "revoke_operator", on: :member
       post "move",   on: :member
       delete "destroy", on: :member, as: :destroy
       post "anonymise", on: :member

@@ -155,6 +155,25 @@ describe "auditing administrative changes", type: :request do
 
       expect(AdminAction.newest_first.first.action).to eq("translation_proposals_accepted")
     end
+
+    it "records granting the operator role" do
+      target = create_user
+
+      expect { post grant_operator_admin_user_path(target) }.to change { AdminAction.count }.by(1)
+
+      entry = AdminAction.newest_first.first
+      expect(entry.action).to eq("grant_operator")
+      expect(entry.actor_id).to eq(superadmin.id)
+      expect(entry.target_id).to eq(target.id)
+    end
+
+    it "records revoking the operator role" do
+      target = create_user
+      target.update!(:is_operator => true)
+
+      expect { post revoke_operator_admin_user_path(target) }.to change { AdminAction.count }.by(1)
+      expect(AdminAction.newest_first.first.action).to eq("revoke_operator")
+    end
   end
 
   describe "the inherited actions, performed on someone else's game" do

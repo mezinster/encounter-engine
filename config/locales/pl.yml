@@ -27,6 +27,8 @@ pl:
     users:
       granted_notice: "Uprawnienia administratora zostały nadane"
       revoked_notice: "Uprawnienia administratora zostały cofnięte"
+      operator_granted_notice: "Nadano uprawnienia operatora"
+      operator_revoked_notice: "Odebrano uprawnienia operatora"
       cannot_revoke_self: "Nie można odebrać uprawnień samemu sobie"
       cannot_revoke_last: "Nie można odebrać uprawnień ostatniemu administratorowi"
       moved_notice: "Gracz został przeniesiony do drużyny «%{team}»"
@@ -103,6 +105,8 @@ pl:
           test_reset_token: "Zmienił link do testów"
           grant_superadmin: "Nadał uprawnienia administratora"
           revoke_superadmin: "Odebrał uprawnienia administratora"
+          grant_operator: "Nadał uprawnienia operatora"
+          revoke_operator: "Odebrał uprawnienia operatora"
           allow_any_code: "Zezwolił na dowolny kod na poziomie"
           require_all_codes: "Wymógł wszystkie kody na poziomie"
           update_settings: "Zmienił ustawienia"

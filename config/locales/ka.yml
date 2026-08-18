@@ -26,6 +26,8 @@ ka:
     users:
       granted_notice: "ადმინისტრატორის უფლებები მინიჭებულია"
       revoked_notice: "ადმინისტრატორის უფლებები ჩამორთმეულია"
+      operator_granted_notice: "ოპერატორის უფლებები მინიჭებულია"
+      operator_revoked_notice: "ოპერატორის უფლებები ჩამორთმეულია"
       cannot_revoke_self: "საკუთარი უფლებების ჩამორთმევა შეუძლებელია"
       cannot_revoke_last: "ბოლო ადმინისტრატორს უფლებებს ვერ ჩამოართმევთ"
       moved_notice: "მოთამაშე გადაყვანილია გუნდში «%{team}»"
@@ -102,6 +104,8 @@ ka:
           test_reset_token: "შეცვალა ტესტირების ბმული"
           grant_superadmin: "მიანიჭა ადმინისტრატორის უფლებები"
           revoke_superadmin: "ჩამოართვა ადმინისტრატორის უფლებები"
+          grant_operator: "მიანიჭა ოპერატორის უფლებები"
+          revoke_operator: "ჩამოართვა ოპერატორის უფლებები"
           allow_any_code: "დაუშვა ნებისმიერი კოდი დონეზე"
           require_all_codes: "მოითხოვა ყველა კოდი დონეზე"
           update_settings: "შეცვალა პარამეტრები"

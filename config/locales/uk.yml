@@ -20,6 +20,8 @@ uk:
     users:
       granted_notice: "Права адміністратора надано"
       revoked_notice: "Права адміністратора знято"
+      operator_granted_notice: "Права оператора надано"
+      operator_revoked_notice: "Права оператора знято"
       cannot_revoke_self: "Не можна зняти права із самого себе"
       cannot_revoke_last: "Не можна зняти права з останнього адміністратора"
       moved_notice: "Гравця переведено до команди «%{team}»"
@@ -96,6 +98,8 @@ uk:
           test_reset_token: "Змінив посилання на тестування"
           grant_superadmin: "Надав права адміністратора"
           revoke_superadmin: "Зняв права адміністратора"
+          grant_operator: "Надав права оператора"
+          revoke_operator: "Зняв права оператора"
           allow_any_code: "Дозволив будь-який код на рівні"
           require_all_codes: "Зажадав усі коди на рівні"
           update_settings: "Змінив налаштування"

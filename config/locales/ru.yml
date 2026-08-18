@@ -3,6 +3,8 @@ ru:
     users:
       granted_notice: "Права администратора выданы"
       revoked_notice: "Права администратора отозваны"
+      operator_granted_notice: "Права оператора выданы"
+      operator_revoked_notice: "Права оператора отозваны"
       cannot_revoke_self: "Нельзя снять права с самого себя"
       cannot_revoke_last: "Нельзя снять права с последнего администратора"
       moved_notice: "Игрок переведён в команду «%{team}»"
@@ -79,6 +81,8 @@ ru:
           test_reset_token: "Сменил ссылку на тестирование"
           grant_superadmin: "Выдал права администратора"
           revoke_superadmin: "Снял права администратора"
+          grant_operator: "Выдал права оператора"
+          revoke_operator: "Снял права оператора"
           allow_any_code: "Разрешил любой код на уровне"
           require_all_codes: "Потребовал все коды на уровне"
           update_settings: "Изменил настройки"

@@ -48,6 +48,8 @@ tr:
     users:
       granted_notice: "Yönetici yetkileri verildi"
       revoked_notice: "Yönetici yetkileri geri alındı"
+      operator_granted_notice: "Operatör yetkileri verildi"
+      operator_revoked_notice: "Operatör yetkileri alındı"
       cannot_revoke_self: "Kendi yetkilerinizi geri alamazsınız"
       cannot_revoke_last: "Son yöneticinin yetkileri geri alınamaz"
       moved_notice: "Oyuncu «%{team}» adlı takıma taşındı"
@@ -124,6 +126,8 @@ tr:
           test_reset_token: "Test bağlantısını değiştirdi"
           grant_superadmin: "Yönetici yetkileri verdi"
           revoke_superadmin: "Yönetici yetkilerini aldı"
+          grant_operator: "Operatör yetkileri verdi"
+          revoke_operator: "Operatör yetkilerini aldı"
           allow_any_code: "Seviyede herhangi bir koda izin verdi"
           require_all_codes: "Seviyede tüm kodları zorunlu kıldı"
           update_settings: "Ayarları değiştirdi"

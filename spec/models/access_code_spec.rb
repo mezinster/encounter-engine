@@ -167,4 +167,39 @@ describe AccessCode do
       AccessCode.generate_batch!(:game => scheduled, :count => 1, :issued_by => create_user)
     }.to raise_error(ActiveRecord::RecordInvalid)
   end
+
+  describe "#claim!" do
+    def fresh_code
+      AccessCode.generate_batch!(:game => game, :count => 1, :issued_by => create_user)
+      AccessCode.first
+    end
+
+    it "returns true for the request that takes the row" do
+      c = fresh_code
+      pass = create_access_pass(:game => game)
+
+      expect(c.claim!(pass)).to be true
+      expect(c.reload.redeemed_at).to be_present
+      expect(c.reload.access_pass_id).to eq(pass.id)
+    end
+
+    # The whole point. Two stale in-memory copies stand in for two concurrent
+    # requests that both read the row as unclaimed. A Ruby-side nil check
+    # passes here and gives away a free run.
+    it "returns false for a second claim against an already-claimed row" do
+      first  = fresh_code
+      second = AccessCode.find(first.id) # an independent, equally-stale read of the same row
+
+      pass_a = create_access_pass(:game => game)
+      pass_b = create_access_pass(:game => game)
+
+      expect(first.claim!(pass_a)).to be true
+      expect(second.claim!(pass_b)).to be false
+
+      # Not merely "returned false" -- the row must still point at the FIRST
+      # pass. A second claim that returns false but overwrites anyway would
+      # still be the same silent failure the design warns about.
+      expect(first.reload.access_pass_id).to eq(pass_a.id)
+    end
+  end
 end

@@ -76,6 +76,20 @@ class AccessCode < ApplicationRecord
     revoked_at.nil? && redeemed_at.nil? && (expires_at.nil? || expires_at > Time.now)
   end
 
+  # Claims this code for a pass, or returns false if another request got there
+  # first. THE precondition lives in the WHERE, not in Ruby: two requests can
+  # both read redeemed_at as nil and both mint a pass, and that failure is
+  # silent -- a free run, and two passes pointing at one purchase with nothing
+  # in the data to say which was the mistake.
+  #
+  # Returns true when this call took the row.
+  def claim!(pass)
+    taken = self.class.where(:id => id, :redeemed_at => nil)
+                      .update_all(:redeemed_at => Time.now, :access_pass_id => pass.id,
+                                  :updated_at => Time.now)
+    taken == 1
+  end
+
   # Redeemed wins over expired: a redeemed code has already produced a pass,
   # and that pass's life is not the code's business. See the design, C10.
   def state

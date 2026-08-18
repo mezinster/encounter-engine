@@ -48,11 +48,11 @@ class AccessCodeRedemptionsController < ApplicationController
     redirect_to new_team_path, :alert => t("access_code_redemptions.need_a_team")
   end
 
-  # THE conditional claim. The unique index on code_digest stops two codes
-  # sharing a digest; it does NOT stop one code being redeemed twice, because
-  # two requests can both read redeemed_at IS NULL and both mint a pass. That
-  # failure is silent and costs a free run, so the claim is an UPDATE whose
-  # WHERE carries the precondition, and we proceed only if it took the row.
+  # The conditional claim itself lives on AccessCode#claim! (THE precondition
+  # is the WHERE on that UPDATE, not a Ruby-side nil check -- see its comment).
+  # This wraps it in the transaction that creates the pass and rolls back if
+  # another request won the race, so a lost race never leaves an orphaned
+  # AccessPass with no code pointing at it.
   #
   # Returns the pass, or nil when another request won the race.
   def claim(code)
@@ -60,11 +60,7 @@ class AccessCodeRedemptionsController < ApplicationController
       pass = AccessPass.create!(:game => code.game, :team => current_user.team,
                                 :source => "access_code")
 
-      taken = AccessCode.where(:id => code.id, :redeemed_at => nil)
-                        .update_all(:redeemed_at => Time.now, :access_pass_id => pass.id,
-                                    :updated_at => Time.now)
-
-      raise ActiveRecord::Rollback if taken.zero?
+      raise ActiveRecord::Rollback unless code.claim!(pass)
 
       return pass
     end

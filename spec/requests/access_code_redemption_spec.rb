@@ -145,9 +145,14 @@ describe "redeeming an access code", type: :request do
       .to change { AccessPass.count }.by(1)
   end
 
-  # C7: the claim is a conditional UPDATE, not a Ruby-side nil check. Exercise
-  # the claim itself rather than simulating threads: a second claim against an
-  # already-claimed row must affect zero rows and create nothing.
+  # C7: the claim is a conditional UPDATE, not a Ruby-side nil check. This
+  # example only proves the user-visible outcome of two SEQUENTIAL requests --
+  # by the second POST, the first has already committed, so the ordinary
+  # redeemable? guard above refuses it regardless of how #claim! ends up
+  # implemented. It does NOT exercise the race itself and would pass against
+  # a naive `if redeemed_at.nil?` just as well. The race guard is
+  # spec/models/access_code_spec.rb's "#claim!" examples, which load two
+  # stale copies of the same row to stand in for two concurrent requests.
   it "cannot be claimed twice" do
     raw = fresh_code
     team

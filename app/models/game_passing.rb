@@ -219,7 +219,10 @@ class GamePassing < ApplicationRecord
   end
 
   def pass_level!
-    if last_level?
+    passed = self.current_level
+    finishing = last_level?
+
+    if finishing
       set_finish_time
     else
       update_current_level_entered_at
@@ -229,6 +232,8 @@ class GamePassing < ApplicationRecord
 
     self.current_level = self.current_level.next
     save!
+
+    award_points_for(passed, finishing)
   end
 
   def finished?
@@ -382,6 +387,25 @@ protected
 
   def reset_answered_questions
     self.answered_questions.clear
+  end
+
+  # Awards are written AFTER the advance is saved, deliberately. A team
+  # standing in a street with a correct answer must move on whether or not the
+  # ledger accepts a row; nothing about scoring may block play.
+  #
+  # PointTransaction.award! returns nil on a duplicate rather than raising, so
+  # a re-passed level -- an operator sent them back -- awards once and the team
+  # still advances. See the design, P5.
+  def award_points_for(level, finishing)
+    return unless game&.points_enabled?
+
+    PointTransaction.award!(:passing => self, :reason => "level_completed",
+                            :level => level, :amount => game.points_for_level(level))
+
+    return unless finishing
+
+    PointTransaction.award!(:passing => self, :reason => "game_completed",
+                            :level => nil, :amount => game.game_completion_points)
   end
 
   # AnsweredQuestionsCoder.load silently returns [] when the column holds a

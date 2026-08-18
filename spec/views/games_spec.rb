@@ -177,6 +177,10 @@ end
 RSpec.describe "games/new", type: :view do
   it "renders the new-game form" do
     assign(:game, Game.new)
+    # The form's superadmin translation-panel guard calls logged_in? and
+    # current_user, which are controller helpers not available in view specs.
+    view.define_singleton_method(:logged_in?) { false }
+    view.define_singleton_method(:current_user) { nil }
 
     render
 
@@ -194,6 +198,10 @@ RSpec.describe "games/new", type: :view do
     game = Game.new
     game.valid?
     assign(:game, game)
+    # The form's superadmin translation-panel guard calls logged_in? and
+    # current_user, which are controller helpers not available in view specs.
+    view.define_singleton_method(:logged_in?) { false }
+    view.define_singleton_method(:current_user) { nil }
 
     render
 

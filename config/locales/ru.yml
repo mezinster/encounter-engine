@@ -345,6 +345,9 @@ ru:
       registration_deadline: "Крайний срок регистрации "
       max_team_number: "Максимальное количество команд"
       is_draft: "Черновик?"
+      access_mode: "Режим доступа"
+      access_mode_scheduled: "По расписанию (регистрация и дата начала)"
+      access_mode_pass_required: "По пропускам (коммерческая игра)"
     primary_locale_label: "Основной язык"
     available_locales_label: "Языки игры"
     new:

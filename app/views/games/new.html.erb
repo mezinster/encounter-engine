@@ -67,6 +67,19 @@
     <%= f.label :visibility, t("games.form.is_draft") %>
     <%= f.check_box :visibility, {}, "draft", "listed" %>
   </div>
+  <%# Operator/superadmin territory only -- see User#may_operate_commercial?
+      and GamesController#game_attributes, which strips this key from
+      anyone else's params so a hand-crafted POST can't set it either. A
+      SINGLE field, deliberately: a later sub-project adds author-settable
+      scoring options to this same form, and a "commercial settings" section
+      built now would either wrongly gate those behind this predicate or
+      have to be split apart later. %>
+  <% if logged_in? && current_user.may_operate_commercial? %>
+    <div class="field">
+      <%= f.label :access_mode, t("games.form.access_mode") %>
+      <%= f.select :access_mode, Game::ACCESS_MODES.map { |m| [t("games.form.access_mode_#{m}"), m] } %>
+    </div>
+  <% end %>
   <%= f.submit t("games.new.submit"), class: "btn btn--go" %>
 <% end %>
 

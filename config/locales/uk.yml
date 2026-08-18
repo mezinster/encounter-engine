@@ -362,6 +362,9 @@ uk:
       registration_deadline: "Кінцевий термін реєстрації "
       max_team_number: "Максимальна кількість команд"
       is_draft: "Чернетка?"
+      access_mode: "Режим доступу"
+      access_mode_scheduled: "За розкладом (реєстрація і дата початку)"
+      access_mode_pass_required: "За перепустками (комерційна гра)"
     primary_locale_label: "Основна мова"
     available_locales_label: "Мови гри"
     new:

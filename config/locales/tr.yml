@@ -391,6 +391,9 @@ tr:
       registration_deadline: "Son kayıt tarihi "
       max_team_number: "En fazla takım sayısı"
       is_draft: "Taslak mı?"
+      access_mode: "Erişim modu"
+      access_mode_scheduled: "Planlı (kayıt ve başlangıç tarihi)"
+      access_mode_pass_required: "Geçiş gerekli (ticari)"
     primary_locale_label: "Ana dil"
     available_locales_label: "Oyunun dilleri"
     new:

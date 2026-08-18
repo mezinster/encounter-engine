@@ -369,6 +369,9 @@ pl:
       registration_deadline: "Ostateczny termin rejestracji "
       max_team_number: "Maksymalna liczba drużyn"
       is_draft: "Szkic?"
+      access_mode: "Tryb dostępu"
+      access_mode_scheduled: "Zaplanowana (rejestracja i data rozpoczęcia)"
+      access_mode_pass_required: "Wymagany dostęp (komercyjna)"
     primary_locale_label: "Język główny"
     available_locales_label: "Języki gry"
     new:

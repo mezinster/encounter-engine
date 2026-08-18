@@ -368,6 +368,9 @@ ka:
       registration_deadline: "რეგისტრაციის ბოლო ვადა "
       max_team_number: "გუნდების მაქსიმალური რაოდენობა"
       is_draft: "მონახაზი?"
+      access_mode: "წვდომის რეჟიმი"
+      access_mode_scheduled: "განრიგით (რეგისტრაცია და დაწყების თარიღი)"
+      access_mode_pass_required: "საჭიროა უფლება (კომერციული თამაში)"
     primary_locale_label: "ძირითადი ენა"
     available_locales_label: "თამაშის ენები"
     new:

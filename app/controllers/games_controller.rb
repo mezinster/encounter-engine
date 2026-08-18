@@ -284,7 +284,7 @@ class GamesController < ApplicationController
   def game_params
     params.fetch(:game, ActionController::Parameters.new)
           .permit(:name, :description, :starts_at, :registration_deadline,
-                   :max_team_number, :visibility, :primary_locale,
+                   :max_team_number, :visibility, :primary_locale, :access_mode,
                    :available_locale_list => [],
                    :translations => translation_params_shape(Game::TRANSLATABLE_FIELDS))
   end
@@ -297,9 +297,20 @@ class GamesController < ApplicationController
 
   # translations_attributes= is the concern's writer; the form posts
   # `translations` because that is what reads naturally in the markup.
+  #
+  # access_mode is stripped here, not merely hidden from the form: permitting
+  # the param already closes the mass-assignment hole Rails cares about, but
+  # an ordinary author could still hand-craft a POST with
+  # game[access_mode]=pass_required and have it accepted, because
+  # game_attributes has no notion of WHO is asking. Deleting the key unless
+  # the actor holds may_operate_commercial? is what actually enforces "this
+  # is operator territory" -- see the games/new and games/edit views, which
+  # render the control under the identical predicate so an ordinary author
+  # never sees a field their POST would be refused anyway.
   def game_attributes
     attributes = game_params.to_h
     translations = attributes.delete("translations")
+    attributes.delete("access_mode") unless logged_in? && current_user.may_operate_commercial?
     attributes.merge("translations_attributes" => translations)
   end
 

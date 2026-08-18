@@ -364,6 +364,9 @@ be:
       registration_deadline: "Крайні тэрмін рэгістрацыі "
       max_team_number: "Максімальная колькасць каманд"
       is_draft: "Чарнавік?"
+      access_mode: "Рэжым доступу"
+      access_mode_scheduled: "Па раскладзе (рэгістрацыя і дата пачатку)"
+      access_mode_pass_required: "Па пропусках (камерцыйная гульня)"
     primary_locale_label: "Асноўная мова"
     available_locales_label: "Мовы гульні"
     new:

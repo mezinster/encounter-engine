@@ -116,4 +116,29 @@ describe GamePassing do
     expect { passing.pass_level! }.to raise_error(ActiveRecord::StatementInvalid)
     expect(passing.reload.current_level_id).to eq(second.id)
   end
+
+  # Team#deletable? requires point_transactions.empty? (Task 1), and both
+  # TestAdmission#revoke! and GameRun#sweep_test_admissions! skip a
+  # disposable test team unless it's deletable. A testing run's awards would
+  # be real, permanent rows, so the sweep would silently leave the
+  # "nickname (test #N)" team behind forever, holding phantom points.
+  it "awards nothing on a testing run" do
+    game, first, _second = scoring_game
+    run = game.current_run
+    run.update_column(:is_testing, true)
+    passing = create_game_passing(:game => game, :level => first, :game_run => run)
+
+    expect { passing.pass_level! }.not_to change { PointTransaction.count }
+  end
+
+  # The guard above must not swallow nil: game_run is optional, and a passing
+  # with no run at all is an ORDINARY run, not a testing one, so it must
+  # still award. A guard shaped like
+  # `return if game_run.nil? || game_run.is_testing?` fails this one.
+  it "still awards when the passing has no game_run at all" do
+    game, first, _second = scoring_game
+    passing = create_game_passing(:game => game, :level => first, :game_run => nil)
+
+    expect { passing.pass_level! }.to change { PointTransaction.count }.by(1)
+  end
 end

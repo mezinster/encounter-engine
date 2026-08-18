@@ -399,6 +399,19 @@ protected
   def award_points_for(level, finishing)
     return unless game&.points_enabled?
 
+    # A testing run's awards would be real, permanent rows -- the ledger
+    # never reverses (see PointTransaction's class comment). Team#deletable?
+    # requires point_transactions.empty?, so a solo author who passes even
+    # one level while test-running a points-enabled game leaves the
+    # disposable "nickname (test #N)" team permanently undeletable, and both
+    # TestAdmission#revoke! and GameRun#sweep_test_admissions! skip it
+    # silently because deletable? is false -- a phantom team holding points
+    # in the global chart forever. game_run is optional (belongs_to
+    # :game_run, :optional => true), and nil means an ORDINARY run, so this
+    # is `&.is_testing?`, not `.nil? || ...is_testing?` -- either of those
+    # forms would also switch off every passing that has no game_run at all.
+    return if game_run&.is_testing?
+
     PointTransaction.award!(:passing => self, :reason => "level_completed",
                             :level => level, :amount => game.points_for_level(level))
 

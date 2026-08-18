@@ -202,17 +202,14 @@ class LogsController < ApplicationController
 
   # The requesting team's attempt at a gated game. There is no run to
   # resolve through -- every commercial attempt's game_run_id is NULL -- so
-  # this reads game_passings directly on (game, team), restricted to rows
-  # that actually hold an access pass (a stray runless passing that isn't a
-  # gated attempt must not match). Most recent first: a team that bought a
+  # this defers entirely to GamePassing.gated_attempt_for, THE single
+  # definition of "this team's current attempt" (finding 3 of the
+  # whole-branch review, see that method's comment): newest first, which is
+  # provably the live one whenever a live one exists. A team that bought a
   # second pass after finishing or abandoning the first is judged by its
   # newest attempt, same as gated_passing in GamePassingsController prefers
   # the live one.
   def gated_passing_for(team)
-    return nil if team.nil?
-
-    GamePassing.where(:game_id => @game.id, :team_id => team.id)
-               .where.not(:access_pass_id => nil)
-               .order(:id => :desc).first
+    GamePassing.gated_attempt_for(@game, team)
   end
 end

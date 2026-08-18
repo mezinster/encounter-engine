@@ -399,7 +399,9 @@ bin/rails db:test:prepare
 - [ ] **Step 5: Confirm no reference survives**
 
 Run: `grep -rn "is_draft" app/ config/ lib/ db/schema.rb`
-Expected: **no output**. `spec/` legitimately still contains `:is_draft` at the fixture call sites and in the fixture's own translation — that is Step 3's design. `db/migrate/` retains it in the two migrations, which is correct history.
+Expected: **exactly nine hits, all of them the deliberately-kept translation key** — `games.form.is_draft` in each of the seven locale files, plus its two `t()` call sites in `games/new.html.erb` and `games/edit.html.erb` (Step 1 keeps that key on purpose). Anything else is a leftover.
+
+Do **not** chase the count to zero by renaming private methods or rewording comments: the key is staying, so zero is unreachable, and identifier churn beyond the column removal is out of scope for this task. `spec/` legitimately still contains `:is_draft` at the fixture call sites and in the fixture's own translation — that is Step 3's design. `db/migrate/` retains it in the two migrations, which is correct history.
 
 - [ ] **Step 6: Run the affected specs**
 

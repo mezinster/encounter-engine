@@ -1,0 +1,9 @@
+<h2 class="page-title"><%= t("access_code_redemptions.title") %></h2>
+
+<%= form_with url: redeem_access_code_path, method: :post, local: true do %>
+  <p>
+    <%= label_tag :access_code, t("access_code_redemptions.code") %>
+    <%= text_field_tag :access_code, @access_code, :autocomplete => "off", :autocapitalize => "characters" %>
+  </p>
+  <p><%= submit_tag t("access_code_redemptions.submit"), :class => "btn btn--go" %></p>
+<% end %>

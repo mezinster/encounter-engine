@@ -33,6 +33,45 @@ be:
     revoked_notice: "Доступ адкліканы"
     not_found: "Каманда не знойдзена"
     cannot_revoke_started: "Нельга адклікаць доступ: каманда ўжо пачала праходжанне"
+  access_codes:
+    title: "Коды доступу"
+    bad_count: "Пазначце ад 1 да %{max} кодаў"
+    bad_expiry: "Не ўдалося распазнаць дату"
+    revoked_notice: "Адклікана кодаў: %{count}"
+    unrevoked_notice: "Вернута кодаў: %{count}"
+    expiry_notice: "Зменены тэрмін у кодаў: %{count}"
+    nothing_matched: "Адпаведных кодаў не знойдзена"
+    batch: "Партыя"
+    created_at: "Створана"
+    issuer: "Аператар"
+    size: "Усяго"
+    outstanding: "Не выкарыстаны"
+    redeemed: "Выкарыстаны"
+    revoked: "Адкліканы"
+    expired: "Пратэрмінаваны"
+    revoke: "Адклікаць"
+    unrevoke: "Вярнуць"
+    set_expiry: "Тэрмін"
+    lookup:
+      title: "Знайсці код"
+      submit: "Знайсці"
+      not_found: "Такі код не знойдзены ў гэтай гульні"
+      team: "Выкарыстаны камандай"
+    generate:
+      count: "Колькі кодаў"
+      expires_at: "Дзейнічаюць да (неабавязкова)"
+      submit: "Стварыць коды"
+    created:
+      title: "Новыя коды"
+      warning: "Гэта адзіны раз, калі коды паказаны. Скапіруйце іх зараз — аднавіць іх будзе немагчыма."
+      batch: "Партыя: %{key}"
+      back: "Да спісу кодаў"
+  access_code_redemptions:
+    title: "Увесці код доступу"
+    code: "Код"
+    submit: "Актываваць"
+    redeemed: "Код прыняты. Гульня адкрыта для вашай каманды."
+    need_a_team: "Спачатку стварыце каманду — код мы захавалі."
   admin:
     users:
       granted_notice: "Правы адміністратара выдадзены"
@@ -136,6 +175,10 @@ be:
           translation_proposals_accepted: "Прыняў пераклады"
           issue_access_pass: "Выдаў доступ да гульні"
           revoke_access_pass: "Адклікаў доступ да гульні"
+          generate_access_codes: "Стварыў коды доступу"
+          revoke_access_codes: "Адклікаў коды доступу"
+          unrevoke_access_codes: "Вярнуў коды доступу"
+          set_access_code_expiry: "Змяніў тэрмін дзеяння кодаў"
     settings:
       title: "Налады абмежаванняў"
       explanation: "Абмежаванні на рэгістрацыю дзейнічаюць на адзін IP-адрас за пазначаны перыяд; 0 адключае абмежаванне. Абмежаванні на файлы дзейнічаюць на гульню і на ўвесь сервер."
@@ -147,6 +190,8 @@ be:
         signup_window_seconds: "Перыяд для рэгістрацый (секунд)"
         reset_max: "Запытаў скіду пароля з аднаго адраса"
         reset_window_seconds: "Перыяд для скіду пароля (секунд)"
+        access_code_redemption_max: "Спроб уводу кода доступу з аднаго адраса"
+        access_code_redemption_window_seconds: "Перыяд для ўводу кода доступу (секунд)"
         file_max_megabytes: "Максімальны памер файла (МБ)"
         max_files_per_upload: "Файлаў за адну загрузку"
         game_quota_megabytes: "Квота на гульню (МБ)"
@@ -267,6 +312,13 @@ be:
     translation_key_missing: "Пераклад пры дапамозе ШІ недаступны: не наладжаны ключ API."
     not_registered_for_game: "Ваша каманда не зарэгістравана на гэту гульню."
     no_access_pass: "Для гэтай гульні патрэбны доступ. Звярніцеся да арганізатара."
+    access_code:
+      unknown: "Такі код не знойдзены"
+      redeemed: "Гэты код ужо выкарыстаны"
+      revoked: "Гэты код адкліканы"
+      expired: "Тэрмін дзеяння кода скончыўся"
+      game_unavailable: "Гульня зараз недаступная"
+      throttled: "Занадта шмат спроб. Паспрабуйце пазней."
     must_be_superadmin: "Доступ толькі для адміністратара"
     must_operate_commercial: "Гэтая старонка даступная толькі аператарам і адміністратарам"
     game_not_gated: "Гэтая старонка даступная толькі для гульні, якая прадаецца па пропусках"
@@ -398,6 +450,7 @@ be:
       start: "Старт"
       finish_test: "Завяршыць тэставанне"
       manage_access: "Кіраванне пропускамі"
+      manage_access_codes: "Кіраванне кодамі доступу"
   test_admissions:
     team_not_found: "Каманда «%{name}» не знойдзена"
     already_admitted: "«%{name}» ужо дапушчаны да тэставання"
@@ -707,6 +760,7 @@ be:
     current_games_status:
       play: "Гуляць!"
       not_registered: "Вы не зарэгістраваны"
+      redeem_code_link: "Увесці код доступу"
     countdown:
       # Three-element arrays indexed by the hard-coded Slavic plural function
       # in app/views/shared/_countdown.html.erb: [n%10==1 and n%100!=11,
@@ -959,6 +1013,8 @@ be:
       submit: "Увайсці"
   activerecord:
     attributes:
+      access_code:
+        game: "Гульня"
       access_pass:
         game: "Гульня"
       file_attachment:
@@ -975,6 +1031,10 @@ be:
         invalid: "мае няправільнае значэнне"
         record_invalid: "Запіс несапраўдны"
       models:
+        access_code:
+          attributes:
+            game:
+              not_gated: "не прадаецца па доступе"
         access_pass:
           attributes:
             game:

@@ -58,22 +58,28 @@ RSpec.describe "shared/_current_games_status", type: :view do
     expect(rendered).to include(show_current_level_path(game_id: game.id))
   end
 
-  it "renders the access-required message for a gated game the team has no live pass or attempt for" do
+  # F11: this used to render errors.no_access_pass as the link text ("...
+  # Contact the organiser"), which read as a dead end while being a way in.
+  # It now carries its own link-text key; errors.no_access_pass stays as the
+  # refusal message it is used as elsewhere.
+  it "renders a redeem-code link for a gated game the team has no live pass or attempt for" do
     game = create_game(:access_mode => "pass_required")
 
     render partial: "shared/current_games_status",
            locals: { game_entry: nil, game: game, gated_live: false }
 
-    expect(rendered).to include(I18n.t("errors.no_access_pass"))
+    expect(rendered).to include("Ввести код доступа")
+    expect(rendered).to include(redeem_access_code_path)
   end
 
-  it "renders the access-required message for a gated game when gated_live is not passed at all" do
+  it "renders a redeem-code link for a gated game when gated_live is not passed at all" do
     game = create_game(:access_mode => "pass_required")
 
     render partial: "shared/current_games_status",
            locals: { game_entry: nil, game: game }
 
-    expect(rendered).to include(I18n.t("errors.no_access_pass"))
+    expect(rendered).to include("Ввести код доступа")
+    expect(rendered).to include(redeem_access_code_path)
   end
 end
 

@@ -59,7 +59,7 @@ module EncounterEngine
     # signup request logs its params -- including a plaintext password --
     # at :info, which config/environments/production.rb sets as the
     # production log level.
-    config.filter_parameters += [:password, :password_confirmation, :secret, :token]
+    config.filter_parameters += [:password, :password_confirmation, :secret, :token, :access_code]
 
     # Active Storage draws nine routes of its own by default, including
     # POST /rails/active_storage/direct_uploads and

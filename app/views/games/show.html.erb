@@ -24,6 +24,7 @@
     scheduled game. %>
 <% if @game.pass_required? && logged_in? && current_user.may_operate_commercial? %>
   <p><%= link_to t("games.show.manage_access"), game_access_passes_path(@game), class: "btn" %></p>
+  <p><%= link_to t("games.show.manage_access_codes"), game_access_codes_path(@game), class: "btn" %></p>
 <% end %>
 
 <div class="panel">

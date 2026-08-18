@@ -51,6 +51,17 @@ describe "reaching the access-pass console for a gated game", type: :request do
     end
   end
 
+  # F1: the codes console (AccessCodesController) had no entry point at all --
+  # game_access_codes_path was referenced only from inside app/views/access_codes/
+  # itself, so an operator had to hand-type the URL to reach it.
+  describe "the access-codes link on the game's own page" do
+    it "is shown to an operator on a gated game, and points at the codes console" do
+      sign_in(operator)
+      get game_path(game)
+      expect(response.body).to include(game_access_codes_path(game))
+    end
+  end
+
   describe "GamePassingsController#index on a gated game" do
     it "lists the game's gated attempts instead of an empty run-scoped list" do
       pass = create_access_pass(:game => game, :team => create_team)

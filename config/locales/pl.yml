@@ -38,6 +38,45 @@ pl:
     revoked_notice: "Dostęp odebrany"
     not_found: "Nie znaleziono drużyny"
     cannot_revoke_started: "Nie można odebrać dostępu: drużyna już zaczęła"
+  access_codes:
+    title: "Kody dostępu"
+    bad_count: "Podaj od 1 do %{max} kodów"
+    bad_expiry: "Nie udało się rozpoznać daty"
+    revoked_notice: "Odebrano kodów: %{count}"
+    unrevoked_notice: "Przywrócono kodów: %{count}"
+    expiry_notice: "Zmieniono termin dla kodów: %{count}"
+    nothing_matched: "Nie znaleziono pasujących kodów"
+    batch: "Partia"
+    created_at: "Utworzona"
+    issuer: "Operator"
+    size: "Łącznie"
+    outstanding: "Niewykorzystane"
+    redeemed: "Wykorzystane"
+    revoked: "Odebrane"
+    expired: "Przeterminowane"
+    revoke: "Odbierz"
+    unrevoke: "Przywróć"
+    set_expiry: "Termin"
+    lookup:
+      title: "Znajdź kod"
+      submit: "Znajdź"
+      not_found: "Nie znaleziono takiego kodu w tej grze"
+      team: "Wykorzystany przez drużynę"
+    generate:
+      count: "Ile kodów"
+      expires_at: "Ważne do (opcjonalnie)"
+      submit: "Utwórz kody"
+    created:
+      title: "Nowe kody"
+      warning: "To jedyny raz, gdy kody są pokazane. Skopiuj je teraz — nie da się ich odzyskać."
+      batch: "Partia: %{key}"
+      back: "Do listy kodów"
+  access_code_redemptions:
+    title: "Wprowadź kod dostępu"
+    code: "Kod"
+    submit: "Aktywuj"
+    redeemed: "Kod przyjęty. Gra jest otwarta dla twojej drużyny."
+    need_a_team: "Najpierw utwórz drużynę — zachowaliśmy twój kod."
   admin:
     users:
       granted_notice: "Uprawnienia administratora zostały nadane"
@@ -141,6 +180,10 @@ pl:
           translation_proposals_accepted: "Przyjął tłumaczenia"
           issue_access_pass: "Nadał dostęp do gry"
           revoke_access_pass: "Odebrał dostęp do gry"
+          generate_access_codes: "Utworzył kody dostępu"
+          revoke_access_codes: "Odebrał kody dostępu"
+          unrevoke_access_codes: "Przywrócił kody dostępu"
+          set_access_code_expiry: "Zmienił termin ważności kodów"
     settings:
       title: "Ustawienia limitów"
       explanation: "Limity rejestracji obowiązują dla jednego adresu IP w podanym okresie; 0 wyłącza limit. Limity plików obowiązują dla gry i dla całego serwera."
@@ -152,6 +195,8 @@ pl:
         signup_window_seconds: "Okres dla rejestracji (sekund)"
         reset_max: "Żądań resetu hasła z jednego adresu"
         reset_window_seconds: "Okres dla resetu hasła (sekund)"
+        access_code_redemption_max: "Prób wpisania kodu dostępu z jednego adresu"
+        access_code_redemption_window_seconds: "Okres dla wpisywania kodu dostępu (sekund)"
         file_max_megabytes: "Maksymalny rozmiar pliku (MB)"
         max_files_per_upload: "Plików na jedno przesłanie"
         game_quota_megabytes: "Limit na grę (MB)"
@@ -272,6 +317,13 @@ pl:
     translation_key_missing: "Tłumaczenie przy pomocy AI jest niedostępne: nie skonfigurowano klucza API."
     not_registered_for_game: "Twoja drużyna nie jest zapisana na tę grę."
     no_access_pass: "Ta gra wymaga dostępu. Skontaktuj się z organizatorem."
+    access_code:
+      unknown: "Nie znaleziono takiego kodu"
+      redeemed: "Ten kod został już użyty"
+      revoked: "Ten kod został odebrany"
+      expired: "Kod wygasł"
+      game_unavailable: "Gra jest obecnie niedostępna"
+      throttled: "Zbyt wiele prób. Spróbuj później."
     must_be_superadmin: "Dostęp tylko dla administratora"
     must_operate_commercial: "Ta strona jest dostępna tylko dla operatorów i administratorów"
     game_not_gated: "Ta strona jest dostępna tylko dla gry sprzedawanej za pomocą przepustek"
@@ -403,6 +455,7 @@ pl:
       start: "Start"
       finish_test: "Zakończ testowanie"
       manage_access: "Zarządzaj przepustkami dostępu"
+      manage_access_codes: "Zarządzaj kodami dostępu"
   test_admissions:
     team_not_found: "Nie znaleziono drużyny «%{name}»"
     already_admitted: "«%{name}» ma już dostęp do testów"
@@ -712,6 +765,7 @@ pl:
     current_games_status:
       play: "Graj!"
       not_registered: "Nie jesteś zapisany"
+      redeem_code_link: "Wprowadź kod dostępu"
     countdown:
       # Three-element arrays indexed by the plural function hard-coded in
       # app/views/shared/_countdown.html.erb: [n%10==1 and n%100!=11,
@@ -972,6 +1026,8 @@ pl:
       submit: "Zaloguj się"
   activerecord:
     attributes:
+      access_code:
+        game: "Gra"
       access_pass:
         game: "Gra"
       file_attachment:
@@ -988,6 +1044,10 @@ pl:
         invalid: "ma nieprawidłową wartość"
         record_invalid: "Rekord jest nieprawidłowy"
       models:
+        access_code:
+          attributes:
+            game:
+              not_gated: "nie jest sprzedawana z dostępem"
         access_pass:
           attributes:
             game:

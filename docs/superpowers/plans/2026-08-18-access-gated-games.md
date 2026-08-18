@@ -609,12 +609,23 @@ The label lives beside the existing `withdrawn`/`draft`/`finished`/`running`/`sc
 
 Match the indentation of the sibling `scheduled:` line exactly in each file.
 
-- [ ] **Step 7: Run the specs**
+- [ ] **Step 7: Render the new status where statuses are rendered**
 
-Run: `bundle exec rspec spec/models/game/access_mode_spec.rb spec/models/game/status_spec.rb spec/i18n_spec.rb`
+Two sites display a game's status, and they behave differently:
+
+- `app/helpers/games_helper.rb:76` (`game_status_tag`, used by `games/_list.html.erb`) builds its key **dynamically** as `t("games.list.status_#{game.status}")`, so it picks the new rung up for free once `games.list.status_available` exists. Its own `case` chooses only a CSS modifier and its `else` is harmless. **Confirm this needs no change; do not edit it for symmetry.**
+- `app/views/admin/games/index.html.erb:25-31` enumerates statuses **explicitly**, with a bare `else` mapping to `admin.games.index.scheduled`. An `:available` game renders as «Запланирована» — the same disagreement between the ladder's two definitions that this task exists to prevent, displaced into a view.
+
+Add a `when :available` branch in the ladder's position (after `:finished`, before `:running`) using `t("admin.games.index.available")`, and keep the existing `else` for `:scheduled`. A plain `tag` class, matching the neutral treatment `:draft` and `:finished` get.
+
+Add a request example asserting an `:available` game renders «Доступна» on the admin games index and not «Запланирована» — literal Russian, not `I18n.t`, since `ru` is the default locale in test and an `I18n.t`-routed assertion cannot fail on a missing key.
+
+- [ ] **Step 8: Run the specs**
+
+Run: `bundle exec rspec spec/models/game/access_mode_spec.rb spec/models/game/status_spec.rb spec/requests/admin_console_spec.rb spec/i18n_spec.rb`
 Expected: 0 failures. `status_spec.rb` must pass **without modification** — every existing example is about scheduled games, and the new rung is behind `pass_required?`.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add -A

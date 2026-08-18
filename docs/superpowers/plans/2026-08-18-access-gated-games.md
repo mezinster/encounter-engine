@@ -2268,17 +2268,25 @@ describe "an operator's authority", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  # end_game, NOT withdraw. Verified in app/controllers/games_controller.rb:
+  # line 16 gates [:edit, :update, :delete, :end_game, :start_test,
+  # :finish_test, :hand_over] with ensure_author, while line 19 separately
+  # gates [:withdraw, :restore, :unfinish, :lock, :unlock] with
+  # require_superadmin! -- a filter this clause cannot reach. end_game is the
+  # audited action that actually sits behind ensure_author and already calls
+  # acting_as_operator?, which is the pairing this example exists to prove.
+  # The helper really is end_game_game_path (POST /games/end_game/:id).
   it "audits an operator acting on a gated game they did not author" do
     game = gated_game
     sign_in(operator)
 
-    expect { post withdraw_game_path(game) }.to change { AdminAction.count }.by(1)
-    expect(AdminAction.newest_first.first.action).to eq("withdraw")
+    expect { post end_game_game_path(game) }.to change { AdminAction.count }.by(1)
+    expect(AdminAction.newest_first.first.action).to eq("end_game")
   end
 end
 ```
 
-Read `config/routes.rb` for the real level and withdraw route helpers before running — use what is there, do not invent helpers.
+Read `config/routes.rb` for the real level route helper before running — use what is there, do not invent helpers.
 
 - [ ] **Step 2: Run it and confirm it fails for the right reason**
 

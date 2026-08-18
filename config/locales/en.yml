@@ -350,6 +350,9 @@ en:
       access_mode: "Access mode"
       access_mode_scheduled: "Scheduled (registration and a start date)"
       access_mode_pass_required: "Pass required (commercial)"
+      points_enabled: "Award points"
+      level_completion_points: "Points per level"
+      game_completion_points: "Points for finishing"
     primary_locale_label: "Primary language"
     available_locales_label: "Game languages"
     new:
@@ -462,6 +465,7 @@ en:
       text: "Task text"
       correct_answer: "Code"
       codes_rule: "How codes count"
+      points_award: "Points for this level (blank = the game's value)"
     edit:
       title: "Task"
       game_prefix: "game"

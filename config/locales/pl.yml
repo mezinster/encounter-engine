@@ -374,6 +374,9 @@ pl:
       access_mode: "Tryb dostępu"
       access_mode_scheduled: "Zaplanowana (rejestracja i data rozpoczęcia)"
       access_mode_pass_required: "Wymagany dostęp (komercyjna)"
+      points_enabled: "Przyznawaj punkty"
+      level_completion_points: "Punktów za poziom"
+      game_completion_points: "Punktów za ukończenie"
     primary_locale_label: "Język główny"
     available_locales_label: "Języki gry"
     new:
@@ -486,6 +489,7 @@ pl:
       text: "Treść zadania"
       correct_answer: "Kod"
       codes_rule: "Jak zaliczać kody"
+      points_award: "Punktów za ten poziom (puste = wartość gry)"
     edit:
       title: "Zadanie"
       game_prefix: "gra"

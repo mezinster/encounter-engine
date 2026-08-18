@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_170000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_180000) do
   create_table "access_passes", force: :cascade do |t|
     t.integer "game_id", null: false
     t.integer "team_id", null: false
@@ -173,6 +173,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_170000) do
     t.datetime "withdrawn_at"
     t.string "visibility", default: "listed", null: false
     t.string "access_mode", default: "scheduled", null: false
+    t.boolean "points_enabled", default: false, null: false
+    t.integer "level_completion_points", default: 0, null: false
+    t.integer "game_completion_points", default: 0, null: false
   end
 
   create_table "hints", force: :cascade do |t|
@@ -199,6 +202,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_170000) do
     t.string "name"
     t.integer "wrong_answer_penalty", default: 0, null: false
     t.boolean "any_code_passes", default: true, null: false
+    t.integer "points_award"
   end
 
   create_table "logs", force: :cascade do |t|

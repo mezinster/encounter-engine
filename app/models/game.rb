@@ -487,6 +487,16 @@ class Game < ApplicationRecord
     self.is_testing
   end
 
+  # What passing this level is worth. The level's own value wins when it has
+  # one -- INCLUDING zero, which is why this tests for nil rather than using
+  # `||`. `level.points_award || level_completion_points` would silently turn
+  # a deliberate zero into the game's default.
+  def points_for_level(level)
+    return level.points_award unless level&.points_award.nil?
+
+    level_completion_points
+  end
+
   # Stored comma-separated rather than serialised: it is a short list of ASCII
   # locale codes, it has to be readable in a SQLite console during an incident,
   # and a plain string needs no coder on either database.

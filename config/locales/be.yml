@@ -369,6 +369,9 @@ be:
       access_mode: "Рэжым доступу"
       access_mode_scheduled: "Па раскладзе (рэгістрацыя і дата пачатку)"
       access_mode_pass_required: "Па пропусках (камерцыйная гульня)"
+      points_enabled: "Налічваць ачкі"
+      level_completion_points: "Ачкоў за ўзровень"
+      game_completion_points: "Ачкоў за праходжанне"
     primary_locale_label: "Асноўная мова"
     available_locales_label: "Мовы гульні"
     new:
@@ -481,6 +484,7 @@ be:
       text: "Тэкст задання"
       correct_answer: "Код"
       codes_rule: "Як залічваць коды"
+      points_award: "Ачкоў за гэты ўзровень (пуста — як у гульні)"
     edit:
       title: "Заданне"
       game_prefix: "гульня"

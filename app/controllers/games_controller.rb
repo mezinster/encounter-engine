@@ -308,6 +308,7 @@ class GamesController < ApplicationController
     params.fetch(:game, ActionController::Parameters.new)
           .permit(:name, :description, :starts_at, :registration_deadline,
                    :max_team_number, :visibility, :primary_locale, :access_mode,
+                   :points_enabled, :level_completion_points, :game_completion_points,
                    :available_locale_list => [],
                    :translations => translation_params_shape(Game::TRANSLATABLE_FIELDS))
   end

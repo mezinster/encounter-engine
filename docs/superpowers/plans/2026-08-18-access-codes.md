@@ -510,7 +510,10 @@ describe "generating access codes", type: :request do
     post game_access_codes_path(game), :params => { :count => 2 }
 
     expect(response).to have_http_status(:ok)
-    shown = response.body.scan(/[0-9A-HJKMNP-TV-Z]{10}/).uniq
+    # The view renders them grouped, XXXXX-XXXXX, so match that shape --
+    # and note find_by_code normalises the dash away, which is exactly what a
+    # customer copying the printed form needs it to do.
+    shown = response.body.scan(/[0-9A-HJKMNP-TV-Z]{5}-[0-9A-HJKMNP-TV-Z]{5}/).uniq
     expect(shown.length).to be >= 2
     expect(AccessCode.find_by_code(shown.first)).to be_present
   end
@@ -662,7 +665,9 @@ end
 
 <p><%= t("access_codes.created.batch", :key => @batch_key) %></p>
 
-<pre class="codes"><% @codes.each do |raw| %><%= raw.insert(5, "-") %>
+<%# insert would mutate the array element in place; this array is the only
+    copy of these secrets that will ever exist, so it is read, not edited. %>
+<pre class="codes"><% @codes.each do |raw| %><%= "#{raw[0, 5]}-#{raw[5, 5]}" %>
 <% end %></pre>
 
 <p><%= link_to t("access_codes.created.back"), game_access_codes_path(@game) %></p>

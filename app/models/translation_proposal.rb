@@ -28,6 +28,11 @@ class TranslationProposal < ApplicationRecord
 
   scope :pending,   -> { where(:state => PENDING) }
   scope :unflagged, -> { where(:flags => [ nil, "" ]) }
+  # The exact complement of :unflagged. Spelled out rather than written as
+  # `where.not(:flags => [nil, ""])`, which in SQL drops the NULL rows from
+  # BOTH scopes and would quietly lose every proposal whose flags column was
+  # never written.
+  scope :flagged,   -> { where.not(:flags => nil).where.not(:flags => "") }
 
   def flag_list
     self.flags.to_s.split(",").map(&:strip).reject(&:blank?)

@@ -906,6 +906,7 @@ ka:
     review:
       heading: "თამაშის «%{game}» თარგმანის განხილვა"
       accept_all: "ყველას მიღება შენიშვნების გარეშე"
+      accept_flagged: "მიღება შენიშვნებით (%{count})"
       accept: "მიღება"
       reject: "უარყოფა"
       edited: "რედაქტირებულია:"

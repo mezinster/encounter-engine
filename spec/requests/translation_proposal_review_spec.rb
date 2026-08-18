@@ -139,6 +139,47 @@ describe "reviewing translation proposals", type: :request do
     expect(flagged.reload.state).to eq(TranslationProposal::PENDING)
   end
 
+  # The counterpart action, for a reviewer who HAS read the flagged rows and
+  # decided they are fine -- 15 quiz options that are brand names is a real
+  # shape. It is deliberately a separate button from accept_all: sweeping the
+  # flagged ones up silently is what would make the review step decorative.
+  describe "accepting the flagged proposals in bulk" do
+    it "accepts the flagged ones and leaves the unflagged for the other button" do
+      clean   = proposal_for(level, "name", "The first")
+      flagged = proposal_for(level, "text", "Найдите табличку", :flags => "identical")
+
+      post accept_flagged_game_translation_run_proposals_path(game, run)
+
+      expect(flagged.reload.state).to eq(TranslationProposal::ACCEPTED)
+      expect(flagged.reviewed_by_id).to eq(superadmin.id)
+      expect(level.reload.translated("text", "en")).to eq("Найдите табличку")
+      expect(clean.reload.state).to eq(TranslationProposal::PENDING)
+    end
+
+    # The audit log is the only place this is visible afterwards, and a bypass
+    # of the review gate must not read like a routine bulk accept.
+    it "records that the accepted proposals were flagged ones" do
+      proposal_for(level, "name", "The first",         :flags => "identical")
+      proposal_for(level, "text", "Найдите табличку", :flags => "identical,length")
+
+      expect { post accept_flagged_game_translation_run_proposals_path(game, run) }
+        .to change { AdminAction.count }.by(1)
+
+      entry = AdminAction.newest_first.first
+      expect(entry.action).to eq("translation_proposals_accepted")
+      expect(entry.details).to eq("run=#{run.id} proposals=2 flagged=2")
+    end
+
+    it "refuses a non-superadmin" do
+      proposal_for(level, "name", "The first", :flags => "identical")
+      sign_in(create_user)
+
+      post accept_flagged_game_translation_run_proposals_path(game, run)
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
   it "completes the publish gate once every proposal is accepted" do
     proposal_for(game,  "name",        "Night city")
     proposal_for(game,  "description", "A city game")
@@ -240,6 +281,22 @@ describe "reviewing translation proposals", type: :request do
       started_proposal(started, "name", "Night city")
 
       expect { post accept_all_game_translation_run_proposals_path(started, started_run) }
+        .not_to raise_error
+
+      expect(level_proposal.reload.state).to eq(TranslationProposal::PENDING)
+      expect(ContentTranslation.where(:locale => "en").count).to eq(0)
+      expect(flash[:alert]).to be_present
+    end
+
+    # Same all-or-nothing guarantee for the flagged button. It shares the
+    # transaction with accept_all, and this is what proves the sharing is real
+    # rather than two loops that happen to look alike.
+    it "applies nothing at all when accept_flagged hits an invalid record" do
+      level_proposal = started_proposal(started.levels.first, "name", "The first",
+                                        :flags => "identical")
+      started_proposal(started, "name", "Night city", :flags => "identical")
+
+      expect { post accept_flagged_game_translation_run_proposals_path(started, started_run) }
         .not_to raise_error
 
       expect(level_proposal.reload.state).to eq(TranslationProposal::PENDING)

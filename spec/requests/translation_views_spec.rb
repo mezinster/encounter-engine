@@ -76,6 +76,44 @@ describe "translation screens", type: :request do
     expect(response.body).to include(I18n.t("translations.flags.identical"))
   end
 
+  # The flagged rows and their reasons ARE the confirmation step for this
+  # button, which is why it sits under the table rather than beside accept_all
+  # at the top, and why the count is in the label: pressing it is a decision
+  # about a specific number of proposals the reviewer has just read.
+  describe "the bulk button for flagged proposals" do
+    let(:run) do
+      TranslationRun.create!(:game => game, :actor => superadmin,
+                             :model => "claude-opus-5", :state => TranslationRun::SUCCEEDED)
+    end
+
+    def proposal(field, text, flags: nil)
+      TranslationProposal.create!(:translation_run => run, :translatable => level,
+                                  :field => field, :locale => "en",
+                                  :source_text => level[field].to_s, :proposed_text => text,
+                                  :flags => flags, :state => "pending")
+    end
+
+    it "offers it with the number of flagged proposals in the label" do
+      proposal("text", "Найдите табличку", :flags => "identical")
+      proposal("name", "The first")
+      sign_in(superadmin)
+
+      get game_translation_run_proposals_path(game, run)
+
+      expect(response.body).to include(accept_flagged_game_translation_run_proposals_path(game, run))
+      expect(response.body).to include(I18n.t("translations.review.accept_flagged", :count => 1))
+    end
+
+    it "does not offer it when nothing is flagged" do
+      proposal("name", "The first")
+      sign_in(superadmin)
+
+      get game_translation_run_proposals_path(game, run)
+
+      expect(response.body).not_to include(accept_flagged_game_translation_run_proposals_path(game, run))
+    end
+  end
+
   # Beyond the brief: Task 7's review noted that a background thread which
   # dies before its own rescue block runs leaves a run stuck PENDING -- and
   # PENDING counts as active (TranslationRun::ACTIVE_STATES), so the game is

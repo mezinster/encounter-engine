@@ -234,6 +234,9 @@ Rails.application.routes.draw do
           post :reject
         end
         post :accept_all, :on => :collection
+        # The flagged ones, for a reviewer who has read them. Separate from
+        # accept_all deliberately -- see the actions.
+        post :accept_flagged, :on => :collection
       end
     end
   end

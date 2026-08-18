@@ -324,7 +324,7 @@ RSpec.describe "games/show", type: :view do
   # added, a preference set on the play screen could not be changed once the
   # game stopped.
   it "offers the content-language switcher to a signed-in reader of a multilingual game" do
-    # Published, not draft: ensure_author_if_game_is_draft would 401 a
+    # Published, not draft: ensure_author_if_game_draft would 401 a
     # non-author reader of a draft game, so a draft fixture here would pin a
     # state no real request can reach. The publish gate
     # (spec/models/game/publish_gate_fallout_spec.rb) refuses to save a
@@ -339,7 +339,7 @@ RSpec.describe "games/show", type: :view do
     game.translations_attributes = { "en" => { "name" => "#{game.name} (EN)",
                                                 "description" => "#{game.description} (EN)" } }
     game.save!
-    game.update!(:is_draft => false)
+    game.update!(:visibility => "listed")
     reader = create_user
 
     assign(:game, game)
@@ -372,7 +372,7 @@ RSpec.describe "games/show", type: :view do
     game.translations_attributes = { "en" => { "name" => "#{game.name} (EN)",
                                                 "description" => "#{game.description} (EN)" } }
     game.save!
-    game.update!(:is_draft => false)
+    game.update!(:visibility => "listed")
     reader = create_user
 
     assign(:game, game)

@@ -3,7 +3,7 @@ require "rails_helper"
 
 # New in fix round 1: the initial port of GamesController dropped the three
 # #show-only filters the Merb original had (find_team,
-# ensure_author_if_game_is_draft, ensure_author_if_no_start_time -- see
+# ensure_author_if_game_draft, ensure_author_if_no_start_time -- see
 # master:app/controllers/games.rb:6-8). Without them a guest could GET
 # /games/:id on an unpublished draft, or on a game with no start_at yet, and
 # see its name/description/level count before the author meant it to be

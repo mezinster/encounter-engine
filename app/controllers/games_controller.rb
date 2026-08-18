@@ -92,7 +92,25 @@ class GamesController < ApplicationController
     end
 
     @game.finish_game!
-    @game.current_run.passings.each(&:end!)
+    # THE GAME's passings, not the current run's: a commercial attempt has
+    # game_run_id NULL and current_run.passings (scoped by game_run_id) can
+    # never see it -- the same defect class Game#resume! and
+    # InterventionsController#find_game_passing were already fixed for.
+    # Without this, a runless attempt's status/finished_at stayed nil
+    # forever: Team#in_live_race? stayed permanently true (the team could
+    # never hand over captaincy or leave), the operator console kept showing
+    # «проходится», and AccessPassesController#destroy refused to release the
+    # pass because it still had an attempt.
+    #
+    # Every passing gets end! called, not just the unfinished ones -- same as
+    # before this fix, for a single-run game #game_passings and
+    # #current_run.passings name the identical set, so this is unchanged for
+    # every scheduled game. end! itself skips only exited passings; a team
+    # that genuinely crossed the finish line also picks up status "ended"
+    # here, which is what let the admin overview's "in progress" count go to
+    # zero the moment the author closes the game (see
+    # spec/requests/admin_passing_outcomes_spec.rb).
+    @game.game_passings.each(&:end!)
     record_admin_action("end_game", @game) if acting_as_operator?(@game)
     redirect_to dashboard_path
   end

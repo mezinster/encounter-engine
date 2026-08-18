@@ -104,6 +104,18 @@ describe "translation screens", type: :request do
       expect(response.body).to include(I18n.t("translations.review.accept_flagged", :count => 1))
     end
 
+    # The count is the confirmation step, so it has to name exactly what the
+    # button will accept. Blank output is flagged but never bulk-accepted.
+    it "counts only what the button will actually accept" do
+      proposal("text", "Найдите табличку", :flags => "identical")
+      proposal("name", "", :flags => "empty")
+      sign_in(superadmin)
+
+      get game_translation_run_proposals_path(game, run)
+
+      expect(response.body).to include(I18n.t("translations.review.accept_flagged", :count => 1))
+    end
+
     it "does not offer it when nothing is flagged" do
       proposal("name", "The first")
       sign_in(superadmin)

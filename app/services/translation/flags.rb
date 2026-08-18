@@ -23,10 +23,11 @@ module Translation
     # What "written in the game's own language" looks like, per source locale.
     # Used by `identical` only: see #translatable_source?.
     #
-    # A locale absent from this map falls back to ANY letter, which is the
-    # behaviour every locale had before this map existed. That default is the
-    # safe direction: available_locales can grow without anyone remembering
-    # this file, and a new language must not silently switch a check off.
+    # A locale absent from this map falls back to ANY letter -- the behaviour
+    # every locale had before this map existed, except that a source of pure
+    # digits ("17") is no longer flagged. That default is the safe direction:
+    # available_locales can grow without anyone remembering this file, and a
+    # new language must not silently switch a check off.
     SOURCE_SCRIPTS = {
       "ru" => /\p{Cyrillic}/, "uk" => /\p{Cyrillic}/, "be" => /\p{Cyrillic}/,
       "ka" => /\p{Georgian}/,
@@ -72,10 +73,13 @@ module Translation
     # back, which then satisfies the publish gate -- in noise a reviewer has to
     # clear by hand.
     #
-    # A game authored in a Latin-script language gains nothing from this: there,
-    # "Gucci" and an untranslated English sentence are the same shape. Accepted
-    # deliberately; the alternative rules that would separate them also silence
-    # a one-word source left untranslated, which is a real miss.
+    # The test is on the SOURCE STRING, not on the game: a Latin-only field in
+    # a Russian game ("Follow the white rabbit", if an author wrote one) is
+    # suppressed too, and so is every field of a game authored in a Latin
+    # script. "Gucci" and an untranslated English sentence are the same shape
+    # here and cannot be told apart. Accepted deliberately: the alternative
+    # rules that separate them also silence a one-word source left
+    # untranslated, which is a real miss on the case this check exists for.
     def self.translatable_source?(source, source_locale)
       source.match?(SOURCE_SCRIPTS.fetch(source_locale.to_s, ANY_LETTER))
     end

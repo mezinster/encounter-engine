@@ -66,8 +66,8 @@ class TranslationProposalsController < ApplicationController
   # are the ones a human has to look at, and a bulk action that ignored them
   # would make the whole review step decorative.
   def accept_all
-    bulk_accept!(@run.translation_proposals.pending.unflagged) do |count|
-      "run=#{@run.id} proposals=#{count}"
+    bulk_accept!(@run.translation_proposals.pending.unflagged) do |accepted|
+      "run=#{@run.id} proposals=#{accepted.size}"
     end
   end
 
@@ -81,8 +81,16 @@ class TranslationProposalsController < ApplicationController
   # it: pressing "accept everything" must never be how a flagged proposal gets
   # in, and the audit entry has to say which of the two happened.
   def accept_flagged
-    bulk_accept!(@run.translation_proposals.pending.flagged) do |count|
-      "run=#{@run.id} proposals=#{count} flagged=#{count}"
+    # Selected in Ruby through the same predicate the button's label counts
+    # with -- see TranslationProposal#bulk_acceptable_flagged? for why there is
+    # no SQL scope here. A run's proposals are already loaded a page at a time
+    # by #index; the largest real run to date was 499 rows.
+    bulk_accept!(@run.translation_proposals.pending.select(&:bulk_acceptable_flagged?)) do |accepted|
+      # The flag KINDS, not a count that would only ever repeat proposals=.
+      # Someone reading this entry later wants to know what was waved through;
+      # "identical" and "lost_digits" are very different answers.
+      kinds = accepted.flat_map(&:flag_list).uniq.sort.join(",")
+      "run=#{@run.id} proposals=#{accepted.size} flagged=#{kinds}"
     end
   end
 
@@ -109,7 +117,7 @@ class TranslationProposalsController < ApplicationController
       return redirect_to(game_translation_run_proposals_path(@game, @run))
     end
 
-    record_admin_action("translation_proposals_accepted", @game, yield(accepted.size))
+    record_admin_action("translation_proposals_accepted", @game, yield(accepted))
     redirect_to game_translation_run_proposals_path(@game, @run)
   end
 

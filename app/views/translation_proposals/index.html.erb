@@ -60,7 +60,7 @@
     confirmation step -- there is no dialog, this app has no rails-ujs -- so
     the count goes in the label, making the button a statement about a
     specific number of proposals rather than a vague "and the rest". %>
-<% flagged_count = @proposals.count { |proposal| proposal.flagged? && proposal.state == TranslationProposal::PENDING } %>
+<% flagged_count = @proposals.count(&:bulk_acceptable_flagged?) %>
 <% if flagged_count > 0 %>
   <%= button_to t("translations.review.accept_flagged", :count => flagged_count),
                 accept_flagged_game_translation_run_proposals_path(@game, @run),

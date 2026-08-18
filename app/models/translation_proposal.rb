@@ -28,11 +28,6 @@ class TranslationProposal < ApplicationRecord
 
   scope :pending,   -> { where(:state => PENDING) }
   scope :unflagged, -> { where(:flags => [ nil, "" ]) }
-  # The exact complement of :unflagged. Spelled out rather than written as
-  # `where.not(:flags => [nil, ""])`, which in SQL drops the NULL rows from
-  # BOTH scopes and would quietly lose every proposal whose flags column was
-  # never written.
-  scope :flagged,   -> { where.not(:flags => nil).where.not(:flags => "") }
 
   def flag_list
     self.flags.to_s.split(",").map(&:strip).reject(&:blank?)
@@ -44,6 +39,23 @@ class TranslationProposal < ApplicationRecord
 
   def flagged?
     self.flag_list.any?
+  end
+
+  # What the flagged bulk button acts on, and what its label counts. One
+  # predicate for both, deliberately: the count IS that button's confirmation
+  # step -- there is no dialog, this app has no rails-ujs -- so a label that
+  # could disagree with the action would be worse than no label at all. A SQL
+  # scope beside this Ruby predicate would be exactly that second definition
+  # (`flags = " "` is flagged to `!= ''` and unflagged to #flag_list).
+  #
+  # `empty` is excluded, not swept: TranslationProposalsController#accept
+  # refuses blank text outright -- "Reject is how you say no; blank is a
+  # mistake, and it says so" -- and ContentTranslation has no presence
+  # validation on `value`, so accepting one writes a blank row that the
+  # proposal can never be taken back out of. Blank output is not something a
+  # reviewer can read and decide is fine, which is what this button is for.
+  def bulk_acceptable_flagged?
+    self.state == PENDING && self.flagged? && !self.flag_list.include?("empty")
   end
 
   # What actually reached (or would reach) content_translations. proposed_text

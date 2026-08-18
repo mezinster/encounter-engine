@@ -146,6 +146,10 @@ describe "reviewing translation proposals", type: :request do
   describe "accepting the flagged proposals in bulk" do
     it "accepts the flagged ones and leaves the unflagged for the other button" do
       clean   = proposal_for(level, "name", "The first")
+      # "" is what an unflagged proposal actually carries in production --
+      # Runner writes Flags.for(...).join(","), which is "" when nothing fired,
+      # never nil. A scope that only knew about nil would sweep this one up.
+      written = proposal_for(game, "name", "Night city", :flags => "")
       flagged = proposal_for(level, "text", "Найдите табличку", :flags => "identical")
 
       post accept_flagged_game_translation_run_proposals_path(game, run)
@@ -154,6 +158,27 @@ describe "reviewing translation proposals", type: :request do
       expect(flagged.reviewed_by_id).to eq(superadmin.id)
       expect(level.reload.translated("text", "en")).to eq("Найдите табличку")
       expect(clean.reload.state).to eq(TranslationProposal::PENDING)
+      expect(written.reload.state).to eq(TranslationProposal::PENDING)
+    end
+
+    # #accept refuses blank text outright -- "Reject is how you say no; blank
+    # is a mistake, and it says so." accept_all could never meet one, because
+    # blank output always carries `empty` and `unflagged` excluded it. This
+    # button inverts that scope, so the empty set would otherwise be the one
+    # set it is GUARANTEED to sweep up: ContentTranslation has no presence
+    # validation on `value`, so each would write a blank row, leave the
+    # pending list for good, and clear the `empty` check -- one of the five
+    # the whole feature rests on -- in a single press.
+    it "will not accept blank machine output, even though it is flagged" do
+      blank = proposal_for(level, "name", "", :flags => "empty")
+      other = proposal_for(level, "text", "Найдите табличку", :flags => "identical")
+
+      post accept_flagged_game_translation_run_proposals_path(game, run)
+
+      expect(other.reload.state).to eq(TranslationProposal::ACCEPTED)
+      expect(blank.reload.state).to eq(TranslationProposal::PENDING)
+      expect(ContentTranslation.find_by(:translatable => level, :field => "name",
+                                        :locale => "en")).to be_nil
     end
 
     # The audit log is the only place this is visible afterwards, and a bypass
@@ -167,7 +192,10 @@ describe "reviewing translation proposals", type: :request do
 
       entry = AdminAction.newest_first.first
       expect(entry.action).to eq("translation_proposals_accepted")
-      expect(entry.details).to eq("run=#{run.id} proposals=2 flagged=2")
+      # The flag KINDS, not a count that would only ever repeat proposals=.
+      # An investigator reading this later wants to know what was waved
+      # through, and "identical" and "lost_digits" are very different answers.
+      expect(entry.details).to eq("run=#{run.id} proposals=2 flagged=identical,length")
     end
 
     it "refuses a non-superadmin" do

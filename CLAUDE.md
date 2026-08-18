@@ -180,7 +180,7 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **780 leaf
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **782 leaf
   keys** each: `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
@@ -212,7 +212,7 @@ add steps there or Cucumber will auto-require them a second time.
   only places an inverted load order would ever be visible; a validation message the gem does not
   define cannot demonstrate anything about precedence.
 - **No key in this app uses I18n pluralisation, and that was load-bearing before the gem.** The
-  three `t()` calls passing `count:` are plain `%{count}` interpolation (`"Коды (%{count}):"`), and
+  four `t()` calls passing `count:` are plain `%{count}` interpolation (`"Коды (%{count}):"`), and
   no `one:`/`few:`/`many:`/`other:` key exists anywhere. (The countdown *is* pluralised, but by
   hand and outside I18n entirely — see the `shared.countdown.*` note below.) Rails' built-in
   pluralizer knows `one`/`other` only, so the first genuinely pluralised key would have raised
@@ -220,7 +220,7 @@ add steps there or Cucumber will auto-require them a second time.
   involved. `rails-i18n` supplies the CLDR rules, so pluralised keys are now safe to write.
 - **Five of the seven locales are machine-produced and unreviewed: `uk`, `ka`, `be`, `pl`, `tr`.**
   Only `ru` and `en` have been read by a speaker. All five are complete and structurally verified —
-  every interpolation variable matches and all 780 keys resolve at runtime — but the *wording* has
+  every interpolation variable matches and all 782 keys resolve at runtime — but the *wording* has
   not been checked by anyone. This is a known, recorded state rather than an oversight, and the
   bottleneck on fixing it is native review, not engineering. Each file says so in its own header
   comment too. **Turkish is the one to get reviewed first** if only one can be: it needed

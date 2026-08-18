@@ -316,13 +316,22 @@ RSpec.describe "games/show", type: :view do
   # added, a preference set on the play screen could not be changed once the
   # game stopped.
   it "offers the content-language switcher to a signed-in reader of a multilingual game" do
-    # Draft: the publish gate (spec/models/game/publish_gate_fallout_spec.rb)
-    # refuses to save a non-draft game that declares a locale it has no
-    # translations for, and this spec only cares about the switcher, not
-    # translation completeness.
+    # Published, not draft: ensure_author_if_game_is_draft would 401 a
+    # non-author reader of a draft game, so a draft fixture here would pin a
+    # state no real request can reach. The publish gate
+    # (spec/models/game/publish_gate_fallout_spec.rb) refuses to save a
+    # non-draft game that declares a locale it has no translations for, and
+    # translations_attributes= only persists content_translations after_save
+    # (TranslatableContent), so the game can't go straight from
+    # "new, untranslated" to "published, translated" in one save -- save once
+    # as a draft to persist the translation, then flip to published now that
+    # it's there. Same two-step pattern as spec/requests/translated_level_spec.rb.
     game = create_game(:is_draft => true)
     game.available_locale_list = %w[ru en]
+    game.translations_attributes = { "en" => { "name" => "#{game.name} (EN)",
+                                                "description" => "#{game.description} (EN)" } }
     game.save!
+    game.update!(:is_draft => false)
     reader = create_user
 
     assign(:game, game)
@@ -342,6 +351,38 @@ RSpec.describe "games/show", type: :view do
     # The game page's own route, not the play screen's -- posting to the
     # latter from here 401s on a game that is not running.
     expect(rendered).not_to include(set_content_locale_path(:game_id => game.id, :locale => "en"))
+  end
+
+  # Whole-branch review: the switcher listed every declared locale as an
+  # identical button, so the page said "you can change the language" but
+  # never "you are reading Turkish" -- the actual confusion that started this
+  # branch. The active locale must render as a label with no form pointing at
+  # it; every other declared locale keeps its button_to.
+  it "renders the active content locale as a label, not a button, while other locales stay buttons" do
+    game = create_game(:is_draft => true)
+    game.available_locale_list = %w[ru en]
+    game.translations_attributes = { "en" => { "name" => "#{game.name} (EN)",
+                                                "description" => "#{game.description} (EN)" } }
+    game.save!
+    game.update!(:is_draft => false)
+    reader = create_user
+
+    assign(:game, game)
+    assign(:game_entries, [])
+    assign(:teams, [])
+    assign(:current_user, reader)
+    view.define_singleton_method(:logged_in?)   { true }
+    view.define_singleton_method(:current_user) { reader }
+    # The reader is currently reading "en" -- that is the locale the switcher
+    # must render inert.
+    view.define_singleton_method(:content_locale_for) { |g| "en" }
+
+    render
+
+    # No form posts back to the locale the reader is already reading...
+    expect(rendered).not_to include(%(action="#{set_content_locale_game_path(game, :locale => "en")}"))
+    # ...but the other declared locale is still a live button_to.
+    expect(rendered).to include(%(action="#{set_content_locale_game_path(game, :locale => "ru")}"))
   end
 
   it "shows no switcher for a game with a single declared locale" do

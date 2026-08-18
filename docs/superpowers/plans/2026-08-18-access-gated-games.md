@@ -365,6 +365,11 @@ In `spec/spec_helpers/fixtures_helper.rb`, `build_game` builds a `Game` from an 
 
 Read the existing method before editing and keep its body intact — this inserts a translation at the top, it does not rewrite it.
 
+**Two things this step must get right, both discovered while Task 1 ran:**
+
+1. **Task 1 added `:is_draft => false` to `build_game`'s DEFAULT hash**, because `visibility` defaults to `"draft"` while the old column defaulted to `false` — without it, examples that name no draftness silently began building drafts. That default must now become `:visibility => "listed"`. Leaving `:is_draft => false` there would pass an unknown attribute to `Game.new` the moment the shims are deleted, because the translation above only fires when the CALLER supplied the key.
+2. Verify by running an example that names no draftness and asserting the game is listed. `spec/requests/games_listing_spec.rb` is full of them; if it goes red here, the default was lost.
+
 - [ ] **Step 4: Delete the shims and drop the column**
 
 Remove `Game#is_draft` and `Game#is_draft=` (added in Task 1) from `app/models/game.rb`.

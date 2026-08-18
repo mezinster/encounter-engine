@@ -59,7 +59,16 @@ class Game < ApplicationRecord
   has_many :game_passings, :class_name => "GamePassing"
   has_many :game_files, :dependent => :destroy
   has_many :translation_runs, :dependent => :destroy
-  has_many :access_passes, :dependent => :destroy
+  # No dependent: option, matching game_passings and logs above: this is a
+  # PURCHASE record, and #deletable? below refuses deletion outright rather
+  # than cascading it away -- Team#deletable? states the identical rule for
+  # its own access_passes association one level down. A cascade here would
+  # be dead code in the ordinary path (deletable? already refuses while any
+  # exist), and live code on the day something bypasses that guard -- a
+  # console `game.destroy`, a future caller that forgets to check -- at which
+  # point it would silently destroy the one record proving what a customer
+  # paid for.
+  has_many :access_passes
 
   validates :name, presence: true, uniqueness: true
   validates :description, presence: true
@@ -338,8 +347,16 @@ class Game < ApplicationRecord
   # destroy would orphan them rather than remove them -- there are no foreign
   # keys and no dependent: option on those associations. Withdrawal achieves
   # what deletion is usually reached for, without leaving unreachable rows.
+  #
+  # access_passes joins the check for the same reason, and it matters more
+  # here than the identical conjunct on Team#deletable?: ensure_author now
+  # lets an OPERATOR delete a gated game they did not author, so the actor
+  # this refuses is routinely someone other than whoever issued the passes.
+  # Without it, deleting a gated game with issued-but-unstarted passes
+  # destroyed every purchase record silently -- no refusal, no audit of what
+  # was lost.
   def deletable?
-    self.game_passings.empty?
+    self.game_passings.empty? && self.access_passes.empty?
   end
 
   def created_by?(user)

@@ -140,6 +140,8 @@
 
 <%= render "teams", teams: @teams if (!logged_in?) || (logged_in? && !@current_user.author_of?(@game)) %>
 
+<%= render "pass_standings", game: @game if @game.pass_required? %>
+
 <% if @game.draft? and !@game.started? and @game.levels and @game.levels.count > 0 %>
    <p><%= button_to t("games.show.start_test"), start_test_game_path(@game), :class => "btn" %></p>
 <% end %>

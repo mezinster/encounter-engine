@@ -202,6 +202,21 @@ class GamePassing < ApplicationRecord
     self.finished_at + self.penalty_seconds.to_i
   end
 
+  # What commercial standings rank on. NOT effective_finished_at, which is an
+  # absolute timestamp: every pass starts when its own team opens the play
+  # screen, so comparing instants would place a team that played in August
+  # behind one that played in March however fast it was. GameRun#place_of's
+  # comment records that exact defect.
+  #
+  # paused_seconds is subtracted because an operator pausing the game is not
+  # the customer's doing; penalty_seconds is added for the same reason it is
+  # added to effective_finished_at.
+  def duration
+    return nil unless self.finished_at
+
+    (self.finished_at - self.created_at).round - self.paused_seconds.to_i + self.penalty_seconds.to_i
+  end
+
   # The clock every countdown is measured against. While a game is paused this
   # is the instant it was paused, so hints_to_show, upcoming_hints and
   # time_at_level all freeze together -- and get_current_level_tip returns an

@@ -332,6 +332,12 @@ uk:
       reject: "(відмовити)"
     teams:
       legend: "Беруть участь команди:"
+    standings:
+      title: "Результати"
+      place: "Місце"
+      team: "Команда"
+      finished_at: "Фініш"
+      duration: "Час"
     form:
       name: "Назва"
       description: "Опис"

@@ -143,6 +143,18 @@ class Game < ApplicationRecord
     self.access_mode == "pass_required"
   end
 
+  # One row per COMPLETED attempt, fastest first. Completed means the team
+  # crossed the line: finished_at set and not exited -- the same pair
+  # GamePassing's `completed` scope uses, and the same pair that decides
+  # whether a pass was spent.
+  #
+  # Sorted in Ruby rather than SQL for the same reason GameRun#place_of does:
+  # expressing the arithmetic portably across SQLite and PostgreSQL is more
+  # trouble than it is worth for a listing of tens of attempts.
+  def pass_standings
+    game_passings.completed.includes(:team).to_a.sort_by(&:duration)
+  end
+
   # A draft has not begun, whatever the clock says: the start date on an
   # unpublished game is a plan, not an event.
   #

@@ -361,6 +361,12 @@ tr:
       reject: "(reddet)"
     teams:
       legend: "Katılan takımlar:"
+    standings:
+      title: "Sonuçlar"
+      place: "Sıra"
+      team: "Takım"
+      finished_at: "Bitiş"
+      duration: "Süre"
     form:
       name: "Ad"
       description: "Açıklama"

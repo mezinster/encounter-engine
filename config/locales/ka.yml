@@ -338,6 +338,12 @@ ka:
       reject: "(უარყოფა)"
     teams:
       legend: "მონაწილე გუნდები:"
+    standings:
+      title: "შედეგები"
+      place: "ადგილი"
+      team: "გუნდი"
+      finished_at: "ფინიში"
+      duration: "დრო"
     form:
       name: "დასახელება"
       description: "აღწერა"

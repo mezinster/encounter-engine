@@ -315,6 +315,12 @@ en:
       reject: "(reject)"
     teams:
       legend: "Participating teams:"
+    standings:
+      title: "Results"
+      place: "Place"
+      team: "Team"
+      finished_at: "Finished"
+      duration: "Time"
     form:
       name: "Title"
       description: "Description"

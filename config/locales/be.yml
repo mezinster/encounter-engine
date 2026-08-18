@@ -334,6 +334,12 @@ be:
       reject: "(адмовіць)"
     teams:
       legend: "Удзельнічаюць каманды:"
+    standings:
+      title: "Вынікі"
+      place: "Месца"
+      team: "Каманда"
+      finished_at: "Фініш"
+      duration: "Час"
     form:
       name: "Назва"
       description: "Апісанне"

@@ -315,6 +315,12 @@ ru:
       reject: "(отказать)"
     teams:
       legend: "Участвуют команды:"
+    standings:
+      title: "Результаты"
+      place: "Место"
+      team: "Команда"
+      finished_at: "Финиш"
+      duration: "Время"
     form:
       name: "Название"
       description: "Описание"

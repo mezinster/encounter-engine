@@ -339,6 +339,12 @@ pl:
       reject: "(odrzuć)"
     teams:
       legend: "Biorą udział drużyny:"
+    standings:
+      title: "Wyniki"
+      place: "Miejsce"
+      team: "Drużyna"
+      finished_at: "Meta"
+      duration: "Czas"
     form:
       name: "Nazwa"
       description: "Opis"

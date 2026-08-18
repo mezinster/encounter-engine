@@ -161,6 +161,9 @@ class GamePassingsController < ApplicationController
   end
 
   def show_results
+    # A gated game has no cohort and no run standings. Its results are the
+    # per-attempt standings on the game page -- see the design, B7.
+    return redirect_to(game_path(@game)) if @game.pass_required?
   end
 
   def exit_game

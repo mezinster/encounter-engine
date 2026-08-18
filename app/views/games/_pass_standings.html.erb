@@ -1,0 +1,26 @@
+<% standings = game.pass_standings %>
+<% if standings.any? %>
+  <h3><%= t("games.standings.title") %></h3>
+  <div class="table-wrap">
+  <table class="table--cards">
+    <thead>
+      <tr>
+        <th><%= t("games.standings.place") %></th>
+        <th><%= t("games.standings.team") %></th>
+        <th><%= t("games.standings.finished_at") %></th>
+        <th><%= t("games.standings.duration") %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% standings.each_with_index do |attempt, index| %>
+        <tr>
+          <td data-label="<%= t("games.standings.place") %>"><%= index + 1 %></td>
+          <td data-label="<%= t("games.standings.team") %>"><%= attempt.team&.name %></td>
+          <td data-label="<%= t("games.standings.finished_at") %>"><%= l(attempt.finished_at, :format => :long) %></td>
+          <td data-label="<%= t("games.standings.duration") %>"><%= distance_of_time_in_words(attempt.duration) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  </div>
+<% end %>

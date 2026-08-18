@@ -11,6 +11,22 @@ module ContentLocaleSelection
     helper_method :content_locale_for
   end
 
+  private
+
+  # Precedence: the player's explicit per-game choice, then their own locale
+  # (which LocaleSelection has already resolved from ?locale= or their
+  # profile), then the game's primary language.
+  def content_locale_for(game)
+    return nil if game.nil?
+
+    @content_locales ||= {}
+    @content_locales[game] ||= begin
+      offered = game.available_locale_list
+      candidate = per_game_content_locale(game) || current_content_user_locale
+      offered.include?(candidate.to_s) ? candidate.to_s : game.primary_locale.to_s
+    end
+  end
+
   # Persist a per-game content-language choice for the signed-in user.
   # Returns false, writing nothing, for a guest or for a locale the game does
   # not offer.
@@ -31,22 +47,6 @@ module ContentLocaleSelection
     # memo is exactly the kind of thing a later render would inherit silently.
     @content_locales = nil
     true
-  end
-
-  private
-
-  # Precedence: the player's explicit per-game choice, then their own locale
-  # (which LocaleSelection has already resolved from ?locale= or their
-  # profile), then the game's primary language.
-  def content_locale_for(game)
-    return nil if game.nil?
-
-    @content_locales ||= {}
-    @content_locales[game] ||= begin
-      offered = game.available_locale_list
-      candidate = per_game_content_locale(game) || current_content_user_locale
-      offered.include?(candidate.to_s) ? candidate.to_s : game.primary_locale.to_s
-    end
   end
 
   def per_game_content_locale(game)

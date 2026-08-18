@@ -1,0 +1,60 @@
+<h1><%= @team.name %></h1>
+
+<p><%= t("teams.show.balance") %>: <%= @team.balance %></p>
+
+<h2><%= t("teams.show.games") %></h2>
+
+<div class="table-wrap">
+<table class="table--cards">
+  <thead>
+    <tr>
+      <th><%= t("teams.show.game") %></th>
+      <th><%= t("teams.show.started") %></th>
+      <th><%= t("teams.show.finished") %></th>
+      <th><%= t("teams.show.points") %></th>
+    </tr>
+  </thead>
+  <tbody>
+  <% @passings.each do |passing| %>
+    <tr>
+      <td data-label="<%= t("teams.show.game") %>"><%= passing.game&.name %></td>
+      <td data-label="<%= t("teams.show.started") %>"><%= l(passing.created_at, :format => :long) %></td>
+      <td data-label="<%= t("teams.show.finished") %>">
+        <%= passing.finished_at ? l(passing.finished_at, :format => :long) : t("teams.show.unfinished") %>
+      </td>
+      <td data-label="<%= t("teams.show.points") %>"><%= @per_attempt.fetch(passing.id, 0) %></td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+</div>
+
+<h2><%= t("teams.show.ledger") %></h2>
+
+<div class="table-wrap">
+<table class="table--cards">
+  <thead>
+    <tr>
+      <th><%= t("teams.show.when") %></th>
+      <th><%= t("teams.show.game") %></th>
+      <th><%= t("teams.show.reason") %></th>
+      <th><%= t("teams.show.amount") %></th>
+    </tr>
+  </thead>
+  <tbody>
+  <% @transactions.each do |row| %>
+    <tr>
+      <td data-label="<%= t("teams.show.when") %>"><%= l(row.created_at, :format => :long) %></td>
+      <td data-label="<%= t("teams.show.game") %>"><%= row.game&.name %></td>
+      <%# Rendered from a fixed set, never interpolated from the column: an
+          unrecognised reason must not print "translation missing" on a public
+          page. See the design, §6. %>
+      <td data-label="<%= t("teams.show.reason") %>">
+        <%= PointTransaction::REASONS.include?(row.reason) ? t("teams.show.reasons.#{row.reason}") : row.reason %>
+      </td>
+      <td data-label="<%= t("teams.show.amount") %>"><%= row.amount %></td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+</div>

@@ -1,6 +1,6 @@
 # -*- encoding : utf-8 -*-
 class TeamsController < ApplicationController
-  before_action :require_authentication!
+  before_action :require_authentication!, :except => [ :show ]
   before_action :ensure_not_member_of_any_team, only: [:new, :create]
 
   # Discovery for join requests. `resources :teams` already routed index and
@@ -35,6 +35,22 @@ class TeamsController < ApplicationController
     # already applied instead of coming back in whatever order the sort felt
     # like.
     @teams = @teams.to_a.sort_by { |t| [ -balance_of(t), t.name.to_s ] }
+  end
+
+  # Public: the chart links here, and P9 makes the whole ledger readable.
+  # TeamRoomController is the team's own room, behind ensure_team_member, and
+  # is a different thing.
+  def show
+    @team = Team.find(params[:id])
+
+    # Preloaded because the view names each game and each level: without this
+    # the ledger table issues two queries per row.
+    @transactions = @team.point_transactions.includes(:game, :level).order(:created_at => :desc)
+
+    # One row per attempt, with what that attempt was worth -- a grouped sum,
+    # not a per-attempt lookup.
+    @passings = @team.game_passings.includes(:game).order(:created_at => :desc)
+    @per_attempt = @team.point_transactions.group(:game_passing_id).sum(:amount)
   end
 
   def new

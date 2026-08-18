@@ -19,7 +19,7 @@
   <tbody>
   <% @teams.each do |team| %>
     <tr>
-      <td data-label="<%= t("teams.index.name") %>"><%= team.name %></td>
+      <td data-label="<%= t("teams.index.name") %>"><%= link_to team.name, team_path(team) %></td>
       <%# A captainless team is a valid state (a solo captain may leave), so
           the nil case is a label rather than a dereference. %>
       <td data-label="<%= t("teams.index.captain") %>">

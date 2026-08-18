@@ -967,6 +967,7 @@ tr:
     review:
       heading: "«%{game}» adlı oyunun çevirisinin incelenmesi"
       accept_all: "Sorunsuz olanların tümünü kabul et"
+      accept_flagged: "Sorunlu olanları kabul et (%{count})"
       accept: "Kabul et"
       reject: "Reddet"
       edited: "Düzenlendi:"

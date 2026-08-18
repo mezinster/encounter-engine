@@ -281,6 +281,36 @@ A new image is built, migrations run, traffic moves over once the new container 
 There is no downtime — but **don't deploy during a game**: teams out in the city hit the gap at
 the worst possible moment.
 
+### 9. Reclaiming file storage
+
+Uploaded files count against a per-game quota and an instance cap, both adjustable in
+`/admin/settings`. Two maintenance tasks exist for what that screen cannot do. Both run on the
+server; neither has a button.
+
+```bash
+bundle exec kamal app exec 'bin/rails game_files:purge_orphans'
+```
+
+Deletes stored data attached to nothing. Orphans are left behind by uploads rejected part-way —
+which happens most when the disk is already under pressure, so this is worth knowing about
+before you need it.
+
+**One caveat, recorded honestly.** The task has no age cutoff, unlike the version Rails' own
+guides suggest. The reasoning is that this application has no direct uploads, so no other
+connection can observe an upload in flight as unattached — but that is a reading of the upload
+code, not an experiment, and nobody has run it against a server taking real simultaneous
+uploads. Prefer to run it when nothing is being uploaded. If a second way of writing files is
+ever added, re-check that reasoning first: the failure it would cause is a file purged from
+under an author mid-upload, and it would be silent.
+
+```bash
+bundle exec kamal app exec 'bin/rails game_files:regenerate_variants'
+```
+
+Rebuilds every file's generated previews and rewrites the recorded size of them. Useful when the
+stored usage figures have drifted from what is really on disk. Safe to re-run; one unreadable
+file is reported and skipped rather than stopping the rest.
+
 ---
 
 ## Environment variables

@@ -164,11 +164,18 @@ The task page shows:
   get a list to choose from instead;
 - **hints** — these appear on their own, on a timer that starts when your team reaches
   the task. A countdown shows the time to the next one;
-- **a code counter**, if the task has several codes and all of them are needed.
+- **a code counter**, if the task has several codes and all of them are needed;
+- **photographs**, if the author attached any — a strip of thumbnails below the task
+  text, and below each hint that has fired.
 
-The entry field, the countdown to the next hint and the latest hint are pinned to the
-bottom of the screen: however much task text and however many hints pile up, you never
-have to scroll to answer.
+The answer bar — the entry field, the countdown to the next hint, and your accumulated
+penalty if you have one — sticks to the bottom of the screen and stays there wherever
+you have scrolled to. Everything else is an ordinary page scroll: the task text, the
+photographs, each hint as it fires and the answer options sit above the bar, and a long
+task is scrolled through.
+
+Tap a photograph to open it at full size. PDFs and animated GIFs show a paperclip and
+the file name instead of a thumbnail, and open the same way.
 
 Codes are matched ignoring capitalisation and surrounding spaces. A single code can
 have several accepted spellings — the author decides.
@@ -287,6 +294,54 @@ counts: there is no "partly right" here, because the score in this game is time.
 The penalty for a wrong choice is set on the task itself, in minutes, and is added to
 the team's final time.
 
+### Files and images
+
+A task or a hint can carry photographs — the plaque the code is on, the building to
+find, the map fragment.
+
+**Upload once, attach many times.** Files belong to the game, not to a task. "Files" on
+the game's page is the game's library: upload there, then attach from any task or hint
+form by picking from "Game library". The same photograph can hang on several tasks
+without being uploaded again or counting twice against the quota.
+
+**What you can upload.** JPEG, PNG, GIF, HEIC and PDF, by default. The defaults are
+**25 MB per file**, **10 files per upload** and **100 MB per game** — an administrator
+can change all three in the settings screen, so treat them as the current values rather
+than as fixed rules. The game's Files page shows where you stand: "Used X MB of Y MB".
+Images also have a ceiling of 50 megapixels, which no phone camera comes near.
+
+**HEIC is converted for you.** Photographs from an iPhone arrive as HEIC and are
+re-encoded on upload rather than refused.
+
+**The file type is decided by reading the bytes**, not by the file name. Renaming
+`something.exe` to `something.jpg` does not get it in.
+
+**Location data is stripped from photographs.** JPEG, PNG and HEIC images are decoded
+and written out again with every metadata field dropped, EXIF and GPS included — which
+matters here more than in most applications, because on a "find this building" task the
+coordinates in the photograph *are* the answer. Note the exception: GIFs and PDFs are
+checked but not re-encoded, so any metadata inside them is preserved. Do not use a PDF
+for anything whose metadata you have not looked at.
+
+**Attachments are per-language.** In a multilingual game each language tab has its own
+set, and the primary tab holds the language-neutral one. A player sees the neutral files
+**plus** those for the language they are reading in — neutral first. So a photograph
+that needs no translation goes on the primary tab and appears for everyone; a sign
+photographed in two languages goes on the two language tabs.
+
+**What players see:** a strip of square thumbnails below the task text, and another
+below each hint that has fired — never inside the text itself. Tapping one opens the
+full-size file. PDFs and animated GIFs show a paperclip and the file name instead of a
+thumbnail.
+
+**Deleting.** Files are deleted from the game's Files page, and the page marks which are
+"unused". While the game is running, deleting asks you to type the file name first —
+deliberate friction, because a file removed mid-race disappears from under teams
+standing in the street.
+
+If a file's stored data goes missing, only that one image 404s; the task and its text
+still render.
+
 ### Importing tasks in bulk
 
 "Import levels in bulk" on the game's page saves entering two dozen tasks by hand.
@@ -320,6 +375,9 @@ the options page.
 
 Codes are shared across languages. If an answer is spelled differently in another
 language, add each spelling as another accepted code.
+
+Attached files are per-language too, and add up rather than replacing each other — see
+[Files and images](#files-and-images).
 
 Two rules:
 
@@ -543,6 +601,37 @@ address may make in a given window. `0` disables a limit.
 The defaults suit an ordinary server. Raising them is rarely necessary; lowering them
 is for when someone is hammering the door. Bear in mind that one address may be a
 whole club or a whole dormitory.
+
+### Storage
+
+`/admin` shows **Storage**: how many megabytes of uploaded files the instance is
+holding, against its cap.
+
+`/admin/settings` holds the limits, all of them defaults you can change:
+
+| Setting | Default | What it does |
+|---|---|---|
+| Maximum file size (MB) | 25 | Per file, at upload |
+| Files per upload | 10 | How many at once |
+| Game quota (MB) | 100 | Per game, counting originals and generated previews |
+| Instance cap (MB) | 4096 | Across every game |
+| Free disk space floor (MB) | 3072 | Uploads refuse below this |
+| Allowed file extensions | `jpg jpeg png gif heic pdf` | May be narrowed, never widened |
+
+Two of those deserve a word.
+
+**The free-space floor is a brake, not an accountant.** It refuses uploads while the
+*disk* is low, regardless of how much quota anyone has left. On a single small server
+the alternative is filling the disk and taking down the database and the next deploy
+along with the uploads.
+
+**The extension list can only be narrowed.** It is intersected with a fixed internal
+list before use, so removing `pdf` works and adding `svg` does nothing — deliberate,
+because the removed formats are the ones that can carry executable content.
+
+Reclaiming space that files no longer occupy is a server-side operation rather than a
+button — see [Reclaiming file storage](deployment.en.md#9-reclaiming-file-storage) in the
+installation guide.
 
 ### Intervening in other people's games
 

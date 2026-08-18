@@ -915,6 +915,7 @@ be:
     review:
       heading: "Праверка перакладу гульні «%{game}»"
       accept_all: "Прыняць усё без заўваг"
+      accept_flagged: "Прыняць з заўвагамі (%{count})"
       accept: "Прыняць"
       reject: "Адхіліць"
       edited: "Адрэдагавана:"

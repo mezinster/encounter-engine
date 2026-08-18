@@ -4,12 +4,12 @@ class GamesController < ApplicationController
   include AdminAudit
 
   before_action :require_authentication!, except: [:index, :show]
-  before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :unfinish, :lock, :unlock, :hand_over]
+  before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :unfinish, :lock, :unlock, :hand_over, :set_content_locale]
   before_action :find_team, only: [:show]
-  before_action :ensure_author_if_game_draft, only: [:show]
-  before_action :ensure_author_if_no_start_time, only: [:show]
-  before_action :ensure_author_if_game_is_withdrawn, only: [:show]
-  before_action :ensure_author_if_game_is_testing, only: [:show]
+  before_action :ensure_author_if_game_draft, only: [:show, :set_content_locale]
+  before_action :ensure_author_if_no_start_time, only: [:show, :set_content_locale]
+  before_action :ensure_author_if_game_is_withdrawn, only: [:show, :set_content_locale]
+  before_action :ensure_author_if_game_is_testing, only: [:show, :set_content_locale]
   # hand_over is deliberately NOT on ensure_editing_not_locked below: that
   # filter answers with 401, and the lock refusal here is a sentence the author
   # can act on. See the action.
@@ -239,6 +239,21 @@ class GamesController < ApplicationController
     # ensure_author_if_game_draft, so redirecting to a game the caller has
     # just stopped authoring would answer a successful transfer with 401.
     redirect_to games_path, :notice => t("games.hand_over.done", :nickname => successor.nickname)
+  end
+
+  # Which language this reader wants THIS game's authored content in.
+  #
+  # The play screen has the same switcher, but its route is behind the
+  # play-time filters -- started game, on a team in it. An author who picked
+  # another language while testing a translation was then stuck with it on
+  # this page, with nothing here to change it back and no way to reach the
+  # play screen once the game was stopped.
+  #
+  # Guarded by exactly the filters #show is guarded by: if you can read the
+  # game, you can record which language you read it in.
+  def set_content_locale
+    store_content_locale(@game, params[:locale])
+    redirect_to game_path(@game)
   end
 
   # Same treatment as start_test. This direction sets visibility back to

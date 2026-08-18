@@ -66,16 +66,47 @@ class TranslationProposalsController < ApplicationController
   # are the ones a human has to look at, and a bulk action that ignored them
   # would make the whole review step decorative.
   def accept_all
-    accepted = @run.translation_proposals.pending.unflagged.to_a
+    bulk_accept!(@run.translation_proposals.pending.unflagged) do |accepted|
+      "run=#{@run.id} proposals=#{accepted.size}"
+    end
+  end
 
-    # All or nothing. apply! runs the record's FULL validation set, and a
-    # Game-level proposal on a game that has already started fails
-    # Game#game_starts_in_the_future -- a validation the authoring forms never
-    # meet because GamesController gates edits behind ensure_game_was_not_started
-    # and this controller has no such filter. Un-transacted, the loop applied
-    # some proposals, raised on one, 500ed, and wrote NO audit entry: a game
-    # half-translated by an action that reported nothing at all. Every spec
-    # fixture is a draft, so neither suite could see it.
+  # The flagged ones, in bulk, on purpose -- for the reviewer who has read them
+  # and decided they are fine. That is a real shape: one run produced 15
+  # `identical` flags that were all quiz options naming brands, and clearing
+  # them one at a time is the kind of chore that teaches a reviewer to stop
+  # reading.
+  #
+  # Deliberately a SEPARATE action from accept_all rather than a wider scope on
+  # it: pressing "accept everything" must never be how a flagged proposal gets
+  # in, and the audit entry has to say which of the two happened.
+  def accept_flagged
+    # Selected in Ruby through the same predicate the button's label counts
+    # with -- see TranslationProposal#bulk_acceptable_flagged? for why there is
+    # no SQL scope here. A run's proposals are already loaded a page at a time
+    # by #index; the largest real run to date was 499 rows.
+    bulk_accept!(@run.translation_proposals.pending.select(&:bulk_acceptable_flagged?)) do |accepted|
+      # The flag KINDS, not a count that would only ever repeat proposals=.
+      # Someone reading this entry later wants to know what was waved through;
+      # "identical" and "lost_digits" are very different answers.
+      kinds = accepted.flat_map(&:flag_list).uniq.sort.join(",")
+      "run=#{@run.id} proposals=#{accepted.size} flagged=#{kinds}"
+    end
+  end
+
+  private
+
+  # All or nothing. apply! runs the record's FULL validation set, and a
+  # Game-level proposal on a game that has already started fails
+  # Game#game_starts_in_the_future -- a validation the authoring forms never
+  # meet because GamesController gates edits behind ensure_game_was_not_started
+  # and this controller has no such filter. Un-transacted, the loop applied
+  # some proposals, raised on one, 500ed, and wrote NO audit entry: a game
+  # half-translated by an action that reported nothing at all. Every spec
+  # fixture is a draft, so neither suite could see it.
+  def bulk_accept!(scope)
+    accepted = scope.to_a
+
     begin
       TranslationProposal.transaction do
         accepted.each { |proposal| apply!(proposal, proposal.proposed_text) }
@@ -86,12 +117,9 @@ class TranslationProposalsController < ApplicationController
       return redirect_to(game_translation_run_proposals_path(@game, @run))
     end
 
-    record_admin_action("translation_proposals_accepted", @game,
-                        "run=#{@run.id} proposals=#{accepted.size}")
+    record_admin_action("translation_proposals_accepted", @game, yield(accepted))
     redirect_to game_translation_run_proposals_path(@game, @run)
   end
-
-  private
 
   def load_run
     @game = Game.find(params[:game_id])

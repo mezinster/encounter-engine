@@ -174,6 +174,28 @@ describe "auditing administrative changes", type: :request do
       expect { post revoke_operator_admin_user_path(target) }.to change { AdminAction.count }.by(1)
       expect(AdminAction.newest_first.first.action).to eq("revoke_operator")
     end
+
+    # The second bulk button reuses the SAME action name, deliberately -- it is
+    # the same kind of event -- and tells the two apart in the details. This
+    # file is the enumeration guard for the audited set (see the comment in
+    # AdminAudit), so the entry point belongs here even though the name it
+    # writes was already listed.
+    it "records a bulk acceptance of flagged proposals, and says they were flagged" do
+      run = TranslationRun.create!(:game => game, :actor => superadmin,
+                                   :model => "claude-opus-5", :state => "succeeded")
+      level = create_level(:game => game, :name => "Первый", :text => "Найдите табличку")
+      TranslationProposal.create!(:translation_run => run, :translatable => level,
+                                  :field => "name", :locale => "en",
+                                  :source_text => "Первый", :proposed_text => "Первый",
+                                  :flags => "identical", :state => "pending")
+
+      expect { post accept_flagged_game_translation_run_proposals_path(game, run) }
+        .to change { AdminAction.count }.by(1)
+
+      entry = AdminAction.newest_first.first
+      expect(entry.action).to eq("translation_proposals_accepted")
+      expect(entry.details).to include("flagged=identical")
+    end
   end
 
   describe "the inherited actions, performed on someone else's game" do

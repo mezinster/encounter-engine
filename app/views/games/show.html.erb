@@ -8,6 +8,15 @@
   <div class="is-draft-message"><%= t("games.show.draft_label") %></div>
 <% end %>
 
+<%# Directly under the title, because the title itself is translated content:
+    a reader who wonders why the name reads Turkish finds the control that
+    says so in the same glance. Signed-in only -- the preference is stored per
+    user, and a guest's content locale already follows the header switcher. %>
+<% if logged_in? %>
+  <%= render "shared/content_language_switcher", :game => @game,
+             :switch_path => ->(locale) { set_content_locale_game_path(@game, :locale => locale) } %>
+<% end %>
+
 <%# Any operator, not just this game's author -- AccessPassesController's
     ensure_commercial_operator carries no authorship check either (an
     operator's authority is scoped to GATED games, not to games they

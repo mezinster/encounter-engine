@@ -922,6 +922,7 @@ uk:
     review:
       heading: "Перевірка перекладу гри «%{game}»"
       accept_all: "Прийняти все без зауважень"
+      accept_flagged: "Прийняти із зауваженнями (%{count})"
       accept: "Прийняти"
       reject: "Відхилити"
       edited: "Відредаговано:"

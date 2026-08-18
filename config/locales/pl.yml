@@ -928,6 +928,7 @@ pl:
     review:
       heading: "Sprawdzanie tłumaczenia gry „%{game}”"
       accept_all: "Zaakceptuj wszystko bez uwag"
+      accept_flagged: "Zaakceptuj z uwagami (%{count})"
       accept: "Zaakceptuj"
       reject: "Odrzuć"
       edited: "Zredagowano:"

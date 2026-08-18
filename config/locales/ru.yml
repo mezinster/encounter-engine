@@ -917,6 +917,7 @@ ru:
     review:
       heading: "Проверка перевода игры «%{game}»"
       accept_all: "Принять всё без замечаний"
+      accept_flagged: "Принять с замечаниями (%{count})"
       accept: "Принять"
       reject: "Отклонить"
       edited: "Отредактировано:"

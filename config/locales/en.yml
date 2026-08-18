@@ -896,6 +896,7 @@ en:
     review:
       heading: "Reviewing the translation of “%{game}”"
       accept_all: "Accept everything unflagged"
+      accept_flagged: "Accept flagged (%{count})"
       accept: "Accept"
       reject: "Reject"
       edited: "Edited:"

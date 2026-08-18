@@ -41,6 +41,23 @@ class TranslationProposal < ApplicationRecord
     self.flag_list.any?
   end
 
+  # What the flagged bulk button acts on, and what its label counts. One
+  # predicate for both, deliberately: the count IS that button's confirmation
+  # step -- there is no dialog, this app has no rails-ujs -- so a label that
+  # could disagree with the action would be worse than no label at all. A SQL
+  # scope beside this Ruby predicate would be exactly that second definition
+  # (`flags = " "` is flagged to `!= ''` and unflagged to #flag_list).
+  #
+  # `empty` is excluded, not swept: TranslationProposalsController#accept
+  # refuses blank text outright -- "Reject is how you say no; blank is a
+  # mistake, and it says so" -- and ContentTranslation has no presence
+  # validation on `value`, so accepting one writes a blank row that the
+  # proposal can never be taken back out of. Blank output is not something a
+  # reviewer can read and decide is fine, which is what this button is for.
+  def bulk_acceptable_flagged?
+    self.state == PENDING && self.flagged? && !self.flag_list.include?("empty")
+  end
+
   # What actually reached (or would reach) content_translations. proposed_text
   # stays immutable so the table can still answer "what did the machine
   # produce"; accepted_text records the reviewer's edit when there was one.

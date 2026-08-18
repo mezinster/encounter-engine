@@ -187,16 +187,16 @@ class GamePassingsController < ApplicationController
   # Writes on behalf of current_user, which require_authentication! (see the
   # before_action list above) already guarantees is present for every action
   # on this controller except :index and :show_results -- but that filter's
-  # job is authentication, not this action's, so still check rather than
-  # trust it silently and let a future filter change turn this into a
-  # NoMethodError on nil instead of a no-op.
+  # job is authentication, not this action's, so store_content_locale still
+  # checks rather than trusting it silently and letting a future filter change
+  # turn this into a NoMethodError on nil instead of a no-op.
+  #
+  # The game page has its own switcher (GamesController#set_content_locale),
+  # reachable when the game is not running. Same write, different guards and a
+  # different redirect -- which is why the action stays here rather than the
+  # two screens sharing one endpoint.
   def set_content_locale
-    if current_user && @game.available_locale_list.include?(params[:locale].to_s)
-      preference = GameLocalePreference.find_or_initialize_by(:user_id => current_user.id,
-                                                             :game_id => @game.id)
-      preference.locale = params[:locale].to_s
-      preference.save!
-    end
+    store_content_locale(@game, params[:locale])
     redirect_to show_current_level_path(:game_id => @game.id)
   end
 

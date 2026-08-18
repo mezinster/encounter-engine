@@ -20,6 +20,20 @@ module Translation
     # Two or more Latin letters, so a stray initial does not trip the check.
     LATIN  = /[A-Za-z]{2,}/
 
+    # What "written in the game's own language" looks like, per source locale.
+    # Used by `identical` only: see #translatable_source?.
+    #
+    # A locale absent from this map falls back to ANY letter, which is the
+    # behaviour every locale had before this map existed. That default is the
+    # safe direction: available_locales can grow without anyone remembering
+    # this file, and a new language must not silently switch a check off.
+    SOURCE_SCRIPTS = {
+      "ru" => /\p{Cyrillic}/, "uk" => /\p{Cyrillic}/, "be" => /\p{Cyrillic}/,
+      "ka" => /\p{Georgian}/,
+      "en" => /\p{Latin}/,    "pl" => /\p{Latin}/,    "tr" => /\p{Latin}/
+    }.freeze
+    ANY_LETTER = /\p{L}/
+
     # String#strip trims ASCII whitespace ONLY, so a proposal consisting of a
     # single non-breaking space escaped `empty` and compared unequal in
     # `identical` -- and NBSP is exactly the sort of character machine output
@@ -27,13 +41,17 @@ module Translation
     # does match U+00A0.
     OUTER_SPACE = /\A[[:space:]]+|[[:space:]]+\z/
 
-    def self.for(source:, proposed:)
+    # source_locale is the game's primary_locale -- required, not defaulted:
+    # the one production caller has it to hand, and a default here would let a
+    # future caller silently fall back to the loosest rule.
+    def self.for(source:, proposed:, source_locale:)
       source   = trim(source)
       proposed = trim(proposed)
 
       flags = []
       flags << "empty"       if proposed.empty?
-      flags << "identical"   if !proposed.empty? && proposed == source
+      flags << "identical"   if !proposed.empty? && proposed == source &&
+                                translatable_source?(source, source_locale)
       flags << "lost_digits" if lost?(DIGITS, source, proposed)
       flags << "lost_latin"  if lost?(LATIN,  source, proposed)
       flags << "length"      if implausible_length?(source, proposed)
@@ -42,6 +60,24 @@ module Translation
 
     def self.trim(text)
       text.to_s.gsub(OUTER_SPACE, "")
+    end
+
+    # Was there anything here for the model to translate?
+    #
+    # `identical` asks "did the model fail to translate this", and that question
+    # only means something when the source held source-language words. A quiz
+    # option that is a brand name or a number ("Gucci", "17") comes back
+    # unchanged because unchanged is the correct translation, and flagging it
+    # buries the one case this check exists for -- source-language text echoed
+    # back, which then satisfies the publish gate -- in noise a reviewer has to
+    # clear by hand.
+    #
+    # A game authored in a Latin-script language gains nothing from this: there,
+    # "Gucci" and an untranslated English sentence are the same shape. Accepted
+    # deliberately; the alternative rules that would separate them also silence
+    # a one-word source left untranslated, which is a real miss.
+    def self.translatable_source?(source, source_locale)
+      source.match?(SOURCE_SCRIPTS.fetch(source_locale.to_s, ANY_LETTER))
     end
 
     # Asymmetric on purpose: a token the SOURCE contains and the proposal does
@@ -59,6 +95,6 @@ module Translation
       ratio < SHORT_RATIO || ratio > LONG_RATIO
     end
 
-    private_class_method :lost?, :implausible_length?, :trim
+    private_class_method :lost?, :implausible_length?, :trim, :translatable_source?
   end
 end

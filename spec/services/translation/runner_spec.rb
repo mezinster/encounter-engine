@@ -77,6 +77,30 @@ describe Translation::Runner do
     expect(proposal.flag_list).to eq([])
   end
 
+  # The game's primary_locale has to REACH Translation::Flags. `identical` is
+  # suppressed only for a source holding nothing in the game's OWN language --
+  # a brand name or a number, which comes back unchanged because unchanged is
+  # correct -- and that judgement is impossible without knowing which language
+  # the game is written in. The target locale is the other one in scope here,
+  # and passing it instead would flag this proposal, since "Gucci" is Latin and
+  # the target is `en`.
+  it "judges identical against the game's own language, not the target's" do
+    create_level(:game => game, :name => "Gucci", :text => "Gucci")
+    echo = Class.new(FakeClient) do
+      define_method(:translate) do |unit:, locale:|
+        result = super(:unit => unit, :locale => locale)
+        result.texts.each_key { |k| result.texts[k] = result.texts[k].sub(/\A\[#{locale}\] /, "") }
+        result
+      end
+    end.new
+
+    described_class.new(run, :client => echo).call
+
+    brand = run.translation_proposals.where(:proposed_text => "Gucci")
+    expect(brand).not_to be_empty
+    expect(brand.map(&:flag_list).flatten.uniq).to eq([])
+  end
+
   it "accumulates token usage onto the run" do
     described_class.new(run, :client => FakeClient.new).call
 

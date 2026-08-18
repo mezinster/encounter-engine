@@ -289,7 +289,12 @@ module Translation
             :locale          => locale,
             :source_text     => source,
             :proposed_text   => text,
-            :flags           => Flags.for(:source => source, :proposed => text).join(","),
+            # source_locale, not `locale`: the flags judge the SOURCE, and
+            # `identical` in particular asks whether the game's own language
+            # survived into the proposal.
+            :flags           => Flags.for(:source        => source,
+                                          :proposed      => text,
+                                          :source_locale => @run.game.primary_locale).join(","),
             :state           => TranslationProposal::PENDING
           )
           @run.increment!(:fields_done)

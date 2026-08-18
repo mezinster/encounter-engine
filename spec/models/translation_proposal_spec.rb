@@ -51,7 +51,8 @@ describe TranslationProposal do
   it "stores blank machine output so the empty flag can be reviewed" do
     proposal = build_proposal(
       :proposed_text => "",
-      :flags => Translation::Flags.for(:source => "Найдите", :proposed => "").join(",")
+      :flags => Translation::Flags.for(:source => "Найдите", :proposed => "",
+                                       :source_locale => "ru").join(",")
     )
 
     expect { proposal.save! }.not_to raise_error

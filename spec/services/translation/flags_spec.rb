@@ -1,8 +1,11 @@
 require "rails_helper"
 
 describe Translation::Flags do
-  def flags_for(source, proposed)
-    described_class.for(:source => source, :proposed => proposed)
+  # source_locale defaults to the game language every example here was written
+  # against; the examples that care about it pass their own.
+  def flags_for(source, proposed, source_locale: "ru")
+    described_class.for(:source => source, :proposed => proposed,
+                        :source_locale => source_locale)
   end
 
   it "returns nothing for an ordinary good translation" do
@@ -24,6 +27,51 @@ describe Translation::Flags do
 
   it "ignores surrounding whitespace when deciding identity" do
     expect(flags_for("Найдите табличку", "  Найдите табличку  ")).to include("identical")
+  end
+
+  # `identical` asks "did the model fail to translate this?", and that question
+  # is only meaningful when the source held something translatable in the first
+  # place. A quiz option that is a brand name or a number comes back unchanged
+  # because unchanged is CORRECT, and one real run produced 15 of them
+  # (Gucci, YouTube, 17, ...) against 483 clean proposals -- noise that a
+  # reviewer has to clear by hand, on exactly the check whose value depends on
+  # being rare enough to read.
+  describe "a source with nothing in the game's own language to translate" do
+    it "does not call an unchanged brand name identical" do
+      expect(flags_for("Gucci", "Gucci")).not_to include("identical")
+    end
+
+    it "does not call an unchanged number identical" do
+      expect(flags_for("17", "17")).not_to include("identical")
+    end
+
+    # THE regression guard for this rule: the suppression must not reach the
+    # failure `identical` exists for -- Russian text echoed back as its own
+    # translation, which then satisfies the publish gate.
+    it "still flags source-language text echoed back unchanged" do
+      expect(flags_for("Орёл сел", "Орёл сел")).to include("identical")
+    end
+
+    it "reads the script from the game's language, not from the alphabet at hand" do
+      expect(flags_for("გუჩი", "გუჩი", :source_locale => "ka")).to include("identical")
+      expect(flags_for("Gucci", "Gucci", :source_locale => "ka")).not_to include("identical")
+    end
+
+    # A game authored in a Latin-script language cannot be helped by this test:
+    # "Gucci" and an untranslated English sentence look the same to it. Pinned
+    # so the limitation is a decision on record rather than a surprise.
+    it "cannot tell a brand name from untranslated text in a Latin-script game" do
+      expect(flags_for("Gucci", "Gucci", :source_locale => "en")).to include("identical")
+    end
+
+    # available_locales can grow without anyone remembering this file, so an
+    # unregistered locale must not silently switch the check off. It falls back
+    # to "any letter at all", which is the old behaviour except for sources
+    # that are pure digits.
+    it "falls back to any letter for a locale it does not know" do
+      expect(flags_for("Gucci", "Gucci", :source_locale => "xx")).to include("identical")
+      expect(flags_for("17", "17", :source_locale => "xx")).not_to include("identical")
+    end
   end
 
   # Answers in this game are codes players type. Translating one silently

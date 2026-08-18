@@ -121,9 +121,16 @@ range exactly and the draw is therefore uniform — taking characters modulo an 
 not divide evenly is the standard way to quietly lose entropy.
 
 **Normalisation is one method, used by generation, redemption and the operator's lookup.** It
-upcases, strips whitespace and dashes, and maps the confusables the alphabet deliberately
-excludes: `I` and `L` to `1`, `O` to `0`. Crockford excludes those from output *so that* they can
-be accepted as input; the design only pays off if the input side does the mapping.
+upcases, strips whitespace and dashes, and maps **all four** letters the alphabet deliberately
+excludes: `I` and `L` to `1`, `O` to `0`, and `U` to `V`. Crockford excludes those from output *so
+that* they can be accepted as input; the design only pays off if the input side maps every one of
+them.
+
+`U → V` is this spec's decision, not Crockford's, which simply treats `U` as invalid. `U` is
+excluded from the alphabet precisely because it is confusable with `V` — on a card, in
+handwriting, and in several of the fonts a client is likely to print with — so a customer who
+reads a printed `V` as `U` must still get in. Leaving `U` unmapped makes a valid code permanently
+unredeemable for that customer, and codes cannot be recalled once posted.
 
 If the lookup and the redemption path ever disagreed about normalisation, an operator would
 confirm a code is fine while the customer keeps failing to redeem it. One method, and a spec that

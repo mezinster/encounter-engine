@@ -269,4 +269,50 @@ describe "live-game interventions", type: :request do
       expect(response.body).to include("team-panel")
     end
   end
+
+  # A commercial attempt carries game_run_id: nil -- GamePassingsController
+  # never places it in a run -- so @game.current_run.passings, scoped by
+  # game_run_id, can never see it. Without #find_game_passing's gated branch,
+  # none of these actions could reach a paying customer's attempt, which is
+  # exactly what AccessPassesController#destroy points an operator at when it
+  # refuses to revoke a pass whose attempt has begun.
+  describe "reaching a gated game's runless attempt" do
+    let(:gated_level) { create_level }
+    let(:gated_game) do
+      g = gated_level.game
+      g.update!(:access_mode => "pass_required", :visibility => "listed")
+      set_game_schedule!(g, :starts_at => 1.hour.ago)
+      g
+    end
+    let(:gated_team) { create_team }
+    let(:pass) { create_access_pass(:game => gated_game, :team => gated_team) }
+    let(:attempt) do
+      create_game_passing(:game => gated_game, :team => gated_team, :level => gated_level,
+                          :game_run => nil, :access_pass => pass)
+    end
+
+    it "moves a runless attempt to a level" do
+      second = create_level(:game => gated_game)
+      attempt
+      sign_in(superadmin)
+
+      post move_team_path(:game_id => gated_game.id, :team_id => gated_team.id),
+           :params => { :level_id => second.id }
+
+      expect(attempt.reload.current_level).to eq(second)
+      expect(attempt.reload.game_run_id).to be_nil
+    end
+
+    # reinstate! clears finished_at, which is what AccessPass#spent? reads --
+    # so rescuing a team that quit also un-spends the pass they quit with.
+    it "reinstates a runless attempt that quit, leaving its pass unspent" do
+      attempt.exit!
+      sign_in(superadmin)
+
+      post reinstate_team_path(:game_id => gated_game.id, :team_id => gated_team.id)
+
+      expect(attempt.reload.exited?).to be false
+      expect(pass.reload.spent?).to be false
+    end
+  end
 end

@@ -16,6 +16,21 @@
 # answer string players find in the city), подсказка -> підказка,
 # "сойти с дистанции" -> "зійти з дистанції" (quit mid-game).
 uk:
+  access_passes:
+    title: "Доступ до гри"
+    team_name: "Назва команди"
+    submit: "Видати доступ"
+    issued: "Виданий"
+    state: "Стан"
+    state_live: "не використаний"
+    state_playing: "проходиться"
+    state_spent: "використаний"
+    state_revoked: "відкликаний"
+    revoke: "Відкликати"
+    issued_notice: "Доступ надано команді «%{team}»"
+    revoked_notice: "Доступ відкликано"
+    not_found: "Команду не знайдено"
+    cannot_revoke_started: "Не можна відкликати доступ: команда вже почала проходження"
   admin:
     users:
       granted_notice: "Права адміністратора надано"
@@ -117,6 +132,8 @@ uk:
           translation_run_cancelled: "Зупинив переклад"
           translation_run_retried: "Повторив переклад"
           translation_proposals_accepted: "Прийняв переклади"
+          issue_access_pass: "Надав доступ до гри"
+          revoke_access_pass: "Відкликав доступ до гри"
     settings:
       title: "Налаштування обмежень"
       explanation: "Обмеження на реєстрацію діють на одну IP-адресу за вказаний період; 0 вимикає обмеження. Обмеження на файли діють на гру та на весь сервер."

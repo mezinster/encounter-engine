@@ -1,4 +1,19 @@
 ru:
+  access_passes:
+    title: "Доступ к игре"
+    team_name: "Название команды"
+    submit: "Выдать доступ"
+    issued: "Выдан"
+    state: "Состояние"
+    state_live: "не использован"
+    state_playing: "проходится"
+    state_spent: "использован"
+    state_revoked: "отозван"
+    revoke: "Отозвать"
+    issued_notice: "Доступ выдан команде «%{team}»"
+    revoked_notice: "Доступ отозван"
+    not_found: "Команда не найдена"
+    cannot_revoke_started: "Нельзя отозвать доступ: команда уже начала прохождение"
   admin:
     users:
       granted_notice: "Права администратора выданы"
@@ -100,6 +115,8 @@ ru:
           translation_run_cancelled: "Остановил перевод"
           translation_run_retried: "Повторил перевод"
           translation_proposals_accepted: "Принял переводы"
+          issue_access_pass: "Выдал доступ к игре"
+          revoke_access_pass: "Отозвал доступ к игре"
     settings:
       title: "Настройки ограничений"
       explanation: "Ограничения на регистрацию действуют на один IP-адрес за указанный период; 0 отключает ограничение. Ограничения на файлы действуют на игру и на весь сервер."

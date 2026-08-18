@@ -22,6 +22,21 @@
 # (verbal noun: "შენახვა" = "saving" = "Save"), which is the normal Georgian
 # UI imperative.
 ka:
+  access_passes:
+    title: "თამაშის წვდომა"
+    team_name: "გუნდის სახელი"
+    submit: "წვდომის მინიჭება"
+    issued: "გაცემული"
+    state: "მდგომარეობა"
+    state_live: "გამოუყენებელი"
+    state_playing: "მიმდინარეობს"
+    state_spent: "გამოყენებული"
+    state_revoked: "ჩამორთმეული"
+    revoke: "ჩამორთმევა"
+    issued_notice: "წვდომა მიენიჭა გუნდს «%{team}»"
+    revoked_notice: "წვდომა ჩამორთმეულია"
+    not_found: "გუნდი ვერ მოიძებნა"
+    cannot_revoke_started: "წვდომის ჩამორთმევა შეუძლებელია: გუნდმა უკვე დაიწყო"
   admin:
     users:
       granted_notice: "ადმინისტრატორის უფლებები მინიჭებულია"
@@ -123,6 +138,8 @@ ka:
           translation_run_cancelled: "შეაჩერა თარგმანი"
           translation_run_retried: "გაიმეორა თარგმანი"
           translation_proposals_accepted: "მიიღო თარგმანები"
+          issue_access_pass: "მიანიჭა თამაშის წვდომა"
+          revoke_access_pass: "ჩამოართვა თამაშის წვდომა"
     settings:
       title: "შეზღუდვების პარამეტრები"
       explanation: "რეგისტრაციის შეზღუდვები მოქმედებს ერთ IP-მისამართზე მითითებულ პერიოდში; 0 თიშავს შეზღუდვას. ფაილების შეზღუდვები მოქმედებს თამაშზე და მთელ სერვერზე."

@@ -80,8 +80,16 @@ class InterventionsController < ApplicationController
     @game = Game.find(params[:game_id])
   end
 
+  # A commercial attempt carries game_run_id: nil (GamePassingsController
+  # never places it in a run), so @game.current_run.passings -- scoped by
+  # game_run_id -- can never see it. Without this branch, move_to_level!,
+  # reinstate! and reset_level_clock! are all unreachable for a gated game's
+  # attempt, and AccessPassesController#destroy's "a started run is an
+  # intervention" refusal points at a tool that cannot touch the attempt it
+  # just refused to release. The scheduled branch is unchanged.
   def find_game_passing
-    @game_passing = @game.current_run.passings.of_team(params[:team_id]).first
+    passings = @game.pass_required? ? @game.game_passings : @game.current_run.passings
+    @game_passing = passings.of_team(params[:team_id]).first
     raise ActiveRecord::RecordNotFound unless @game_passing
   end
 

@@ -44,6 +44,21 @@
 # подсказка -> ipucu, игрок -> oyuncu, заявка -> başvuru, "сойти с дистанции"
 # -> "yarıştan çekilmek" (quit mid-game).
 tr:
+  access_passes:
+    title: "Oyun erişimi"
+    team_name: "Takım adı"
+    submit: "Erişim ver"
+    issued: "Verildi"
+    state: "Durum"
+    state_live: "kullanılmadı"
+    state_playing: "devam ediyor"
+    state_spent: "kullanıldı"
+    state_revoked: "geri alındı"
+    revoke: "Geri al"
+    issued_notice: "«%{team}» adlı takıma erişim verildi"
+    revoked_notice: "Erişim geri alındı"
+    not_found: "Takım bulunamadı"
+    cannot_revoke_started: "Erişim geri alınamaz: takım çoktan başladı"
   admin:
     users:
       granted_notice: "Yönetici yetkileri verildi"
@@ -145,6 +160,8 @@ tr:
           translation_run_cancelled: "Çeviriyi durdurdu"
           translation_run_retried: "Çeviriyi yeniden denedi"
           translation_proposals_accepted: "Çevirileri kabul etti"
+          issue_access_pass: "Oyun erişimi verdi"
+          revoke_access_pass: "Oyun erişimini geri aldı"
     settings:
       title: "Sınırlama ayarları"
       explanation: "Kayıt sınırlamaları belirtilen süre içinde tek bir IP adresi için geçerlidir; 0 sınırlamayı kapatır. Dosya sınırlamaları oyun başına ve sunucu genelinde geçerlidir."

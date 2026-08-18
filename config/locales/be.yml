@@ -18,6 +18,21 @@
 # заявка -> заяўка, "сойти с дистанции" -> "сысці з дыстанцыі" (quit
 # mid-game).
 be:
+  access_passes:
+    title: "Доступ да гульні"
+    team_name: "Назва каманды"
+    submit: "Выдаць доступ"
+    issued: "Выдадзены"
+    state: "Стан"
+    state_live: "не выкарыстаны"
+    state_playing: "праходзіцца"
+    state_spent: "выкарыстаны"
+    state_revoked: "адкліканы"
+    revoke: "Адклікаць"
+    issued_notice: "Доступ выдадзены камандзе «%{team}»"
+    revoked_notice: "Доступ адкліканы"
+    not_found: "Каманда не знойдзена"
+    cannot_revoke_started: "Нельга адклікаць доступ: каманда ўжо пачала праходжанне"
   admin:
     users:
       granted_notice: "Правы адміністратара выдадзены"
@@ -119,6 +134,8 @@ be:
           translation_run_cancelled: "Спыніў пераклад"
           translation_run_retried: "Паўтарыў пераклад"
           translation_proposals_accepted: "Прыняў пераклады"
+          issue_access_pass: "Выдаў доступ да гульні"
+          revoke_access_pass: "Адклікаў доступ да гульні"
     settings:
       title: "Налады абмежаванняў"
       explanation: "Абмежаванні на рэгістрацыю дзейнічаюць на адзін IP-адрас за пазначаны перыяд; 0 адключае абмежаванне. Абмежаванні на файлы дзейнічаюць на гульню і на ўвесь сервер."

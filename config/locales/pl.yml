@@ -23,6 +23,21 @@
 # "drużyny o nazwie «%{team}»" nowhere -- instead the quoted name is kept in
 # apposition after a common noun, which is grammatical whatever the name is.
 pl:
+  access_passes:
+    title: "Dostęp do gry"
+    team_name: "Nazwa drużyny"
+    submit: "Nadaj dostęp"
+    issued: "Wydany"
+    state: "Stan"
+    state_live: "niewykorzystany"
+    state_playing: "w trakcie"
+    state_spent: "wykorzystany"
+    state_revoked: "odebrany"
+    revoke: "Odbierz"
+    issued_notice: "Nadano dostęp drużynie „%{team}”"
+    revoked_notice: "Dostęp odebrany"
+    not_found: "Nie znaleziono drużyny"
+    cannot_revoke_started: "Nie można odebrać dostępu: drużyna już zaczęła"
   admin:
     users:
       granted_notice: "Uprawnienia administratora zostały nadane"
@@ -124,6 +139,8 @@ pl:
           translation_run_cancelled: "Zatrzymał tłumaczenie"
           translation_run_retried: "Powtórzył tłumaczenie"
           translation_proposals_accepted: "Przyjął tłumaczenia"
+          issue_access_pass: "Nadał dostęp do gry"
+          revoke_access_pass: "Odebrał dostęp do gry"
     settings:
       title: "Ustawienia limitów"
       explanation: "Limity rejestracji obowiązują dla jednego adresu IP w podanym okresie; 0 wyłącza limit. Limity plików obowiązują dla gry i dla całego serwera."

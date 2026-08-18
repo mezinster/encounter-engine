@@ -1,4 +1,19 @@
 en:
+  access_passes:
+    title: "Game access"
+    team_name: "Team name"
+    submit: "Issue access"
+    issued: "Issued"
+    state: "State"
+    state_live: "unused"
+    state_playing: "in progress"
+    state_spent: "used"
+    state_revoked: "revoked"
+    revoke: "Revoke"
+    issued_notice: "Access issued to “%{team}”"
+    revoked_notice: "Access revoked"
+    not_found: "Team not found"
+    cannot_revoke_started: "Cannot revoke: the team has already started"
   admin:
     users:
       granted_notice: "Administrator rights granted"
@@ -100,6 +115,8 @@ en:
           translation_run_cancelled: "Stopped a translation"
           translation_run_retried: "Retried a translation"
           translation_proposals_accepted: "Accepted translations"
+          issue_access_pass: "Issued game access"
+          revoke_access_pass: "Revoked game access"
     settings:
       title: "Rate limits"
       explanation: "Signup limits apply per IP address per window; 0 disables the limit. File limits apply per game and across the whole server."

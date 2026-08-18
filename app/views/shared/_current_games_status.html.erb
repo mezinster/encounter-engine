@@ -5,4 +5,20 @@
   <% else %>
     <%= t("shared.current_games_status.not_registered") %>
   <% end %>
+<%# A gated game never creates a GameEntry, so game_entry is nil here rather
+    than carrying some third status -- this is the whole reason it's a
+    separate branch. gated_live is the caller's job, not this partial's: it
+    is computed once per listing (not per row) from the team's access_passes,
+    exactly the shape GamesHelper#game_team_counts already uses for the
+    scheduled columns beside this one, and passing it in is what keeps this
+    partial from re-querying per row and reintroducing the N+1
+    games_listing_spec.rb pins. local_assigns, not a bare reference: a caller
+    that never passes it (the dashboard's started-games widget, which has no
+    gated rows today) must default to "no access" rather than raise. %>
+<% elsif game.pass_required? %>
+  <% if local_assigns[:gated_live] %>
+    <%= link_to t("shared.current_games_status.play"), show_current_level_path(game_id: game.id) %>
+  <% else %>
+    <%= t("errors.no_access_pass") %>
+  <% end %>
 <% end %>

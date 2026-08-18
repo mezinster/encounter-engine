@@ -1,5 +1,37 @@
 # -*- encoding : utf-8 -*-
 module GamesHelper
+  # Whether the SIGNED-IN user's team may currently play each gated game in
+  # `games`, keyed by game id -- one query for the whole listing, regardless
+  # of how many gated rows it holds. "May currently play" is AccessPass#live?
+  # across every pass the team holds for that game: not revoked, and not
+  # spent (spent? already covers both "finished" and "quit", and a live pass
+  # covers both "not started yet" and "attempt in progress", since an
+  # in-progress attempt has no finished_at -- see AccessPass#live?/#spent?).
+  #
+  # Deliberately NOT GamePassing.gated_attempt_for: that method answers "which
+  # ROW is this team's canonical attempt", a question this per-row yes/no
+  # check never asks, and calling it once per gated row would be exactly the
+  # per-row query this method exists to avoid (spec/requests/
+  # games_listing_spec.rb pins the flat count, the same shape fd96d51 fixed
+  # for the admin console's access_passes preload).
+  #
+  # No team, or no gated rows in this listing: {} (falsy for every game id,
+  # so a caller need not special-case either).
+  def gated_play_status(games)
+    return {} unless logged_in? && current_user.team
+
+    gated_ids = games.select(&:pass_required?).map(&:id)
+    return {} if gated_ids.empty?
+
+    team = current_user.team
+    @gated_play_status ||= {}
+    @gated_play_status[[team.id, gated_ids.sort]] ||=
+      AccessPass.where(:game_id => gated_ids, :team_id => team.id, :revoked_at => nil)
+                .includes(:attempt)
+                .group_by(&:game_id)
+                .transform_values { |passes| passes.any?(&:live?) }
+  end
+
   # Team counts for a whole listing in two queries, regardless of how many
   # games it holds.
   #

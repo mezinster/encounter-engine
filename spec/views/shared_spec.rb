@@ -45,6 +45,36 @@ RSpec.describe "shared/_current_games_status", type: :view do
 
     expect(rendered).to include(I18n.t("shared.current_games_status.not_registered"))
   end
+
+  # A gated game never creates a GameEntry -- game_entry is nil for it -- so
+  # this is a second branch entirely, not a third game_entry.status value.
+  it "renders the play link for a gated game the team may currently play" do
+    game = create_game(:access_mode => "pass_required")
+
+    render partial: "shared/current_games_status",
+           locals: { game_entry: nil, game: game, gated_live: true }
+
+    expect(rendered).to include(I18n.t("shared.current_games_status.play"))
+    expect(rendered).to include(show_current_level_path(game_id: game.id))
+  end
+
+  it "renders the access-required message for a gated game the team has no live pass or attempt for" do
+    game = create_game(:access_mode => "pass_required")
+
+    render partial: "shared/current_games_status",
+           locals: { game_entry: nil, game: game, gated_live: false }
+
+    expect(rendered).to include(I18n.t("errors.no_access_pass"))
+  end
+
+  it "renders the access-required message for a gated game when gated_live is not passed at all" do
+    game = create_game(:access_mode => "pass_required")
+
+    render partial: "shared/current_games_status",
+           locals: { game_entry: nil, game: game }
+
+    expect(rendered).to include(I18n.t("errors.no_access_pass"))
+  end
 end
 
 RSpec.describe "shared/_current_games", type: :view do

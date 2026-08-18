@@ -66,6 +66,24 @@ RSpec.describe GamesController, "#edit", type: :controller do
     end
   end
 
+  # ensure_game_was_not_started reads @game.started?, and a gated game's
+  # starts_at is meaningless -- it has no schedule to "begin". Without this
+  # exemption a gated game whose (irrelevant) starts_at happened to be in the
+  # past became permanently uneditable for its own author, the moment the
+  # clock passed a date nobody was tracking.
+  describe "when author attempts to edit a gated game whose starts_at is in the past" do
+    before :each do
+      @author = create_user
+      @game = create_game :author => @author, :starts_at => 1.hour.ago,
+                          :access_mode => "pass_required"
+    end
+
+    it "responds successfully" do
+      perform_request(:as_user => @author)
+      expect(response).to have_http_status(:success)
+    end
+  end
+
   def perform_request(opts={})
     session[:user_id] = opts[:as_user]&.id
     session[:session_token] = opts[:as_user]&.session_token

@@ -577,8 +577,18 @@ protected
   # the likelier it got, and test_date is in no permitted-params list, so
   # nothing the author could type would fix it. finish_test sets visibility
   # back to "draft" first, which is what makes this exemption cover it.
+  # A gated game has no schedule for this to police -- #status reports
+  # :available for it without ever consulting the clock (see the comment on
+  # #status), and starts_at is simply not a field pass_required? means
+  # anything by. Without this exemption, the SAME starts_at that a scheduled
+  # game must keep in the future would refuse every future save of a gated
+  # game the moment its irrelevant value aged past -- including a plain
+  # author_finished!/withdraw!/whatever save on a game that was authored as
+  # scheduled and later converted, or one whose starts_at was simply never
+  # cleared.
   def game_starts_in_the_future
     return if self.draft?
+    return if self.pass_required?
 
     if self.author_finished_at.nil? and self.starts_at and self.starts_at < Time.now
       self.errors.add(:starts_at, :in_the_past)

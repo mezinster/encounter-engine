@@ -349,7 +349,14 @@ class GamesController < ApplicationController
     ensure_author if game_draft?
   end
 
+  # A gated game legitimately has no start time -- it never gets one, and
+  # never will -- so "no start time" cannot mean "not yet scheduled, author
+  # only" for it the way it does for a scheduled game. Without this
+  # exemption, every gated game's own show page 401'd its paying customers,
+  # who hold a pass but are neither the author nor a superadmin.
   def ensure_author_if_no_start_time
+    return if @game.pass_required?
+
     ensure_author if no_start_time?
   end
 

@@ -56,6 +56,22 @@ RSpec.describe GamesController, "#update", type: :controller do
     end
   end
 
+  # Same exemption as games/edit_spec.rb, exercised on the write side: a
+  # gated game's starts_at being in the past must not permanently lock its
+  # author out of saving it.
+  describe "when author attempts to update a gated game whose starts_at is in the past" do
+    before :each do
+      @author = create_user
+      @game = create_game :author => @author, :starts_at => 1.hour.ago,
+                          :access_mode => "pass_required"
+    end
+
+    it "does not raise Unauthorized" do
+      perform_request(:as_user => @author)
+      expect(response).not_to have_http_status(:unauthorized)
+    end
+  end
+
   def perform_request(opts={})
     session[:user_id] = opts[:as_user]&.id
     session[:session_token] = opts[:as_user]&.session_token

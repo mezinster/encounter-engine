@@ -75,6 +75,22 @@ RSpec.describe GamesController, "#show", type: :controller do
     end
   end
 
+  # A gated game legitimately has no start time -- it never gets one -- so
+  # ensure_author_if_no_start_time treating that as "not yet scheduled,
+  # author only" would 401 the game's own paying customers. Unlike the
+  # ordinary "no start time" case above, a guest here must succeed.
+  describe "when a guest attempts to view a published, gated game with no start time" do
+    before :each do
+      @game = create_game :is_draft => false, :starts_at => nil,
+                          :access_mode => "pass_required"
+    end
+
+    it "responds successfully" do
+      perform_request
+      expect(response).to have_http_status(:success)
+    end
+  end
+
   def perform_request(opts={})
     session[:user_id] = opts[:as_user]&.id
     session[:session_token] = opts[:as_user]&.session_token

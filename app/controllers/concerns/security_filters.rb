@@ -59,7 +59,15 @@ module SecurityFilters
     raise Authentication::Unauthorized, t("errors.game_is_locked") if @game&.editing_locked?
   end
 
+  # A gated game's starts_at is meaningless -- see the comment on
+  # Game#game_starts_in_the_future -- so #started? reading it (nil-safe as it
+  # is) is the wrong question here entirely. Without this exemption, a gated
+  # game whose irrelevant starts_at happened to sit in the past became
+  # permanently uneditable for its own author the moment the clock passed a
+  # date nobody was tracking.
   def ensure_game_was_not_started
+    return if @game.pass_required?
+
     raise Authentication::Unauthorized, t("errors.game_already_started") if @game.started?
   end
 

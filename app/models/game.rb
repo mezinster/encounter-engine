@@ -4,6 +4,8 @@ class Game < ApplicationRecord
 
   TRANSLATABLE_FIELDS = %w[name description].freeze
 
+  VISIBILITIES = %w[draft listed].freeze
+
   # Not a boolean: these entries are simultaneously the publish gate's reason
   # for refusing and the author's to-do list, so they carry enough to render a
   # deep link straight to the offending field.
@@ -60,6 +62,7 @@ class Game < ApplicationRecord
   validates :description, presence: true
   validates :max_team_number, numericality: { greater_than: 0, less_than: 10000 }
   validates :author, presence: true
+  validates :visibility, :inclusion => { :in => VISIBILITIES }
 
   validate :game_starts_in_the_future
   validate :valid_max_num
@@ -68,7 +71,7 @@ class Game < ApplicationRecord
   validate :deadline_is_before_game_start
 
   scope :by, ->(author) { where(author_id: author) }
-  scope :non_drafts, -> { where(is_draft: false) }
+  scope :non_drafts, -> { where(:visibility => "listed") }
   # Joins each game to its CURRENT run -- the highest ordinal. Every scope and
   # counter that filters on a schedule column goes through this, so there is one
   # definition of "the run that speaks for this game" in SQL rather than one per
@@ -125,7 +128,27 @@ class Game < ApplicationRecord
   end
 
   def draft?
-    self.is_draft
+    self.visibility == "draft"
+  end
+
+  def listed?
+    self.visibility == "listed"
+  end
+
+  # TEMPORARY, removed in the task that drops the is_draft column. Fifteen
+  # files still say is_draft -- both author forms, the permit list,
+  # start_test/finish_test and create_game in the spec fixtures -- and keeping
+  # the old name working for one commit is what lets the column land with a
+  # green suite instead of a coordinated edit across all of them.
+  #
+  # These override the ActiveRecord attribute methods of the same name, which
+  # is the point: the column is still present but no longer authoritative.
+  def is_draft
+    draft?
+  end
+
+  def is_draft=(value)
+    self.visibility = ActiveModel::Type::Boolean.new.cast(value) ? "draft" : "listed"
   end
 
   # A draft has not begun, whatever the clock says: the start date on an
@@ -370,13 +393,13 @@ class Game < ApplicationRecord
     # condition picks the current run and is also what stops a game with two
     # runs being counted twice.
     live       = with_current_run.where(:withdrawn_at => nil)
-    published  = live.where(:is_draft => false)
+    published  = live.where(:visibility => "listed")
     unfinished = published.where("game_runs.author_finished_at IS NULL")
 
     {
       # Unjoined: withdrawn_at is still a games column, so this needs no run.
       :withdrawn => where.not(:withdrawn_at => nil).count,
-      :draft     => live.where(:is_draft => true).count,
+      :draft     => live.where(:visibility => "draft").count,
       :finished  => published.where("game_runs.author_finished_at IS NOT NULL").count,
       # starts_at is nullable and Game#started? treats NULL as not started, so
       # the NULL check is explicit rather than left to a comparison that would
@@ -636,7 +659,7 @@ private
   def declared_locales_are_translated_before_publication
     return if self.draft?
     return unless self.new_record? ||
-                  self.is_draft_changed?(:from => true, :to => false) ||
+                  self.visibility_changed?(:from => "draft", :to => "listed") ||
                   self.available_locales_changed?
 
     missing = self.missing_translations

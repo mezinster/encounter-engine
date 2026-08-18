@@ -43,7 +43,13 @@ module FixturesHelper
       :name => random_string,
       :description => random_string,
       :starts_at => "2099-01-01 00:00",
-      :max_team_number => 100
+      :max_team_number => 100,
+      # games.visibility now defaults to "draft" (a new game starts
+      # unpublished until its author acts), which is the opposite polarity
+      # of is_draft's old `default: false`. Restated here so every existing
+      # call site that omits :is_draft keeps getting a published game, same
+      # as before this column existed.
+      :is_draft => false
     }.merge(options)
     Game.new creation_params
   end

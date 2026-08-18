@@ -6,7 +6,7 @@
 ## 0. The gap
 
 This application has exactly one privileged role and it is all-or-nothing.
-`SecurityFilters#ensure_author` (`app/controllers/concerns/security_filters.rb:31`) opens with
+`SecurityFilters#ensure_author` (`app/controllers/concerns/security_filters.rb:32`) opens with
 
 ```ruby
 return if logged_in? && current_user.superadmin?
@@ -46,9 +46,9 @@ Two orthogonal booleans, with one predicate that ORs them, has no such state.
 
 ### D4 — why there is no `last_operator?` guard
 
-`User#last_superadmin?` (`app/models/user.rb:101`) exists because "the instance must never end up
+`User#last_superadmin?` (`app/models/user.rb:116`) exists because "the instance must never end up
 with nobody able to administer it", and it is enforced twice — in `Admin::UsersController#revoke`
-and again as a model validation (`user.rb:262`), the latter because a console mistake is the real
+and again as a model validation (`user.rb:276`), the latter because a console mistake is the real
 risk.
 
 None of that transfers. A superadmin can always grant the operator role back, so an instance with
@@ -83,14 +83,14 @@ The client's word for this role is "Admin". It is taken, three times over:
   `grant_admin_admin_user_path`.
 * «администратор» is already the superadmin's user-facing label —
   `admin.users.index.superadmin`, `admin.users.show.grant`, `errors.must_be_superadmin`, and both
-  audit-action labels (`config/locales/ru.yml:28`, `:42`, `:80`, `:81`, `:224`).
+  audit-action labels (`config/locales/ru.yml:30`, `:45`, `:85`, `:86`, `:231`).
 
 The third point is cheap to change — **no spec and no feature file pins that Russian string** (both
 suites grepped: zero hits) — but the first two are not, and the client's vocabulary is a UI concern
 rather than a schema one.
 
 `operator` is also the word this codebase already uses in prose for this exact capacity:
-`AdminAudit#acting_as_operator?` (`app/controllers/concerns/admin_audit.rb:53`), the "Operator
+`AdminAudit#acting_as_operator?` (`app/controllers/concerns/admin_audit.rb:59`), the "Operator
 interventions" comment (`app/models/game_passing.rb:278`), "an operator who can edit a game"
 (`security_filters.rb`). One consequence to handle in §6: `acting_as_operator?` currently means "a
 superadmin acting on someone else's game", and once the role exists, "operator" carries both that
@@ -196,7 +196,7 @@ Two further properties of that line are load-bearing:
 
 ## 6. Audit
 
-`AdminAudit#acting_as_operator?` (`admin_audit.rb:53`) is today
+`AdminAudit#acting_as_operator?` (`admin_audit.rb:59`) is today
 
 ```ruby
 logged_in? && current_user.superadmin? && game.author_id != current_user.id

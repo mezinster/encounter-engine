@@ -4,6 +4,12 @@
 # than one glance -- which is what matters once this role can be granted to a
 # helper.
 #
+# NAMING, since a role called `operator` now exists: "the operator" above is a
+# CAPACITY -- whichever superadmin is at the console -- not User#operator?.
+# This controller stays superadmin-only (require_superadmin! below); granting
+# the operator role does not open it. See AdminAudit#acting_as_operator? for
+# the same distinction made where it first mattered.
+#
 # crypted_password and salt are never passed to a view. A spec asserts their
 # absence across every reporting screen: the risk is not that someone adds them
 # deliberately but that a future `<%= user.attributes %>` leaks them silently.
@@ -166,7 +172,8 @@ class Admin::UsersController < ApplicationController
       # The person is gone, so they neither play nor administer. Detaching
       # also stops a nameless ghost sitting in someone's team roster.
       :team          => nil,
-      :is_superadmin => false
+      :is_superadmin => false,
+      :is_operator   => false
     )
 
     record_admin_action("anonymise_user", user)

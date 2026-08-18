@@ -59,13 +59,19 @@ describe "the operator role in the admin console", type: :request do
   end
 
   # The two roles are independent columns, so both tags can show at once.
+  # Scoped to the target's own row: the signed-in superadmin has their own
+  # row too, so an unscoped include("администратор") would pass regardless
+  # of what the target's row actually shows.
   it "tags a user who holds both roles twice" do
     target.update!(:is_superadmin => true, :is_operator => true)
     sign_in(superadmin)
 
     get admin_users_path
 
-    expect(response.body).to include("оператор")
-    expect(response.body).to include("администратор")
+    doc = Nokogiri::HTML(response.body)
+    row = doc.css("tr").find { |tr| tr.at_css("a[href='#{admin_user_path(target)}']") }
+
+    expect(row.text).to include("оператор")
+    expect(row.text).to include("администратор")
   end
 end

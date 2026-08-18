@@ -192,6 +192,8 @@ tr:
         signup_window_seconds: "Kayıtlar için süre (saniye)"
         reset_max: "Tek adresten parola sıfırlama isteği sayısı"
         reset_window_seconds: "Parola sıfırlama için süre (saniye)"
+        access_code_redemption_max: "Tek adresten erişim kodu deneme sayısı"
+        access_code_redemption_window_seconds: "Erişim kodu denemeleri için süre (saniye)"
         file_max_megabytes: "Maksimum dosya boyutu (MB)"
         max_files_per_upload: "Yükleme başına dosya sayısı"
         game_quota_megabytes: "Oyun başına kota (MB)"

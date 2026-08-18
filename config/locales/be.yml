@@ -166,6 +166,8 @@ be:
         signup_window_seconds: "Перыяд для рэгістрацый (секунд)"
         reset_max: "Запытаў скіду пароля з аднаго адраса"
         reset_window_seconds: "Перыяд для скіду пароля (секунд)"
+        access_code_redemption_max: "Спроб уводу кода доступу з аднаго адраса"
+        access_code_redemption_window_seconds: "Перыяд для ўводу кода доступу (секунд)"
         file_max_megabytes: "Максімальны памер файла (МБ)"
         max_files_per_upload: "Файлаў за адну загрузку"
         game_quota_megabytes: "Квота на гульню (МБ)"

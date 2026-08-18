@@ -164,6 +164,8 @@ uk:
         signup_window_seconds: "Період для реєстрацій (секунд)"
         reset_max: "Запитів скидання пароля з однієї адреси"
         reset_window_seconds: "Період для скидання пароля (секунд)"
+        access_code_redemption_max: "Спроб введення коду доступу з однієї адреси"
+        access_code_redemption_window_seconds: "Період для введення коду доступу (секунд)"
         file_max_megabytes: "Максимальний розмір файлу (МБ)"
         max_files_per_upload: "Файлів за одне завантаження"
         game_quota_megabytes: "Квота на гру (МБ)"

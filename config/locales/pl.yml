@@ -171,6 +171,8 @@ pl:
         signup_window_seconds: "Okres dla rejestracji (sekund)"
         reset_max: "Żądań resetu hasła z jednego adresu"
         reset_window_seconds: "Okres dla resetu hasła (sekund)"
+        access_code_redemption_max: "Prób wpisania kodu dostępu z jednego adresu"
+        access_code_redemption_window_seconds: "Okres dla wpisywania kodu dostępu (sekund)"
         file_max_megabytes: "Maksymalny rozmiar pliku (MB)"
         max_files_per_upload: "Plików na jedno przesłanie"
         game_quota_megabytes: "Limit na grę (MB)"

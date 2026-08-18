@@ -147,6 +147,8 @@ ru:
         signup_window_seconds: "Период для регистраций (секунд)"
         reset_max: "Запросов сброса пароля с одного адреса"
         reset_window_seconds: "Период для сброса пароля (секунд)"
+        access_code_redemption_max: "Попыток ввода кода доступа с одного адреса"
+        access_code_redemption_window_seconds: "Период для ввода кода доступа (секунд)"
         file_max_megabytes: "Максимальный размер файла (МБ)"
         max_files_per_upload: "Файлов за одну загрузку"
         game_quota_megabytes: "Квота на игру (МБ)"

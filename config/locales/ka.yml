@@ -170,6 +170,8 @@ ka:
         signup_window_seconds: "რეგისტრაციის პერიოდი (წამი)"
         reset_max: "პაროლის აღდგენის მოთხოვნა ერთი მისამართიდან"
         reset_window_seconds: "პაროლის აღდგენის პერიოდი (წამი)"
+        access_code_redemption_max: "წვდომის კოდის შეყვანის მცდელობა ერთი მისამართიდან"
+        access_code_redemption_window_seconds: "წვდომის კოდის შეყვანის პერიოდი (წამი)"
         file_max_megabytes: "ფაილის მაქსიმალური ზომა (მბ)"
         max_files_per_upload: "ფაილები ერთ ატვირთვაზე"
         game_quota_megabytes: "კვოტა თამაშზე (მბ)"

@@ -147,6 +147,8 @@ en:
         signup_window_seconds: "Signup window (seconds)"
         reset_max: "Password reset requests per address"
         reset_window_seconds: "Password reset window (seconds)"
+        access_code_redemption_max: "Access code redemption attempts per address"
+        access_code_redemption_window_seconds: "Access code redemption window (seconds)"
         file_max_megabytes: "Maximum file size (MB)"
         max_files_per_upload: "Files per upload"
         game_quota_megabytes: "Quota per game (MB)"

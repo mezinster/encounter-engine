@@ -36,7 +36,7 @@ not move the clock.
 | P6 | How is an amount stored? | One **signed integer**. A fine is a negative row, not a second column or a type flag. |
 | P7 | Where does the chart live? | It **extends `teams#index`**, which already lists every team. |
 | P8 | What does the chart rank by? | **Balance**, descending. Nothing time-based. |
-| P9 | Who sees what? | Aggregates are **public**; the **itemised ledger** is for the team's own members and operators. |
+| P9 | Who sees what? | **Everything is public**, itemised rows included. Transparency is the chart's purpose. |
 | P10 | Does D1 ship operator adjustments? | **No** — but `created_by_id` exists from the start. See §2.1. |
 
 ### P3/P4 — why the ledger never reverses
@@ -187,18 +187,34 @@ already exists.
 
 ## 5. Visibility
 
-| Audience | Sees |
-|---|---|
-| Anyone | The chart, and each team's per-game **totals** |
-| The team's own members, and operators | The **itemised** ledger — every transaction, its reason, and its actor |
+**The whole ledger is public**, itemised rows included: the chart, each team's per-game totals,
+and every individual transaction with its reason.
 
-The line is drawn at fines. A public itemised ledger publishes penalties: «−20» against a named
-team, readable by everyone, is a disciplinary record nobody agreed to on signing up. The same row
-is exactly what the team must see to query a charge.
+Transparency is what the chart is *for*. A fine already shows up publicly whatever we do — it is
+subtracted from the balance, and the balance is the sort key, so a fined team visibly drops. Hiding
+the line while publishing its effect would let a reader see that a team lost ground without being
+able to see why, which is the worst of both.
 
-This is the one decision in D1 that is hard to reverse **socially** rather than technically —
-publishing fines and then retracting them does not unpublish them — so the conservative default is
-taken, and widening it later costs nothing.
+An earlier draft of this spec split aggregates from itemised rows, reserving the detail for the
+team's own members and operators. That was withdrawn on review, and the reason is worth recording:
+**D1 writes nothing but positive awards.** `level_completed` and `game_completed` are the only two
+reasons, so the boundary protected data that does not exist. It was speculative complexity
+answering a question D1 never asks.
+
+### The question this defers, and where it will actually arise
+
+Two kinds of negative row are not alike, and only one of them is a genuine product question:
+
+* **A skip fine** (sub-project D2) is the team's own choice, taken during play. Publishing it is
+  part of the game's record, like a resignation on a scoresheet. It is public.
+* **An operator adjustment** — a bonus or penalty imposed *by a person on* a team — is different in
+  kind. The team did not choose it, may dispute it, and cannot answer it in the place it is
+  displayed. Whether such a row shows its line publicly or only its effect on the balance is a real
+  decision, with a real product argument on each side.
+
+D1 ships no operator adjustments (§9), so that decision is **not made here**. It belongs to
+whoever builds that UI, and this section exists so they know it is theirs to make rather than
+inheriting a default nobody chose.
 
 ## 6. i18n
 

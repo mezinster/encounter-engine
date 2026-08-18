@@ -78,6 +78,18 @@ RSpec.describe Team, "#deletable?" do
     expect(team.reload.deletable?).to be false
   end
 
+  # A fourth history guard, added with AccessPass: a purchase record, so
+  # holding one blocks deletion the same way a game_entry/game_passing/log
+  # row does -- the team holds nothing else here, so this fails for the
+  # access_passes conjunct alone.
+  it "is false once it holds an access pass" do
+    team = empty_team
+    game = create_game(:is_draft => false, :access_mode => "pass_required")
+    create_access_pass(:game => game, :team => team)
+
+    expect(team.reload.deletable?).to be false
+  end
+
   # Invitations and join requests are meaningless once the team is gone, and
   # a dangling one breaks the dashboard, which renders invitation.to_team.name.
   # So they travel with it rather than blocking it.

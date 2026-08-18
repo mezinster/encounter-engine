@@ -65,6 +65,7 @@ class GamePassing < ApplicationRecord
   belongs_to :game, optional: true
   belongs_to :current_level, :class_name => "Level", optional: true
   belongs_to :game_run, :optional => true
+  belongs_to :access_pass, :optional => true
 
   scope :of_game, ->(game) { where(game_id: game) }
   scope :of_team, ->(team) { where(team_id: team) }
@@ -116,6 +117,46 @@ class GamePassing < ApplicationRecord
     unfinished = where(:finished_at => nil)
     unfinished.where(:status => nil).or(unfinished.where.not(:status => %w[exited ended]))
   }
+
+  # THE single definition of "this team's current attempt at a gated game" --
+  # finding 3 of the whole-branch review. Three call sites each invented
+  # their own resolution: GamePassingsController#gated_passing (first
+  # unspent, unordered), LogsController#gated_passing_for
+  # (order(:id => :desc)), InterventionsController#find_game_passing (no
+  # order at all). Spec B6 allows a team to hold several attempts for one
+  # game (a fresh pass after the first is spent), so those three could pick
+  # DIFFERENT rows once a team held two -- and under SQLite's insertion-order
+  # default, the unordered form picked the OLDEST, already-completed one.
+  #
+  # Newest first (id, not created_at -- the column every other id-based
+  # ordering in this codebase, e.g. LogsController's old form, already used),
+  # and that is provably the LIVE attempt whenever a live one exists:
+  # #gated_passing only ever creates a new attempt once every existing one is
+  # spent ("return live if live" -- a fresh pass is never touched while an
+  # unspent attempt exists), so at any moment at most the highest-id attempt
+  # can be unspent. Every older one is therefore guaranteed spent, which
+  # makes "newest" and "the live one, else the most recently finished one"
+  # the SAME resolution rather than two that happen to agree today:
+  #   * GamePassingsController#gated_passing serves it unchanged when live,
+  #     and otherwise correctly falls through to mint a new attempt.
+  #   * LogsController's full-log access is judged by it, live or spent --
+  #     a team currently playing a second attempt must not read the log of a
+  #     finished first one, and a team whose newest attempt is finished
+  #     reads that one's log, never an older attempt's.
+  #   * InterventionsController's move/reinstate/reset_clock act on it --
+  #     "reinstate" in particular exists to un-spend a team's most recent
+  #     attempt, never an older one they have already replaced.
+  #
+  # where.not(:access_pass_id => nil) excludes a stray runless passing that
+  # is not a gated attempt at all (there is no other way to reach one, but
+  # nothing enforces that here). team may be a Team or a raw id, matching
+  # of_team's own flexibility -- InterventionsController has only
+  # params[:team_id] on hand and this spares it an extra Team.find.
+  def self.gated_attempt_for(game, team)
+    return nil if team.nil?
+
+    of_game(game).of_team(team).where.not(:access_pass_id => nil).order(:id => :desc).first
+  end
 
   before_create :update_current_level_entered_at
 
@@ -199,6 +240,21 @@ class GamePassing < ApplicationRecord
     return nil unless self.finished_at
 
     self.finished_at + self.penalty_seconds.to_i
+  end
+
+  # What commercial standings rank on. NOT effective_finished_at, which is an
+  # absolute timestamp: every pass starts when its own team opens the play
+  # screen, so comparing instants would place a team that played in August
+  # behind one that played in March however fast it was. GameRun#place_of's
+  # comment records that exact defect.
+  #
+  # paused_seconds is subtracted because an operator pausing the game is not
+  # the customer's doing; penalty_seconds is added for the same reason it is
+  # added to effective_finished_at.
+  def duration
+    return nil unless self.finished_at
+
+    (self.finished_at - self.created_at).round - self.paused_seconds.to_i + self.penalty_seconds.to_i
   end
 
   # The clock every countdown is measured against. While a game is paused this

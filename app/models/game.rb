@@ -4,6 +4,10 @@ class Game < ApplicationRecord
 
   TRANSLATABLE_FIELDS = %w[name description].freeze
 
+  VISIBILITIES = %w[draft listed].freeze
+
+  ACCESS_MODES = %w[scheduled pass_required].freeze
+
   # Not a boolean: these entries are simultaneously the publish gate's reason
   # for refusing and the author's to-do list, so they carry enough to render a
   # deep link straight to the offending field.
@@ -55,11 +59,23 @@ class Game < ApplicationRecord
   has_many :game_passings, :class_name => "GamePassing"
   has_many :game_files, :dependent => :destroy
   has_many :translation_runs, :dependent => :destroy
+  # No dependent: option, matching game_passings and logs above: this is a
+  # PURCHASE record, and #deletable? below refuses deletion outright rather
+  # than cascading it away -- Team#deletable? states the identical rule for
+  # its own access_passes association one level down. A cascade here would
+  # be dead code in the ordinary path (deletable? already refuses while any
+  # exist), and live code on the day something bypasses that guard -- a
+  # console `game.destroy`, a future caller that forgets to check -- at which
+  # point it would silently destroy the one record proving what a customer
+  # paid for.
+  has_many :access_passes
 
   validates :name, presence: true, uniqueness: true
   validates :description, presence: true
   validates :max_team_number, numericality: { greater_than: 0, less_than: 10000 }
   validates :author, presence: true
+  validates :visibility, :inclusion => { :in => VISIBILITIES }
+  validates :access_mode, :inclusion => { :in => ACCESS_MODES }
 
   validate :game_starts_in_the_future
   validate :valid_max_num
@@ -68,7 +84,7 @@ class Game < ApplicationRecord
   validate :deadline_is_before_game_start
 
   scope :by, ->(author) { where(author_id: author) }
-  scope :non_drafts, -> { where(is_draft: false) }
+  scope :non_drafts, -> { where(:visibility => "listed") }
   # Joins each game to its CURRENT run -- the highest ordinal. Every scope and
   # counter that filters on a schedule column goes through this, so there is one
   # definition of "the run that speaks for this game" in SQL rather than one per
@@ -94,7 +110,7 @@ class Game < ApplicationRecord
   # rather than a silent leak.
   #
   # A game in TEST mode is excluded, and that clause is why this comment grew.
-  # start_test clears is_draft so the game behaves as live, which silently
+  # start_test sets visibility to "listed" so the game behaves as live, which silently
   # retires the non_drafts protection above at exactly the moment the game is
   # an unpublished rehearsal -- it was listed on the public home page as
   # RUNNING, reported from production 2026-08-15. shared/_current_games.html
@@ -125,7 +141,27 @@ class Game < ApplicationRecord
   end
 
   def draft?
-    self.is_draft
+    self.visibility == "draft"
+  end
+
+  def listed?
+    self.visibility == "listed"
+  end
+
+  def pass_required?
+    self.access_mode == "pass_required"
+  end
+
+  # One row per COMPLETED attempt, fastest first. Completed means the team
+  # crossed the line: finished_at set and not exited -- the same pair
+  # GamePassing's `completed` scope uses, and the same pair that decides
+  # whether a pass was spent.
+  #
+  # Sorted in Ruby rather than SQL for the same reason GameRun#place_of does:
+  # expressing the arithmetic portably across SQLite and PostgreSQL is more
+  # trouble than it is worth for a listing of tens of attempts.
+  def pass_standings
+    game_passings.completed.includes(:team).to_a.sort_by(&:duration)
   end
 
   # A draft has not begun, whatever the clock says: the start date on an
@@ -150,8 +186,8 @@ class Game < ApplicationRecord
   #
   # Nothing downstream shifts: #status short-circuits on draft? before it ever
   # reaches here, Game.started and .not_started compose this with .visible,
-  # which excludes drafts already, and start_test clears is_draft before it
-  # moves starts_at, so a test run is never a draft.
+  # which excludes drafts already, and start_test sets visibility to "listed"
+  # before it moves starts_at, so a test run is never a draft.
   def started?
     return false if draft?
 
@@ -211,11 +247,17 @@ class Game < ApplicationRecord
 
     transaction do
       held = Time.now - self.paused_at
-      # finished_at excludes both finished and exited teams; neither has a
-      # running clock. update_column because this is a mechanical bulk shift.
-      # The current run's passings: only they have running clocks to shift.
-      current_run.passings.where(:finished_at => nil).find_each do |gp|
+      # THE GAME's passings, not the current run's: a commercial attempt has
+      # game_run_id NULL and would be skipped, so its hints would jump forward
+      # by the length of the pause. Nothing raises; the team simply finds them
+      # spent.
+      #
+      # in_progress rather than where(finished_at: nil): end! sets status
+      # "ended" and leaves finished_at nil, so the old form shifted a clock
+      # that an operator-ended passing does not have.
+      game_passings.in_progress.find_each do |gp|
         gp.update_column(:current_level_entered_at, gp.current_level_entered_at + held)
+        gp.update_column(:paused_seconds, gp.paused_seconds + held.round)
       end
       current_run.update_column(:paused_at, nil)
     end
@@ -254,7 +296,7 @@ class Game < ApplicationRecord
   # The ONLY writer of author_id after creation, mirroring Team#set_captain!.
   # A game with two ways to change its author is a game whose access control
   # cannot be reasoned about from one place -- and author_id is what
-  # ensure_author, ensure_author_if_game_is_draft and every author-only screen
+  # ensure_author, ensure_author_if_game_draft and every author-only screen
   # ultimately read.
   #
   # update_column, not update!, carrying exactly the reasoning on withdraw!
@@ -305,8 +347,16 @@ class Game < ApplicationRecord
   # destroy would orphan them rather than remove them -- there are no foreign
   # keys and no dependent: option on those associations. Withdrawal achieves
   # what deletion is usually reached for, without leaving unreachable rows.
+  #
+  # access_passes joins the check for the same reason, and it matters more
+  # here than the identical conjunct on Team#deletable?: ensure_author now
+  # lets an OPERATOR delete a gated game they did not author, so the actor
+  # this refuses is routinely someone other than whoever issued the passes.
+  # Without it, deleting a gated game with issued-but-unstarted passes
+  # destroyed every purchase record silently -- no refusal, no audit of what
+  # was lost.
   def deletable?
-    self.game_passings.empty?
+    self.game_passings.empty? && self.access_passes.empty?
   end
 
   def created_by?(user)
@@ -346,6 +396,11 @@ class Game < ApplicationRecord
     return :withdrawn if withdrawn?
     return :draft     if draft?
     return :finished  if author_finished?
+    # A gated game is never "scheduled": it has no start date to wait for and
+    # no cohort to wait with. Placed after :finished so an operator who closes
+    # a commercial game still sees it reported as finished, and before
+    # :running so the schedule rungs below stay purely about scheduled games.
+    return :available if pass_required?
     return :running   if started?
     :scheduled
   end
@@ -370,20 +425,23 @@ class Game < ApplicationRecord
     # condition picks the current run and is also what stops a game with two
     # runs being counted twice.
     live       = with_current_run.where(:withdrawn_at => nil)
-    published  = live.where(:is_draft => false)
+    published  = live.where(:visibility => "listed")
     unfinished = published.where("game_runs.author_finished_at IS NULL")
 
     {
       # Unjoined: withdrawn_at is still a games column, so this needs no run.
       :withdrawn => where.not(:withdrawn_at => nil).count,
-      :draft     => live.where(:is_draft => true).count,
+      :draft     => live.where(:visibility => "draft").count,
       :finished  => published.where("game_runs.author_finished_at IS NOT NULL").count,
+      :available => unfinished.where(:access_mode => "pass_required").count,
       # starts_at is nullable and Game#started? treats NULL as not started, so
       # the NULL check is explicit rather than left to a comparison that would
       # evaluate to unknown and drop the row from every bucket.
-      :running   => unfinished.where("game_runs.starts_at IS NOT NULL")
+      :running   => unfinished.where(:access_mode => "scheduled")
+                              .where("game_runs.starts_at IS NOT NULL")
                               .where("game_runs.starts_at < ?", now).count,
-      :scheduled => unfinished.where("game_runs.starts_at IS NULL OR game_runs.starts_at >= ?", now).count
+      :scheduled => unfinished.where(:access_mode => "scheduled")
+                              .where("game_runs.starts_at IS NULL OR game_runs.starts_at >= ?", now).count
     }
   end
 
@@ -505,8 +563,8 @@ protected
   # for them.
   #
   # Publication is still gated. `draft?` reads the value being saved, so a
-  # game going from draft to published (is_draft true -> false) is not a
-  # draft by the time this runs, and a past start date is refused there --
+  # game going from draft to published (visibility "draft" -> "listed") is not
+  # a draft by the time this runs, and a past start date is refused there --
   # which is the moment that matters, and the same moment
   # declared_locales_are_translated_before_publication guards.
   #
@@ -517,10 +575,20 @@ protected
   # save was refused and the game was stuck in testing permanently. The
   # parked date sits still while the clock moves, so the longer the test ran
   # the likelier it got, and test_date is in no permitted-params list, so
-  # nothing the author could type would fix it. finish_test sets is_draft
-  # first, which is what makes this exemption cover it.
+  # nothing the author could type would fix it. finish_test sets visibility
+  # back to "draft" first, which is what makes this exemption cover it.
+  # A gated game has no schedule for this to police -- #status reports
+  # :available for it without ever consulting the clock (see the comment on
+  # #status), and starts_at is simply not a field pass_required? means
+  # anything by. Without this exemption, the SAME starts_at that a scheduled
+  # game must keep in the future would refuse every future save of a gated
+  # game the moment its irrelevant value aged past -- including a plain
+  # author_finished!/withdraw!/whatever save on a game that was authored as
+  # scheduled and later converted, or one whose starts_at was simply never
+  # cleared.
   def game_starts_in_the_future
     return if self.draft?
+    return if self.pass_required?
 
     if self.author_finished_at.nil? and self.starts_at and self.starts_at < Time.now
       self.errors.add(:starts_at, :in_the_past)
@@ -557,10 +625,11 @@ protected
   # to report registration closed, registration then never closed.
   #
   # Skipping is safe rather than merely convenient: a testing game is started
-  # (start_test clears is_draft and moves starts_at into the past), and
-  # ensure_game_was_not_started already covers edit and update, so an author
-  # cannot reach these validations mid-test to write a nonsensical deadline.
-  # The only writers during a test are start_test and finish_test themselves.
+  # (start_test sets visibility to "listed" and moves starts_at into the
+  # past), and ensure_game_was_not_started already covers edit and update, so
+  # an author cannot reach these validations mid-test to write a nonsensical
+  # deadline. The only writers during a test are start_test and finish_test
+  # themselves.
   #
   # finish_test restores starts_at before clearing is_testing, so the rules
   # apply again on the very save that ends the test -- a deadline that has
@@ -629,14 +698,14 @@ private
   # finish_game! and start_test raised.
   #
   # The three cases that must still be caught:
-  #   - a game created already published (is_draft defaults to false and the
-  #     new-game form leaves the box unchecked, so this is the common path)
+  #   - a game created already published (the author unchecked the draft box
+  #     at creation, publishing the game immediately)
   #   - a draft being published
   #   - a locale added to a game that is already live
   def declared_locales_are_translated_before_publication
     return if self.draft?
     return unless self.new_record? ||
-                  self.is_draft_changed?(:from => true, :to => false) ||
+                  self.visibility_changed?(:from => "draft", :to => "listed") ||
                   self.available_locales_changed?
 
     missing = self.missing_translations

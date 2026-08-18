@@ -44,15 +44,15 @@ RSpec.describe GamesController, "#start_test", type: :controller do
   end
 
   # Whole-branch review, Finding 1's fallout: start_test's @game.save! was
-  # named as a 500-raising site. It sets is_draft = false, so it runs
+  # named as a 500-raising site. It sets visibility to "listed", so it runs
   # through the exact save the old, state-only guard (`return if draft?`)
   # broke on. Two cases worth telling apart:
   #   - a game that is ALREADY published and has since acquired a gap (the
-  #     fallout case) -- is_draft is false->false here, not a real
+  #     fallout case) -- visibility is listed->listed here, not a real
   #     transition, so start_test must still succeed
   #   - a DRAFT game with a gap being published through start_test (the
-  #     legitimate case) -- is_draft genuinely transitions true->false, so
-  #     the gate must still refuse
+  #     legitimate case) -- visibility genuinely transitions draft->listed,
+  #     so the gate must still refuse
   describe "when the game has a translation gap" do
     describe "and the game is already published (fallout: must still start)" do
       before :each do
@@ -65,7 +65,7 @@ RSpec.describe GamesController, "#start_test", type: :controller do
         level = create_level(:game => @game, :name => "Уровень", :text => "Текст")
         level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text" } }
         level.save!
-        @game.update!(:is_draft => false)
+        @game.update!(:visibility => "listed")
 
         # Untranslated level added AFTER a clean publication -- the fallout gap.
         create_level(:game => @game, :name => "Уровень 2", :text => "Текст 2")
@@ -89,7 +89,7 @@ RSpec.describe GamesController, "#start_test", type: :controller do
                                                      "description" => "#{@game.description} (EN)" } }
         @game.save!
         # Never translated -- legitimate while draft, but start_test's
-        # is_draft: true -> false transition must still catch it.
+        # visibility: draft -> listed transition must still catch it.
         create_level(:game => @game, :name => "Уровень", :text => "Текст")
       end
 
@@ -108,7 +108,7 @@ RSpec.describe GamesController, "#start_test", type: :controller do
         )
 
         @game.reload
-        expect(@game.is_draft?).to be true
+        expect(@game.draft?).to be true
         expect(@game.is_testing?).to be false
       end
     end

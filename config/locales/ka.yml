@@ -22,10 +22,27 @@
 # (verbal noun: "შენახვა" = "saving" = "Save"), which is the normal Georgian
 # UI imperative.
 ka:
+  access_passes:
+    title: "თამაშის წვდომა"
+    team_name: "გუნდის სახელი"
+    submit: "წვდომის მინიჭება"
+    issued: "გაცემული"
+    state: "მდგომარეობა"
+    state_live: "გამოუყენებელი"
+    state_playing: "მიმდინარეობს"
+    state_spent: "გამოყენებული"
+    state_revoked: "ჩამორთმეული"
+    revoke: "ჩამორთმევა"
+    issued_notice: "წვდომა მიენიჭა გუნდს «%{team}»"
+    revoked_notice: "წვდომა ჩამორთმეულია"
+    not_found: "გუნდი ვერ მოიძებნა"
+    cannot_revoke_started: "წვდომის ჩამორთმევა შეუძლებელია: გუნდმა უკვე დაიწყო"
   admin:
     users:
       granted_notice: "ადმინისტრატორის უფლებები მინიჭებულია"
       revoked_notice: "ადმინისტრატორის უფლებები ჩამორთმეულია"
+      operator_granted_notice: "ოპერატორის უფლებები მინიჭებულია"
+      operator_revoked_notice: "ოპერატორის უფლებები ჩამორთმეულია"
       cannot_revoke_self: "საკუთარი უფლებების ჩამორთმევა შეუძლებელია"
       cannot_revoke_last: "ბოლო ადმინისტრატორს უფლებებს ვერ ჩამოართმევთ"
       moved_notice: "მოთამაშე გადაყვანილია გუნდში «%{team}»"
@@ -49,6 +66,7 @@ ka:
         signed_up: "რეგისტრაცია"
         role: "როლი"
         superadmin: "ადმინისტრატორი"
+        operator: "ოპერატორი"
         back: "მიმოხილვაზე დაბრუნება"
       show:
         email: "E-mail"
@@ -64,6 +82,8 @@ ka:
         back: "მოთამაშეების სიაზე დაბრუნება"
         grant: "ადმინისტრატორად დანიშვნა"
         revoke: "ადმინისტრატორის უფლებების ჩამორთმევა"
+        grant_operator: "ოპერატორად დანიშვნა"
+        revoke_operator: "ოპერატორის უფლებების ჩამორთმევა"
         move: "გუნდში გადაყვანა"
         delete: "ანგარიშის წაშლა"
         anonymise: "ანგარიშის გაუპიროვნება"
@@ -102,6 +122,8 @@ ka:
           test_reset_token: "შეცვალა ტესტირების ბმული"
           grant_superadmin: "მიანიჭა ადმინისტრატორის უფლებები"
           revoke_superadmin: "ჩამოართვა ადმინისტრატორის უფლებები"
+          grant_operator: "მიანიჭა ოპერატორის უფლებები"
+          revoke_operator: "ჩამოართვა ოპერატორის უფლებები"
           allow_any_code: "დაუშვა ნებისმიერი კოდი დონეზე"
           require_all_codes: "მოითხოვა ყველა კოდი დონეზე"
           update_settings: "შეცვალა პარამეტრები"
@@ -116,6 +138,8 @@ ka:
           translation_run_cancelled: "შეაჩერა თარგმანი"
           translation_run_retried: "გაიმეორა თარგმანი"
           translation_proposals_accepted: "მიიღო თარგმანები"
+          issue_access_pass: "მიანიჭა თამაშის წვდომა"
+          revoke_access_pass: "ჩამოართვა თამაშის წვდომა"
     settings:
       title: "შეზღუდვების პარამეტრები"
       explanation: "რეგისტრაციის შეზღუდვები მოქმედებს ერთ IP-მისამართზე მითითებულ პერიოდში; 0 თიშავს შეზღუდვას. ფაილების შეზღუდვები მოქმედებს თამაშზე და მთელ სერვერზე."
@@ -156,6 +180,7 @@ ka:
           finished: "დასრულებული"
           running: "მიმდინარე"
           scheduled: "დაგეგმილი"
+          available: "ხელმისაწვდომია"
         total:
           users: "მოთამაშე"
           teams: "გუნდი"
@@ -193,6 +218,7 @@ ka:
         running: "მიმდინარე"
         finished: "დასრულებული"
         withdrawn: "მოხსნილია გამოქვეყნებიდან"
+        available: "ხელმისაწვდომია"
         locked: "რედაქტირება გაყინულია"
         edit: "რედაქტირება"
         entries_link: "განაცხადები (%{count})"
@@ -244,6 +270,7 @@ ka:
     must_be_author: "ამ გვერდის სანახავად უნდა იყოთ თამაშის ავტორი"
     translation_key_missing: "ხელოვნური ინტელექტით თარგმნა მიუწვდომელია: API-ის გასაღები არ არის მითითებული."
     not_registered_for_game: "თქვენი გუნდი არ არის რეგისტრირებული ამ თამაშზე."
+    no_access_pass: "ამ თამაშისთვის საჭიროა წვდომა. მიმართეთ ორგანიზატორს."
     must_be_author_or_finished_player: "პასუხების სრული ლოგი ხელმისაწვდომია მხოლოდ თამაშის ავტორისთვის ან იმ გუნდის მოთამაშისთვის, რომელმაც თამაში დაასრულა"
     game_already_started: "თამაშის დაწყების შემდეგ მისი რედაქტირება შეუძლებელია"
     must_be_recipient: "ამ მოქმედების შესასრულებლად უნდა იყოთ მოწვევის მიმღები"
@@ -255,6 +282,8 @@ ka:
     game_is_not_testing: "თამაში არ არის ტესტირების რეჟიმში"
     bad_test_token: "ტესტირების ბმული არასწორია"
     must_be_superadmin: "წვდომა მხოლოდ ადმინისტრატორისთვის"
+    must_operate_commercial: "ეს გვერდი ხელმისაწვდომია მხოლოდ ოპერატორებისა და ადმინისტრატორებისთვის"
+    game_not_gated: "ეს გვერდი ხელმისაწვდომია მხოლოდ იმ თამაშისთვის, რომელიც იყიდება წვდომის ბილეთით"
     too_many_requests: "ძალიან ბევრი მცდელობა. სცადეთ მოგვიანებით."
     game_is_not_live: "თამაში ამჟამად არ მიმდინარეობს"
   interventions:
@@ -311,6 +340,7 @@ ka:
       status_finished: "დასრულებული"
       status_running: "მიმდინარე"
       status_scheduled: "დაგეგმილი"
+      status_available: "ხელმისაწვდომია"
       paused: "შეჩერებულია"
       duration: "%{hours} სთ %{minutes} წთ"
       playing: "თამაშობს: %{count}"
@@ -327,6 +357,12 @@ ka:
       reject: "(უარყოფა)"
     teams:
       legend: "მონაწილე გუნდები:"
+    standings:
+      title: "შედეგები"
+      place: "ადგილი"
+      team: "გუნდი"
+      finished_at: "ფინიში"
+      duration: "დრო"
     form:
       name: "დასახელება"
       description: "აღწერა"
@@ -334,6 +370,9 @@ ka:
       registration_deadline: "რეგისტრაციის ბოლო ვადა "
       max_team_number: "გუნდების მაქსიმალური რაოდენობა"
       is_draft: "მონახაზი?"
+      access_mode: "წვდომის რეჟიმი"
+      access_mode_scheduled: "განრიგით (რეგისტრაცია და დაწყების თარიღი)"
+      access_mode_pass_required: "საჭიროა უფლება (კომერციული თამაში)"
     primary_locale_label: "ძირითადი ენა"
     available_locales_label: "თამაშის ენები"
     new:
@@ -362,6 +401,7 @@ ka:
       start_test: "ტესტირების დაწყება"
       start: "სტარტი"
       finish_test: "ტესტირების დასრულება"
+      manage_access: "წვდომის ბილეთების მართვა"
   # Same treatment as tr: the case ending sits on a preceding common noun
   # (გუნდი / მოთამაშე / მონაწილე / თამაშის), never on %{name} or %{game}.
   test_admissions:
@@ -953,6 +993,8 @@ ka:
       submit: "შესვლა"
   activerecord:
     attributes:
+      access_pass:
+        game: "თამაში"
       file_attachment:
         attachable: "ობიექტი"
         game_file: "ფაილი"
@@ -967,6 +1009,10 @@ ka:
         invalid: "აქვს არასწორი მნიშვნელობა"
         record_invalid: "ჩანაწერი არასწორია"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "არ იყიდება წვდომით"
         answer:
           attributes:
             value:

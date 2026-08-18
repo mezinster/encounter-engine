@@ -93,6 +93,21 @@ class User < ApplicationRecord
     self.is_superadmin
   end
 
+  def operator?
+    self.is_operator
+  end
+
+  # The single question every commercial surface asks. Superadmins pass
+  # without holding the role, and the two columns stay independent -- this is
+  # the only place they are combined. See the operator-role design, D3.
+  #
+  # Nothing in sub-project A calls this. It is defined here, with coverage, so
+  # that sub-project B reaches for one predicate rather than open-coding
+  # `superadmin? || operator?` at each of its call sites.
+  def may_operate_commercial?
+    superadmin? || operator?
+  end
+
   def self.superadmin_count
     where(:is_superadmin => true).count
   end

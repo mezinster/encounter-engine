@@ -63,14 +63,14 @@ describe Game do
     it "lets a complete game leave draft" do
       complete = create_game(:is_draft => true)
       create_level(:game => complete)
-      complete.is_draft = false
+      complete.visibility = "listed"
       expect(complete).to be_valid
     end
 
     # This is a race: a team reaching a level it cannot read loses the leg.
     it "refuses to leave draft while a declared locale is incomplete" do
       create_level(:game => game, :name => "Уровень", :text => "Текст")
-      game.is_draft = false
+      game.visibility = "listed"
       expect(game).not_to be_valid
       expect(game.errors[:base]).to be_present
     end
@@ -82,7 +82,7 @@ describe Game do
 
     it "refuses a game created directly as published while a locale is incomplete" do
       g = Game.new(:name => "Новая", :description => "Описание", :author => create_user,
-                   :max_team_number => 5, :starts_at => Time.now + 1.day, :is_draft => false)
+                   :max_team_number => 5, :starts_at => Time.now + 1.day, :visibility => "listed")
       g.primary_locale = "ru"
       g.available_locale_list = %w[ru en]
       expect(g).not_to be_valid
@@ -108,7 +108,7 @@ describe Game do
       level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text" } }
       level.save!
 
-      game.reload.is_draft = false
+      game.reload.visibility = "listed"
       expect(game.save).to be true
     end
   end

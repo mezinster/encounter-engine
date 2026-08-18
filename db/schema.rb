@@ -10,7 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_16_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_160000) do
+  create_table "access_passes", force: :cascade do |t|
+    t.integer "game_id", null: false
+    t.integer "team_id", null: false
+    t.string "source", null: false
+    t.integer "issued_by_id"
+    t.datetime "revoked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "team_id"], name: "index_access_passes_on_game_id_and_team_id"
+  end
+
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -125,6 +136,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_16_120000) do
     t.string "status"
     t.integer "penalty_seconds", default: 0, null: false
     t.integer "game_run_id"
+    t.integer "access_pass_id"
+    t.integer "paused_seconds", default: 0, null: false
+    t.index ["access_pass_id"], name: "index_game_passings_on_access_pass_id", unique: true, where: "access_pass_id IS NOT NULL"
     t.index ["game_run_id"], name: "index_game_passings_on_game_run_id"
     t.index ["team_id", "game_run_id"], name: "index_game_passings_on_team_id_and_game_run_id", unique: true
   end
@@ -153,11 +167,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_16_120000) do
     t.integer "author_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.boolean "is_draft", default: false, null: false
     t.string "primary_locale", default: "ru", null: false
     t.string "available_locales", default: "ru", null: false
     t.datetime "editing_locked_at"
     t.datetime "withdrawn_at"
+    t.string "visibility", default: "listed", null: false
+    t.string "access_mode", default: "scheduled", null: false
   end
 
   create_table "hints", force: :cascade do |t|
@@ -195,7 +210,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_16_120000) do
     t.integer "team_id"
     t.integer "level_id"
     t.integer "game_run_id"
+    t.integer "game_passing_id"
     t.index ["game_id", "team_id", "level_id"], name: "index_logs_on_game_id_and_team_id_and_level_id"
+    t.index ["game_passing_id"], name: "index_logs_on_game_passing_id"
     t.index ["game_run_id"], name: "index_logs_on_game_run_id"
   end
 
@@ -316,6 +333,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_16_120000) do
     t.string "password_digest"
     t.string "reset_password_token_digest"
     t.datetime "reset_password_sent_at"
+    t.boolean "is_operator", default: false, null: false
     t.index ["reset_password_token_digest"], name: "index_users_on_reset_password_token_digest"
   end
 

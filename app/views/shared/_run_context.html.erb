@@ -7,6 +7,13 @@
     four views of ONE controller, all of which set the same three, so passing
     them four times would be noise. shared/_run_switcher takes locals because
     its callers live in different controllers with different policies. %>
+<%# @run is nil for a gated game -- LogsController#find_run deliberately
+    skips the run lookup for one (Task 7), since a commercial attempt has no
+    run to report on. There is nothing this partial can say about a run that
+    does not exist, so it says nothing: all four callers render it
+    unconditionally, and this is the one place that decides whether there is
+    context to show, rather than each of the four repeating the guard. %>
+<% if @run %>
 <p class="run-context">
   <strong><%= t("shared.run_switcher.run_label",
                 :ordinal => @run.ordinal,
@@ -27,3 +34,4 @@
     when the run has no start date, as the results page does. %>
 <% zone_reference = (@run.starts_at || Time.current).in_time_zone(Time.zone) %>
 <p><em><%= t("shared.times_in_zone", :zone => zone_reference.formatted_offset) %></em></p>
+<% end %>

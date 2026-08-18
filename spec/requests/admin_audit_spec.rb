@@ -156,6 +156,25 @@ describe "auditing administrative changes", type: :request do
       expect(AdminAction.newest_first.first.action).to eq("translation_proposals_accepted")
     end
 
+    it "records granting the operator role" do
+      target = create_user
+
+      expect { post grant_operator_admin_user_path(target) }.to change { AdminAction.count }.by(1)
+
+      entry = AdminAction.newest_first.first
+      expect(entry.action).to eq("grant_operator")
+      expect(entry.actor_id).to eq(superadmin.id)
+      expect(entry.target_id).to eq(target.id)
+    end
+
+    it "records revoking the operator role" do
+      target = create_user
+      target.update!(:is_operator => true)
+
+      expect { post revoke_operator_admin_user_path(target) }.to change { AdminAction.count }.by(1)
+      expect(AdminAction.newest_first.first.action).to eq("revoke_operator")
+    end
+
     # The second bulk button reuses the SAME action name, deliberately -- it is
     # the same kind of event -- and tells the two apart in the details. This
     # file is the enumeration guard for the audited set (see the comment in
@@ -224,20 +243,20 @@ describe "auditing administrative changes", type: :request do
     end
   end
 
-  # The condition is "superadmin AND not the author". Getting it wrong in the
-  # other direction floods the log with ordinary use and buries the entries
-  # anyone actually wants to find.
+  # The condition is "may_operate_commercial? (superadmin OR operator) AND
+  # not the author". Getting it wrong in the other direction floods the log
+  # with ordinary use and buries the entries anyone actually wants to find.
   describe "an author acting on their own game" do
     it "records nothing" do
       sign_in(author)
       expect { post end_game_game_path(game) }.not_to change { AdminAction.count }
     end
 
-    # acting_as_operator? is "superadmin AND not the author". The example
-    # above only exercises a non-superadmin author; this is the other half of
-    # the conjunction -- a superadmin who is ALSO the author must still record
-    # nothing, or the log would bury every superadmin's ordinary games under
-    # administrative noise.
+    # acting_as_operator? is "may_operate_commercial? AND not the author".
+    # The example above only exercises a non-superadmin author; this is the
+    # other half of the conjunction -- a superadmin who is ALSO the author
+    # must still record nothing, or the log would bury every superadmin's
+    # ordinary games under administrative noise.
     it "records nothing when the author is also a superadmin" do
       author.update!(:is_superadmin => true)
       sign_in(author)

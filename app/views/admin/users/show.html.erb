@@ -43,6 +43,12 @@
     <%= button_to t("admin.users.show.grant"), grant_admin_user_path(@user), :method => :post, :class => "btn btn--go" %>
   <% end %>
 
+  <% if @user.operator? %>
+    <%= button_to t("admin.users.show.revoke_operator"), revoke_operator_admin_user_path(@user), :method => :post, :class => "btn btn--danger" %>
+  <% else %>
+    <%= button_to t("admin.users.show.grant_operator"), grant_operator_admin_user_path(@user), :method => :post, :class => "btn btn--go" %>
+  <% end %>
+
   <%# Offered only where Admin::UsersController#destroy would accept: not
       yourself, not a captain (reassign first), not an author (their games are
       other people's content -- anonymise instead). The last-superadmin case

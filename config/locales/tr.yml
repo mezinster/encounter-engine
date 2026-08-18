@@ -44,10 +44,27 @@
 # подсказка -> ipucu, игрок -> oyuncu, заявка -> başvuru, "сойти с дистанции"
 # -> "yarıştan çekilmek" (quit mid-game).
 tr:
+  access_passes:
+    title: "Oyun erişimi"
+    team_name: "Takım adı"
+    submit: "Erişim ver"
+    issued: "Verildi"
+    state: "Durum"
+    state_live: "kullanılmadı"
+    state_playing: "devam ediyor"
+    state_spent: "kullanıldı"
+    state_revoked: "geri alındı"
+    revoke: "Geri al"
+    issued_notice: "«%{team}» adlı takıma erişim verildi"
+    revoked_notice: "Erişim geri alındı"
+    not_found: "Takım bulunamadı"
+    cannot_revoke_started: "Erişim geri alınamaz: takım çoktan başladı"
   admin:
     users:
       granted_notice: "Yönetici yetkileri verildi"
       revoked_notice: "Yönetici yetkileri geri alındı"
+      operator_granted_notice: "Operatör yetkileri verildi"
+      operator_revoked_notice: "Operatör yetkileri alındı"
       cannot_revoke_self: "Kendi yetkilerinizi geri alamazsınız"
       cannot_revoke_last: "Son yöneticinin yetkileri geri alınamaz"
       moved_notice: "Oyuncu «%{team}» adlı takıma taşındı"
@@ -71,6 +88,7 @@ tr:
         signed_up: "Kayıt"
         role: "Rol"
         superadmin: "yönetici"
+        operator: "operatör"
         back: "Genel bakışa"
       show:
         email: "E-posta"
@@ -86,6 +104,8 @@ tr:
         back: "Oyuncu listesine"
         grant: "Yönetici yap"
         revoke: "Yönetici yetkilerini al"
+        grant_operator: "Operatör yap"
+        revoke_operator: "Operatör yetkilerini al"
         move: "Takıma taşı"
         delete: "Hesabı sil"
         anonymise: "Hesabı anonimleştir"
@@ -124,6 +144,8 @@ tr:
           test_reset_token: "Test bağlantısını değiştirdi"
           grant_superadmin: "Yönetici yetkileri verdi"
           revoke_superadmin: "Yönetici yetkilerini aldı"
+          grant_operator: "Operatör yetkileri verdi"
+          revoke_operator: "Operatör yetkilerini aldı"
           allow_any_code: "Seviyede herhangi bir koda izin verdi"
           require_all_codes: "Seviyede tüm kodları zorunlu kıldı"
           update_settings: "Ayarları değiştirdi"
@@ -138,6 +160,8 @@ tr:
           translation_run_cancelled: "Çeviriyi durdurdu"
           translation_run_retried: "Çeviriyi yeniden denedi"
           translation_proposals_accepted: "Çevirileri kabul etti"
+          issue_access_pass: "Oyun erişimi verdi"
+          revoke_access_pass: "Oyun erişimini geri aldı"
     settings:
       title: "Sınırlama ayarları"
       explanation: "Kayıt sınırlamaları belirtilen süre içinde tek bir IP adresi için geçerlidir; 0 sınırlamayı kapatır. Dosya sınırlamaları oyun başına ve sunucu genelinde geçerlidir."
@@ -178,6 +202,7 @@ tr:
           finished: "Bitti"
           running: "Sürüyor"
           scheduled: "Planlandı"
+          available: "Erişilebilir"
         total:
           users: "Oyuncu"
           teams: "Takım"
@@ -216,6 +241,7 @@ tr:
         running: "Sürüyor"
         finished: "Bitti"
         withdrawn: "Yayından kaldırıldı"
+        available: "Erişilebilir"
         locked: "düzenleme donduruldu"
         edit: "Düzenle"
         entries_link: "Başvurular (%{count})"
@@ -267,7 +293,10 @@ tr:
     must_be_author: "Bu sayfayı görmek için oyunun yazarı olmalısınız"
     translation_key_missing: "Yapay zeka ile çeviri kullanılamıyor: API anahtarı ayarlanmamış."
     not_registered_for_game: "Takımınız bu oyuna kayıtlı değil."
+    no_access_pass: "Bu oyun için erişim gerekiyor. Düzenleyiciye başvurun."
     must_be_superadmin: "Erişim yalnızca yöneticiye açıktır"
+    must_operate_commercial: "Bu sayfa yalnızca operatörler ve yöneticiler içindir"
+    game_not_gated: "Bu sayfa yalnızca geçiş ile satılan bir oyun için kullanılabilir"
     too_many_requests: "Çok fazla deneme yapıldı. Daha sonra tekrar deneyin."
     must_be_author_or_finished_player: "Tam cevap günlüğü yalnızca oyunun yazarına ya da oyunu bitiren takımın oyuncusuna açıktır"
     game_already_started: "Oyun başladıktan sonra düzenlenemez"
@@ -334,6 +363,7 @@ tr:
       status_finished: "Bitti"
       status_running: "Sürüyor"
       status_scheduled: "Planlandı"
+      status_available: "Erişilebilir"
       paused: "duraklatıldı"
       duration: "%{hours} sa %{minutes} dk"
       playing: "oynayan: %{count}"
@@ -350,6 +380,12 @@ tr:
       reject: "(reddet)"
     teams:
       legend: "Katılan takımlar:"
+    standings:
+      title: "Sonuçlar"
+      place: "Sıra"
+      team: "Takım"
+      finished_at: "Bitiş"
+      duration: "Süre"
     form:
       name: "Ad"
       description: "Açıklama"
@@ -357,6 +393,9 @@ tr:
       registration_deadline: "Son kayıt tarihi "
       max_team_number: "En fazla takım sayısı"
       is_draft: "Taslak mı?"
+      access_mode: "Erişim modu"
+      access_mode_scheduled: "Planlı (kayıt ve başlangıç tarihi)"
+      access_mode_pass_required: "Geçiş gerekli (ticari)"
     primary_locale_label: "Ana dil"
     available_locales_label: "Oyunun dilleri"
     new:
@@ -385,6 +424,7 @@ tr:
       start_test: "Testi başlat"
       start: "Başla"
       finish_test: "Testi bitir"
+      manage_access: "Erişim izinlerini yönet"
   # Every key below carrying %{name} or %{game} puts the case suffix on a
   # common noun (adlı takım / adlı oyuncu / adlı katılımcı / adlı oyunun),
   # never on the placeholder: the correct suffix depends on the value's final
@@ -971,6 +1011,8 @@ tr:
       submit: "Giriş yap"
   activerecord:
     attributes:
+      access_pass:
+        game: "Oyun"
       file_attachment:
         attachable: "Nesne"
         game_file: "Dosya"
@@ -985,6 +1027,10 @@ tr:
         invalid: "geçersiz bir değer içeriyor"
         record_invalid: "Kayıt geçersiz"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "erişim ile satılmıyor"
         answer:
           attributes:
             value:

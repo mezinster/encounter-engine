@@ -39,6 +39,11 @@ Rails.application.routes.draw do
     resources :users, only: [ :index, :show ] do
       post "grant",  on: :member
       post "revoke", on: :member
+      # The operator role. Separate actions rather than a parameterised one:
+      # grant/revoke above are superadmin's and have guards these must not
+      # inherit -- see the operator-role design, D4.
+      post "grant_operator",  on: :member
+      post "revoke_operator", on: :member
       post "move",   on: :member
       delete "destroy", on: :member, as: :destroy
       post "anonymise", on: :member
@@ -253,6 +258,12 @@ Rails.application.routes.draw do
   # codes count is a property of the level, not of one team's passing.
   post "/games/:game_id/levels/:id/allow_any_code",    to: "interventions#allow_any_code",    as: :allow_any_code_level
   post "/games/:game_id/levels/:id/require_all_codes", to: "interventions#require_all_codes", as: :require_all_codes_level
+
+  # Commercial entitlements. Nested under the game because every action is
+  # about one game's passes, and the authorization asks about that game.
+  resources :games, only: [] do
+    resources :access_passes, only: [ :index, :create, :destroy ]
+  end
 
   # The routes below have no `resources` equivalent: in Merb they were only
   # reachable through the catch-all `default_routes` entry

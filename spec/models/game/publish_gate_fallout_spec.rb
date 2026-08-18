@@ -29,7 +29,7 @@ describe Game do
     level = create_level(:game => g, :name => "Уровень", :text => "Текст")
     level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text" } }
     level.save!
-    g.update!(:is_draft => false)
+    g.update!(:visibility => "listed")
     g
   end
 

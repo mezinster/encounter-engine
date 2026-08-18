@@ -13,7 +13,7 @@ describe "switching content language from the game page", type: :request do
 
   let(:author) { create_user }
 
-  # A draft, and deliberately so: ensure_author_if_game_is_draft keeps a draft
+  # A draft, and deliberately so: ensure_author_if_game_draft keeps a draft
   # author-only, and a stopped draft is exactly the state in which the owner
   # got stuck in Turkish.
   let(:game) do

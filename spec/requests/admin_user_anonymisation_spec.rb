@@ -36,13 +36,14 @@ describe "anonymising a user account", type: :request do
     victim = create_user
     team = create_team(:captain => create_user)
     team.members << victim
-    victim.update!(:is_superadmin => true)
+    victim.update!(:is_superadmin => true, :is_operator => true)
     sign_in(superadmin)
 
     post anonymise_admin_user_path(victim)
 
     expect(victim.reload.team).to be_nil
     expect(victim.superadmin?).to be false
+    expect(victim.operator?).to be false
   end
 
   it "records who did it" do

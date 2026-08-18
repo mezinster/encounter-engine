@@ -10,9 +10,10 @@ class GameFilesController < ApplicationController
   include SecurityFilters
 
   before_action :find_game
-  # ensure_author ALREADY admits superadmins -- see the SECURITY CHOKEPOINT
-  # comment in SecurityFilters. That is exactly this page's rule, so there is
-  # no second permission check here; a parallel one would drift out of sync.
+  # ensure_author ALREADY admits superadmins, and an operator on a gated game
+  # -- see the SECURITY CHOKEPOINT comment in SecurityFilters. That is
+  # exactly this page's rule, so there is no second permission check here; a
+  # parallel one would drift out of sync.
   before_action :ensure_author
   # Writing is content, so the editing lock applies. Listing is a read-only
   # view and deliberately stays off it, matching the filter's own comment.

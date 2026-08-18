@@ -215,4 +215,67 @@ describe "the games listing", type: :request do
 
     expect(ten).to eq(one)
   end
+
+  # GamesHelper#gated_play_status -- the batched preload behind the play
+  # link/access-required cell below. A per-row AccessPass lookup would break
+  # this exactly as an unpreloaded deletable? broke the admin console
+  # (fd96d51): the query count must not grow with the number of gated rows.
+  describe "the play link on a gated row" do
+    it "shows the play link when the signed-in team holds a live pass" do
+      game = create_game(:is_draft => false, :access_mode => "pass_required")
+      captain = create_user
+      team = create_team(:captain => captain)
+      create_access_pass(:game => game, :team => team)
+      login(captain)
+
+      get games_path
+
+      expect(response.body).to include(I18n.t("shared.current_games_status.play"))
+    end
+
+    it "shows the access-required message when the signed-in team holds no pass" do
+      game = create_game(:is_draft => false, :access_mode => "pass_required")
+      captain = create_user
+      create_team(:captain => captain)
+      login(captain)
+
+      get games_path
+
+      expect(response.body).to include(I18n.t("errors.no_access_pass"))
+    end
+
+    it "shows the access-required message to a guest" do
+      create_game(:is_draft => false, :access_mode => "pass_required")
+
+      get games_path
+
+      expect(response.body).to include(I18n.t("errors.no_access_pass"))
+    end
+
+    it "does not show the message at all for a scheduled game" do
+      running_game("Обычная")
+
+      get games_path
+
+      expect(response.body).not_to include(I18n.t("errors.no_access_pass"))
+    end
+
+    it "does not grow the query count as the number of gated rows grows" do
+      captain = create_user
+      team = create_team(:captain => captain)
+      login(captain)
+
+      game = create_game(:is_draft => false, :access_mode => "pass_required")
+      create_access_pass(:game => game, :team => team)
+      one = count_queries { get games_path }
+
+      9.times do
+        g = create_game(:is_draft => false, :access_mode => "pass_required")
+        create_access_pass(:game => g, :team => team)
+      end
+      ten = count_queries { get games_path }
+
+      expect(ten).to eq(one)
+    end
+  end
 end

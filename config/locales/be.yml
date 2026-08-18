@@ -18,10 +18,27 @@
 # заявка -> заяўка, "сойти с дистанции" -> "сысці з дыстанцыі" (quit
 # mid-game).
 be:
+  access_passes:
+    title: "Доступ да гульні"
+    team_name: "Назва каманды"
+    submit: "Выдаць доступ"
+    issued: "Выдадзены"
+    state: "Стан"
+    state_live: "не выкарыстаны"
+    state_playing: "праходзіцца"
+    state_spent: "выкарыстаны"
+    state_revoked: "адкліканы"
+    revoke: "Адклікаць"
+    issued_notice: "Доступ выдадзены камандзе «%{team}»"
+    revoked_notice: "Доступ адкліканы"
+    not_found: "Каманда не знойдзена"
+    cannot_revoke_started: "Нельга адклікаць доступ: каманда ўжо пачала праходжанне"
   admin:
     users:
       granted_notice: "Правы адміністратара выдадзены"
       revoked_notice: "Правы адміністратара адкліканы"
+      operator_granted_notice: "Правы аператара выдадзены"
+      operator_revoked_notice: "Правы аператара знятыя"
       cannot_revoke_self: "Нельга зняць правы з самога сябе"
       cannot_revoke_last: "Нельга зняць правы з апошняга адміністратара"
       moved_notice: "Гулец пераведзены ў каманду «%{team}»"
@@ -45,6 +62,7 @@ be:
         signed_up: "Рэгістрацыя"
         role: "Роля"
         superadmin: "адміністратар"
+        operator: "аператар"
         back: "Да агляду"
       show:
         email: "E-mail"
@@ -60,6 +78,8 @@ be:
         back: "Да спіса гульцоў"
         grant: "Зрабіць адміністратарам"
         revoke: "Зняць правы адміністратара"
+        grant_operator: "Зрабіць аператарам"
+        revoke_operator: "Зняць правы аператара"
         move: "Перавесці ў каманду"
         delete: "Выдаліць акаўнт"
         anonymise: "Абязлічыць акаўнт"
@@ -98,6 +118,8 @@ be:
           test_reset_token: "Змяніў спасылку на тэставанне"
           grant_superadmin: "Выдаў правы адміністратара"
           revoke_superadmin: "Зняў правы адміністратара"
+          grant_operator: "Выдаў правы аператара"
+          revoke_operator: "Зняў правы аператара"
           allow_any_code: "Дазволіў любы код на ўзроўні"
           require_all_codes: "Запатрабаваў усе коды на ўзроўні"
           update_settings: "Змяніў налады"
@@ -112,6 +134,8 @@ be:
           translation_run_cancelled: "Спыніў пераклад"
           translation_run_retried: "Паўтарыў пераклад"
           translation_proposals_accepted: "Прыняў пераклады"
+          issue_access_pass: "Выдаў доступ да гульні"
+          revoke_access_pass: "Адклікаў доступ да гульні"
     settings:
       title: "Налады абмежаванняў"
       explanation: "Абмежаванні на рэгістрацыю дзейнічаюць на адзін IP-адрас за пазначаны перыяд; 0 адключае абмежаванне. Абмежаванні на файлы дзейнічаюць на гульню і на ўвесь сервер."
@@ -152,6 +176,7 @@ be:
           finished: "Завершана"
           running: "Ідзе"
           scheduled: "Запланавана"
+          available: "Даступная"
         total:
           users: "Гульцоў"
           teams: "Каманд"
@@ -189,6 +214,7 @@ be:
         running: "Ідзе"
         finished: "Завершана"
         withdrawn: "Знята з публікацыі"
+        available: "Даступная"
         locked: "рэдагаванне замарожана"
         edit: "Рэдагаваць"
         entries_link: "Заяўкі (%{count})"
@@ -240,7 +266,10 @@ be:
     must_be_author: "Вы павінны быць аўтарам гульні, каб бачыць гэту старонку"
     translation_key_missing: "Пераклад пры дапамозе ШІ недаступны: не наладжаны ключ API."
     not_registered_for_game: "Ваша каманда не зарэгістравана на гэту гульню."
+    no_access_pass: "Для гэтай гульні патрэбны доступ. Звярніцеся да арганізатара."
     must_be_superadmin: "Доступ толькі для адміністратара"
+    must_operate_commercial: "Гэтая старонка даступная толькі аператарам і адміністратарам"
+    game_not_gated: "Гэтая старонка даступная толькі для гульні, якая прадаецца па пропусках"
     too_many_requests: "Занадта шмат спробаў. Паспрабуйце пазней."
     must_be_author_or_finished_player: "Поўны лог адказаў даступны толькі аўтару гульні або гульцу з каманды, якая скончыла гульню"
     game_already_started: "Нельга рэдагаваць гульню пасля яе пачатку"
@@ -307,6 +336,7 @@ be:
       status_finished: "Завершана"
       status_running: "Ідзе"
       status_scheduled: "Запланавана"
+      status_available: "Даступная"
       paused: "на паўзе"
       duration: "%{hours} г %{minutes} хв"
       playing: "гуляюць: %{count}"
@@ -323,6 +353,12 @@ be:
       reject: "(адмовіць)"
     teams:
       legend: "Удзельнічаюць каманды:"
+    standings:
+      title: "Вынікі"
+      place: "Месца"
+      team: "Каманда"
+      finished_at: "Фініш"
+      duration: "Час"
     form:
       name: "Назва"
       description: "Апісанне"
@@ -330,6 +366,9 @@ be:
       registration_deadline: "Крайні тэрмін рэгістрацыі "
       max_team_number: "Максімальная колькасць каманд"
       is_draft: "Чарнавік?"
+      access_mode: "Рэжым доступу"
+      access_mode_scheduled: "Па раскладзе (рэгістрацыя і дата пачатку)"
+      access_mode_pass_required: "Па пропусках (камерцыйная гульня)"
     primary_locale_label: "Асноўная мова"
     available_locales_label: "Мовы гульні"
     new:
@@ -358,6 +397,7 @@ be:
       start_test: "Пачаць тэставанне"
       start: "Старт"
       finish_test: "Завяршыць тэставанне"
+      manage_access: "Кіраванне пропускамі"
   test_admissions:
     team_not_found: "Каманда «%{name}» не знойдзена"
     already_admitted: "«%{name}» ужо дапушчаны да тэставання"
@@ -919,6 +959,8 @@ be:
       submit: "Увайсці"
   activerecord:
     attributes:
+      access_pass:
+        game: "Гульня"
       file_attachment:
         attachable: "Аб'ект"
         game_file: "Файл"
@@ -933,6 +975,10 @@ be:
         invalid: "мае няправільнае значэнне"
         record_invalid: "Запіс несапраўдны"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "не прадаецца па доступе"
         answer:
           attributes:
             value:

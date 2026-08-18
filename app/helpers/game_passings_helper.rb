@@ -60,11 +60,21 @@ module GamePassingsHelper
   # actually completing the game, so a finished non-exited player always
   # sees this link. current_user may be nil here (guest), unlike in the
   # controller method where require_authentication! already ran.
+  # Gated resolution goes through GamePassing.gated_attempt_for -- THE single
+  # definition of "this team's current attempt" (finding 3 of the
+  # whole-branch review). Finding 6: this used to resolve through
+  # game.current_run.passing_for even for a gated game, which is scoped by
+  # game_run_id and can never see a runless attempt, so the link was false
+  # for every gated attempt -- reachable only by typing show_full_log's URL
+  # directly, which LogsController#ensure_full_log_access (see its own
+  # gated_passing_for) already admitted.
   def full_log_visible?(game)
     return false unless logged_in?
     return true if game.created_by?(current_user)
 
-    game_passing = current_user.team && game.current_run.passing_for(current_user.team)
+    game_passing = current_user.team &&
+      (game.pass_required? ? GamePassing.gated_attempt_for(game, current_user.team) :
+                             game.current_run.passing_for(current_user.team))
     !!(game_passing&.finished? && !game_passing.exited?)
   end
 end

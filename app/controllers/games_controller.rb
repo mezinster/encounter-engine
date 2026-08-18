@@ -6,7 +6,7 @@ class GamesController < ApplicationController
   before_action :require_authentication!, except: [:index, :show]
   before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :unfinish, :lock, :unlock, :hand_over, :set_content_locale]
   before_action :find_team, only: [:show]
-  before_action :ensure_author_if_game_is_draft, only: [:show, :set_content_locale]
+  before_action :ensure_author_if_game_draft, only: [:show, :set_content_locale]
   before_action :ensure_author_if_no_start_time, only: [:show, :set_content_locale]
   before_action :ensure_author_if_game_is_withdrawn, only: [:show, :set_content_locale]
   before_action :ensure_author_if_game_is_testing, only: [:show, :set_content_locale]
@@ -92,12 +92,38 @@ class GamesController < ApplicationController
     end
 
     @game.finish_game!
-    @game.current_run.passings.each(&:end!)
+    # THE GAME's passings, not the current run's: a commercial attempt has
+    # game_run_id NULL and current_run.passings (scoped by game_run_id) can
+    # never see it -- the same defect class Game#resume! and
+    # InterventionsController#find_game_passing were already fixed for.
+    # Without this, a runless attempt's status/finished_at stayed nil
+    # forever: Team#in_live_race? stayed permanently true (the team could
+    # never hand over captaincy or leave), the operator console kept showing
+    # «проходится», and AccessPassesController#destroy refused to release the
+    # pass because it still had an attempt.
+    #
+    # Every passing gets end! called, not just the unfinished ones, and not
+    # just the CURRENT run's -- #game_passings names every run this game has
+    # ever had, not only #current_run.passings. That is deliberately wider
+    # than "every scheduled game today has a single run": Game#open_run! and
+    # Admin::GamesController#open_run both create a second one, so a game
+    # ended twice (once per run) sweeps an OLDER run's passings again here.
+    # That repeat sweep is safe, not merely unlikely to matter: finish_game!
+    # has exactly one caller (this action), so by the time a later run is
+    # being ended, an earlier run's passings were already swept by the call
+    # that ended IT -- every one of them is already "ended" or "exited".
+    # end! skips exited? outright and, for an already-ended row, re-writes
+    # the same status it already holds, so re-running it changes nothing.
+    # A team that genuinely crossed the finish line also picks up status
+    # "ended" here, which is what let the admin overview's "in progress"
+    # count go to zero the moment the author closes the game (see
+    # spec/requests/admin_passing_outcomes_spec.rb).
+    @game.game_passings.each(&:end!)
     record_admin_action("end_game", @game) if acting_as_operator?(@game)
     redirect_to dashboard_path
   end
 
-  # save, not save!. start_test sets is_draft to false, which is exactly the
+  # save, not save!. start_test sets visibility to "listed", which is exactly the
   # transition the translation-completeness gate guards, so a game with a
   # declared-but-untranslated language legitimately fails to save here.
   #
@@ -108,7 +134,7 @@ class GamesController < ApplicationController
   # translating". The reason was computed, attached as errors[:base], and then
   # discarded by the exception. Surface it instead.
   def start_test
-    @game.is_draft = false
+    @game.visibility = "listed"
     @game.is_testing = true
     @game.test_date = @game.starts_at
     @game.starts_at = Time.now + 0.1.second
@@ -210,7 +236,7 @@ class GamesController < ApplicationController
                         "#{previous} -> #{successor.nickname}") if operator
 
     # The games LIST, not the game. A draft sits behind
-    # ensure_author_if_game_is_draft, so redirecting to a game the caller has
+    # ensure_author_if_game_draft, so redirecting to a game the caller has
     # just stopped authoring would answer a successful transfer with 401.
     redirect_to games_path, :notice => t("games.hand_over.done", :nickname => successor.nickname)
   end
@@ -230,11 +256,11 @@ class GamesController < ApplicationController
     redirect_to game_path(@game)
   end
 
-  # Same treatment as start_test. This direction sets is_draft back to true so
-  # the gate cannot fire, but another validation still can -- and an author
-  # stuck in test mode with a blank 422 has no way to understand why.
+  # Same treatment as start_test. This direction sets visibility back to
+  # "draft" so the gate cannot fire, but another validation still can -- and
+  # an author stuck in test mode with a blank 422 has no way to understand why.
   def finish_test
-    @game.is_draft = true
+    @game.visibility = "draft"
     @game.is_testing = false
     @game.starts_at = @game.test_date
     @game.test_date = Time.now
@@ -281,7 +307,7 @@ class GamesController < ApplicationController
   def game_params
     params.fetch(:game, ActionController::Parameters.new)
           .permit(:name, :description, :starts_at, :registration_deadline,
-                   :max_team_number, :is_draft, :primary_locale,
+                   :max_team_number, :visibility, :primary_locale, :access_mode,
                    :available_locale_list => [],
                    :translations => translation_params_shape(Game::TRANSLATABLE_FIELDS))
   end
@@ -294,9 +320,20 @@ class GamesController < ApplicationController
 
   # translations_attributes= is the concern's writer; the form posts
   # `translations` because that is what reads naturally in the markup.
+  #
+  # access_mode is stripped here, not merely hidden from the form: permitting
+  # the param already closes the mass-assignment hole Rails cares about, but
+  # an ordinary author could still hand-craft a POST with
+  # game[access_mode]=pass_required and have it accepted, because
+  # game_attributes has no notion of WHO is asking. Deleting the key unless
+  # the actor holds may_operate_commercial? is what actually enforces "this
+  # is operator territory" -- see the games/new and games/edit views, which
+  # render the control under the identical predicate so an ordinary author
+  # never sees a field their POST would be refused anyway.
   def game_attributes
     attributes = game_params.to_h
     translations = attributes.delete("translations")
+    attributes.delete("access_mode") unless logged_in? && current_user.may_operate_commercial?
     attributes.merge("translations_attributes" => translations)
   end
 
@@ -316,7 +353,7 @@ class GamesController < ApplicationController
     @team = current_user&.team
   end
 
-  def game_is_draft?
+  def game_draft?
     @game.draft?
   end
 
@@ -331,11 +368,18 @@ class GamesController < ApplicationController
   # these two guards, an unpublished game's name/description/level count
   # leak from the moment its author saves the draft, before it's meant to be
   # public.
-  def ensure_author_if_game_is_draft
-    ensure_author if game_is_draft?
+  def ensure_author_if_game_draft
+    ensure_author if game_draft?
   end
 
+  # A gated game legitimately has no start time -- it never gets one, and
+  # never will -- so "no start time" cannot mean "not yet scheduled, author
+  # only" for it the way it does for a scheduled game. Without this
+  # exemption, every gated game's own show page 401'd its paying customers,
+  # who hold a pass but are neither the author nor a superadmin.
   def ensure_author_if_no_start_time
+    return if @game.pass_required?
+
     ensure_author if no_start_time?
   end
 
@@ -350,10 +394,11 @@ class GamesController < ApplicationController
   end
 
   # The fourth sibling, and it exists because the first one stops working.
-  # ensure_author_if_game_is_draft keeps non-authors off an unpublished game --
-  # but start_test clears is_draft, so from the moment a rehearsal begins that
-  # guard lapses and the page becomes world-readable. Reported from production
-  # 2026-08-15, together with the listing leak Game.visible now closes.
+  # ensure_author_if_game_draft keeps non-authors off an unpublished game --
+  # but start_test sets visibility to "listed", so from the moment a rehearsal
+  # begins that guard lapses and the page becomes world-readable. Reported
+  # from production 2026-08-15, together with the listing leak Game.visible
+  # now closes.
   #
   # Wider than its siblings by one case: an admitted TESTER must reach the game
   # they were invited to. That is the only widening -- a stranger with the URL

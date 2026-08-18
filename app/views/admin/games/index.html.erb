@@ -26,6 +26,7 @@
            when :withdrawn %><span class="tag tag--danger"><%= t("admin.games.index.withdrawn") %></span>
         <% when :draft     %><span class="tag"><%= t("admin.games.index.draft") %></span>
         <% when :finished  %><span class="tag"><%= t("admin.games.index.finished") %></span>
+        <% when :available %><span class="tag"><%= t("admin.games.index.available") %></span>
         <% when :running   %><span class="tag tag--live"><%= t("admin.games.index.running") %></span>
         <% else            %><span class="tag"><%= t("admin.games.index.scheduled") %></span>
         <% end %>

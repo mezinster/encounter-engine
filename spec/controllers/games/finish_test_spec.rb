@@ -87,7 +87,7 @@ RSpec.describe GamesController, "#finish_test", type: :controller do
       perform_request(:as_user => @user)
 
       expect(@game.reload.is_testing?).to be false
-      expect(@game.is_draft).to be true
+      expect(@game.draft?).to be true
     end
 
     it "redirects to the game rather than bouncing back with an alert" do

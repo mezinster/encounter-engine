@@ -21,6 +21,19 @@ describe "game deletion", type: :request do
     expect(game.reload.deletable?).to be false
   end
 
+  # Finding 1 of the whole-branch review: has_many :access_passes carried
+  # :dependent => :destroy while this check only ever looked at
+  # game_passings, so deleting a gated game with an issued-but-unstarted pass
+  # destroyed the purchase record silently -- no refusal, no audit of what
+  # was lost. No game_passing exists yet in this example, so it isolates the
+  # access_passes conjunct: dropping it from Game#deletable? leaves every
+  # other example here green and only this one fails.
+  it "is refused once a gated game holds an access pass, even with no passing yet" do
+    game = create_game(:author => author, :is_draft => false, :access_mode => "pass_required")
+    create_access_pass(:game => game)
+    expect(game.reload.deletable?).to be false
+  end
+
   # Today's behaviour orphans them: zero foreign keys, no dependent: options.
   it "takes the levels, hints, questions and answers with it" do
     game     = create_game(:author => author, :is_draft => true)

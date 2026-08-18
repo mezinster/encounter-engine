@@ -73,9 +73,17 @@
     <%= f.text_field :max_team_number %>
   </div>
   <div class="field">
-    <%= f.label :is_draft, t("games.form.is_draft") %>
-    <%= f.check_box :is_draft %>
+    <%= f.label :visibility, t("games.form.is_draft") %>
+    <%= f.check_box :visibility, {}, "draft", "listed" %>
   </div>
+  <%# Same predicate and same single-field shape as games/new.html.erb -- see
+      the comment there. %>
+  <% if logged_in? && current_user.may_operate_commercial? %>
+    <div class="field">
+      <%= f.label :access_mode, t("games.form.access_mode") %>
+      <%= f.select :access_mode, Game::ACCESS_MODES.map { |m| [t("games.form.access_mode_#{m}"), m] } %>
+    </div>
+  <% end %>
   <%= f.submit t("games.edit.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), game_path(@game) %></em>
 <% end %>

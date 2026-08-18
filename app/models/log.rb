@@ -24,6 +24,10 @@ class Log < ApplicationRecord
 
   scope :of_run, ->(run) { where(:game_run_id => run.id) }
 
+  # A log line belongs to one team's one attempt. game_run_id was only ever a
+  # proxy for that, and stops being one when a commercial attempt has no run.
+  scope :of_attempt, ->(passing) { where(:game_passing_id => passing.id) }
+
   # Idempotent and safe to re-run: only touches rows whose game_run_id is
   # still NULL. Returns the count, which the migration logs -- a backfill that
   # resolved nothing would otherwise look identical to one that resolved
@@ -77,5 +81,28 @@ class Log < ApplicationRecord
     end
 
     { :teams => resolved_teams, :levels => resolved_levels, :ambiguous => ambiguous_levels }
+  end
+
+  # Idempotent and safe to re-run: only touches rows whose game_passing_id is
+  # still NULL. Returns the count, which the migration logs -- see
+  # backfill_run_ids! for why that matters.
+  #
+  # Resolves from (game_run_id, team_id), which is unique by the index on
+  # game_passings. A row missing either simply stays NULL rather than being
+  # guessed at: an answer attributed to the wrong attempt is worse than one
+  # attributed to none.
+  def self.backfill_passing_ids!
+    resolved = 0
+
+    where(:game_passing_id => nil).where.not(:game_run_id => nil)
+                                  .where.not(:team_id => nil).find_each do |log|
+      passing = GamePassing.find_by(:game_run_id => log.game_run_id, :team_id => log.team_id)
+      next if passing.nil?
+
+      log.update_column(:game_passing_id, passing.id)
+      resolved += 1
+    end
+
+    { :resolved => resolved }
   end
 end

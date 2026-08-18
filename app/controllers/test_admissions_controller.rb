@@ -1,9 +1,10 @@
 # -*- encoding : utf-8 -*-
 # Who, besides the author's own team, may play a test run.
 #
-# Everything except #invite/#join is author-or-superadmin: SecurityFilters#
-# ensure_author already returns early for superadmins, which is what satisfies
-# the "or superadmin" half of this feature with no second permission concept.
+# Everything except #invite/#join is author-or-superadmin-or-gated-operator:
+# SecurityFilters#ensure_author already returns early for superadmins, and
+# for an operator on a gated game, which is what satisfies that half of this
+# feature with no second permission concept.
 class TestAdmissionsController < ApplicationController
   include SecurityFilters
   include AdminAudit

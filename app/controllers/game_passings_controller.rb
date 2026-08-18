@@ -58,8 +58,7 @@ class GamePassingsController < ApplicationController
   # #post_answer, so a team that has NOT finished is unaffected.
   def show_current_level
     if @game_passing.finished?
-      @run ||= @game.current_run
-      render :show_results
+      render_finished_passing
       return
     end
 
@@ -68,8 +67,24 @@ class GamePassingsController < ApplicationController
     render layout: "in_game"
   end
 
+  # current_run.passings is run-scoped, and a gated attempt is runless
+  # (game_run_id NULL) -- the same defect class Game#resume! and
+  # InterventionsController#find_game_passing were already fixed for. Without
+  # this branch, a gated game's live console (the move/reinstate controls
+  # this view hosts) was empty for every gated game, however many teams were
+  # actually playing.
+  #
+  # where.not(:access_pass_id => nil), not GamePassing.gated_attempt_for:
+  # that method answers "which ROW is THIS TEAM's current attempt" -- a
+  # per-team question this console does not ask. This is a per-GAME listing,
+  # every gated attempt for it, exactly as current_run.passings is every
+  # scheduled attempt for the run.
   def index
-    @game_passings = @game.current_run.passings
+    @game_passings = if @game.pass_required?
+                       @game.game_passings.where.not(:access_pass_id => nil)
+                     else
+                       @game.current_run.passings
+                     end
     # For the move control on each row. Loaded once here rather than per row.
     @levels = Level.of_game(@game).order(:position)
   end
@@ -110,8 +125,7 @@ class GamePassingsController < ApplicationController
 
   def post_answer
     if @game_passing.finished?
-      @run ||= @game.current_run
-      render :show_results
+      render_finished_passing
       return
     end
 
@@ -149,8 +163,7 @@ class GamePassingsController < ApplicationController
     note_level_passed(level_before)
 
     if @game_passing.finished?
-      @run ||= @game.current_run
-      render :show_results
+      render_finished_passing
     else
       # check_answer! may have advanced current_level (pass_level!), so the
       # preload has to happen after it, same as show_current_level -- this
@@ -161,20 +174,14 @@ class GamePassingsController < ApplicationController
   end
 
   def show_results
+    # A gated game has no cohort and no run standings. Its results are the
+    # per-attempt standings on the game page -- see the design, B7.
+    return redirect_to(game_path(@game)) if @game.pass_required?
   end
 
   def exit_game
     @game_passing.exit!
-    # These renders reach show_results.html.erb WITHOUT going through
-    # #show_results, so find_run never ran for them. The current run is right
-    # here: a team that has just finished or exited is in the run being played,
-    # never an earlier one.
-    #
-    # find_run stays scoped to #show_results deliberately -- widening it would
-    # let ensure_game_is_started judge a PLAY request against an older, started
-    # run, and admit a team into a run that has not opened yet.
-    @run ||= @game.current_run
-    render :show_results
+    render_finished_passing
   end
 
   # Writes on behalf of current_user, which require_authentication! (see the
@@ -194,6 +201,29 @@ class GamePassingsController < ApplicationController
   end
 
   private
+
+  # The render every "the passing is finished" branch reaches --
+  # show_current_level, both checks in post_answer, post_options and
+  # exit_game. A gated game has no run standings to show (see #show_results'
+  # own guard above): its results are the per-attempt standings on the game
+  # page instead (games/_pass_standings.html.erb, the design's B7). Without
+  # this, all five sites rendered show_results.html.erb with an EMPTY run
+  # table for a paid attempt -- "Поздравляем" above nothing, and no link to
+  # the standings that do exist. Finding 4 of the whole-branch review.
+  #
+  # These renders reach show_results.html.erb WITHOUT going through
+  # #show_results, so find_run never ran for them. current_run is right for
+  # the scheduled branch: a team that has just finished or exited is in the
+  # run being played, never an earlier one -- find_run stays scoped to
+  # #show_results deliberately, or ensure_game_is_started would judge a PLAY
+  # request against an older, started run and admit a team into a run that
+  # has not opened yet.
+  def render_finished_passing
+    return redirect_to(game_path(@game)) if @game.pass_required?
+
+    @run ||= @game.current_run
+    render :show_results
+  end
 
   # Quiz levels submit option_ids as { question_id => [option_id, ...] }.
   #
@@ -273,8 +303,7 @@ class GamePassingsController < ApplicationController
     note_level_passed(level_before)
 
     if @game_passing.finished?
-      @run ||= @game.current_run
-      render :show_results
+      render_finished_passing
     else
       # answer_options! may have advanced current_level, so preload after it --
       # same reasoning as the code path above.
@@ -522,7 +551,14 @@ class GamePassingsController < ApplicationController
   # non-accepted entry but stops nothing: any user could create a team and GET
   # /play/:game_id for any started game, including one the author had
   # explicitly rejected.
+  # Gated games resolve through the entitlement rather than the current run:
+  # a commercial attempt has game_run_id NULL, so current_run.passing_for
+  # would never find it. The rule that an EXISTING passing is served before
+  # any gate runs is preserved for both, and is what lets a spent pass keep
+  # its own finished attempt readable.
   def find_or_create_game_passing
+    return @game_passing = gated_passing if @game.pass_required?
+
     @game_passing = @game.current_run.passing_for(@team)
     return @game_passing if @game_passing
 
@@ -533,6 +569,33 @@ class GamePassingsController < ApplicationController
     @game_passing = GamePassing.create!(team: @team, game: @game,
                                         game_run: @game.current_run,
                                         current_level: @game.levels.first)
+  end
+
+  # The team's attempt if one is live, otherwise a new one on their oldest
+  # live pass. An attempt whose pass is spent is NOT live -- that is how a
+  # team who bought a replacement gets a second attempt rather than being
+  # handed the finished one.
+  #
+  # An operator-ended attempt IS still live (end! leaves finished_at nil, so
+  # the pass is unspent), and is served rather than replaced: unfinish! and
+  # reinstate! are how such a game comes back, and they resume where the team
+  # stopped. A pass never yields two attempts.
+  def gated_passing
+    raise Authentication::Unauthorized, t("errors.no_access_pass") if @team.nil?
+
+    # GamePassing.gated_attempt_for is THE single definition of "this team's
+    # current attempt" (see finding 3 of the whole-branch review, and that
+    # method's own comment) -- newest first, which is provably the live one
+    # whenever a live one exists.
+    attempt = GamePassing.gated_attempt_for(@game, @team)
+    return attempt if attempt && !attempt.access_pass.spent?
+
+    pass = AccessPass.next_for(@game, @team)
+    raise Authentication::Unauthorized, t("errors.no_access_pass") if pass.nil?
+
+    GamePassing.create!(:team => @team, :game => @game,
+                        :game_run => nil, :access_pass => pass,
+                        :current_level => @game.levels.first)
   end
 
   # is_testing? is exempt, but ONLY for the author's own team, and that
@@ -617,13 +680,20 @@ class GamePassingsController < ApplicationController
     # what this answer actually belongs to, and in phase 3 a team's passing may
     # be in a run that is no longer the current one.
     Log.create!(game_id: @game.id, game_run_id: @game_passing.game_run_id,
+                game_passing_id: @game_passing.id,
                 level: level.name, level_id: level.id,
                 team: @team.name,  team_id: @team.id,
                 time: Time.now, answer: @answer)
   end
 
+  # A gated game has no start date to wait for and no cohort to wait with, so
+  # "has it started?" is not a question about it. What must still be refused is
+  # a game the author has not published: otherwise unfinished work is playable
+  # by anyone holding an invitation.
   def ensure_game_is_started
     return if @game.is_testing?
+    return if @game.pass_required? && !@game.draft?
+
     raise Authentication::Unauthorized, t("game.not_started") unless viewing_a_started_run?
   end
 
@@ -652,6 +722,10 @@ class GamePassingsController < ApplicationController
     raise Authentication::Unauthorized, t("errors.game_finished_by_author") if @game.author_finished?
   end
 
+  # A team that quit and then bought a replacement must not be locked out by a
+  # filter guarding the attempt they paid to replace. On a gated game the
+  # resolution above has already handed back a NEW attempt in that case, so an
+  # exited passing reaching here means they have no further pass.
   def ensure_team_not_exited
     raise Authentication::Unauthorized, t("errors.team_exited") if @game_passing.exited?
   end

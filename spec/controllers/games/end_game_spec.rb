@@ -52,6 +52,30 @@ RSpec.describe GamesController, "#end_game", type: :controller do
     end
   end
 
+  # Finding 2 of the whole-branch review: a commercial attempt has
+  # game_run_id NULL, so @game.current_run.passings -- scoped by game_run_id
+  # -- could never reach it, and end_game left it running forever.
+  describe "when the game is gated and holds a runless attempt" do
+    before :each do
+      @user  = create_user
+      @game  = create_game :author => @user, :is_draft => false, :access_mode => "pass_required"
+      @level = create_level :game => @game
+      @pass  = create_access_pass :game => @game
+      @passing = create_game_passing :game => @game, :team => @pass.team, :level => @level,
+                                     :game_run => nil, :access_pass => @pass
+    end
+
+    it "ends the runless attempt too, freeing the team from a live race forever" do
+      expect(@passing.team.in_live_race?).to be true
+
+      perform_request(:as_user => @user)
+
+      expect(@passing.reload.status).to eq("ended")
+      expect(@passing.finished_at).to be_nil
+      expect(@passing.team.reload.in_live_race?).to be false
+    end
+  end
+
   describe "when a guest attempts to end the game" do
     before :each do
       @game = create_game

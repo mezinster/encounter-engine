@@ -1,8 +1,25 @@
 en:
+  access_passes:
+    title: "Game access"
+    team_name: "Team name"
+    submit: "Issue access"
+    issued: "Issued"
+    state: "State"
+    state_live: "unused"
+    state_playing: "in progress"
+    state_spent: "used"
+    state_revoked: "revoked"
+    revoke: "Revoke"
+    issued_notice: "Access issued to “%{team}”"
+    revoked_notice: "Access revoked"
+    not_found: "Team not found"
+    cannot_revoke_started: "Cannot revoke: the team has already started"
   admin:
     users:
       granted_notice: "Administrator rights granted"
       revoked_notice: "Administrator rights revoked"
+      operator_granted_notice: "Operator rights granted"
+      operator_revoked_notice: "Operator rights revoked"
       cannot_revoke_self: "You cannot revoke your own rights"
       cannot_revoke_last: "You cannot revoke the last administrator"
       moved_notice: "The player has been moved to “%{team}”"
@@ -26,6 +43,7 @@ en:
         signed_up: "Registered"
         role: "Role"
         superadmin: "administrator"
+        operator: "operator"
         back: "Back to overview"
       show:
         email: "Email"
@@ -41,6 +59,8 @@ en:
         back: "Back to players"
         grant: "Make administrator"
         revoke: "Revoke administrator rights"
+        grant_operator: "Make operator"
+        revoke_operator: "Revoke operator rights"
         move: "Move to team"
         delete: "Delete account"
         anonymise: "Anonymise account"
@@ -79,6 +99,8 @@ en:
           test_reset_token: "Replaced the test link"
           grant_superadmin: "Granted administrator rights"
           revoke_superadmin: "Revoked administrator rights"
+          grant_operator: "Granted operator rights"
+          revoke_operator: "Revoked operator rights"
           allow_any_code: "Allowed any one code on a level"
           require_all_codes: "Required all codes on a level"
           update_settings: "Changed the settings"
@@ -93,6 +115,8 @@ en:
           translation_run_cancelled: "Stopped a translation"
           translation_run_retried: "Retried a translation"
           translation_proposals_accepted: "Accepted translations"
+          issue_access_pass: "Issued game access"
+          revoke_access_pass: "Revoked game access"
     settings:
       title: "Rate limits"
       explanation: "Signup limits apply per IP address per window; 0 disables the limit. File limits apply per game and across the whole server."
@@ -133,6 +157,7 @@ en:
           finished: "Finished"
           running: "Running"
           scheduled: "Scheduled"
+          available: "Available"
         total:
           users: "Players"
           teams: "Teams"
@@ -170,6 +195,7 @@ en:
         running: "Running"
         finished: "Finished"
         withdrawn: "Withdrawn"
+        available: "Available"
         locked: "editing frozen"
         edit: "Edit"
         entries_link: "Applications (%{count})"
@@ -221,7 +247,10 @@ en:
     must_be_author: "You must be the game's author to view this page"
     translation_key_missing: "AI translation is unavailable: no API key is configured."
     not_registered_for_game: "Your team is not registered for this game."
+    no_access_pass: "This game requires access. Contact the organiser."
     must_be_superadmin: "Administrator access only"
+    must_operate_commercial: "This page is available to operators and administrators only"
+    game_not_gated: "This page is only available for a game sold by access pass"
     too_many_requests: "Too many attempts. Please try again later."
     must_be_author_or_finished_player: "The full log is only available to the game's author or a player whose team has finished the game"
     game_already_started: "You can't edit a game after it has started"
@@ -288,6 +317,7 @@ en:
       status_finished: "Finished"
       status_running: "Running"
       status_scheduled: "Scheduled"
+      status_available: "Available"
       paused: "paused"
       duration: "%{hours}h %{minutes}m"
       playing: "playing: %{count}"
@@ -304,6 +334,12 @@ en:
       reject: "(reject)"
     teams:
       legend: "Participating teams:"
+    standings:
+      title: "Results"
+      place: "Place"
+      team: "Team"
+      finished_at: "Finished"
+      duration: "Time"
     form:
       name: "Title"
       description: "Description"
@@ -311,6 +347,9 @@ en:
       registration_deadline: "Registration deadline "
       max_team_number: "Maximum number of teams"
       is_draft: "Draft?"
+      access_mode: "Access mode"
+      access_mode_scheduled: "Scheduled (registration and a start date)"
+      access_mode_pass_required: "Pass required (commercial)"
     primary_locale_label: "Primary language"
     available_locales_label: "Game languages"
     new:
@@ -339,6 +378,7 @@ en:
       start_test: "Start testing"
       start: "Start"
       finish_test: "Finish testing"
+      manage_access: "Manage access passes"
   test_admissions:
     team_not_found: "Team «%{name}» was not found"
     already_admitted: "«%{name}» is already admitted to the test"
@@ -903,6 +943,8 @@ en:
     # Kept for ru/en key parity (spec/i18n_spec.rb); English's default
     # humanized names already read fine, so these mostly restate them.
     attributes:
+      access_pass:
+        game: "Game"
       file_attachment:
         # "Object", not the default humanisation "Attachable": that is the
         # polymorphic association's internal name, and the thing it points at
@@ -920,6 +962,10 @@ en:
         invalid: "is invalid"
         record_invalid: "Record is invalid"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "is not sold by access pass"
         answer:
           attributes:
             value:

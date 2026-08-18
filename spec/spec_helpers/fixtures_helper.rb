@@ -38,12 +38,27 @@ module FixturesHelper
   end
 
   def build_game(options={})
+    # Call sites still speak is_draft, which is the older and shorter name and
+    # reads well in an example. Translated here so the fixture keeps that
+    # vocabulary without the column existing.
+    if options.key?(:is_draft)
+      options = options.dup
+      options[:visibility] = options.delete(:is_draft) ? "draft" : "listed"
+    end
+
     creation_params = {
       :author => create_user,
       :name => random_string,
       :description => random_string,
       :starts_at => "2099-01-01 00:00",
-      :max_team_number => 100
+      :max_team_number => 100,
+      # games.visibility now defaults to "listed" at the column level too
+      # (db/migrate/20260818155000_correct_visibility_default_on_games.rb),
+      # matching is_draft's old `default: false`. Restated explicitly here,
+      # matching the rest of this hash, so a call site that omits :is_draft
+      # (or :visibility) keeps getting a published game regardless of what
+      # the column default happens to be.
+      :visibility => "listed"
     }.merge(options)
     Game.new creation_params
   end
@@ -149,6 +164,16 @@ module FixturesHelper
     creation_params[:game_run] ||= game.current_run if game
 
     GameEntry.create! creation_params
+  end
+
+  def create_access_pass(options = {})
+    game = options[:game] || create_game(:is_draft => false, :access_mode => "pass_required")
+
+    AccessPass.create!({
+      :game   => game,
+      :team   => create_team,
+      :source => "operator_invite"
+    }.merge(options))
   end
 
   # The run must already be testing -- TestAdmission refuses otherwise -- so

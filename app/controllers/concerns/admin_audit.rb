@@ -49,7 +49,14 @@ module AdminAudit
   # Lives here rather than on GamesController because InterventionsController
   # needs the same test; it takes the game explicitly so neither controller
   # depends on a particular instance variable being set.
+  #
+  # NAMING, since a role called `operator` now exists: this predicate is about
+  # a CAPACITY (acting on a game you did not author), not about holding
+  # User#operator?. A superadmin who holds no role still acts as an operator
+  # here. Sub-project B widens the superadmin? test below to
+  # may_operate_commercial?, or an operator's acts on commercial games they did
+  # not author go unrecorded -- which is the whole population the role creates.
   def acting_as_operator?(game)
-    logged_in? && current_user.superadmin? && game.author_id != current_user.id
+    logged_in? && current_user.may_operate_commercial? && game.author_id != current_user.id
   end
 end

@@ -4,6 +4,12 @@
 # than one glance -- which is what matters once this role can be granted to a
 # helper.
 #
+# NAMING, since a role called `operator` now exists: "the operator" above is a
+# CAPACITY -- whichever superadmin is at the console -- not User#operator?.
+# This controller stays superadmin-only (require_superadmin! below); granting
+# the operator role does not open it. See AdminAudit#acting_as_operator? for
+# the same distinction made where it first mattered.
+#
 # crypted_password and salt are never passed to a view. A spec asserts their
 # absence across every reporting screen: the risk is not that someone adds them
 # deliberately but that a future `<%= user.attributes %>` leaks them silently.
@@ -48,6 +54,31 @@ class Admin::UsersController < ApplicationController
     user.update!(:is_superadmin => false)
     record_admin_action("revoke_superadmin", user)
     redirect_to admin_user_path(user), :notice => t("admin.users.revoked_notice")
+  end
+
+  # The operator role (sub-project A of the commercial-games programme). It
+  # grants nothing yet: its authority clause lands in sub-project B, where
+  # Game#commercial? will exist to scope it.
+  #
+  # No self guard and no last-holder guard, unlike #revoke above. Both of that
+  # method's guards exist so the instance can never end up with nobody able to
+  # administer it; a superadmin can always grant this role back, so neither
+  # applies. See docs/superpowers/specs/2026-08-18-operator-role-design.md, D4.
+  #
+  # record_admin_action is called AFTER the change lands, matching the rule in
+  # AdminAudit: a refused action must leave no entry.
+  def grant_operator
+    user = User.find(params[:id])
+    user.update!(:is_operator => true)
+    record_admin_action("grant_operator", user)
+    redirect_to admin_user_path(user), :notice => t("admin.users.operator_granted_notice")
+  end
+
+  def revoke_operator
+    user = User.find(params[:id])
+    user.update!(:is_operator => false)
+    record_admin_action("revoke_operator", user)
+    redirect_to admin_user_path(user), :notice => t("admin.users.operator_revoked_notice")
   end
 
   # Housekeeping -- spam and test accounts. Every refusal exists because the
@@ -141,7 +172,8 @@ class Admin::UsersController < ApplicationController
       # The person is gone, so they neither play nor administer. Detaching
       # also stops a nameless ghost sitting in someone's team roster.
       :team          => nil,
-      :is_superadmin => false
+      :is_superadmin => false,
+      :is_operator   => false
     )
 
     record_admin_action("anonymise_user", user)

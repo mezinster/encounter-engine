@@ -30,6 +30,12 @@ module SecurityFilters
   # that any FUTURE call site of ensure_author silently admits superadmins too.
   def ensure_author
     return if logged_in? && current_user.superadmin?
+    # An operator's authority is scoped to GATED games -- deliberately
+    # game-conditional rather than a bare `|| current_user.operator?`. This
+    # filter also gates levels, hints, questions and game entries, so the
+    # unscoped form would let an operator reach an ordinary player's public
+    # game through its levels controller, in a diff that never mentions games.
+    return if logged_in? && current_user.operator? && @game&.pass_required?
 
     raise Authentication::Unauthorized, t("errors.must_be_author") unless logged_in? && current_user.author_of?(@game)
   end
@@ -53,7 +59,15 @@ module SecurityFilters
     raise Authentication::Unauthorized, t("errors.game_is_locked") if @game&.editing_locked?
   end
 
+  # A gated game's starts_at is meaningless -- see the comment on
+  # Game#game_starts_in_the_future -- so #started? reading it (nil-safe as it
+  # is) is the wrong question here entirely. Without this exemption, a gated
+  # game whose irrelevant starts_at happened to sit in the past became
+  # permanently uneditable for its own author the moment the clock passed a
+  # date nobody was tracking.
   def ensure_game_was_not_started
+    return if @game.pass_required?
+
     raise Authentication::Unauthorized, t("errors.game_already_started") if @game.started?
   end
 

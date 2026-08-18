@@ -17,6 +17,15 @@
              :switch_path => ->(locale) { set_content_locale_game_path(@game, :locale => locale) } %>
 <% end %>
 
+<%# Any operator, not just this game's author -- AccessPassesController's
+    ensure_commercial_operator carries no authorship check either (an
+    operator's authority is scoped to GATED games, not to games they
+    personally wrote). Gated only: the console has nothing to manage on a
+    scheduled game. %>
+<% if @game.pass_required? && logged_in? && current_user.may_operate_commercial? %>
+  <p><%= link_to t("games.show.manage_access"), game_access_passes_path(@game), class: "btn" %></p>
+<% end %>
+
 <div class="panel">
   <p>
     <em><%= t("games.show.author_label") %></em> - <strong><%= @game.author.nickname %></strong>
@@ -147,6 +156,19 @@
 </script>
 
 <%= render "teams", teams: @teams if (!logged_in?) || (logged_in? && !@current_user.author_of?(@game)) %>
+
+<%= render "pass_standings", game: @game if @game.pass_required? %>
+
+<%# The gated equivalent of game_passings/show_results.html.erb's identical
+    block: a gated attempt now finishes onto THIS page (F4 of the
+    whole-branch review redirects every finishing render here instead of an
+    empty run-results table), so the full-log link has to live here too, or
+    a finished paying customer could reach it only by typing the URL (F6).
+    full_log_visible? is per-CURRENT-USER, not per-standings-row, which is
+    why this sits once below the whole leaderboard rather than per team. %>
+<% if @game.pass_required? && full_log_visible?(@game) %>
+  <p><%= link_to t("game_passings.show_results.full_log"), show_full_log_path(@game) %></p>
+<% end %>
 
 <% if @game.draft? and !@game.started? and @game.levels and @game.levels.count > 0 %>
    <p><%= button_to t("games.show.start_test"), start_test_game_path(@game), :class => "btn" %></p>

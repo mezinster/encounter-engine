@@ -20,7 +20,7 @@ end
 
 # Game#status == :running, reached directly rather than through the existing
 # `игра "X" уже начата` step: that one travels the clock (`сейчас "..."`),
-# which these scenarios do not otherwise need, and it leaves is_draft alone --
+# which these scenarios do not otherwise need, and it leaves visibility alone --
 # a draft reports :draft from #status whatever the clock says (see Game#started?).
 #
 # The assertion at the end is not decoration. The typed-confirmation branch
@@ -29,7 +29,7 @@ end
 # ordinary, unconfirmed delete path.
 Given /^игра "([^\"]*)" идёт$/ do |game_name|
   game = Game.where(:name => game_name).first
-  game.update_column(:is_draft, false)
+  game.update_column(:visibility, "listed")
   run = game.runs.reload.to_a.last || game.runs.create!(:ordinal => 1)
   run.update_column(:starts_at, 1.hour.ago)
 

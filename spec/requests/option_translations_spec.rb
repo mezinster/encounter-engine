@@ -93,7 +93,7 @@ describe "translating a quiz question's options", type: :request do
 
     expect(game.reload.missing_translations).to be_empty
 
-    game.is_draft = false
+    game.visibility = "listed"
     expect(game).to be_valid
   end
 end

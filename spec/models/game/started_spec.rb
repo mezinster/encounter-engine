@@ -51,7 +51,7 @@ describe Game, '#started?' do
   # draft was locked for everyone. See spec/requests/draft_past_start_spec.rb.
   describe "when the game is a draft whose start date has passed" do
     before :each do
-      @game.update!(:is_draft => true)
+      @game.update!(:visibility => "draft")
       # Past validations, exactly as real time does it: the row was valid when
       # saved and the clock moved afterwards. update! would be refused by
       # game_starts_in_the_future, which is the whole reason this state is

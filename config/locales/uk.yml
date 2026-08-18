@@ -16,10 +16,27 @@
 # answer string players find in the city), подсказка -> підказка,
 # "сойти с дистанции" -> "зійти з дистанції" (quit mid-game).
 uk:
+  access_passes:
+    title: "Доступ до гри"
+    team_name: "Назва команди"
+    submit: "Видати доступ"
+    issued: "Виданий"
+    state: "Стан"
+    state_live: "не використаний"
+    state_playing: "проходиться"
+    state_spent: "використаний"
+    state_revoked: "відкликаний"
+    revoke: "Відкликати"
+    issued_notice: "Доступ надано команді «%{team}»"
+    revoked_notice: "Доступ відкликано"
+    not_found: "Команду не знайдено"
+    cannot_revoke_started: "Не можна відкликати доступ: команда вже почала проходження"
   admin:
     users:
       granted_notice: "Права адміністратора надано"
       revoked_notice: "Права адміністратора знято"
+      operator_granted_notice: "Права оператора надано"
+      operator_revoked_notice: "Права оператора знято"
       cannot_revoke_self: "Не можна зняти права із самого себе"
       cannot_revoke_last: "Не можна зняти права з останнього адміністратора"
       moved_notice: "Гравця переведено до команди «%{team}»"
@@ -43,6 +60,7 @@ uk:
         signed_up: "Реєстрація"
         role: "Роль"
         superadmin: "адміністратор"
+        operator: "оператор"
         back: "До огляду"
       show:
         email: "E-mail"
@@ -58,6 +76,8 @@ uk:
         back: "До списку гравців"
         grant: "Зробити адміністратором"
         revoke: "Зняти права адміністратора"
+        grant_operator: "Зробити оператором"
+        revoke_operator: "Зняти права оператора"
         move: "Перевести до команди"
         delete: "Видалити обліковий запис"
         anonymise: "Знеособити обліковий запис"
@@ -96,6 +116,8 @@ uk:
           test_reset_token: "Змінив посилання на тестування"
           grant_superadmin: "Надав права адміністратора"
           revoke_superadmin: "Зняв права адміністратора"
+          grant_operator: "Надав права оператора"
+          revoke_operator: "Зняв права оператора"
           allow_any_code: "Дозволив будь-який код на рівні"
           require_all_codes: "Зажадав усі коди на рівні"
           update_settings: "Змінив налаштування"
@@ -110,6 +132,8 @@ uk:
           translation_run_cancelled: "Зупинив переклад"
           translation_run_retried: "Повторив переклад"
           translation_proposals_accepted: "Прийняв переклади"
+          issue_access_pass: "Надав доступ до гри"
+          revoke_access_pass: "Відкликав доступ до гри"
     settings:
       title: "Налаштування обмежень"
       explanation: "Обмеження на реєстрацію діють на одну IP-адресу за вказаний період; 0 вимикає обмеження. Обмеження на файли діють на гру та на весь сервер."
@@ -150,6 +174,7 @@ uk:
           finished: "Завершена"
           running: "Триває"
           scheduled: "Запланована"
+          available: "Доступна"
         total:
           users: "Гравців"
           teams: "Команд"
@@ -187,6 +212,7 @@ uk:
         running: "Триває"
         finished: "Завершена"
         withdrawn: "Знята з публікації"
+        available: "Доступна"
         locked: "редагування заморожено"
         edit: "Редагувати"
         entries_link: "Заявки (%{count})"
@@ -238,6 +264,7 @@ uk:
     must_be_author: "Ви маєте бути автором гри, щоб бачити цю сторінку"
     translation_key_missing: "Переклад за допомогою ШІ недоступний: не налаштовано ключ API."
     not_registered_for_game: "Ваша команда не зареєстрована на цю гру."
+    no_access_pass: "Для цієї гри потрібен доступ. Зверніться до організатора."
     must_be_author_or_finished_player: "Повний лог відповідей доступний лише автору гри або гравцеві з команди, яка завершила гру"
     game_already_started: "Не можна редагувати гру після її початку"
     must_be_recipient: "Ви маєте бути отримувачем запрошення, щоб виконати цю дію"
@@ -249,6 +276,8 @@ uk:
     game_is_not_testing: "Гра не в режимі тестування"
     bad_test_token: "Посилання на тестування недійсне"
     must_be_superadmin: "Доступ лише для адміністратора"
+    must_operate_commercial: "Ця сторінка доступна лише операторам і адміністраторам"
+    game_not_gated: "Ця сторінка доступна лише для гри, яка продається за перепустками"
     too_many_requests: "Забагато спроб. Спробуйте пізніше."
     game_is_not_live: "Гра зараз не триває"
   interventions:
@@ -305,6 +334,7 @@ uk:
       status_finished: "Завершена"
       status_running: "Триває"
       status_scheduled: "Запланована"
+      status_available: "Доступна"
       paused: "на паузі"
       duration: "%{hours} год %{minutes} хв"
       playing: "грають: %{count}"
@@ -321,6 +351,12 @@ uk:
       reject: "(відмовити)"
     teams:
       legend: "Беруть участь команди:"
+    standings:
+      title: "Результати"
+      place: "Місце"
+      team: "Команда"
+      finished_at: "Фініш"
+      duration: "Час"
     form:
       name: "Назва"
       description: "Опис"
@@ -328,6 +364,9 @@ uk:
       registration_deadline: "Кінцевий термін реєстрації "
       max_team_number: "Максимальна кількість команд"
       is_draft: "Чернетка?"
+      access_mode: "Режим доступу"
+      access_mode_scheduled: "За розкладом (реєстрація і дата початку)"
+      access_mode_pass_required: "За перепустками (комерційна гра)"
     primary_locale_label: "Основна мова"
     available_locales_label: "Мови гри"
     new:
@@ -356,6 +395,7 @@ uk:
       start_test: "Почати тестування"
       start: "Старт"
       finish_test: "Завершити тестування"
+      manage_access: "Керування перепустками"
   test_admissions:
     team_not_found: "Команду «%{name}» не знайдено"
     already_admitted: "«%{name}» вже допущені до тестування"
@@ -928,6 +968,8 @@ uk:
       submit: "Увійти"
   activerecord:
     attributes:
+      access_pass:
+        game: "Гра"
       file_attachment:
         attachable: "Об'єкт"
         game_file: "Файл"
@@ -942,6 +984,10 @@ uk:
         invalid: "має неправильне значення"
         record_invalid: "Запис недійсний"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "не продається за доступом"
         answer:
           attributes:
             value:

@@ -70,5 +70,24 @@ describe Game do
         @game.errors[:starts_at].should_not be_empty
       end
     end
+
+    # A gated game has no schedule for a customer to wait on -- pass_required?
+    # already makes #status report :available instead of consulting the
+    # clock (see the comment on Game#status). Without this exemption, a game
+    # authored as scheduled and later converted to pass_required (or one
+    # whose irrelevant starts_at simply aged past, exactly as the draft case
+    # above ages) could never be saved again: this validation would refuse
+    # every subsequent save with "in the past", for a field the game no
+    # longer means anything by.
+    describe "when a gated game's starts_at is in the past" do
+      before :each do
+        @game = build_game :starts_at => "1971-01-01 00:00", :access_mode => "pass_required"
+        @game.valid?
+      end
+
+      it "should be valid" do
+        @game.should be_valid
+      end
+    end
   end
 end

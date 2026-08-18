@@ -10,16 +10,17 @@ class InterventionsController < ApplicationController
 
   before_action :require_authentication!
   before_action :find_game
-  # ensure_author already means "the author, or any superadmin", and
-  # ensure_editing_not_locked already exempts superadmins -- together they give
-  # this feature's whole authorization rule with no new concept.
+  # ensure_author already means "the author, any superadmin, or an operator on
+  # a gated game", and ensure_editing_not_locked already exempts superadmins
+  # -- together they give this feature's whole authorization rule with no new
+  # concept.
   before_action :ensure_author
   before_action :ensure_editing_not_locked
   before_action :ensure_game_is_live
   before_action :find_game_passing, only: [ :move, :reinstate, :reset_clock ]
 
   # Deliberately narrower than ensure_author, which every other action here
-  # uses and which means "the author, or any superadmin". Changing how codes
+  # uses and which also admits an operator on a gated game. Changing how codes
   # count alters the difficulty of a race already in progress, for every team
   # at once, after some have committed effort to the harder rule. An operator
   # doing that leaves an audited entry and is answerable for it; an author
@@ -80,8 +81,24 @@ class InterventionsController < ApplicationController
     @game = Game.find(params[:game_id])
   end
 
+  # A commercial attempt carries game_run_id: nil (GamePassingsController
+  # never places it in a run), so @game.current_run.passings -- scoped by
+  # game_run_id -- can never see it. Without this branch, move_to_level!,
+  # reinstate! and reset_level_clock! are all unreachable for a gated game's
+  # attempt, and AccessPassesController#destroy's "a started run is an
+  # intervention" refusal points at a tool that cannot touch the attempt it
+  # just refused to release. The scheduled branch is unchanged.
+  #
+  # GamePassing.gated_attempt_for is THE single definition of "this team's
+  # current attempt" for the gated branch -- finding 3 of the whole-branch
+  # review. This used to run with no order at all, which under SQLite
+  # returned the OLDEST, already-completed attempt for a team holding two --
+  # exactly wrong for reinstate, whose whole purpose is rescuing the team's
+  # most recent one.
   def find_game_passing
-    @game_passing = @game.current_run.passings.of_team(params[:team_id]).first
+    @game_passing = @game.pass_required? ?
+                       GamePassing.gated_attempt_for(@game, params[:team_id]) :
+                       @game.current_run.passings.of_team(params[:team_id]).first
     raise ActiveRecord::RecordNotFound unless @game_passing
   end
 

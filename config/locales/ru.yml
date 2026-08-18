@@ -1,8 +1,25 @@
 ru:
+  access_passes:
+    title: "Доступ к игре"
+    team_name: "Название команды"
+    submit: "Выдать доступ"
+    issued: "Выдан"
+    state: "Состояние"
+    state_live: "не использован"
+    state_playing: "проходится"
+    state_spent: "использован"
+    state_revoked: "отозван"
+    revoke: "Отозвать"
+    issued_notice: "Доступ выдан команде «%{team}»"
+    revoked_notice: "Доступ отозван"
+    not_found: "Команда не найдена"
+    cannot_revoke_started: "Нельзя отозвать доступ: команда уже начала прохождение"
   admin:
     users:
       granted_notice: "Права администратора выданы"
       revoked_notice: "Права администратора отозваны"
+      operator_granted_notice: "Права оператора выданы"
+      operator_revoked_notice: "Права оператора отозваны"
       cannot_revoke_self: "Нельзя снять права с самого себя"
       cannot_revoke_last: "Нельзя снять права с последнего администратора"
       moved_notice: "Игрок переведён в команду «%{team}»"
@@ -26,6 +43,7 @@ ru:
         signed_up: "Регистрация"
         role: "Роль"
         superadmin: "администратор"
+        operator: "оператор"
         back: "К обзору"
       show:
         email: "E-mail"
@@ -41,6 +59,8 @@ ru:
         back: "К списку игроков"
         grant: "Сделать администратором"
         revoke: "Снять права администратора"
+        grant_operator: "Сделать оператором"
+        revoke_operator: "Снять права оператора"
         move: "Перевести в команду"
         delete: "Удалить аккаунт"
         anonymise: "Обезличить аккаунт"
@@ -79,6 +99,8 @@ ru:
           test_reset_token: "Сменил ссылку на тестирование"
           grant_superadmin: "Выдал права администратора"
           revoke_superadmin: "Снял права администратора"
+          grant_operator: "Выдал права оператора"
+          revoke_operator: "Снял права оператора"
           allow_any_code: "Разрешил любой код на уровне"
           require_all_codes: "Потребовал все коды на уровне"
           update_settings: "Изменил настройки"
@@ -93,6 +115,8 @@ ru:
           translation_run_cancelled: "Остановил перевод"
           translation_run_retried: "Повторил перевод"
           translation_proposals_accepted: "Принял переводы"
+          issue_access_pass: "Выдал доступ к игре"
+          revoke_access_pass: "Отозвал доступ к игре"
     settings:
       title: "Настройки ограничений"
       explanation: "Ограничения на регистрацию действуют на один IP-адрес за указанный период; 0 отключает ограничение. Ограничения на файлы действуют на игру и на весь сервер."
@@ -133,6 +157,7 @@ ru:
           finished: "Завершена"
           running: "Идёт"
           scheduled: "Запланирована"
+          available: "Доступна"
         total:
           users: "Игроков"
           teams: "Команд"
@@ -170,6 +195,7 @@ ru:
         running: "Идёт"
         finished: "Завершена"
         withdrawn: "Снята с публикации"
+        available: "Доступна"
         locked: "редактирование заморожено"
         edit: "Редактировать"
         entries_link: "Заявки (%{count})"
@@ -221,7 +247,10 @@ ru:
     must_be_author: "Вы должны быть автором игры, чтобы видеть эту страницу"
     translation_key_missing: "Перевод с помощью ИИ недоступен: не настроен ключ API."
     not_registered_for_game: "Ваша команда не зарегистрирована на эту игру."
+    no_access_pass: "Для этой игры нужен доступ. Обратитесь к организатору."
     must_be_superadmin: "Доступ только для администратора"
+    must_operate_commercial: "Эта страница доступна только операторам и администраторам"
+    game_not_gated: "Эта страница доступна только для игры, которая продаётся по доступу"
     too_many_requests: "Слишком много попыток. Попробуйте позже."
     must_be_author_or_finished_player: "Полный лог ответов доступен только автору игры или игроку из команды, закончившей игру"
     game_already_started: "Нельзя редактировать игру после её начала"
@@ -288,6 +317,7 @@ ru:
       status_finished: "Завершена"
       status_running: "Идёт"
       status_scheduled: "Запланирована"
+      status_available: "Доступна"
       paused: "на паузе"
       duration: "%{hours} ч %{minutes} мин"
       playing: "играют: %{count}"
@@ -304,6 +334,12 @@ ru:
       reject: "(отказать)"
     teams:
       legend: "Участвуют команды:"
+    standings:
+      title: "Результаты"
+      place: "Место"
+      team: "Команда"
+      finished_at: "Финиш"
+      duration: "Время"
     form:
       name: "Название"
       description: "Описание"
@@ -311,6 +347,9 @@ ru:
       registration_deadline: "Крайний срок регистрации "
       max_team_number: "Максимальное количество команд"
       is_draft: "Черновик?"
+      access_mode: "Режим доступа"
+      access_mode_scheduled: "По расписанию (регистрация и дата начала)"
+      access_mode_pass_required: "По пропускам (коммерческая игра)"
     primary_locale_label: "Основной язык"
     available_locales_label: "Языки игры"
     new:
@@ -339,6 +378,7 @@ ru:
       start_test: "Начать тестирование"
       start: "Старт"
       finish_test: "Завершить тестирование"
+      manage_access: "Управление пропусками"
   test_admissions:
     team_not_found: "Команда «%{name}» не найдена"
     already_admitted: "«%{name}» уже допущены к тестированию"
@@ -928,6 +968,8 @@ ru:
     # follows, not a standalone sentence -- "Игра" is feminine, "Файл" is
     # masculine, and Russian predicate participles inflect for that.
     attributes:
+      access_pass:
+        game: "Игра"
       file_attachment:
         attachable: "Объект"
         game_file: "Файл"
@@ -942,6 +984,10 @@ ru:
         invalid: "имеет неверное значение"
         record_invalid: "Запись недействительна"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "не продаётся по доступу"
         answer:
           attributes:
             value:

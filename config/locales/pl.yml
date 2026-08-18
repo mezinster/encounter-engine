@@ -23,10 +23,27 @@
 # "drużyny o nazwie «%{team}»" nowhere -- instead the quoted name is kept in
 # apposition after a common noun, which is grammatical whatever the name is.
 pl:
+  access_passes:
+    title: "Dostęp do gry"
+    team_name: "Nazwa drużyny"
+    submit: "Nadaj dostęp"
+    issued: "Wydany"
+    state: "Stan"
+    state_live: "niewykorzystany"
+    state_playing: "w trakcie"
+    state_spent: "wykorzystany"
+    state_revoked: "odebrany"
+    revoke: "Odbierz"
+    issued_notice: "Nadano dostęp drużynie „%{team}”"
+    revoked_notice: "Dostęp odebrany"
+    not_found: "Nie znaleziono drużyny"
+    cannot_revoke_started: "Nie można odebrać dostępu: drużyna już zaczęła"
   admin:
     users:
       granted_notice: "Uprawnienia administratora zostały nadane"
       revoked_notice: "Uprawnienia administratora zostały cofnięte"
+      operator_granted_notice: "Nadano uprawnienia operatora"
+      operator_revoked_notice: "Odebrano uprawnienia operatora"
       cannot_revoke_self: "Nie można odebrać uprawnień samemu sobie"
       cannot_revoke_last: "Nie można odebrać uprawnień ostatniemu administratorowi"
       moved_notice: "Gracz został przeniesiony do drużyny «%{team}»"
@@ -50,6 +67,7 @@ pl:
         signed_up: "Rejestracja"
         role: "Rola"
         superadmin: "administrator"
+        operator: "operator"
         back: "Do przeglądu"
       show:
         email: "E-mail"
@@ -65,6 +83,8 @@ pl:
         back: "Do listy graczy"
         grant: "Nadaj uprawnienia administratora"
         revoke: "Odbierz uprawnienia administratora"
+        grant_operator: "Nadaj uprawnienia operatora"
+        revoke_operator: "Odbierz uprawnienia operatora"
         move: "Przenieś do drużyny"
         delete: "Usuń konto"
         anonymise: "Zanonimizuj konto"
@@ -103,6 +123,8 @@ pl:
           test_reset_token: "Zmienił link do testów"
           grant_superadmin: "Nadał uprawnienia administratora"
           revoke_superadmin: "Odebrał uprawnienia administratora"
+          grant_operator: "Nadał uprawnienia operatora"
+          revoke_operator: "Odebrał uprawnienia operatora"
           allow_any_code: "Zezwolił na dowolny kod na poziomie"
           require_all_codes: "Wymógł wszystkie kody na poziomie"
           update_settings: "Zmienił ustawienia"
@@ -117,6 +139,8 @@ pl:
           translation_run_cancelled: "Zatrzymał tłumaczenie"
           translation_run_retried: "Powtórzył tłumaczenie"
           translation_proposals_accepted: "Przyjął tłumaczenia"
+          issue_access_pass: "Nadał dostęp do gry"
+          revoke_access_pass: "Odebrał dostęp do gry"
     settings:
       title: "Ustawienia limitów"
       explanation: "Limity rejestracji obowiązują dla jednego adresu IP w podanym okresie; 0 wyłącza limit. Limity plików obowiązują dla gry i dla całego serwera."
@@ -157,6 +181,7 @@ pl:
           finished: "Zakończona"
           running: "Trwa"
           scheduled: "Zaplanowana"
+          available: "Dostępna"
         total:
           users: "Graczy"
           teams: "Drużyn"
@@ -194,6 +219,7 @@ pl:
         running: "Trwa"
         finished: "Zakończona"
         withdrawn: "Wycofana z publikacji"
+        available: "Dostępna"
         locked: "edycja zablokowana"
         edit: "Edytuj"
         entries_link: "Zgłoszenia (%{count})"
@@ -245,7 +271,10 @@ pl:
     must_be_author: "Musisz być autorem gry, aby zobaczyć tę stronę"
     translation_key_missing: "Tłumaczenie przy pomocy AI jest niedostępne: nie skonfigurowano klucza API."
     not_registered_for_game: "Twoja drużyna nie jest zapisana na tę grę."
+    no_access_pass: "Ta gra wymaga dostępu. Skontaktuj się z organizatorem."
     must_be_superadmin: "Dostęp tylko dla administratora"
+    must_operate_commercial: "Ta strona jest dostępna tylko dla operatorów i administratorów"
+    game_not_gated: "Ta strona jest dostępna tylko dla gry sprzedawanej za pomocą przepustek"
     too_many_requests: "Zbyt wiele prób. Spróbuj później."
     must_be_author_or_finished_player: "Pełny dziennik odpowiedzi jest dostępny tylko dla autora gry albo gracza z drużyny, która ukończyła grę"
     game_already_started: "Nie można edytować gry po jej rozpoczęciu"
@@ -312,6 +341,7 @@ pl:
       status_finished: "Zakończona"
       status_running: "Trwa"
       status_scheduled: "Zaplanowana"
+      status_available: "Dostępna"
       paused: "wstrzymana"
       duration: "%{hours} godz. %{minutes} min"
       playing: "grają: %{count}"
@@ -328,6 +358,12 @@ pl:
       reject: "(odrzuć)"
     teams:
       legend: "Biorą udział drużyny:"
+    standings:
+      title: "Wyniki"
+      place: "Miejsce"
+      team: "Drużyna"
+      finished_at: "Meta"
+      duration: "Czas"
     form:
       name: "Nazwa"
       description: "Opis"
@@ -335,6 +371,9 @@ pl:
       registration_deadline: "Ostateczny termin rejestracji "
       max_team_number: "Maksymalna liczba drużyn"
       is_draft: "Szkic?"
+      access_mode: "Tryb dostępu"
+      access_mode_scheduled: "Zaplanowana (rejestracja i data rozpoczęcia)"
+      access_mode_pass_required: "Wymagany dostęp (komercyjna)"
     primary_locale_label: "Język główny"
     available_locales_label: "Języki gry"
     new:
@@ -363,6 +402,7 @@ pl:
       start_test: "Rozpocznij testowanie"
       start: "Start"
       finish_test: "Zakończ testowanie"
+      manage_access: "Zarządzaj przepustkami dostępu"
   test_admissions:
     team_not_found: "Nie znaleziono drużyny «%{name}»"
     already_admitted: "«%{name}» ma już dostęp do testów"
@@ -932,6 +972,8 @@ pl:
       submit: "Zaloguj się"
   activerecord:
     attributes:
+      access_pass:
+        game: "Gra"
       file_attachment:
         attachable: "Obiekt"
         game_file: "Plik"
@@ -946,6 +988,10 @@ pl:
         invalid: "ma nieprawidłową wartość"
         record_invalid: "Rekord jest nieprawidłowy"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "nie jest sprzedawana z dostępem"
         answer:
           attributes:
             value:

@@ -58,4 +58,36 @@ describe "logs of a gated game", type: :request do
     expect(response.body).to include("own-code")
     expect(response.body).not_to include("other-code")
   end
+
+  # Fix round 1: LogsController#find_run leaves @run nil for a gated game
+  # (Task 7), and show_live_channel/show_level_log/show_game_log stay
+  # scheduled-only in substance -- they must render *empty*, not 500. All
+  # three are author-only (ensure_author), so the author reaches them by
+  # direct URL even though no UI link produces one for a gated game.
+  describe "the scheduled-only screens on a gated game" do
+    let!(:passing) { create_game_passing(:game => game, :level => level, :game_run => nil) }
+
+    before { sign_in(game.author) }
+
+    it "renders the live channel empty rather than raising" do
+      get show_live_channel_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("run-context")
+    end
+
+    it "renders the level log empty rather than raising" do
+      get show_level_log_path(:game_id => game.id, :team_id => passing.team_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("run-context")
+    end
+
+    it "renders the game log empty rather than raising" do
+      get show_game_log_path(:game_id => game.id, :team_id => passing.team_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("run-context")
+    end
+  end
 end

@@ -159,9 +159,10 @@ class LogsController < ApplicationController
   # Teams are counted through the RUN; levels through the GAME, because levels
   # are the game's content and are shared by every running of it.
   def count_the_run
-    # @run is nil for a gated game (find_run skips the lookup) -- the header
-    # this feeds (shared/_run_context) is itself only rendered for a run, so
-    # this simply has nothing to report rather than counting anything.
+    # @run is nil for a gated game (find_run skips the lookup) -- there is
+    # nothing to count teams THROUGH. shared/_run_context guards on @run
+    # itself and renders nothing in that case, so this value is simply
+    # never read for a gated game rather than needing to be a real count.
     @run_team_count   = @run ? GamePassing.where(:game_run_id => @run.id).count : nil
     @game_level_count = Level.of_game(@game).count
   end

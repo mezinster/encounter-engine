@@ -7,11 +7,10 @@
 <h1><%= t("logs.show_full_log.title", :game => @game.name) %></h1>
 
 <%# A gated game has no run to give context for -- LogsController#find_run
-    leaves @run nil for one, and shared/_run_context dereferences @run
-    directly (ordinal, starts_at), so it is skipped rather than adapted. %>
-<% if @run %>
-  <%= render "shared/run_context" %>
-<% end %>
+    leaves @run nil for one. shared/_run_context now guards on @run itself
+    (fix round 1), so all four callers, this one included, render it
+    unconditionally rather than each repeating the check. %>
+<%= render "shared/run_context" %>
 
 <div class="table-wrap">
 <table id="stats">

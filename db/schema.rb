@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_110000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -153,7 +153,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_110000) do
     t.integer "author_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.boolean "is_draft", default: false, null: false
     t.string "primary_locale", default: "ru", null: false
     t.string "available_locales", default: "ru", null: false
     t.datetime "editing_locked_at"

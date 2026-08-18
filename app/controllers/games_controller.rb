@@ -6,7 +6,7 @@ class GamesController < ApplicationController
   before_action :require_authentication!, except: [:index, :show]
   before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :unfinish, :lock, :unlock, :hand_over]
   before_action :find_team, only: [:show]
-  before_action :ensure_author_if_game_is_draft, only: [:show]
+  before_action :ensure_author_if_game_draft, only: [:show]
   before_action :ensure_author_if_no_start_time, only: [:show]
   before_action :ensure_author_if_game_is_withdrawn, only: [:show]
   before_action :ensure_author_if_game_is_testing, only: [:show]
@@ -97,7 +97,7 @@ class GamesController < ApplicationController
     redirect_to dashboard_path
   end
 
-  # save, not save!. start_test sets is_draft to false, which is exactly the
+  # save, not save!. start_test sets visibility to "listed", which is exactly the
   # transition the translation-completeness gate guards, so a game with a
   # declared-but-untranslated language legitimately fails to save here.
   #
@@ -108,7 +108,7 @@ class GamesController < ApplicationController
   # translating". The reason was computed, attached as errors[:base], and then
   # discarded by the exception. Surface it instead.
   def start_test
-    @game.is_draft = false
+    @game.visibility = "listed"
     @game.is_testing = true
     @game.test_date = @game.starts_at
     @game.starts_at = Time.now + 0.1.second
@@ -210,16 +210,16 @@ class GamesController < ApplicationController
                         "#{previous} -> #{successor.nickname}") if operator
 
     # The games LIST, not the game. A draft sits behind
-    # ensure_author_if_game_is_draft, so redirecting to a game the caller has
+    # ensure_author_if_game_draft, so redirecting to a game the caller has
     # just stopped authoring would answer a successful transfer with 401.
     redirect_to games_path, :notice => t("games.hand_over.done", :nickname => successor.nickname)
   end
 
-  # Same treatment as start_test. This direction sets is_draft back to true so
-  # the gate cannot fire, but another validation still can -- and an author
-  # stuck in test mode with a blank 422 has no way to understand why.
+  # Same treatment as start_test. This direction sets visibility back to
+  # "draft" so the gate cannot fire, but another validation still can -- and
+  # an author stuck in test mode with a blank 422 has no way to understand why.
   def finish_test
-    @game.is_draft = true
+    @game.visibility = "draft"
     @game.is_testing = false
     @game.starts_at = @game.test_date
     @game.test_date = Time.now
@@ -266,7 +266,7 @@ class GamesController < ApplicationController
   def game_params
     params.fetch(:game, ActionController::Parameters.new)
           .permit(:name, :description, :starts_at, :registration_deadline,
-                   :max_team_number, :is_draft, :primary_locale,
+                   :max_team_number, :visibility, :primary_locale,
                    :available_locale_list => [],
                    :translations => translation_params_shape(Game::TRANSLATABLE_FIELDS))
   end
@@ -301,7 +301,7 @@ class GamesController < ApplicationController
     @team = current_user&.team
   end
 
-  def game_is_draft?
+  def game_draft?
     @game.draft?
   end
 
@@ -316,8 +316,8 @@ class GamesController < ApplicationController
   # these two guards, an unpublished game's name/description/level count
   # leak from the moment its author saves the draft, before it's meant to be
   # public.
-  def ensure_author_if_game_is_draft
-    ensure_author if game_is_draft?
+  def ensure_author_if_game_draft
+    ensure_author if game_draft?
   end
 
   def ensure_author_if_no_start_time
@@ -335,10 +335,11 @@ class GamesController < ApplicationController
   end
 
   # The fourth sibling, and it exists because the first one stops working.
-  # ensure_author_if_game_is_draft keeps non-authors off an unpublished game --
-  # but start_test clears is_draft, so from the moment a rehearsal begins that
-  # guard lapses and the page becomes world-readable. Reported from production
-  # 2026-08-15, together with the listing leak Game.visible now closes.
+  # ensure_author_if_game_draft keeps non-authors off an unpublished game --
+  # but start_test sets visibility to "listed", so from the moment a rehearsal
+  # begins that guard lapses and the page becomes world-readable. Reported
+  # from production 2026-08-15, together with the listing leak Game.visible
+  # now closes.
   #
   # Wider than its siblings by one case: an admitted TESTER must reach the game
   # they were invited to. That is the only widening -- a stranger with the URL

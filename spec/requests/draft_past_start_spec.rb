@@ -67,10 +67,10 @@ describe "a draft whose start date has passed", type: :request do
     end
 
     # The point of the whole fix: the draft can be published again. Without it
-    # the author could not clear is_draft, so the game was unrecoverable.
+    # the author could not clear visibility, so the game was unrecoverable.
     it "can publish it by moving the start date" do
       patch game_path(game), :params => {
-        :game => { :starts_at => 1.day.from_now.strftime("%Y-%m-%d %H:%M"), :is_draft => "0" }
+        :game => { :starts_at => 1.day.from_now.strftime("%Y-%m-%d %H:%M"), :visibility => "listed" }
       }
 
       expect(game.reload.draft?).to be_falsey
@@ -86,7 +86,7 @@ describe "a draft whose start date has passed", type: :request do
     # started, which is the state the validation existed to prevent in the
     # first place.
     it "cannot publish it WITHOUT moving the start date" do
-      patch game_path(game), :params => { :game => { :is_draft => "0" } }
+      patch game_path(game), :params => { :game => { :visibility => "listed" } }
 
       expect(game.reload.draft?).to be_truthy
     end

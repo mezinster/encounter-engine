@@ -15,7 +15,7 @@ describe "playing a translated game", type: :request do
     g.translations_attributes = { "en" => { "name" => "#{g.name} (EN)",
                                             "description" => "#{g.description} (EN)" } }
     g.save!
-    g.update!(:is_draft => false)
+    g.update!(:visibility => "listed")
     g
   end
   let(:level) { create_level(:game => game, :name => "Уровень", :text => "Найдите памятник") }
@@ -54,7 +54,7 @@ describe "translated content over real HTTP", type: :request do
     g.translations_attributes = { "en" => { "name" => "EN game name",
                                             "description" => "EN game description" } }
     g.save!
-    g.update!(:is_draft => false)
+    g.update!(:visibility => "listed")
     yield g if block_given?
     g.reload
     Time.stub(:now => now + 1)

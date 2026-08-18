@@ -38,6 +38,14 @@ module FixturesHelper
   end
 
   def build_game(options={})
+    # Call sites still speak is_draft, which is the older and shorter name and
+    # reads well in an example. Translated here so the fixture keeps that
+    # vocabulary without the column existing.
+    if options.key?(:is_draft)
+      options = options.dup
+      options[:visibility] = options.delete(:is_draft) ? "draft" : "listed"
+    end
+
     creation_params = {
       :author => create_user,
       :name => random_string,
@@ -47,9 +55,9 @@ module FixturesHelper
       # games.visibility now defaults to "draft" (a new game starts
       # unpublished until its author acts), which is the opposite polarity
       # of is_draft's old `default: false`. Restated here so every existing
-      # call site that omits :is_draft keeps getting a published game, same
-      # as before this column existed.
-      :is_draft => false
+      # call site that omits :is_draft (or :visibility) keeps getting a
+      # published game, same as before this column existed.
+      :visibility => "listed"
     }.merge(options)
     Game.new creation_params
   end

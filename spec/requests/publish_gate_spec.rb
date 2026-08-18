@@ -25,7 +25,7 @@ describe "the publish gate", type: :request do
 
   it "refuses publication and explains why" do
     create_level(:game => game, :name => "Уровень", :text => "Текст")
-    game.is_draft = false
+    game.visibility = "listed"
     expect(game.save).to be false
     expect(game.errors[:base].join).to be_present
   end
@@ -37,7 +37,7 @@ describe "the publish gate", type: :request do
     level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text" } }
     level.save!
 
-    game.reload.is_draft = false
+    game.reload.visibility = "listed"
     expect(game.save).to be true
   end
 
@@ -110,7 +110,7 @@ describe "the publish gate", type: :request do
       game.save!
       level.translations_attributes = { "en" => { "name" => "Level", "text" => "Text" } }
       level.save!
-      game.update!(:is_draft => false)
+      game.update!(:visibility => "listed")
 
       # Finding 1: this no longer invalidates the (now published) game -- it
       # just leaves a gap that Finding 4 makes visible.

@@ -97,7 +97,7 @@ class Game < ApplicationRecord
   # rather than a silent leak.
   #
   # A game in TEST mode is excluded, and that clause is why this comment grew.
-  # start_test clears is_draft so the game behaves as live, which silently
+  # start_test sets visibility to "listed" so the game behaves as live, which silently
   # retires the non_drafts protection above at exactly the moment the game is
   # an unpublished rehearsal -- it was listed on the public home page as
   # RUNNING, reported from production 2026-08-15. shared/_current_games.html
@@ -135,22 +135,6 @@ class Game < ApplicationRecord
     self.visibility == "listed"
   end
 
-  # TEMPORARY, removed in the task that drops the is_draft column. Fifteen
-  # files still say is_draft -- both author forms, the permit list,
-  # start_test/finish_test and create_game in the spec fixtures -- and keeping
-  # the old name working for one commit is what lets the column land with a
-  # green suite instead of a coordinated edit across all of them.
-  #
-  # These override the ActiveRecord attribute methods of the same name, which
-  # is the point: the column is still present but no longer authoritative.
-  def is_draft
-    draft?
-  end
-
-  def is_draft=(value)
-    self.visibility = ActiveModel::Type::Boolean.new.cast(value) ? "draft" : "listed"
-  end
-
   # A draft has not begun, whatever the clock says: the start date on an
   # unpublished game is a plan, not an event.
   #
@@ -173,8 +157,8 @@ class Game < ApplicationRecord
   #
   # Nothing downstream shifts: #status short-circuits on draft? before it ever
   # reaches here, Game.started and .not_started compose this with .visible,
-  # which excludes drafts already, and start_test clears is_draft before it
-  # moves starts_at, so a test run is never a draft.
+  # which excludes drafts already, and start_test sets visibility to "listed"
+  # before it moves starts_at, so a test run is never a draft.
   def started?
     return false if draft?
 
@@ -277,7 +261,7 @@ class Game < ApplicationRecord
   # The ONLY writer of author_id after creation, mirroring Team#set_captain!.
   # A game with two ways to change its author is a game whose access control
   # cannot be reasoned about from one place -- and author_id is what
-  # ensure_author, ensure_author_if_game_is_draft and every author-only screen
+  # ensure_author, ensure_author_if_game_draft and every author-only screen
   # ultimately read.
   #
   # update_column, not update!, carrying exactly the reasoning on withdraw!
@@ -528,8 +512,8 @@ protected
   # for them.
   #
   # Publication is still gated. `draft?` reads the value being saved, so a
-  # game going from draft to published (is_draft true -> false) is not a
-  # draft by the time this runs, and a past start date is refused there --
+  # game going from draft to published (visibility "draft" -> "listed") is not
+  # a draft by the time this runs, and a past start date is refused there --
   # which is the moment that matters, and the same moment
   # declared_locales_are_translated_before_publication guards.
   #
@@ -540,8 +524,8 @@ protected
   # save was refused and the game was stuck in testing permanently. The
   # parked date sits still while the clock moves, so the longer the test ran
   # the likelier it got, and test_date is in no permitted-params list, so
-  # nothing the author could type would fix it. finish_test sets is_draft
-  # first, which is what makes this exemption cover it.
+  # nothing the author could type would fix it. finish_test sets visibility
+  # back to "draft" first, which is what makes this exemption cover it.
   def game_starts_in_the_future
     return if self.draft?
 
@@ -580,10 +564,11 @@ protected
   # to report registration closed, registration then never closed.
   #
   # Skipping is safe rather than merely convenient: a testing game is started
-  # (start_test clears is_draft and moves starts_at into the past), and
-  # ensure_game_was_not_started already covers edit and update, so an author
-  # cannot reach these validations mid-test to write a nonsensical deadline.
-  # The only writers during a test are start_test and finish_test themselves.
+  # (start_test sets visibility to "listed" and moves starts_at into the
+  # past), and ensure_game_was_not_started already covers edit and update, so
+  # an author cannot reach these validations mid-test to write a nonsensical
+  # deadline. The only writers during a test are start_test and finish_test
+  # themselves.
   #
   # finish_test restores starts_at before clearing is_testing, so the rules
   # apply again on the very save that ends the test -- a deadline that has
@@ -652,8 +637,8 @@ private
   # finish_game! and start_test raised.
   #
   # The three cases that must still be caught:
-  #   - a game created already published (is_draft defaults to false and the
-  #     new-game form leaves the box unchecked, so this is the common path)
+  #   - a game created already published (the author unchecked the draft box
+  #     at creation, publishing the game immediately)
   #   - a draft being published
   #   - a locale added to a game that is already live
   def declared_locales_are_translated_before_publication

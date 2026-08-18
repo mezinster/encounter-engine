@@ -193,7 +193,7 @@ describe "reviewing translation proposals", type: :request do
       # validation under test -- and via current_run, because the eight
       # scheduling columns live on GameRun now and Game only delegates to them.
       g.current_run.update_column(:starts_at, 2.hours.ago)
-      g.update_column(:is_draft, false)
+      g.update_column(:visibility, "listed")
       g.reload
     end
 

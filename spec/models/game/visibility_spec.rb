@@ -28,48 +28,6 @@ describe Game do
     end
   end
 
-  # Removed in the next task, together with the is_draft column. Covered while
-  # they exist because the whole suite depends on them for one commit.
-  describe "the temporary is_draft shims" do
-    it "reads draft-ness through the new column" do
-      game = create_game
-      game.update!(:visibility => "listed")
-      expect(game.reload.is_draft).to be false
-
-      # The discriminating direction: build_game now defaults :is_draft to
-      # false, and nothing else writes the raw is_draft column once the
-      # shim lands, so it sits at that DB default for every fixture-created
-      # row regardless of visibility. Setting visibility directly here --
-      # not through the is_draft= shim -- leaves the raw column false while
-      # visibility says draft. A reader that fell back to the raw column
-      # would still report false; only a reader that goes through
-      # visibility reports true, which is what must actually happen.
-      game.update!(:visibility => "draft")
-      expect(game.reload.is_draft).to be true
-    end
-
-    it "writes the new column when assigned true" do
-      game = create_game
-      game.is_draft = true
-      expect(game.visibility).to eq("draft")
-    end
-
-    it "writes the new column when assigned false" do
-      game = create_game
-      game.is_draft = false
-      expect(game.visibility).to eq("listed")
-    end
-
-    # The author form posts strings, not booleans.
-    it "casts the string a checkbox posts" do
-      game = create_game
-      game.is_draft = "0"
-      expect(game.visibility).to eq("listed")
-      game.is_draft = "1"
-      expect(game.visibility).to eq("draft")
-    end
-  end
-
   describe ".visible" do
     it "excludes a draft" do
       game = create_game(:is_draft => true)

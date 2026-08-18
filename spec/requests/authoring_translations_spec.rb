@@ -63,7 +63,7 @@ describe "authoring translations", type: :request do
       put game_path(solo_game), params: {
         game: {
           name: solo_game.name, description: solo_game.description,
-          max_team_number: solo_game.max_team_number, is_draft: true,
+          max_team_number: solo_game.max_team_number, visibility: "draft",
           primary_locale: "ru", :available_locale_list => %w[ru en]
         }
       }

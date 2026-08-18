@@ -73,8 +73,8 @@
     <%= f.text_field :max_team_number %>
   </div>
   <div class="field">
-    <%= f.label :is_draft, t("games.form.is_draft") %>
-    <%= f.check_box :is_draft %>
+    <%= f.label :visibility, t("games.form.is_draft") %>
+    <%= f.check_box :visibility, {}, "draft", "listed" %>
   </div>
   <%= f.submit t("games.edit.submit"), class: "btn btn--go" %>
   <em><%= link_to t("shared.cancel"), game_path(@game) %></em>

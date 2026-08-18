@@ -18,7 +18,7 @@ describe "quiz options and the publish gate", type: :request do
   it "refuses to publish a multilingual game whose options are untranslated" do
     game, _level, option = multilingual_game_with_an_option
 
-    game.is_draft = false
+    game.visibility = "listed"
 
     expect(game.valid?).to be false
     expect(game.missing_translations.map(&:record)).to include(option)
@@ -45,7 +45,7 @@ describe "quiz options and the publish gate", type: :request do
     option.translations_attributes = { "en" => { "text" => "Paris" } }
     option.save!
 
-    game.reload.is_draft = false
+    game.reload.visibility = "listed"
 
     expect(game.valid?).to be true
   end

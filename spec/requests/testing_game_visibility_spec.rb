@@ -4,9 +4,10 @@ require "rails_helper"
 # home page as RUNNING, its profile was readable by a logged-off visitor, and
 # that profile offered «Старт» and «Завершить тестирование» to anyone.
 #
-# Root cause: start_test clears is_draft so the game behaves as live. Until
-# then a draft was kept off every list by Game.visible (non_drafts) and off its
-# own page by ensure_author_if_game_is_draft. Both protections stop applying
+# Root cause: start_test sets visibility to "listed" so the game behaves as
+# live. Until then a draft was kept off every list by Game.visible
+# (non_drafts) and off its own page by ensure_author_if_game_draft. Both
+# protections stop applying
 # the moment a test begins, and nothing replaced them -- so a rehearsal of an
 # unpublished game became public.
 #
@@ -69,7 +70,7 @@ describe "a game in test mode is not public", type: :request do
       sign_in(author)
       post finish_test_game_path(game)
       # finish_test returns it to draft; publish it as an author would.
-      game.reload.update!(:is_draft => false)
+      game.reload.update!(:visibility => "listed")
       delete logout_path
 
       get root_path

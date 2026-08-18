@@ -1,6 +1,13 @@
 <%# app/views/shared/_content_language_switcher.html.erb %>
 <%# Only worth showing when there is actually a choice to make. %>
 <% if game.multilingual? %>
+  <%# Two screens render this, and each has to post to its own route: the play
+      screen's is behind the play-time filters and redirects into the game,
+      the game page's is behind the same filters as games#show and redirects
+      back there. Defaulting to the play route keeps show_current_level's
+      render unchanged. %>
+  <% switch_path = local_assigns.fetch(:switch_path,
+       ->(locale) { set_content_locale_path(:game_id => game.id, :locale => locale) }) %>
   <div class="content-language-switcher">
     <%= t("game_passings.content_language") %>:
     <% game.available_locale_list.each do |locale| %>
@@ -9,7 +16,7 @@
           "locales.<code>" ("Русский", "English", ...) -- reuse it rather
           than inventing a second key for the same list of names. %>
       <%= button_to t("locales.#{locale}"),
-                    set_content_locale_path(:game_id => game.id, :locale => locale),
+                    switch_path.call(locale),
                     :method => :post, :class => "language-choice" %>
     <% end %>
   </div>

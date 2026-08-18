@@ -831,8 +831,11 @@ describe "the points chart", type: :request do
   end
 
   it "breaks ties on name, so an all-zero chart is alphabetical" do
-    b = create_team(:captain => create_user, :name => "Бета")
-    a = create_team(:captain => create_user, :name => "Альфа")
+    # create_team IGNORES a :name option -- it always generates "Team#<random>"
+    # -- so the names are set afterwards. Passing :name to the helper would
+    # leave two random names and an assertion that proves nothing.
+    b = create_team(:captain => create_user); b.update!(:name => "Бета")
+    a = create_team(:captain => create_user); a.update!(:name => "Альфа")
     sign_in(viewer)
 
     get teams_path

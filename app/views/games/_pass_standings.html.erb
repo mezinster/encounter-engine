@@ -17,7 +17,13 @@
           <td data-label="<%= t("games.standings.place") %>"><%= index + 1 %></td>
           <td data-label="<%= t("games.standings.team") %>"><%= attempt.team&.name %></td>
           <td data-label="<%= t("games.standings.finished_at") %>"><%= l(attempt.finished_at, :format => :long) %></td>
-          <td data-label="<%= t("games.standings.duration") %>"><%= distance_of_time_in_words(attempt.duration) %></td>
+          <%# distance_of_time_in_words buckets to the nearest few minutes --
+              two attempts 25 minutes apart both read "около 3 часов", so a
+              table sorted BY duration (Game#pass_standings) looked
+              arbitrarily ordered. seconds_to_hms (TimeFormatting, already
+              included in GamePassing) is exact and locale-free -- finding 5
+              of the whole-branch review. %>
+          <td data-label="<%= t("games.standings.duration") %>"><%= attempt.seconds_to_hms(attempt.duration) %></td>
         </tr>
       <% end %>
     </tbody>

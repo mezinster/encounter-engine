@@ -15,6 +15,13 @@ describe "standings on a gated game's page", type: :request do
 
     expect(response.body).to include("Результаты")
     expect(response.body).to include(pass.team.name)
+    # Finding 5: the standings are RANKED by duration, so the column must show
+    # it exactly (00:10:00 for 600 seconds) rather than
+    # distance_of_time_in_words' nearest-few-minutes bucketing, which renders
+    # the same "около Х минут"/"около Х часов" text for attempts many minutes
+    # apart -- a table sorted by the very thing the reader cannot distinguish.
+    expect(response.body).to include(attempt.seconds_to_hms(attempt.duration))
+    expect(response.body).to include("00:10:00")
   end
 
   it "does not render standings on a scheduled game's page" do

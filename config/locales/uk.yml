@@ -393,6 +393,7 @@ uk:
       start_test: "Почати тестування"
       start: "Старт"
       finish_test: "Завершити тестування"
+      manage_access: "Керування перепустками"
   test_admissions:
     team_not_found: "Команду «%{name}» не знайдено"
     already_admitted: "«%{name}» вже допущені до тестування"

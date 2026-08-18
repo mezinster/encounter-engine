@@ -399,6 +399,7 @@ ka:
       start_test: "ტესტირების დაწყება"
       start: "სტარტი"
       finish_test: "ტესტირების დასრულება"
+      manage_access: "წვდომის ბილეთების მართვა"
   # Same treatment as tr: the case ending sits on a preceding common noun
   # (გუნდი / მოთამაშე / მონაწილე / თამაშის), never on %{name} or %{game}.
   test_admissions:

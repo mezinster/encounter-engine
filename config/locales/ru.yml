@@ -376,6 +376,7 @@ ru:
       start_test: "Начать тестирование"
       start: "Старт"
       finish_test: "Завершить тестирование"
+      manage_access: "Управление пропусками"
   test_admissions:
     team_not_found: "Команда «%{name}» не найдена"
     already_admitted: "«%{name}» уже допущены к тестированию"

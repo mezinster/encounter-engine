@@ -8,6 +8,14 @@
   <div class="is-draft-message"><%= t("games.show.draft_label") %></div>
 <% end %>
 
+<%# Any operator, not just this game's author -- AccessPassesController's
+    ensure_commercial_operator carries no authorship check either (an
+    operator's authority is scoped to GATED games, not to games they
+    personally wrote). Gated only: the console has nothing to manage on a
+    scheduled game. %>
+<% if @game.pass_required? && logged_in? && current_user.may_operate_commercial? %>
+  <p><%= link_to t("games.show.manage_access"), game_access_passes_path(@game), class: "btn" %></p>
+<% end %>
 
 <div class="panel">
   <p>

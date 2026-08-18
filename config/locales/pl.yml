@@ -400,6 +400,7 @@ pl:
       start_test: "Rozpocznij testowanie"
       start: "Start"
       finish_test: "Zakończ testowanie"
+      manage_access: "Zarządzaj przepustkami dostępu"
   test_admissions:
     team_not_found: "Nie znaleziono drużyny «%{name}»"
     already_admitted: "«%{name}» ma już dostęp do testów"

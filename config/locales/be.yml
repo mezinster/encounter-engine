@@ -395,6 +395,7 @@ be:
       start_test: "Пачаць тэставанне"
       start: "Старт"
       finish_test: "Завяршыць тэставанне"
+      manage_access: "Кіраванне пропускамі"
   test_admissions:
     team_not_found: "Каманда «%{name}» не знойдзена"
     already_admitted: "«%{name}» ужо дапушчаны да тэставання"

@@ -67,8 +67,24 @@ class GamePassingsController < ApplicationController
     render layout: "in_game"
   end
 
+  # current_run.passings is run-scoped, and a gated attempt is runless
+  # (game_run_id NULL) -- the same defect class Game#resume! and
+  # InterventionsController#find_game_passing were already fixed for. Without
+  # this branch, a gated game's live console (the move/reinstate controls
+  # this view hosts) was empty for every gated game, however many teams were
+  # actually playing.
+  #
+  # where.not(:access_pass_id => nil), not GamePassing.gated_attempt_for:
+  # that method answers "which ROW is THIS TEAM's current attempt" -- a
+  # per-team question this console does not ask. This is a per-GAME listing,
+  # every gated attempt for it, exactly as current_run.passings is every
+  # scheduled attempt for the run.
   def index
-    @game_passings = @game.current_run.passings
+    @game_passings = if @game.pass_required?
+                       @game.game_passings.where.not(:access_pass_id => nil)
+                     else
+                       @game.current_run.passings
+                     end
     # For the move control on each row. Loaded once here rather than per row.
     @levels = Level.of_game(@game).order(:position)
   end

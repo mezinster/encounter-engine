@@ -376,6 +376,7 @@ en:
       start_test: "Start testing"
       start: "Start"
       finish_test: "Finish testing"
+      manage_access: "Manage access passes"
   test_admissions:
     team_not_found: "Team «%{name}» was not found"
     already_admitted: "«%{name}» is already admitted to the test"

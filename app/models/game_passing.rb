@@ -65,6 +65,7 @@ class GamePassing < ApplicationRecord
   belongs_to :game, optional: true
   belongs_to :current_level, :class_name => "Level", optional: true
   belongs_to :game_run, :optional => true
+  belongs_to :access_pass, :optional => true
 
   scope :of_game, ->(game) { where(game_id: game) }
   scope :of_team, ->(team) { where(team_id: team) }

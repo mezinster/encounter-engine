@@ -912,6 +912,8 @@ en:
     # Kept for ru/en key parity (spec/i18n_spec.rb); English's default
     # humanized names already read fine, so these mostly restate them.
     attributes:
+      access_pass:
+        game: "Game"
       file_attachment:
         # "Object", not the default humanisation "Attachable": that is the
         # polymorphic association's internal name, and the thing it points at
@@ -929,6 +931,10 @@ en:
         invalid: "is invalid"
         record_invalid: "Record is invalid"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "is not sold by access pass"
         answer:
           attributes:
             value:

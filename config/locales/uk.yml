@@ -937,6 +937,8 @@ uk:
       submit: "Увійти"
   activerecord:
     attributes:
+      access_pass:
+        game: "Гра"
       file_attachment:
         attachable: "Об'єкт"
         game_file: "Файл"
@@ -951,6 +953,10 @@ uk:
         invalid: "має неправильне значення"
         record_invalid: "Запис недійсний"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "не продається за доступом"
         answer:
           attributes:
             value:

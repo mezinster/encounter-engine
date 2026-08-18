@@ -165,6 +165,16 @@ module FixturesHelper
     GameEntry.create! creation_params
   end
 
+  def create_access_pass(options = {})
+    game = options[:game] || create_game(:is_draft => false, :access_mode => "pass_required")
+
+    AccessPass.create!({
+      :game   => game,
+      :team   => create_team,
+      :source => "operator_invite"
+    }.merge(options))
+  end
+
   # The run must already be testing -- TestAdmission refuses otherwise -- so
   # this flips the flag rather than making every caller remember to. Pass
   # :user to build a SOLO admission; :team then names the disposable team.

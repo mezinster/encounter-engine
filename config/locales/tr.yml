@@ -980,6 +980,8 @@ tr:
       submit: "Giriş yap"
   activerecord:
     attributes:
+      access_pass:
+        game: "Oyun"
       file_attachment:
         attachable: "Nesne"
         game_file: "Dosya"
@@ -994,6 +996,10 @@ tr:
         invalid: "geçersiz bir değer içeriyor"
         record_invalid: "Kayıt geçersiz"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "erişim ile satılmıyor"
         answer:
           attributes:
             value:

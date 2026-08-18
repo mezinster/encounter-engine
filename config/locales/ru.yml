@@ -937,6 +937,8 @@ ru:
     # follows, not a standalone sentence -- "Игра" is feminine, "Файл" is
     # masculine, and Russian predicate participles inflect for that.
     attributes:
+      access_pass:
+        game: "Игра"
       file_attachment:
         attachable: "Объект"
         game_file: "Файл"
@@ -951,6 +953,10 @@ ru:
         invalid: "имеет неверное значение"
         record_invalid: "Запись недействительна"
       models:
+        access_pass:
+          attributes:
+            game:
+              not_gated: "не продаётся по доступу"
         answer:
           attributes:
             value:

@@ -1039,7 +1039,7 @@ end
 - [ ] **Step 2: Run it and confirm it fails for the right reason**
 
 Run: `bundle exec rspec spec/models/game/pause_resume_spec.rb`
-Expected: FAIL — `unknown attribute 'access_pass'` on the first two examples, and the fourth failing because the ended passing's clock **was** shifted.
+Expected: FAIL — `unknown attribute 'paused_seconds'` on the accumulate example, the runless example failing because `resume!` skips an attempt with no run, and the fourth failing because the ended passing's clock **was** shifted.
 
 - [ ] **Step 3: Write the migration**
 

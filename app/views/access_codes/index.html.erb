@@ -11,3 +11,84 @@
   </p>
   <p><%= submit_tag t("access_codes.generate.submit"), :class => "btn btn--go" %></p>
 <% end %>
+
+<h3><%= t("access_codes.lookup.title") %></h3>
+
+<%# POST, not GET: a GET would put the customer's secret in a query string,
+    which reaches server logs, browser history and every proxy between --
+    the one place filter_parameters cannot help. %>
+<%= form_with url: lookup_game_access_codes_path(@game), method: :post, local: true do %>
+  <p>
+    <%= text_field_tag :access_code, nil, :autocomplete => "off", :autocapitalize => "characters" %>
+    <%= submit_tag t("access_codes.lookup.submit"), :class => "btn" %>
+  </p>
+<% end %>
+
+<% if params[:access_code].present? %>
+  <% if @found %>
+    <%# Facts ABOUT the code, never the code: an operator's screenshot or
+        screen-share must not be able to leak one. %>
+    <p>
+      <%= t("access_codes.batch") %>: <%= @found.batch_key %> &middot;
+      <%= t("access_codes.#{@found.state}") %>
+      <% if @found.access_pass&.team %>
+        &middot; <%= t("access_codes.lookup.team") %>: <%= @found.access_pass.team.name %>
+      <% end %>
+    </p>
+    <% unless @found.redeemed_at %>
+      <%= button_to t("access_codes.revoke"), revoke_game_access_codes_path(@game),
+                    :method => :patch, :params => { :code_id => @found.id }, :class => "btn btn--danger" %>
+    <% end %>
+  <% else %>
+    <p class="alert"><%= t("access_codes.lookup.not_found") %></p>
+  <% end %>
+<% end %>
+
+<h3><%= t("access_codes.title") %></h3>
+
+<div class="table-wrap">
+<table class="table--cards">
+  <thead>
+    <tr>
+      <th><%= t("access_codes.batch") %></th>
+      <th><%= t("access_codes.created_at") %></th>
+      <th><%= t("access_codes.size") %></th>
+      <th><%= t("access_codes.outstanding") %></th>
+      <th><%= t("access_codes.redeemed") %></th>
+      <th><%= t("access_codes.revoked") %></th>
+      <th><%= t("access_codes.expired") %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  <% @batches.each do |key, created| %>
+    <% size = @sizes[key].to_i %>
+    <% used = @redeemed[key].to_i %>
+    <% gone = @revoked[key].to_i %>
+    <% old  = @expired[key].to_i %>
+    <tr>
+      <td data-label="<%= t("access_codes.batch") %>"><%= key %></td>
+      <td data-label="<%= t("access_codes.created_at") %>"><%= l(created, :format => :long) %></td>
+      <td data-label="<%= t("access_codes.size") %>"><%= size %></td>
+      <td data-label="<%= t("access_codes.outstanding") %>"><%= size - used - gone - old %></td>
+      <td data-label="<%= t("access_codes.redeemed") %>"><%= used %></td>
+      <td data-label="<%= t("access_codes.revoked") %>"><%= gone %></td>
+      <td data-label="<%= t("access_codes.expired") %>"><%= old %></td>
+      <td>
+        <%# No confirmation attributes: this app ships neither Turbo nor
+            rails-ujs, so data-confirm would imply a dialog nobody gets. %>
+        <%= button_to t("access_codes.revoke"), revoke_game_access_codes_path(@game),
+                      :method => :patch, :params => { :batch_key => key }, :class => "btn btn--danger" %>
+        <%= button_to t("access_codes.unrevoke"), unrevoke_game_access_codes_path(@game),
+                      :method => :patch, :params => { :batch_key => key }, :class => "btn" %>
+        <%= form_with url: expiry_game_access_codes_path(@game), method: :patch, local: true do %>
+          <%= hidden_field_tag :batch_key, key %>
+          <%= date_field_tag :expires_at %>
+          <%= submit_tag t("access_codes.set_expiry"), :class => "btn" %>
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+</div>

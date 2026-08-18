@@ -273,6 +273,10 @@ Rails.application.routes.draw do
         patch :revoke
         patch :unrevoke
         patch :expiry
+        # POST, not GET: a GET would put the customer's secret in a query
+        # string, and that lands in server logs, browser history and every
+        # proxy between -- the one place filter_parameters cannot reach.
+        post :lookup
       end
     end
   end

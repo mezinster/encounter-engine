@@ -18,8 +18,21 @@ class AccessCodesController < ApplicationController
   before_action :ensure_commercial_operator
   before_action :ensure_game_is_gated
 
+  # Batches, not codes -- there is nothing readable to show per code, and the
+  # counts are what an operator actually asks for.
+  #
+  # THREE grouped queries for the whole page regardless of how many batches
+  # exist, not one lookup per batch: sub-project B broke two query-count specs
+  # by adding a per-row read behind a listing, and this screen has its own.
   def index
-    @batches = @game.access_codes.order(:created_at)
+    scope = @game.access_codes
+    @batches   = scope.group(:batch_key).minimum(:created_at)
+    @sizes     = scope.group(:batch_key).count
+    @redeemed  = scope.where.not(:redeemed_at => nil).group(:batch_key).count
+    @revoked   = scope.where(:redeemed_at => nil).where.not(:revoked_at => nil).group(:batch_key).count
+    @expired   = scope.where(:redeemed_at => nil, :revoked_at => nil)
+                      .where("expires_at IS NOT NULL AND expires_at <= ?", Time.now)
+                      .group(:batch_key).count
   end
 
   def create
@@ -73,6 +86,19 @@ class AccessCodesController < ApplicationController
 
     record_admin_action("set_access_code_expiry", @game, "#{target_label(n)} -> #{when_ || "-"}")
     redirect_to game_access_codes_path(@game), :notice => t("access_codes.expiry_notice", :count => n)
+  end
+
+  # An operator cannot read codes off this screen, so the only way to answer
+  # "my code does not work" is for the customer to supply the secret and for
+  # us to digest it exactly as redemption does. That is the whole support
+  # workflow, and it is why AccessCode.normalize is one method rather than
+  # two: if this and redemption ever disagreed about confusables, an operator
+  # would confirm a code is fine while the customer kept failing to use it.
+  def lookup
+    code = AccessCode.find_by_code(params[:access_code])
+    @found = code if code && code.game_id == @game.id
+    index
+    render :index
   end
 
   private

@@ -224,6 +224,32 @@ D1 ships no operator adjustments (§9), so that decision is **not made here**. I
 whoever builds that UI, and this section exists so they know it is theirs to make rather than
 inheriting a default nobody chose.
 
+### Amendment, 2026-08-19: "the ledger is public" is not "the catalogue is public"
+
+The whole-branch review found `teams#show` printing the **titles of draft and withdrawn games** to
+a signed-out stranger: an author admits a team to test an unreleased game, and its title is
+readable off a public page; a withdrawn game leaks permanently, on every participant's page.
+
+That is this section applied one step too far, and the error was in the plan rather than in the
+implementation. A team's page carries two different kinds of information, and only one of them is
+what §5 is about:
+
+* **The ledger** — amounts, reasons, totals, ordering. Public, as above. This is the part that
+  makes the chart mean anything.
+* **Game identity** — the title, and the fact that this team played *that* game. Not covered here
+  at all. Every other surface in this app gates it through `Game.visible` (non-draft, not
+  withdrawn, no testing run), and nothing in the argument above applies to it: publishing a title
+  tells a reader nothing about why a team placed where it did.
+
+So a game the viewer may not see is rendered with a **neutral placeholder**, and its amounts still
+count toward every total on the page. The row is not dropped. Omitting it would make the public
+balance stop equalling the sum of the public rows — a reader would see a team's total exceed its
+visible history and read the chart as broken, which is precisely the "sees the effect, cannot see
+why" failure this section rejects two paragraphs above. The game's own author still sees the title.
+
+The general form, worth carrying into D2: **a decision to publish one kind of data on a page does
+not publish everything else the page happens to render.**
+
 ## 6. i18n
 
 New keys in **all seven** locales (`ru`, `en`, `uk`, `ka`, `tr`, `be`, `pl`): the three game form
@@ -245,9 +271,13 @@ unrecognised `reason` cannot produce `translation missing:` on a public page.
   an attempt driven to completion twice earns `game_completed` **once**. The second is the one a
   single index would miss, so it is not optional. Assert row counts, not balances — a balance can
   be right for the wrong reason.
-* **Request** — the chart's figures for a team with a mixture of finished and abandoned runs; the
-  visibility split, with a guest and a non-member seeing totals and no itemised rows, and a member
-  and an operator seeing them.
+* **Request** — the chart's figures for a team with a mixture of finished and abandoned runs, where
+  "abandoned" means an `exit!`ed run: that sets `finished_at` *and* `status = "exited"`, so a
+  surface reading `finished_at` alone reports it as completed while the chart reports it as not,
+  and the two disagree about the same run.
+  A guest sees the whole ledger, itemised — there is no visibility split to test, because §5
+  withdrew it. What a guest must NOT see is the *title* of a game they are not entitled to; see the
+  amendment at the end of §5.
 * **Query count** — the chart flat as the number of teams grows.
 * **Regression** — the inherited Cucumber contract (228 scenarios / 2325 steps) unchanged. The
   award hook sits inside `pass_level!`, which that contract drives constantly, so this is the gate

@@ -176,6 +176,16 @@ module FixturesHelper
     }.merge(options))
   end
 
+  # Returns the AccessCode; the raw code is the second element of the pair
+  # generate_batch! returns, so a spec that needs to redeem asks for it.
+  def create_access_code(options = {})
+    game = options[:game] || create_game(:is_draft => false, :access_mode => "pass_required")
+    _key, raws = AccessCode.generate_batch!(:game => game, :count => 1,
+                                            :issued_by => options[:issued_by] || create_user,
+                                            :expires_at => options[:expires_at])
+    [ AccessCode.find_by_code(raws.first), raws.first ]
+  end
+
   # The run must already be testing -- TestAdmission refuses otherwise -- so
   # this flips the flag rather than making every caller remember to. Pass
   # :user to build a SOLO admission; :team then names the disposable team.

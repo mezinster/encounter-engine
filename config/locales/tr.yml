@@ -1011,6 +1011,8 @@ tr:
       submit: "Giriş yap"
   activerecord:
     attributes:
+      access_code:
+        game: "Oyun"
       access_pass:
         game: "Oyun"
       file_attachment:
@@ -1027,6 +1029,10 @@ tr:
         invalid: "geçersiz bir değer içeriyor"
         record_invalid: "Kayıt geçersiz"
       models:
+        access_code:
+          attributes:
+            game:
+              not_gated: "erişim ile satılmıyor"
         access_pass:
           attributes:
             game:

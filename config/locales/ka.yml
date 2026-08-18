@@ -993,6 +993,8 @@ ka:
       submit: "შესვლა"
   activerecord:
     attributes:
+      access_code:
+        game: "თამაში"
       access_pass:
         game: "თამაში"
       file_attachment:
@@ -1009,6 +1011,10 @@ ka:
         invalid: "აქვს არასწორი მნიშვნელობა"
         record_invalid: "ჩანაწერი არასწორია"
       models:
+        access_code:
+          attributes:
+            game:
+              not_gated: "არ იყიდება წვდომით"
         access_pass:
           attributes:
             game:

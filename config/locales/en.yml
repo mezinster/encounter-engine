@@ -943,6 +943,8 @@ en:
     # Kept for ru/en key parity (spec/i18n_spec.rb); English's default
     # humanized names already read fine, so these mostly restate them.
     attributes:
+      access_code:
+        game: "Game"
       access_pass:
         game: "Game"
       file_attachment:
@@ -962,6 +964,10 @@ en:
         invalid: "is invalid"
         record_invalid: "Record is invalid"
       models:
+        access_code:
+          attributes:
+            game:
+              not_gated: "is not sold by access pass"
         access_pass:
           attributes:
             game:

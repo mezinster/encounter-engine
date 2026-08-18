@@ -972,6 +972,8 @@ pl:
       submit: "Zaloguj się"
   activerecord:
     attributes:
+      access_code:
+        game: "Gra"
       access_pass:
         game: "Gra"
       file_attachment:
@@ -988,6 +990,10 @@ pl:
         invalid: "ma nieprawidłową wartość"
         record_invalid: "Rekord jest nieprawidłowy"
       models:
+        access_code:
+          attributes:
+            game:
+              not_gated: "nie jest sprzedawana z dostępem"
         access_pass:
           attributes:
             game:

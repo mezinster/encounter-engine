@@ -34,6 +34,17 @@ describe "game deletion", type: :request do
     expect(game.reload.deletable?).to be false
   end
 
+  # Same discrimination as the access_passes example above, one purchase
+  # record earlier in its life: an unredeemed AccessCode has not yet produced
+  # a pass, so it isolates the access_codes conjunct -- dropping it from
+  # Game#deletable? leaves every other example here green and only this one
+  # fails.
+  it "is refused once a gated game holds an access code, even unredeemed" do
+    game = create_game(:author => author, :is_draft => false, :access_mode => "pass_required")
+    create_access_code(:game => game)
+    expect(game.reload.deletable?).to be false
+  end
+
   # Today's behaviour orphans them: zero foreign keys, no dependent: options.
   it "takes the levels, hints, questions and answers with it" do
     game     = create_game(:author => author, :is_draft => true)

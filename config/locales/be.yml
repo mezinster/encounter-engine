@@ -959,6 +959,8 @@ be:
       submit: "Увайсці"
   activerecord:
     attributes:
+      access_code:
+        game: "Гульня"
       access_pass:
         game: "Гульня"
       file_attachment:
@@ -975,6 +977,10 @@ be:
         invalid: "мае няправільнае значэнне"
         record_invalid: "Запіс несапраўдны"
       models:
+        access_code:
+          attributes:
+            game:
+              not_gated: "не прадаецца па доступе"
         access_pass:
           attributes:
             game:

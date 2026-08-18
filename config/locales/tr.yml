@@ -185,6 +185,7 @@ tr:
           finished: "Bitti"
           running: "Sürüyor"
           scheduled: "Planlandı"
+          available: "Erişilebilir"
         total:
           users: "Oyuncu"
           teams: "Takım"
@@ -223,6 +224,7 @@ tr:
         running: "Sürüyor"
         finished: "Bitti"
         withdrawn: "Yayından kaldırıldı"
+        available: "Erişilebilir"
         locked: "düzenleme donduruldu"
         edit: "Düzenle"
         entries_link: "Başvurular (%{count})"
@@ -341,6 +343,7 @@ tr:
       status_finished: "Bitti"
       status_running: "Sürüyor"
       status_scheduled: "Planlandı"
+      status_available: "Erişilebilir"
       paused: "duraklatıldı"
       duration: "%{hours} sa %{minutes} dk"
       playing: "oynayan: %{count}"

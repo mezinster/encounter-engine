@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_130000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -158,6 +158,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_120000) do
     t.datetime "editing_locked_at"
     t.datetime "withdrawn_at"
     t.string "visibility", default: "draft", null: false
+    t.string "access_mode", default: "scheduled", null: false
   end
 
   create_table "hints", force: :cascade do |t|

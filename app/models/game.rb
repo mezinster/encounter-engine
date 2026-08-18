@@ -6,6 +6,8 @@ class Game < ApplicationRecord
 
   VISIBILITIES = %w[draft listed].freeze
 
+  ACCESS_MODES = %w[scheduled pass_required].freeze
+
   # Not a boolean: these entries are simultaneously the publish gate's reason
   # for refusing and the author's to-do list, so they carry enough to render a
   # deep link straight to the offending field.
@@ -63,6 +65,7 @@ class Game < ApplicationRecord
   validates :max_team_number, numericality: { greater_than: 0, less_than: 10000 }
   validates :author, presence: true
   validates :visibility, :inclusion => { :in => VISIBILITIES }
+  validates :access_mode, :inclusion => { :in => ACCESS_MODES }
 
   validate :game_starts_in_the_future
   validate :valid_max_num
@@ -133,6 +136,10 @@ class Game < ApplicationRecord
 
   def listed?
     self.visibility == "listed"
+  end
+
+  def pass_required?
+    self.access_mode == "pass_required"
   end
 
   # A draft has not begun, whatever the clock says: the start date on an
@@ -353,6 +360,11 @@ class Game < ApplicationRecord
     return :withdrawn if withdrawn?
     return :draft     if draft?
     return :finished  if author_finished?
+    # A gated game is never "scheduled": it has no start date to wait for and
+    # no cohort to wait with. Placed after :finished so an operator who closes
+    # a commercial game still sees it reported as finished, and before
+    # :running so the schedule rungs below stay purely about scheduled games.
+    return :available if pass_required?
     return :running   if started?
     :scheduled
   end
@@ -385,12 +397,15 @@ class Game < ApplicationRecord
       :withdrawn => where.not(:withdrawn_at => nil).count,
       :draft     => live.where(:visibility => "draft").count,
       :finished  => published.where("game_runs.author_finished_at IS NOT NULL").count,
+      :available => unfinished.where(:access_mode => "pass_required").count,
       # starts_at is nullable and Game#started? treats NULL as not started, so
       # the NULL check is explicit rather than left to a comparison that would
       # evaluate to unknown and drop the row from every bucket.
-      :running   => unfinished.where("game_runs.starts_at IS NOT NULL")
+      :running   => unfinished.where(:access_mode => "scheduled")
+                              .where("game_runs.starts_at IS NOT NULL")
                               .where("game_runs.starts_at < ?", now).count,
-      :scheduled => unfinished.where("game_runs.starts_at IS NULL OR game_runs.starts_at >= ?", now).count
+      :scheduled => unfinished.where(:access_mode => "scheduled")
+                              .where("game_runs.starts_at IS NULL OR game_runs.starts_at >= ?", now).count
     }
   end
 

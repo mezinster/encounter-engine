@@ -157,6 +157,7 @@ uk:
           finished: "Завершена"
           running: "Триває"
           scheduled: "Запланована"
+          available: "Доступна"
         total:
           users: "Гравців"
           teams: "Команд"
@@ -194,6 +195,7 @@ uk:
         running: "Триває"
         finished: "Завершена"
         withdrawn: "Знята з публікації"
+        available: "Доступна"
         locked: "редагування заморожено"
         edit: "Редагувати"
         entries_link: "Заявки (%{count})"
@@ -312,6 +314,7 @@ uk:
       status_finished: "Завершена"
       status_running: "Триває"
       status_scheduled: "Запланована"
+      status_available: "Доступна"
       paused: "на паузі"
       duration: "%{hours} год %{minutes} хв"
       playing: "грають: %{count}"

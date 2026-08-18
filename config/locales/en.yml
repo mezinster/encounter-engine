@@ -140,6 +140,7 @@ en:
           finished: "Finished"
           running: "Running"
           scheduled: "Scheduled"
+          available: "Available"
         total:
           users: "Players"
           teams: "Teams"
@@ -177,6 +178,7 @@ en:
         running: "Running"
         finished: "Finished"
         withdrawn: "Withdrawn"
+        available: "Available"
         locked: "editing frozen"
         edit: "Edit"
         entries_link: "Applications (%{count})"
@@ -295,6 +297,7 @@ en:
       status_finished: "Finished"
       status_running: "Running"
       status_scheduled: "Scheduled"
+      status_available: "Available"
       paused: "paused"
       duration: "%{hours}h %{minutes}m"
       playing: "playing: %{count}"

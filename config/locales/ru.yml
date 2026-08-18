@@ -140,6 +140,7 @@ ru:
           finished: "Завершена"
           running: "Идёт"
           scheduled: "Запланирована"
+          available: "Доступна"
         total:
           users: "Игроков"
           teams: "Команд"
@@ -177,6 +178,7 @@ ru:
         running: "Идёт"
         finished: "Завершена"
         withdrawn: "Снята с публикации"
+        available: "Доступна"
         locked: "редактирование заморожено"
         edit: "Редактировать"
         entries_link: "Заявки (%{count})"
@@ -295,6 +297,7 @@ ru:
       status_finished: "Завершена"
       status_running: "Идёт"
       status_scheduled: "Запланирована"
+      status_available: "Доступна"
       paused: "на паузе"
       duration: "%{hours} ч %{minutes} мин"
       playing: "играют: %{count}"

@@ -164,6 +164,7 @@ pl:
           finished: "Zakończona"
           running: "Trwa"
           scheduled: "Zaplanowana"
+          available: "Dostępna"
         total:
           users: "Graczy"
           teams: "Drużyn"
@@ -201,6 +202,7 @@ pl:
         running: "Trwa"
         finished: "Zakończona"
         withdrawn: "Wycofana z publikacji"
+        available: "Dostępna"
         locked: "edycja zablokowana"
         edit: "Edytuj"
         entries_link: "Zgłoszenia (%{count})"
@@ -319,6 +321,7 @@ pl:
       status_finished: "Zakończona"
       status_running: "Trwa"
       status_scheduled: "Zaplanowana"
+      status_available: "Dostępna"
       paused: "wstrzymana"
       duration: "%{hours} godz. %{minutes} min"
       playing: "grają: %{count}"

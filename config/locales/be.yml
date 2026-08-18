@@ -159,6 +159,7 @@ be:
           finished: "Завершана"
           running: "Ідзе"
           scheduled: "Запланавана"
+          available: "Даступная"
         total:
           users: "Гульцоў"
           teams: "Каманд"
@@ -196,6 +197,7 @@ be:
         running: "Ідзе"
         finished: "Завершана"
         withdrawn: "Знята з публікацыі"
+        available: "Даступная"
         locked: "рэдагаванне замарожана"
         edit: "Рэдагаваць"
         entries_link: "Заяўкі (%{count})"
@@ -314,6 +316,7 @@ be:
       status_finished: "Завершана"
       status_running: "Ідзе"
       status_scheduled: "Запланавана"
+      status_available: "Даступная"
       paused: "на паўзе"
       duration: "%{hours} г %{minutes} хв"
       playing: "гуляюць: %{count}"

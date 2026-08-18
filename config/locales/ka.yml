@@ -163,6 +163,7 @@ ka:
           finished: "დასრულებული"
           running: "მიმდინარე"
           scheduled: "დაგეგმილი"
+          available: "ხელმისაწვდომია"
         total:
           users: "მოთამაშე"
           teams: "გუნდი"
@@ -200,6 +201,7 @@ ka:
         running: "მიმდინარე"
         finished: "დასრულებული"
         withdrawn: "მოხსნილია გამოქვეყნებიდან"
+        available: "ხელმისაწვდომია"
         locked: "რედაქტირება გაყინულია"
         edit: "რედაქტირება"
         entries_link: "განაცხადები (%{count})"
@@ -318,6 +320,7 @@ ka:
       status_finished: "დასრულებული"
       status_running: "მიმდინარე"
       status_scheduled: "დაგეგმილი"
+      status_available: "ხელმისაწვდომია"
       paused: "შეჩერებულია"
       duration: "%{hours} სთ %{minutes} წთ"
       playing: "თამაშობს: %{count}"

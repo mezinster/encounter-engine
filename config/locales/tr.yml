@@ -59,6 +59,18 @@ tr:
     revoked_notice: "Erişim geri alındı"
     not_found: "Takım bulunamadı"
     cannot_revoke_started: "Erişim geri alınamaz: takım çoktan başladı"
+  access_codes:
+    title: "Erişim kodları"
+    bad_count: "1 ile %{max} arasında kod belirtin"
+    generate:
+      count: "Kaç kod"
+      expires_at: "Geçerlilik tarihi (isteğe bağlı)"
+      submit: "Kod oluştur"
+    created:
+      title: "Yeni kodlar"
+      warning: "Kodlar yalnızca bir kez gösterilir. Şimdi kopyalayın — geri alınamaz."
+      batch: "Parti: %{key}"
+      back: "Kod listesine"
   admin:
     users:
       granted_notice: "Yönetici yetkileri verildi"
@@ -162,6 +174,7 @@ tr:
           translation_proposals_accepted: "Çevirileri kabul etti"
           issue_access_pass: "Oyun erişimi verdi"
           revoke_access_pass: "Oyun erişimini geri aldı"
+          generate_access_codes: "Erişim kodları oluşturdu"
     settings:
       title: "Sınırlama ayarları"
       explanation: "Kayıt sınırlamaları belirtilen süre içinde tek bir IP adresi için geçerlidir; 0 sınırlamayı kapatır. Dosya sınırlamaları oyun başına ve sunucu genelinde geçerlidir."

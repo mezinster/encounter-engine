@@ -14,6 +14,18 @@ en:
     revoked_notice: "Access revoked"
     not_found: "Team not found"
     cannot_revoke_started: "Cannot revoke: the team has already started"
+  access_codes:
+    title: "Access codes"
+    bad_count: "Choose between 1 and %{max} codes"
+    generate:
+      count: "How many codes"
+      expires_at: "Valid until (optional)"
+      submit: "Generate codes"
+    created:
+      title: "New codes"
+      warning: "This is the only time these codes are shown. Copy them now — they cannot be recovered."
+      batch: "Batch: %{key}"
+      back: "Back to codes"
   admin:
     users:
       granted_notice: "Administrator rights granted"
@@ -117,6 +129,7 @@ en:
           translation_proposals_accepted: "Accepted translations"
           issue_access_pass: "Issued game access"
           revoke_access_pass: "Revoked game access"
+          generate_access_codes: "Generated access codes"
     settings:
       title: "Rate limits"
       explanation: "Signup limits apply per IP address per window; 0 disables the limit. File limits apply per game and across the whole server."

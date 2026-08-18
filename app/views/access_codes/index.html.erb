@@ -1,0 +1,13 @@
+<h2 class="page-title"><%= t("access_codes.title") %> &mdash; <%= @game.name %></h2>
+
+<%= form_with url: game_access_codes_path(@game), method: :post, local: true do %>
+  <p>
+    <%= label_tag :count, t("access_codes.generate.count") %>
+    <%= number_field_tag :count, 10, :min => 1, :max => AccessCodesController::MAX_PER_BATCH %>
+  </p>
+  <p>
+    <%= label_tag :expires_at, t("access_codes.generate.expires_at") %>
+    <%= date_field_tag :expires_at %>
+  </p>
+  <p><%= submit_tag t("access_codes.generate.submit"), :class => "btn btn--go" %></p>
+<% end %>

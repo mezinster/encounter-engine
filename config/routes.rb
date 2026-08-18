@@ -263,6 +263,10 @@ Rails.application.routes.draw do
   # about one game's passes, and the authorization asks about that game.
   resources :games, only: [] do
     resources :access_passes, only: [ :index, :create, :destroy ]
+    # The secrets that create those passes. A separate screen rather than more
+    # sections on the pass console: passes and codes answer different
+    # questions and both lists grow.
+    resources :access_codes, only: [ :index, :create ]
   end
 
   # The routes below have no `resources` equivalent: in Merb they were only

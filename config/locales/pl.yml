@@ -38,6 +38,18 @@ pl:
     revoked_notice: "Dostęp odebrany"
     not_found: "Nie znaleziono drużyny"
     cannot_revoke_started: "Nie można odebrać dostępu: drużyna już zaczęła"
+  access_codes:
+    title: "Kody dostępu"
+    bad_count: "Podaj od 1 do %{max} kodów"
+    generate:
+      count: "Ile kodów"
+      expires_at: "Ważne do (opcjonalnie)"
+      submit: "Utwórz kody"
+    created:
+      title: "Nowe kody"
+      warning: "To jedyny raz, gdy kody są pokazane. Skopiuj je teraz — nie da się ich odzyskać."
+      batch: "Partia: %{key}"
+      back: "Do listy kodów"
   admin:
     users:
       granted_notice: "Uprawnienia administratora zostały nadane"
@@ -141,6 +153,7 @@ pl:
           translation_proposals_accepted: "Przyjął tłumaczenia"
           issue_access_pass: "Nadał dostęp do gry"
           revoke_access_pass: "Odebrał dostęp do gry"
+          generate_access_codes: "Utworzył kody dostępu"
     settings:
       title: "Ustawienia limitów"
       explanation: "Limity rejestracji obowiązują dla jednego adresu IP w podanym okresie; 0 wyłącza limit. Limity plików obowiązują dla gry i dla całego serwera."

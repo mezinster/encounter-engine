@@ -38,8 +38,13 @@ class AccessCode < ApplicationRecord
   # Mirrors User.find_by_reset_token's three guards: a blank input resolves to
   # nothing even against a blank stored digest, and the comparison is
   # constant-time rather than trusting the database's indexed equality.
+  #
+  # Normalise BEFORE testing emptiness, not raw.strip: a value like "-" is not
+  # blank by String#strip alone, but normalize strips dashes too and reduces
+  # it to "", which must be refused for the same reason a truly empty input
+  # is -- otherwise this guard's claim to catch "nothing" is only partly true.
   def self.find_by_code(raw)
-    return nil if raw.to_s.strip.empty?
+    return nil if normalize(raw).empty?
 
     wanted = digest(raw)
     candidate = where.not(:code_digest => nil).find_by(:code_digest => wanted)

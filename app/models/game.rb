@@ -360,6 +360,15 @@ class Game < ApplicationRecord
   # access_codes joins for the same reason again: a code is a purchase record
   # too (see AccessCode), and deleting the game would destroy it even before
   # a customer redeems it into a pass.
+  #
+  # This is a conjunction evaluated once PER ROW in the operator listings, so
+  # every association it reads turns an unpreloaded listing into an N+1. It
+  # has happened twice already -- access_passes, then access_codes -- and both
+  # are preloaded at the one call site that renders this per row:
+  # Admin::GamesController#index (see the comment on its `includes`). The next
+  # conjunct added here needs the same preload added there, or this method
+  # stays cheap in isolation while the screen that calls it once per row goes
+  # quadratic.
   def deletable?
     self.game_passings.empty? && self.access_passes.empty? && self.access_codes.empty?
   end

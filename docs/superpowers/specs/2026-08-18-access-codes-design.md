@@ -181,9 +181,11 @@ guards (`may_operate_commercial?` and `pass_required?`). Passes and codes answer
 questions and both lists grow.
 
 **The list shows batches, not codes.** One row per `batch_key`: when, by whom, size, and counts —
-outstanding, redeemed, revoked, expired. Those counts come from **one grouped query**
-(`group(:batch_key)`), never a lookup per row: sub-project B broke two query-count specs by adding
-a per-row read behind a listing, and the same specs guard this one.
+outstanding, redeemed, revoked, expired. Those come from **seven queries total, regardless of how
+many batches exist** — six grouped by `batch_key` (created-at, size, redeemed, revoked, expired,
+issuer id) plus one flat lookup of the issuers' nicknames — never a lookup per row: sub-project B
+broke two query-count specs by adding a per-row read behind a listing, and the same specs guard
+this one.
 
 Per-batch actions: revoke all, lift the revocation, set or clear the batch's expiry.
 

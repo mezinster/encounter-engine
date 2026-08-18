@@ -110,6 +110,17 @@ describe AccessCode do
       expect(AccessCode.find_by_code("")).to be_nil
       expect(AccessCode.find_by_code(nil)).to be_nil
     end
+
+    # F8: the guard used to test String#strip.empty?, which "-" survives (it
+    # is not whitespace), and only THEN digested whatever was left -- here,
+    # the empty string. Harmless today because no row can hold SHA256(""), but
+    # the guard's comment claimed to catch every input that reduces to
+    # nothing, and this one slipped through it. Normalising before testing
+    # emptiness is what actually delivers that.
+    it "returns nil for input that normalizes to nothing, even though it is not blank" do
+      expect(AccessCode.find_by_code("-")).to be_nil
+      expect(AccessCode.find_by_code(" - -")).to be_nil
+    end
   end
 
   describe "#redeemable? and #state" do

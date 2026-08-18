@@ -21,9 +21,13 @@ class AccessCodesController < ApplicationController
   # Batches, not codes -- there is nothing readable to show per code, and the
   # counts are what an operator actually asks for.
   #
-  # THREE grouped queries for the whole page regardless of how many batches
-  # exist, not one lookup per batch: sub-project B broke two query-count specs
-  # by adding a per-row read behind a listing, and this screen has its own.
+  # SEVEN queries for the whole page regardless of how many batches exist, not
+  # one lookup per batch: sub-project B broke two query-count specs by adding
+  # a per-row read behind a listing, and this screen has its own. Six are
+  # grouped (batches, sizes, redeemed, revoked, expired, issuer id per batch);
+  # the seventh is one flat User lookup for the issuers' nicknames, keyed off
+  # the distinct ids the grouped query returned -- still one query, not one
+  # per batch.
   def index
     scope = @game.access_codes
     @batches   = scope.group(:batch_key).minimum(:created_at)
@@ -33,6 +37,8 @@ class AccessCodesController < ApplicationController
     @expired   = scope.where(:redeemed_at => nil, :revoked_at => nil)
                       .where("expires_at IS NOT NULL AND expires_at <= ?", Time.now)
                       .group(:batch_key).count
+    @issuers      = scope.group(:batch_key).minimum(:issued_by_id)
+    @issuer_names = User.where(:id => @issuers.values.compact.uniq).pluck(:id, :nickname).to_h
   end
 
   def create
@@ -43,14 +49,25 @@ class AccessCodesController < ApplicationController
                   :alert => t("access_codes.bad_count", :max => MAX_PER_BATCH) and return
     end
 
+    ok, expires_at = parsed_expiry(params[:expires_at])
+    unless ok
+      redirect_to game_access_codes_path(@game),
+                  :alert => t("access_codes.bad_expiry") and return
+    end
+
     key, @codes = AccessCode.generate_batch!(
       :game => @game, :count => count, :issued_by => current_user,
-      :expires_at => params[:expires_at].presence
+      :expires_at => expires_at
     )
 
     # The batch_key, never a code: batch_key is a handle that grants nothing.
     record_admin_action("generate_access_codes", @game, "#{key} (#{count})")
     @batch_key = key
+
+    # The one page that ever renders a raw code. Set here, not in the view --
+    # a shared or intermediary cache must never be given the chance to retain
+    # this response for a second viewer.
+    response.headers["Cache-Control"] = "no-store"
     render :created
   end
 
@@ -80,7 +97,12 @@ class AccessCodesController < ApplicationController
   end
 
   def expiry
-    when_ = params[:expires_at].presence
+    ok, when_ = parsed_expiry(params[:expires_at])
+    unless ok
+      redirect_to game_access_codes_path(@game),
+                  :alert => t("access_codes.bad_expiry") and return
+    end
+
     n = targeted_codes.update_all(:expires_at => when_, :updated_at => Time.now)
     return nothing_matched if n.zero?
 
@@ -113,6 +135,29 @@ class AccessCodesController < ApplicationController
     return scope.where(:id => params[:code_id]) if params[:code_id].present?
 
     scope.of_batch(params[:batch_key].to_s)
+  end
+
+  # Blank ("", the date field cleared) means "clear the expiry" and is a
+  # legitimate value to write. Present-but-unparseable ("not-a-date", or
+  # anything Time.zone.parse rejects) is a DIFFERENT thing -- ActiveRecord's
+  # own datetime type cast turns exactly that case into nil too, silently, so
+  # letting it flow through to update_all/create! would clear the expiry
+  # while expiry_notice told the operator it had been set. Parsing here,
+  # before either write, is what tells the two cases apart: returns
+  # [true, nil] for blank, [true, a Time] for something parseable, and
+  # [false, nil] for present-but-garbage, which the caller must refuse rather
+  # than write.
+  def parsed_expiry(raw)
+    return [ true, nil ] if raw.blank?
+
+    parsed = begin
+      Time.zone.parse(raw)
+    rescue ArgumentError
+      nil
+    end
+    return [ false, nil ] if parsed.nil?
+
+    [ true, parsed ]
   end
 
   # A no-op is not an administrative act: AdminAudit's own rule is that a

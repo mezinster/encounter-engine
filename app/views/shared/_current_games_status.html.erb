@@ -19,6 +19,6 @@
   <% if local_assigns[:gated_live] %>
     <%= link_to t("shared.current_games_status.play"), show_current_level_path(game_id: game.id) %>
   <% else %>
-    <%= link_to t("errors.no_access_pass"), redeem_access_code_path %>
+    <%= link_to t("shared.current_games_status.redeem_code_link"), redeem_access_code_path %>
   <% end %>
 <% end %>

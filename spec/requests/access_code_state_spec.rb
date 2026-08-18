@@ -99,6 +99,23 @@ describe "revoking and expiring access codes", type: :request do
     expect(AccessCode.where(:expires_at => nil).count).to eq(2)
   end
 
+  # F7: params[:expires_at] used to flow straight into update_all/create!, and
+  # ActiveRecord's own datetime cast turns anything it cannot parse into nil --
+  # silently CLEARING the expiry while expiry_notice told the operator it had
+  # been set. A present-but-unparseable value must be refused instead.
+  it "refuses an unparseable expiry, writing nothing, rather than silently clearing it" do
+    key, _ = batch_of(2)
+    sign_in(operator)
+    patch expiry_game_access_codes_path(game), :params => { :batch_key => key, :expires_at => "2030-01-01" }
+
+    patch expiry_game_access_codes_path(game), :params => { :batch_key => key, :expires_at => "not-a-date" }
+
+    expect(AccessCode.where.not(:expires_at => nil).count).to eq(2)
+    expect(response).to redirect_to(game_access_codes_path(game))
+    follow_redirect!
+    expect(response.body).to include("Не удалось распознать дату")
+  end
+
   # C10: these columns govern whether a code can still be EXCHANGED. A
   # redeemed code has already produced a pass, and that pass's life is not the
   # code's business -- expiring it must not reach through and end a run.

@@ -62,6 +62,28 @@ describe "generating access codes", type: :request do
     expect(AccessCode.where.not(:expires_at => nil).count).to eq(2)
   end
 
+  # F7: an unparseable :expires_at must refuse rather than silently cast to
+  # nil and mint the batch with no expiry at all -- see the identical example
+  # for #expiry in access_code_state_spec.rb.
+  it "refuses an unparseable expiry, minting nothing" do
+    sign_in(operator)
+
+    expect { post game_access_codes_path(game), :params => { :count => 2, :expires_at => "not-a-date" } }
+      .not_to change { AccessCode.count }
+
+    follow_redirect!
+    expect(response.body).to include("Не удалось распознать дату")
+  end
+
+  # F9: this is the only page in the app that ever renders a raw secret. A
+  # shared or intermediary cache must never be given the chance to retain it.
+  it "sets Cache-Control: no-store on the page that shows the raw codes" do
+    sign_in(operator)
+    post game_access_codes_path(game), :params => { :count => 1 }
+
+    expect(response.headers["Cache-Control"]).to include("no-store")
+  end
+
   it "records an audit entry naming the batch, never a code" do
     sign_in(operator)
     expect { post game_access_codes_path(game), :params => { :count => 2 } }

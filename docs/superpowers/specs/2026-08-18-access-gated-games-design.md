@@ -263,7 +263,7 @@ attempts come back, and they resume where the team stopped. **A pass never yield
 | Filter | Change |
 |---|---|
 | `ensure_game_is_started` (`:625`) | For `pass_required`, "started" is meaningless: it becomes "visibility is not `draft`". A draft commercial game must still refuse, or an operator's unfinished work is playable by anyone holding an invitation. |
-| `ensure_team_not_exited` (`:655`) | Becomes "exited **and** no further live pass". Otherwise a team that bought a replacement is locked out by a filter guarding the attempt they paid to replace. |
+| `ensure_team_not_exited` (`:713`) | **Unchanged** -- corrected 2026-08-18, whole-branch review finding 7. It looked like it would need to become "exited **and** no further live pass", so a team that bought a replacement is not locked out by a filter guarding the attempt they paid to replace. It does not need to: `find_or_create_game_passing`'s gated resolution (`gated_passing`, above) already hands back a NEW attempt when a live replacement pass exists, and raises `Authentication::Unauthorized` before this filter is ever reached when none does -- so an exited passing can only arrive here when the team truly has no further pass, which is exactly when refusing is correct. Task 6's review verified this by driving the controller, not by reading the code; only the comment on the filter itself was changed to record why, never the filter. |
 | `ensure_not_author_of_the_game` | Unchanged. |
 | `ensure_game_not_finished_by_author` | Unchanged — `author_finished?` delegates to the current run, which is how an operator retires a commercial game. |
 

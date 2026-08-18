@@ -50,6 +50,12 @@ pl:
       warning: "To jedyny raz, gdy kody są pokazane. Skopiuj je teraz — nie da się ich odzyskać."
       batch: "Partia: %{key}"
       back: "Do listy kodów"
+  access_code_redemptions:
+    title: "Wprowadź kod dostępu"
+    code: "Kod"
+    submit: "Aktywuj"
+    redeemed: "Kod przyjęty. Gra jest otwarta dla twojej drużyny."
+    need_a_team: "Najpierw utwórz drużynę — zachowaliśmy twój kod."
   admin:
     users:
       granted_notice: "Uprawnienia administratora zostały nadane"
@@ -285,6 +291,13 @@ pl:
     translation_key_missing: "Tłumaczenie przy pomocy AI jest niedostępne: nie skonfigurowano klucza API."
     not_registered_for_game: "Twoja drużyna nie jest zapisana na tę grę."
     no_access_pass: "Ta gra wymaga dostępu. Skontaktuj się z organizatorem."
+    access_code:
+      unknown: "Nie znaleziono takiego kodu"
+      redeemed: "Ten kod został już użyty"
+      revoked: "Ten kod został odebrany"
+      expired: "Kod wygasł"
+      game_unavailable: "Gra jest obecnie niedostępna"
+      throttled: "Zbyt wiele prób. Spróbuj później."
     must_be_superadmin: "Dostęp tylko dla administratora"
     must_operate_commercial: "Ta strona jest dostępna tylko dla operatorów i administratorów"
     game_not_gated: "Ta strona jest dostępna tylko dla gry sprzedawanej za pomocą przepustek"

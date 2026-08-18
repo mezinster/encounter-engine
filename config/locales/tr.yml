@@ -71,6 +71,12 @@ tr:
       warning: "Kodlar yalnızca bir kez gösterilir. Şimdi kopyalayın — geri alınamaz."
       batch: "Parti: %{key}"
       back: "Kod listesine"
+  access_code_redemptions:
+    title: "Erişim kodu girin"
+    code: "Kod"
+    submit: "Kullan"
+    redeemed: "Kod kabul edildi. Oyun takımınıza açıldı."
+    need_a_team: "Önce bir takım oluşturun — kodunuzu sakladık."
   admin:
     users:
       granted_notice: "Yönetici yetkileri verildi"
@@ -307,6 +313,13 @@ tr:
     translation_key_missing: "Yapay zeka ile çeviri kullanılamıyor: API anahtarı ayarlanmamış."
     not_registered_for_game: "Takımınız bu oyuna kayıtlı değil."
     no_access_pass: "Bu oyun için erişim gerekiyor. Düzenleyiciye başvurun."
+    access_code:
+      unknown: "Böyle bir kod bulunamadı"
+      redeemed: "Bu kod zaten kullanılmış"
+      revoked: "Bu kod geri alınmış"
+      expired: "Kodun süresi dolmuş"
+      game_unavailable: "Oyun şu anda kullanılamıyor"
+      throttled: "Çok fazla deneme. Daha sonra tekrar deneyin."
     must_be_superadmin: "Erişim yalnızca yöneticiye açıktır"
     must_operate_commercial: "Bu sayfa yalnızca operatörler ve yöneticiler içindir"
     game_not_gated: "Bu sayfa yalnızca geçiş ile satılan bir oyun için kullanılabilir"

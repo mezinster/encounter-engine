@@ -269,6 +269,11 @@ Rails.application.routes.draw do
     resources :access_codes, only: [ :index, :create ]
   end
 
+  # One global form: the code carries its own game, so a customer holding a
+  # card need not find the game first.
+  get  "/redeem", to: "access_code_redemptions#new",    as: :redeem_access_code
+  post "/redeem", to: "access_code_redemptions#create"
+
   # The routes below have no `resources` equivalent: in Merb they were only
   # reachable through the catch-all `default_routes` entry
   # (`match("/:controller(/:action(/:id))(.:format)")`) at the bottom of

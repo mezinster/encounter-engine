@@ -40,6 +40,9 @@ ka:
   access_codes:
     title: "წვდომის კოდები"
     bad_count: "მიუთითეთ 1-დან %{max}-მდე კოდი"
+    revoked_notice: "ჩამორთმეულია კოდი: %{count}"
+    unrevoked_notice: "დაბრუნებულია კოდი: %{count}"
+    expiry_notice: "შეიცვალა ვადა კოდებზე: %{count}"
     generate:
       count: "რამდენი კოდი"
       expires_at: "ძალაშია (არასავალდებულო)"
@@ -159,6 +162,9 @@ ka:
           issue_access_pass: "მიანიჭა თამაშის წვდომა"
           revoke_access_pass: "ჩამოართვა თამაშის წვდომა"
           generate_access_codes: "შექმნა წვდომის კოდები"
+          revoke_access_codes: "ჩამოართვა წვდომის კოდები"
+          unrevoke_access_codes: "დააბრუნა წვდომის კოდები"
+          set_access_code_expiry: "შეცვალა კოდების ვადა"
     settings:
       title: "შეზღუდვების პარამეტრები"
       explanation: "რეგისტრაციის შეზღუდვები მოქმედებს ერთ IP-მისამართზე მითითებულ პერიოდში; 0 თიშავს შეზღუდვას. ფაილების შეზღუდვები მოქმედებს თამაშზე და მთელ სერვერზე."

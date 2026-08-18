@@ -62,6 +62,9 @@ tr:
   access_codes:
     title: "Erişim kodları"
     bad_count: "1 ile %{max} arasında kod belirtin"
+    revoked_notice: "Geri alınan kod: %{count}"
+    unrevoked_notice: "Geri verilen kod: %{count}"
+    expiry_notice: "Süresi değişen kod: %{count}"
     generate:
       count: "Kaç kod"
       expires_at: "Geçerlilik tarihi (isteğe bağlı)"
@@ -181,6 +184,9 @@ tr:
           issue_access_pass: "Oyun erişimi verdi"
           revoke_access_pass: "Oyun erişimini geri aldı"
           generate_access_codes: "Erişim kodları oluşturdu"
+          revoke_access_codes: "Erişim kodlarını geri aldı"
+          unrevoke_access_codes: "Erişim kodlarını geri verdi"
+          set_access_code_expiry: "Erişim kodu süresini değiştirdi"
     settings:
       title: "Sınırlama ayarları"
       explanation: "Kayıt sınırlamaları belirtilen süre içinde tek bir IP adresi için geçerlidir; 0 sınırlamayı kapatır. Dosya sınırlamaları oyun başına ve sunucu genelinde geçerlidir."

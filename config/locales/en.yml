@@ -17,6 +17,9 @@ en:
   access_codes:
     title: "Access codes"
     bad_count: "Choose between 1 and %{max} codes"
+    revoked_notice: "Codes revoked: %{count}"
+    unrevoked_notice: "Codes restored: %{count}"
+    expiry_notice: "Expiry changed on %{count} codes"
     generate:
       count: "How many codes"
       expires_at: "Valid until (optional)"
@@ -136,6 +139,9 @@ en:
           issue_access_pass: "Issued game access"
           revoke_access_pass: "Revoked game access"
           generate_access_codes: "Generated access codes"
+          revoke_access_codes: "Revoked access codes"
+          unrevoke_access_codes: "Restored access codes"
+          set_access_code_expiry: "Changed access-code expiry"
     settings:
       title: "Rate limits"
       explanation: "Signup limits apply per IP address per window; 0 disables the limit. File limits apply per game and across the whole server."

@@ -266,7 +266,15 @@ Rails.application.routes.draw do
     # The secrets that create those passes. A separate screen rather than more
     # sections on the pass console: passes and codes answer different
     # questions and both lists grow.
-    resources :access_codes, only: [ :index, :create ]
+    resources :access_codes, only: [ :index, :create ] do
+      collection do
+        # Each takes EITHER code_id OR batch_key -- one rule, two scopes. See
+        # the controller's targeted_codes.
+        patch :revoke
+        patch :unrevoke
+        patch :expiry
+      end
+    end
   end
 
   # One global form: the code carries its own game, so a customer holding a

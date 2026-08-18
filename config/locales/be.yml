@@ -36,6 +36,9 @@ be:
   access_codes:
     title: "Коды доступу"
     bad_count: "Пазначце ад 1 да %{max} кодаў"
+    revoked_notice: "Адклікана кодаў: %{count}"
+    unrevoked_notice: "Вернута кодаў: %{count}"
+    expiry_notice: "Зменены тэрмін у кодаў: %{count}"
     generate:
       count: "Колькі кодаў"
       expires_at: "Дзейнічаюць да (неабавязкова)"
@@ -155,6 +158,9 @@ be:
           issue_access_pass: "Выдаў доступ да гульні"
           revoke_access_pass: "Адклікаў доступ да гульні"
           generate_access_codes: "Стварыў коды доступу"
+          revoke_access_codes: "Адклікаў коды доступу"
+          unrevoke_access_codes: "Вярнуў коды доступу"
+          set_access_code_expiry: "Змяніў тэрмін дзеяння кодаў"
     settings:
       title: "Налады абмежаванняў"
       explanation: "Абмежаванні на рэгістрацыю дзейнічаюць на адзін IP-адрас за пазначаны перыяд; 0 адключае абмежаванне. Абмежаванні на файлы дзейнічаюць на гульню і на ўвесь сервер."

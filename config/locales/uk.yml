@@ -34,6 +34,9 @@ uk:
   access_codes:
     title: "Коди доступу"
     bad_count: "Вкажіть від 1 до %{max} кодів"
+    revoked_notice: "Відкликано кодів: %{count}"
+    unrevoked_notice: "Повернено кодів: %{count}"
+    expiry_notice: "Змінено термін у кодів: %{count}"
     generate:
       count: "Скільки кодів"
       expires_at: "Дійсні до (необов'язково)"
@@ -153,6 +156,9 @@ uk:
           issue_access_pass: "Надав доступ до гри"
           revoke_access_pass: "Відкликав доступ до гри"
           generate_access_codes: "Створив коди доступу"
+          revoke_access_codes: "Відкликав коди доступу"
+          unrevoke_access_codes: "Повернув коди доступу"
+          set_access_code_expiry: "Змінив термін дії кодів"
     settings:
       title: "Налаштування обмежень"
       explanation: "Обмеження на реєстрацію діють на одну IP-адресу за вказаний період; 0 вимикає обмеження. Обмеження на файли діють на гру та на весь сервер."

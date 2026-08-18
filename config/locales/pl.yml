@@ -41,6 +41,9 @@ pl:
   access_codes:
     title: "Kody dostępu"
     bad_count: "Podaj od 1 do %{max} kodów"
+    revoked_notice: "Odebrano kodów: %{count}"
+    unrevoked_notice: "Przywrócono kodów: %{count}"
+    expiry_notice: "Zmieniono termin dla kodów: %{count}"
     generate:
       count: "Ile kodów"
       expires_at: "Ważne do (opcjonalnie)"
@@ -160,6 +163,9 @@ pl:
           issue_access_pass: "Nadał dostęp do gry"
           revoke_access_pass: "Odebrał dostęp do gry"
           generate_access_codes: "Utworzył kody dostępu"
+          revoke_access_codes: "Odebrał kody dostępu"
+          unrevoke_access_codes: "Przywrócił kody dostępu"
+          set_access_code_expiry: "Zmienił termin ważności kodów"
     settings:
       title: "Ustawienia limitów"
       explanation: "Limity rejestracji obowiązują dla jednego adresu IP w podanym okresie; 0 wyłącza limit. Limity plików obowiązują dla gry i dla całego serwera."

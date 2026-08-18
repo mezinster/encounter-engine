@@ -41,7 +41,46 @@ class AccessCodesController < ApplicationController
     render :created
   end
 
+  # Revocation and expiry govern whether a code can still be EXCHANGED, and
+  # nothing else. Neither reaches a code that has already been redeemed: that
+  # code has produced an AccessPass, and ending a run the customer paid for is
+  # a separate, deliberate act through the pass. See the design, C10.
+  def revoke
+    n = targeted_codes.update_all(:revoked_at => Time.now, :updated_at => Time.now)
+    record_admin_action("revoke_access_codes", @game, target_label(n))
+    redirect_to game_access_codes_path(@game), :notice => t("access_codes.revoked_notice", :count => n)
+  end
+
+  def unrevoke
+    n = targeted_codes.update_all(:revoked_at => nil, :updated_at => Time.now)
+    record_admin_action("unrevoke_access_codes", @game, target_label(n))
+    redirect_to game_access_codes_path(@game), :notice => t("access_codes.unrevoked_notice", :count => n)
+  end
+
+  def expiry
+    when_ = params[:expires_at].presence
+    n = targeted_codes.update_all(:expires_at => when_, :updated_at => Time.now)
+    record_admin_action("set_access_code_expiry", @game, "#{target_label(n)} -> #{when_ || "-"}")
+    redirect_to game_access_codes_path(@game), :notice => t("access_codes.expiry_notice", :count => n)
+  end
+
   private
+
+  # ONE definition of "which codes is this operator acting on", used by all
+  # three actions. Always scoped through @game, so a batch_key or id belonging
+  # to another game resolves to nothing rather than to somebody else's codes.
+  def targeted_codes
+    scope = @game.access_codes
+    return scope.where(:id => params[:code_id]) if params[:code_id].present?
+
+    scope.of_batch(params[:batch_key].to_s)
+  end
+
+  # The batch key or the code's id -- never the code itself, which this
+  # application does not hold and must never write to an audit entry.
+  def target_label(count)
+    params[:code_id].present? ? "code ##{params[:code_id]} (#{count})" : "#{params[:batch_key]} (#{count})"
+  end
 
   def find_game
     @game = Game.find(params[:game_id])

@@ -17,6 +17,9 @@ ru:
   access_codes:
     title: "Коды доступа"
     bad_count: "Укажите от 1 до %{max} кодов"
+    revoked_notice: "Отозвано кодов: %{count}"
+    unrevoked_notice: "Возвращено кодов: %{count}"
+    expiry_notice: "Изменён срок у кодов: %{count}"
     generate:
       count: "Сколько кодов"
       expires_at: "Действительны до (необязательно)"
@@ -136,6 +139,9 @@ ru:
           issue_access_pass: "Выдал доступ к игре"
           revoke_access_pass: "Отозвал доступ к игре"
           generate_access_codes: "Создал коды доступа"
+          revoke_access_codes: "Отозвал коды доступа"
+          unrevoke_access_codes: "Вернул коды доступа"
+          set_access_code_expiry: "Изменил срок действия кодов"
     settings:
       title: "Настройки ограничений"
       explanation: "Ограничения на регистрацию действуют на один IP-адрес за указанный период; 0 отключает ограничение. Ограничения на файлы действуют на игру и на весь сервер."

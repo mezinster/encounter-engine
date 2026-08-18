@@ -57,6 +57,6 @@ module AdminAudit
   # may_operate_commercial?, or an operator's acts on commercial games they did
   # not author go unrecorded -- which is the whole population the role creates.
   def acting_as_operator?(game)
-    logged_in? && current_user.superadmin? && game.author_id != current_user.id
+    logged_in? && current_user.may_operate_commercial? && game.author_id != current_user.id
   end
 end

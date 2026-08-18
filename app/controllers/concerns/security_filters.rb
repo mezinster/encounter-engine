@@ -30,6 +30,12 @@ module SecurityFilters
   # that any FUTURE call site of ensure_author silently admits superadmins too.
   def ensure_author
     return if logged_in? && current_user.superadmin?
+    # An operator's authority is scoped to GATED games -- deliberately
+    # game-conditional rather than a bare `|| current_user.operator?`. This
+    # filter also gates levels, hints, questions and game entries, so the
+    # unscoped form would let an operator reach an ordinary player's public
+    # game through its levels controller, in a diff that never mentions games.
+    return if logged_in? && current_user.operator? && @game&.pass_required?
 
     raise Authentication::Unauthorized, t("errors.must_be_author") unless logged_in? && current_user.author_of?(@game)
   end

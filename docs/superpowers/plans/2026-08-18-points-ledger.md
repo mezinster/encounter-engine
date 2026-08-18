@@ -36,7 +36,7 @@
 | `db/migrate/20260820100000_create_point_transactions.rb` | Create: the ledger table and its two partial unique indexes | 1 |
 | `app/models/point_transaction.rb` | Create: the ledger row, its reasons, its award constructor | 1 |
 | `app/models/team.rb` | Modify: `has_many :point_transactions`, `#balance` | 1 |
-| `db/migrate/20260820110000_add_scoring_to_games_and_levels.rb` | Create: the four config columns | 2 |
+| `db/migrate/20260818180000_add_scoring_to_games_and_levels.rb` | Create: the four config columns | 2 |
 | `app/views/games/{new,edit}.html.erb` | Modify: three scoring fields | 2 |
 | `app/views/levels/{new,edit}.html.erb` | Modify: the per-level override | 2 |
 | `app/controllers/{games,levels}_controller.rb` | Modify: permit lists | 2 |
@@ -346,7 +346,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 ## Task 2: the scoring configuration
 
 **Files:**
-- Create: `db/migrate/20260820110000_add_scoring_to_games_and_levels.rb`
+- Create: `db/migrate/20260818180000_add_scoring_to_games_and_levels.rb`
 - Modify: `app/models/game.rb` (`#points_for_level`), `app/views/games/{new,edit}.html.erb`, `app/views/levels/{new,edit}.html.erb`, `app/controllers/games_controller.rb` (permit list), `app/controllers/levels_controller.rb` (permit list)
 - Modify: `config/locales/{ru,en,uk,ka,tr,be,pl}.yml`
 - Test: `spec/models/game/scoring_spec.rb`, `spec/requests/scoring_config_spec.rb`
@@ -443,7 +443,7 @@ Expected: FAIL — `unknown attribute 'points_enabled'`.
 
 - [ ] **Step 3: Write the migration**
 
-Create `db/migrate/20260820110000_add_scoring_to_games_and_levels.rb`:
+Create `db/migrate/20260818180000_add_scoring_to_games_and_levels.rb`:
 
 ```ruby
 class AddScoringToGamesAndLevels < ActiveRecord::Migration[8.0]
@@ -537,7 +537,7 @@ Expected: 0 failures. `spec/views/games_spec.rb` renders the game form and will 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add -- db/migrate/20260820110000_add_scoring_to_games_and_levels.rb db/schema.rb \
+git add -- db/migrate/20260818180000_add_scoring_to_games_and_levels.rb db/schema.rb \
         app/models/game.rb app/views/games app/views/levels \
         app/controllers/games_controller.rb app/controllers/levels_controller.rb \
         spec/models/game/scoring_spec.rb spec/requests/scoring_config_spec.rb \

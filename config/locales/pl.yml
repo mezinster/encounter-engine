@@ -254,6 +254,7 @@ pl:
     must_be_author: "Musisz być autorem gry, aby zobaczyć tę stronę"
     translation_key_missing: "Tłumaczenie przy pomocy AI jest niedostępne: nie skonfigurowano klucza API."
     not_registered_for_game: "Twoja drużyna nie jest zapisana na tę grę."
+    no_access_pass: "Ta gra wymaga dostępu. Skontaktuj się z organizatorem."
     must_be_superadmin: "Dostęp tylko dla administratora"
     too_many_requests: "Zbyt wiele prób. Spróbuj później."
     must_be_author_or_finished_player: "Pełny dziennik odpowiedzi jest dostępny tylko dla autora gry albo gracza z drużyny, która ukończyła grę"

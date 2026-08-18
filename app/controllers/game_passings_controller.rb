@@ -522,7 +522,14 @@ class GamePassingsController < ApplicationController
   # non-accepted entry but stops nothing: any user could create a team and GET
   # /play/:game_id for any started game, including one the author had
   # explicitly rejected.
+  # Gated games resolve through the entitlement rather than the current run:
+  # a commercial attempt has game_run_id NULL, so current_run.passing_for
+  # would never find it. The rule that an EXISTING passing is served before
+  # any gate runs is preserved for both, and is what lets a spent pass keep
+  # its own finished attempt readable.
   def find_or_create_game_passing
+    return @game_passing = gated_passing if @game.pass_required?
+
     @game_passing = @game.current_run.passing_for(@team)
     return @game_passing if @game_passing
 
@@ -533,6 +540,32 @@ class GamePassingsController < ApplicationController
     @game_passing = GamePassing.create!(team: @team, game: @game,
                                         game_run: @game.current_run,
                                         current_level: @game.levels.first)
+  end
+
+  # The team's attempt if one is live, otherwise a new one on their oldest
+  # live pass. An attempt whose pass is spent is NOT live -- that is how a
+  # team who bought a replacement gets a second attempt rather than being
+  # handed the finished one.
+  #
+  # An operator-ended attempt IS still live (end! leaves finished_at nil, so
+  # the pass is unspent), and is served rather than replaced: unfinish! and
+  # reinstate! are how such a game comes back, and they resume where the team
+  # stopped. A pass never yields two attempts.
+  def gated_passing
+    raise Authentication::Unauthorized, t("errors.no_access_pass") if @team.nil?
+
+    live = GamePassing.where(:team_id => @team.id, :game_id => @game.id)
+                      .where.not(:access_pass_id => nil)
+                      .includes(:access_pass)
+                      .detect { |gp| !gp.access_pass.spent? }
+    return live if live
+
+    pass = AccessPass.next_for(@game, @team)
+    raise Authentication::Unauthorized, t("errors.no_access_pass") if pass.nil?
+
+    GamePassing.create!(:team => @team, :game => @game,
+                        :game_run => nil, :access_pass => pass,
+                        :current_level => @game.levels.first)
   end
 
   # is_testing? is exempt, but ONLY for the author's own team, and that
@@ -622,8 +655,14 @@ class GamePassingsController < ApplicationController
                 time: Time.now, answer: @answer)
   end
 
+  # A gated game has no start date to wait for and no cohort to wait with, so
+  # "has it started?" is not a question about it. What must still be refused is
+  # a game the author has not published: otherwise unfinished work is playable
+  # by anyone holding an invitation.
   def ensure_game_is_started
     return if @game.is_testing?
+    return if @game.pass_required? && !@game.draft?
+
     raise Authentication::Unauthorized, t("game.not_started") unless viewing_a_started_run?
   end
 
@@ -652,6 +691,10 @@ class GamePassingsController < ApplicationController
     raise Authentication::Unauthorized, t("errors.game_finished_by_author") if @game.author_finished?
   end
 
+  # A team that quit and then bought a replacement must not be locked out by a
+  # filter guarding the attempt they paid to replace. On a gated game the
+  # resolution above has already handed back a NEW attempt in that case, so an
+  # exited passing reaching here means they have no further pass.
   def ensure_team_not_exited
     raise Authentication::Unauthorized, t("errors.team_exited") if @game_passing.exited?
   end

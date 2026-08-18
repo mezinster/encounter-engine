@@ -230,6 +230,7 @@ en:
     must_be_author: "You must be the game's author to view this page"
     translation_key_missing: "AI translation is unavailable: no API key is configured."
     not_registered_for_game: "Your team is not registered for this game."
+    no_access_pass: "This game requires access. Contact the organiser."
     must_be_superadmin: "Administrator access only"
     too_many_requests: "Too many attempts. Please try again later."
     must_be_author_or_finished_player: "The full log is only available to the game's author or a player whose team has finished the game"

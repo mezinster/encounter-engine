@@ -45,7 +45,7 @@
 | `db/migrate/20260818140000_create_access_passes.rb` | Create | 4 |
 | `app/models/access_pass.rb` | Create: the entitlement, `spent?`/`live?`, selection scope | 4 |
 | `spec/models/access_pass/spent_spec.rb` | Create | 4 |
-| `db/migrate/20260818150000_add_access_pass_to_game_passings.rb` | Create: `access_pass_id`, `paused_seconds` | 5 |
+| `db/migrate/20260818150000_add_paused_seconds_to_game_passings.rb` | Create: `paused_seconds` | 5 |
 | `app/models/game.rb` (`#resume!`) | Modify: widen to `game_passings.in_progress`, accumulate pause | 5 |
 | `app/controllers/game_passings_controller.rb` | Modify: resolution + two filters | 6 |
 | `db/migrate/20260818160000_add_game_passing_to_logs.rb` | Create | 7 |
@@ -636,7 +636,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: `Game#pass_required?` from Task 3.
-- Produces: table `access_passes` (`game_id`, `team_id`, `source`, `issued_by_id`, `revoked_at`, timestamps); `AccessPass#revoked?`, `#spent?`, `#live?`; `AccessPass.next_for(game, team)` → the oldest live pass or nil; `AccessPass::SOURCES`; fixture `create_access_pass(:game =>, :team =>)`. Tasks 5, 6, 8 and 9 all use these.
+- Produces: table `access_passes` (`game_id`, `team_id`, `source`, `issued_by_id`, `revoked_at`, timestamps); `game_passings.access_pass_id` (nullable, partial-unique) and `GamePassing#access_pass`; `AccessPass#revoked?`, `#spent?`, `#live?`; `AccessPass.next_for(game, team)` → the oldest live pass or nil; `AccessPass::SOURCES`; fixture `create_access_pass(:game =>, :team =>)`. Tasks 5, 6, 8 and 9 all use these.
 
 **The `spent?` reduction.** A pass is spent when the **team** ended the attempt. `GamePassing#exit!` sets `finished_at` as well as `status`, and `end!` (the operator closing a game) sets `status` without `finished_at` — so "completed or exited" is exactly "`finished_at` is present". One column separates team-caused endings from operator-caused ones. The predicate is one expression; the *rule* it encodes is not, which is why the spec below asserts every state.
 
@@ -783,11 +783,28 @@ class CreateAccessPasses < ActiveRecord::Migration[8.0]
     # consumed oldest first. See the design, B6 -- liveness is derived from
     # the attempt, so no index could enforce "one live pass" anyway.
     add_index :access_passes, [ :game_id, :team_id ]
+
+    # The 1:1 binding lives in the same migration as the table it binds,
+    # because AccessPass#spent? reads through it -- a pass model without this
+    # column has no testable behaviour at all.
+    #
+    # Written explicitly rather than leaning on the existing
+    # (team_id, game_run_id) index, which stops constraining commercial rows
+    # only because SQL compares NULLs as distinct -- true, but implicit.
+    add_column :game_passings, :access_pass_id, :integer
+    add_index  :game_passings, :access_pass_id,
+               :unique => true, :where => "access_pass_id IS NOT NULL"
   end
 end
 ```
 
 Then `bin/rails db:migrate && bin/rails db:test:prepare`.
+
+Add the inverse association in `app/models/game_passing.rb`, beside `belongs_to :game_run` (`:67`):
+
+```ruby
+  belongs_to :access_pass, :optional => true
+```
 
 - [ ] **Step 4: Write the model**
 
@@ -914,10 +931,8 @@ In `spec/spec_helpers/fixtures_helper.rb`, beside `create_game_entry`:
 
 - [ ] **Step 7: Run the specs**
 
-Run: `bundle exec rspec spec/models/access_pass spec/i18n_spec.rb`
-Expected: 0 failures.
-
-Note that `spec/models/access_pass/spent_spec.rb` will not pass until Task 5 adds `game_passings.access_pass_id`. **That is expected**: run it, confirm the only failures are `unknown attribute 'access_pass'`, and proceed — Task 5's Step 6 re-runs it green. Say so explicitly in your report.
+Run: `bundle exec rspec spec/models/access_pass spec/models/game_passing spec/i18n_spec.rb`
+Expected: 0 failures. This task is self-contained — the binding column it needs is added in Step 3 below.
 
 - [ ] **Step 8: Commit**
 
@@ -945,14 +960,13 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 ## Task 5: the attempt's two new columns, and the pause fix
 
 **Files:**
-- Create: `db/migrate/20260818150000_add_access_pass_to_game_passings.rb`
-- Modify: `app/models/game_passing.rb` — `belongs_to :access_pass`
+- Create: `db/migrate/20260818150000_add_paused_seconds_to_game_passings.rb`
 - Modify: `app/models/game.rb` — `#resume!` (`:209`)
 - Test: `spec/models/game/pause_resume_spec.rb` (create or extend if one exists)
 
 **Interfaces:**
 - Consumes: `AccessPass` from Task 4.
-- Produces: `game_passings.access_pass_id` (nullable, partial-unique) and `game_passings.paused_seconds` (integer, `default: 0, null: false`); `GamePassing#access_pass`. Task 6 creates attempts with these; Task 8 reads `paused_seconds` for duration.
+- Produces: `game_passings.paused_seconds` (integer, `default: 0, null: false`), accumulated by `Game#resume!`. Task 8 reads it for duration.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1029,35 +1043,21 @@ Expected: FAIL — `unknown attribute 'access_pass'` on the first two examples, 
 
 - [ ] **Step 3: Write the migration**
 
-Create `db/migrate/20260818150000_add_access_pass_to_game_passings.rb`:
+Create `db/migrate/20260818150000_add_paused_seconds_to_game_passings.rb`:
 
 ```ruby
-class AddAccessPassToGamePassings < ActiveRecord::Migration[8.0]
+class AddPausedSecondsToGamePassings < ActiveRecord::Migration[8.0]
   def change
-    add_column :game_passings, :access_pass_id, :integer
     add_column :game_passings, :paused_seconds, :integer, :default => 0, :null => false
-
-    # The 1:1 binding that makes AccessPass#spent? derivable. Written
-    # explicitly rather than leaning on the existing (team_id, game_run_id)
-    # index, which stops constraining commercial rows only because SQL
-    # compares NULLs as distinct -- true, but implicit.
-    add_index :game_passings, :access_pass_id,
-              :unique => true, :where => "access_pass_id IS NOT NULL"
   end
 end
 ```
 
 Then `bin/rails db:migrate && bin/rails db:test:prepare`.
 
-- [ ] **Step 4: Add the association**
+`game_passings.access_pass_id` and `belongs_to :access_pass` already exist — Task 4 added them, because a pass model whose binding column is missing has no testable behaviour.
 
-In `app/models/game_passing.rb`, beside `belongs_to :game_run` (`:67`):
-
-```ruby
-  belongs_to :access_pass, :optional => true
-```
-
-- [ ] **Step 5: Fix `resume!`**
+- [ ] **Step 4: Fix `resume!`**
 
 In `app/models/game.rb:209`, replace the loop body. **Keep the whole comment block above the method** — its reasoning about transactions and `update_column` is unchanged — and add the note below:
 
@@ -1084,19 +1084,18 @@ In `app/models/game.rb:209`, replace the loop body. **Keep the whole comment blo
   end
 ```
 
-- [ ] **Step 6: Run the specs**
+- [ ] **Step 5: Run the specs**
 
-Run: `bundle exec rspec spec/models/game/pause_resume_spec.rb spec/models/access_pass spec/models/game_passing`
-Expected: 0 failures. Task 4's `spent_spec.rb` passes now that `access_pass_id` exists — confirm that explicitly.
+Run: `bundle exec rspec spec/models/game/pause_resume_spec.rb spec/models/game_passing`
+Expected: 0 failures.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add -A
-git commit -m "Bind an attempt to its pass, and fix resume! for runless ones
+git commit -m "Accumulate paused time, and fix resume! for runless attempts
 
-game_passings gains access_pass_id (partial-unique, the 1:1 binding
-spent? derives from) and paused_seconds.
+game_passings gains paused_seconds.
 
 resume! shifted hint clocks through current_run.passings, so a runless
 commercial attempt was skipped entirely and its hints would jump

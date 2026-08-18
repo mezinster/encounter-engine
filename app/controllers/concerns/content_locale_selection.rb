@@ -11,6 +11,28 @@ module ContentLocaleSelection
     helper_method :content_locale_for
   end
 
+  # Persist a per-game content-language choice for the signed-in user.
+  # Returns false, writing nothing, for a guest or for a locale the game does
+  # not offer.
+  #
+  # Both switchers write through this. They differ only in which filters guard
+  # them and where they redirect; a second copy of the find_or_initialize would
+  # be a second place to forget the available_locale_list check.
+  def store_content_locale(game, locale)
+    return false unless respond_to?(:current_user, true) && current_user
+    return false unless game.available_locale_list.include?(locale.to_s)
+
+    preference = GameLocalePreference.find_or_initialize_by(:user_id => current_user.id,
+                                                           :game_id => game.id)
+    preference.locale = locale.to_s
+    preference.save!
+    # content_locale_for memoises per game for the life of the request. Both
+    # callers redirect, so nothing re-reads it here today -- but a stale
+    # memo is exactly the kind of thing a later render would inherit silently.
+    @content_locales = nil
+    true
+  end
+
   private
 
   # Precedence: the player's explicit per-game choice, then their own locale

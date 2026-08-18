@@ -133,6 +133,12 @@ Rails.application.routes.draw do
       # Handing the game to another player. POST, not GET: this app has no
       # Turbo and no rails-ujs, so the view drives it with a real form.
       post :hand_over
+
+      # Which language this reader sees the game's authored content in.
+      # POST because it writes; a member route because the preference is
+      # per-game. The play screen keeps its own route (set_content_locale_path,
+      # under /play) -- same write, different guards and redirect.
+      post :set_content_locale
     end
 
     # Singular: a game has one import screen, not a collection of imports.

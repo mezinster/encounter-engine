@@ -35,9 +35,24 @@
         &middot; <%= t("access_codes.lookup.team") %>: <%= @found.access_pass.team.name %>
       <% end %>
     </p>
+    <%# The action appropriate to the code's state -- targeted_codes excludes
+        redeemed rows structurally (see the controller), so a button rendered
+        for a redeemed code here would post and silently match nothing. %>
     <% unless @found.redeemed_at %>
-      <%= button_to t("access_codes.revoke"), revoke_game_access_codes_path(@game),
-                    :method => :patch, :params => { :code_id => @found.id }, :class => "btn btn--danger" %>
+      <div id="code-actions">
+        <% if @found.revoked_at %>
+          <%= button_to t("access_codes.unrevoke"), unrevoke_game_access_codes_path(@game),
+                        :method => :patch, :params => { :code_id => @found.id }, :class => "btn" %>
+        <% else %>
+          <%= button_to t("access_codes.revoke"), revoke_game_access_codes_path(@game),
+                        :method => :patch, :params => { :code_id => @found.id }, :class => "btn btn--danger" %>
+        <% end %>
+        <%= form_with url: expiry_game_access_codes_path(@game), method: :patch, local: true do %>
+          <%= hidden_field_tag :code_id, @found.id %>
+          <%= date_field_tag :expires_at %>
+          <%= submit_tag t("access_codes.set_expiry"), :class => "btn" %>
+        <% end %>
+      </div>
     <% end %>
   <% else %>
     <p class="alert"><%= t("access_codes.lookup.not_found") %></p>
@@ -52,6 +67,7 @@
     <tr>
       <th><%= t("access_codes.batch") %></th>
       <th><%= t("access_codes.created_at") %></th>
+      <th><%= t("access_codes.issuer") %></th>
       <th><%= t("access_codes.size") %></th>
       <th><%= t("access_codes.outstanding") %></th>
       <th><%= t("access_codes.redeemed") %></th>
@@ -69,6 +85,7 @@
     <tr>
       <td data-label="<%= t("access_codes.batch") %>"><%= key %></td>
       <td data-label="<%= t("access_codes.created_at") %>"><%= l(created, :format => :long) %></td>
+      <td data-label="<%= t("access_codes.issuer") %>"><%= @issuer_names[@issuers[key]] || "—" %></td>
       <td data-label="<%= t("access_codes.size") %>"><%= size %></td>
       <td data-label="<%= t("access_codes.outstanding") %>"><%= size - used - gone - old %></td>
       <td data-label="<%= t("access_codes.redeemed") %>"><%= used %></td>

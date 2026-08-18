@@ -53,6 +53,21 @@ describe "revoking and expiring access codes", type: :request do
     expect(AccessCode.where(:revoked_at => nil).count).to eq(2)
   end
 
+  # F2: unrevoke and expiry already accepted code_id through targeted_codes,
+  # but nothing exercised that -- only the view was missing a way to send one.
+  it "lifts a revocation on a single code, leaving the rest of its batch revoked" do
+    key, raws = batch_of(2)
+    sign_in(operator)
+    patch revoke_game_access_codes_path(game), :params => { :batch_key => key }
+    code_a = AccessCode.find_by_code(raws.first)
+    code_b = AccessCode.find_by_code(raws.last)
+
+    patch unrevoke_game_access_codes_path(game), :params => { :code_id => code_a.id }
+
+    expect(code_a.reload.revoked_at).to be_nil
+    expect(code_b.reload.revoked_at).to be_present
+  end
+
   it "sets an expiry on a batch" do
     key, _ = batch_of(2)
     sign_in(operator)
@@ -60,6 +75,18 @@ describe "revoking and expiring access codes", type: :request do
     patch expiry_game_access_codes_path(game), :params => { :batch_key => key, :expires_at => "2030-01-01" }
 
     expect(AccessCode.where.not(:expires_at => nil).count).to eq(2)
+  end
+
+  it "sets an expiry on a single code, leaving the rest of its batch untouched" do
+    _key, raws = batch_of(2)
+    code_a = AccessCode.find_by_code(raws.first)
+    code_b = AccessCode.find_by_code(raws.last)
+    sign_in(operator)
+
+    patch expiry_game_access_codes_path(game), :params => { :code_id => code_a.id, :expires_at => "2030-01-01" }
+
+    expect(code_a.reload.expires_at).to be_present
+    expect(code_b.reload.expires_at).to be_nil
   end
 
   it "clears an expiry when given a blank date" do

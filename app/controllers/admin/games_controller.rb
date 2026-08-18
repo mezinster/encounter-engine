@@ -22,12 +22,13 @@ class Admin::GamesController < ApplicationController
     # :runs joins :author and :game_passings here for the same reason -- the
     # view renders a status and a start time per row, and both read the run.
     #
-    # access_passes is preloaded for the same reason as game_passings, not a
-    # new one: Game#deletable? reads both, the view calls it once per row,
-    # and Game#deletable?'s own comment already explains why access_passes
-    # belongs in that check. Leaving it unpreloaded here would reintroduce
-    # exactly the per-row query game_passings was already preloaded to avoid.
-    @games = Game.includes(:author, :game_passings, :access_passes, :runs).order(:created_at => :desc)
+    # access_passes and access_codes are preloaded for the same reason as
+    # game_passings, not a new one: Game#deletable? reads all three, the view
+    # calls it once per row, and Game#deletable?'s own comment already
+    # explains why each belongs in that check. Leaving either unpreloaded
+    # here would reintroduce exactly the per-row query game_passings was
+    # already preloaded to avoid.
+    @games = Game.includes(:author, :game_passings, :access_passes, :access_codes, :runs).order(:created_at => :desc)
 
     # ONE grouped query for the whole page, not one per row. :runs is already
     # preloaded above, so current_run costs nothing here -- and the comment on

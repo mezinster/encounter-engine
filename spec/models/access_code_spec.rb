@@ -31,6 +31,17 @@ describe AccessCode do
     it "differs for different codes" do
       expect(AccessCode.digest("ABCDE12345")).not_to eq(AccessCode.digest("ABCDE12346"))
     end
+
+    # U is excluded from the alphabet precisely because it is confusable with
+    # V -- on a card, in handwriting, and in several fonts a client is likely
+    # to print with. Digest equality is the property redemption actually
+    # depends on, so this asserts on digest, not only normalize; a code typed
+    # with U must resolve to the same row as the same code printed with V,
+    # never to whatever "1" happens to collide with.
+    it "digests a typed U identically to a printed V, not to 1" do
+      expect(AccessCode.digest("U2345ABCDE")).to eq(AccessCode.digest("V2345ABCDE"))
+      expect(AccessCode.normalize("U2345ABCDE")).to eq("V2345ABCDE")
+    end
   end
 
   describe ".generate_batch!" do

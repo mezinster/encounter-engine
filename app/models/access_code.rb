@@ -28,7 +28,7 @@ class AccessCode < ApplicationRecord
   # excludes I, L, O and U from the OUTPUT so they can be accepted as INPUT
   # aliases for 1, 1, 0 and V. A customer types what they see on the card.
   def self.normalize(raw)
-    raw.to_s.upcase.gsub(/[\s\-]/, "").tr("ILOU", "1101")
+    raw.to_s.upcase.gsub(/[\s\-]/, "").tr("ILOU", "110V")
   end
 
   def self.digest(raw)

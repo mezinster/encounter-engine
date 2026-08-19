@@ -62,12 +62,44 @@ describe "skipping a level", type: :request do
                                   :reason => "level_skipped").count).to eq(1)
   end
 
-  it "refuses a member who is not the captain" do
+  # Three different guards refuse three different actors. Asserting the
+  # distinct status codes (rather than "not authorized" in general) pins that
+  # removing any ONE guard fails a specific example here, instead of being
+  # silently absorbed by whichever guard is left.
+  it "refuses an own-team member who is not the captain, with 401" do
     game, passing, _captain, member = skippable
     sign_in(member)
 
     post skip_level_path(:game_id => game.id)
 
+    expect(response).to have_http_status(:unauthorized)
+    expect(PointTransaction.where(:game_passing_id => passing.id).count).to eq(0)
+  end
+
+  # A different guard entirely: ensure_team_captain passes (this user IS a
+  # captain, just not of a team registered for THIS game), so it is
+  # find_or_create_game_passing's may_start_passing? check that refuses --
+  # the team has no accepted GameEntry for this game's current run.
+  it "refuses the captain of a different, unrelated team, with 401" do
+    game, passing, _captain, _member = skippable
+    other_captain = create_user
+    create_team(:captain => other_captain)
+    sign_in(other_captain)
+
+    post skip_level_path(:game_id => game.id)
+
+    expect(response).to have_http_status(:unauthorized)
+    expect(PointTransaction.where(:game_passing_id => passing.id).count).to eq(0)
+  end
+
+  # require_authentication! -- Authentication::Unauthenticated, not
+  # Unauthorized -- redirects rather than 401s.
+  it "redirects a signed-out visitor to the login page" do
+    game, passing, _captain, _member = skippable
+
+    post skip_level_path(:game_id => game.id)
+
+    expect(response).to redirect_to(login_path)
     expect(PointTransaction.where(:game_passing_id => passing.id).count).to eq(0)
   end
 
@@ -80,6 +112,29 @@ describe "skipping a level", type: :request do
     create_level(:game => game, :position => 2)
     create_game_passing(:level => one, :team => team)
     sign_in(captain)
+
+    get show_current_level_path(:game_id => game.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include(I18n.t("game_passings.show_current_level.skip_level"))
+  end
+
+  # The easiest case to get wrong: skips_allowed? and skips_left.positive?
+  # are two SEPARATE conditions gating the button. Dropping either one leaves
+  # the button on screen for a team that can no longer use it -- they would
+  # click it and land on a refusal.
+  it "hides the skip button once the team's allowance is exhausted" do
+    captain = create_user
+    team    = create_team(:captain => captain)
+    game    = create_game(:max_skips => 1, :skip_points_fine => 25, :points_enabled => true)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
+    one     = create_level(:game => game, :position => 1)
+    create_level(:game => game, :position => 2)
+    passing = create_game_passing(:level => one, :team => team)
+    sign_in(captain)
+
+    post skip_level_path(:game_id => game.id)
+    expect(passing.reload.skips_left).to eq(0)
 
     get show_current_level_path(:game_id => game.id)
 

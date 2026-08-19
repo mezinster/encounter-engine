@@ -321,6 +321,7 @@ en:
     cannot_play_own_game: "You can't play your own games, sorry :-)"
     game_finished_by_author: "The game was ended by its author, you can no longer play it"
     team_exited: "Your team has left the race"
+    passing_stopped_by_operator: "Your run was stopped by the organiser"
     game_is_not_live: "This game is not currently running"
   interventions:
     skip_level: "Skip the level"
@@ -361,6 +362,21 @@ en:
     unlocked_notice: "Game editing unlocked"
     not_deletable: "This game cannot be deleted because teams have played it. Withdraw it instead."
     not_endable_in_test: "This game cannot be ended: it is in test mode. Use “Finish testing” to stop the test."
+    withdrawal:
+      categories:
+        technical: "Technical problem"
+        safety: "Safety"
+        weather: "Weather"
+        cancelled: "The game is cancelled"
+        other: "Another reason"
+      form:
+        title: "Withdrawing %{game}"
+        category: "Reason"
+        note: "Details (teams will see this)"
+        mode: "What to do with the runs"
+        mode_freeze: "Freeze — we will come back"
+        mode_ended: "End — keep the results"
+        submit: "Withdraw the game"
     hand_over:
       done: "Authorship transferred to %{nickname}"
       unknown_user: "No player with that nickname. Check the spelling."
@@ -791,6 +807,8 @@ en:
     content_not_translated: "This task is not translated into your language yet — showing the original."
     content_language: "Task language"
     paused: "The organiser has paused the game. Stay where you are and wait for it to resume."
+    withdrawn:
+      title: "The game has been stopped"
     index:
       title: 'Game "%{name}"'
       team: "Team"

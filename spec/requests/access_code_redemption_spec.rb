@@ -125,7 +125,7 @@ describe "redeeming an access code", type: :request do
 
     it "reports a game that is no longer available" do
       raw = fresh_code
-      game.withdraw!
+      game.withdraw!(:category => "other", :mode => "freeze")
 
       post redeem_access_code_path, :params => { :access_code => raw }
       expect(AccessPass.count).to eq(0)

@@ -35,10 +35,21 @@ class GamePassingsController < ApplicationController
   before_action :ensure_game_is_started
   before_action :ensure_team_captain, only: [:exit_game, :confirm_skip, :skip_level]
   before_action :ensure_game_not_finished_by_author, except: [:index, :show_results]
+  # A withdrawn game is NOT a 401. A refusal tells a team standing in the rain
+  # that they are not authorised, which is both false and useless -- and this
+  # is the only notification mechanism the app has: no Turbo, no rails-ujs, no
+  # polling, so a team learns on their next request. The GET therefore succeeds
+  # and explains itself; the state-changing actions land them on that same
+  # explanation rather than on an error.
+  before_action :halt_if_withdrawn, except: [ :index, :show_results ]
   before_action :find_or_create_game_passing, except: [:show_results, :index]
   before_action :ensure_team_not_exited, except: [:index, :show_results]
   before_action :ensure_team_member, except: [:index, :show_results]
   before_action :ensure_not_author_of_the_game, except: [:index, :show_results]
+  # After the three refusals above, so each of them keeps its own, more
+  # specific message -- exited? is one half of interrupted?, and
+  # ensure_team_not_exited answers it first.
+  before_action :ensure_passing_not_interrupted, except: [:index, :show_results]
   before_action :ensure_author, only: [:index]
   before_action :ensure_game_not_paused, only: [ :post_answer, :exit_game, :confirm_skip, :skip_level ]
 
@@ -221,6 +232,63 @@ class GamePassingsController < ApplicationController
   end
 
   private
+
+  def halt_if_withdrawn
+    return unless @game.withdrawn?
+    return unless team_owed_the_notice?
+
+    if request.get?
+      render "game_passings/withdrawn"
+    else
+      redirect_to show_current_level_path(:game_id => @game.id)
+    end
+  end
+
+  # Who the notice is for. It carries the operator's free-text incident note --
+  # a cordoned location, a police instruction, sometimes a name -- and the
+  # filter above has to run BEFORE find_or_create_game_passing, because that
+  # filter CREATES a passing and halting after it would enrol a team in a
+  # withdrawn game merely for reading the notice. It therefore also runs ahead
+  # of ensure_team_member, ensure_team_not_exited and
+  # ensure_not_author_of_the_game -- and those three were the only thing
+  # keeping the note away from a signed-in stranger, the author, and a team
+  # that had already walked off the course, each of whom got a 401 before this
+  # branch and 200 plus the note after it. Game.visible hides a withdrawn game
+  # from the catalogue while its reason was readable by anyone who guessed
+  # /play/:id.
+  #
+  # So the halt applies only to a team the notice is FOR, and everyone else
+  # falls through to the filters that already refuse them correctly. One extra
+  # query, no reordering.
+  #
+  # Two populations, because "has a passing" alone is wrong in both directions:
+  #
+  #   * A team whose only run here is an exited one is entitled to nothing --
+  #     ensure_team_not_exited 401s them, and it must keep doing so.
+  #   * A team that is entitled to play but has not opened the play screen yet
+  #     has NO row. Falling through for them would hand them straight to
+  #     find_or_create_game_passing, which CREATES one -- so they would be
+  #     enrolled in a withdrawn game and served its level, which is the very
+  #     thing this filter's placement ahead of that one exists to prevent.
+  #     Entitlement is asked the same way that filter asks it, gated games
+  #     through their pass and everyone else through their accepted entry, so
+  #     the two cannot disagree.
+  #
+  # Rows are loaded and asked in Ruby rather than filtered with
+  # where.not(:status => "exited"): status is nullable, and NOT IN is NULL --
+  # and so false -- for a NULL, which would drop every ordinary in-progress
+  # row. That is the same three-valued trap GamePassing's outcome scopes
+  # document. A team has one or two passings for a game.
+  def team_owed_the_notice?
+    return false if @team.nil?
+
+    passings = @game.game_passings.where(:team_id => @team.id).to_a
+    return passings.any? { |passing| !passing.exited? } if passings.any?
+
+    return AccessPass.next_for(@game, @team).present? if @game.pass_required?
+
+    may_start_passing?
+  end
 
   # The render every "the passing is finished" branch reaches --
   # show_current_level, both checks in post_answer, post_options and
@@ -748,6 +816,34 @@ class GamePassingsController < ApplicationController
   # exited passing reaching here means they have no further pass.
   def ensure_team_not_exited
     raise Authentication::Unauthorized, t("errors.team_exited") if @game_passing.exited?
+  end
+
+  # A run the operator closed stays closed, and reinstate! is the way back.
+  #
+  # This is F1 of the whole-branch review, and the reason it was invisible for
+  # so long: NOTHING on the play path read `status`. GamesController#end_game
+  # closes every run exactly the way withdraw!(mode: "ended") does, and is safe
+  # only because it ALSO stamps author_finished_at, which
+  # ensure_game_not_finished_by_author reads -- an invariant enforced by a
+  # neighbouring column rather than by the column that means it. A withdrawal
+  # stamps no such neighbour, so restore! (the only button the admin console
+  # offers a withdrawn game) put every closed run back on the road: the captain
+  # got the level, a correct code advanced current_level while status stayed
+  # "ended", and the whole outage came off their hint countdown. The row read
+  # as interrupted in the operator's console while being actively raced.
+  #
+  # GamesController#unfinish has the same shape -- it revives the GAME and
+  # deliberately leaves team passings "ended", saying so in its own comment,
+  # "the reinstate intervention already revives teams one by one with a fair
+  # clock reset". This is what makes that true rather than merely intended.
+  #
+  # interrupted?, not `status == "ended"`: it is this application's single
+  # notion of a run that stopped without finishing, it agrees with the
+  # GamePassing.interrupted scope the operator console reads, and it excludes a
+  # team that genuinely crossed the line before the author closed the game
+  # (end! stamps "ended" on those too, but finished_at separates them).
+  def ensure_passing_not_interrupted
+    raise Authentication::Unauthorized, t("errors.passing_stopped_by_operator") if @game_passing.interrupted?
   end
 
   # Deliberately NOT an Authentication::Unauthorized like its neighbours here.

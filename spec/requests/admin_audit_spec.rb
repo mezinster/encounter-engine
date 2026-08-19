@@ -21,13 +21,15 @@ describe "auditing administrative changes", type: :request do
     before { sign_in(superadmin) }
 
     it "snapshots the actor's nickname when the action is recorded" do
-      post withdraw_game_path(game)
+      post withdraw_game_path(game), :params => { :withdrawal_category => "other",
+                                                  :withdrawal_mode => "freeze" }
 
       expect(AdminAction.newest_first.first.actor_label).to eq(superadmin.nickname)
     end
 
     it "still names the actor on screen after their row is gone" do
-      post withdraw_game_path(game)
+      post withdraw_game_path(game), :params => { :withdrawal_category => "other",
+                                                  :withdrawal_mode => "freeze" }
       remembered = superadmin.nickname
       AdminAction.update_all(:actor_id => 0)
 
@@ -45,7 +47,10 @@ describe "auditing administrative changes", type: :request do
     before { sign_in(superadmin) }
 
     it "records a withdrawal against the game" do
-      expect { post withdraw_game_path(game) }.to change { AdminAction.count }.by(1)
+      expect {
+        post withdraw_game_path(game), :params => { :withdrawal_category => "other",
+                                                    :withdrawal_mode => "freeze" }
+      }.to change { AdminAction.count }.by(1)
 
       entry = AdminAction.newest_first.first
       expect(entry.action).to eq("withdraw")
@@ -309,7 +314,8 @@ describe "auditing administrative changes", type: :request do
 
     it "links to a target that still exists" do
       sign_in(superadmin)
-      post withdraw_game_path(game)
+      post withdraw_game_path(game), :params => { :withdrawal_category => "other",
+                                                  :withdrawal_mode => "freeze" }
 
       get admin_audit_index_path
 
@@ -325,10 +331,12 @@ describe "auditing administrative changes", type: :request do
     it "keeps the query count flat as the number of entries grows" do
       sign_in(superadmin)
 
-      2.times { post withdraw_game_path(create_game(:author => author, :is_draft => true)) }
+      withdrawal_params = { :withdrawal_category => "other", :withdrawal_mode => "freeze" }
+
+      2.times { post withdraw_game_path(create_game(:author => author, :is_draft => true)), :params => withdrawal_params }
       small = count_queries { get admin_audit_index_path }
 
-      8.times { post withdraw_game_path(create_game(:author => author, :is_draft => true)) }
+      8.times { post withdraw_game_path(create_game(:author => author, :is_draft => true)), :params => withdrawal_params }
       large = count_queries { get admin_audit_index_path }
 
       expect(large).to eq(small)
@@ -336,9 +344,13 @@ describe "auditing administrative changes", type: :request do
   end
 
   describe "the details column" do
+    # withdraw now always composes a details string (category/mode/note), so
+    # it can no longer stand in for "an action that records none" -- restore
+    # still calls record_admin_action with no third argument.
     it "is nil for an action that records none" do
+      game.update!(:withdrawn_at => Time.now)
       sign_in(superadmin)
-      post withdraw_game_path(game)
+      post restore_game_path(game)
 
       expect(AdminAction.newest_first.first.details).to be_nil
     end

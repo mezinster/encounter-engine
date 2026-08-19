@@ -47,7 +47,7 @@ describe Game do
     # see the design, B2a.
     it "excludes a listed game that has been withdrawn" do
       game = create_game(:is_draft => false)
-      game.withdraw!
+      game.withdraw!(:category => "other", :mode => "freeze")
       expect(Game.visible).not_to include(game)
     end
   end

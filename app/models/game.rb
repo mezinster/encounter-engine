@@ -8,6 +8,11 @@ class Game < ApplicationRecord
 
   ACCESS_MODES = %w[scheduled pass_required].freeze
 
+  # `other` exists so the list never becomes a reason to pick a wrong category.
+  # It is the one case where the free text is doing all the work.
+  WITHDRAWAL_CATEGORIES = %w[technical safety weather cancelled other].freeze
+  WITHDRAWAL_MODES      = %w[freeze ended].freeze
+
   # Not a boolean: these entries are simultaneously the publish gate's reason
   # for refusing and the author's to-do list, so they carry enough to render a
   # deep link straight to the offending field.
@@ -290,12 +295,67 @@ class Game < ApplicationRecord
   # started. On a draft they worked, which is why the specs stayed green:
   # create_game defaults starts_at to 2099, so no example had ever exercised a
   # started game. spec/requests/withdrawal_spec.rb now does.
-  def withdraw!
-    update_column(:withdrawn_at, Time.now)
+  # freeze  -- "stop, we are fixing this": runs stay intact and the clock stops.
+  # ended   -- "this game is over": every run in progress closes, results stand.
+  #
+  # The mode is the operator's choice rather than a fixed policy, because only
+  # the person pulling the game knows which event this is.
+  #
+  # Transactional: a withdrawal that paused the run but failed to record that
+  # it did would leave restore! unable to tell its own pause from the
+  # operator's, and nothing downstream could recover the difference.
+  def withdraw!(category:, mode:, note: nil)
+    raise ArgumentError, "unknown category" unless WITHDRAWAL_CATEGORIES.include?(category)
+    raise ArgumentError, "unknown mode"     unless WITHDRAWAL_MODES.include?(mode)
+
+    transaction do
+      # Carried forward, not recomputed. A second withdrawal on an already
+      # withdrawn game -- the Back button lands on the form, and escalating a
+      # freeze to an end is the only thing the console offers no other route
+      # to -- finds the run already paused, skips the branch below, and used to
+      # write false over the true the FIRST withdrawal recorded, while
+      # paused_at stayed set. restore! then declined to resume and the game
+      # came back permanently frozen, unannounced. Guarded on withdrawn?
+      # because only an in-flight withdrawal has a pause of its own to
+      # remember: restore! clears the flag, so a game that is not withdrawn
+      # cannot carry a stale true.
+      paused_by_withdrawal = self.withdrawn? && self.withdrawal_paused_run
+
+      if mode == "freeze" && !self.paused?
+        pause!
+        paused_by_withdrawal = true
+      end
+
+      # THE GAME's passings, not the current run's, and in_progress rather than
+      # finished_at nil -- both for the reasons resume! records at the same
+      # association.
+      game_passings.in_progress.find_each(&:end!) if mode == "ended"
+
+      update_columns(:withdrawn_at           => Time.now,
+                     :withdrawal_category    => category,
+                     :withdrawal_note        => note,
+                     :withdrawal_mode        => mode,
+                     :withdrawal_paused_run  => paused_by_withdrawal)
+    end
   end
 
+  # Resumes ONLY a pause this withdrawal caused. An operator who paused before
+  # withdrawing expects the game to still be paused afterwards.
+  #
+  # Ended runs are NOT revived. A game withdrawn-and-ended and then restored is
+  # a game with a finished field; reinstating a team is an existing audited
+  # intervention, and doing it implicitly here would resurrect runs the
+  # operator deliberately closed.
   def restore!
-    update_column(:withdrawn_at, nil)
+    transaction do
+      resume! if self.withdrawal_paused_run && self.paused?
+
+      update_columns(:withdrawn_at           => nil,
+                     :withdrawal_category    => nil,
+                     :withdrawal_note        => nil,
+                     :withdrawal_mode        => nil,
+                     :withdrawal_paused_run  => false)
+    end
   end
 
   # The reverse of finish_game!, superadmin-only (see GamesController). Same

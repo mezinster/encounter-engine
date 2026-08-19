@@ -4,7 +4,7 @@ class GamesController < ApplicationController
   include AdminAudit
 
   before_action :require_authentication!, except: [:index, :show]
-  before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :withdraw, :restore, :unfinish, :lock, :unlock, :hand_over, :set_content_locale]
+  before_action :find_game, only: [:show, :edit, :update, :delete, :end_game, :start_test, :finish_test, :new_withdrawal, :withdraw, :restore, :unfinish, :lock, :unlock, :hand_over, :set_content_locale]
   before_action :find_team, only: [:show]
   before_action :ensure_author_if_game_draft, only: [:show, :set_content_locale]
   before_action :ensure_author_if_no_start_time, only: [:show, :set_content_locale]
@@ -16,7 +16,7 @@ class GamesController < ApplicationController
   before_action :ensure_author, only: [:edit, :update, :delete, :end_game, :start_test, :finish_test, :hand_over]
   before_action :ensure_editing_not_locked, only: [:edit, :update, :delete, :end_game, :start_test, :finish_test]
   before_action :ensure_game_was_not_started, only: [:edit, :update]
-  before_action :require_superadmin!, only: [:withdraw, :restore, :unfinish, :lock, :unlock]
+  before_action :require_superadmin!, only: [:new_withdrawal, :withdraw, :restore, :unfinish, :lock, :unlock]
 
   def index
     @games = if params[:user_id].present?
@@ -162,10 +162,28 @@ class GamesController < ApplicationController
     redirect_to @game
   end
 
+  def new_withdrawal
+  end
+
   def withdraw
-    @game.withdraw!
-    record_admin_action("withdraw", @game)
+    @game.withdraw!(:category => params[:withdrawal_category],
+                    :mode     => params[:withdrawal_mode],
+                    :note     => params[:withdrawal_note].presence)
+
+    # The note is appended only when there is one: "technical/freeze: " with a
+    # dangling colon reads like a truncated entry to whoever is reading the log
+    # during an incident. The full note is on the game either way -- this line
+    # exists so the audit is legible on its own.
+    detail = "#{params[:withdrawal_category]}/#{params[:withdrawal_mode]}"
+    detail << ": #{params[:withdrawal_note]}" if params[:withdrawal_note].present?
+
+    record_admin_action("withdraw", @game, detail)
     redirect_to admin_games_path, :notice => t("games.withdrawn_notice")
+  rescue ArgumentError
+    # A missing or unknown category OR mode is a form error the operator can
+    # correct on the spot, not a refusal to report elsewhere -- withdraw!
+    # raises ArgumentError for both.
+    render :new_withdrawal, :status => :unprocessable_entity
   end
 
   def restore

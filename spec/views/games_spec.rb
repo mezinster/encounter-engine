@@ -121,7 +121,7 @@ RSpec.describe "games/_list", type: :view do
   it "shows no end time for a game that was finished and later withdrawn" do
     game = create_game
     set_game_schedule!(game, :starts_at => 2.hours.ago, :author_finished_at => 1.hour.ago)
-    game.withdraw!
+    game.withdraw!(:category => "other", :mode => "freeze")
 
     view.define_singleton_method(:logged_in?) { false }
 

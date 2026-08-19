@@ -135,6 +135,10 @@ Rails.application.routes.draw do
   resources :games do
     member do
       delete :delete
+      # A GET that renders the form; the POST beside it does the work. A form
+      # rather than a one-click button because a withdrawal now carries a
+      # required reason and a choice of mode.
+      get :new_withdrawal
       post :withdraw
       post :restore
       post :unfinish

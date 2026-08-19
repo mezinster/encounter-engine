@@ -58,7 +58,7 @@
           <% if game.withdrawn? %>
             <%= button_to t("admin.games.index.restore"), restore_game_path(game), :method => :post, :class => "btn" %>
           <% else %>
-            <%= button_to t("admin.games.index.withdraw"), withdraw_game_path(game), :method => :post, :class => "btn" %>
+            <%= link_to t("admin.games.index.withdraw"), new_withdrawal_game_path(game), :class => "btn" %>
           <% end %>
           <%# Independent of the withdraw/restore toggle above: withdrawal and
               author-finish are separate facts, and a withdrawn-and-finished

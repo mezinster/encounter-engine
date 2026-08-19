@@ -28,7 +28,7 @@ describe "the home page games list", type: :request do
   it "does not show a withdrawn game" do
     game = create_game(:is_draft => false, :name => "Отозванная игра", :max_team_number => 20)
     set_game_schedule!(game, :starts_at => 2.hours.ago)
-    game.withdraw!
+    game.withdraw!(:category => "other", :mode => "freeze")
 
     get root_path
 

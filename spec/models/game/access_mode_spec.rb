@@ -34,7 +34,7 @@ describe Game do
 
     it "still reports :withdrawn for a gated game that was withdrawn" do
       game = create_game(:is_draft => false, :access_mode => "pass_required")
-      game.withdraw!
+      game.withdraw!(:category => "other", :mode => "freeze")
       expect(game.status).to eq(:withdrawn)
     end
 

@@ -407,6 +407,21 @@ tr:
     unlocked_notice: "Oyunun düzenlenmesi çözüldü"
     not_deletable: "Oyun silinemez: daha önce oynandı. Yayından kaldırın."
     not_endable_in_test: "Oyun bitirilemez: test modunda. Testi durdurmak için «Testi bitir» seçeneğini kullanın."
+    withdrawal:
+      categories:
+        technical: "Teknik sorun"
+        safety: "Güvenlik"
+        weather: "Hava durumu"
+        cancelled: "Oyun iptal edildi"
+        other: "Başka bir neden"
+      form:
+        title: "«%{game}» adlı oyunun geri çekilmesi"
+        category: "Neden"
+        note: "Ayrıntılar (takımlar görecek)"
+        mode: "Devam eden turlar ne olsun"
+        mode_freeze: "Dondur — geri döneceğiz"
+        mode_ended: "Bitir — sonuçlar kalsın"
+        submit: "Oyunu geri çek"
     hand_over:
       done: "«%{nickname}» adlı oyuncuya yazarlık devredildi"
       unknown_user: "Bu takma ada sahip bir oyuncu bulunamadı. Yazımı kontrol edin."

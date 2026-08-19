@@ -80,7 +80,8 @@ describe "withdrawal", type: :request do
 
   it "can be withdrawn and restored by a superadmin" do
     sign_in(superadmin)
-    post withdraw_game_path(game)
+    post withdraw_game_path(game), :params => { :withdrawal_category => "other",
+                                                :withdrawal_mode => "freeze" }
     expect(game.reload.withdrawn?).to be true
     expect(response).to redirect_to(admin_games_path)
 
@@ -137,7 +138,8 @@ describe "withdrawal", type: :request do
     before { sign_in(superadmin) }
 
     it "can still be withdrawn" do
-      post withdraw_game_path(live)
+      post withdraw_game_path(live), :params => { :withdrawal_category => "other",
+                                                  :withdrawal_mode => "freeze" }
 
       expect(response).to have_http_status(:found)
       expect(live.reload.withdrawn?).to be true

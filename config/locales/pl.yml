@@ -385,6 +385,21 @@ pl:
     unlocked_notice: "Edycja gry została odblokowana"
     not_deletable: "Gry nie można usunąć: już w nią grano. Wycofaj ją z publikacji."
     not_endable_in_test: "Gry nie można zakończyć: jest w trybie testowania. Aby zatrzymać test, użyj «Zakończ testowanie»."
+    withdrawal:
+      categories:
+        technical: "Problem techniczny"
+        safety: "Bezpieczeństwo"
+        weather: "Pogoda"
+        cancelled: "Gra odwołana"
+        other: "Inny powód"
+      form:
+        title: "Wycofanie gry „%{game}”"
+        category: "Powód"
+        note: "Szczegóły (zobaczą je drużyny)"
+        mode: "Co zrobić z przejściami"
+        mode_freeze: "Zamroź — wrócimy do gry"
+        mode_ended: "Zakończ — zachowaj wyniki"
+        submit: "Wycofaj grę"
     hand_over:
       done: "Autorstwo przekazane: %{nickname}"
       unknown_user: "Nie znaleziono gracza o takim pseudonimie. Sprawdź pisownię."

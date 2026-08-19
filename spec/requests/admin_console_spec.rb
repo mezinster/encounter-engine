@@ -70,7 +70,9 @@ describe "the admin console", type: :request do
 
     get admin_games_path
 
-    expect(response.body).to include(withdraw_game_path(played))
+    # The console links to the withdrawal FORM, not the POST endpoint --
+    # withdrawal now carries a required reason and a choice of mode.
+    expect(response.body).to include(new_withdrawal_game_path(played))
     expect(response.body).not_to include(delete_game_path(played))
   end
 

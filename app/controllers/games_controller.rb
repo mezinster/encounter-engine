@@ -326,6 +326,7 @@ class GamesController < ApplicationController
           .permit(:name, :description, :starts_at, :registration_deadline,
                    :max_team_number, :visibility, :primary_locale, :access_mode,
                    :points_enabled, :level_completion_points, :game_completion_points,
+                   :max_skips, :skip_points_fine, :skip_time_penalty,
                    :available_locale_list => [],
                    :translations => translation_params_shape(Game::TRANSLATABLE_FIELDS))
   end

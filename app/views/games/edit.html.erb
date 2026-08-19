@@ -88,6 +88,18 @@
     <%= f.label :game_completion_points, t("games.form.game_completion_points") %>
     <%= f.number_field :game_completion_points, :min => 0 %>
   </div>
+  <div class="field">
+    <%= f.label :max_skips, t("games.form.max_skips") %>
+    <%= f.number_field :max_skips, :min => 0 %>
+  </div>
+  <div class="field">
+    <%= f.label :skip_points_fine, t("games.form.skip_points_fine") %>
+    <%= f.number_field :skip_points_fine, :min => 0 %>
+  </div>
+  <div class="field">
+    <%= f.label :skip_time_penalty, t("games.form.skip_time_penalty") %>
+    <%= f.number_field :skip_time_penalty, :min => 0 %>
+  </div>
   <%# Same predicate and same single-field shape as games/new.html.erb -- see
       the comment there. %>
   <% if logged_in? && current_user.may_operate_commercial? %>

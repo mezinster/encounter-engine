@@ -167,6 +167,7 @@ be:
           move_team: "Перавёў каманду на іншы ўзровень"
           reinstate_team: "Вярнуў каманду ў гульню"
           reset_clock: "Скінуў адлік часу на ўзроўні"
+          skip_level: "Прапусціў узровень за каманду"
           accept_entry: "Прыняў заяўку каманды"
           reject_entry: "Адхіліў заяўку каманды"
           translation_run_started: "Запусціў пераклад"
@@ -335,6 +336,8 @@ be:
     team_exited: "Каманда сышла з дыстанцыі"
     game_is_not_live: "Гульня зараз не ідзе"
   interventions:
+    skip_level: "Прапусціць узровень"
+    skipped_notice: "Узровень прапушчаны"
     paused_notice: "Гульня прыпынена"
     resumed_notice: "Гульня працягваецца"
     moved_notice: "Каманда пераведзена на іншы ўзровень"
@@ -424,6 +427,9 @@ be:
       points_enabled: "Налічваць ачкі"
       level_completion_points: "Ачкоў за ўзровень"
       game_completion_points: "Ачкоў за праходжанне"
+      max_skips: "Пропускаў узроўняў за гульню"
+      skip_points_fine: "Спісанне ачкоў за пропуск"
+      skip_time_penalty: "Штрафны час за пропуск, сек"
     primary_locale_label: "Асноўная мова"
     available_locales_label: "Мовы гульні"
     new:
@@ -827,8 +833,17 @@ be:
       answer_label: "Код"
       submit: "Адправіць!"
       exit_game: "Сысці з дыстанцыі"
+      skip_level: "Прапусціць узровень"
       finish_testing: "Завяршыць тэставанне"
       attachments_label: "Прыкладзеныя файлы"
+    confirm_skip:
+      title: "Прапусціць узровень?"
+      cost: "Спісанне: %{points} ачкоў і %{seconds} сек штрафнога часу."
+      cost_time_only: "Спісанне: %{seconds} сек штрафнога часу."
+      remaining: "Засталося пропускаў: %{count}"
+      confirm: "Так, прапусціць"
+      cancel: "Вярнуцца да ўзроўню"
+    skip_refused: "Пропуск немагчымы"
     show_results:
       congrats: "Віншуем, вы скончылі гульню!"
       place: "Месца"
@@ -942,6 +957,7 @@ be:
       reasons:
         level_completed: "Ачко за ўзровень"
         game_completed: "Ачко за праходжанне"
+        level_skipped: "Штраф за пропуск"
     handed_over: "Капітанства перададзена: %{nickname}"
     cannot_hand_over_mid_race: "Нельга перадаць капітанства, пакуль каманда на дыстанцыі"
     hand_over_needs_another_member: "Выберыце іншага ўдзельніка каманды"
@@ -1043,6 +1059,10 @@ be:
         game: "Гульня"
       access_pass:
         game: "Гульня"
+      game:
+        max_skips: "Лік пропускаў"
+        skip_points_fine: "Спісанне ачкоў"
+        skip_time_penalty: "Штрафны час"
       file_attachment:
         attachable: "Аб'ект"
         game_file: "Файл"

@@ -165,6 +165,7 @@ uk:
           move_team: "Перевів команду на інший рівень"
           reinstate_team: "Повернув команду в гру"
           reset_clock: "Скинув відлік часу на рівні"
+          skip_level: "Пропустив рівень за команду"
           accept_entry: "Прийняв заявку команди"
           reject_entry: "Відхилив заявку команди"
           translation_run_started: "Запустив переклад"
@@ -333,6 +334,8 @@ uk:
     too_many_requests: "Забагато спроб. Спробуйте пізніше."
     game_is_not_live: "Гра зараз не триває"
   interventions:
+    skip_level: "Пропустити рівень"
+    skipped_notice: "Рівень пропущено"
     paused_notice: "Гру призупинено"
     resumed_notice: "Гра триває"
     moved_notice: "Команду переведено на інший рівень"
@@ -422,6 +425,9 @@ uk:
       points_enabled: "Нараховувати очки"
       level_completion_points: "Очок за рівень"
       game_completion_points: "Очок за проходження"
+      max_skips: "Пропусків рівнів за гру"
+      skip_points_fine: "Списання очок за пропуск"
+      skip_time_penalty: "Штрафний час за пропуск, сек"
     primary_locale_label: "Основна мова"
     available_locales_label: "Мови гри"
     new:
@@ -831,8 +837,17 @@ uk:
       answer_label: "Код"
       submit: "Надіслати!"
       exit_game: "Зійти з дистанції"
+      skip_level: "Пропустити рівень"
       finish_testing: "Завершити тестування"
       attachments_label: "Прикріплені файли"
+    confirm_skip:
+      title: "Пропустити рівень?"
+      cost: "Списання: %{points} очок і %{seconds} сек штрафного часу."
+      cost_time_only: "Списання: %{seconds} сек штрафного часу."
+      remaining: "Залишилось пропусків: %{count}"
+      confirm: "Так, пропустити"
+      cancel: "Повернутися до рівня"
+    skip_refused: "Пропуск неможливий"
     show_results:
       congrats: "Вітаємо, ви завершили гру!"
       place: "Місце"
@@ -949,6 +964,7 @@ uk:
       reasons:
         level_completed: "Очко за рівень"
         game_completed: "Очко за проходження"
+        level_skipped: "Штраф за пропуск"
     handed_over: "Капітанство передано: %{nickname}"
     cannot_hand_over_mid_race: "Не можна передати капітанство, поки команда на дистанції"
     hand_over_needs_another_member: "Оберіть іншого учасника команди"
@@ -1052,6 +1068,10 @@ uk:
         game: "Гра"
       access_pass:
         game: "Гра"
+      game:
+        max_skips: "Число пропусків"
+        skip_points_fine: "Списання очок"
+        skip_time_penalty: "Штрафний час"
       file_attachment:
         attachable: "Об'єкт"
         game_file: "Файл"

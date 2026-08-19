@@ -262,21 +262,69 @@ class GamePassing < ApplicationRecord
   end
 
   def pass_level!
-    passed = self.current_level
+    passed    = self.current_level
     finishing = last_level?
 
-    if finishing
-      set_finish_time
-    else
-      update_current_level_entered_at
-    end
-
-    reset_answered_questions
-
-    self.current_level = self.current_level.next
-    save!
+    advance!(finishing)
 
     award_points_for(passed, finishing)
+  end
+
+  # Returns the level that was skipped.
+  #
+  # The fine is charged BEFORE the advance, which is the reverse of what
+  # pass_level! does with its award, and the reversal is deliberate. An award
+  # that fails to write is a bookkeeping problem: the team answered correctly
+  # and must move on regardless. A FINE that fails to write hands out the thing
+  # it exists to price -- and because skips_left counts these rows, an
+  # unrecorded skip also makes the cap unenforceable.
+  #
+  # Charging first is safe only because refusing a skip is a no-op: the team
+  # stays on a level they can still play. That is what separates this from
+  # refusing to advance on a correct answer.
+  #
+  # If the charge succeeds and the advance then fails, the team retries: the
+  # partial unique index refuses the second row, award! returns nil, and the
+  # advance runs. One charge, no stuck team, and no transaction around the two
+  # -- see PointTransaction.award!, which must not be rescued from inside one.
+  # The paused refusal lives HERE, not in a controller filter, and that is the
+  # point of it. GamePassingsController carries ensure_game_not_paused; the
+  # operator's InterventionsController deliberately treats a paused game as
+  # live (a resume must stay reachable), so the same rule expressed as a filter
+  # protected one of the two ways into this method and an operator could skip
+  # for a team mid-pause. advance! stamps current_level_entered_at from
+  # Time.now while every countdown reads effective_now -- paused_at -- so the
+  # team's clock came out negative and Game#resume! then shifted it further
+  # into the future, delaying every hint on the level they had just been given.
+  # Refusing here holds on both paths by construction. Spec section 3 asks for
+  # this refusal in the model for that reason.
+  #
+  # Narrow to paused ON PURPOSE: the other senses of "not currently running" --
+  # not yet started, draft, withdrawn, author-finished -- are refused on both
+  # paths by ensure_game_is_started / ensure_game_is_live already, and a
+  # testing run is skippable BY DESIGN (S7), which a general "the game must be
+  # running" predicate would break.
+  def skip_level!(actor)
+    raise ArgumentError, "game is paused" if game.paused?
+    raise ArgumentError, "team has exited" if exited?
+    raise ArgumentError, "no skips left" unless skips_left.positive?
+
+    skipped = self.current_level
+    raise ArgumentError, "nothing to skip" if skipped.nil?
+
+    charge_skip!(skipped, actor)
+    advance!(last_level?)
+    log_skip!(skipped)
+
+    skipped
+  end
+
+  # Derived, never stored. The partial unique index on
+  # (game_passing_id, level_id, reason) already guarantees one row per skipped
+  # level, so counting rows IS the count of skips -- a column would be a second
+  # account of the same fact, free to drift from it.
+  def skips_left
+    game.max_skips.to_i - point_transactions.where(:reason => "level_skipped").count
   end
 
   def finished?
@@ -430,6 +478,96 @@ protected
 
   def reset_answered_questions
     self.answered_questions.clear
+  end
+
+  # What "advance" means, in one place. pass_level! and skip_level! differ only
+  # in what they do BEFORE and AFTER this: a pass awards afterwards, a skip
+  # charges beforehand. Extracted rather than copied because this repository has
+  # already shipped one concept resolved two ways -- finished_at versus
+  # status "exited", which disagreed across two surfaces until a review caught
+  # it -- and a second copy of this would be the same bet.
+  #
+  # `finishing` is passed in rather than recomputed: the caller reads it before
+  # current_level moves, and after the move the answer would be wrong.
+  def advance!(finishing)
+    if finishing
+      set_finish_time
+    else
+      update_current_level_entered_at
+    end
+
+    reset_answered_questions
+
+    self.current_level = self.current_level.next
+    save!
+  end
+
+  # NOT gated on points_enabled, and that is a considered difference from
+  # award_points_for. That gate exists so no EXISTING game starts writing rows
+  # behind its author's back; a skip row cannot be written unless the author
+  # set max_skips > 0, which is the opt-in. points_enabled gates awards; it
+  # does not gate the record of a team's own action.
+  #
+  # With points off the AMOUNT is zeroed rather than the row skipped entirely:
+  # points_enabled is the master switch for the whole points system, and a
+  # game with it off gives a team no way to EARN -- so charging the ordinary
+  # fine would drain a balance the team built in other games, for a game that
+  # could never add to it. The four skip settings are independent form
+  # fields with no cross-validation (see Game's validations), so
+  # points_enabled: false, skip_points_fine: 25 is reachable by ordinary
+  # misconfiguration. The row is still written at amount 0, because the cap
+  # (skips_left) still needs it to count.
+  #
+  # Testing runs write these rows for the same reason: without them the cap has
+  # nothing to count, and an author testing the limit they configured would see
+  # no limit. finish_test and TestAdmission#revoke! delete a run's
+  # point_transactions, so nothing outlives the test.
+  #
+  # increment!, not read-modify-write, for the reason answer_options! records
+  # at this same column: two teammates acting at the same instant under
+  # update_column each read the same starting value and one charge is lost.
+  #
+  # Guarded on award! returning a row, not fired unconditionally: award!
+  # returns nil when the partial unique index refuses a duplicate -- a retry
+  # after a failed advance (S5's self-heal), or an operator re-skip landing a
+  # team back on a level it already paid for. Firing the increment regardless
+  # double-charges the team's clock on exactly the path S5 promises is a
+  # single charge. The ledger row is the single arbiter of "already charged
+  # for this level" -- the same one skips_left already relies on.
+  def charge_skip!(level, actor)
+    amount = game.points_enabled? ? -game.skip_points_fine.to_i : 0
+
+    row = PointTransaction.award!(:passing    => self,
+                                  :reason     => "level_skipped",
+                                  :level      => level,
+                                  :amount     => amount,
+                                  :created_by => actor)
+    return if row.nil?
+
+    penalty = game.skip_time_penalty.to_i
+    increment!(:penalty_seconds, penalty) if penalty.positive?
+  end
+
+  # The level log is what an author reads to see what a team did, and a level
+  # that simply stops having answers looks like a team that went quiet. AFTER
+  # the advance, not before: the log line is a record, and a record of a skip
+  # that did not happen is worse than a missing one.
+  #
+  # `answer` holds a fixed ASCII marker rather than a t() call. This is STORED
+  # data, read later by everyone who opens the log, so a translated string
+  # would freeze whichever locale the acting user happened to be using into a
+  # row that outlives their session -- the same reasoning as
+  # TestAdmission.disposable_team_name.
+  def log_skip!(level)
+    Log.create!(:game_id         => game_id,
+                :game_run_id     => game_run_id,
+                :game_passing_id => id,
+                :level           => level.name,
+                :level_id        => level.id,
+                :team            => team.name,
+                :team_id         => team_id,
+                :time            => Time.now,
+                :answer          => "(skipped)")
   end
 
   # Awards are written AFTER the advance is saved, deliberately. A team

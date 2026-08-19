@@ -148,6 +148,7 @@ en:
           move_team: "Moved a team to another level"
           reinstate_team: "Brought a team back into the game"
           reset_clock: "Reset the level clock"
+          skip_level: "Skipped a level for a team"
           accept_entry: "Accepted a team's application"
           reject_entry: "Rejected a team's application"
           translation_run_started: "Started a translation"
@@ -316,6 +317,8 @@ en:
     team_exited: "Your team has left the race"
     game_is_not_live: "This game is not currently running"
   interventions:
+    skip_level: "Skip the level"
+    skipped_notice: "The level was skipped"
     paused_notice: "Game paused"
     resumed_notice: "Game resumed"
     moved_notice: "Team moved to another level"
@@ -405,6 +408,9 @@ en:
       points_enabled: "Award points"
       level_completion_points: "Points per level"
       game_completion_points: "Points for finishing"
+      max_skips: "Level skips allowed per game"
+      skip_points_fine: "Points deducted per skip"
+      skip_time_penalty: "Time penalty per skip, sec"
     primary_locale_label: "Primary language"
     available_locales_label: "Game languages"
     new:
@@ -808,8 +814,17 @@ en:
       answer_label: "Code"
       submit: "Submit!"
       exit_game: "Leave the race"
+      skip_level: "Skip this level"
       finish_testing: "Finish testing"
       attachments_label: "Attached files"
+    confirm_skip:
+      title: "Skip this level?"
+      cost: "Cost: %{points} points and %{seconds} sec of penalty time."
+      cost_time_only: "Cost: %{seconds} sec of penalty time."
+      remaining: "Skips remaining: %{count}"
+      confirm: "Yes, skip it"
+      cancel: "Back to the level"
+    skip_refused: "This level cannot be skipped"
     show_results:
       congrats: "Congratulations, you finished the game!"
       place: "Place"
@@ -923,6 +938,7 @@ en:
       reasons:
         level_completed: "Level passed"
         game_completed: "Game finished"
+        level_skipped: "Level skipped"
     handed_over: "Captaincy handed over to %{nickname}"
     cannot_hand_over_mid_race: "Captaincy cannot be handed over while the team is racing"
     hand_over_needs_another_member: "Choose another member of the team"
@@ -1027,6 +1043,10 @@ en:
         game: "Game"
       access_pass:
         game: "Game"
+      game:
+        max_skips: "Skips allowed"
+        skip_points_fine: "Points deducted"
+        skip_time_penalty: "Time penalty"
       file_attachment:
         # "Object", not the default humanisation "Attachable": that is the
         # polymorphic association's internal name, and the thing it points at

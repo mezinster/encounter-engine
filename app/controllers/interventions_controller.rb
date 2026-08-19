@@ -17,7 +17,7 @@ class InterventionsController < ApplicationController
   before_action :ensure_author
   before_action :ensure_editing_not_locked
   before_action :ensure_game_is_live
-  before_action :find_game_passing, only: [ :move, :reinstate, :reset_clock ]
+  before_action :find_game_passing, only: [ :move, :reinstate, :reset_clock, :skip_level ]
 
   # Deliberately narrower than ensure_author, which every other action here
   # uses and which also admits an operator on a gated game. Changing how codes
@@ -61,6 +61,16 @@ class InterventionsController < ApplicationController
     @game_passing.reset_level_clock!
     audit("reset_clock", @game_passing.team.name)
     back_to_stats(t("interventions.clock_reset_notice"))
+  end
+
+  # Shares skip_level! with the captain's own button, so it is bound by the
+  # same cap and raises the same ArgumentError -- which rescue_from turns into
+  # a refusal, exactly as it does for every other action here. current_user is
+  # passed as the actor, so the ledger row records who spent the team's points.
+  def skip_level
+    @game_passing.skip_level!(current_user)
+    audit("skip_level", @game_passing.team.name)
+    back_to_stats(t("interventions.skipped_notice"))
   end
 
   def allow_any_code

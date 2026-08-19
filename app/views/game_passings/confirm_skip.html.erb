@@ -1,0 +1,38 @@
+<%# No JavaScript anywhere in this app, so the confirmation is a page rather
+    than a dialog. The GET renders this; only the button below spends
+    anything. %>
+<div class="page">
+  <h2><%= t("game_passings.confirm_skip.title") %></h2>
+
+  <%# Two things this page must not get wrong, because stating the price is the
+      only reason it exists.
+
+      The fine is announced only when points are ON: charge_skip! zeroes the
+      amount for a game with points_enabled false, and the four skip settings
+      have no cross-validation, so points off with a non-zero fine is an
+      ordinary misconfiguration. Announcing 25 and charging 0 is the page
+      lying in the direction that costs the team a level it did not need to
+      buy.
+
+      The penalty is stated in SECONDS, the unit skip_time_penalty is stored
+      and authored in ("Штрафное время за пропуск, сек"). Dividing into whole
+      minutes is integer division on that column, so a 45-second cost rendered
+      as "0 мин" while 45 seconds were charged. %>
+  <p>
+    <% if @game.points_enabled? %>
+      <%= t("game_passings.confirm_skip.cost",
+            :points  => @game.skip_points_fine.to_i,
+            :seconds => @game.skip_time_penalty.to_i) %>
+    <% else %>
+      <%= t("game_passings.confirm_skip.cost_time_only",
+            :seconds => @game.skip_time_penalty.to_i) %>
+    <% end %>
+  </p>
+
+  <p><%= t("game_passings.confirm_skip.remaining", :count => @game_passing.skips_left) %></p>
+
+  <%= button_to t("game_passings.confirm_skip.confirm"),
+                skip_level_path(:game_id => @game.id), :class => "btn danger-row" %>
+
+  <%= link_to t("game_passings.confirm_skip.cancel"), show_current_level_path(:game_id => @game.id) %>
+</div>

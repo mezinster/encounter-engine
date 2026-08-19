@@ -171,6 +171,7 @@ ka:
           move_team: "გადაიყვანა გუნდი სხვა დონეზე"
           reinstate_team: "დააბრუნა გუნდი თამაშში"
           reset_clock: "განულა დროის ათვლა დონეზე"
+          skip_level: "გამოტოვა დონე გუნდისთვის"
           accept_entry: "მიიღო გუნდის განაცხადი"
           reject_entry: "უარყო გუნდის განაცხადი"
           translation_run_started: "დაიწყო თარგმანი"
@@ -339,6 +340,8 @@ ka:
     too_many_requests: "ძალიან ბევრი მცდელობა. სცადეთ მოგვიანებით."
     game_is_not_live: "თამაში ამჟამად არ მიმდინარეობს"
   interventions:
+    skip_level: "დონის გამოტოვება"
+    skipped_notice: "დონე გამოტოვებულია"
     paused_notice: "თამაში შეჩერებულია"
     resumed_notice: "თამაში გრძელდება"
     moved_notice: "გუნდი გადაყვანილია სხვა დონეზე"
@@ -428,6 +431,9 @@ ka:
       points_enabled: "ქულების დარიცხვა"
       level_completion_points: "ქულა დონისთვის"
       game_completion_points: "ქულა დასრულებისთვის"
+      max_skips: "გამოტოვებადი დონეები თამაშზე"
+      skip_points_fine: "ქულის ჩამოჭრა გამოტოვებაზე"
+      skip_time_penalty: "ჯარიმის დრო გამოტოვებაზე, წმ"
     primary_locale_label: "ძირითადი ენა"
     available_locales_label: "თამაშის ენები"
     new:
@@ -855,8 +861,17 @@ ka:
       answer_label: "კოდი"
       submit: "გაგზავნა!"
       exit_game: "დისტანციიდან გასვლა"
+      skip_level: "დონის გამოტოვება"
       finish_testing: "ტესტირების დასრულება"
       attachments_label: "მიმაგრებული ფაილები"
+    confirm_skip:
+      title: "გამოვტოვოთ დონე?"
+      cost: "ღირებულება: %{points} ქულა და %{seconds} წამი საჯარიმო დრო."
+      cost_time_only: "ღირებულება: %{seconds} წამი საჯარიმო დრო."
+      remaining: "დარჩენილი გამოტოვებები: %{count}"
+      confirm: "დიახ, გამოვტოვოთ"
+      cancel: "დონეზე დაბრუნება"
+    skip_refused: "დონის გამოტოვება ვერ მოხერხდა"
     show_results:
       congrats: "გილოცავთ, თქვენ დაასრულეთ თამაში!"
       place: "ადგილი"
@@ -973,6 +988,7 @@ ka:
       reasons:
         level_completed: "ქულა დონისთვის"
         game_completed: "ქულა დასრულებისთვის"
+        level_skipped: "ჯარიმა გამოტოვებისთვის"
     handed_over: "კაპიტნობა გადაეცა: %{nickname}"
     cannot_hand_over_mid_race: "კაპიტნობის გადაცემა შეუძლებელია, სანამ გუნდი დისტანციაზეა"
     hand_over_needs_another_member: "აირჩიეთ გუნდის სხვა წევრი"
@@ -1077,6 +1093,10 @@ ka:
         game: "თამაში"
       access_pass:
         game: "თამაში"
+      game:
+        max_skips: "დაშვებული გამოტოვებები"
+        skip_points_fine: "ჩამოჭრილი ქულა"
+        skip_time_penalty: "ჯარიმის დრო"
       file_attachment:
         attachable: "ობიექტი"
         game_file: "ფაილი"

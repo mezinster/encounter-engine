@@ -79,6 +79,18 @@
     <%= f.label :game_completion_points, t("games.form.game_completion_points") %>
     <%= f.number_field :game_completion_points, :min => 0 %>
   </div>
+  <div class="field">
+    <%= f.label :max_skips, t("games.form.max_skips") %>
+    <%= f.number_field :max_skips, :min => 0 %>
+  </div>
+  <div class="field">
+    <%= f.label :skip_points_fine, t("games.form.skip_points_fine") %>
+    <%= f.number_field :skip_points_fine, :min => 0 %>
+  </div>
+  <div class="field">
+    <%= f.label :skip_time_penalty, t("games.form.skip_time_penalty") %>
+    <%= f.number_field :skip_time_penalty, :min => 0 %>
+  </div>
   <%# Operator/superadmin territory only -- see User#may_operate_commercial?
       and GamesController#game_attributes, which strips this key from
       anyone else's params so a hand-crafted POST can't set it either. A

@@ -253,6 +253,7 @@ Rails.application.routes.draw do
   post "/games/:game_id/teams/:team_id/move",        to: "interventions#move",        as: :move_team
   post "/games/:game_id/teams/:team_id/reinstate",   to: "interventions#reinstate",   as: :reinstate_team
   post "/games/:game_id/teams/:team_id/reset_clock", to: "interventions#reset_clock", as: :reset_team_clock
+  post "/games/:game_id/teams/:team_id/skip_level", to: "interventions#skip_level", as: :skip_team_level
 
   # Level-scoped, unlike the team-scoped interventions above: how a level's
   # codes count is a property of the level, not of one team's passing.
@@ -318,6 +319,12 @@ Rails.application.routes.draw do
   post "/games/:game_id/test/:token", to: "test_admissions#join",   as: :join_test
 
   post "/game_passings/exit_game/:game_id", to: "game_passings#exit_game", as: :exit_game
+
+  # Two routes, not one, because this app has no rails-ujs: `data-confirm` is
+  # inert markup here, so the confirmation has to be a real page. The GET only
+  # renders; the POST is what spends the team's points.
+  get  "/game_passings/confirm_skip/:game_id", to: "game_passings#confirm_skip", as: :confirm_skip
+  post "/game_passings/skip_level/:game_id",   to: "game_passings#skip_level",   as: :skip_level
 
   # app/views/dashboard/_finished_games.html.erb:7 and
   # app/views/shared/_current_games.html.erb:13 build this URL with

@@ -76,6 +76,9 @@ class Game < ApplicationRecord
   validates :name, presence: true, uniqueness: true
   validates :description, presence: true
   validates :max_team_number, numericality: { greater_than: 0, less_than: 10000 }
+  validates :max_skips,         numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :skip_points_fine,  numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :skip_time_penalty, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :author, presence: true
   validates :visibility, :inclusion => { :in => VISIBILITIES }
   validates :access_mode, :inclusion => { :in => ACCESS_MODES }
@@ -518,6 +521,14 @@ class Game < ApplicationRecord
     return level.points_award unless level&.points_award.nil?
 
     level_completion_points
+  end
+
+  # max_skips IS the switch: there is no separate boolean to keep in step with
+  # it. Zero means an author who never thought about skipping gets a game that
+  # cannot be skipped, which is the right default for every game that already
+  # exists.
+  def skips_allowed?
+    self.max_skips.to_i.positive?
   end
 
   # Stored comma-separated rather than serialised: it is a short list of ASCII

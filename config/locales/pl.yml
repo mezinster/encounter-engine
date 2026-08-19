@@ -1094,6 +1094,8 @@ pl:
       access_pass:
         game: "Gra"
       game:
+        level_completion_points: "Naliczenie za poziom"
+        game_completion_points: "Naliczenie za ukończenie"
         max_skips: "Liczba pominięć"
         skip_points_fine: "Odjęcie punktów"
         skip_time_penalty: "Kara czasowa"

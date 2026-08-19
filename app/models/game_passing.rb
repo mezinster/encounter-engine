@@ -306,7 +306,16 @@ class GamePassing < ApplicationRecord
   # running" predicate would break.
   def skip_level!(actor)
     raise ArgumentError, "game is paused" if game.paused?
-    raise ArgumentError, "team has exited" if exited?
+    # interrupted? rather than exited?: end! sets status "ended" and deliberately
+    # does NOT stamp finished_at, so an ended passing keeps its current_level
+    # and slipped past an exited?-only guard. Concretely -- a six-hour night
+    # game hits its deadline, the author ends it, and a team still walking to a
+    # location could spend points and a cap slot to advance inside a run that
+    # has already concluded, for a move that cannot change their standing.
+    # finished? is named too rather than left to "nothing to skip" below: that
+    # only refuses because current_level is nil on a finished run, which is an
+    # implementation detail of advance! rather than a statement of the rule.
+    raise ArgumentError, "run is over" if finished? || interrupted?
     raise ArgumentError, "no skips left" unless skips_left.positive?
 
     skipped = self.current_level

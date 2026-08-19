@@ -1081,6 +1081,8 @@ be:
       access_pass:
         game: "Гульня"
       game:
+        level_completion_points: "Налічэнне за ўзровень"
+        game_completion_points: "Налічэнне за праходжанне"
         max_skips: "Лік пропускаў"
         skip_points_fine: "Спісанне ачкоў"
         skip_time_penalty: "Штрафны час"

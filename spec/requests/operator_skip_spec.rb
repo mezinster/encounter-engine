@@ -127,4 +127,38 @@ describe "an operator skipping a level for a team", type: :request do
     expect(response).to redirect_to(login_path)
     expect(PointTransaction.where(:game_passing_id => passing.id).count).to eq(0)
   end
+
+  # A4. The button already hides when the game allows no skips or the allowance
+  # is spent. It did not hide for a run that is over, so an operator was
+  # offered a control whose only possible outcome is a refusal.
+  it "does not offer the skip button for a run the author ended" do
+    author  = create_user
+    game    = create_game(:author => author, :max_skips => 2, :skip_points_fine => 25)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
+    one     = create_level(:game => game, :position => 1)
+    create_level(:game => game, :position => 2)
+    passing = create_game_passing(:game => game, :level => one)
+    passing.end!
+    sign_in(author)
+
+    get game_stats_path(:game_id => game.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include(I18n.t("interventions.skip_level"))
+  end
+
+  it "still offers it for a run that is live" do
+    author  = create_user
+    game    = create_game(:author => author, :max_skips => 2, :skip_points_fine => 25)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
+    one     = create_level(:game => game, :position => 1)
+    create_level(:game => game, :position => 2)
+    create_game_passing(:game => game, :level => one)
+    sign_in(author)
+
+    get game_stats_path(:game_id => game.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(I18n.t("interventions.skip_level"))
+  end
 end

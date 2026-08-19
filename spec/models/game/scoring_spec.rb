@@ -10,6 +10,32 @@ describe Game do
     end
   end
 
+  describe "the award settings refuse negative values" do
+    # :min => 0 on the form is client-side only. A crafted POST would otherwise
+    # make every team that passes a level LOSE points automatically, silently,
+    # for the whole game -- which is not a fine anyone chose to issue. Two
+    # mechanisms already exist for deliberate deductions: D2's skip fine and
+    # D3's operator adjustment, both signed on purpose.
+    it "refuses a negative award for a level" do
+      game = create_game
+      game.level_completion_points = -5
+      expect(game).not_to be_valid
+      expect(game.errors[:level_completion_points]).not_to be_empty
+    end
+
+    it "refuses a negative award for finishing" do
+      game = create_game
+      game.game_completion_points = -5
+      expect(game).not_to be_valid
+      expect(game.errors[:game_completion_points]).not_to be_empty
+    end
+
+    it "still accepts zero for both" do
+      expect(create_game(:level_completion_points => 0,
+                         :game_completion_points => 0)).to be_valid
+    end
+  end
+
   describe "#points_for_level" do
     let(:game)  { create_game(:points_enabled => true, :level_completion_points => 10) }
     let(:level) { create_level(:game => game) }

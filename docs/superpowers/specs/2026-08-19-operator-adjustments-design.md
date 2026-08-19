@@ -109,6 +109,23 @@ an action *during* play; an adjustment is usually a judgement made *after* it �
 the next morning, a broken location confirmed once the game is over. **The most common adjustment
 is one nobody could have made while the run was live.**
 
+**Correction, found during Task 2: "finished" means two different things here, and this decision
+needs both.** They are guaranteed by different mechanisms, and an earlier draft of this section
+conflated them:
+
+* **A finished or exited GamePassing** — the team's own run is over. *Nothing blocks this.* No
+  filter on `InterventionsController` reads the passing's state, so an adjustment on a finished run
+  works with or without any exemption. Worth an example anyway, because it would break the day
+  someone adds a passing-state filter, but it proves nothing about the exemption.
+* **A Game that is no longer live** — the author has finished it, or it is a draft, or withdrawn.
+  *This is what `ensure_game_is_live` blocks*, and it is the case the exemption in §4.1 exists to
+  serve. It is also the likelier one in practice: a dispute settled the next morning is settled
+  after the author closed the game, not merely after one team stopped running.
+
+So the exemption is load-bearing, and only a test that finishes the **game** demonstrates it. This
+was established by instrumenting the filter to confirm it was reached and evaluating `live=true`
+while the passing-level examples passed regardless.
+
 ---
 
 ## 2. Data model

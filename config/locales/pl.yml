@@ -1085,6 +1085,8 @@ pl:
         filename: "Nazwa pliku"
         content_type: "Typ pliku"
       point_transaction:
+        game: "Gra"
+        game_passing: "Przejście"
         amount: "Kwota"
         note: "Wyjaśnienie"
     errors:
@@ -1170,6 +1172,10 @@ pl:
               blank: "Nie wpisano treści zadania"
         point_transaction:
           attributes:
+            game:
+              blank: "nie wybrana"
+            game_passing:
+              blank: "nie wybrane"
             amount:
               other_than: "nie może być zerowa"
             note:

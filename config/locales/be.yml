@@ -1072,6 +1072,8 @@ be:
         filename: "Імя файла"
         content_type: "Тып файла"
       point_transaction:
+        game: "Гульня"
+        game_passing: "Праходжанне"
         amount: "Сума"
         note: "Тлумачэнне"
     errors:
@@ -1157,6 +1159,10 @@ be:
               blank: "Вы не ўвялі тэкст задання"
         point_transaction:
           attributes:
+            game:
+              blank: "не выбрана"
+            game_passing:
+              blank: "не выбрана"
             amount:
               other_than: "не можа быць нулявой"
             note:

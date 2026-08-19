@@ -1106,6 +1106,8 @@ ka:
         filename: "ფაილის სახელი"
         content_type: "ფაილის ტიპი"
       point_transaction:
+        game: "თამაში"
+        game_passing: "გავლა"
         amount: "ოდენობა"
         note: "განმარტება"
     errors:
@@ -1191,6 +1193,10 @@ ka:
               blank: "თქვენ არ შეიყვანეთ დავალების ტექსტი"
         point_transaction:
           attributes:
+            game:
+              blank: "არ არის არჩეული"
+            game_passing:
+              blank: "არ არის არჩეული"
             amount:
               other_than: "ნულოვანი ვერ იქნება"
             note:

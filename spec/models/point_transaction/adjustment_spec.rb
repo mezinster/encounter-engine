@@ -56,11 +56,23 @@ describe PointTransaction do
       expect(team.balance).to eq(0)
     end
 
-    # The narrowed index is SHARED with three reasons that depend on it for
-    # idempotence. Narrowing it for adjustments must not have narrowed it for
-    # them -- and an example per reason, because `reason <> 'adjustment'` is one
-    # clause protecting three separate guarantees, and a typo in it would
-    # release all three at once while every adjustment example stayed green.
+    # These three examples guard three real regressions, but not through the
+    # same index. `level_completed` and `level_skipped` always carry a real
+    # `level`, so their duplicate is caught by the untouched sibling index,
+    # `index_point_transactions_per_level` (WHERE level_id IS NOT NULL) -- the
+    # narrowed `per_attempt` index this task changed never enters into it.
+    # `game_completed` is the only one of the three with a NULL level, so it
+    # is the only one actually exercising the narrowed `per_attempt` index
+    # and its `AND reason <> 'adjustment'` clause.
+    #
+    # Concretely: corrupting that clause (verified by mutation) reddens only
+    # the `game_completed` example below -- `level_completed` and
+    # `level_skipped` stay green throughout, because `per_level` alone already
+    # protects them. A future reader seeing green on all three after such a
+    # mutation should not conclude the clause is untouched; only
+    # `game_completed`'s result says anything about it. All three examples
+    # are kept regardless, because each guards a real, independent
+    # idempotence guarantee -- just not all through the same index.
     %w[level_completed game_completed].each do |reason|
       it "still refuses a duplicate #{reason} on the same attempt" do
         passing = create_game_passing

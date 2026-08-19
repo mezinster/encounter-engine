@@ -1081,6 +1081,8 @@ uk:
         filename: "Ім'я файлу"
         content_type: "Тип файлу"
       point_transaction:
+        game: "Гра"
+        game_passing: "Проходження"
         amount: "Сума"
         note: "Пояснення"
     errors:
@@ -1166,6 +1168,10 @@ uk:
               blank: "Ви не ввели текст завдання"
         point_transaction:
           attributes:
+            game:
+              blank: "не вибрана"
+            game_passing:
+              blank: "не вибране"
             amount:
               other_than: "не може бути нульовою"
             note:

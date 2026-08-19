@@ -1124,6 +1124,8 @@ tr:
         filename: "Dosya adı"
         content_type: "Dosya türü"
       point_transaction:
+        game: "Oyun"
+        game_passing: "Geçiş"
         amount: "Miktar"
         note: "Açıklama"
     errors:
@@ -1209,6 +1211,10 @@ tr:
               blank: "Görevin metnini girmediniz"
         point_transaction:
           attributes:
+            game:
+              blank: "seçilmedi"
+            game_passing:
+              blank: "seçilmedi"
             amount:
               other_than: "sıfır olamaz"
             note:

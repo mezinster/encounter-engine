@@ -1081,6 +1081,8 @@ ru:
         filename: "Имя файла"
         content_type: "Тип файла"
       point_transaction:
+        game: "Игра"
+        game_passing: "Прохождение"
         amount: "Сумма"
         note: "Пояснение"
     errors:
@@ -1166,6 +1168,10 @@ ru:
               blank: "Вы не ввели текст задания"
         point_transaction:
           attributes:
+            game:
+              blank: "не выбрана"
+            game_passing:
+              blank: "не выбрано"
             amount:
               other_than: "не может быть нулевой"
             note:

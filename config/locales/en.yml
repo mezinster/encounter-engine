@@ -1059,6 +1059,8 @@ en:
         filename: "Filename"
         content_type: "Content type"
       point_transaction:
+        game: "Game"
+        game_passing: "Passing"
         amount: "Amount"
         note: "Explanation"
     errors:
@@ -1144,6 +1146,10 @@ en:
               blank: "Task text is required"
         point_transaction:
           attributes:
+            game:
+              blank: "is not selected"
+            game_passing:
+              blank: "is not selected"
             amount:
               other_than: "cannot be zero"
             note:

@@ -1006,6 +1006,7 @@ tr:
         level_completed: "Seviye puanı"
         game_completed: "Bitirme puanı"
         level_skipped: "Atlama cezası"
+        adjustment: "Düzeltme"
     handed_over: "Kaptanlık devredildi: %{nickname}"
     cannot_hand_over_mid_race: "Takım yarıştayken kaptanlık devredilemez"
     hand_over_needs_another_member: "Takımdan başka bir üye seçin"
@@ -1122,6 +1123,9 @@ tr:
         game: "Oyun"
         filename: "Dosya adı"
         content_type: "Dosya türü"
+      point_transaction:
+        amount: "Miktar"
+        note: "Açıklama"
     errors:
       messages:
         blank: "boş olamaz"
@@ -1203,6 +1207,12 @@ tr:
               blank: "Görevin adını girmediniz"
             text:
               blank: "Görevin metnini girmediniz"
+        point_transaction:
+          attributes:
+            amount:
+              other_than: "sıfır olamaz"
+            note:
+              blank: "girilmelidir"
         setting:
           attributes:
             value:

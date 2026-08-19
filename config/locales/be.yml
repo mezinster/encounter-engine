@@ -958,6 +958,7 @@ be:
         level_completed: "Ачко за ўзровень"
         game_completed: "Ачко за праходжанне"
         level_skipped: "Штраф за пропуск"
+        adjustment: "Карэкціроўка"
     handed_over: "Капітанства перададзена: %{nickname}"
     cannot_hand_over_mid_race: "Нельга перадаць капітанства, пакуль каманда на дыстанцыі"
     hand_over_needs_another_member: "Выберыце іншага ўдзельніка каманды"
@@ -1070,6 +1071,9 @@ be:
         game: "Гульня"
         filename: "Імя файла"
         content_type: "Тып файла"
+      point_transaction:
+        amount: "Сума"
+        note: "Тлумачэнне"
     errors:
       messages:
         blank: "не можа быць пустым"
@@ -1151,6 +1155,12 @@ be:
               blank: "Вы не ўвялі назву задання"
             text:
               blank: "Вы не ўвялі тэкст задання"
+        point_transaction:
+          attributes:
+            amount:
+              other_than: "не можа быць нулявой"
+            note:
+              blank: "не пазначана"
         setting:
           attributes:
             value:

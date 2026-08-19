@@ -939,6 +939,7 @@ en:
         level_completed: "Level passed"
         game_completed: "Game finished"
         level_skipped: "Level skipped"
+        adjustment: "Adjustment"
     handed_over: "Captaincy handed over to %{nickname}"
     cannot_hand_over_mid_race: "Captaincy cannot be handed over while the team is racing"
     hand_over_needs_another_member: "Choose another member of the team"
@@ -1057,6 +1058,9 @@ en:
         game: "Game"
         filename: "Filename"
         content_type: "Content type"
+      point_transaction:
+        amount: "Amount"
+        note: "Explanation"
     errors:
       messages:
         blank: "can't be blank"
@@ -1138,6 +1142,12 @@ en:
               blank: "Task name is required"
             text:
               blank: "Task text is required"
+        point_transaction:
+          attributes:
+            amount:
+              other_than: "cannot be zero"
+            note:
+              blank: "is required"
         setting:
           attributes:
             value:

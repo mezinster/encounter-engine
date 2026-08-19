@@ -971,6 +971,7 @@ pl:
         level_completed: "Punkt za poziom"
         game_completed: "Punkt za ukończenie"
         level_skipped: "Kara za pominięcie"
+        adjustment: "Korekta"
     handed_over: "Kapitaństwo przekazane: %{nickname}"
     cannot_hand_over_mid_race: "Nie można przekazać kapitaństwa, dopóki drużyna jest na trasie"
     hand_over_needs_another_member: "Wybierz innego członka drużyny"
@@ -1083,6 +1084,9 @@ pl:
         game: "Gra"
         filename: "Nazwa pliku"
         content_type: "Typ pliku"
+      point_transaction:
+        amount: "Kwota"
+        note: "Wyjaśnienie"
     errors:
       messages:
         blank: "nie może być puste"
@@ -1164,6 +1168,12 @@ pl:
               blank: "Nie wpisano nazwy zadania"
             text:
               blank: "Nie wpisano treści zadania"
+        point_transaction:
+          attributes:
+            amount:
+              other_than: "nie może być zerowa"
+            note:
+              blank: "nie zostało podane"
         setting:
           attributes:
             value:

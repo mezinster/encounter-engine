@@ -4,18 +4,35 @@
 # Never updated, never reversed. A team that abandons a run keeps what it
 # earned and simply never earns the completion award -- see the design, P3/P4.
 class PointTransaction < ApplicationRecord
-  # D1's two, plus D2's fine. An operator adjustment would add another. The
-  # negative rows are why `amount` is signed.
-  REASONS = %w[level_completed game_completed level_skipped].freeze
+  # D1's two, plus D2's fine, plus an operator adjustment. The negative rows
+  # are why `amount` is signed.
+  REASONS = %w[level_completed game_completed level_skipped adjustment].freeze
 
   belongs_to :team
-  belongs_to :game
-  belongs_to :game_passing
+  belongs_to :game,         :optional => true
+  belongs_to :game_passing, :optional => true
   belongs_to :level,      :optional => true
   belongs_to :created_by, :class_name => "User", :optional => true
 
   validates :amount, :presence => true, :numericality => { :only_integer => true }
   validates :reason, :inclusion => { :in => REASONS }
+
+  # belongs_to's automatic presence validation is gone now that both
+  # associations are :optional => true (a global adjustment has neither), so
+  # it is reinstated here for every other reason -- D1 and D2 rows still need
+  # a game and an attempt.
+  validates :game,         :presence => true, :unless => :adjustment?
+  validates :game_passing, :presence => true, :unless => :adjustment?
+
+  # Both conditional on the reason: every row D1 and D2 write has no note, and
+  # a zero-amount award is legitimate (a game scoring 0 per level still records
+  # that the level was passed).
+  validates :note,   :presence => true,                            :if => :adjustment?
+  validates :amount, :numericality => { :other_than => 0 },        :if => :adjustment?
+
+  def adjustment?
+    self.reason == "adjustment"
+  end
 
   # Writes the row, or returns nil when one already exists for this
   # (attempt, level, reason).
@@ -53,5 +70,29 @@ class PointTransaction < ApplicationRecord
             :created_by      => created_by)
   rescue ActiveRecord::RecordNotUnique
     nil
+  end
+
+  # NOT award!, and the difference is the point. award! rescues
+  # RecordNotUnique and returns nil, which is what makes an award idempotent --
+  # a level re-passed after an operator sent a team back awards once. Two
+  # deliberate -50s are two different events, not a retry of one.
+  #
+  # After the index change above a violation cannot fire here at all, and that
+  # is exactly what would make reusing award! dangerous rather than harmless:
+  # this method would carry a rescue that is currently unreachable and would
+  # silently swallow a real constraint error the day anything about that index
+  # changes.
+  #
+  # passing nil => a global row: game_id and game_passing_id both NULL, and the
+  # row belongs to the team rather than to any run.
+  def self.adjust!(team:, amount:, note:, actor:, passing: nil)
+    create!(:team_id         => team.id,
+            :game_id         => passing&.game_id,
+            :game_passing_id => passing&.id,
+            :level_id        => nil,
+            :amount          => amount,
+            :reason          => "adjustment",
+            :note            => note,
+            :created_by      => actor)
   end
 end

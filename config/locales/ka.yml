@@ -989,6 +989,7 @@ ka:
         level_completed: "ქულა დონისთვის"
         game_completed: "ქულა დასრულებისთვის"
         level_skipped: "ჯარიმა გამოტოვებისთვის"
+        adjustment: "კორექტირება"
     handed_over: "კაპიტნობა გადაეცა: %{nickname}"
     cannot_hand_over_mid_race: "კაპიტნობის გადაცემა შეუძლებელია, სანამ გუნდი დისტანციაზეა"
     hand_over_needs_another_member: "აირჩიეთ გუნდის სხვა წევრი"
@@ -1104,6 +1105,9 @@ ka:
         game: "თამაში"
         filename: "ფაილის სახელი"
         content_type: "ფაილის ტიპი"
+      point_transaction:
+        amount: "ოდენობა"
+        note: "განმარტება"
     errors:
       messages:
         blank: "არ შეიძლება იყოს ცარიელი"
@@ -1185,6 +1189,12 @@ ka:
               blank: "თქვენ არ შეიყვანეთ დავალების დასახელება"
             text:
               blank: "თქვენ არ შეიყვანეთ დავალების ტექსტი"
+        point_transaction:
+          attributes:
+            amount:
+              other_than: "ნულოვანი ვერ იქნება"
+            note:
+              blank: "არ არის მითითებული"
         setting:
           attributes:
             value:

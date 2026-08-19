@@ -965,6 +965,7 @@ uk:
         level_completed: "Очко за рівень"
         game_completed: "Очко за проходження"
         level_skipped: "Штраф за пропуск"
+        adjustment: "Коригування"
     handed_over: "Капітанство передано: %{nickname}"
     cannot_hand_over_mid_race: "Не можна передати капітанство, поки команда на дистанції"
     hand_over_needs_another_member: "Оберіть іншого учасника команди"
@@ -1079,6 +1080,9 @@ uk:
         game: "Гра"
         filename: "Ім'я файлу"
         content_type: "Тип файлу"
+      point_transaction:
+        amount: "Сума"
+        note: "Пояснення"
     errors:
       messages:
         blank: "не може бути порожнім"
@@ -1160,6 +1164,12 @@ uk:
               blank: "Ви не ввели назву завдання"
             text:
               blank: "Ви не ввели текст завдання"
+        point_transaction:
+          attributes:
+            amount:
+              other_than: "не може бути нульовою"
+            note:
+              blank: "не вказано"
         setting:
           attributes:
             value:

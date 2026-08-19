@@ -960,6 +960,7 @@ ru:
         level_completed: "Очко за уровень"
         game_completed: "Очко за прохождение"
         level_skipped: "Штраф за пропуск"
+        adjustment: "Корректировка"
     handed_over: "Капитанство передано: %{nickname}"
     cannot_hand_over_mid_race: "Нельзя передать капитанство, пока команда на дистанции"
     hand_over_needs_another_member: "Выберите другого участника команды"
@@ -1079,6 +1080,9 @@ ru:
         game: "Игра"
         filename: "Имя файла"
         content_type: "Тип файла"
+      point_transaction:
+        amount: "Сумма"
+        note: "Пояснение"
     errors:
       messages:
         blank: "не может быть пустым"
@@ -1160,6 +1164,12 @@ ru:
               blank: "Вы не ввели название задания"
             text:
               blank: "Вы не ввели текст задания"
+        point_transaction:
+          attributes:
+            amount:
+              other_than: "не может быть нулевой"
+            note:
+              blank: "не указано"
         setting:
           attributes:
             value:

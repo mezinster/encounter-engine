@@ -976,6 +976,7 @@ pl:
       games: "Rozegrane gry"
       game: "Gra"
       hidden_game: "Ukryta gra"
+      no_game: "Poza grą"
       started: "Początek"
       finished: "Meta"
       unfinished: "nieukończona"
@@ -984,6 +985,7 @@ pl:
       ledger: "Naliczenia"
       when: "Kiedy"
       reason: "Za co"
+      note: "Wyjaśnienie"
       amount: "Punktów"
       reasons:
         level_completed: "Punkt za poziom"

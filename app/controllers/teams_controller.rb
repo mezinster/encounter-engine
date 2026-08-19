@@ -219,8 +219,12 @@ class TeamsController < ApplicationController
   # public balance stop equalling the sum of the public rows, which reads as a
   # bug in the chart and defeats the point of publishing an itemised ledger.
   # What leaks is only "these points were earned in a game you cannot see".
+  # Three states, not two. A row with no game at all is not a row whose game is
+  # hidden: saying "hidden game" for a global adjustment tells the reader a
+  # game exists that they may not see, which invents one.
   def game_title_for_viewer(game)
-    return t("teams.show.hidden_game") if game.nil? || !@nameable_game_ids.include?(game.id)
+    return t("teams.show.no_game")     if game.nil?
+    return t("teams.show.hidden_game") unless @nameable_game_ids.include?(game.id)
 
     game.name
   end

@@ -944,6 +944,7 @@ en:
       games: "Games played"
       game: "Game"
       hidden_game: "Hidden game"
+      no_game: "Not tied to a game"
       started: "Started"
       finished: "Finished"
       unfinished: "not finished"
@@ -952,6 +953,7 @@ en:
       ledger: "Ledger"
       when: "When"
       reason: "Reason"
+      note: "Explanation"
       amount: "Amount"
       reasons:
         level_completed: "Level passed"

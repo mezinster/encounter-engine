@@ -965,6 +965,7 @@ ru:
       games: "Сыгранные игры"
       game: "Игра"
       hidden_game: "Скрытая игра"
+      no_game: "Вне игры"
       started: "Начало"
       finished: "Финиш"
       unfinished: "не завершена"
@@ -973,6 +974,7 @@ ru:
       ledger: "Начисления"
       when: "Когда"
       reason: "За что"
+      note: "Пояснение"
       amount: "Очков"
       reasons:
         level_completed: "Очко за уровень"

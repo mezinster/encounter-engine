@@ -1011,6 +1011,7 @@ tr:
       games: "Oynanan oyunlar"
       game: "Oyun"
       hidden_game: "Gizli oyun"
+      no_game: "Oyun dışı"
       started: "Başlangıç"
       finished: "Bitiş"
       unfinished: "bitirilmedi"
@@ -1019,6 +1020,7 @@ tr:
       ledger: "Hareketler"
       when: "Ne zaman"
       reason: "Nedeni"
+      note: "Açıklama"
       amount: "Puan"
       reasons:
         level_completed: "Seviye puanı"

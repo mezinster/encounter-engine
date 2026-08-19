@@ -994,6 +994,7 @@ ka:
       games: "ნათამაშები"
       game: "თამაში"
       hidden_game: "დამალული თამაში"
+      no_game: "თამაშის გარეშე"
       started: "დაწყება"
       finished: "ფინიში"
       unfinished: "დაუსრულებელი"
@@ -1002,6 +1003,7 @@ ka:
       ledger: "ჩარიცხვები"
       when: "როდის"
       reason: "რისთვის"
+      note: "განმარტება"
       amount: "ქულა"
       reasons:
         level_completed: "ქულა დონისთვის"

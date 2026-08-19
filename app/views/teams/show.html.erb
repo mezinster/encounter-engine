@@ -53,6 +53,7 @@
       <th><%= t("teams.show.when") %></th>
       <th><%= t("teams.show.game") %></th>
       <th><%= t("teams.show.reason") %></th>
+      <th><%= t("teams.show.note") %></th>
       <th><%= t("teams.show.amount") %></th>
     </tr>
   </thead>
@@ -67,6 +68,9 @@
       <td data-label="<%= t("teams.show.reason") %>">
         <%= PointTransaction::REASONS.include?(row.reason) ? t("teams.show.reasons.#{row.reason}") : row.reason %>
       </td>
+      <%# Operator-authored free text on a public page: rendered verbatim,
+          never through t(), and escaped by ERB's default. %>
+      <td data-label="<%= t("teams.show.note") %>"><%= row.note %></td>
       <td data-label="<%= t("teams.show.amount") %>"><%= row.amount %></td>
     </tr>
   <% end %>

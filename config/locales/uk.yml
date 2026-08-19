@@ -970,6 +970,7 @@ uk:
       games: "Зіграні ігри"
       game: "Гра"
       hidden_game: "Прихована гра"
+      no_game: "Поза грою"
       started: "Початок"
       finished: "Фініш"
       unfinished: "не завершена"
@@ -978,6 +979,7 @@ uk:
       ledger: "Нарахування"
       when: "Коли"
       reason: "За що"
+      note: "Пояснення"
       amount: "Очок"
       reasons:
         level_completed: "Очко за рівень"

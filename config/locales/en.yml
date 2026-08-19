@@ -300,6 +300,7 @@ en:
     translation_key_missing: "AI translation is unavailable: no API key is configured."
     not_registered_for_game: "Your team is not registered for this game."
     no_access_pass: "This game requires access. Contact the organiser."
+    access_revoked: "Access to this game has been withdrawn"
     access_code:
       unknown: "No such code"
       redeemed: "This code has already been used"
@@ -809,6 +810,14 @@ en:
     paused: "The organiser has paused the game. Stay where you are and wait for it to resume."
     withdrawn:
       title: "The game has been stopped"
+    pass_revoked:
+      what_to_do: "Please contact the game's organiser."
+    gated_finish:
+      title: "Game finished"
+      your_place: "Your place"
+      your_time: "Your time"
+      your_points: "Your points"
+      balance: "Team total"
     index:
       title: 'Game "%{name}"'
       team: "Team"

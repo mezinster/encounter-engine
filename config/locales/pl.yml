@@ -324,6 +324,7 @@ pl:
     translation_key_missing: "Tłumaczenie przy pomocy AI jest niedostępne: nie skonfigurowano klucza API."
     not_registered_for_game: "Twoja drużyna nie jest zapisana na tę grę."
     no_access_pass: "Ta gra wymaga dostępu. Skontaktuj się z organizatorem."
+    access_revoked: "Dostęp do tej gry został cofnięty"
     access_code:
       unknown: "Nie znaleziono takiego kodu"
       redeemed: "Ten kod został już użyty"
@@ -841,6 +842,14 @@ pl:
     paused: "Gra została wstrzymana przez organizatora. Zostań na miejscu i czekaj na wznowienie."
     withdrawn:
       title: "Gra została zatrzymana"
+    pass_revoked:
+      what_to_do: "Skontaktuj się z organizatorem gry."
+    gated_finish:
+      title: "Gra ukończona"
+      your_place: "Twoje miejsce"
+      your_time: "Twój czas"
+      your_points: "Twoje punkty"
+      balance: "Łącznie drużyna"
     index:
       title: 'Gra "%{name}"'
       team: "Drużyna"

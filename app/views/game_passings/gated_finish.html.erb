@@ -1,0 +1,74 @@
+<%# NO .page wrapper of its own, deliberately -- same reason as
+    pass_revoked.html.erb, which this view is modelled on: render_finished_passing
+    renders this under the APPLICATION layout, which has already opened
+    <div class="page">, and .page carries min-height: 100svh, so a second one
+    nested inside it stacks a full viewport below the sticky topbar. See the
+    pass_revoked.html.erb comment for the measured numbers; this view was
+    checked the same way before it shipped. %>
+<h2><%= t("game_passings.gated_finish.title") %></h2>
+
+<%# No "unplaced" fallback: render_finished_passing serves this screen only
+    for a COMPLETED attempt, and a completed attempt is in pass_standings by
+    construction, so @place is always set. The label that stood here was
+    reachable only through the quit path this branch used to render -- a
+    string nothing legitimate produced. %>
+<p><%= t("game_passings.gated_finish.your_place") %>: <%= @place %></p>
+<p><%= t("game_passings.gated_finish.your_time") %>:
+   <%= @game_passing.seconds_to_hms(@game_passing.duration) %></p>
+
+<% if @ledger.any? %>
+  <h3><%= t("game_passings.gated_finish.your_points") %></h3>
+  <div class="table-wrap">
+    <table class="table--cards">
+      <tbody>
+        <% @ledger.each do |row| %>
+          <tr>
+            <%# The reason, then whatever identifies THIS row among rows with
+                the same reason -- the level for an award or a fine, the
+                operator's note for an adjustment. The two are mutually
+                exclusive: PointTransaction.award! never writes a note and
+                .adjust! always leaves level_id nil.
+                Without them, two "Очко за уровень | 10" rows for different
+                levels read identically (although @ledger already eager-loads
+                includes(:level)), and an adjustment reads "Корректировка |
+                33" -- an unexplained plus-or-minus N on the one screen a
+                customer reads for their points, which is where they stop
+                reading and contact support instead. The note is REQUIRED by
+                PointTransaction's own validation, so it is always there to
+                show.
+                One cell rather than a column of its own: a note column would
+                stand empty on every level row, and an empty cell in this
+                table is not blank below 48rem -- .table--cards td::before
+                prints the column name over it.
+                The reason label is translated from a fixed set (an
+                unrecognised value must not print "translation missing" to a
+                customer); the level name and the note are author- and
+                operator-written content, rendered verbatim, never through
+                t() and escaped by ERB's default. %>
+            <td data-label="<%= t("teams.show.reason") %>">
+              <%= PointTransaction::REASONS.include?(row.reason) ? t("teams.show.reasons.#{row.reason}") : row.reason %>
+              <% if row.level %>— <%= row.level.name %><% end %>
+              <% if row.note.present? %>— <%= row.note %><% end %>
+            </td>
+            <td data-label="<%= t("teams.show.amount") %>"><%= row.amount %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p><%= t("game_passings.gated_finish.balance") %>: <%= @game_passing.team.balance %></p>
+<% end %>
+
+<%# standings passed in: render_finished_passing already loaded and sorted
+    them to work out @place, and the partial would otherwise do both again. %>
+<%= render "games/pass_standings", game: @game, standings: @standings, highlight: @game_passing %>
+
+<%# The link a finishing team used to land next to, before this screen
+    replaced the redirect to the game page. Same guard and same key as
+    show_results.html.erb, so it appears if and only if following it would
+    succeed (LogsController#ensure_full_log_access). %>
+<% if full_log_visible?(@game) %>
+  <p><%= link_to t("game_passings.show_results.full_log"), show_full_log_path(@game) %></p>
+<% end %>
+
+<p><%= link_to @game.name, game_path(@game) %></p>

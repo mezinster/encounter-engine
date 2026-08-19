@@ -59,6 +59,45 @@ tr:
     revoked_notice: "Erişim geri alındı"
     not_found: "Takım bulunamadı"
     cannot_revoke_started: "Erişim geri alınamaz: takım çoktan başladı"
+  access_codes:
+    title: "Erişim kodları"
+    bad_count: "1 ile %{max} arasında kod belirtin"
+    bad_expiry: "Bu tarih anlaşılamadı"
+    revoked_notice: "Geri alınan kod: %{count}"
+    unrevoked_notice: "Geri verilen kod: %{count}"
+    expiry_notice: "Süresi değişen kod: %{count}"
+    nothing_matched: "Eşleşen kod bulunamadı"
+    batch: "Parti"
+    created_at: "Oluşturuldu"
+    issuer: "Operatör"
+    size: "Toplam"
+    outstanding: "Kullanılmadı"
+    redeemed: "Kullanıldı"
+    revoked: "Geri alındı"
+    expired: "Süresi doldu"
+    revoke: "Geri al"
+    unrevoke: "Geri ver"
+    set_expiry: "Süre"
+    lookup:
+      title: "Kod bul"
+      submit: "Bul"
+      not_found: "Bu oyunda böyle bir kod yok"
+      team: "Kullanan takım"
+    generate:
+      count: "Kaç kod"
+      expires_at: "Geçerlilik tarihi (isteğe bağlı)"
+      submit: "Kod oluştur"
+    created:
+      title: "Yeni kodlar"
+      warning: "Kodlar yalnızca bir kez gösterilir. Şimdi kopyalayın — geri alınamaz."
+      batch: "Parti: %{key}"
+      back: "Kod listesine"
+  access_code_redemptions:
+    title: "Erişim kodu girin"
+    code: "Kod"
+    submit: "Kullan"
+    redeemed: "Kod kabul edildi. Oyun takımınıza açıldı."
+    need_a_team: "Önce bir takım oluşturun — kodunuzu sakladık."
   admin:
     users:
       granted_notice: "Yönetici yetkileri verildi"
@@ -162,6 +201,10 @@ tr:
           translation_proposals_accepted: "Çevirileri kabul etti"
           issue_access_pass: "Oyun erişimi verdi"
           revoke_access_pass: "Oyun erişimini geri aldı"
+          generate_access_codes: "Erişim kodları oluşturdu"
+          revoke_access_codes: "Erişim kodlarını geri aldı"
+          unrevoke_access_codes: "Erişim kodlarını geri verdi"
+          set_access_code_expiry: "Erişim kodu süresini değiştirdi"
     settings:
       title: "Sınırlama ayarları"
       explanation: "Kayıt sınırlamaları belirtilen süre içinde tek bir IP adresi için geçerlidir; 0 sınırlamayı kapatır. Dosya sınırlamaları oyun başına ve sunucu genelinde geçerlidir."
@@ -173,6 +216,8 @@ tr:
         signup_window_seconds: "Kayıtlar için süre (saniye)"
         reset_max: "Tek adresten parola sıfırlama isteği sayısı"
         reset_window_seconds: "Parola sıfırlama için süre (saniye)"
+        access_code_redemption_max: "Tek adresten erişim kodu deneme sayısı"
+        access_code_redemption_window_seconds: "Erişim kodu denemeleri için süre (saniye)"
         file_max_megabytes: "Maksimum dosya boyutu (MB)"
         max_files_per_upload: "Yükleme başına dosya sayısı"
         game_quota_megabytes: "Oyun başına kota (MB)"
@@ -294,6 +339,13 @@ tr:
     translation_key_missing: "Yapay zeka ile çeviri kullanılamıyor: API anahtarı ayarlanmamış."
     not_registered_for_game: "Takımınız bu oyuna kayıtlı değil."
     no_access_pass: "Bu oyun için erişim gerekiyor. Düzenleyiciye başvurun."
+    access_code:
+      unknown: "Böyle bir kod bulunamadı"
+      redeemed: "Bu kod zaten kullanılmış"
+      revoked: "Bu kod geri alınmış"
+      expired: "Kodun süresi dolmuş"
+      game_unavailable: "Oyun şu anda kullanılamıyor"
+      throttled: "Çok fazla deneme. Daha sonra tekrar deneyin."
     must_be_superadmin: "Erişim yalnızca yöneticiye açıktır"
     must_operate_commercial: "Bu sayfa yalnızca operatörler ve yöneticiler içindir"
     game_not_gated: "Bu sayfa yalnızca geçiş ile satılan bir oyun için kullanılabilir"
@@ -428,6 +480,7 @@ tr:
       start: "Başla"
       finish_test: "Testi bitir"
       manage_access: "Erişim izinlerini yönet"
+      manage_access_codes: "Erişim kodlarını yönet"
   # Every key below carrying %{name} or %{game} puts the case suffix on a
   # common noun (adlı takım / adlı oyuncu / adlı katılımcı / adlı oyunun),
   # never on the placeholder: the correct suffix depends on the value's final
@@ -748,6 +801,7 @@ tr:
     current_games_status:
       play: "Oyna!"
       not_registered: "Kayıtlı değilsiniz"
+      redeem_code_link: "Erişim kodu girin"
     countdown:
       # Still three elements, even though Turkish has no plural agreement
       # after a numeral at all ("3 gün", "1 gün"):
@@ -1037,6 +1091,8 @@ tr:
       submit: "Giriş yap"
   activerecord:
     attributes:
+      access_code:
+        game: "Oyun"
       access_pass:
         game: "Oyun"
       file_attachment:
@@ -1053,6 +1109,10 @@ tr:
         invalid: "geçersiz bir değer içeriyor"
         record_invalid: "Kayıt geçersiz"
       models:
+        access_code:
+          attributes:
+            game:
+              not_gated: "erişim ile satılmıyor"
         access_pass:
           attributes:
             game:

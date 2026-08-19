@@ -233,7 +233,10 @@ describe "the games listing", type: :request do
       expect(response.body).to include(I18n.t("shared.current_games_status.play"))
     end
 
-    it "shows the access-required message when the signed-in team holds no pass" do
+    # F11: the games list links to the redemption form now, with its own
+    # link-text key -- errors.no_access_pass remains a refusal message used
+    # elsewhere (GamePassingsController), but this listing no longer renders it.
+    it "shows the redeem-code link when the signed-in team holds no pass" do
       game = create_game(:is_draft => false, :access_mode => "pass_required")
       captain = create_user
       create_team(:captain => captain)
@@ -241,15 +244,15 @@ describe "the games listing", type: :request do
 
       get games_path
 
-      expect(response.body).to include(I18n.t("errors.no_access_pass"))
+      expect(response.body).to include(I18n.t("shared.current_games_status.redeem_code_link"))
     end
 
-    it "shows the access-required message to a guest" do
+    it "shows the redeem-code link to a guest" do
       create_game(:is_draft => false, :access_mode => "pass_required")
 
       get games_path
 
-      expect(response.body).to include(I18n.t("errors.no_access_pass"))
+      expect(response.body).to include(I18n.t("shared.current_games_status.redeem_code_link"))
     end
 
     it "does not show the message at all for a scheduled game" do
@@ -257,7 +260,7 @@ describe "the games listing", type: :request do
 
       get games_path
 
-      expect(response.body).not_to include(I18n.t("errors.no_access_pass"))
+      expect(response.body).not_to include(I18n.t("shared.current_games_status.redeem_code_link"))
     end
 
     it "does not grow the query count as the number of gated rows grows" do

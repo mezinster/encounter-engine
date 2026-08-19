@@ -10,7 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_180000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_19_100000) do
+  create_table "access_codes", force: :cascade do |t|
+    t.integer "game_id", null: false
+    t.string "code_digest", null: false
+    t.string "batch_key", null: false
+    t.integer "issued_by_id"
+    t.datetime "revoked_at"
+    t.datetime "expires_at"
+    t.datetime "redeemed_at"
+    t.integer "access_pass_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["code_digest"], name: "index_access_codes_on_code_digest", unique: true
+    t.index ["game_id", "batch_key"], name: "index_access_codes_on_game_id_and_batch_key"
+  end
+
   create_table "access_passes", force: :cascade do |t|
     t.integer "game_id", null: false
     t.integer "team_id", null: false

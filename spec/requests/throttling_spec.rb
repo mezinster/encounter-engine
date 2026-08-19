@@ -83,4 +83,33 @@ describe "throttling the endpoints that send mail", type: :request do
       expect(response).to have_http_status(:too_many_requests)
     end
   end
+
+  # F6: AccessCodeRedemptionsController#create calls throttle!, but nothing
+  # exercised that call -- deleting it failed nothing. Unlike signup/reset,
+  # this endpoint answers with a redirect and its own flash message rather
+  # than a bare 429, so the refusal is asserted through the flash instead.
+  describe "access code redemption" do
+    let(:captain) { create_user }
+    let(:team)    { create_team(:captain => captain) }
+    let(:game)    { create_game(:is_draft => false, :access_mode => "pass_required") }
+
+    def sign_in(user)
+      put login_path, :params => { :email => user.email, :password => "1234" }
+    end
+
+    it "refuses past the configured limit, creating no pass" do
+      Setting.put("access_code_redemption_max", 1)
+      team
+      sign_in(captain)
+      _code, raw = create_access_code(:game => game)
+
+      # Trips the counter without redeeming anything, so the SECOND request
+      # below is refused for being over the limit, not for an unknown code.
+      post redeem_access_code_path, :params => { :access_code => "ZZZZZZZZZZ" }
+
+      expect { post redeem_access_code_path, :params => { :access_code => raw } }
+        .not_to change { AccessPass.count }
+      expect(flash[:alert]).to include("Слишком много попыток")
+    end
+  end
 end

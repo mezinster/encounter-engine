@@ -1,0 +1,12 @@
+<h2 class="page-title"><%= t("access_codes.created.title") %></h2>
+
+<p class="alert"><%= t("access_codes.created.warning") %></p>
+
+<p><%= t("access_codes.created.batch", :key => @batch_key) %></p>
+
+<%# insert would mutate the array element in place; this array is the only
+    copy of these secrets that will ever exist, so it is read, not edited. %>
+<pre class="codes"><% @codes.each do |raw| %><%= "#{raw[0, 5]}-#{raw[5, 5]}" %>
+<% end %></pre>
+
+<p><%= link_to t("access_codes.created.back"), game_access_codes_path(@game) %></p>

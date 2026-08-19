@@ -37,6 +37,45 @@ ka:
     revoked_notice: "წვდომა ჩამორთმეულია"
     not_found: "გუნდი ვერ მოიძებნა"
     cannot_revoke_started: "წვდომის ჩამორთმევა შეუძლებელია: გუნდმა უკვე დაიწყო"
+  access_codes:
+    title: "წვდომის კოდები"
+    bad_count: "მიუთითეთ 1-დან %{max}-მდე კოდი"
+    bad_expiry: "თარიღის ამოცნობა ვერ მოხერხდა"
+    revoked_notice: "ჩამორთმეულია კოდი: %{count}"
+    unrevoked_notice: "დაბრუნებულია კოდი: %{count}"
+    expiry_notice: "შეიცვალა ვადა კოდებზე: %{count}"
+    nothing_matched: "შესაბამისი კოდები ვერ მოიძებნა"
+    batch: "პარტია"
+    created_at: "შექმნილია"
+    issuer: "ოპერატორი"
+    size: "სულ"
+    outstanding: "გამოუყენებელი"
+    redeemed: "გამოყენებული"
+    revoked: "ჩამორთმეული"
+    expired: "ვადაგასული"
+    revoke: "ჩამორთმევა"
+    unrevoke: "დაბრუნება"
+    set_expiry: "ვადა"
+    lookup:
+      title: "კოდის მოძებნა"
+      submit: "მოძებნა"
+      not_found: "ასეთი კოდი ამ თამაშში ვერ მოიძებნა"
+      team: "გამოიყენა გუნდმა"
+    generate:
+      count: "რამდენი კოდი"
+      expires_at: "ძალაშია (არასავალდებულო)"
+      submit: "კოდების შექმნა"
+    created:
+      title: "ახალი კოდები"
+      warning: "კოდები მხოლოდ ერთხელ ჩანს. დააკოპირეთ ახლავე — აღდგენა შეუძლებელია."
+      batch: "პარტია: %{key}"
+      back: "კოდების სიაში"
+  access_code_redemptions:
+    title: "შეიყვანეთ წვდომის კოდი"
+    code: "კოდი"
+    submit: "გააქტიურება"
+    redeemed: "კოდი მიღებულია. თამაში ხელმისაწვდომია თქვენი გუნდისთვის."
+    need_a_team: "ჯერ შექმენით გუნდი — კოდი შევინახეთ."
   admin:
     users:
       granted_notice: "ადმინისტრატორის უფლებები მინიჭებულია"
@@ -140,6 +179,10 @@ ka:
           translation_proposals_accepted: "მიიღო თარგმანები"
           issue_access_pass: "მიანიჭა თამაშის წვდომა"
           revoke_access_pass: "ჩამოართვა თამაშის წვდომა"
+          generate_access_codes: "შექმნა წვდომის კოდები"
+          revoke_access_codes: "ჩამოართვა წვდომის კოდები"
+          unrevoke_access_codes: "დააბრუნა წვდომის კოდები"
+          set_access_code_expiry: "შეცვალა კოდების ვადა"
     settings:
       title: "შეზღუდვების პარამეტრები"
       explanation: "რეგისტრაციის შეზღუდვები მოქმედებს ერთ IP-მისამართზე მითითებულ პერიოდში; 0 თიშავს შეზღუდვას. ფაილების შეზღუდვები მოქმედებს თამაშზე და მთელ სერვერზე."
@@ -151,6 +194,8 @@ ka:
         signup_window_seconds: "რეგისტრაციის პერიოდი (წამი)"
         reset_max: "პაროლის აღდგენის მოთხოვნა ერთი მისამართიდან"
         reset_window_seconds: "პაროლის აღდგენის პერიოდი (წამი)"
+        access_code_redemption_max: "წვდომის კოდის შეყვანის მცდელობა ერთი მისამართიდან"
+        access_code_redemption_window_seconds: "წვდომის კოდის შეყვანის პერიოდი (წამი)"
         file_max_megabytes: "ფაილის მაქსიმალური ზომა (მბ)"
         max_files_per_upload: "ფაილები ერთ ატვირთვაზე"
         game_quota_megabytes: "კვოტა თამაშზე (მბ)"
@@ -271,6 +316,13 @@ ka:
     translation_key_missing: "ხელოვნური ინტელექტით თარგმნა მიუწვდომელია: API-ის გასაღები არ არის მითითებული."
     not_registered_for_game: "თქვენი გუნდი არ არის რეგისტრირებული ამ თამაშზე."
     no_access_pass: "ამ თამაშისთვის საჭიროა წვდომა. მიმართეთ ორგანიზატორს."
+    access_code:
+      unknown: "ასეთი კოდი ვერ მოიძებნა"
+      redeemed: "ეს კოდი უკვე გამოყენებულია"
+      revoked: "ეს კოდი ჩამორთმეულია"
+      expired: "კოდის ვადა გავიდა"
+      game_unavailable: "თამაში ამჟამად მიუწვდომელია"
+      throttled: "ძალიან ბევრი მცდელობა. სცადეთ მოგვიანებით."
     must_be_author_or_finished_player: "პასუხების სრული ლოგი ხელმისაწვდომია მხოლოდ თამაშის ავტორისთვის ან იმ გუნდის მოთამაშისთვის, რომელმაც თამაში დაასრულა"
     game_already_started: "თამაშის დაწყების შემდეგ მისი რედაქტირება შეუძლებელია"
     must_be_recipient: "ამ მოქმედების შესასრულებლად უნდა იყოთ მოწვევის მიმღები"
@@ -405,6 +457,7 @@ ka:
       start: "სტარტი"
       finish_test: "ტესტირების დასრულება"
       manage_access: "წვდომის ბილეთების მართვა"
+      manage_access_codes: "წვდომის კოდების მართვა"
   # Same treatment as tr: the case ending sits on a preceding common noun
   # (გუნდი / მოთამაშე / მონაწილე / თამაშის), never on %{name} or %{game}.
   test_admissions:
@@ -738,6 +791,7 @@ ka:
     current_games_status:
       play: "თამაში!"
       not_registered: "თქვენ არ ხართ დარეგისტრირებული"
+      redeem_code_link: "შეიყვანეთ წვდომის კოდი"
     countdown:
       # Still three elements, even though Georgian has only one/other in CLDR:
       # app/views/shared/_countdown.html.erb hard-codes a Slavic index
@@ -1019,6 +1073,8 @@ ka:
       submit: "შესვლა"
   activerecord:
     attributes:
+      access_code:
+        game: "თამაში"
       access_pass:
         game: "თამაში"
       file_attachment:
@@ -1035,6 +1091,10 @@ ka:
         invalid: "აქვს არასწორი მნიშვნელობა"
         record_invalid: "ჩანაწერი არასწორია"
       models:
+        access_code:
+          attributes:
+            game:
+              not_gated: "არ იყიდება წვდომით"
         access_pass:
           attributes:
             game:

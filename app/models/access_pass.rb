@@ -6,7 +6,7 @@
 # table holding a digest, and redeeming it CREATES a pass. That is what keeps
 # team_id NOT NULL here forever.
 class AccessPass < ApplicationRecord
-  SOURCES = %w[operator_invite].freeze
+  SOURCES = %w[operator_invite access_code].freeze
 
   belongs_to :game
   belongs_to :team

@@ -69,6 +69,8 @@ class Game < ApplicationRecord
   # point it would silently destroy the one record proving what a customer
   # paid for.
   has_many :access_passes
+  has_many :access_codes, :dependent => :destroy
+  # No dependent: option, deliberately -- see deletable? below.
   has_many :point_transactions
 
   validates :name, presence: true, uniqueness: true
@@ -356,8 +358,22 @@ class Game < ApplicationRecord
   # Without it, deleting a gated game with issued-but-unstarted passes
   # destroyed every purchase record silently -- no refusal, no audit of what
   # was lost.
+  #
+  # access_codes joins for the same reason again: a code is a purchase record
+  # too (see AccessCode), and deleting the game would destroy it even before
+  # a customer redeems it into a pass.
+  #
+  # This is a conjunction evaluated once PER ROW in the operator listings, so
+  # every association it reads turns an unpreloaded listing into an N+1. It
+  # has happened twice already -- access_passes, then access_codes -- and both
+  # are preloaded at the one call site that renders this per row:
+  # Admin::GamesController#index (see the comment on its `includes`). The next
+  # conjunct added here needs the same preload added there, or this method
+  # stays cheap in isolation while the screen that calls it once per row goes
+  # quadratic.
   def deletable?
-    self.game_passings.empty? && self.access_passes.empty? && self.point_transactions.empty?
+    self.game_passings.empty? && self.access_passes.empty? &&
+      self.access_codes.empty? && self.point_transactions.empty?
   end
 
   def created_by?(user)

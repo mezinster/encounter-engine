@@ -12,7 +12,9 @@ class Setting < ApplicationRecord
     "signup_max"            => 5,
     "signup_window_seconds" => 3600,
     "reset_max"             => 3,
-    "reset_window_seconds"  => 3600
+    "reset_window_seconds"  => 3600,
+    "access_code_redemption_max"            => 10,
+    "access_code_redemption_window_seconds" => 3600
   }.freeze
 
   # Game file storage. See

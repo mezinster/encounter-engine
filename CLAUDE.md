@@ -266,8 +266,23 @@ add steps there or Cucumber will auto-require them a second time.
   hint delay labels, which bracket a number Georgian postposes; and anywhere a user-supplied name
   is interpolated, where the case suffix was moved onto a preceding common noun so it never lands
   on the name.
-- A signed-in user's stored locale preference beats the instance default; an explicit `?locale=`
-  query param beats both (`app/controllers/concerns/locale_selection.rb`).
+- **Locale precedence, highest first: `?locale=` → the session → the user's stored preference →
+  `DEFAULT_LOCALE`** (`app/controllers/concerns/locale_selection.rb`). The session step exists
+  because `?locale=` alone lasted exactly one page view: **no form in this app carries the
+  parameter through its POST**, so the first button pressed after switching threw the language
+  away, and both suites — which assert on one response at a time — saw nothing wrong. `?locale=`
+  now writes `session[:locale]`, and `UsersController#update` deletes that key on a successful
+  save so the profile form still wins over a preview taken earlier in the same session.
+  `reset_session` on login and on logout drops it too, which is what makes logging in hand you
+  your account's own preference rather than a guest's preview.
+- **The switcher renders as plain labels, not links, on any page rendered from a non-GET request**,
+  and that is a fix rather than an omission. Every href is `request.path` + `?locale=`, which is
+  wrong the moment the path describes how the page was *submitted* rather than how it can be
+  *fetched*: `POST /games/:id/access_codes/lookup` has no GET route, so the link was a guaranteed
+  `ActionController::RoutingError`; and on `POST /games/:id/access_codes` the path *does* answer
+  GET, so clicking a language walked the operator off the one page that ever shows the raw codes,
+  which are unrecoverable. Same shape on every validation-error re-render, where it discards the
+  typed input. `spec/requests/locale_switcher_spec.rb` pins both halves.
 - `DEFAULT_LOCALE` (env var, defaults to `ru`) sets the instance-wide default in production —
   see `create-heroku-instance`.
 

@@ -22,15 +22,19 @@ class Admin::GamesController < ApplicationController
     # :runs joins :author and :game_passings here for the same reason -- the
     # view renders a status and a start time per row, and both read the run.
     #
-    # access_passes is preloaded for the same reason as game_passings, not a
-    # new one: Game#deletable? reads both, the view calls it once per row,
-    # and Game#deletable?'s own comment already explains why access_passes
-    # belongs in that check. Leaving it unpreloaded here would reintroduce
-    # exactly the per-row query game_passings was already preloaded to avoid.
+    # access_passes, access_codes and point_transactions are preloaded for the
+    # same reason as game_passings, not a new one: Game#deletable? reads all
+    # four, the view calls it once per row, and Game#deletable?'s own comment
+    # already explains why each belongs in that check. Leaving any of them
+    # unpreloaded here would reintroduce exactly the per-row query
+    # game_passings was already preloaded to avoid.
     #
-    # point_transactions joins the same preload for the same reason:
-    # Game#deletable? now reads it too, and this is evaluated once per row.
-    @games = Game.includes(:author, :game_passings, :access_passes, :point_transactions, :runs)
+    # This list has now grown three times, once per sub-project that gave
+    # deletable? another conjunct. Whoever adds the fourth: the conjunct and
+    # this preload are a pair, and adding one without the other is invisible
+    # until the console is slow with real data.
+    @games = Game.includes(:author, :game_passings, :access_passes, :access_codes,
+                           :point_transactions, :runs)
                  .order(:created_at => :desc)
 
     # ONE grouped query for the whole page, not one per row. :runs is already

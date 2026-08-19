@@ -14,6 +14,45 @@ en:
     revoked_notice: "Access revoked"
     not_found: "Team not found"
     cannot_revoke_started: "Cannot revoke: the team has already started"
+  access_codes:
+    title: "Access codes"
+    bad_count: "Choose between 1 and %{max} codes"
+    bad_expiry: "That expiry date could not be understood"
+    revoked_notice: "Codes revoked: %{count}"
+    unrevoked_notice: "Codes restored: %{count}"
+    expiry_notice: "Expiry changed on %{count} codes"
+    nothing_matched: "No matching codes found"
+    batch: "Batch"
+    created_at: "Created"
+    issuer: "Operator"
+    size: "Total"
+    outstanding: "Outstanding"
+    redeemed: "Redeemed"
+    revoked: "Revoked"
+    expired: "Expired"
+    revoke: "Revoke"
+    unrevoke: "Restore"
+    set_expiry: "Expiry"
+    lookup:
+      title: "Find a code"
+      submit: "Find"
+      not_found: "No such code in this game"
+      team: "Redeemed by"
+    generate:
+      count: "How many codes"
+      expires_at: "Valid until (optional)"
+      submit: "Generate codes"
+    created:
+      title: "New codes"
+      warning: "This is the only time these codes are shown. Copy them now — they cannot be recovered."
+      batch: "Batch: %{key}"
+      back: "Back to codes"
+  access_code_redemptions:
+    title: "Enter an access code"
+    code: "Code"
+    submit: "Redeem"
+    redeemed: "Code accepted. The game is open to your team."
+    need_a_team: "Create a team first — we have kept your code."
   admin:
     users:
       granted_notice: "Administrator rights granted"
@@ -117,6 +156,10 @@ en:
           translation_proposals_accepted: "Accepted translations"
           issue_access_pass: "Issued game access"
           revoke_access_pass: "Revoked game access"
+          generate_access_codes: "Generated access codes"
+          revoke_access_codes: "Revoked access codes"
+          unrevoke_access_codes: "Restored access codes"
+          set_access_code_expiry: "Changed access-code expiry"
     settings:
       title: "Rate limits"
       explanation: "Signup limits apply per IP address per window; 0 disables the limit. File limits apply per game and across the whole server."
@@ -128,6 +171,8 @@ en:
         signup_window_seconds: "Signup window (seconds)"
         reset_max: "Password reset requests per address"
         reset_window_seconds: "Password reset window (seconds)"
+        access_code_redemption_max: "Access code redemption attempts per address"
+        access_code_redemption_window_seconds: "Access code redemption window (seconds)"
         file_max_megabytes: "Maximum file size (MB)"
         max_files_per_upload: "Files per upload"
         game_quota_megabytes: "Quota per game (MB)"
@@ -248,6 +293,13 @@ en:
     translation_key_missing: "AI translation is unavailable: no API key is configured."
     not_registered_for_game: "Your team is not registered for this game."
     no_access_pass: "This game requires access. Contact the organiser."
+    access_code:
+      unknown: "No such code"
+      redeemed: "This code has already been used"
+      revoked: "This code has been revoked"
+      expired: "This code has expired"
+      game_unavailable: "That game is not available"
+      throttled: "Too many attempts. Try again later."
     must_be_superadmin: "Administrator access only"
     must_operate_commercial: "This page is available to operators and administrators only"
     game_not_gated: "This page is only available for a game sold by access pass"
@@ -382,6 +434,7 @@ en:
       start: "Start"
       finish_test: "Finish testing"
       manage_access: "Manage access passes"
+      manage_access_codes: "Manage access codes"
   test_admissions:
     team_not_found: "Team «%{name}» was not found"
     already_admitted: "«%{name}» is already admitted to the test"
@@ -697,6 +750,7 @@ en:
     current_games_status:
       play: "Play!"
       not_registered: "You are not registered"
+      redeem_code_link: "Enter an access code"
     countdown:
       prefix: "Time left: "
       years: ["year", "years", "years"]
@@ -969,6 +1023,8 @@ en:
     # Kept for ru/en key parity (spec/i18n_spec.rb); English's default
     # humanized names already read fine, so these mostly restate them.
     attributes:
+      access_code:
+        game: "Game"
       access_pass:
         game: "Game"
       file_attachment:
@@ -988,6 +1044,10 @@ en:
         invalid: "is invalid"
         record_invalid: "Record is invalid"
       models:
+        access_code:
+          attributes:
+            game:
+              not_gated: "is not sold by access pass"
         access_pass:
           attributes:
             game:

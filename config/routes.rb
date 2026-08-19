@@ -263,7 +263,28 @@ Rails.application.routes.draw do
   # about one game's passes, and the authorization asks about that game.
   resources :games, only: [] do
     resources :access_passes, only: [ :index, :create, :destroy ]
+    # The secrets that create those passes. A separate screen rather than more
+    # sections on the pass console: passes and codes answer different
+    # questions and both lists grow.
+    resources :access_codes, only: [ :index, :create ] do
+      collection do
+        # Each takes EITHER code_id OR batch_key -- one rule, two scopes. See
+        # the controller's targeted_codes.
+        patch :revoke
+        patch :unrevoke
+        patch :expiry
+        # POST, not GET: a GET would put the customer's secret in a query
+        # string, and that lands in server logs, browser history and every
+        # proxy between -- the one place filter_parameters cannot reach.
+        post :lookup
+      end
+    end
   end
+
+  # One global form: the code carries its own game, so a customer holding a
+  # card need not find the game first.
+  get  "/redeem", to: "access_code_redemptions#new",    as: :redeem_access_code
+  post "/redeem", to: "access_code_redemptions#create"
 
   # The routes below have no `resources` equivalent: in Merb they were only
   # reachable through the catch-all `default_routes` entry

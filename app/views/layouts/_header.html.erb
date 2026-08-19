@@ -18,9 +18,12 @@
     route helper, which would need to know what page it's on -- previews any
     available locale from anywhere in the app without a form or JS. It
     changes the platform chrome only: game content is author-authored and is
-    never translated (see features/i18n/switch-language.feature). Persisting
-    a choice across visits is done separately, on the profile form
-    (app/views/users/edit.html.erb). %>
+    never translated (see features/i18n/switch-language.feature). The choice
+    is remembered for the rest of the session -- no form here carries ?locale=
+    through its POST, so without that it lasted one page view. Persisting it
+    across sessions is still done separately, on the profile form
+    (app/views/users/edit.html.erb), which clears the session key when it
+    saves. %>
 <%# The two chrome controls are wrapped in one element rather than sitting
     loose in the topbar's flex row, and that grouping is what keeps the
     dropdown below on screen. .topbar wraps, so a loose #locale-switcher lands
@@ -64,10 +67,31 @@
       <%= t("locales.#{I18n.locale}") %>
     </button>
 
+    <%# Links only on a page reached by GET. Every href here is request.path
+        plus ?locale=, which is the whole reason the switcher works from
+        anywhere without knowing what page it is on -- and which is wrong the
+        moment the page was RENDERED from a POST or PATCH rather than fetched:
+
+          * the path may have no GET route at all. The access-code console
+            renders from POST .../access_codes/lookup (POST on purpose: a GET
+            would put the customer's code in the query string), so the link
+            offered GET .../lookup -- ActionController::RoutingError, every
+            time.
+          * where the path does answer GET, following it silently discards the
+            rendered page. On .../access_codes it lands on the batch list,
+            which is exactly where the freshly-minted codes are NOT -- and
+            those are shown once and unrecoverable. Same shape, less costly,
+            on every validation-error re-render: your typed input is gone.
+
+        There is no correct target to offer instead, so the menu names the
+        languages without linking to them. One page view later, on the GET the
+        form redirects to, the links are back. %>
     <div class="locale-menu">
     <% I18n.available_locales.each do |available_locale| %>
       <% if available_locale == I18n.locale %>
         <span class="locale-switcher-current"><%= t("locales.#{available_locale}") %></span>
+      <% elsif !request.get? %>
+        <span class="locale-switcher-inert"><%= t("locales.#{available_locale}") %></span>
       <% else %>
         <%# request.query_parameters is an ActiveSupport::HashWithIndifferentAccess
             (ActionDispatch::ParamBuilder#make_params), so merging with a string

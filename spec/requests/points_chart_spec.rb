@@ -171,6 +171,41 @@ describe "the points chart", type: :request do
     expect(cells(row_for(passing.team))[3, 2]).to eq(%w[1 1])
   end
 
+  # Spec section 6 of the operator-adjustments design: "a negative adjustment
+  # sorts and totals correctly on the chart." F5 of the whole-branch review --
+  # the behaviour was measured correct and left unpinned, and this file was
+  # never touched by that branch at all.
+  #
+  # A GLOBAL adjustment deliberately: it is the first kind of row in this table
+  # with no game_id and no game_passing_id, so it is the one the chart's three
+  # aggregates (earned/deducted by team_id, the per-attempt grouping on
+  # teams#show) had never been driven with. Both halves are asserted -- the
+  # -50 must reach the deducted column AND the balance, and it must reorder the
+  # team behind one it was previously level with. A row that vanished entirely
+  # would leave the totals looking plausible and the sort untouched.
+  it "totals and sorts a negative global adjustment" do
+    game, level = scoring_game
+    fined = create_game_passing(:game => game, :level => level)
+    ahead = create_game_passing(:game => game, :level => level)
+    [ fined, ahead ].each do |passing|
+      PointTransaction.award!(:passing => passing, :reason => "level_completed",
+                              :level => level, :amount => 10)
+    end
+    PointTransaction.adjust!(:team => fined.team, :amount => -50,
+                             :note => "Нарушение регламента", :actor => create_user)
+    sign_in(viewer)
+
+    get teams_path
+
+    expect(response).to have_http_status(:ok)
+    # name, captain, members, started, finished, earned, deducted, balance.
+    # The deducted column renders .abs -- it is headed "снято", a magnitude --
+    # so 50 there and -40 in the balance beside it is the correct pair.
+    expect(cells(row_for(fined.team))[3, 5]).to eq(%w[1 0 10 50 -40])
+    expect(cells(row_for(ahead.team))[3, 5]).to eq(%w[1 0 10 0 10])
+    expect(response.body.index(ahead.team.name)).to be < response.body.index(fined.team.name)
+  end
+
   # A rehearsal writes no ledger row (GamePassing#award_points_for returns
   # early on a testing run), so counting its passings here reported a team
   # that has never played anything real as "1 started, 1 finished, 0 points".

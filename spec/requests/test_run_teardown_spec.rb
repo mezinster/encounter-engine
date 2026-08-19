@@ -109,6 +109,65 @@ describe "finishing a test run", type: :request do
 
     Team.exists?(real.id).should be true
   end
+
+  # F1 of the operator-adjustments whole-branch review, reproduced end to end
+  # over HTTP exactly as the reviewer executed it.
+  #
+  # A GLOBAL adjustment (PointTransaction.adjust! with passing: nil) belongs to
+  # no run, so it carries no game_passing_id and the run-scoped deletion above
+  # cannot see it. Before the fix it survived the sweep; Team#deletable? then
+  # refused the disposable team for ever, DELETE /admin/teams/:id refused too,
+  # and a phantom "<nickname> (test #N)" sat on the public chart with nothing
+  # anywhere able to clear it -- the ledger never reverses (D1 P3/P4) and no
+  # screen deletes a row.
+  #
+  # The two closing assertions are not redundant: the team could be spared with
+  # its row deleted, or destroyed with the row left orphaned, and only one of
+  # the four combinations is what "a destroyed team takes its ledger with it"
+  # means.
+  it "destroys a disposable team carrying a GLOBAL adjustment that belongs to no run" do
+    tester    = create_user
+    admission = TestAdmission.admit_player!(game.current_run, tester)
+    team      = admission.team
+    GamePassing.create!(:team => team, :game => game,
+                        :game_run => game.current_run, :current_level => level)
+
+    admin = create_user
+    admin.update!(:is_superadmin => true)
+    delete logout_path
+    sign_in(admin)
+    post admin_team_adjustments_path(:team_id => team.id),
+         :params => { :amount => -40, :note => "тест", :confirmed => "1" }
+    expect(response).to have_http_status(:found)
+    expect(PointTransaction.where(:team_id => team.id, :game_passing_id => nil).count).to eq(1)
+
+    delete logout_path
+    sign_in(author)
+    post finish_test_game_path(game)
+    expect(response).to have_http_status(:found)
+
+    expect(Team.exists?(team.id)).to be false
+    expect(PointTransaction.where(:team_id => team.id)).to be_empty
+  end
+
+  # The other half of the same fix, and the reason the ledger deletion is
+  # guarded rather than unconditional. A solo admission pointing at a REAL team
+  # is not something TestAdmission.admit_player! can produce -- it is the
+  # defensive case GameRun#sweep_test_admissions! already names in its own
+  # comment -- and a sweep that deleted by team_id before consulting the rest of
+  # deletable?'s clauses would wipe a real team's ledger while correctly
+  # sparing the team, which is worse than the bug being fixed.
+  it "never touches a real team's ledger even when a solo admission names it" do
+    real = create_team(:captain => create_user)
+    create_test_admission(:run => game.current_run, :team => real, :user => create_user)
+    PointTransaction.adjust!(:team => real, :amount => -25, :note => "штраф",
+                             :actor => author)
+
+    post finish_test_game_path(game)
+
+    expect(Team.exists?(real.id)).to be true
+    expect(PointTransaction.where(:team_id => real.id).count).to eq(1)
+  end
 end
 
 # The reachable path the whole-branch review found (F3): start_test does not

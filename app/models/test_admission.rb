@@ -102,8 +102,18 @@ class TestAdmission < ApplicationRecord
   # whole-branch review, F3, and the matching deletion in
   # GamesController#finish_test.
   #
+  # The run-scoped deletion above reaches every row gameplay writes and no
+  # GLOBAL adjustment: PointTransaction.adjust! with `passing: nil` belongs to
+  # the team and to no run, so it has no game_passing_id to be found by. Left
+  # behind it made the disposable team undeletable for ever and put a phantom
+  # on the public chart nothing could clear, so the team is destroyed through
+  # Team#destroy_with_ledger!, keyed on the TEAM -- a team being destroyed
+  # takes its whole ledger with it. The predicate stays as the guard, minus its
+  # ledger clause, so a solo admission naming a REAL team still spares both the
+  # team and its rows. F1 of the operator-adjustments whole-branch review.
+  #
   # Same ordering as GameRun#sweep_test_admissions!: transactions, passings
-  # and logs first, then the row, then the team -- deletable? is consulted
+  # and logs first, then the row, then the team -- the predicate is consulted
   # after all of them, deliberately.
   def revoke!
     self.class.transaction do
@@ -114,7 +124,7 @@ class TestAdmission < ApplicationRecord
 
       doomed = solo? ? team : nil
       destroy
-      doomed.destroy if doomed && doomed.reload.deletable?
+      doomed.destroy_with_ledger! if doomed && doomed.reload.deletable_apart_from_ledger?
     end
   end
 

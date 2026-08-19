@@ -72,6 +72,39 @@ be careful about the note, not a reason to hide it** — an operator's judgement
 public is a feature of a community game, not a hazard of one. A note that would embarrass its
 author when published is a note whose adjustment probably needs rethinking.
 
+#### A2 and D1 §5's hidden-game placeholder — accepted, not overlooked
+
+**Found by the whole-branch review (F2), by execution rather than by reading**, and recorded here
+because it is a real interaction between two decisions that were each made without the other in
+view.
+
+The interaction. D1 §5 renders a neutral placeholder — «Скрытая игра» — in the Game column of
+`teams#show` for a row whose game the viewer may not see, so a signed-out visitor can still add up
+a team's balance without being handed the catalogue. This sub-project's §4.1 exemption from
+`ensure_game_is_live` makes draft, withdrawn and testing games adjustable for the first time, which
+are exactly the states that placeholder conceals. So an operator who types a withdrawn game's title
+into the **note** produces a row where the Game cell says «Скрытая игра» and the Note cell, beside
+it, says the title. Both were observed on one page at once, signed out.
+
+**Ruling: accept it.** The only code fix available is to suppress the note when the row's game is
+not nameable to the viewer — and that reproduces, precisely, the "sees the effect, cannot see why"
+failure D1 §5 rejects in its own words and A2 above rejects again one step further: a public
+−50 advertising that a person judged this team while withholding the justification. Trading a
+guarantee about *games* for a guaranteed failure about *teams* is not an improvement, and the note
+is the half a disputing team actually needs.
+
+The placeholder is also being asked here for something it was never built to do. It protects the
+catalogue from **casual enumeration by strangers** — someone reading a public page and collecting
+the names of unpublished games. It has never been a control on what a **trusted operator
+deliberately publishes**: the same operator can post the title anywhere, and free text cannot be
+policed by the renderer that displays it. A2's existing paragraph already says the cost of a public
+note is a reason to be careful about writing one; this is the same cost with a game's name in it
+rather than a team's.
+
+What follows for anyone extending this: a note is public the moment it is written, to everyone,
+regardless of the state of the game the row hangs on. Treat it as a published sentence, not as a
+field scoped to whoever can already see the game.
+
 ### A5 — why not `award!`
 
 `PointTransaction.award!` rescues `ActiveRecord::RecordNotUnique` and returns `nil`. That is what

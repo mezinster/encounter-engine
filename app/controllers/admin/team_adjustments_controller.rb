@@ -28,7 +28,13 @@ class Admin::TeamAdjustmentsController < ApplicationController
 
     PointTransaction.adjust!(:team => @team, :amount => @amount,
                              :note => @note, :actor => current_user)
-    record_admin_action("adjust_points_globally", @team)
+    # `details` carries the amount and the note. Without them the entry said a
+    # team had been adjusted globally and neither by how much nor why -- on the
+    # door with the wider blast radius of the two, since a global row reaches
+    # every game the team has ever played. Spec section 4.4; F3 of the
+    # whole-branch review.
+    record_admin_action("adjust_points_globally", @team,
+                        adjustment_details(@team, @amount, @note))
     redirect_to admin_teams_path, :notice => t("admin.team_adjustments.done")
   rescue ActiveRecord::RecordInvalid
     render :new, :status => :unprocessable_entity

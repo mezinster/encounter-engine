@@ -103,6 +103,25 @@ describe "revoking a test admission", type: :request do
     Team.exists?(team.id).should be false
   end
 
+  # The revoke half of F1 (operator-adjustments whole-branch review). The
+  # deletion two examples up is keyed on game_passing_id, which is exactly
+  # right for every row gameplay writes and blind to a GLOBAL adjustment: that
+  # row belongs to the team and to no run at all. Left behind it made the
+  # disposable team permanently undeletable and put it on the public chart for
+  # ever, with nothing anywhere able to remove either.
+  it "destroys a disposable team carrying a GLOBAL adjustment" do
+    tester    = create_user
+    team      = create_team
+    admission = create_test_admission(:run => game.current_run, :team => team, :user => tester)
+    PointTransaction.adjust!(:team => team, :amount => -40, :note => "тест",
+                             :actor => author)
+
+    post revoke_test_admission_path(:game_id => game.id, :id => admission.id)
+
+    expect(Team.exists?(team.id)).to be false
+    expect(PointTransaction.where(:team_id => team.id)).to be_empty
+  end
+
   it "leaves a real team alone" do
     real      = create_team(:captain => create_user)
     admission = create_test_admission(:run => game.current_run, :team => real)

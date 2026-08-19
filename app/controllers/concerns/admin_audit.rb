@@ -39,6 +39,25 @@ module AdminAudit
     )
   end
 
+  # The details string for a points adjustment, shared by both doors --
+  # InterventionsController#create_adjustment (game-scoped) and
+  # Admin::TeamAdjustmentsController#create (global).
+  #
+  # Spec section 4.4 of the operator-adjustments design asks for the actor, the
+  # team, the amount and the note, and only the actor is a column of its own.
+  # Shared rather than written twice so the two doors cannot drift into two
+  # formats an investigator has to learn separately -- they already differ in
+  # their target (a Game on one, a Team on the other), so the details column is
+  # the only one that reads the same across them. That is also why the team is
+  # named here even on the global door, where target_label already carries it.
+  #
+  # Stored data, never chrome: the team name and the note are user-authored,
+  # so this goes nowhere near t() -- the same rule that keeps game titles out
+  # of the locale files.
+  def adjustment_details(team, amount, note)
+    "#{team.name}: #{amount} (#{note})"
+  end
+
   # Audited only when an operator acts on someone else's game. An author
   # acting on their own game is ordinary use, not an administrative act, and
   # recording it would bury the administrative entries under routine ones.

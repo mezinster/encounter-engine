@@ -93,4 +93,47 @@ describe "a superadmin adjusting a team's points globally", type: :request do
     expect(response).to have_http_status(:unauthorized)
     expect(PointTransaction.count).to eq(0)
   end
+
+  # Spec section 4.4 wants the actor, the team, the amount AND the note. This
+  # path always recorded, but with `details` left nil -- so an investigator
+  # learnt that a team had been adjusted globally and neither by how much nor
+  # why, on the door with the widest blast radius of the two. F3 of the
+  # whole-branch review.
+  #
+  # The team is named in `details` even though target_label already carries it:
+  # the two doors then read identically in the log's details column, which is
+  # the only column an investigator can compare across them.
+  it "audits the adjustment with the team, the amount and the note" do
+    team  = create_team(:captain => create_user)
+    admin = superadmin
+    sign_in(admin)
+
+    expect {
+      post admin_team_adjustments_path(:team_id => team.id),
+           :params => { :amount => -25, :note => "Нарушение регламента", :confirmed => "1" }
+    }.to change { AdminAction.count }.by(1)
+
+    entry = AdminAction.newest_first.first
+    expect(entry.action).to eq("adjust_points_globally")
+    expect(entry.actor_id).to eq(admin.id)
+    expect(entry.target_type).to eq("Team")
+    expect(entry.target_id).to eq(team.id)
+    expect(entry.details).to include(team.name)
+    expect(entry.details).to include("-25")
+    expect(entry.details).to include("Нарушение регламента")
+  end
+
+  # After the row lands, never before -- AdminAudit's own rule.
+  it "records nothing when the adjustment is refused" do
+    team = create_team(:captain => create_user)
+    sign_in(superadmin)
+
+    expect {
+      post admin_team_adjustments_path(:team_id => team.id),
+           :params => { :amount => 0, :note => "x", :confirmed => "1" }
+    }.not_to change { AdminAction.count }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(PointTransaction.count).to eq(0)
+  end
 end

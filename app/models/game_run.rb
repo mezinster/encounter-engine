@@ -90,15 +90,26 @@ class GameRun < ApplicationRecord
     # is one migration away from not catching it.
     admissions.delete_all
 
-    # deletable? is evaluated here, after the caller has deleted the ledger
+    # The predicate is evaluated here, after the caller has deleted the ledger
     # rows, the passings and the logs: these team objects were loaded fresh
-    # above with unloaded associations, so game_passings.empty?,
-    # point_transactions.empty? and Log.where(team_id:) query their
-    # post-deletion state. A team cached earlier in the request would report
-    # stale associations and be spared. The guard also makes this safe against
-    # an admission pointing at a REAL team -- deletable? refuses anything with
-    # members, a captain, entries, passings or logs.
-    solo_teams.each { |team| team.destroy if team.deletable? }
+    # above with unloaded associations, so game_passings.empty? and
+    # Log.where(team_id:) query their post-deletion state. A team cached
+    # earlier in the request would report stale associations and be spared. The
+    # guard also makes this safe against an admission pointing at a REAL team
+    # -- it refuses anything with members, a captain, entries, passings or
+    # logs.
+    #
+    # deletable_apart_from_ledger?/destroy_with_ledger! rather than
+    # `destroy if deletable?`, and the pair is load-bearing. The caller deletes
+    # this run's ledger rows by game_passing_id, which reaches every row
+    # gameplay writes and no GLOBAL adjustment -- PointTransaction.adjust! with
+    # `passing: nil` belongs to the team and to no run. Such a row left behind
+    # made deletable? false for ever, so this line silently spared the
+    # disposable team and put a phantom on the public chart nothing could
+    # clear. A team being destroyed takes its whole ledger with it; a team
+    # being spared keeps all of it. F1 of the operator-adjustments
+    # whole-branch review.
+    solo_teams.each { |team| team.destroy_with_ledger! if team.deletable_apart_from_ledger? }
 
     update_column(:test_token, nil)
   end

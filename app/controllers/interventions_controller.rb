@@ -108,7 +108,26 @@ class InterventionsController < ApplicationController
     PointTransaction.adjust!(:team => @game_passing.team, :amount => @amount,
                              :note => @note, :actor => current_user,
                              :passing => @game_passing)
-    audit("adjust_points", @game_passing.team.name)
+    # record_admin_action directly, NOT through audit(), for the same reason
+    # audit_level below does it: that helper records only when
+    # acting_as_operator?, which is false when the actor owns the game -- so an
+    # author adjusting a team on their OWN game wrote the ledger row and no
+    # audit entry at all.
+    #
+    # The acting_as_operator? rule is right for pause, move and reset_clock:
+    # ordinary authoring acts, on one game, by the person whose game it is.
+    # An adjustment is not one of those. It moves points on a chart that is
+    # public and spans every game, it cannot be reversed (the ledger never
+    # does), and the person who typed the amount chose it -- so it is
+    # answerable regardless of who wrote it. Spec section 4.4 asks for the
+    # audit "always"; F3 of the whole-branch review found neither door
+    # honouring that.
+    #
+    # The target stays the GAME, matching this controller's other entries; the
+    # team, the amount and the note travel in `details`, which is the only
+    # place a single-target row can carry them.
+    record_admin_action("adjust_points", @game,
+                        adjustment_details(@game_passing.team, @amount, @note))
     back_to_stats(t("interventions.adjusted_notice"))
   rescue ActiveRecord::RecordInvalid
     render :new_adjustment, :status => :unprocessable_entity

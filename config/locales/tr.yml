@@ -872,6 +872,7 @@ tr:
       answer_label: "Kod"
       submit: "Gönder!"
       exit_game: "Yarıştan çekil"
+      skip_level: "Bu seviyeyi atla"
       finish_testing: "Testi bitir"
       # aria-label on shared/_attachment_strip's container -- announced once
       # per strip by a screen reader, ahead of the photos/links it contains.
@@ -879,6 +880,13 @@ tr:
       # Turkish/Georgian case-suffix concerns elsewhere in this file apply
       # to it.
       attachments_label: "Ekli dosyalar"
+    confirm_skip:
+      title: "Bu seviye atlansın mı?"
+      cost: "Bedeli: %{points} puan ve %{minutes} dakika ceza süresi."
+      remaining: "Kalan atlama hakkı: %{count}"
+      confirm: "Evet, atla"
+      cancel: "Seviyeye dön"
+    skip_refused: "Bu seviye atlanamaz"
     show_results:
       congrats: "Tebrikler, oyunu bitirdiniz!"
       place: "Sıra"
@@ -993,6 +1001,7 @@ tr:
       reasons:
         level_completed: "Seviye puanı"
         game_completed: "Bitirme puanı"
+        level_skipped: "Atlama cezası"
     handed_over: "Kaptanlık devredildi: %{nickname}"
     cannot_hand_over_mid_race: "Takım yarıştayken kaptanlık devredilemez"
     hand_over_needs_another_member: "Takımdan başka bir üye seçin"

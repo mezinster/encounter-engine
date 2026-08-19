@@ -319,6 +319,12 @@ Rails.application.routes.draw do
 
   post "/game_passings/exit_game/:game_id", to: "game_passings#exit_game", as: :exit_game
 
+  # Two routes, not one, because this app has no rails-ujs: `data-confirm` is
+  # inert markup here, so the confirmation has to be a real page. The GET only
+  # renders; the POST is what spends the team's points.
+  get  "/game_passings/confirm_skip/:game_id", to: "game_passings#confirm_skip", as: :confirm_skip
+  post "/game_passings/skip_level/:game_id",   to: "game_passings#skip_level",   as: :skip_level
+
   # app/views/dashboard/_finished_games.html.erb:7 and
   # app/views/shared/_current_games.html.erb:13 build this URL with
   # `url(:controller => :game_passings, :action => :show_results, :game_id

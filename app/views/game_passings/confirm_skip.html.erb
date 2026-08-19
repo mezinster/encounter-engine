@@ -1,0 +1,17 @@
+<%# No JavaScript anywhere in this app, so the confirmation is a page rather
+    than a dialog. The GET renders this; only the button below spends
+    anything. %>
+<div class="page">
+  <h2><%= t("game_passings.confirm_skip.title") %></h2>
+
+  <p><%= t("game_passings.confirm_skip.cost",
+           :points => @game.skip_points_fine,
+           :minutes => (@game.skip_time_penalty / 60)) %></p>
+
+  <p><%= t("game_passings.confirm_skip.remaining", :count => @game_passing.skips_left) %></p>
+
+  <%= button_to t("game_passings.confirm_skip.confirm"),
+                skip_level_path(:game_id => @game.id), :class => "btn danger-row" %>
+
+  <%= link_to t("game_passings.confirm_skip.cancel"), show_current_level_path(:game_id => @game.id) %>
+</div>

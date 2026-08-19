@@ -843,8 +843,16 @@ pl:
       answer_label: "Kod"
       submit: "Wyślij!"
       exit_game: "Zrezygnuj z gry"
+      skip_level: "Pomiń poziom"
       finish_testing: "Zakończ testowanie"
       attachments_label: "Załączone pliki"
+    confirm_skip:
+      title: "Pominąć poziom?"
+      cost: "Koszt: %{points} pkt i %{minutes} min kary czasowej."
+      remaining: "Pozostało pominięć: %{count}"
+      confirm: "Tak, pomiń"
+      cancel: "Wróć do poziomu"
+    skip_refused: "Nie można pominąć tego poziomu"
     show_results:
       congrats: "Gratulacje, gra ukończona!"
       place: "Miejsce"
@@ -958,6 +966,7 @@ pl:
       reasons:
         level_completed: "Punkt za poziom"
         game_completed: "Punkt za ukończenie"
+        level_skipped: "Kara za pominięcie"
     handed_over: "Kapitaństwo przekazane: %{nickname}"
     cannot_hand_over_mid_race: "Nie można przekazać kapitaństwa, dopóki drużyna jest na trasie"
     hand_over_needs_another_member: "Wybierz innego członka drużyny"

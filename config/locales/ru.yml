@@ -826,12 +826,20 @@ ru:
       answer_label: "Код"
       submit: "Отправить!"
       exit_game: "Сойти с дистанции"
+      skip_level: "Пропустить уровень"
       finish_testing: "Завершить тестирование"
       # aria-label on shared/_attachment_strip's container -- announced once
       # per strip by a screen reader, ahead of the photos/links it contains.
       # A static noun phrase, no interpolation, so none of the
       # Turkish/Georgian case-suffix concerns below apply to it.
       attachments_label: "Прикреплённые файлы"
+    confirm_skip:
+      title: "Пропустить уровень?"
+      cost: "Списание: %{points} очков и %{minutes} мин штрафного времени."
+      remaining: "Осталось пропусков: %{count}"
+      confirm: "Да, пропустить"
+      cancel: "Вернуться к уровню"
+    skip_refused: "Пропуск невозможен"
     show_results:
       congrats: "Поздравляем, вы закончили игру!"
       place: "Место"
@@ -947,6 +955,7 @@ ru:
       reasons:
         level_completed: "Очко за уровень"
         game_completed: "Очко за прохождение"
+        level_skipped: "Штраф за пропуск"
     handed_over: "Капитанство передано: %{nickname}"
     cannot_hand_over_mid_race: "Нельзя передать капитанство, пока команда на дистанции"
     hand_over_needs_another_member: "Выберите другого участника команды"

@@ -33,14 +33,14 @@ class GamePassingsController < ApplicationController
   # programme exists to keep readable.
   before_action :find_run, only: [:show_results]
   before_action :ensure_game_is_started
-  before_action :ensure_team_captain, only: [:exit_game]
+  before_action :ensure_team_captain, only: [:exit_game, :confirm_skip, :skip_level]
   before_action :ensure_game_not_finished_by_author, except: [:index, :show_results]
   before_action :find_or_create_game_passing, except: [:show_results, :index]
   before_action :ensure_team_not_exited, except: [:index, :show_results]
   before_action :ensure_team_member, except: [:index, :show_results]
   before_action :ensure_not_author_of_the_game, except: [:index, :show_results]
   before_action :ensure_author, only: [:index]
-  before_action :ensure_game_not_paused, only: [ :post_answer, :exit_game ]
+  before_action :ensure_game_not_paused, only: [ :post_answer, :exit_game, :confirm_skip, :skip_level ]
 
   # TICKET #83 ("Игрок удачно обновляется при завершении игры"): a team that
   # has finished has no current_level, so rendering show_current_level for one
@@ -182,6 +182,19 @@ class GamePassingsController < ApplicationController
   def exit_game
     @game_passing.exit!
     render_finished_passing
+  end
+
+  # Renders only. Deliberately has no side effect of its own: a GET that spent
+  # points would fire on a back-button press or a link preview.
+  def confirm_skip
+    redirect_to show_current_level_path(:game_id => @game.id) and return unless @game.skips_allowed?
+  end
+
+  def skip_level
+    @game_passing.skip_level!(current_user)
+    redirect_to show_current_level_path(:game_id => @game.id)
+  rescue ArgumentError
+    redirect_to show_current_level_path(:game_id => @game.id), :alert => t("game_passings.skip_refused")
   end
 
   # Writes on behalf of current_user, which require_authentication! (see the

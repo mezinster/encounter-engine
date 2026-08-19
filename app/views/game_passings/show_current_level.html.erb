@@ -151,6 +151,10 @@
     <% if current_user.captain? %>
       <%= button_to t("game_passings.show_current_level.exit_game"), exit_game_path(:game_id => @game_passing.game_id), :class => "btn" %>
     <% end %>
+    <% if current_user.captain? && @game.skips_allowed? && @game_passing.skips_left.positive? %>
+      <%= link_to t("game_passings.show_current_level.skip_level"),
+                  confirm_skip_path(:game_id => @game.id), :class => "btn" %>
+    <% end %>
     <%# created_by? as well as is_testing?, and the addition is not cosmetic.
         finish_test sits behind ensure_author and deletes every passing and log
         line in the run. is_testing? alone was a sound proxy for "you are the

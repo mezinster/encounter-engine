@@ -834,8 +834,16 @@ uk:
       answer_label: "Код"
       submit: "Надіслати!"
       exit_game: "Зійти з дистанції"
+      skip_level: "Пропустити рівень"
       finish_testing: "Завершити тестування"
       attachments_label: "Прикріплені файли"
+    confirm_skip:
+      title: "Пропустити рівень?"
+      cost: "Списання: %{points} очок і %{minutes} хв штрафного часу."
+      remaining: "Залишилось пропусків: %{count}"
+      confirm: "Так, пропустити"
+      cancel: "Повернутися до рівня"
+    skip_refused: "Пропуск неможливий"
     show_results:
       congrats: "Вітаємо, ви завершили гру!"
       place: "Місце"
@@ -952,6 +960,7 @@ uk:
       reasons:
         level_completed: "Очко за рівень"
         game_completed: "Очко за проходження"
+        level_skipped: "Штраф за пропуск"
     handed_over: "Капітанство передано: %{nickname}"
     cannot_hand_over_mid_race: "Не можна передати капітанство, поки команда на дистанції"
     hand_over_needs_another_member: "Оберіть іншого учасника команди"

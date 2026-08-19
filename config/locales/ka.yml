@@ -858,8 +858,16 @@ ka:
       answer_label: "კოდი"
       submit: "გაგზავნა!"
       exit_game: "დისტანციიდან გასვლა"
+      skip_level: "დონის გამოტოვება"
       finish_testing: "ტესტირების დასრულება"
       attachments_label: "მიმაგრებული ფაილები"
+    confirm_skip:
+      title: "გამოვტოვოთ დონე?"
+      cost: "ღირებულება: %{points} ქულა და %{minutes} წუთი საჯარიმო დრო."
+      remaining: "დარჩენილი გამოტოვებები: %{count}"
+      confirm: "დიახ, გამოვტოვოთ"
+      cancel: "დონეზე დაბრუნება"
+    skip_refused: "დონის გამოტოვება ვერ მოხერხდა"
     show_results:
       congrats: "გილოცავთ, თქვენ დაასრულეთ თამაში!"
       place: "ადგილი"
@@ -976,6 +984,7 @@ ka:
       reasons:
         level_completed: "ქულა დონისთვის"
         game_completed: "ქულა დასრულებისთვის"
+        level_skipped: "ჯარიმა გამოტოვებისთვის"
     handed_over: "კაპიტნობა გადაეცა: %{nickname}"
     cannot_hand_over_mid_race: "კაპიტნობის გადაცემა შეუძლებელია, სანამ გუნდი დისტანციაზეა"
     hand_over_needs_another_member: "აირჩიეთ გუნდის სხვა წევრი"

@@ -811,8 +811,16 @@ en:
       answer_label: "Code"
       submit: "Submit!"
       exit_game: "Leave the race"
+      skip_level: "Skip this level"
       finish_testing: "Finish testing"
       attachments_label: "Attached files"
+    confirm_skip:
+      title: "Skip this level?"
+      cost: "Cost: %{points} points and %{minutes} min of penalty time."
+      remaining: "Skips remaining: %{count}"
+      confirm: "Yes, skip it"
+      cancel: "Back to the level"
+    skip_refused: "This level cannot be skipped"
     show_results:
       congrats: "Congratulations, you finished the game!"
       place: "Place"
@@ -926,6 +934,7 @@ en:
       reasons:
         level_completed: "Level passed"
         game_completed: "Game finished"
+        level_skipped: "Level skipped"
     handed_over: "Captaincy handed over to %{nickname}"
     cannot_hand_over_mid_race: "Captaincy cannot be handed over while the team is racing"
     hand_over_needs_another_member: "Choose another member of the team"

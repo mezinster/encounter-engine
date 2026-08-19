@@ -405,6 +405,9 @@ en:
       points_enabled: "Award points"
       level_completion_points: "Points per level"
       game_completion_points: "Points for finishing"
+      max_skips: "Level skips allowed per game"
+      skip_points_fine: "Points deducted per skip"
+      skip_time_penalty: "Time penalty per skip, sec"
     primary_locale_label: "Primary language"
     available_locales_label: "Game languages"
     new:
@@ -1027,6 +1030,10 @@ en:
         game: "Game"
       access_pass:
         game: "Game"
+      game:
+        max_skips: "Skips allowed"
+        skip_points_fine: "Points deducted"
+        skip_time_penalty: "Time penalty"
       file_attachment:
         # "Object", not the default humanisation "Attachable": that is the
         # polymorphic association's internal name, and the thing it points at

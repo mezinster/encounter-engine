@@ -428,6 +428,9 @@ ka:
       points_enabled: "ქულების დარიცხვა"
       level_completion_points: "ქულა დონისთვის"
       game_completion_points: "ქულა დასრულებისთვის"
+      max_skips: "გამოტოვებადი დონეები თამაშზე"
+      skip_points_fine: "ქულის ჩამოჭრა გამოტოვებაზე"
+      skip_time_penalty: "ჯარიმის დრო გამოტოვებაზე, წმ"
     primary_locale_label: "ძირითადი ენა"
     available_locales_label: "თამაშის ენები"
     new:
@@ -1077,6 +1080,10 @@ ka:
         game: "თამაში"
       access_pass:
         game: "თამაში"
+      game:
+        max_skips: "დაშვებული გამოტოვებები"
+        skip_points_fine: "ჩამოჭრილი ქულა"
+        skip_time_penalty: "ჯარიმის დრო"
       file_attachment:
         attachable: "ობიექტი"
         game_file: "ფაილი"

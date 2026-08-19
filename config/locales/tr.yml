@@ -863,6 +863,8 @@ tr:
     content_not_translated: "Bu görev henüz sizin dilinize çevrilmedi — özgün dili gösteriliyor."
     content_language: "Görevlerin dili"
     paused: "Oyun düzenleyici tarafından duraklatıldı. Yerinizde kalın ve devam etmesini bekleyin."
+    withdrawn:
+      title: "Oyun durduruldu"
     index:
       title: '"%{name}" adlı oyun'
       team: "Takım"

@@ -806,6 +806,8 @@ en:
     content_not_translated: "This task is not translated into your language yet — showing the original."
     content_language: "Task language"
     paused: "The organiser has paused the game. Stay where you are and wait for it to resume."
+    withdrawn:
+      title: "The game has been stopped"
     index:
       title: 'Game "%{name}"'
       team: "Team"

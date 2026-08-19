@@ -1,0 +1,14 @@
+<div class="page page--focused">
+  <h2><%= t("game_passings.withdrawn.title") %></h2>
+
+  <p class="withdrawn-category">
+    <%= t("games.withdrawal.categories.#{@game.withdrawal_category}") %>
+  </p>
+
+  <%# Operator-authored free text: verbatim, never through t(), and rendered as
+      its OWN element rather than composed into a sentence -- which is what
+      keeps a Turkish or Georgian case suffix off an interpolated value. %>
+  <% if @game.withdrawal_note.present? %>
+    <p class="withdrawn-note"><%= @game.withdrawal_note %></p>
+  <% end %>
+</div>

@@ -35,6 +35,13 @@ class GamePassingsController < ApplicationController
   before_action :ensure_game_is_started
   before_action :ensure_team_captain, only: [:exit_game, :confirm_skip, :skip_level]
   before_action :ensure_game_not_finished_by_author, except: [:index, :show_results]
+  # A withdrawn game is NOT a 401. A refusal tells a team standing in the rain
+  # that they are not authorised, which is both false and useless -- and this
+  # is the only notification mechanism the app has: no Turbo, no rails-ujs, no
+  # polling, so a team learns on their next request. The GET therefore succeeds
+  # and explains itself; the state-changing actions land them on that same
+  # explanation rather than on an error.
+  before_action :halt_if_withdrawn, except: [ :index, :show_results ]
   before_action :find_or_create_game_passing, except: [:show_results, :index]
   before_action :ensure_team_not_exited, except: [:index, :show_results]
   before_action :ensure_team_member, except: [:index, :show_results]
@@ -221,6 +228,16 @@ class GamePassingsController < ApplicationController
   end
 
   private
+
+  def halt_if_withdrawn
+    return unless @game.withdrawn?
+
+    if request.get?
+      render "game_passings/withdrawn"
+    else
+      redirect_to show_current_level_path(:game_id => @game.id)
+    end
+  end
 
   # The render every "the passing is finished" branch reaches --
   # show_current_level, both checks in post_answer, post_options and

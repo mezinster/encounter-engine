@@ -838,6 +838,8 @@ pl:
     content_not_translated: "To zadanie nie zostało jeszcze przetłumaczone na Twój język — pokazano język oryginału."
     content_language: "Język zadań"
     paused: "Gra została wstrzymana przez organizatora. Zostań na miejscu i czekaj na wznowienie."
+    withdrawn:
+      title: "Gra została zatrzymana"
     index:
       title: 'Gra "%{name}"'
       team: "Drużyna"

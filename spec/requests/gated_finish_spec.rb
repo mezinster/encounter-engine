@@ -95,16 +95,30 @@ describe "a paid game's ending", type: :request do
 
     it "still lets a team with a replacement pass play" do
       game, team, captain, one, pass = gated_setup
-      create_game_passing(:game => game, :team => team, :game_run => nil,
-                          :access_pass => pass, :level => one)
+      original = create_game_passing(:game => game, :team => team, :game_run => nil,
+                                     :access_pass => pass, :level => one)
       pass.update!(:revoked_at => Time.now)
-      create_access_pass(:game => game, :team => team)
+      replacement = create_access_pass(:game => game, :team => team)
       sign_in(captain)
 
-      get show_current_level_path(:game_id => game.id)
+      expect { get show_current_level_path(:game_id => game.id) }
+        .to change { GamePassing.count }.by(1)
 
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include(I18n.t("errors.access_revoked"))
+
+      # A FRESH attempt, not the revoked one carried forward: bound to the
+      # replacement pass, starting at level 1.
+      fresh = GamePassing.order(:id).last
+      expect(fresh.id).not_to eq(original.id)
+      expect(fresh.access_pass_id).to eq(replacement.id)
+      expect(fresh.current_level).to eq(one)
+      expect(fresh.finished_at).to be_nil
+
+      # The original, revoked-pass attempt is left exactly as it was.
+      expect(original.reload.access_pass_id).to eq(pass.id)
+      expect(original.current_level).to eq(one)
+      expect(original.finished_at).to be_nil
     end
   end
 end

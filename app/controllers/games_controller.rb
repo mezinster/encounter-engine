@@ -170,12 +170,19 @@ class GamesController < ApplicationController
                     :mode     => params[:withdrawal_mode],
                     :note     => params[:withdrawal_note].presence)
 
-    record_admin_action("withdraw", @game,
-                        "#{params[:withdrawal_category]}/#{params[:withdrawal_mode]}: #{params[:withdrawal_note]}")
+    # The note is appended only when there is one: "technical/freeze: " with a
+    # dangling colon reads like a truncated entry to whoever is reading the log
+    # during an incident. The full note is on the game either way -- this line
+    # exists so the audit is legible on its own.
+    detail = "#{params[:withdrawal_category]}/#{params[:withdrawal_mode]}"
+    detail << ": #{params[:withdrawal_note]}" if params[:withdrawal_note].present?
+
+    record_admin_action("withdraw", @game, detail)
     redirect_to admin_games_path, :notice => t("games.withdrawn_notice")
   rescue ArgumentError
-    # A missing or unknown category is a form error the operator can correct on
-    # the spot, not a refusal to report elsewhere.
+    # A missing or unknown category OR mode is a form error the operator can
+    # correct on the spot, not a refusal to report elsewhere -- withdraw!
+    # raises ArgumentError for both.
     render :new_withdrawal, :status => :unprocessable_entity
   end
 

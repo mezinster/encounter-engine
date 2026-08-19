@@ -5,11 +5,11 @@
 umbrella decisions P1–P6, `2026-08-18-points-ledger-design.md` (D1) for the ledger this writes to,
 and `2026-08-19-level-skipping-design.md` (D2) for the first negative rows.
 
-**Base:** branched from `master` at `20270f1`, which contains D1. **D2 is open in PR #120 and not
-merged.** D3 and D2 both add a value to `PointTransaction::REASONS`, both add a ledger reason
-label in seven locale files, and both add an audit action label — so they will conflict, in the
-same shape the C/D1 conflict already did, and every resolution will be a union. Rebase onto `master`
-once #120 merges rather than branching off a PR that may still change.
+**Base:** rebased onto `master` at `af1033a`, which contains both D1 and D2 (PR #120, merged
+2026-08-19). The conflict this spec originally warned about — D2 and D3 each adding a value to
+`PointTransaction::REASONS`, a ledger reason label in seven locale files, and an audit action
+label — did not arise: the rebase was clean, because at the time only this document existed on the
+branch.
 
 ---
 

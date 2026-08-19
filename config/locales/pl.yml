@@ -851,7 +851,8 @@ pl:
       attachments_label: "Załączone pliki"
     confirm_skip:
       title: "Pominąć poziom?"
-      cost: "Koszt: %{points} pkt i %{minutes} min kary czasowej."
+      cost: "Koszt: %{points} pkt i %{seconds} s kary czasowej."
+      cost_time_only: "Koszt: %{seconds} s kary czasowej."
       remaining: "Pozostało pominięć: %{count}"
       confirm: "Tak, pomiń"
       cancel: "Wróć do poziomu"

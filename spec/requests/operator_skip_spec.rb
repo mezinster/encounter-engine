@@ -42,6 +42,78 @@ describe "an operator skipping a level for a team", type: :request do
     expect(PointTransaction.where(:game_passing_id => passing.id).count).to eq(0)
   end
 
+  # Whole-branch F1, the operator's half and the reason the refusal moved into
+  # the model. InterventionsController treats a paused game as live on purpose
+  # -- #resume has to stay reachable -- so this request reaches skip_level!
+  # with every filter satisfied, and only the model can turn it away. Before
+  # the fix it succeeded, advancing the team and stamping a level clock five
+  # minutes ahead of the paused countdown.
+  it "refuses while the game is paused, leaving the level and the ledger alone" do
+    author  = create_user
+    game    = create_game(:author => author, :max_skips => 1, :skip_points_fine => 25,
+                          :points_enabled => true)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
+    one     = create_level(:game => game, :position => 1)
+    create_level(:game => game, :position => 2)
+    passing = create_game_passing(:game => game, :level => one)
+    sign_in(author)
+    game.pause!
+
+    post skip_team_level_path(:game_id => game.id, :team_id => passing.team_id)
+
+    expect(response).to have_http_status(:found)
+    expect(passing.reload.current_level).to eq(one)
+    expect(PointTransaction.where(:game_passing_id => passing.id).count).to eq(0)
+  end
+
+  # Whole-branch F3. max_skips defaults to 0 and is itself the feature switch,
+  # so an unconditional button sat on every team of every existing game and
+  # could only ever produce a refusal. The positive case is asserted in the
+  # same example so "the button is absent" cannot pass because the panel, the
+  # page or the whole request was absent.
+  describe "the button on the stats page" do
+    def stats_page_for(max_skips)
+      author  = create_user
+      game    = create_game(:author => author, :max_skips => max_skips,
+                            :skip_points_fine => 25, :points_enabled => true)
+      set_game_schedule!(game, :starts_at => 1.hour.ago)
+      one     = create_level(:game => game, :position => 1)
+      create_level(:game => game, :position => 2)
+      passing = create_game_passing(:game => game, :level => one)
+      sign_in(author)
+      [ game, passing ]
+    end
+
+    it "is offered when the game allows skips and the team has some left" do
+      game, _passing = stats_page_for(1)
+
+      get game_stats_path(game)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("interventions.skip_level"))
+    end
+
+    it "is not offered on a game that allows no skips" do
+      game, _passing = stats_page_for(0)
+
+      get game_stats_path(game)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(I18n.t("interventions.skip_level"))
+    end
+
+    it "is not offered once the team's allowance is spent" do
+      game, passing = stats_page_for(1)
+      post skip_team_level_path(:game_id => game.id, :team_id => passing.team_id)
+      expect(passing.reload.skips_left).to eq(0)
+
+      get game_stats_path(game)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(I18n.t("interventions.skip_level"))
+    end
+  end
+
   it "refuses a signed-out stranger" do
     author  = create_user
     game    = create_game(:author => author, :max_skips => 1)

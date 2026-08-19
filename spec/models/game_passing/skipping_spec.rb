@@ -233,6 +233,34 @@ describe GamePassing do
                                   :reason => "level_skipped").count).to eq(0)
   end
 
+  # Whole-branch F1. The rule has to be here rather than in a filter: the
+  # captain's controller carries ensure_game_not_paused and the operator's
+  # deliberately does not, so a guard expressed once per controller was a
+  # guard on one of the two callers of this method.
+  describe "a paused game" do
+    it "refuses the skip, leaving the level and the ledger untouched" do
+      game, one, _two = skippable_game
+      passing = create_game_passing(:game => game, :level => one)
+      game.pause!
+
+      expect { passing.skip_level!(captain) }.to raise_error(ArgumentError)
+
+      expect(passing.reload.current_level).to eq(one)
+      expect(PointTransaction.where(:game_passing_id => passing.id).count).to eq(0)
+    end
+
+    it "allows it again once the game resumes" do
+      game, one, two = skippable_game
+      passing = create_game_passing(:game => game, :level => one)
+      game.pause!
+      game.resume!
+
+      passing.skip_level!(captain)
+
+      expect(passing.reload.current_level).to eq(two)
+    end
+  end
+
   # F5: four properties the code already gets right, with no example
   # protecting them until now.
   describe "properties pinned after review" do

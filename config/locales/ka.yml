@@ -866,7 +866,8 @@ ka:
       attachments_label: "მიმაგრებული ფაილები"
     confirm_skip:
       title: "გამოვტოვოთ დონე?"
-      cost: "ღირებულება: %{points} ქულა და %{minutes} წუთი საჯარიმო დრო."
+      cost: "ღირებულება: %{points} ქულა და %{seconds} წამი საჯარიმო დრო."
+      cost_time_only: "ღირებულება: %{seconds} წამი საჯარიმო დრო."
       remaining: "დარჩენილი გამოტოვებები: %{count}"
       confirm: "დიახ, გამოვტოვოთ"
       cancel: "დონეზე დაბრუნება"

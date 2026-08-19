@@ -838,7 +838,8 @@ ru:
       attachments_label: "Прикреплённые файлы"
     confirm_skip:
       title: "Пропустить уровень?"
-      cost: "Списание: %{points} очков и %{minutes} мин штрафного времени."
+      cost: "Списание: %{points} очков и %{seconds} сек штрафного времени."
+      cost_time_only: "Списание: %{seconds} сек штрафного времени."
       remaining: "Осталось пропусков: %{count}"
       confirm: "Да, пропустить"
       cancel: "Вернуться к уровню"

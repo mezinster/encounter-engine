@@ -838,7 +838,8 @@ be:
       attachments_label: "Прыкладзеныя файлы"
     confirm_skip:
       title: "Прапусціць узровень?"
-      cost: "Спісанне: %{points} ачкоў і %{minutes} хв штрафнога часу."
+      cost: "Спісанне: %{points} ачкоў і %{seconds} сек штрафнога часу."
+      cost_time_only: "Спісанне: %{seconds} сек штрафнога часу."
       remaining: "Засталося пропускаў: %{count}"
       confirm: "Так, прапусціць"
       cancel: "Вярнуцца да ўзроўню"

@@ -186,8 +186,15 @@ class GamePassingsController < ApplicationController
 
   # Renders only. Deliberately has no side effect of its own: a GET that spent
   # points would fire on a back-button press or a link preview.
+  # Both halves of "this team can skip", not just the game's switch: the play
+  # screen hides the button on skips_allowed? AND skips_left.positive?, and
+  # this page is reachable without it -- a bookmark, the back button, history.
+  # Checking only the first rendered "Осталось пропусков: 0" above a live
+  # confirm button whose only possible outcome is a refusal.
   def confirm_skip
-    redirect_to show_current_level_path(:game_id => @game.id) and return unless @game.skips_allowed?
+    unless @game.skips_allowed? && @game_passing.skips_left.positive?
+      redirect_to show_current_level_path(:game_id => @game.id) and return
+    end
   end
 
   def skip_level

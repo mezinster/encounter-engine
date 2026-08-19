@@ -885,7 +885,8 @@ tr:
       attachments_label: "Ekli dosyalar"
     confirm_skip:
       title: "Bu seviye atlansın mı?"
-      cost: "Bedeli: %{points} puan ve %{minutes} dakika ceza süresi."
+      cost: "Bedeli: %{points} puan ve %{seconds} saniye ceza süresi."
+      cost_time_only: "Bedeli: %{seconds} saniye ceza süresi."
       remaining: "Kalan atlama hakkı: %{count}"
       confirm: "Evet, atla"
       cancel: "Seviyeye dön"

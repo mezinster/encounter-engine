@@ -287,7 +287,25 @@ class GamePassing < ApplicationRecord
   # partial unique index refuses the second row, award! returns nil, and the
   # advance runs. One charge, no stuck team, and no transaction around the two
   # -- see PointTransaction.award!, which must not be rescued from inside one.
+  # The paused refusal lives HERE, not in a controller filter, and that is the
+  # point of it. GamePassingsController carries ensure_game_not_paused; the
+  # operator's InterventionsController deliberately treats a paused game as
+  # live (a resume must stay reachable), so the same rule expressed as a filter
+  # protected one of the two ways into this method and an operator could skip
+  # for a team mid-pause. advance! stamps current_level_entered_at from
+  # Time.now while every countdown reads effective_now -- paused_at -- so the
+  # team's clock came out negative and Game#resume! then shifted it further
+  # into the future, delaying every hint on the level they had just been given.
+  # Refusing here holds on both paths by construction. Spec section 3 asks for
+  # this refusal in the model for that reason.
+  #
+  # Narrow to paused ON PURPOSE: the other senses of "not currently running" --
+  # not yet started, draft, withdrawn, author-finished -- are refused on both
+  # paths by ensure_game_is_started / ensure_game_is_live already, and a
+  # testing run is skippable BY DESIGN (S7), which a general "the game must be
+  # running" predicate would break.
   def skip_level!(actor)
+    raise ArgumentError, "game is paused" if game.paused?
     raise ArgumentError, "team has exited" if exited?
     raise ArgumentError, "no skips left" unless skips_left.positive?
 

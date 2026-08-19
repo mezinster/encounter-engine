@@ -842,7 +842,8 @@ uk:
       attachments_label: "Прикріплені файли"
     confirm_skip:
       title: "Пропустити рівень?"
-      cost: "Списання: %{points} очок і %{minutes} хв штрафного часу."
+      cost: "Списання: %{points} очок і %{seconds} сек штрафного часу."
+      cost_time_only: "Списання: %{seconds} сек штрафного часу."
       remaining: "Залишилось пропусків: %{count}"
       confirm: "Так, пропустити"
       cancel: "Повернутися до рівня"

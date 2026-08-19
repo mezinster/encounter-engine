@@ -39,6 +39,90 @@ describe "skipping a level", type: :request do
     expect(response.body).to include(I18n.t("game_passings.confirm_skip.remaining", :count => passing.skips_left))
   end
 
+  # Whole-branch F2(a). charge_skip! zeroes the amount when points are off, so
+  # a page announcing the fine states a price the model will not charge. The
+  # fine is deliberately NON-ZERO here: with 0 the assertion would be
+  # satisfied by the fixture rather than by the code.
+  it "does not promise points on a game whose points are switched off" do
+    captain = create_user
+    team    = create_team(:captain => captain)
+    game    = create_game(:max_skips => 2, :skip_points_fine => 25,
+                          :skip_time_penalty => 45, :points_enabled => false)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
+    one     = create_level(:game => game, :position => 1)
+    create_level(:game => game, :position => 2)
+    create_game_passing(:level => one, :team => team)
+    sign_in(captain)
+
+    get confirm_skip_path(:game_id => game.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(
+      I18n.t("game_passings.confirm_skip.cost_time_only", :seconds => 45))
+    expect(response.body).not_to include(
+      I18n.t("game_passings.confirm_skip.cost", :points => 25, :seconds => 45))
+  end
+
+  # Whole-branch F2(b). skip_time_penalty is SECONDS; rendering it as whole
+  # minutes is integer division, so 45 seconds read as "0 мин" on the one
+  # screen whose job is stating the cost.
+  it "states a sub-minute penalty instead of rounding it to zero" do
+    captain = create_user
+    team    = create_team(:captain => captain)
+    game    = create_game(:max_skips => 2, :skip_points_fine => 25,
+                          :skip_time_penalty => 45, :points_enabled => true)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
+    one     = create_level(:game => game, :position => 1)
+    create_level(:game => game, :position => 2)
+    create_game_passing(:level => one, :team => team)
+    sign_in(captain)
+
+    get confirm_skip_path(:game_id => game.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(
+      I18n.t("game_passings.confirm_skip.cost", :points => 25, :seconds => 45))
+  end
+
+  # Whole-branch F4. The play screen hides the button on skips_allowed? AND
+  # skips_left.positive?; this page is reachable directly -- bookmark, back
+  # button -- and checked only the first.
+  it "redirects away from the confirmation page once the allowance is spent" do
+    captain = create_user
+    team    = create_team(:captain => captain)
+    game    = create_game(:max_skips => 1, :skip_points_fine => 25, :points_enabled => true)
+    set_game_schedule!(game, :starts_at => 1.hour.ago)
+    one     = create_level(:game => game, :position => 1)
+    create_level(:game => game, :position => 2)
+    passing = create_game_passing(:level => one, :team => team)
+    sign_in(captain)
+
+    post skip_level_path(:game_id => game.id)
+    expect(passing.reload.skips_left).to eq(0)
+
+    get confirm_skip_path(:game_id => game.id)
+
+    expect(response).to redirect_to(show_current_level_path(:game_id => game.id))
+  end
+
+  # Whole-branch F1, the captain's half. Two guards refuse this now -- the
+  # controller's ensure_game_not_paused and, behind it, skip_level! itself --
+  # and the model one is what makes the operator's path (operator_skip_spec)
+  # agree with this one.
+  it "refuses the captain while the game is paused" do
+    game, passing, captain, _member = skippable
+    level_before = passing.current_level
+    sign_in(captain)
+    game.pause!
+
+    post skip_level_path(:game_id => game.id)
+
+    expect(response).to have_http_status(:found)
+    expect(passing.reload.current_level).to eq(level_before)
+    expect(passing.reload.skips_left).to eq(2)
+    expect(PointTransaction.where(:game_passing_id => passing.id).count).to eq(0)
+  end
+
   # The GET must not perform the skip -- if it does, a link preview or a
   # back-button press spends the team's points.
   it "does not skip anything on the confirmation page itself" do

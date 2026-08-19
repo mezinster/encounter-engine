@@ -24,8 +24,16 @@
                     :method => :post, :class => "btn btn--danger" %>
     <% end %>
 
-    <%= button_to t("interventions.skip_level"),
-                  skip_team_level_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
-                  :method => :post, :class => "btn" %>
+    <%# The same two conditions the captain's own button carries in
+        show_current_level.html.erb, and for the same reason: skip_level! is
+        shared, so a button offered outside them can only ever come back as
+        "Это действие сейчас невозможно". max_skips defaults to 0 and IS the
+        feature switch, so without this the control appeared on every team of
+        every game that exists today. %>
+    <% if game_passing.game.skips_allowed? && game_passing.skips_left.positive? %>
+      <%= button_to t("interventions.skip_level"),
+                    skip_team_level_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
+                    :method => :post, :class => "btn" %>
+    <% end %>
   </div>
 </div>

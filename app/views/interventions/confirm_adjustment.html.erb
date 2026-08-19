@@ -1,0 +1,26 @@
+<div class="page">
+  <h2><%= t("interventions.adjust.confirm_title") %></h2>
+
+  <%# The team is named here deliberately: the mistake a confirmation catches
+      is not a mistyped amount, which the operator can see, but an amount
+      entered against the wrong team. %>
+  <p><%= t("interventions.adjust.summary",
+           :team => @game_passing.team.name, :amount => @amount) %></p>
+
+  <%# Operator-authored text: rendered verbatim, never through t(). %>
+  <p class="adjust-note"><%= @note %></p>
+
+  <p><%= t("interventions.adjust.balance_change",
+           :before => @game_passing.team.balance,
+           :after  => @game_passing.team.balance + @amount) %></p>
+
+  <%= form_with url: team_adjustments_path(:game_id => @game.id, :team_id => @game_passing.team_id), method: :post do %>
+    <%= hidden_field_tag :amount, @amount %>
+    <%= hidden_field_tag :note, @note %>
+    <%= hidden_field_tag :confirmed, "1" %>
+    <%= submit_tag t("interventions.adjust.confirm"), :class => "btn danger-row" %>
+  <% end %>
+
+  <%= link_to t("interventions.adjust.cancel"),
+              new_team_adjustment_path(:game_id => @game.id, :team_id => @game_passing.team_id) %>
+</div>

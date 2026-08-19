@@ -194,6 +194,8 @@ tr:
           reinstate_team: "Takımı oyuna geri aldı"
           reset_clock: "Seviyedeki süre sayacını sıfırladı"
           skip_level: "Bir takım için seviye atladı"
+          adjust_points: "Bir takımın puanını düzeltti"
+          adjust_points_globally: "Bir takımın tüm oyunlardaki puanını düzeltti"
           accept_entry: "Bir takımın başvurusunu kabul etti"
           reject_entry: "Bir takımın başvurusunu reddetti"
           translation_run_started: "Çeviri başlattı"
@@ -323,6 +325,10 @@ tr:
         actions: "İşlemler"
         set_captain: "Kaptan yap"
         delete: "Takımı sil"
+    team_adjustments:
+      title: "«%{team}» adlı takımın puan düzeltmesi"
+      summary: "«%{team}» adlı takıma tüm oyunlar için %{amount} puan"
+      done: "Puanlar düzeltildi"
   answers:
     must_have_at_least_one_variant: "En az bir kod seçeneği olmalıdır"
     index:
@@ -373,6 +379,18 @@ tr:
     any_code_notice: "«%{name}» adlı seviyede artık herhangi bir kod yeterli"
     all_codes_notice: "«%{name}» adlı seviyede artık tüm kodlar gerekli"
     refused: "Bu işlem şu anda yapılamaz"
+    adjusted_notice: "Puanlar düzeltildi"
+    adjust:
+      button: "Puan düzeltmesi"
+      title: "«%{team}» adlı takımın puan düzeltmesi"
+      amount: "Kaç puan (eksi düşer)"
+      note: "Açıklama (herkese görünür)"
+      review: "Gözden geçir"
+      confirm_title: "Düzeltmeyi onaylayın"
+      summary: "«%{team}» adlı takıma %{amount} puan"
+      balance_change: "Bakiye: %{before} → %{after}"
+      confirm: "Evet, kaydet"
+      cancel: "Değiştir"
   invitations:
     notice_sent: "%{nickname} adlı kullanıcıya davet gönderildi"
     new:
@@ -993,6 +1011,7 @@ tr:
       games: "Oynanan oyunlar"
       game: "Oyun"
       hidden_game: "Gizli oyun"
+      no_game: "Oyun dışı"
       started: "Başlangıç"
       finished: "Bitiş"
       unfinished: "bitirilmedi"
@@ -1001,11 +1020,13 @@ tr:
       ledger: "Hareketler"
       when: "Ne zaman"
       reason: "Nedeni"
+      note: "Açıklama"
       amount: "Puan"
       reasons:
         level_completed: "Seviye puanı"
         game_completed: "Bitirme puanı"
         level_skipped: "Atlama cezası"
+        adjustment: "Düzeltme"
     handed_over: "Kaptanlık devredildi: %{nickname}"
     cannot_hand_over_mid_race: "Takım yarıştayken kaptanlık devredilemez"
     hand_over_needs_another_member: "Takımdan başka bir üye seçin"
@@ -1122,6 +1143,11 @@ tr:
         game: "Oyun"
         filename: "Dosya adı"
         content_type: "Dosya türü"
+      point_transaction:
+        game: "Oyun"
+        game_passing: "Geçiş"
+        amount: "Miktar"
+        note: "Açıklama"
     errors:
       messages:
         blank: "boş olamaz"
@@ -1203,6 +1229,16 @@ tr:
               blank: "Görevin adını girmediniz"
             text:
               blank: "Görevin metnini girmediniz"
+        point_transaction:
+          attributes:
+            game:
+              blank: "seçilmedi"
+            game_passing:
+              blank: "seçilmedi"
+            amount:
+              other_than: "sıfır olamaz"
+            note:
+              blank: "girilmelidir"
         setting:
           attributes:
             value:

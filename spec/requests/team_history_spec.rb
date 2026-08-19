@@ -255,4 +255,33 @@ describe "a team's history", type: :request do
 
     expect(large).to eq(small)
   end
+
+  # A global adjustment belongs to no game. "There is nothing here to name" and
+  # "there is something here you may not see" are different statements, and
+  # rendering the second for the first invents a game for the reader.
+  it "shows a global adjustment without pretending a hidden game exists" do
+    team = create_team(:captain => create_user)
+    PointTransaction.adjust!(:team => team, :amount => -25,
+                             :note => "Нарушение регламента", :actor => create_user)
+
+    get team_path(team)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Нарушение регламента")
+    expect(response.body).to include(I18n.t("teams.show.no_game"))
+    expect(response.body).not_to include(I18n.t("teams.show.hidden_game"))
+  end
+
+  # The note is operator-authored free text on a public page.
+  it "escapes markup in a note rather than rendering it" do
+    team = create_team(:captain => create_user)
+    PointTransaction.adjust!(:team => team, :amount => -1,
+                             :note => "<script>alert(1)</script>", :actor => create_user)
+
+    get team_path(team)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include("<script>alert(1)</script>")
+    expect(response.body).to include("&lt;script&gt;")
+  end
 end

@@ -168,6 +168,8 @@ be:
           reinstate_team: "Вярнуў каманду ў гульню"
           reset_clock: "Скінуў адлік часу на ўзроўні"
           skip_level: "Прапусціў узровень за каманду"
+          adjust_points: "Скарэктаваў ачкі каманды"
+          adjust_points_globally: "Скарэктаваў ачкі каманды па ўсіх гульнях"
           accept_entry: "Прыняў заяўку каманды"
           reject_entry: "Адхіліў заяўку каманды"
           translation_run_started: "Запусціў пераклад"
@@ -296,6 +298,10 @@ be:
         actions: "Дзеянні"
         set_captain: "Прызначыць капітанам"
         delete: "Выдаліць каманду"
+    team_adjustments:
+      title: "Карэкціроўка ачкоў каманды «%{team}»"
+      summary: "Камандзе «%{team}» па ўсіх гульнях: %{amount} ачкоў"
+      done: "Ачкі скарэктаваны"
   answers:
     must_have_at_least_one_variant: "Павінен быць хаця б адзін варыянт кода"
     index:
@@ -346,6 +352,18 @@ be:
     any_code_notice: "На ўзроўні «%{name}» цяпер дастаткова любога кода"
     all_codes_notice: "На ўзроўні «%{name}» цяпер патрэбны ўсе коды"
     refused: "Гэта дзеянне зараз немагчымае"
+    adjusted_notice: "Ачкі скарэктаваны"
+    adjust:
+      button: "Карэкціроўка ачкоў"
+      title: "Карэкціроўка ачкоў каманды «%{team}»"
+      amount: "Колькі ачкоў (мінус — спісанне)"
+      note: "Тлумачэнне (будзе бачна ўсім)"
+      review: "Праверыць"
+      confirm_title: "Пацвердзіце карэкціроўку"
+      summary: "Камандзе «%{team}»: %{amount} ачкоў"
+      balance_change: "Баланс: %{before} → %{after}"
+      confirm: "Так, запісаць"
+      cancel: "Змяніць"
   invitations:
     notice_sent: "Карыстальніку %{nickname} выслана запрашэнне"
     new:
@@ -945,6 +963,7 @@ be:
       games: "Згуляныя гульні"
       game: "Гульня"
       hidden_game: "Схаваная гульня"
+      no_game: "Па-за гульнёй"
       started: "Пачатак"
       finished: "Фініш"
       unfinished: "не завершана"
@@ -953,11 +972,13 @@ be:
       ledger: "Налічэнні"
       when: "Калі"
       reason: "За што"
+      note: "Тлумачэнне"
       amount: "Ачкоў"
       reasons:
         level_completed: "Ачко за ўзровень"
         game_completed: "Ачко за праходжанне"
         level_skipped: "Штраф за пропуск"
+        adjustment: "Карэкціроўка"
     handed_over: "Капітанства перададзена: %{nickname}"
     cannot_hand_over_mid_race: "Нельга перадаць капітанства, пакуль каманда на дыстанцыі"
     hand_over_needs_another_member: "Выберыце іншага ўдзельніка каманды"
@@ -1070,6 +1091,11 @@ be:
         game: "Гульня"
         filename: "Імя файла"
         content_type: "Тып файла"
+      point_transaction:
+        game: "Гульня"
+        game_passing: "Праходжанне"
+        amount: "Сума"
+        note: "Тлумачэнне"
     errors:
       messages:
         blank: "не можа быць пустым"
@@ -1151,6 +1177,16 @@ be:
               blank: "Вы не ўвялі назву задання"
             text:
               blank: "Вы не ўвялі тэкст задання"
+        point_transaction:
+          attributes:
+            game:
+              blank: "не выбрана"
+            game_passing:
+              blank: "не выбрана"
+            amount:
+              other_than: "не можа быць нулявой"
+            note:
+              blank: "не пазначана"
         setting:
           attributes:
             value:

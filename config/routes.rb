@@ -35,6 +35,12 @@ Rails.application.routes.draw do
     resources :teams, only: [ :index ] do
       post "set_captain", on: :member
       delete "destroy", on: :member, as: :destroy
+
+      # A global adjustment: belongs to the team rather than to any one game.
+      # Superadmin-only -- see the class comment on
+      # Admin::TeamAdjustmentsController for why this cannot ride
+      # InterventionsController's ensure_author.
+      resources :adjustments, :only => [ :new, :create ], :controller => "team_adjustments"
     end
     resources :users, only: [ :index, :show ] do
       post "grant",  on: :member
@@ -254,6 +260,13 @@ Rails.application.routes.draw do
   post "/games/:game_id/teams/:team_id/reinstate",   to: "interventions#reinstate",   as: :reinstate_team
   post "/games/:game_id/teams/:team_id/reset_clock", to: "interventions#reset_clock", as: :reset_team_clock
   post "/games/:game_id/teams/:team_id/skip_level", to: "interventions#skip_level", as: :skip_team_level
+
+  # Two endpoints, not three: the POST renders a confirmation when `confirmed`
+  # is absent and writes when it is present. This app has no rails-ujs, so a
+  # data-confirm dialog would be inert markup and the click would go straight
+  # through -- and an adjustment cannot be undone (the ledger never reverses).
+  get  "/games/:game_id/teams/:team_id/adjustments/new", to: "interventions#new_adjustment", as: :new_team_adjustment
+  post "/games/:game_id/teams/:team_id/adjustments",     to: "interventions#create_adjustment", as: :team_adjustments
 
   # Level-scoped, unlike the team-scoped interventions above: how a level's
   # codes count is a property of the level, not of one team's passing.

@@ -302,9 +302,18 @@ class GamesController < ApplicationController
     passings.delete_all
     Log.of_run(@game.current_run).delete_all
 
-    # After the two deletions above, deliberately: Team#deletable? refuses a
-    # team that still holds a passing or a log line, so sweeping first would
-    # spare every disposable team this test created.
+    # After the two deletions above, deliberately: the deletable? predicate
+    # refuses a team that still holds a passing or a log line, so sweeping
+    # first would spare every disposable team this test created.
+    #
+    # The deletion on the line above is keyed on game_passing_id, which is
+    # complete for every row gameplay writes and blind to a GLOBAL adjustment
+    # (PointTransaction.adjust! with `passing: nil`, which belongs to the team
+    # and to no run). Nothing extra is needed HERE: a global row is not this
+    # run's to erase, and the one case where it must go -- a disposable team
+    # being destroyed -- is handled inside the sweep below, through
+    # Team#destroy_with_ledger!. F1 of the operator-adjustments whole-branch
+    # review.
     @game.current_run.sweep_test_admissions!
 
     record_admin_action("finish_test", @game) if acting_as_operator?(@game)

@@ -88,13 +88,53 @@ class Team < ApplicationRecord
   # Logs are checked by team_id rather than by the legacy name column: the
   # id-based scope is the one Log's own scopes use since the foreign-key work.
   def deletable?
+    deletable_apart_from_ledger? && point_transactions.empty?
+  end
+
+  # #deletable? minus its ledger clause, and it exists for exactly two callers:
+  # TestAdmission#revoke! and GameRun#sweep_test_admissions!, the teardowns that
+  # destroy a DISPOSABLE team. They pair it with #destroy_with_ledger! below.
+  #
+  # Splitting it out rather than letting them keep calling #deletable? is the
+  # whole fix: a ledger row is a reason to refuse deleting a REAL team (it
+  # records something that happened to it) and never a reason to spare a
+  # tombstone the teardown is erasing. Splitting it out rather than deleting by
+  # team_id unconditionally is the other half -- every remaining clause is
+  # still consulted FIRST, so a team with members, a captain, entries,
+  # passings, passes or logs keeps both itself and its ledger. A sweep that
+  # deleted rows before asking would wipe a real team's ledger while correctly
+  # sparing the team, which is worse than what it fixes.
+  def deletable_apart_from_ledger?
     members.empty? &&
       captain.nil? &&
       game_entries.empty? &&
       game_passings.empty? &&
       access_passes.empty? &&
-      point_transactions.empty? &&
       Log.where(:team_id => id).empty?
+  end
+
+  # Destroy this team and take its whole ledger with it. Guard it with
+  # #deletable_apart_from_ledger? above -- this method does not check.
+  #
+  # Keyed on the TEAM, not on a passing, and that is the point. Both teardowns
+  # already delete a run's ledger rows by game_passing_id, which was complete
+  # while every row belonged to a run; PointTransaction.adjust! with
+  # `passing: nil` writes the first rows that belong to none, so a global
+  # adjustment on a disposable team survived that deletion, #deletable? then
+  # refused the team for ever, and the tombstone stayed on the public chart
+  # with nothing in any UI able to clear it. (The ledger is append-only, which
+  # means it is never REVERSED -- no compensating entry, no edit -- not that a
+  # row outlives the team it describes.) F1 of the operator-adjustments
+  # whole-branch review.
+  #
+  # PointTransaction.where(...), NOT point_transactions.delete_all: the
+  # association carries no dependent: option, and delete_all on such a proxy
+  # NULLIFIES the foreign key instead of deleting rows -- the same trap
+  # GameRun#sweep_test_admissions! and GamesController#finish_test both record
+  # about their own associations.
+  def destroy_with_ledger!
+    PointTransaction.where(:team_id => id).delete_all
+    destroy
   end
 
   # True while the team is in a race that is still running for them.

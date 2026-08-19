@@ -166,6 +166,8 @@ uk:
           reinstate_team: "Повернув команду в гру"
           reset_clock: "Скинув відлік часу на рівні"
           skip_level: "Пропустив рівень за команду"
+          adjust_points: "Скоригував очки команди"
+          adjust_points_globally: "Скоригував очки команди по всіх іграх"
           accept_entry: "Прийняв заявку команди"
           reject_entry: "Відхилив заявку команди"
           translation_run_started: "Запустив переклад"
@@ -294,6 +296,10 @@ uk:
         actions: "Дії"
         set_captain: "Призначити капітаном"
         delete: "Видалити команду"
+    team_adjustments:
+      title: "Коригування очок команди «%{team}»"
+      summary: "Команді «%{team}» по всіх іграх: %{amount} очок"
+      done: "Очки скориговано"
   answers:
     must_have_at_least_one_variant: "Має бути хоча б один варіант коду"
     index:
@@ -344,6 +350,18 @@ uk:
     any_code_notice: "На рівні «%{name}» тепер достатньо будь-якого коду"
     all_codes_notice: "На рівні «%{name}» тепер потрібні всі коди"
     refused: "Ця дія зараз неможлива"
+    adjusted_notice: "Очки скориговано"
+    adjust:
+      button: "Коригування очок"
+      title: "Коригування очок команди «%{team}»"
+      amount: "Скільки очок (мінус — списання)"
+      note: "Пояснення (буде видно всім)"
+      review: "Перевірити"
+      confirm_title: "Підтвердьте коригування"
+      summary: "Команді «%{team}»: %{amount} очок"
+      balance_change: "Баланс: %{before} → %{after}"
+      confirm: "Так, записати"
+      cancel: "Змінити"
   invitations:
     notice_sent: "Користувачеві %{nickname} надіслано запрошення"
     new:
@@ -952,6 +970,7 @@ uk:
       games: "Зіграні ігри"
       game: "Гра"
       hidden_game: "Прихована гра"
+      no_game: "Поза грою"
       started: "Початок"
       finished: "Фініш"
       unfinished: "не завершена"
@@ -960,11 +979,13 @@ uk:
       ledger: "Нарахування"
       when: "Коли"
       reason: "За що"
+      note: "Пояснення"
       amount: "Очок"
       reasons:
         level_completed: "Очко за рівень"
         game_completed: "Очко за проходження"
         level_skipped: "Штраф за пропуск"
+        adjustment: "Коригування"
     handed_over: "Капітанство передано: %{nickname}"
     cannot_hand_over_mid_race: "Не можна передати капітанство, поки команда на дистанції"
     hand_over_needs_another_member: "Оберіть іншого учасника команди"
@@ -1079,6 +1100,11 @@ uk:
         game: "Гра"
         filename: "Ім'я файлу"
         content_type: "Тип файлу"
+      point_transaction:
+        game: "Гра"
+        game_passing: "Проходження"
+        amount: "Сума"
+        note: "Пояснення"
     errors:
       messages:
         blank: "не може бути порожнім"
@@ -1160,6 +1186,16 @@ uk:
               blank: "Ви не ввели назву завдання"
             text:
               blank: "Ви не ввели текст завдання"
+        point_transaction:
+          attributes:
+            game:
+              blank: "не вибрана"
+            game_passing:
+              blank: "не вибране"
+            amount:
+              other_than: "не може бути нульовою"
+            note:
+              blank: "не вказано"
         setting:
           attributes:
             value:

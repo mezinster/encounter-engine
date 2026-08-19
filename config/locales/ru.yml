@@ -149,6 +149,8 @@ ru:
           reinstate_team: "Вернул команду в игру"
           reset_clock: "Сбросил отсчёт времени на уровне"
           skip_level: "Пропустил уровень за команду"
+          adjust_points: "Скорректировал очки команды"
+          adjust_points_globally: "Скорректировал очки команды по всем играм"
           accept_entry: "Принял заявку команды"
           reject_entry: "Отклонил заявку команды"
           translation_run_started: "Запустил перевод"
@@ -277,6 +279,10 @@ ru:
         actions: "Действия"
         set_captain: "Назначить капитаном"
         delete: "Удалить команду"
+    team_adjustments:
+      title: "Корректировка очков команды «%{team}»"
+      summary: "Команде «%{team}» по всем играм: %{amount} очков"
+      done: "Очки скорректированы"
   answers:
     must_have_at_least_one_variant: "Должен быть хотя бы один вариант кода"
     index:
@@ -327,6 +333,18 @@ ru:
     any_code_notice: "На уровне «%{name}» теперь достаточно любого кода"
     all_codes_notice: "На уровне «%{name}» теперь нужны все коды"
     refused: "Это действие сейчас невозможно"
+    adjusted_notice: "Очки скорректированы"
+    adjust:
+      button: "Корректировка очков"
+      title: "Корректировка очков команды «%{team}»"
+      amount: "Сколько очков (минус — списание)"
+      note: "Пояснение (будет видно всем)"
+      review: "Проверить"
+      confirm_title: "Подтвердите корректировку"
+      summary: "Команде «%{team}»: %{amount} очков"
+      balance_change: "Баланс: %{before} → %{after}"
+      confirm: "Да, записать"
+      cancel: "Изменить"
   invitations:
     notice_sent: "Пользователю %{nickname} выслано приглашение"
     new:
@@ -947,6 +965,7 @@ ru:
       games: "Сыгранные игры"
       game: "Игра"
       hidden_game: "Скрытая игра"
+      no_game: "Вне игры"
       started: "Начало"
       finished: "Финиш"
       unfinished: "не завершена"
@@ -955,11 +974,13 @@ ru:
       ledger: "Начисления"
       when: "Когда"
       reason: "За что"
+      note: "Пояснение"
       amount: "Очков"
       reasons:
         level_completed: "Очко за уровень"
         game_completed: "Очко за прохождение"
         level_skipped: "Штраф за пропуск"
+        adjustment: "Корректировка"
     handed_over: "Капитанство передано: %{nickname}"
     cannot_hand_over_mid_race: "Нельзя передать капитанство, пока команда на дистанции"
     hand_over_needs_another_member: "Выберите другого участника команды"
@@ -1079,6 +1100,11 @@ ru:
         game: "Игра"
         filename: "Имя файла"
         content_type: "Тип файла"
+      point_transaction:
+        game: "Игра"
+        game_passing: "Прохождение"
+        amount: "Сумма"
+        note: "Пояснение"
     errors:
       messages:
         blank: "не может быть пустым"
@@ -1160,6 +1186,16 @@ ru:
               blank: "Вы не ввели название задания"
             text:
               blank: "Вы не ввели текст задания"
+        point_transaction:
+          attributes:
+            game:
+              blank: "не выбрана"
+            game_passing:
+              blank: "не выбрано"
+            amount:
+              other_than: "не может быть нулевой"
+            note:
+              blank: "не указано"
         setting:
           attributes:
             value:

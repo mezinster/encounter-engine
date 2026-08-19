@@ -149,6 +149,8 @@ en:
           reinstate_team: "Brought a team back into the game"
           reset_clock: "Reset the level clock"
           skip_level: "Skipped a level for a team"
+          adjust_points: "Adjusted a team's points"
+          adjust_points_globally: "Adjusted a team's points across all games"
           accept_entry: "Accepted a team's application"
           reject_entry: "Rejected a team's application"
           translation_run_started: "Started a translation"
@@ -277,6 +279,10 @@ en:
         actions: "Actions"
         set_captain: "Make captain"
         delete: "Delete team"
+    team_adjustments:
+      title: "Adjust points for %{team}"
+      summary: "%{amount} points for %{team}, across all games"
+      done: "The points were adjusted"
   answers:
     must_have_at_least_one_variant: "There must be at least one answer code"
     index:
@@ -327,6 +333,18 @@ en:
     any_code_notice: "Any one code now passes the level “%{name}”"
     all_codes_notice: "All codes are now required on the level “%{name}”"
     refused: "That action is not possible right now"
+    adjusted_notice: "The points were adjusted"
+    adjust:
+      button: "Adjust points"
+      title: "Adjust points for %{team}"
+      amount: "How many points (negative deducts)"
+      note: "Explanation (publicly visible)"
+      review: "Review"
+      confirm_title: "Confirm the adjustment"
+      summary: "%{amount} points for %{team}"
+      balance_change: "Balance: %{before} → %{after}"
+      confirm: "Yes, record it"
+      cancel: "Change it"
   invitations:
     notice_sent: "An invitation was sent to %{nickname}"
     new:
@@ -926,6 +944,7 @@ en:
       games: "Games played"
       game: "Game"
       hidden_game: "Hidden game"
+      no_game: "Not tied to a game"
       started: "Started"
       finished: "Finished"
       unfinished: "not finished"
@@ -934,11 +953,13 @@ en:
       ledger: "Ledger"
       when: "When"
       reason: "Reason"
+      note: "Explanation"
       amount: "Amount"
       reasons:
         level_completed: "Level passed"
         game_completed: "Game finished"
         level_skipped: "Level skipped"
+        adjustment: "Adjustment"
     handed_over: "Captaincy handed over to %{nickname}"
     cannot_hand_over_mid_race: "Captaincy cannot be handed over while the team is racing"
     hand_over_needs_another_member: "Choose another member of the team"
@@ -1057,6 +1078,11 @@ en:
         game: "Game"
         filename: "Filename"
         content_type: "Content type"
+      point_transaction:
+        game: "Game"
+        game_passing: "Passing"
+        amount: "Amount"
+        note: "Explanation"
     errors:
       messages:
         blank: "can't be blank"
@@ -1138,6 +1164,16 @@ en:
               blank: "Task name is required"
             text:
               blank: "Task text is required"
+        point_transaction:
+          attributes:
+            game:
+              blank: "is not selected"
+            game_passing:
+              blank: "is not selected"
+            amount:
+              other_than: "cannot be zero"
+            note:
+              blank: "is required"
         setting:
           attributes:
             value:

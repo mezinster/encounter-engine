@@ -262,19 +262,10 @@ class GamePassing < ApplicationRecord
   end
 
   def pass_level!
-    passed = self.current_level
+    passed    = self.current_level
     finishing = last_level?
 
-    if finishing
-      set_finish_time
-    else
-      update_current_level_entered_at
-    end
-
-    reset_answered_questions
-
-    self.current_level = self.current_level.next
-    save!
+    advance!(finishing)
 
     award_points_for(passed, finishing)
   end
@@ -430,6 +421,28 @@ protected
 
   def reset_answered_questions
     self.answered_questions.clear
+  end
+
+  # What "advance" means, in one place. pass_level! and skip_level! differ only
+  # in what they do BEFORE and AFTER this: a pass awards afterwards, a skip
+  # charges beforehand. Extracted rather than copied because this repository has
+  # already shipped one concept resolved two ways -- finished_at versus
+  # status "exited", which disagreed across two surfaces until a review caught
+  # it -- and a second copy of this would be the same bet.
+  #
+  # `finishing` is passed in rather than recomputed: the caller reads it before
+  # current_level moves, and after the move the answer would be wrong.
+  def advance!(finishing)
+    if finishing
+      set_finish_time
+    else
+      update_current_level_entered_at
+    end
+
+    reset_answered_questions
+
+    self.current_level = self.current_level.next
+    save!
   end
 
   # Awards are written AFTER the advance is saved, deliberately. A team

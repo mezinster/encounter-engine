@@ -321,6 +321,7 @@ ru:
     cannot_play_own_game: "Нельзя играть в собственные игры, сорри :-)"
     game_finished_by_author: "Игра была завершена автором, и вы не можете в нее больше играть"
     team_exited: "Команда сошла с дистанции"
+    passing_stopped_by_operator: "Прохождение игры остановлено организатором"
     game_is_not_live: "Игра сейчас не идёт"
   interventions:
     skip_level: "Пропустить уровень"

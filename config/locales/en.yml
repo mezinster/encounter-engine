@@ -321,6 +321,7 @@ en:
     cannot_play_own_game: "You can't play your own games, sorry :-)"
     game_finished_by_author: "The game was ended by its author, you can no longer play it"
     team_exited: "Your team has left the race"
+    passing_stopped_by_operator: "Your run was stopped by the organiser"
     game_is_not_live: "This game is not currently running"
   interventions:
     skip_level: "Skip the level"

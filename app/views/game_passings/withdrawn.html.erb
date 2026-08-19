@@ -1,14 +1,23 @@
-<div class="page page--focused">
-  <h2><%= t("game_passings.withdrawn.title") %></h2>
+<%# NO .page wrapper of its own, deliberately. halt_if_withdrawn renders this
+    under the APPLICATION layout, which has already opened <div class="page">
+    -- and .page carries min-height: 100svh, so a second one nested inside it
+    is a full viewport tall stacked below the sticky topbar: measured at
+    390x680, 375x553 and 1280x800, the document came out 849/722/917px tall
+    against content ending at y=221/220/182 -- 169/169/117px of scroll into
+    nothing. Without the wrapper the document is exactly one viewport at all
+    three sizes. The class was copied from the in_game layout's shell,
+    which this page replaces rather than uses. Neither suite can see it --
+    Capybara parses no CSS -- and bin/measure-play-screen measures the play
+    screen, not this one. %>
+<h2><%= t("game_passings.withdrawn.title") %></h2>
 
-  <p class="withdrawn-category">
-    <%= t("games.withdrawal.categories.#{@game.withdrawal_category}") %>
-  </p>
+<p class="withdrawn-category">
+  <%= t("games.withdrawal.categories.#{@game.withdrawal_category}") %>
+</p>
 
-  <%# Operator-authored free text: verbatim, never through t(), and rendered as
-      its OWN element rather than composed into a sentence -- which is what
-      keeps a Turkish or Georgian case suffix off an interpolated value. %>
-  <% if @game.withdrawal_note.present? %>
-    <p class="withdrawn-note"><%= @game.withdrawal_note %></p>
-  <% end %>
-</div>
+<%# Operator-authored free text: verbatim, never through t(), and rendered as
+    its OWN element rather than composed into a sentence -- which is what
+    keeps a Turkish or Georgian case suffix off an interpolated value. %>
+<% if @game.withdrawal_note.present? %>
+  <p class="withdrawn-note"><%= @game.withdrawal_note %></p>
+<% end %>

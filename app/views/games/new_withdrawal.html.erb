@@ -4,9 +4,15 @@
   <%= form_with url: withdraw_game_path(@game), method: :post do %>
     <div class="field">
       <%= label_tag :withdrawal_category, t("games.withdrawal.form.category") %>
+      <%# The submitted value is re-selected, not defaulted: this form comes
+          back at 422 when withdraw! refuses the pair, and a re-render that
+          silently reset both selects to their first option would re-present
+          technical/freeze to an operator who chose something else. Mode is
+          the difference between freezing a game and ending every team's run. %>
       <%= select_tag :withdrawal_category,
                      options_for_select(Game::WITHDRAWAL_CATEGORIES.map { |c|
-                       [ t("games.withdrawal.categories.#{c}"), c ] }) %>
+                       [ t("games.withdrawal.categories.#{c}"), c ] },
+                                        params[:withdrawal_category]) %>
     </div>
 
     <div class="field">
@@ -18,7 +24,8 @@
       <%= label_tag :withdrawal_mode, t("games.withdrawal.form.mode") %>
       <%= select_tag :withdrawal_mode,
                      options_for_select([ [ t("games.withdrawal.form.mode_freeze"), "freeze" ],
-                                          [ t("games.withdrawal.form.mode_ended"),  "ended" ] ]) %>
+                                          [ t("games.withdrawal.form.mode_ended"),  "ended" ] ],
+                                        params[:withdrawal_mode]) %>
     </div>
 
     <%= submit_tag t("games.withdrawal.form.submit"), :class => "btn danger-row" %>

@@ -70,6 +70,40 @@ describe "withdrawing a game through the form", type: :request do
     expect(game.reload.withdrawn?).to be false
   end
 
+  # F5 of the whole-branch review. The 422 re-render is built from
+  # options_for_select with no selected value, so the form came back showing
+  # the first option of each select -- technical/freeze -- whatever the
+  # operator had chosen. Mode is the difference between freezing a game and
+  # ending every team's run, so a hurried re-submit recorded the wrong one.
+  def selected_option_values(body, select_name)
+    Nokogiri::HTML(body).css("select[name='#{select_name}'] option[selected]")
+            .map { |o| o["value"] }
+  end
+
+  it "keeps the category the operator chose when it re-renders the form" do
+    game = running_game
+    sign_in(superadmin)
+
+    post withdraw_game_path(game), :params => { :withdrawal_category => "safety",
+                                                :withdrawal_note => "Мост закрыт",
+                                                :withdrawal_mode => "sideways" }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(selected_option_values(response.body, "withdrawal_category")).to eq([ "safety" ])
+    expect(response.body).to include("Мост закрыт")
+  end
+
+  it "keeps the mode the operator chose when it re-renders the form" do
+    game = running_game
+    sign_in(superadmin)
+
+    post withdraw_game_path(game), :params => { :withdrawal_category => "banana",
+                                                :withdrawal_mode => "ended" }
+
+    expect(response).to have_http_status(:unprocessable_entity)
+    expect(selected_option_values(response.body, "withdrawal_mode")).to eq([ "ended" ])
+  end
+
   it "refuses an ordinary user" do
     game = running_game
     sign_in(create_user)

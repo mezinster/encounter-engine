@@ -345,6 +345,7 @@ pl:
     cannot_play_own_game: "Nie można grać we własne gry, sorry :-)"
     game_finished_by_author: "Gra została zakończona przez autora i nie możesz już w nią grać"
     team_exited: "Drużyna zrezygnowała z gry"
+    passing_stopped_by_operator: "Przejście gry zostało zatrzymane przez organizatora"
     game_is_not_live: "Gra w tej chwili nie trwa"
   interventions:
     skip_level: "Pomiń poziom"

@@ -80,4 +80,188 @@ describe "playing a game that has been withdrawn", type: :request do
     expect(response.body).not_to include("<script>alert(1)</script>")
     expect(response.body).to include("&lt;script&gt;")
   end
+
+  # The other two refusals section 6 of the spec asks for. Both behaved
+  # correctly from the day the filter landed; nothing pinned them, and a
+  # refusal nobody drives is a refusal that can be deleted by accident.
+  it "refuses a quit, and the team lands on the explanation" do
+    game, passing, captain = team_mid_run
+    game.withdraw!(:category => "safety", :mode => "freeze")
+    sign_in(captain)
+
+    post exit_game_path(:game_id => game.id)
+
+    expect(response).to redirect_to(show_current_level_path(:game_id => game.id))
+    expect(passing.reload.exited?).to be false
+  end
+
+  # A GET, so it gets the notice rather than the redirect -- and it must NOT
+  # get the skip confirmation, which is one button away from spending a skip.
+  it "shows the explanation instead of the skip confirmation" do
+    game, _passing, captain = team_mid_run
+    game.withdraw!(:category => "weather", :note => "Гроза над точкой 3",
+                   :mode => "freeze")
+    sign_in(captain)
+
+    get confirm_skip_path(:game_id => game.id)
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(I18n.t("game_passings.withdrawn.title"))
+    expect(response.body).not_to include(I18n.t("game_passings.confirm_skip.title"))
+  end
+
+  # F1 of the whole-branch review, and the reason it was invisible: NOTHING on
+  # the play path read `status`. GamesController#end_game closes runs exactly
+  # the same way and is safe only because it ALSO stamps author_finished_at,
+  # which ensure_game_not_finished_by_author reads -- an invariant enforced by
+  # a neighbouring column rather than by the column that means it.
+  # withdraw!(mode: "ended") has no such neighbour, so restore! -- the only
+  # button the admin console offers a withdrawn game -- put every closed run
+  # back on the road, with the whole outage charged to its hint clock.
+  describe "a run the withdrawal ended, after the game is restored" do
+    def ended_and_restored
+      game, passing, captain = team_mid_run
+      game.withdraw!(:category => "cancelled", :mode => "ended")
+      game.restore!
+      [ game, passing, captain ]
+    end
+
+    it "refuses the correct code, and the run stays where the operator left it" do
+      game, passing, captain = ended_and_restored
+      level_before = passing.current_level
+      sign_in(captain)
+
+      post post_answer_path(:game_id => game.id),
+           :params => { :answer => level_before.correct_answer }
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(passing.reload.current_level).to eq(level_before)
+      expect(passing.status).to eq("ended")
+    end
+
+    it "refuses the play screen rather than serving the level" do
+      game, passing, captain = ended_and_restored
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.body).not_to include(passing.current_level.name)
+    end
+
+    it "refuses a skip" do
+      game, passing, captain = ended_and_restored
+      sign_in(captain)
+
+      post skip_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(PointTransaction.where(:game_passing_id => passing.id).count).to eq(0)
+    end
+
+    # The documented way back, and the positive control for the three
+    # refusals above: reinstate! is an existing, audited intervention that
+    # also resets the level clock, so the team returns without the outage on
+    # their countdown.
+    it "plays again once the operator reinstates the team" do
+      game, passing, captain = ended_and_restored
+      level_before = passing.current_level
+      # reload first: withdraw! ended the row in the database through its own
+      # object, and save! writes only attributes this one thinks it changed.
+      passing.reload.reinstate!
+      sign_in(captain)
+
+      post post_answer_path(:game_id => game.id),
+           :params => { :answer => level_before.correct_answer }
+
+      expect(response).to have_http_status(:ok)
+      expect(passing.reload.current_level).not_to eq(level_before)
+    end
+  end
+
+  # F3 of the whole-branch review. halt_if_withdrawn has to run BEFORE
+  # find_or_create_game_passing -- that filter CREATES a passing, so halting
+  # after it would enrol a team in a withdrawn game merely for reading the
+  # notice -- but it therefore also runs before the three filters that refuse
+  # everyone else, and each of them was a 401 before this branch. The note is
+  # what an operator types under stress: a cordoned location, a police
+  # instruction, sometimes a name.
+  describe "the operator's note" do
+    # A method rather than a constant: Ruby's lexical scope puts a constant
+    # assigned inside `describe` onto Object.
+    def secret_note
+      "Улица перекрыта полицией, Иванов"
+    end
+
+    def withdrawn_game_with_a_note
+      game, passing, captain = team_mid_run
+      game.withdraw!(:category => "safety", :note => secret_note, :mode => "freeze")
+      [ game, passing, captain ]
+    end
+
+    it "reaches the team playing the game" do
+      game, _passing, captain = withdrawn_game_with_a_note
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(secret_note)
+    end
+
+    # The other side of the participation test, and the reason it cannot simply
+    # be "has a passing": an accepted team that had not opened the play screen
+    # yet has no row, and falling through for them would hand them to
+    # find_or_create_game_passing -- which CREATES one. That would both let
+    # them play a withdrawn game and enrol them in it, which is exactly what
+    # the filter's placement exists to prevent.
+    it "reaches an accepted team that had not started yet, without enrolling them" do
+      game, _passing, _captain = withdrawn_game_with_a_note
+      latecomer = create_user
+      team = create_team(:captain => latecomer)
+      create_game_entry(:game => game, :team => team)
+      sign_in(latecomer)
+
+      expect {
+        get show_current_level_path(:game_id => game.id)
+      }.not_to change { GamePassing.count }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(secret_note)
+      expect(response.body).not_to include(I18n.t("game_passings.show_current_level.answer_label"))
+    end
+
+    it "does not reach a signed-in stranger with no entry for the game" do
+      game, _passing, _captain = withdrawn_game_with_a_note
+      stranger = create_user
+      create_team(:captain => stranger)
+      sign_in(stranger)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.body).not_to include(secret_note)
+    end
+
+    it "does not reach the game's own author" do
+      game, _passing, _captain = withdrawn_game_with_a_note
+      sign_in(game.author)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.body).not_to include(secret_note)
+    end
+
+    it "does not reach a team that has already left the race" do
+      game, passing, captain = withdrawn_game_with_a_note
+      passing.exit!
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.body).not_to include(secret_note)
+    end
+  end
 end

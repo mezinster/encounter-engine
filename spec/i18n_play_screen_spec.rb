@@ -27,6 +27,10 @@ describe "the play screen in every shipped locale" do
   # running. A fallback here is not cosmetic in the way a wrong menu label is:
   # getting the exit button or the answer feedback wrong costs someone the
   # game.
+  #
+  # errors.passing_stopped_by_operator is not a game_passings.* key but meets
+  # the same test: it is rendered as the WHOLE response to a team whose run the
+  # operator closed, in place of their level.
   PLAY_SCREEN_KEYS = %w[
     game_passings.show_current_level.title_prefix
     game_passings.show_current_level.level_label
@@ -51,6 +55,7 @@ describe "the play screen in every shipped locale" do
     game_passings.confirm_skip.confirm
     game_passings.confirm_skip.cancel
     game_passings.withdrawn.title
+    errors.passing_stopped_by_operator
   ].freeze
 
   SHIPPED_LOCALES.each do |locale|

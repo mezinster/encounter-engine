@@ -300,7 +300,17 @@ class Game < ApplicationRecord
     raise ArgumentError, "unknown mode"     unless WITHDRAWAL_MODES.include?(mode)
 
     transaction do
-      paused_by_withdrawal = false
+      # Carried forward, not recomputed. A second withdrawal on an already
+      # withdrawn game -- the Back button lands on the form, and escalating a
+      # freeze to an end is the only thing the console offers no other route
+      # to -- finds the run already paused, skips the branch below, and used to
+      # write false over the true the FIRST withdrawal recorded, while
+      # paused_at stayed set. restore! then declined to resume and the game
+      # came back permanently frozen, unannounced. Guarded on withdrawn?
+      # because only an in-flight withdrawal has a pause of its own to
+      # remember: restore! clears the flag, so a game that is not withdrawn
+      # cannot carry a stale true.
+      paused_by_withdrawal = self.withdrawn? && self.withdrawal_paused_run
 
       if mode == "freeze" && !self.paused?
         pause!

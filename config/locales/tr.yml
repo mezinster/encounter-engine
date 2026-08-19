@@ -367,6 +367,7 @@ tr:
     cannot_play_own_game: "Kendi oyunlarınızı oynayamazsınız, kusura bakmayın :-)"
     game_finished_by_author: "Oyun yazarı tarafından bitirildi, artık oynayamazsınız"
     team_exited: "Takım yarıştan çekildi"
+    passing_stopped_by_operator: "Oyun geçişiniz organizatör tarafından durduruldu"
     game_is_not_live: "Oyun şu anda sürmüyor"
   interventions:
     skip_level: "Seviyeyi atla"

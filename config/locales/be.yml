@@ -340,6 +340,7 @@ be:
     cannot_play_own_game: "Нельга гуляць ва ўласныя гульні, соры :-)"
     game_finished_by_author: "Гульня была завершана аўтарам, і вы больш не можаце ў яе гуляць"
     team_exited: "Каманда сышла з дыстанцыі"
+    passing_stopped_by_operator: "Праходжанне гульні спынена арганізатарам"
     game_is_not_live: "Гульня зараз не ідзе"
   interventions:
     skip_level: "Прапусціць узровень"

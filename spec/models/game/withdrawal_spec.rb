@@ -132,6 +132,43 @@ describe Game do
       expect(game.reload.paused?).to be true
     end
 
+    # F2 of the whole-branch review. withdrawal_paused_run started life as a
+    # fresh local, false unless THIS call paused -- so a second withdrawal on
+    # an already-frozen game wrote false over the true the first one recorded
+    # while paused_at stayed set, and restore! then declined to resume. The
+    # game came back from withdrawal permanently paused, unannounced.
+    #
+    # It is not a theoretical sequence: escalating a freeze to an end is a real
+    # operator move, and re-submitting the withdrawal form (the Back button
+    # lands on it) is the only route the console offers for it.
+    it "resumes after a freeze that was escalated to an end" do
+      game    = running_game
+      passing = create_game_passing(:level => game.levels.first)
+      game.withdraw!(:category => "technical", :mode => "freeze")
+      expect(game.reload.paused?).to be true
+
+      game.withdraw!(:category => "cancelled", :mode => "ended")
+      expect(game.reload.withdrawal_paused_run).to be true
+
+      game.restore!
+
+      expect(game.reload.paused?).to be false
+      expect(game.withdrawn?).to be false
+      # The escalation still did its own job.
+      expect(passing.reload.status).to eq("ended")
+    end
+
+    it "resumes after a freeze that was withdrawn a second time" do
+      game = running_game
+      game.withdraw!(:category => "technical", :mode => "freeze")
+
+      game.withdraw!(:category => "safety", :mode => "freeze")
+
+      game.restore!
+
+      expect(game.reload.paused?).to be false
+    end
+
     it "does not revive ended runs" do
       game    = running_game
       passing = create_game_passing(:level => game.levels.first)

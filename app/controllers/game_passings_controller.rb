@@ -51,6 +51,29 @@ class GamePassingsController < ApplicationController
   # specific message -- exited? is one half of interrupted?, and
   # ensure_team_not_exited answers it first.
   before_action :ensure_passing_not_interrupted, except: [:index, :show_results]
+  # show_current_level and post_answer already guard themselves (each calls
+  # render_finished_passing on @game_passing.finished? before doing anything
+  # else -- see TICKET #83 above and #post_answer's own check), because both
+  # must keep RENDERING the finish screen rather than merely refusing. Every
+  # other GATED action that touches this passing needs the same guard and
+  # never got it: exit_game calls GamePassing#exit!, which unconditionally
+  # rewrites finished_at and sets status "exited" -- on a served finished
+  # attempt that DESTROYS its own result (Game#pass_standings excludes an
+  # exited passing), reachable from the play screen's own exit control via
+  # the back button, no crafted request needed. get_current_level_tip
+  # dereferences current_level, which a finished attempt has none of (the
+  # exact nil TICKET #83 already documents) -- a 500, not a refusal. Both
+  # were 401 before gated_passing started serving a finished attempt; this
+  # restores "safe" without reintroducing "refused".
+  #
+  # Scoped to pass_required? deliberately (see halt_if_gated_attempt_finished
+  # itself), NOT because the same shape of bug can't happen on a non-gated
+  # game -- current_run.passing_for(@team) (find_or_create_game_passing's
+  # OTHER branch) serves a finished-but-not-exited passing there too, with no
+  # finished? filter of its own, so exit_game looks reachable on one there as
+  # well. That branch was not touched by the gated-finish change and the bug,
+  # if real, is pre-existing -- reported, not fixed here.
+  before_action :halt_if_gated_attempt_finished, only: [ :exit_game, :get_current_level_tip ]
   before_action :ensure_author, only: [:index]
   before_action :ensure_game_not_paused, only: [ :post_answer, :exit_game, :confirm_skip, :skip_level ]
 
@@ -255,6 +278,27 @@ class GamePassingsController < ApplicationController
   # Only when NO live pass remains. A team whose pass was revoked but who holds
   # a replacement plays on -- that is the same rule that gives a finished team
   # with a spare pass a fresh attempt.
+  #
+  # Positioned before find_or_create_game_passing -- NOT because that filter
+  # would otherwise enrol a revoked team: measured, moving this filter after
+  # it does not (a revoked team with no live pass and no finished attempt
+  # falls through gated_passing's own final raise, creating nothing, unlike
+  # halt_if_withdrawn's neighbouring case, where an entitled team's row
+  # genuinely would get created). The real reason is which MESSAGE a revoked
+  # team with no existing attempt gets: gated_passing cannot distinguish
+  # "revoked" from "never bought" on its own (both have no live pass, no
+  # finished attempt, nothing left to serve) and would raise the stranger's
+  # errors.no_access_pass for both. This filter is the only place that
+  # distinction is checked, so it has to run first.
+  #
+  # gated_passing's own live? check (not spent?) is the other half of
+  # revocation enforcement, and covers what this filter does not: a team
+  # already mid-attempt on a revoked pass, where next_for finds nothing so
+  # this filter halts them too -- but if a replacement pass exists this
+  # filter returns early (below) and live? is what stops the revoked
+  # attempt from being served in gated_passing itself. Removing either guard
+  # independently still leaves the other stopping play; see that method's
+  # header comment.
   def halt_if_pass_revoked
     return unless @game.pass_required?
     return if @team.nil?
@@ -684,15 +728,29 @@ class GamePassingsController < ApplicationController
                                         current_level: @game.levels.first)
   end
 
-  # The team's attempt if one is live, otherwise a new one on their oldest
-  # live pass. An attempt whose pass is spent is NOT live -- that is how a
-  # team who bought a replacement gets a second attempt rather than being
-  # handed the finished one.
+  # What state is this team in? Four answers, tried in order:
   #
-  # An operator-ended attempt IS still live (end! leaves finished_at nil, so
-  # the pass is unspent), and is served rather than replaced: unfinish! and
-  # reinstate! are how such a game comes back, and they resume where the team
-  # stopped. A pass never yields two attempts.
+  #   1. Their attempt is live (pass neither spent nor revoked) -- serve it.
+  #      An operator-ended attempt IS still live (end! leaves finished_at nil,
+  #      so the pass is unspent), and is served rather than replaced:
+  #      unfinish! and reinstate! are how such a game comes back, and they
+  #      resume where the team stopped.
+  #   2. A replacement pass is available -- start a fresh attempt on it. Wins
+  #      over a finished OR a revoked-but-unfinished attempt: a team who
+  #      bought another go gets a new one rather than being handed the old
+  #      result, or stuck on the one whose pass was taken away.
+  #   3. Their attempt is FINISHED and nothing above applied -- serve it
+  #      read-only. The bug this method exists to fix: it used to treat "your
+  #      attempt is finished" as "you have no attempt", handing a paying
+  #      customer who completed the game the message written for a stranger
+  #      who never bought anything.
+  #   4. Otherwise, refuse them -- a genuine stranger, or (rarer) a revoked
+  #      team with no attempt at all, though halt_if_pass_revoked (a
+  #      before_action that runs BEFORE this method, see its own comment)
+  #      intercepts that second case first and gives it its own message
+  #      instead of reaching this raise.
+  #
+  # A pass never yields two attempts.
   def gated_passing
     raise Authentication::Unauthorized, t("errors.no_access_pass") if @team.nil?
 
@@ -887,6 +945,27 @@ class GamePassingsController < ApplicationController
   # (end! stamps "ended" on those too, but finished_at separates them).
   def ensure_passing_not_interrupted
     raise Authentication::Unauthorized, t("errors.passing_stopped_by_operator") if @game_passing.interrupted?
+  end
+
+  # Refuses the two run-touching actions that never got show_current_level's
+  # and post_answer's own @game_passing.finished? guard (see the before_action
+  # comment above). render_finished_passing is the same landing spot those two
+  # already use on a finished attempt -- a pass_required game redirects to the
+  # game page, everything else renders show_results -- so a stray poll or a
+  # back-button exit press lands where a fresh GET would, rather than raising
+  # or crashing.
+  #
+  # Scoped to pass_required? on purpose: this task's regression is entirely
+  # within gated_passing (the ONLY thing that changed to start serving a
+  # finished attempt rather than refusing it), so this guard is scoped to
+  # match it exactly, not to "fix finished-passing safety" in general. A
+  # non-gated game reaches find_or_create_game_passing's OTHER branch, which
+  # this task never touched.
+  def halt_if_gated_attempt_finished
+    return unless @game.pass_required?
+    return unless @game_passing.finished?
+
+    render_finished_passing
   end
 
   # Deliberately NOT an Authentication::Unauthorized like its neighbours here.

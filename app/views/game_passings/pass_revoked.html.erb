@@ -1,5 +1,12 @@
-<div class="page">
-  <h2><%= t("errors.access_revoked") %></h2>
-  <p><%= t("game_passings.pass_revoked.what_to_do") %></p>
-  <p><%= link_to @game.name, game_path(@game) %></p>
-</div>
+<%# NO .page wrapper of its own, deliberately -- same reason as
+    withdrawn.html.erb, which this view is modelled on: halt_if_pass_revoked
+    renders this under the APPLICATION layout, which has already opened
+    <div class="page">, and .page carries min-height: 100svh, so a second one
+    nested inside it stacks a full viewport below the sticky topbar. Measured
+    at 390x680, 375x553 and 1280x800 with the wrapper: 849/722/917px document,
+    169/169/117px of dead scroll. Without it: 680/553/800px, exactly one
+    viewport. Neither suite can see this -- Capybara parses no CSS, and
+    bin/measure-play-screen measures the play screen, not this one. %>
+<h2><%= t("errors.access_revoked") %></h2>
+<p><%= t("game_passings.pass_revoked.what_to_do") %></p>
+<p><%= link_to @game.name, game_path(@game) %></p>

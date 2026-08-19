@@ -40,6 +40,8 @@
           <%= button_to t("admin.teams.index.delete"), destroy_admin_team_path(team),
                         :method => :delete, :class => "btn btn--danger" %>
         <% end %>
+        <%= link_to t("interventions.adjust.button"),
+                    new_admin_team_adjustment_path(:team_id => team.id), :class => "btn" %>
         <% if team.members.any? %>
           <%= form_with url: set_captain_admin_team_path(team), method: :post do %>
             <%= select_tag :member_id,

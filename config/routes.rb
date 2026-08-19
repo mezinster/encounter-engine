@@ -35,6 +35,12 @@ Rails.application.routes.draw do
     resources :teams, only: [ :index ] do
       post "set_captain", on: :member
       delete "destroy", on: :member, as: :destroy
+
+      # A global adjustment: belongs to the team rather than to any one game.
+      # Superadmin-only -- see the class comment on
+      # Admin::TeamAdjustmentsController for why this cannot ride
+      # InterventionsController's ensure_author.
+      resources :adjustments, :only => [ :new, :create ], :controller => "team_adjustments"
     end
     resources :users, only: [ :index, :show ] do
       post "grant",  on: :member

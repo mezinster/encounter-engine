@@ -169,6 +169,7 @@ be:
           reset_clock: "Скінуў адлік часу на ўзроўні"
           skip_level: "Прапусціў узровень за каманду"
           adjust_points: "Скарэктаваў ачкі каманды"
+          adjust_points_globally: "Скарэктаваў ачкі каманды па ўсіх гульнях"
           accept_entry: "Прыняў заяўку каманды"
           reject_entry: "Адхіліў заяўку каманды"
           translation_run_started: "Запусціў пераклад"
@@ -297,6 +298,10 @@ be:
         actions: "Дзеянні"
         set_captain: "Прызначыць капітанам"
         delete: "Выдаліць каманду"
+    team_adjustments:
+      title: "Карэкціроўка ачкоў каманды «%{team}»"
+      summary: "Камандзе «%{team}» па ўсіх гульнях: %{amount} ачкоў"
+      done: "Ачкі скарэктаваны"
   answers:
     must_have_at_least_one_variant: "Павінен быць хаця б адзін варыянт кода"
     index:

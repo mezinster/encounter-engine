@@ -150,6 +150,7 @@ ru:
           reset_clock: "Сбросил отсчёт времени на уровне"
           skip_level: "Пропустил уровень за команду"
           adjust_points: "Скорректировал очки команды"
+          adjust_points_globally: "Скорректировал очки команды по всем играм"
           accept_entry: "Принял заявку команды"
           reject_entry: "Отклонил заявку команды"
           translation_run_started: "Запустил перевод"
@@ -278,6 +279,10 @@ ru:
         actions: "Действия"
         set_captain: "Назначить капитаном"
         delete: "Удалить команду"
+    team_adjustments:
+      title: "Корректировка очков команды «%{team}»"
+      summary: "Команде «%{team}» по всем играм: %{amount} очков"
+      done: "Очки скорректированы"
   answers:
     must_have_at_least_one_variant: "Должен быть хотя бы один вариант кода"
     index:

@@ -1,0 +1,20 @@
+<div class="page">
+  <h2><%= t("interventions.adjust.confirm_title") %></h2>
+
+  <p><%= t("admin.team_adjustments.summary", :team => @team.name, :amount => @amount) %></p>
+
+  <%# Operator-authored text: verbatim, never through t(). %>
+  <p class="adjust-note"><%= @note %></p>
+
+  <p><%= t("interventions.adjust.balance_change",
+           :before => @team.balance, :after => @team.balance + @amount) %></p>
+
+  <%= form_with url: admin_team_adjustments_path(:team_id => @team.id), method: :post do %>
+    <%= hidden_field_tag :amount, @amount %>
+    <%= hidden_field_tag :note, @note %>
+    <%= hidden_field_tag :confirmed, "1" %>
+    <%= submit_tag t("interventions.adjust.confirm"), :class => "btn danger-row" %>
+  <% end %>
+
+  <%= link_to t("interventions.adjust.cancel"), new_admin_team_adjustment_path(:team_id => @team.id) %>
+</div>

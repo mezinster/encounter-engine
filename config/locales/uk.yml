@@ -167,6 +167,7 @@ uk:
           reset_clock: "Скинув відлік часу на рівні"
           skip_level: "Пропустив рівень за команду"
           adjust_points: "Скоригував очки команди"
+          adjust_points_globally: "Скоригував очки команди по всіх іграх"
           accept_entry: "Прийняв заявку команди"
           reject_entry: "Відхилив заявку команди"
           translation_run_started: "Запустив переклад"
@@ -295,6 +296,10 @@ uk:
         actions: "Дії"
         set_captain: "Призначити капітаном"
         delete: "Видалити команду"
+    team_adjustments:
+      title: "Коригування очок команди «%{team}»"
+      summary: "Команді «%{team}» по всіх іграх: %{amount} очок"
+      done: "Очки скориговано"
   answers:
     must_have_at_least_one_variant: "Має бути хоча б один варіант коду"
     index:

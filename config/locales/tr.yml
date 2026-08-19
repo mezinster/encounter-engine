@@ -195,6 +195,7 @@ tr:
           reset_clock: "Seviyedeki süre sayacını sıfırladı"
           skip_level: "Bir takım için seviye atladı"
           adjust_points: "Bir takımın puanını düzeltti"
+          adjust_points_globally: "Bir takımın tüm oyunlardaki puanını düzeltti"
           accept_entry: "Bir takımın başvurusunu kabul etti"
           reject_entry: "Bir takımın başvurusunu reddetti"
           translation_run_started: "Çeviri başlattı"
@@ -324,6 +325,10 @@ tr:
         actions: "İşlemler"
         set_captain: "Kaptan yap"
         delete: "Takımı sil"
+    team_adjustments:
+      title: "«%{team}» adlı takımın puan düzeltmesi"
+      summary: "«%{team}» adlı takıma tüm oyunlar için %{amount} puan"
+      done: "Puanlar düzeltildi"
   answers:
     must_have_at_least_one_variant: "En az bir kod seçeneği olmalıdır"
     index:

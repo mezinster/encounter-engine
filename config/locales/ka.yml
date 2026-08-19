@@ -173,6 +173,7 @@ ka:
           reset_clock: "განულა დროის ათვლა დონეზე"
           skip_level: "გამოტოვა დონე გუნდისთვის"
           adjust_points: "დაკორექტირდა გუნდის ქულები"
+          adjust_points_globally: "დაკორექტირდა გუნდის ქულები ყველა თამაშზე"
           accept_entry: "მიიღო გუნდის განაცხადი"
           reject_entry: "უარყო გუნდის განაცხადი"
           translation_run_started: "დაიწყო თარგმანი"
@@ -301,6 +302,10 @@ ka:
         actions: "მოქმედებები"
         set_captain: "კაპიტნად დანიშვნა"
         delete: "გუნდის წაშლა"
+    team_adjustments:
+      title: "გუნდის «%{team}» ქულების კორექტირება"
+      summary: "გუნდს «%{team}» ყველა თამაშზე — %{amount} ქულა"
+      done: "ქულები კორექტირებულია"
   answers:
     must_have_at_least_one_variant: "უნდა იყოს კოდის სულ მცირე ერთი ვარიანტი"
     index:

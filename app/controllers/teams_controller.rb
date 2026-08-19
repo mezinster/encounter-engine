@@ -1,6 +1,6 @@
 # -*- encoding : utf-8 -*-
 class TeamsController < ApplicationController
-  before_action :require_authentication!
+  before_action :require_authentication!, :except => [ :show ]
   before_action :ensure_not_member_of_any_team, only: [:new, :create]
 
   # Discovery for join requests. `resources :teams` already routed index and
@@ -17,6 +17,60 @@ class TeamsController < ApplicationController
     # One query for the viewer's pending applications rather than one per
     # row, for the same reason.
     @pending_team_ids = TeamJoinRequest.pending.of_user(current_user).pluck(:team_id)
+
+    # Four grouped queries for the whole page, whatever the number of teams.
+    # Never a lookup per row: teams_index_spec.rb pins a flat count, and this
+    # programme has broken that class of guard three times already.
+    @earned    = PointTransaction.where("amount > 0").group(:team_id).sum(:amount)
+    @deducted  = PointTransaction.where("amount < 0").group(:team_id).sum(:amount)
+    #
+    # not_testing on both: a rehearsal writes no ledger row (GamePassing
+    # #award_points_for returns early for a testing run), so counting its
+    # passings here made a team that has never played anything real read
+    # "1 game started, 1 game finished, 0 points" -- and gave the disposable
+    # "<nickname> (test #N)" teams chart rows of their own for the duration of
+    # a test. Same exclusion as the awarding side, so the four columns of a
+    # row now describe the same population.
+    #
+    # `completed`, not finished_at: an exited run stamps finished_at as well
+    # as its status, and walking off the course is not completing it (P4). The
+    # team's own page reads the same predicate through
+    # GamePassing#completed?.
+    @started   = GamePassing.not_testing.group(:team_id).count
+    @finished  = GamePassing.not_testing.completed.group(:team_id).count
+
+    # Sorted in Ruby, from figures already loaded, rather than by adding a
+    # join and an ORDER BY to the relation above: the page renders tens of
+    # teams, and a join here would fight the preloads.
+    #
+    # Name is the tie-break, so teams on equal points -- which at launch is
+    # every team, all on zero -- keep the alphabetical order the relation
+    # already applied instead of coming back in whatever order the sort felt
+    # like.
+    @teams = @teams.to_a.sort_by { |t| [ -balance_of(t), t.name.to_s ] }
+  end
+
+  # Public: the chart links here, and P9 makes the whole ledger readable.
+  # TeamRoomController is the team's own room, behind ensure_team_member, and
+  # is a different thing.
+  def show
+    @team = Team.find(params[:id])
+
+    # Preloaded because both tables below name the game: without this the
+    # ledger issues one query per row. Only :game -- the level is preloaded
+    # nowhere and named nowhere; a `:level` half sat here for a while,
+    # spending a query per page load on a column the view has never rendered.
+    @transactions = @team.point_transactions.includes(:game).order(:created_at => :desc)
+
+    # One row per attempt, with what that attempt was worth -- a grouped sum,
+    # not a per-attempt lookup.
+    @passings = @team.game_passings.includes(:game).order(:created_at => :desc)
+    @per_attempt = @team.point_transactions.group(:game_passing_id).sum(:amount)
+
+    # P9 made the LEDGER public, not the game catalogue -- see
+    # #nameable_game_ids.
+    @nameable_game_ids =
+      nameable_game_ids(@passings.map(&:game) + @transactions.map(&:game))
   end
 
   def new
@@ -117,6 +171,66 @@ class TeamsController < ApplicationController
   end
 
   private
+
+  # Which of these games this viewer may be told the NAME of.
+  #
+  # #show is public and unauthenticated by design, and the decision that made
+  # it so (P9) was about the ledger -- how a team placed and why. It was not a
+  # decision to publish the game catalogue, which every other surface in this
+  # application gates: `Game.visible` scopes the games listing, and
+  # ensure_author_if_game_draft / _is_withdrawn / _is_testing gate games#show.
+  # Without this, an author who admitted a team to test an unreleased game put
+  # its title on a public URL, and a withdrawn game kept its title on every
+  # participant's page for ever. See the whole-branch review, F1.
+  #
+  # A game the viewer may not be told about is rendered with a fixed
+  # placeholder and its row STAYS -- see #game_title_for_viewer.
+  #
+  # The entitlement rule is copied from those filters rather than invented:
+  # Game.visible for everyone, plus the game's own author, plus a superadmin,
+  # plus an operator on a GATED game. That last clause is deliberately
+  # game-conditional, exactly as SecurityFilters#ensure_author is: an
+  # operator's authority runs to commercial games, and an unscoped
+  # `current_user.operator?` here would be wider than anything else in the app
+  # allows.
+  #
+  # ONE query for the whole page, whatever the number of rows -- the flat
+  # count guard in spec/requests/team_history_spec.rb pins that, and the
+  # author/superadmin/operator tests below read author_id and access_mode off
+  # games that are already loaded.
+  def nameable_game_ids(games)
+    games = games.compact.uniq
+    return Set.new if games.empty?
+
+    ids = Game.visible.where(:id => games.map(&:id)).pluck(:id).to_set
+    return ids unless logged_in?
+
+    games.each do |game|
+      ids << game.id if current_user.superadmin? ||
+                        current_user.author_of?(game) ||
+                        (current_user.operator? && game.pass_required?)
+    end
+
+    ids
+  end
+
+  # A neutral, fixed label -- never the title, and never interpolating it.
+  # The row is kept rather than dropped on purpose: omitting it would make the
+  # public balance stop equalling the sum of the public rows, which reads as a
+  # bug in the chart and defeats the point of publishing an itemised ledger.
+  # What leaks is only "these points were earned in a game you cannot see".
+  def game_title_for_viewer(game)
+    return t("teams.show.hidden_game") if game.nil? || !@nameable_game_ids.include?(game.id)
+
+    game.name
+  end
+  helper_method :game_title_for_viewer
+
+  # Earned is positive, deducted is negative, so the balance is their sum.
+  def balance_of(team)
+    @earned.fetch(team.id, 0) + @deducted.fetch(team.id, 0)
+  end
+  helper_method :balance_of
 
   def team_params
     params.fetch(:team, ActionController::Parameters.new).permit(:name)

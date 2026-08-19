@@ -36,6 +36,10 @@
     <%= f.label :wrong_answer_penalty_in_minutes, t("levels.form.wrong_answer_penalty") %>
     <%= f.number_field :wrong_answer_penalty_in_minutes, :min => 0 %>
   </div>
+  <div class="field">
+    <%= f.label :points_award, t("levels.form.points_award") %>
+    <%= f.number_field :points_award, :min => 0 %>
+  </div>
   <%# A radio pair rather than a checkbox: both rules are affirmative
       statements about the level, and a checkbox would force one of them to be
       phrased as the absence of the other. %>

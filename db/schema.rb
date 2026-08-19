@@ -188,6 +188,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_19_100000) do
     t.datetime "withdrawn_at"
     t.string "visibility", default: "listed", null: false
     t.string "access_mode", default: "scheduled", null: false
+    t.boolean "points_enabled", default: false, null: false
+    t.integer "level_completion_points", default: 0, null: false
+    t.integer "game_completion_points", default: 0, null: false
   end
 
   create_table "hints", force: :cascade do |t|
@@ -214,6 +217,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_19_100000) do
     t.string "name"
     t.integer "wrong_answer_penalty", default: 0, null: false
     t.boolean "any_code_passes", default: true, null: false
+    t.integer "points_award"
   end
 
   create_table "logs", force: :cascade do |t|
@@ -239,6 +243,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_19_100000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["question_id"], name: "index_options_on_question_id"
+  end
+
+  create_table "point_transactions", force: :cascade do |t|
+    t.integer "team_id", null: false
+    t.integer "game_id", null: false
+    t.integer "game_passing_id", null: false
+    t.integer "level_id"
+    t.integer "amount", null: false
+    t.string "reason", null: false
+    t.integer "created_by_id"
+    t.datetime "created_at", null: false
+    t.index ["game_passing_id", "level_id", "reason"], name: "index_point_transactions_per_level", unique: true, where: "level_id IS NOT NULL"
+    t.index ["game_passing_id", "reason"], name: "index_point_transactions_per_attempt", unique: true, where: "level_id IS NULL"
+    t.index ["team_id"], name: "index_point_transactions_on_team_id"
   end
 
   create_table "questions", force: :cascade do |t|

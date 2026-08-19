@@ -66,6 +66,7 @@ class GamePassing < ApplicationRecord
   belongs_to :current_level, :class_name => "Level", optional: true
   belongs_to :game_run, :optional => true
   belongs_to :access_pass, :optional => true
+  has_many :point_transactions
 
   scope :of_game, ->(game) { where(game_id: game) }
   scope :of_team, ->(team) { where(team_id: team) }
@@ -116,6 +117,49 @@ class GamePassing < ApplicationRecord
   scope :in_progress, -> {
     unfinished = where(:finished_at => nil)
     unfinished.where(:status => nil).or(unfinished.where.not(:status => %w[exited ended]))
+  }
+
+  # The Ruby twins of `completed` and `interrupted`, for a view holding one
+  # loaded row rather than a relation. They exist so that "finished" is ONE
+  # notion in this application: the public team page used to ask
+  # `passing.finished_at` on its own and so printed a finish time for a run
+  # the chart, asking `GamePassing.completed`, counted as never completed --
+  # two screens one link apart disagreeing about the same row. See the
+  # whole-branch review, F2.
+  #
+  # Deliberately re-expressed rather than delegated to the scopes (which would
+  # cost a query per row on a page that renders a table of them); the pair is
+  # small enough to mirror by hand and
+  # spec/models/game_passing/outcome_scopes_spec.rb pins that each predicate
+  # agrees with its scope on the same row, so a change to one that is not made
+  # to the other goes red.
+  def completed?
+    finished? && !exited?
+  end
+
+  def interrupted?
+    exited? || (self.status == "ended" && !finished?)
+  end
+
+  # Passings on ORDINARY runs -- everything a rehearsal produced is left out.
+  #
+  # The counterpart of #award_points_for's `return if game_run&.is_testing?`:
+  # a testing run writes no ledger row, so counting its passings among a
+  # team's games started/finished made the public chart read "1 game started,
+  # 1 finished, 0 points" for a team that had never played anything real.
+  #
+  # game_run is :optional and nil means an ORDINARY run, so the nil branch is
+  # spelled out. A bare `where.not(:game_run_id => testing)` generates
+  # NOT IN, which is NULL -- and so false -- for a NULL game_run_id under
+  # SQL's three-valued logic, and would silently drop every run-less passing:
+  # the same three-valued trap the outcome scopes above document.
+  #
+  # A subquery rather than a join, for the same reason Game.visible uses one:
+  # this composes with `completed` and with `group(:team_id)` without a second
+  # reference to game_runs.
+  scope :not_testing, -> {
+    testing = GameRun.where(:is_testing => true).select(:id)
+    where(:game_run_id => nil).or(where.not(:game_run_id => testing))
   }
 
   # THE single definition of "this team's current attempt at a gated game" --
@@ -218,7 +262,10 @@ class GamePassing < ApplicationRecord
   end
 
   def pass_level!
-    if last_level?
+    passed = self.current_level
+    finishing = last_level?
+
+    if finishing
       set_finish_time
     else
       update_current_level_entered_at
@@ -228,6 +275,8 @@ class GamePassing < ApplicationRecord
 
     self.current_level = self.current_level.next
     save!
+
+    award_points_for(passed, finishing)
   end
 
   def finished?
@@ -381,6 +430,38 @@ protected
 
   def reset_answered_questions
     self.answered_questions.clear
+  end
+
+  # Awards are written AFTER the advance is saved, deliberately. A team
+  # standing in a street with a correct answer must move on whether or not the
+  # ledger accepts a row; nothing about scoring may block play.
+  #
+  # PointTransaction.award! returns nil on a duplicate rather than raising, so
+  # a re-passed level -- an operator sent them back -- awards once and the team
+  # still advances. See the design, P5.
+  def award_points_for(level, finishing)
+    return unless game&.points_enabled?
+
+    # A testing run's awards would be real, permanent rows -- the ledger
+    # never reverses (see PointTransaction's class comment). Team#deletable?
+    # requires point_transactions.empty?, so a solo author who passes even
+    # one level while test-running a points-enabled game leaves the
+    # disposable "nickname (test #N)" team permanently undeletable, and both
+    # TestAdmission#revoke! and GameRun#sweep_test_admissions! skip it
+    # silently because deletable? is false -- a phantom team holding points
+    # in the global chart forever. game_run is optional (belongs_to
+    # :game_run, :optional => true), and nil means an ORDINARY run, so this
+    # is `&.is_testing?`, not `.nil? || ...is_testing?` -- either of those
+    # forms would also switch off every passing that has no game_run at all.
+    return if game_run&.is_testing?
+
+    PointTransaction.award!(:passing => self, :reason => "level_completed",
+                            :level => level, :amount => game.points_for_level(level))
+
+    return unless finishing
+
+    PointTransaction.award!(:passing => self, :reason => "game_completed",
+                            :level => nil, :amount => game.game_completion_points)
   end
 
   # AnsweredQuestionsCoder.load silently returns [] when the column holds a

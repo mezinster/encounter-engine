@@ -90,9 +90,10 @@ class GameRun < ApplicationRecord
     # is one migration away from not catching it.
     admissions.delete_all
 
-    # deletable? is evaluated here, after the caller has deleted the passings
-    # and logs: these team objects were loaded fresh above with unloaded
-    # associations, so game_passings.empty? and Log.where(team_id:) query their
+    # deletable? is evaluated here, after the caller has deleted the ledger
+    # rows, the passings and the logs: these team objects were loaded fresh
+    # above with unloaded associations, so game_passings.empty?,
+    # point_transactions.empty? and Log.where(team_id:) query their
     # post-deletion state. A team cached earlier in the request would report
     # stale associations and be spared. The guard also makes this safe against
     # an admission pointing at a REAL team -- deletable? refuses anything with

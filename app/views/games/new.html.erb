@@ -67,6 +67,18 @@
     <%= f.label :visibility, t("games.form.is_draft") %>
     <%= f.check_box :visibility, {}, "draft", "listed" %>
   </div>
+  <div class="field">
+    <%= f.label :points_enabled, t("games.form.points_enabled") %>
+    <%= f.check_box :points_enabled %>
+  </div>
+  <div class="field">
+    <%= f.label :level_completion_points, t("games.form.level_completion_points") %>
+    <%= f.number_field :level_completion_points, :min => 0 %>
+  </div>
+  <div class="field">
+    <%= f.label :game_completion_points, t("games.form.game_completion_points") %>
+    <%= f.number_field :game_completion_points, :min => 0 %>
+  </div>
   <%# Operator/superadmin territory only -- see User#may_operate_commercial?
       and GamesController#game_attributes, which strips this key from
       anyone else's params so a hand-crafted POST can't set it either. A

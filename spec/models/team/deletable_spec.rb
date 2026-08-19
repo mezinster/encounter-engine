@@ -90,6 +90,29 @@ RSpec.describe Team, "#deletable?" do
     expect(team.reload.deletable?).to be false
   end
 
+  # A fifth history guard, added with the points ledger: a ledger row is a
+  # record of something that happened, so holding one blocks deletion the
+  # same way a game_entry/game_passing/log/access_pass row does.
+  #
+  # An ordinary point_transaction is always earned through a game_passing
+  # belonging to the same team, so the existing game_passings.empty? conjunct
+  # would already refuse deletion in that case -- it would not isolate this
+  # new conjunct. Deleting the earning passing out from under its award (with
+  # #delete, which skips callbacks/validations, standing in for a row a
+  # console edit or a future cleanup task removed independently) leaves
+  # game_passings empty while the ledger row remains, so only
+  # point_transactions.empty? still refuses here.
+  it "is false once it holds a point transaction, even with no game passing left to explain it" do
+    team = empty_team
+    passing = create_game_passing(:team => team)
+    create_point_transaction(:passing => passing)
+    passing.delete
+
+    expect(team.reload.game_passings).to be_empty
+    expect(team.point_transactions).not_to be_empty
+    expect(team.deletable?).to be false
+  end
+
   # Invitations and join requests are meaningless once the team is gone, and
   # a dangling one breaks the dashboard, which renders invitation.to_team.name.
   # So they travel with it rather than blocking it.

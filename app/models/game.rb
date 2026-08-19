@@ -70,6 +70,8 @@ class Game < ApplicationRecord
   # paid for.
   has_many :access_passes
   has_many :access_codes, :dependent => :destroy
+  # No dependent: option, deliberately -- see deletable? below.
+  has_many :point_transactions
 
   validates :name, presence: true, uniqueness: true
   validates :description, presence: true
@@ -370,7 +372,8 @@ class Game < ApplicationRecord
   # stays cheap in isolation while the screen that calls it once per row goes
   # quadratic.
   def deletable?
-    self.game_passings.empty? && self.access_passes.empty? && self.access_codes.empty?
+    self.game_passings.empty? && self.access_passes.empty? &&
+      self.access_codes.empty? && self.point_transactions.empty?
   end
 
   def created_by?(user)
@@ -498,6 +501,23 @@ class Game < ApplicationRecord
 
   def is_testing?
     self.is_testing
+  end
+
+  # What passing this level is worth. `nil` means "use the game's value"; `0`
+  # means zero, and an author must be able to make one level worth nothing
+  # without turning scoring off for the whole game.
+  #
+  # The explicit nil test is for the reader rather than for Ruby: `0` is truthy
+  # here, so `||` -- and `blank?`, and `present?` -- would all behave
+  # identically. What actually collapses the two is any test asking whether the
+  # number is non-zero (`.zero?`, `to_i > 0`, `&.positive?`), which reads as the
+  # natural thing to write and is wrong. The example in
+  # spec/models/game/scoring_spec.rb pins the distinction and fails against the
+  # `.zero?` form.
+  def points_for_level(level)
+    return level.points_award unless level&.points_award.nil?
+
+    level_completion_points
   end
 
   # Stored comma-separated rather than serialised: it is a short list of ASCII

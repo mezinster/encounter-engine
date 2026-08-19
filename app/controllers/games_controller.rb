@@ -282,7 +282,24 @@ class GamesController < ApplicationController
     # key instead of deleting rows -- so `current_run.passings.delete_all`
     # would leave every passing in place with game_run_id set to NULL, which
     # looks identical to a successful wipe from any run-scoped count.
-    GamePassing.where(:game_run_id => @game.current_run.id).delete_all
+    #
+    # The ledger rows go with them, and BEFORE them -- they are reached
+    # through the passings, so deleting the passings first would leave nothing
+    # to identify them by. An append-only ledger may still lose rows here:
+    # append-only means the ledger is never REVERSED (no compensating entry,
+    # no edit -- see PointTransaction's class comment), not that a row
+    # outlives the run it describes. This run is being erased, so what it
+    # earned is erased with it, exactly as its logs are.
+    #
+    # Not merely tidiness. start_test flips an ALREADY RUNNING real game into
+    # testing mode, so a real run's rows can arrive here; left behind they
+    # were orphaned (Game#deletable? and Team#deletable? both refuse while any
+    # exist, and the passings that explain them are gone, so no UI could ever
+    # clear them) and the public team page showed an empty games table above a
+    # ledger with a balance. See the whole-branch review, F3.
+    passings = GamePassing.where(:game_run_id => @game.current_run.id)
+    PointTransaction.where(:game_passing_id => passings.select(:id)).delete_all
+    passings.delete_all
     Log.of_run(@game.current_run).delete_all
 
     # After the two deletions above, deliberately: Team#deletable? refuses a
@@ -308,6 +325,7 @@ class GamesController < ApplicationController
     params.fetch(:game, ActionController::Parameters.new)
           .permit(:name, :description, :starts_at, :registration_deadline,
                    :max_team_number, :visibility, :primary_locale, :access_mode,
+                   :points_enabled, :level_completion_points, :game_completion_points,
                    :available_locale_list => [],
                    :translations => translation_params_shape(Game::TRANSLATABLE_FIELDS))
   end

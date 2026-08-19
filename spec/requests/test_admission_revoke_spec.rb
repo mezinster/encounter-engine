@@ -59,6 +59,40 @@ describe "revoking a test admission", type: :request do
     response.should have_http_status(:unauthorized)
   end
 
+  # Team#deletable? refuses on point_transactions as well as on passings and
+  # logs, so a ledger row left behind would both strand the disposable team
+  # for ever and orphan itself -- the passing that explains it is deleted on
+  # the line above.
+  it "deletes the tester's ledger rows in this run" do
+    tester    = create_user
+    team      = create_team
+    admission = create_test_admission(:run => game.current_run, :team => team, :user => tester)
+    passing   = GamePassing.create!(:team => team, :game => game,
+                                    :game_run => game.current_run,
+                                    :current_level => level)
+    PointTransaction.award!(:passing => passing, :reason => "level_completed",
+                            :level => level, :amount => 10)
+
+    expect {
+      post revoke_test_admission_path(:game_id => game.id, :id => admission.id)
+    }.to change { PointTransaction.where(:team_id => team.id).count }.from(1).to(0)
+  end
+
+  it "destroys a disposable team that earned points" do
+    tester    = create_user
+    team      = create_team
+    admission = create_test_admission(:run => game.current_run, :team => team, :user => tester)
+    passing   = GamePassing.create!(:team => team, :game => game,
+                                    :game_run => game.current_run,
+                                    :current_level => level)
+    PointTransaction.award!(:passing => passing, :reason => "level_completed",
+                            :level => level, :amount => 10)
+
+    post revoke_test_admission_path(:game_id => game.id, :id => admission.id)
+
+    Team.exists?(team.id).should be false
+  end
+
   it "destroys the disposable team" do
     tester    = create_user
     team      = create_team

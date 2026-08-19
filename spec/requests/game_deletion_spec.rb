@@ -34,6 +34,27 @@ describe "game deletion", type: :request do
     expect(game.reload.deletable?).to be false
   end
 
+  # A ledger row is a record of something that happened, so holding one
+  # blocks deletion the same way a game_passing/access_pass row does.
+  #
+  # An ordinary point_transaction is always earned through a game_passing
+  # belonging to the same game, so the existing game_passings.empty? conjunct
+  # would already refuse deletion in that case -- it would not isolate this
+  # new conjunct. Deleting the earning passing out from under its award (with
+  # #delete, which skips callbacks/validations, standing in for a row removed
+  # independently) leaves game_passings empty while the ledger row remains,
+  # so only point_transactions.empty? still refuses here.
+  it "is refused once the game holds a point transaction, even with no game passing left to explain it" do
+    game = create_game(:author => author, :is_draft => true)
+    passing = create_game_passing(:level => create_level(:game => game))
+    create_point_transaction(:passing => passing)
+    passing.delete
+
+    expect(game.reload.game_passings).to be_empty
+    expect(game.point_transactions).not_to be_empty
+    expect(game.deletable?).to be false
+  end
+
   # Same discrimination as the access_passes example above, one purchase
   # record earlier in its life: an unredeemed AccessCode has not yet produced
   # a pass, so it isolates the access_codes conjunct -- dropping it from

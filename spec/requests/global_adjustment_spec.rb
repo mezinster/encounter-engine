@@ -61,4 +61,36 @@ describe "a superadmin adjusting a team's points globally", type: :request do
     expect(response).to redirect_to(login_path)
     expect(PointTransaction.count).to eq(0)
   end
+
+  # Spec A4's line: an author DOES have authority to adjust a team on their
+  # OWN game (Task 2, InterventionsController#create_adjustment) but must NOT
+  # have it here, because a global row has no game to scope it to and reaches
+  # every game the team has ever played -- including games this author has
+  # nothing to do with. That asymmetry is why this controller is
+  # superadmin-only rather than another action riding ensure_author. The
+  # author here genuinely owns a game, so this exercises that authority
+  # boundary rather than standing in for "any non-superadmin".
+  it "refuses a game author" do
+    team = create_team(:captain => create_user)
+    author = create_user
+    create_game(:author => author)
+    sign_in(author)
+
+    post admin_team_adjustments_path(:team_id => team.id),
+         :params => { :amount => -25, :note => "x", :confirmed => "1" }
+
+    expect(response).to have_http_status(:unauthorized)
+    expect(PointTransaction.count).to eq(0)
+  end
+
+  it "refuses an ordinary signed-in user" do
+    team = create_team(:captain => create_user)
+    sign_in(create_user)
+
+    post admin_team_adjustments_path(:team_id => team.id),
+         :params => { :amount => -25, :note => "x", :confirmed => "1" }
+
+    expect(response).to have_http_status(:unauthorized)
+    expect(PointTransaction.count).to eq(0)
+  end
 end

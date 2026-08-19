@@ -89,6 +89,7 @@ describe "an operator adjusting a team's points for one game", type: :request do
     post team_adjustments_path(:game_id => game.id, :team_id => passing.team_id),
          :params => { :amount => -50, :note => "", :confirmed => "1" }
 
+    expect(response).to have_http_status(:unprocessable_entity)
     expect(PointTransaction.where(:reason => "adjustment").count).to eq(0)
   end
 
@@ -99,6 +100,7 @@ describe "an operator adjusting a team's points for one game", type: :request do
     post team_adjustments_path(:game_id => game.id, :team_id => passing.team_id),
          :params => { :amount => -50, :note => "x", :confirmed => "1" }
 
+    expect(response).to have_http_status(:unauthorized)
     expect(PointTransaction.where(:reason => "adjustment").count).to eq(0)
   end
 end

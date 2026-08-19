@@ -42,5 +42,19 @@ describe GamePassing do
 
       expect(passing.reload.answered_questions).to be_empty
     end
+
+    it "clears answered questions on the finishing path too" do
+      one and two
+      question = create_question(:level => two)
+      passing  = create_game_passing(:game => game, :level => two)
+      passing.pass_question!(question)
+      expect(passing.answered_questions).not_to be_empty
+
+      passing.pass_level!
+
+      passing.reload
+      expect(passing.finished_at).not_to be_nil
+      expect(passing.answered_questions).to be_empty
+    end
   end
 end

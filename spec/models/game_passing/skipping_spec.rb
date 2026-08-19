@@ -146,6 +146,24 @@ describe GamePassing do
       expect(PointTransaction.where(:game_passing_id => passing.id,
                                     :reason => "level_skipped").count).to eq(1)
     end
+
+    # F2: the time penalty must self-heal the same way the points fine does.
+    # increment! sat outside the duplicate protection, so this retry used to
+    # charge the clock twice (600 -> 1200).
+    it "does not charge the time penalty twice when a retry follows a failed advance" do
+      game, one, two = skippable_game(:skip_time_penalty => 600)
+      passing = create_game_passing(:game => game, :level => one)
+
+      allow(passing).to receive(:advance!).and_raise(ActiveRecord::StatementInvalid, "boom")
+      expect { passing.skip_level!(captain) }.to raise_error(ActiveRecord::StatementInvalid)
+      expect(passing.reload.penalty_seconds.to_i).to eq(600)
+
+      allow(passing).to receive(:advance!).and_call_original
+      passing.skip_level!(captain)
+
+      expect(passing.reload.current_level).to eq(two)
+      expect(passing.penalty_seconds.to_i).to eq(600)
+    end
   end
 
   it "writes a log line so the level log shows what happened" do
@@ -180,9 +198,15 @@ describe GamePassing do
   # own action. Both halves in one example on purpose -- an example covering
   # only the skip half would pass against code that had dropped the gate from
   # awarding too.
+  #
+  # F1: skip_points_fine is deliberately NON-ZERO (25) here. With a
+  # fine of 0 configured, `eq(0)` on the row's amount is satisfied by the
+  # fixture regardless of whether points_enabled gates the charge -- the
+  # examples were indistinguishable to this suite until this fine was made
+  # non-zero. Now amount == 0 can only come from the points_enabled gate.
   describe "with points disabled" do
     it "still records the skip and still enforces the cap, while awarding nothing" do
-      game, one, _two = skippable_game(:points_enabled => false, :skip_points_fine => 0)
+      game, one, _two = skippable_game(:points_enabled => false, :skip_points_fine => 25)
       passing = create_game_passing(:game => game, :level => one)
 
       passing.skip_level!(captain)
@@ -193,6 +217,62 @@ describe GamePassing do
       expect(rows.where(:reason => "level_skipped").first.amount).to eq(0)
       expect(rows.where(:reason => "level_completed").count).to eq(0)
       expect(passing.reload.skips_left).to eq(1)
+    end
+  end
+
+  # F4: unreachable from the captain's path today (GamePassingsController
+  # guards it with ensure_team_not_exited), but Task 5's operator path calls
+  # skip_level! directly on an arbitrary passing.
+  it "refuses when the run has exited" do
+    game, one, _two = skippable_game
+    passing = create_game_passing(:game => game, :level => one)
+    passing.exit!
+
+    expect { passing.skip_level!(captain) }.to raise_error(ArgumentError)
+    expect(PointTransaction.where(:game_passing_id => passing.id,
+                                  :reason => "level_skipped").count).to eq(0)
+  end
+
+  # F5: four properties the code already gets right, with no example
+  # protecting them until now.
+  describe "properties pinned after review" do
+    it "stores a fixed ASCII marker, not a translated string" do
+      game, one, _two = skippable_game
+      passing = create_game_passing(:game => game, :level => one)
+
+      passing.skip_level!(captain)
+
+      expect(Log.where(:game_passing_id => passing.id).last.answer).to eq("(skipped)")
+    end
+
+    # Message-order expectation, not a side-effect assertion: the row content
+    # log_skip! writes does not itself change depending on when it runs (the
+    # skipped level is captured before either call), so only an order
+    # assertion on the calls themselves can catch a reordering.
+    it "logs the skip after advancing, not before" do
+      game, one, _two = skippable_game
+      passing = create_game_passing(:game => game, :level => one)
+
+      expect(passing).to receive(:advance!).ordered.and_call_original
+      expect(passing).to receive(:log_skip!).ordered.and_call_original
+
+      passing.skip_level!(captain)
+    end
+
+    it "returns the level that was skipped" do
+      game, one, _two = skippable_game
+      passing = create_game_passing(:game => game, :level => one)
+
+      expect(passing.skip_level!(captain)).to eq(one)
+    end
+
+    it "does not finish the run when the skipped level was not the last one" do
+      game, one, _two = skippable_game
+      passing = create_game_passing(:game => game, :level => one)
+
+      passing.skip_level!(captain)
+
+      expect(passing.reload.finished_at).to be_nil
     end
   end
 end

@@ -288,6 +288,7 @@ class GamePassing < ApplicationRecord
   # advance runs. One charge, no stuck team, and no transaction around the two
   # -- see PointTransaction.award!, which must not be rescued from inside one.
   def skip_level!(actor)
+    raise ArgumentError, "team has exited" if exited?
     raise ArgumentError, "no skips left" unless skips_left.positive?
 
     skipped = self.current_level
@@ -487,8 +488,17 @@ protected
   # award_points_for. That gate exists so no EXISTING game starts writing rows
   # behind its author's back; a skip row cannot be written unless the author
   # set max_skips > 0, which is the opt-in. points_enabled gates awards; it
-  # does not gate the record of a team's own action. With points off the amount
-  # is simply 0, and the cap still works.
+  # does not gate the record of a team's own action.
+  #
+  # With points off the AMOUNT is zeroed rather than the row skipped entirely:
+  # points_enabled is the master switch for the whole points system, and a
+  # game with it off gives a team no way to EARN -- so charging the ordinary
+  # fine would drain a balance the team built in other games, for a game that
+  # could never add to it. The four skip settings are independent form
+  # fields with no cross-validation (see Game's validations), so
+  # points_enabled: false, skip_points_fine: 25 is reachable by ordinary
+  # misconfiguration. The row is still written at amount 0, because the cap
+  # (skips_left) still needs it to count.
   #
   # Testing runs write these rows for the same reason: without them the cap has
   # nothing to count, and an author testing the limit they configured would see
@@ -498,6 +508,28 @@ protected
   # increment!, not read-modify-write, for the reason answer_options! records
   # at this same column: two teammates acting at the same instant under
   # update_column each read the same starting value and one charge is lost.
+  #
+  # Guarded on award! returning a row, not fired unconditionally: award!
+  # returns nil when the partial unique index refuses a duplicate -- a retry
+  # after a failed advance (S5's self-heal), or an operator re-skip landing a
+  # team back on a level it already paid for. Firing the increment regardless
+  # double-charges the team's clock on exactly the path S5 promises is a
+  # single charge. The ledger row is the single arbiter of "already charged
+  # for this level" -- the same one skips_left already relies on.
+  def charge_skip!(level, actor)
+    amount = game.points_enabled? ? -game.skip_points_fine.to_i : 0
+
+    row = PointTransaction.award!(:passing    => self,
+                                  :reason     => "level_skipped",
+                                  :level      => level,
+                                  :amount     => amount,
+                                  :created_by => actor)
+    return if row.nil?
+
+    penalty = game.skip_time_penalty.to_i
+    increment!(:penalty_seconds, penalty) if penalty.positive?
+  end
+
   # The level log is what an author reads to see what a team did, and a level
   # that simply stops having answers looks like a team that went quiet. AFTER
   # the advance, not before: the log line is a record, and a record of a skip
@@ -518,17 +550,6 @@ protected
                 :team_id         => team_id,
                 :time            => Time.now,
                 :answer          => "(skipped)")
-  end
-
-  def charge_skip!(level, actor)
-    PointTransaction.award!(:passing    => self,
-                            :reason     => "level_skipped",
-                            :level      => level,
-                            :amount     => -game.skip_points_fine.to_i,
-                            :created_by => actor)
-
-    penalty = game.skip_time_penalty.to_i
-    increment!(:penalty_seconds, penalty) if penalty.positive?
   end
 
   # Awards are written AFTER the advance is saved, deliberately. A team

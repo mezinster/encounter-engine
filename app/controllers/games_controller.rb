@@ -162,8 +162,13 @@ class GamesController < ApplicationController
     redirect_to @game
   end
 
+  # category/mode/note are hardcoded for now -- the operator's form that
+  # collects a real reason is a later task in this sub-project. "other" and
+  # "freeze" are the safe defaults: "other" is the category built for a
+  # free-text reason nobody has captured yet, and "freeze" is the mode that
+  # leaves runs intact rather than closing them.
   def withdraw
-    @game.withdraw!
+    @game.withdraw!(:category => "other", :mode => "freeze")
     record_admin_action("withdraw", @game)
     redirect_to admin_games_path, :notice => t("games.withdrawn_notice")
   end

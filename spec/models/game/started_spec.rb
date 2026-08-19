@@ -81,7 +81,7 @@ describe Game, '#started?' do
   describe "when the game was withdrawn after starting" do
     before :each do
       set_game_schedule!(@game, :starts_at => 30.minutes.ago)
-      @game.withdraw!
+      @game.withdraw!(:category => "other", :mode => "freeze")
       @game.reload
     end
 

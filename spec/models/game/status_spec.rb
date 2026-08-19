@@ -38,7 +38,7 @@ describe Game, "#status" do
 
   it "is :withdrawn for a withdrawn game" do
     game = create_game(:is_draft => false)
-    game.withdraw!
+    game.withdraw!(:category => "other", :mode => "freeze")
 
     expect(game.status).to eq(:withdrawn)
   end
@@ -49,7 +49,7 @@ describe Game, "#status" do
   it "reports :withdrawn for a game that is both withdrawn and finished" do
     game = running_game
     set_game_schedule!(game, :author_finished_at => Time.now)
-    game.withdraw!
+    game.withdraw!(:category => "other", :mode => "freeze")
 
     expect(game.status).to eq(:withdrawn)
   end
@@ -87,7 +87,7 @@ describe Game, "#status" do
   # report :draft while count_by_status still counts it as :withdrawn.
   it "reports :withdrawn for a draft that has also been withdrawn" do
     game = create_game(:is_draft => true)
-    game.withdraw!
+    game.withdraw!(:category => "other", :mode => "freeze")
 
     expect(game.status).to eq(:withdrawn)
   end
@@ -100,8 +100,8 @@ describe Game, "#status" do
     running_game
     finished = running_game
     set_game_schedule!(finished, :author_finished_at => Time.now)
-    create_game(:is_draft => false).withdraw!
-    create_game(:is_draft => true).withdraw!
+    create_game(:is_draft => false).withdraw!(:category => "other", :mode => "freeze")
+    create_game(:is_draft => true).withdraw!(:category => "other", :mode => "freeze")
 
     tallied = Game.all.group_by(&:status).transform_values(&:size)
     tallied.default = 0

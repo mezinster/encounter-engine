@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_19_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_19_140000) do
   create_table "access_codes", force: :cascade do |t|
     t.integer "game_id", null: false
     t.string "code_digest", null: false
@@ -194,6 +194,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_19_120000) do
     t.integer "max_skips", default: 0, null: false
     t.integer "skip_points_fine", default: 0, null: false
     t.integer "skip_time_penalty", default: 0, null: false
+    t.string "withdrawal_category"
+    t.text "withdrawal_note"
+    t.string "withdrawal_mode"
+    t.boolean "withdrawal_paused_run", default: false, null: false
   end
 
   create_table "hints", force: :cascade do |t|

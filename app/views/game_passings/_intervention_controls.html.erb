@@ -23,5 +23,9 @@
                     reset_team_clock_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
                     :method => :post, :class => "btn btn--danger" %>
     <% end %>
+
+    <%= button_to t("interventions.skip_level"),
+                  skip_team_level_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
+                  :method => :post, :class => "btn" %>
   </div>
 </div>

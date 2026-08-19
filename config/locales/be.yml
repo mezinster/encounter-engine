@@ -167,6 +167,7 @@ be:
           move_team: "Перавёў каманду на іншы ўзровень"
           reinstate_team: "Вярнуў каманду ў гульню"
           reset_clock: "Скінуў адлік часу на ўзроўні"
+          skip_level: "Прапусціў узровень за каманду"
           accept_entry: "Прыняў заяўку каманды"
           reject_entry: "Адхіліў заяўку каманды"
           translation_run_started: "Запусціў пераклад"
@@ -335,6 +336,8 @@ be:
     team_exited: "Каманда сышла з дыстанцыі"
     game_is_not_live: "Гульня зараз не ідзе"
   interventions:
+    skip_level: "Прапусціць узровень"
+    skipped_notice: "Узровень прапушчаны"
     paused_notice: "Гульня прыпынена"
     resumed_notice: "Гульня працягваецца"
     moved_notice: "Каманда пераведзена на іншы ўзровень"

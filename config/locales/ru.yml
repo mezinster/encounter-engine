@@ -148,6 +148,7 @@ ru:
           move_team: "Перевёл команду на другой уровень"
           reinstate_team: "Вернул команду в игру"
           reset_clock: "Сбросил отсчёт времени на уровне"
+          skip_level: "Пропустил уровень за команду"
           accept_entry: "Принял заявку команды"
           reject_entry: "Отклонил заявку команды"
           translation_run_started: "Запустил перевод"
@@ -316,6 +317,8 @@ ru:
     team_exited: "Команда сошла с дистанции"
     game_is_not_live: "Игра сейчас не идёт"
   interventions:
+    skip_level: "Пропустить уровень"
+    skipped_notice: "Уровень пропущен"
     paused_notice: "Игра приостановлена"
     resumed_notice: "Игра продолжается"
     moved_notice: "Команда переведена на другой уровень"

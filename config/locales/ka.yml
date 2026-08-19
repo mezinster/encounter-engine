@@ -171,6 +171,7 @@ ka:
           move_team: "გადაიყვანა გუნდი სხვა დონეზე"
           reinstate_team: "დააბრუნა გუნდი თამაშში"
           reset_clock: "განულა დროის ათვლა დონეზე"
+          skip_level: "გამოტოვა დონე გუნდისთვის"
           accept_entry: "მიიღო გუნდის განაცხადი"
           reject_entry: "უარყო გუნდის განაცხადი"
           translation_run_started: "დაიწყო თარგმანი"
@@ -339,6 +340,8 @@ ka:
     too_many_requests: "ძალიან ბევრი მცდელობა. სცადეთ მოგვიანებით."
     game_is_not_live: "თამაში ამჟამად არ მიმდინარეობს"
   interventions:
+    skip_level: "დონის გამოტოვება"
+    skipped_notice: "დონე გამოტოვებულია"
     paused_notice: "თამაში შეჩერებულია"
     resumed_notice: "თამაში გრძელდება"
     moved_notice: "გუნდი გადაყვანილია სხვა დონეზე"

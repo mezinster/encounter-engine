@@ -148,6 +148,7 @@ en:
           move_team: "Moved a team to another level"
           reinstate_team: "Brought a team back into the game"
           reset_clock: "Reset the level clock"
+          skip_level: "Skipped a level for a team"
           accept_entry: "Accepted a team's application"
           reject_entry: "Rejected a team's application"
           translation_run_started: "Started a translation"
@@ -316,6 +317,8 @@ en:
     team_exited: "Your team has left the race"
     game_is_not_live: "This game is not currently running"
   interventions:
+    skip_level: "Skip the level"
+    skipped_notice: "The level was skipped"
     paused_notice: "Game paused"
     resumed_notice: "Game resumed"
     moved_notice: "Team moved to another level"

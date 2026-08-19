@@ -193,6 +193,7 @@ tr:
           move_team: "Takımı başka bir seviyeye taşıdı"
           reinstate_team: "Takımı oyuna geri aldı"
           reset_clock: "Seviyedeki süre sayacını sıfırladı"
+          skip_level: "Bir takım için seviye atladı"
           accept_entry: "Bir takımın başvurusunu kabul etti"
           reject_entry: "Bir takımın başvurusunu reddetti"
           translation_run_started: "Çeviri başlattı"
@@ -362,6 +363,8 @@ tr:
     team_exited: "Takım yarıştan çekildi"
     game_is_not_live: "Oyun şu anda sürmüyor"
   interventions:
+    skip_level: "Seviyeyi atla"
+    skipped_notice: "Seviye atlandı"
     paused_notice: "Oyun duraklatıldı"
     resumed_notice: "Oyun devam ediyor"
     moved_notice: "Takım başka bir seviyeye taşındı"

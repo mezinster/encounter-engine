@@ -253,6 +253,7 @@ Rails.application.routes.draw do
   post "/games/:game_id/teams/:team_id/move",        to: "interventions#move",        as: :move_team
   post "/games/:game_id/teams/:team_id/reinstate",   to: "interventions#reinstate",   as: :reinstate_team
   post "/games/:game_id/teams/:team_id/reset_clock", to: "interventions#reset_clock", as: :reset_team_clock
+  post "/games/:game_id/teams/:team_id/skip_level", to: "interventions#skip_level", as: :skip_team_level
 
   # Level-scoped, unlike the team-scoped interventions above: how a level's
   # codes count is a property of the level, not of one team's passing.

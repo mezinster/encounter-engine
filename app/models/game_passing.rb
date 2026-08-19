@@ -270,6 +270,44 @@ class GamePassing < ApplicationRecord
     award_points_for(passed, finishing)
   end
 
+  # Returns the level that was skipped.
+  #
+  # The fine is charged BEFORE the advance, which is the reverse of what
+  # pass_level! does with its award, and the reversal is deliberate. An award
+  # that fails to write is a bookkeeping problem: the team answered correctly
+  # and must move on regardless. A FINE that fails to write hands out the thing
+  # it exists to price -- and because skips_left counts these rows, an
+  # unrecorded skip also makes the cap unenforceable.
+  #
+  # Charging first is safe only because refusing a skip is a no-op: the team
+  # stays on a level they can still play. That is what separates this from
+  # refusing to advance on a correct answer.
+  #
+  # If the charge succeeds and the advance then fails, the team retries: the
+  # partial unique index refuses the second row, award! returns nil, and the
+  # advance runs. One charge, no stuck team, and no transaction around the two
+  # -- see PointTransaction.award!, which must not be rescued from inside one.
+  def skip_level!(actor)
+    raise ArgumentError, "no skips left" unless skips_left.positive?
+
+    skipped = self.current_level
+    raise ArgumentError, "nothing to skip" if skipped.nil?
+
+    charge_skip!(skipped, actor)
+    advance!(last_level?)
+    log_skip!(skipped)
+
+    skipped
+  end
+
+  # Derived, never stored. The partial unique index on
+  # (game_passing_id, level_id, reason) already guarantees one row per skipped
+  # level, so counting rows IS the count of skips -- a column would be a second
+  # account of the same fact, free to drift from it.
+  def skips_left
+    game.max_skips.to_i - point_transactions.where(:reason => "level_skipped").count
+  end
+
   def finished?
     !! finished_at
   end
@@ -443,6 +481,54 @@ protected
 
     self.current_level = self.current_level.next
     save!
+  end
+
+  # NOT gated on points_enabled, and that is a considered difference from
+  # award_points_for. That gate exists so no EXISTING game starts writing rows
+  # behind its author's back; a skip row cannot be written unless the author
+  # set max_skips > 0, which is the opt-in. points_enabled gates awards; it
+  # does not gate the record of a team's own action. With points off the amount
+  # is simply 0, and the cap still works.
+  #
+  # Testing runs write these rows for the same reason: without them the cap has
+  # nothing to count, and an author testing the limit they configured would see
+  # no limit. finish_test and TestAdmission#revoke! delete a run's
+  # point_transactions, so nothing outlives the test.
+  #
+  # increment!, not read-modify-write, for the reason answer_options! records
+  # at this same column: two teammates acting at the same instant under
+  # update_column each read the same starting value and one charge is lost.
+  # The level log is what an author reads to see what a team did, and a level
+  # that simply stops having answers looks like a team that went quiet. AFTER
+  # the advance, not before: the log line is a record, and a record of a skip
+  # that did not happen is worse than a missing one.
+  #
+  # `answer` holds a fixed ASCII marker rather than a t() call. This is STORED
+  # data, read later by everyone who opens the log, so a translated string
+  # would freeze whichever locale the acting user happened to be using into a
+  # row that outlives their session -- the same reasoning as
+  # TestAdmission.disposable_team_name.
+  def log_skip!(level)
+    Log.create!(:game_id         => game_id,
+                :game_run_id     => game_run_id,
+                :game_passing_id => id,
+                :level           => level.name,
+                :level_id        => level.id,
+                :team            => team.name,
+                :team_id         => team_id,
+                :time            => Time.now,
+                :answer          => "(skipped)")
+  end
+
+  def charge_skip!(level, actor)
+    PointTransaction.award!(:passing    => self,
+                            :reason     => "level_skipped",
+                            :level      => level,
+                            :amount     => -game.skip_points_fine.to_i,
+                            :created_by => actor)
+
+    penalty = game.skip_time_penalty.to_i
+    increment!(:penalty_seconds, penalty) if penalty.positive?
   end
 
   # Awards are written AFTER the advance is saved, deliberately. A team

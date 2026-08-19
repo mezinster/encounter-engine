@@ -265,10 +265,11 @@ module FixturesHelper
 
   def create_point_transaction(options = {})
     passing = options[:passing] || create_game_passing
-    PointTransaction.award!(:passing => passing,
-                            :reason  => options[:reason] || "level_completed",
-                            :level   => options.key?(:level) ? options[:level] : passing.current_level,
-                            :amount  => options[:amount] || 10)
+    PointTransaction.award!(:passing    => passing,
+                            :reason     => options[:reason] || "level_completed",
+                            :level      => options.key?(:level) ? options[:level] : passing.current_level,
+                            :amount     => options[:amount] || 10,
+                            :created_by => options[:created_by])
   end
 
   def set_game_schedule!(game, attrs)

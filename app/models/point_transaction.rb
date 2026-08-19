@@ -4,10 +4,9 @@
 # Never updated, never reversed. A team that abandons a run keeps what it
 # earned and simply never earns the completion award -- see the design, P3/P4.
 class PointTransaction < ApplicationRecord
-  # D1's two. Sub-project D2 adds the skip fine; an operator adjustment would
-  # add another. Both are negative rows in this same table, which is why
-  # `amount` is signed.
-  REASONS = %w[level_completed game_completed].freeze
+  # D1's two, plus D2's fine. An operator adjustment would add another. The
+  # negative rows are why `amount` is signed.
+  REASONS = %w[level_completed game_completed level_skipped].freeze
 
   belongs_to :team
   belongs_to :game
@@ -44,13 +43,14 @@ class PointTransaction < ApplicationRecord
   # (`GamePassing#pass_level!`) is safe today -- nothing wraps it in a
   # transaction -- but any future caller that does must not rescue this
   # method's `nil` from inside one.
-  def self.award!(passing:, reason:, amount:, level: nil)
+  def self.award!(passing:, reason:, amount:, level: nil, created_by: nil)
     create!(:team_id         => passing.team_id,
             :game_id         => passing.game_id,
             :game_passing_id => passing.id,
             :level_id        => level&.id,
             :amount          => amount,
-            :reason          => reason)
+            :reason          => reason,
+            :created_by      => created_by)
   rescue ActiveRecord::RecordNotUnique
     nil
   end

@@ -269,13 +269,24 @@ in alphabetical position beside `access_code:` / `access_pass:`:
 | tr | `İzin verilen atlama sayısı` | `Düşülen puan` | `Ceza süresi` |
 | ka | `დაშვებული გამოტოვებები` | `ჩამოჭრილი ქულა` | `ჯარიმის დრო` |
 
-**Why these nouns and not more natural ones.** `rails-i18n` supplies the numericality messages
-(`greater_than_or_equal_to`, `not_a_number`), and `ApplicationHelper#error_messages_for` composes
-`"%{attribute} %{message}"`. The Russian message is `должно быть больше или равно 0` — **neuter**.
-So all three Russian nouns are deliberately neuter (`число`, `списание`, `время`) and agree with
-it. The same reasoning applies to `uk`, `be` and `pl`. Picking a masculine noun such as `Штраф`
-here would produce `Штраф должно быть...`, which is simply wrong Russian. Do not "improve" these
-nouns without re-checking the composed sentence.
+**Why these nouns, and how to check a replacement.** `rails-i18n` supplies the numericality
+messages, and `ApplicationHelper#error_messages_for` composes `"%{attribute} %{message}"`, so the
+noun and the message have to form one grammatical sentence.
+
+CORRECTED after Task 1's review, which established the real string by rendering it: the installed
+`rails-i18n` 8.1.0 message for `greater_than_or_equal_to` in `ru` is
+`может иметь значение большее или равное %{count}` — a verb phrase, so the subject noun's gender is
+NOT load-bearing here, and all three render grammatically:
+
+    Число пропусков может иметь значение большее или равное 0
+    Списание очков может иметь значение большее или равное 0
+    Штрафное время может иметь значение большее или равное 0
+
+An earlier draft of this paragraph asserted the message was `должно быть больше или равно 0`, which
+would have made gender load-bearing. That string was never verified and is wrong. The lesson is the
+instruction, not the grammar rule: **render the composed sentence before trusting it.** No test in
+this repository checks that two separately-correct fragments compose into a correct sentence — the
+i18n specs check that keys exist and that interpolation variables match, and nothing more.
 
 - [ ] **Step 11: Run the tests**
 

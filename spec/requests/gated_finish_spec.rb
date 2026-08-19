@@ -174,7 +174,13 @@ describe "a paid game's ending", type: :request do
 
       post exit_game_path(:game_id => game.id)
 
-      expect(response).to have_http_status(:found)
+      # :ok, not :found: halt_if_gated_attempt_finished calls
+      # render_finished_passing, and that now RENDERS the finish screen
+      # (this task) rather than redirecting to game_path (the previous
+      # behaviour, when this example was written against Task 1 alone). The
+      # guard still stops exit_game's own write -- that is everything below
+      # this line, unchanged.
+      expect(response).to have_http_status(:ok)
       expect(attempt.reload.finished_at.to_i).to eq(original_finished_at)
       expect(attempt.status).to be_nil
       expect(game.reload.pass_standings.map(&:id)).to include(attempt.id)
@@ -188,7 +194,105 @@ describe "a paid game's ending", type: :request do
 
       get get_current_level_tip_path(:game_id => game.id)
 
-      expect(response).to have_http_status(:found)
+      # :ok, not :found -- see the comment in the example above.
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
+  describe "the finish screen" do
+    def scored_gated_setup
+      captain = create_user
+      team    = create_team(:captain => captain)
+      game    = create_game(:access_mode => "pass_required", :points_enabled => true,
+                            :level_completion_points => 10, :game_completion_points => 50)
+      one     = create_level(:game => game, :position => 1)
+      create_level(:game => game, :position => 2)
+      set_game_schedule!(game, :starts_at => 1.hour.ago)
+      pass    = create_access_pass(:game => game, :team => team)
+      [ game.reload, team, captain, one, pass ]
+    end
+
+    it "shows their time, their place and their points" do
+      game, team, captain, one, pass = scored_gated_setup
+      attempt = create_game_passing(:game => game, :team => team, :game_run => nil,
+                                    :access_pass => pass, :level => one)
+      attempt.update!(:finished_at => 1.hour.ago)
+      PointTransaction.award!(:passing => attempt, :reason => "game_completed",
+                              :level => nil, :amount => 50)
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(attempt.seconds_to_hms(attempt.duration))
+      expect(response.body).to include("50")
+      expect(response.body).to include(I18n.t("game_passings.gated_finish.your_place"))
+    end
+
+    # A skip fine is negative and this is the screen where a team finds out
+    # what skipping cost them.
+    it "shows a negative row in their own ledger" do
+      game, team, captain, one, pass = scored_gated_setup
+      attempt = create_game_passing(:game => game, :team => team, :game_run => nil,
+                                    :access_pass => pass, :level => one)
+      attempt.update!(:finished_at => 1.hour.ago)
+      PointTransaction.award!(:passing => attempt, :reason => "level_skipped",
+                              :level => one, :amount => -25)
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("-25")
+    end
+
+    # Points are off for most games. The screen must still be coherent.
+    it "is coherent for a game with no points enabled" do
+      captain = create_user
+      team    = create_team(:captain => captain)
+      game    = create_game(:access_mode => "pass_required")
+      one     = create_level(:game => game, :position => 1)
+      create_level(:game => game, :position => 2)
+      set_game_schedule!(game, :starts_at => 1.hour.ago)
+      pass    = create_access_pass(:game => game, :team => team)
+      attempt = create_game_passing(:game => game.reload, :team => team, :game_run => nil,
+                                    :access_pass => pass, :level => one)
+      attempt.update!(:finished_at => 1.hour.ago)
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(attempt.seconds_to_hms(attempt.duration))
+      expect(response.body).not_to include("translation missing")
+    end
+
+    # Two finished attempts, two different teams: proves the highlight marks
+    # THIS team's row and not the other team's -- a single-attempt fixture
+    # could not distinguish "highlighted" from "the only row there is".
+    it "marks the team's own row in the standings, and not another team's" do
+      game, team, captain, one, pass = scored_gated_setup
+      attempt = create_game_passing(:game => game, :team => team, :game_run => nil,
+                                    :access_pass => pass, :level => one)
+      attempt.update!(:finished_at => 2.hours.ago)
+
+      other_captain = create_user
+      other_team    = create_team(:captain => other_captain)
+      other_pass    = create_access_pass(:game => game, :team => other_team)
+      other_attempt = create_game_passing(:game => game, :team => other_team, :game_run => nil,
+                                          :access_pass => other_pass, :level => one)
+      other_attempt.update!(:finished_at => 1.hour.ago)
+
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      doc = Nokogiri::HTML(response.body)
+      rows = doc.css(".table--cards tr.is-you")
+      expect(rows.size).to eq(1)
+      expect(rows.text).to include(team.name)
+      expect(rows.text).not_to include(other_team.name)
     end
   end
 end

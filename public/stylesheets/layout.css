@@ -425,3 +425,15 @@
 @media (prefers-reduced-motion: reduce) {
   #drawer, .drawer-scrim { transition: none; }
 }
+
+/* Marks the viewer's own row in a completed-game standings table
+   (games/_pass_standings.html.erb, rendered with an optional `highlight`
+   local). game_passings/gated_finish.html.erb passes its own attempt so a
+   team that just finished a paid game can find themselves in the table
+   without reading every row; games/show.html.erb renders the same partial
+   with no highlight and is unaffected.
+
+   Background and font-weight only -- .table--cards is already responsive
+   (collapses to cards below 48rem), and anything that changes the row's box
+   needs bin/measure-play-screen re-run to catch a new overflow or scroll. */
+.table--cards tr.is-you { background: var(--surface-2); font-weight: 600; }

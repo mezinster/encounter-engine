@@ -844,6 +844,13 @@ pl:
       title: "Gra została zatrzymana"
     pass_revoked:
       what_to_do: "Skontaktuj się z organizatorem gry."
+    gated_finish:
+      title: "Gra ukończona"
+      your_place: "Twoje miejsce"
+      your_time: "Twój czas"
+      your_points: "Twoje punkty"
+      balance: "Łącznie drużyna"
+      unplaced: "nieokreślone"
     index:
       title: 'Gra "%{name}"'
       team: "Drużyna"

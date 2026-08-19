@@ -376,7 +376,12 @@ class GamePassingsController < ApplicationController
   # request against an older, started run and admit a team into a run that
   # has not opened yet.
   def render_finished_passing
-    return redirect_to(game_path(@game)) if @game.pass_required?
+    if @game.pass_required?
+      @standings = @game.pass_standings
+      @place     = @standings.index(@game_passing)&.+(1)
+      @ledger    = @game_passing.point_transactions.includes(:level).order(:created_at)
+      return render "game_passings/gated_finish"
+    end
 
     @run ||= @game.current_run
     render :show_results

@@ -859,6 +859,13 @@ ka:
       title: "თამაში შეჩერებულია"
     pass_revoked:
       what_to_do: "დაუკავშირდით თამაშის ორგანიზატორს."
+    gated_finish:
+      title: "თამაში დასრულებულია"
+      your_place: "თქვენი ადგილი"
+      your_time: "თქვენი დრო"
+      your_points: "თქვენი ქულები"
+      balance: "გუნდის ჯამი"
+      unplaced: "არ არის განსაზღვრული"
     index:
       title: 'თამაში "%{name}"'
       team: "გუნდი"

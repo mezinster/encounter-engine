@@ -812,6 +812,13 @@ en:
       title: "The game has been stopped"
     pass_revoked:
       what_to_do: "Please contact the game's organiser."
+    gated_finish:
+      title: "Game finished"
+      your_place: "Your place"
+      your_time: "Your time"
+      your_points: "Your points"
+      balance: "Team total"
+      unplaced: "not determined"
     index:
       title: 'Game "%{name}"'
       team: "Team"

@@ -831,6 +831,13 @@ be:
       title: "Гульня спынена"
     pass_revoked:
       what_to_do: "Звярніцеся да арганізатара гульні."
+    gated_finish:
+      title: "Гульня пройдзена"
+      your_place: "Ваша месца"
+      your_time: "Ваш час"
+      your_points: "Вашы ачкі"
+      balance: "Усяго ў каманды"
+      unplaced: "не вызначана"
     index:
       title: 'Гульня "%{name}"'
       team: "Каманда"

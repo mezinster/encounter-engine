@@ -835,6 +835,13 @@ uk:
       title: "Гру зупинено"
     pass_revoked:
       what_to_do: "Зверніться до організатора гри."
+    gated_finish:
+      title: "Гру пройдено"
+      your_place: "Ваше місце"
+      your_time: "Ваш час"
+      your_points: "Ваші очки"
+      balance: "Всього в команди"
+      unplaced: "не визначено"
     index:
       title: 'Гра "%{name}"'
       team: "Команда"

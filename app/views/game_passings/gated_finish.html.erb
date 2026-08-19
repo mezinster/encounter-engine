@@ -1,0 +1,36 @@
+<%# NO .page wrapper of its own, deliberately -- same reason as
+    pass_revoked.html.erb, which this view is modelled on: render_finished_passing
+    renders this under the APPLICATION layout, which has already opened
+    <div class="page">, and .page carries min-height: 100svh, so a second one
+    nested inside it stacks a full viewport below the sticky topbar. See the
+    pass_revoked.html.erb comment for the measured numbers; this view was
+    checked the same way before it shipped. %>
+<h2><%= t("game_passings.gated_finish.title") %></h2>
+
+<p><%= t("game_passings.gated_finish.your_place") %>:
+   <%= @place || t("game_passings.gated_finish.unplaced") %></p>
+<p><%= t("game_passings.gated_finish.your_time") %>:
+   <%= @game_passing.seconds_to_hms(@game_passing.duration) %></p>
+
+<% if @ledger.any? %>
+  <h3><%= t("game_passings.gated_finish.your_points") %></h3>
+  <div class="table-wrap">
+    <table class="table--cards">
+      <tbody>
+        <% @ledger.each do |row| %>
+          <tr>
+            <td data-label="<%= t("teams.show.reason") %>">
+              <%= PointTransaction::REASONS.include?(row.reason) ? t("teams.show.reasons.#{row.reason}") : row.reason %>
+            </td>
+            <td data-label="<%= t("teams.show.amount") %>"><%= row.amount %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p><%= t("game_passings.gated_finish.balance") %>: <%= @game_passing.team.balance %></p>
+<% end %>
+
+<%= render "games/pass_standings", game: @game, highlight: @game_passing %>
+
+<p><%= link_to @game.name, game_path(@game) %></p>

@@ -1,3 +1,4 @@
+<% highlight = defined?(highlight) ? highlight : nil %>
 <% standings = game.pass_standings %>
 <% if standings.any? %>
   <h3><%= t("games.standings.title") %></h3>
@@ -13,7 +14,7 @@
     </thead>
     <tbody>
       <% standings.each_with_index do |attempt, index| %>
-        <tr>
+        <tr class="<%= "is-you" if highlight && attempt == highlight %>">
           <td data-label="<%= t("games.standings.place") %>"><%= index + 1 %></td>
           <td data-label="<%= t("games.standings.team") %>"><%= attempt.team&.name %></td>
           <td data-label="<%= t("games.standings.finished_at") %>"><%= l(attempt.finished_at, :format => :long) %></td>

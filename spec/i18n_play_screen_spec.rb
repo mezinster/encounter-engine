@@ -58,6 +58,8 @@ describe "the play screen in every shipped locale" do
     errors.passing_stopped_by_operator
     errors.access_revoked
     game_passings.pass_revoked.what_to_do
+    game_passings.gated_finish.title
+    game_passings.gated_finish.your_place
   ].freeze
 
   SHIPPED_LOCALES.each do |locale|

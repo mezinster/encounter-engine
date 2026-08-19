@@ -35,5 +35,12 @@
                     skip_team_level_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
                     :method => :post, :class => "btn" %>
     <% end %>
+
+    <%# Unconditional, deliberately: unlike a skip there is no cap and no
+        per-game setting, so there is no state in which an adjustment is
+        unavailable. %>
+    <%= link_to t("interventions.adjust.button"),
+                new_team_adjustment_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
+                :class => "btn" %>
   </div>
 </div>

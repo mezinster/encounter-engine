@@ -149,6 +149,7 @@ ru:
           reinstate_team: "Вернул команду в игру"
           reset_clock: "Сбросил отсчёт времени на уровне"
           skip_level: "Пропустил уровень за команду"
+          adjust_points: "Скорректировал очки команды"
           accept_entry: "Принял заявку команды"
           reject_entry: "Отклонил заявку команды"
           translation_run_started: "Запустил перевод"
@@ -327,6 +328,18 @@ ru:
     any_code_notice: "На уровне «%{name}» теперь достаточно любого кода"
     all_codes_notice: "На уровне «%{name}» теперь нужны все коды"
     refused: "Это действие сейчас невозможно"
+    adjusted_notice: "Очки скорректированы"
+    adjust:
+      button: "Корректировка очков"
+      title: "Корректировка очков команды «%{team}»"
+      amount: "Сколько очков (минус — списание)"
+      note: "Пояснение (будет видно всем)"
+      review: "Проверить"
+      confirm_title: "Подтвердите корректировку"
+      summary: "Команде «%{team}»: %{amount} очков"
+      balance_change: "Баланс: %{before} → %{after}"
+      confirm: "Да, записать"
+      cancel: "Изменить"
   invitations:
     notice_sent: "Пользователю %{nickname} выслано приглашение"
     new:

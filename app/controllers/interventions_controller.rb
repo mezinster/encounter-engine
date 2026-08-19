@@ -17,7 +17,16 @@ class InterventionsController < ApplicationController
   before_action :ensure_author
   before_action :ensure_editing_not_locked
   before_action :ensure_game_is_live
-  before_action :find_game_passing, only: [ :move, :reinstate, :reset_clock, :skip_level ]
+  before_action :find_game_passing,
+                only: [ :move, :reinstate, :reset_clock, :skip_level,
+                        :new_adjustment, :create_adjustment ]
+
+  # A7: an adjustment is usually a judgement made AFTER a run -- a dispute
+  # settled the next morning, a location confirmed broken once the game is
+  # over. The commonest adjustment is one nobody could have made while the run
+  # was live, so these two actions are the only ones here that must survive a
+  # game that has ended.
+  skip_before_action :ensure_game_is_live, only: [ :new_adjustment, :create_adjustment ]
 
   # Deliberately narrower than ensure_author, which every other action here
   # uses and which also admits an operator on a gated game. Changing how codes
@@ -83,6 +92,26 @@ class InterventionsController < ApplicationController
     @level.require_all_codes!
     audit_level("require_all_codes")
     back_to_stats(t("interventions.all_codes_notice", :name => @level.name))
+  end
+
+  def new_adjustment
+    @amount = nil
+    @note   = nil
+  end
+
+  def create_adjustment
+    @amount = params[:amount].to_i
+    @note   = params[:note].to_s
+
+    return render(:confirm_adjustment) if params[:confirmed].blank?
+
+    PointTransaction.adjust!(:team => @game_passing.team, :amount => @amount,
+                             :note => @note, :actor => current_user,
+                             :passing => @game_passing)
+    audit("adjust_points", @game_passing.team.name)
+    back_to_stats(t("interventions.adjusted_notice"))
+  rescue ActiveRecord::RecordInvalid
+    render :new_adjustment, :status => :unprocessable_entity
   end
 
   private

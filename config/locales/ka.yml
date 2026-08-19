@@ -172,6 +172,7 @@ ka:
           reinstate_team: "დააბრუნა გუნდი თამაშში"
           reset_clock: "განულა დროის ათვლა დონეზე"
           skip_level: "გამოტოვა დონე გუნდისთვის"
+          adjust_points: "დაკორექტირდა გუნდის ქულები"
           accept_entry: "მიიღო გუნდის განაცხადი"
           reject_entry: "უარყო გუნდის განაცხადი"
           translation_run_started: "დაიწყო თარგმანი"
@@ -350,6 +351,18 @@ ka:
     any_code_notice: "დონეზე „%{name}“ ახლა საკმარისია ნებისმიერი კოდი"
     all_codes_notice: "დონეზე „%{name}“ ახლა ყველა კოდია საჭირო"
     refused: "ეს მოქმედება ამჟამად შეუძლებელია"
+    adjusted_notice: "ქულები კორექტირებულია"
+    adjust:
+      button: "ქულების კორექტირება"
+      title: "გუნდის «%{team}» ქულების კორექტირება"
+      amount: "რამდენი ქულა (მინუსი აკლებს)"
+      note: "განმარტება (ხილულია ყველასთვის)"
+      review: "შემოწმება"
+      confirm_title: "დაადასტურეთ კორექტირება"
+      summary: "გუნდს «%{team}» — %{amount} ქულა"
+      balance_change: "ბალანსი: %{before} → %{after}"
+      confirm: "დიახ, ჩაიწეროს"
+      cancel: "შეცვლა"
   invitations:
     notice_sent: "მოწვევა გაეგზავნა მომხმარებელს %{nickname}"
     new:

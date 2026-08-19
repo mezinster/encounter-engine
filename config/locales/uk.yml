@@ -166,6 +166,7 @@ uk:
           reinstate_team: "Повернув команду в гру"
           reset_clock: "Скинув відлік часу на рівні"
           skip_level: "Пропустив рівень за команду"
+          adjust_points: "Скоригував очки команди"
           accept_entry: "Прийняв заявку команди"
           reject_entry: "Відхилив заявку команди"
           translation_run_started: "Запустив переклад"
@@ -344,6 +345,18 @@ uk:
     any_code_notice: "На рівні «%{name}» тепер достатньо будь-якого коду"
     all_codes_notice: "На рівні «%{name}» тепер потрібні всі коди"
     refused: "Ця дія зараз неможлива"
+    adjusted_notice: "Очки скориговано"
+    adjust:
+      button: "Коригування очок"
+      title: "Коригування очок команди «%{team}»"
+      amount: "Скільки очок (мінус — списання)"
+      note: "Пояснення (буде видно всім)"
+      review: "Перевірити"
+      confirm_title: "Підтвердьте коригування"
+      summary: "Команді «%{team}»: %{amount} очок"
+      balance_change: "Баланс: %{before} → %{after}"
+      confirm: "Так, записати"
+      cancel: "Змінити"
   invitations:
     notice_sent: "Користувачеві %{nickname} надіслано запрошення"
     new:

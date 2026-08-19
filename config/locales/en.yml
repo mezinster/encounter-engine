@@ -149,6 +149,7 @@ en:
           reinstate_team: "Brought a team back into the game"
           reset_clock: "Reset the level clock"
           skip_level: "Skipped a level for a team"
+          adjust_points: "Adjusted a team's points"
           accept_entry: "Accepted a team's application"
           reject_entry: "Rejected a team's application"
           translation_run_started: "Started a translation"
@@ -327,6 +328,18 @@ en:
     any_code_notice: "Any one code now passes the level “%{name}”"
     all_codes_notice: "All codes are now required on the level “%{name}”"
     refused: "That action is not possible right now"
+    adjusted_notice: "The points were adjusted"
+    adjust:
+      button: "Adjust points"
+      title: "Adjust points for %{team}"
+      amount: "How many points (negative deducts)"
+      note: "Explanation (publicly visible)"
+      review: "Review"
+      confirm_title: "Confirm the adjustment"
+      summary: "%{amount} points for %{team}"
+      balance_change: "Balance: %{before} → %{after}"
+      confirm: "Yes, record it"
+      cancel: "Change it"
   invitations:
     notice_sent: "An invitation was sent to %{nickname}"
     new:

@@ -168,6 +168,7 @@ be:
           reinstate_team: "Вярнуў каманду ў гульню"
           reset_clock: "Скінуў адлік часу на ўзроўні"
           skip_level: "Прапусціў узровень за каманду"
+          adjust_points: "Скарэктаваў ачкі каманды"
           accept_entry: "Прыняў заяўку каманды"
           reject_entry: "Адхіліў заяўку каманды"
           translation_run_started: "Запусціў пераклад"
@@ -346,6 +347,18 @@ be:
     any_code_notice: "На ўзроўні «%{name}» цяпер дастаткова любога кода"
     all_codes_notice: "На ўзроўні «%{name}» цяпер патрэбны ўсе коды"
     refused: "Гэта дзеянне зараз немагчымае"
+    adjusted_notice: "Ачкі скарэктаваны"
+    adjust:
+      button: "Карэкціроўка ачкоў"
+      title: "Карэкціроўка ачкоў каманды «%{team}»"
+      amount: "Колькі ачкоў (мінус — спісанне)"
+      note: "Тлумачэнне (будзе бачна ўсім)"
+      review: "Праверыць"
+      confirm_title: "Пацвердзіце карэкціроўку"
+      summary: "Камандзе «%{team}»: %{amount} ачкоў"
+      balance_change: "Баланс: %{before} → %{after}"
+      confirm: "Так, запісаць"
+      cancel: "Змяніць"
   invitations:
     notice_sent: "Карыстальніку %{nickname} выслана запрашэнне"
     new:

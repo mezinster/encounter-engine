@@ -173,6 +173,7 @@ pl:
           reinstate_team: "Przywrócił drużynę do gry"
           reset_clock: "Zresetował odliczanie czasu na poziomie"
           skip_level: "Pominął poziom za drużynę"
+          adjust_points: "Skorygował punkty drużyny"
           accept_entry: "Przyjął zgłoszenie drużyny"
           reject_entry: "Odrzucił zgłoszenie drużyny"
           translation_run_started: "Uruchomił tłumaczenie"
@@ -351,6 +352,18 @@ pl:
     any_code_notice: "Na poziomie «%{name}» wystarczy teraz dowolny kod"
     all_codes_notice: "Na poziomie «%{name}» potrzebne są teraz wszystkie kody"
     refused: "To działanie jest w tej chwili niemożliwe"
+    adjusted_notice: "Punkty zostały skorygowane"
+    adjust:
+      button: "Korekta punktów"
+      title: "Korekta punktów drużyny „%{team}”"
+      amount: "Ile punktów (minus odejmuje)"
+      note: "Wyjaśnienie (widoczne publicznie)"
+      review: "Sprawdź"
+      confirm_title: "Potwierdź korektę"
+      summary: "%{amount} punktów dla drużyny „%{team}”"
+      balance_change: "Bilans: %{before} → %{after}"
+      confirm: "Tak, zapisz"
+      cancel: "Zmień"
   invitations:
     notice_sent: "Do użytkownika %{nickname} zostało wysłane zaproszenie"
     new:

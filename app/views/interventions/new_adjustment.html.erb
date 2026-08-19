@@ -1,0 +1,15 @@
+<div class="page">
+  <h2><%= t("interventions.adjust.title", :team => @game_passing.team.name) %></h2>
+
+  <%= form_with url: team_adjustments_path(:game_id => @game.id, :team_id => @game_passing.team_id), method: :post do |f| %>
+    <div class="field">
+      <%= label_tag :amount, t("interventions.adjust.amount") %>
+      <%= number_field_tag :amount, @amount %>
+    </div>
+    <div class="field">
+      <%= label_tag :note, t("interventions.adjust.note") %>
+      <%= text_area_tag :note, @note %>
+    </div>
+    <%= submit_tag t("interventions.adjust.review"), :class => "btn" %>
+  <% end %>
+</div>

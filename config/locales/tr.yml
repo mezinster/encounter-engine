@@ -194,6 +194,7 @@ tr:
           reinstate_team: "Takımı oyuna geri aldı"
           reset_clock: "Seviyedeki süre sayacını sıfırladı"
           skip_level: "Bir takım için seviye atladı"
+          adjust_points: "Bir takımın puanını düzeltti"
           accept_entry: "Bir takımın başvurusunu kabul etti"
           reject_entry: "Bir takımın başvurusunu reddetti"
           translation_run_started: "Çeviri başlattı"
@@ -373,6 +374,18 @@ tr:
     any_code_notice: "«%{name}» adlı seviyede artık herhangi bir kod yeterli"
     all_codes_notice: "«%{name}» adlı seviyede artık tüm kodlar gerekli"
     refused: "Bu işlem şu anda yapılamaz"
+    adjusted_notice: "Puanlar düzeltildi"
+    adjust:
+      button: "Puan düzeltmesi"
+      title: "«%{team}» adlı takımın puan düzeltmesi"
+      amount: "Kaç puan (eksi düşer)"
+      note: "Açıklama (herkese görünür)"
+      review: "Gözden geçir"
+      confirm_title: "Düzeltmeyi onaylayın"
+      summary: "«%{team}» adlı takıma %{amount} puan"
+      balance_change: "Bakiye: %{before} → %{after}"
+      confirm: "Evet, kaydet"
+      cancel: "Değiştir"
   invitations:
     notice_sent: "%{nickname} adlı kullanıcıya davet gönderildi"
     new:

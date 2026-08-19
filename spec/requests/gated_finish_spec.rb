@@ -152,6 +152,72 @@ describe "a paid game's ending", type: :request do
       expect(original.current_level).to eq(one)
       expect(original.finished_at).to be_nil
     end
+
+    # F1 of the whole-branch review: THE ORIGINAL BUG WEARING THE NEW MESSAGE.
+    # Pass A is revoked -- a mis-issue, a refund, the wrong code -- the team
+    # buys B and FINISHES on B. The filter asked "does this team hold ANY
+    # revoked pass for this game?", which A answers yes, where the question is
+    # "is the pass behind the attempt I would serve revoked?". A customer who
+    # paid, played and finished was handed a refusal: the same category error
+    # this sub-project exists to fix, one layer up.
+    it "shows the finish screen when a revoked pass was replaced and the replacement was played out" do
+      game, team, captain, _one, revoked = gated_setup
+      revoked.update!(:revoked_at => Time.now)
+      replacement = create_access_pass(:game => game, :team => team)
+      attempt     = finished_attempt(game, team, replacement)
+      sign_in(captain)
+
+      passings_before = GamePassing.count
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("game_passings.gated_finish.title"))
+      expect(response.body).not_to include(I18n.t("errors.access_revoked"))
+      expect(response.body).not_to include(I18n.t("errors.no_access_pass"))
+      # Their result was never in doubt -- only the screen they were shown.
+      expect(game.reload.pass_standings.map(&:id)).to include(attempt.id)
+      expect(GamePassing.count).to eq(passings_before)
+    end
+
+    # The other half of the same condition, and what stops the fix above from
+    # being "a finished attempt never sees this message": when the pass behind
+    # THAT attempt is the revoked one -- a refund granted after the game -- the
+    # revocation IS about them, and the message stands.
+    it "still shows the revoked message when the finished attempt's own pass was revoked" do
+      game, team, captain, _one, pass = gated_setup
+      finished_attempt(game, team, pass)
+      pass.update!(:revoked_at => Time.now)
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("errors.access_revoked"))
+      expect(response.body).not_to include(I18n.t("game_passings.gated_finish.title"))
+    end
+  end
+
+  # F2 of the whole-branch review. GamePassing#exit! stamps finished_at AND
+  # status "exited", so finished? is true while completed? is false -- and the
+  # finish screen branched on finished?. A captain who gave up mid-run was told
+  # "Игра пройдена", shown a place of "не определено" and standings with no row
+  # of theirs, on a page that 401s the moment they come back to it. The finish
+  # screen is for a COMPLETED attempt; a quit keeps master's redirect.
+  describe "a team that quits" do
+    it "is redirected to the game page rather than shown the finish screen" do
+      game, team, captain, one, pass = gated_setup
+      attempt = create_game_passing(:game => game, :team => team, :game_run => nil,
+                                    :access_pass => pass, :level => one)
+      sign_in(captain)
+
+      post exit_game_path(:game_id => game.id)
+
+      expect(response).to redirect_to(game_path(game))
+      expect(attempt.reload.exited?).to be true
+      # They are not in the standings and must not be told they placed.
+      expect(game.reload.pass_standings.map(&:id)).not_to include(attempt.id)
+    end
   end
 
   # A finished attempt is now SERVED rather than refused (see above), which
@@ -185,6 +251,30 @@ describe "a paid game's ending", type: :request do
       expect(attempt.status).to be_nil
       expect(game.reload.pass_standings.map(&:id)).to include(attempt.id)
       expect(GamePassing.count).to eq(passings_before)
+    end
+
+    # F5 of the whole-branch review: confirm_skip was not in
+    # halt_if_gated_attempt_finished's only: list, so a finished attempt was
+    # served the price and a live "Пропустить" button whose ONLY possible
+    # outcome is a refusal (GamePassing#skip_level! raises "run is over"
+    # before charging anything). That is the exact state #confirm_skip's own
+    # comment exists to prevent.
+    it "does not offer a skip confirmation" do
+      captain = create_user
+      team    = create_team(:captain => captain)
+      game    = create_game(:access_mode => "pass_required", :max_skips => 3)
+      create_level(:game => game, :position => 1)
+      create_level(:game => game, :position => 2)
+      set_game_schedule!(game, :starts_at => 1.hour.ago)
+      pass    = create_access_pass(:game => game, :team => team)
+      finished_attempt(game.reload, team, pass)
+      sign_in(captain)
+
+      get confirm_skip_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("game_passings.gated_finish.title"))
+      expect(response.body).not_to include(I18n.t("game_passings.confirm_skip.confirm"))
     end
 
     it "does not 500 the hint poller" do
@@ -265,6 +355,90 @@ describe "a paid game's ending", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(attempt.seconds_to_hms(attempt.duration))
       expect(response.body).not_to include("translation missing")
+    end
+
+    # F6 of the whole-branch review. Two level rows rendered identically
+    # ("Очко за уровень | 10") although render_finished_passing already
+    # eager-loads includes(:level), and an adjustment rendered without the
+    # note that PointTransaction VALIDATES as present -- the only thing
+    # telling one adjustment from another, on the screen where an
+    # unexplained plus-or-minus N is what sends a customer to support.
+    it "names the level on each level row and shows an adjustment's note" do
+      game, team, captain, one, pass = scored_gated_setup
+      two = game.levels.order(:position).last
+      # create_level names every level "Test level", so an example built on the
+      # fixture defaults could not tell the two rows apart -- which is the very
+      # thing this example is about.
+      one.update!(:name => "Мост через Аламедин")
+      two.update!(:name => "Старый вокзал")
+      attempt = create_game_passing(:game => game, :team => team, :game_run => nil,
+                                    :access_pass => pass, :level => one)
+      attempt.update!(:finished_at => 1.hour.ago)
+      PointTransaction.award!(:passing => attempt, :reason => "level_completed",
+                              :level => one, :amount => 10)
+      PointTransaction.award!(:passing => attempt, :reason => "level_completed",
+                              :level => two, :amount => 10)
+      PointTransaction.adjust!(:team => team, :amount => 33, :passing => attempt,
+                               :note => "Компенсация <точка 4>", :actor => create_user)
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(one.name)
+      expect(response.body).to include(two.name)
+      # Operator-authored free text: rendered verbatim and escaped by ERB's
+      # default, never through t() and never html_safe.
+      expect(response.body).to include("Компенсация &lt;точка 4&gt;")
+      expect(response.body).not_to include("Компенсация <точка 4>")
+    end
+
+    # F7 of the whole-branch review. render_finished_passing assigned
+    # @standings, used it only to work out @place, and then the partial ran
+    # game.pass_standings all over again -- two full loads of every completed
+    # attempt, and two Ruby sorts, on every request to this screen. Counted at
+    # the SQL rather than asserted structurally: an example that only checked
+    # the ivar was passed would be green against a partial that ignored it.
+    it "loads the standings once rather than for the place and again for the table" do
+      game, team, captain, one, pass = scored_gated_setup
+      attempt = create_game_passing(:game => game, :team => team, :game_run => nil,
+                                    :access_pass => pass, :level => one)
+      attempt.update!(:finished_at => 1.hour.ago)
+      sign_in(captain)
+
+      statements = []
+      collect = ->(_name, _start, _finish, _id, payload) do
+        statements << payload[:sql] unless payload[:name].to_s =~ /SCHEMA|TRANSACTION/
+      end
+      ActiveSupport::Notifications.subscribed(collect, "sql.active_record") do
+        get show_current_level_path(:game_id => game.id)
+      end
+
+      expect(response).to have_http_status(:ok)
+      # Game#pass_standings is the only query in the request shaped like the
+      # `completed` scope: finished_at set, over game_passings.
+      loads = statements.count do |sql|
+        sql.include?(%q{FROM "game_passings"}) && sql.include?(%q{"finished_at" IS NOT NULL})
+      end
+      expect(loads).to eq(1)
+    end
+
+    # F9 of the whole-branch review: before this branch a finishing gated team
+    # was redirected to the game page, which carries this link. The finish
+    # screen replaced that landing and dropped it, at the moment a team most
+    # wants to read back what they answered.
+    it "carries the team's own full-log link" do
+      game, team, captain, one, pass = scored_gated_setup
+      attempt = create_game_passing(:game => game, :team => team, :game_run => nil,
+                                    :access_pass => pass, :level => one)
+      attempt.update!(:finished_at => 1.hour.ago)
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("game_passings.show_results.full_log"))
+      expect(response.body).to include(show_full_log_path(game))
     end
 
     # Two finished attempts, two different teams: proves the highlight marks

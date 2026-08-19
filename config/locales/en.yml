@@ -818,7 +818,6 @@ en:
       your_time: "Your time"
       your_points: "Your points"
       balance: "Team total"
-      unplaced: "not determined"
     index:
       title: 'Game "%{name}"'
       team: "Team"

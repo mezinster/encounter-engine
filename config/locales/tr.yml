@@ -875,7 +875,6 @@ tr:
       your_time: "Süreniz"
       your_points: "Puanlarınız"
       balance: "Takım toplamı"
-      unplaced: "belirlenmedi"
     index:
       title: '"%{name}" adlı oyun'
       team: "Takım"

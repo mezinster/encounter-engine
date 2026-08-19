@@ -841,7 +841,6 @@ uk:
       your_time: "Ваш час"
       your_points: "Ваші очки"
       balance: "Всього в команди"
-      unplaced: "не визначено"
     index:
       title: 'Гра "%{name}"'
       team: "Команда"

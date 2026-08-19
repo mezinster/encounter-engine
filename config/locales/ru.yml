@@ -833,7 +833,6 @@ ru:
       your_time: "Ваше время"
       your_points: "Ваши очки"
       balance: "Всего у команды"
-      unplaced: "не определено"
     index:
       title: 'Игра "%{name}"'
       team: "Команда"

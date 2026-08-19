@@ -850,7 +850,6 @@ pl:
       your_time: "Twój czas"
       your_points: "Twoje punkty"
       balance: "Łącznie drużyna"
-      unplaced: "nieokreślone"
     index:
       title: 'Gra "%{name}"'
       team: "Drużyna"

@@ -264,4 +264,91 @@ describe "playing a game that has been withdrawn", type: :request do
       expect(response.body).not_to include(secret_note)
     end
   end
+  # F3 and F4 of the whole-branch review. team_owed_the_notice? asked "does
+  # this team have a passing that is not exited?", which is true of a FINISHED
+  # one -- so withdrawing a paid game at 02:00, after five of eight teams had
+  # crossed the line, replaced every one of those five results with "Игра
+  # остановлена" and the operator's incident note. A withdrawal cannot change
+  # the result of a team that already finished, and the note is described in
+  # that method's own comment as being only for the teams the notice is FOR.
+  describe "a team the notice is not for" do
+    def gated_game_with_a_finished_team
+      captain = create_user
+      team    = create_team(:captain => captain)
+      game    = create_game(:access_mode => "pass_required")
+      one     = create_level(:game => game, :position => 1)
+      create_level(:game => game, :position => 2)
+      set_game_schedule!(game, :starts_at => 1.hour.ago)
+      pass    = create_access_pass(:game => game.reload, :team => team)
+      passing = create_game_passing(:game => game, :team => team, :game_run => nil,
+                                    :access_pass => pass, :level => one)
+      passing.update!(:finished_at => 30.minutes.ago)
+      [ game, team, captain, pass, passing ]
+    end
+
+    it "shows a finished paying team their result rather than the notice" do
+      game, _team, captain, _pass, passing = gated_game_with_a_finished_team
+      game.withdraw!(:category => "safety", :note => "Улица перекрыта полицией",
+                     :mode => "ended")
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("game_passings.gated_finish.title"))
+      expect(response.body).not_to include(I18n.t("game_passings.withdrawn.title"))
+      expect(response.body).not_to include("Улица перекрыта полицией")
+      expect(game.reload.pass_standings.map(&:id)).to include(passing.id)
+    end
+
+    # The same population on the free path: the method is shared, and a team
+    # that crossed the line on a scheduled game is no more affected by the
+    # withdrawal than a paying one.
+    it "shows a finished team on a scheduled game their results" do
+      game, passing, captain = team_mid_run
+      passing.update!(:finished_at => 30.minutes.ago)
+      game.withdraw!(:category => "weather", :note => "Гроза над точкой 3",
+                     :mode => "ended")
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("game_passings.show_results.congrats"))
+      expect(response.body).not_to include("Гроза над точкой 3")
+    end
+
+    # F4: the operator deliberately took this team's access away, which makes
+    # them the clearest case of a team the incident note is not for -- and
+    # revocation, not the withdrawal, is why they cannot play.
+    it "does not reach a team whose pass was revoked" do
+      game, _team, captain, pass, passing = gated_game_with_a_finished_team
+      passing.update!(:finished_at => nil)
+      pass.update!(:revoked_at => Time.now)
+      game.withdraw!(:category => "other", :note => "Улица перекрыта полицией",
+                     :mode => "freeze")
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(I18n.t("errors.access_revoked"))
+      expect(response.body).not_to include("Улица перекрыта полицией")
+    end
+
+    # The positive control for all three: a team still ON THE COURSE is
+    # exactly who the notice is for, and must keep getting it.
+    it "still reaches a paying team that is mid-run" do
+      game, _team, captain, _pass, passing = gated_game_with_a_finished_team
+      passing.update!(:finished_at => nil)
+      game.withdraw!(:category => "safety", :note => "Улица перекрыта полицией",
+                     :mode => "freeze")
+      sign_in(captain)
+
+      get show_current_level_path(:game_id => game.id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Улица перекрыта полицией")
+    end
+  end
 end

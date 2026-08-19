@@ -837,7 +837,6 @@ be:
       your_time: "Ваш час"
       your_points: "Вашы ачкі"
       balance: "Усяго ў каманды"
-      unplaced: "не вызначана"
     index:
       title: 'Гульня "%{name}"'
       team: "Каманда"

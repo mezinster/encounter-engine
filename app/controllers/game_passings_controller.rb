@@ -73,7 +73,15 @@ class GamePassingsController < ApplicationController
   # finished? filter of its own, so exit_game looks reachable on one there as
   # well. That branch was not touched by the gated-finish change and the bug,
   # if real, is pre-existing -- reported, not fixed here.
-  before_action :halt_if_gated_attempt_finished, only: [ :exit_game, :get_current_level_tip ]
+  # confirm_skip is on this list for a different reason from the other two: it
+  # writes nothing, and skip_level refuses a finished attempt on its own
+  # (GamePassing#skip_level! raises "run is over" before charge_skip!). What it
+  # did was serve a finished team the price and a live "Пропустить" button
+  # whose ONLY possible outcome is that refusal -- the exact state #confirm_skip
+  # already checks both halves of "this team can skip" to avoid. F5 of the
+  # whole-branch review.
+  before_action :halt_if_gated_attempt_finished,
+                only: [ :exit_game, :get_current_level_tip, :confirm_skip ]
   before_action :ensure_author, only: [:index]
   before_action :ensure_game_not_paused, only: [ :post_answer, :exit_game, :confirm_skip, :skip_level ]
 
@@ -275,9 +283,10 @@ class GamePassingsController < ApplicationController
   # the organiser about access the organiser deliberately took away is a
   # runaround.
   #
-  # Only when NO live pass remains. A team whose pass was revoked but who holds
-  # a replacement plays on -- that is the same rule that gives a finished team
-  # with a spare pass a fresh attempt.
+  # Whether revocation is the reason this team cannot play is
+  # #revocation_blocks_team?'s question, and its comment is where that rule
+  # lives -- including why "does this team hold any revoked pass?" was the
+  # wrong question (F1 of the whole-branch review).
   #
   # Positioned before find_or_create_game_passing -- NOT because that filter
   # would otherwise enrol a revoked team: measured, moving this filter after
@@ -300,17 +309,55 @@ class GamePassingsController < ApplicationController
   # independently still leaves the other stopping play; see that method's
   # header comment.
   def halt_if_pass_revoked
-    return unless @game.pass_required?
-    return if @team.nil?
-    return if AccessPass.next_for(@game, @team).present?
-    return unless AccessPass.where(:game_id => @game.id, :team_id => @team.id)
-                            .where.not(:revoked_at => nil).exists?
+    return unless revocation_blocks_team?
 
     if request.get?
       render "game_passings/pass_revoked"
     else
       redirect_to show_current_level_path(:game_id => @game.id)
     end
+  end
+
+  # Is REVOCATION why this team cannot play? Asked of the ATTEMPT that would be
+  # served, never of the team's pass collection -- which is the whole of F1 of
+  # the whole-branch review. The question used to be "does this team hold any
+  # revoked pass for this game?", and a team whose first pass was revoked (a
+  # mis-issue, a refund, the wrong code), who then bought a second and FINISHED
+  # on it, answered yes: a customer who had paid, played and finished was handed
+  # a refusal. That is the same category error this sub-project exists to fix
+  # one layer up -- the original bug asked "is the pass spent?" where it meant
+  # "does this team have an attempt?".
+  #
+  # Read off #gated_passing's own state table, in its order:
+  #
+  #   * A live pass anywhere means play continues or a replay starts, whatever
+  #     else was revoked. Revocation is not what stopped them.
+  #   * With an attempt to serve, only THAT attempt's pass counts. Revoked and
+  #     unfinished: stopped mid-run, and this message is precisely what
+  #     happened to them (G4). Revoked and finished: a refund settled after the
+  #     game, and it still describes them. Unrevoked and finished: they
+  #     COMPLETED, and the finish screen is theirs.
+  #   * With no attempt at all, a revoked pass is the only thing separating
+  #     this team from a stranger, and gated_passing cannot tell them apart on
+  #     its own (neither has anything left to serve). That case is why this
+  #     filter exists and why it runs ahead of find_or_create_game_passing.
+  #
+  # access_pass is dereferenced safely: a passing on a gated game always has
+  # one today, and a nil there must not turn a refusal into a 500.
+  #
+  # Also read by #team_owed_the_notice? -- a withdrawal notice is for teams
+  # whose PLAY the withdrawal affected, and a team whose access an operator
+  # deliberately took away is not one of them (F4).
+  def revocation_blocks_team?
+    return false unless @game.pass_required?
+    return false if @team.nil?
+    return false if AccessPass.next_for(@game, @team).present?
+
+    attempt = GamePassing.gated_attempt_for(@game, @team)
+    return !!attempt.access_pass&.revoked? if attempt
+
+    AccessPass.where(:game_id => @game.id, :team_id => @team.id)
+              .where.not(:revoked_at => nil).exists?
   end
 
   # Who the notice is for. It carries the operator's free-text incident note --
@@ -348,11 +395,35 @@ class GamePassingsController < ApplicationController
   # and so false -- for a NULL, which would drop every ordinary in-progress
   # row. That is the same three-valued trap GamePassing's outcome scopes
   # document. A team has one or two passings for a game.
+  #
+  # Two populations were counted in that were never affected by the
+  # withdrawal, both because "not exited" is not the same question as "still
+  # on the course" (F3 and F4 of the whole-branch review):
+  #
+  #   * A team that already FINISHED. Withdraw a paid night game at 02:00,
+  #     after five of eight teams have crossed the line, and all five opened
+  #     their result screen to "Игра остановлена" and the incident note
+  #     instead. A withdrawal cannot change the result of a team that already
+  #     finished, and telling them the game was stopped is exactly the wrong
+  #     message to a paying customer who completed it. Their attempt is
+  #     untouched either way -- mode "ended" ends only in_progress passings --
+  #     so they fall through to the finish screen (paid) or the results page
+  #     (free). finished?, NOT completed?: a team the operator ENDED carries
+  #     status "ended" with finished_at still nil, and they are the population
+  #     the notice most exists for.
+  #   * A team whose pass was REVOKED. The operator deliberately cut their
+  #     access; revocation, not the withdrawal, is why they cannot play, and
+  #     halt_if_pass_revoked's own message says so. Without this they got the
+  #     notice AND the free-text note, which this comment's own rule -- the
+  #     halt applies only to a team the notice is FOR -- puts them outside of.
   def team_owed_the_notice?
     return false if @team.nil?
+    return false if revocation_blocks_team?
 
     passings = @game.game_passings.where(:team_id => @team.id).to_a
-    return passings.any? { |passing| !passing.exited? } if passings.any?
+    if passings.any?
+      return passings.any? { |passing| !passing.exited? && !passing.finished? }
+    end
 
     return AccessPass.next_for(@game, @team).present? if @game.pass_required?
 
@@ -377,9 +448,27 @@ class GamePassingsController < ApplicationController
   # has not opened yet.
   def render_finished_passing
     if @game.pass_required?
+      # COMPLETED, not merely finished, and the difference is a captain who
+      # QUIT. GamePassing#exit! stamps finished_at AND status "exited", so a
+      # team that gave up mid-run arrived here with finished? true and was
+      # handed a screen headed "Игра пройдена", a place of "не определено" and
+      # standings holding no row of theirs -- on a page that 401s the moment
+      # they come back to it (ensure_team_not_exited). This restores what a
+      # quit did before this sub-project: the game page, which says nothing
+      # false. F2 of the whole-branch review.
+      return redirect_to(game_path(@game)) unless @game_passing.completed?
+
+      # A completed attempt is in pass_standings by construction -- that scope
+      # is finished_at set and not exited, which is what completed? asks -- so
+      # @place is never nil on this path. It was the `unplaced` label's only
+      # producer, and the label is gone with the branch that produced it.
       @standings = @game.pass_standings
       @place     = @standings.index(@game_passing)&.+(1)
       @ledger    = @game_passing.point_transactions.includes(:level).order(:created_at)
+      # @standings passed through rather than recomputed: the partial defaults
+      # to game.pass_standings for the game page, which has no ivar, and this
+      # screen otherwise loaded and sorted every completed attempt twice per
+      # request. F7 of the whole-branch review.
       return render "game_passings/gated_finish"
     end
 

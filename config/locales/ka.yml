@@ -865,7 +865,6 @@ ka:
       your_time: "თქვენი დრო"
       your_points: "თქვენი ქულები"
       balance: "გუნდის ჯამი"
-      unplaced: "არ არის განსაზღვრული"
     index:
       title: 'თამაში "%{name}"'
       team: "გუნდი"

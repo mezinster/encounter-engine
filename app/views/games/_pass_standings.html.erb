@@ -1,5 +1,10 @@
 <% highlight = defined?(highlight) ? highlight : nil %>
-<% standings = game.pass_standings %>
+<%# Optional local, same shape as highlight above: a caller that has already
+    loaded the standings (GamePassingsController#render_finished_passing, which
+    needs them to work out the team's place) passes them in rather than making
+    this partial load and sort every completed attempt a second time. The game
+    page passes none and computes them here. %>
+<% standings ||= game.pass_standings %>
 <% if standings.any? %>
   <h3><%= t("games.standings.title") %></h3>
   <div class="table-wrap">

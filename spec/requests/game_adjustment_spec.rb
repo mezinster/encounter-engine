@@ -62,6 +62,26 @@ describe "an operator adjusting a team's points for one game", type: :request do
     expect(PointTransaction.where(:reason => "adjustment").count).to eq(1)
   end
 
+  # A7, the other half. ensure_game_is_live reads the GAME's own lifecycle
+  # (started?/draft?/withdrawn?/author_finished?), not the PASSING's
+  # finished_at/exited state -- so the two examples above never actually
+  # reach that filter; they pass identically whether or not the exemption
+  # below is present. This is the one example that reddens if
+  # `skip_before_action :ensure_game_is_live, only: [:new_adjustment,
+  # :create_adjustment]` is removed from InterventionsController: the author
+  # has ended the whole game via finish_game!, which is exactly what
+  # ensure_game_is_live gates on.
+  it "adjusts a team's points after the author has ENDED THE GAME" do
+    author, game, passing = live_game_with_passing
+    game.finish_game!
+    sign_in(author)
+
+    post team_adjustments_path(:game_id => game.id, :team_id => passing.team_id),
+         :params => { :amount => 30, :note => "Спор решён на следующее утро", :confirmed => "1" }
+
+    expect(PointTransaction.where(:reason => "adjustment").count).to eq(1)
+  end
+
   it "refuses a blank note without writing anything" do
     author, game, passing = live_game_with_passing
     sign_in(author)

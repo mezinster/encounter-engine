@@ -116,6 +116,41 @@ describe PointTransaction do
     end
   end
 
+  # B1. The per-ATTEMPT index was narrowed for adjustments; the per-LEVEL one
+  # was not. Nothing writes a level-scoped adjustment today -- adjust! always
+  # sets level_id nil -- so this is unreachable, and it is exactly the kind of
+  # unreachable trap that fires the moment section 8's deferred level-scoped
+  # adjustment is built: adjust! does not rescue, so the second one would 500.
+  describe "the per-level index" do
+    it "allows more than one adjustment on the same level" do
+      passing = create_game_passing
+      level   = passing.current_level
+
+      2.times do |n|
+        PointTransaction.create!(:team_id => passing.team_id, :game_id => passing.game_id,
+                                 :game_passing_id => passing.id, :level_id => level.id,
+                                 :amount => -5, :reason => "adjustment",
+                                 :note => "row #{n}")
+      end
+
+      expect(PointTransaction.where(:level_id => level.id,
+                                    :reason => "adjustment").count).to eq(2)
+    end
+
+    it "still refuses a duplicate level_completed on the same level" do
+      passing = create_game_passing
+      level   = passing.current_level
+
+      first  = PointTransaction.award!(:passing => passing, :reason => "level_completed",
+                                       :level => level, :amount => 10)
+      second = PointTransaction.award!(:passing => passing, :reason => "level_completed",
+                                       :level => level, :amount => 10)
+
+      expect(first).to be_persisted
+      expect(second).to be_nil
+    end
+  end
+
   describe "validations on adjustment rows" do
     it "requires a note" do
       team = create_team(:captain => create_user)

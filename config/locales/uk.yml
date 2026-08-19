@@ -1108,6 +1108,8 @@ uk:
       access_pass:
         game: "Гра"
       game:
+        level_completion_points: "Нарахування за рівень"
+        game_completion_points: "Нарахування за проходження"
         max_skips: "Число пропусків"
         skip_points_fine: "Списання очок"
         skip_time_penalty: "Штрафний час"

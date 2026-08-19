@@ -1151,6 +1151,8 @@ tr:
       access_pass:
         game: "Oyun"
       game:
+        level_completion_points: "Seviye puanı"
+        game_completion_points: "Bitirme puanı"
         max_skips: "İzin verilen atlama sayısı"
         skip_points_fine: "Düşülen puan"
         skip_time_penalty: "Ceza süresi"

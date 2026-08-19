@@ -81,6 +81,15 @@ class Game < ApplicationRecord
   validates :name, presence: true, uniqueness: true
   validates :description, presence: true
   validates :max_team_number, numericality: { greater_than: 0, less_than: 10000 }
+  # An AWARD cannot be negative. :min => 0 on the form is client-side only, and
+  # a crafted POST would otherwise make every team that passes a level lose
+  # points automatically and silently for the whole game -- which is not a fine
+  # anyone chose to issue. Deliberate deductions have two mechanisms of their
+  # own, both signed on purpose: the skip fine (games.skip_points_fine, applied
+  # only when a team chooses to skip) and an operator adjustment
+  # (PointTransaction.adjust!, applied only when a person decides to).
+  validates :level_completion_points, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :game_completion_points,  numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :max_skips,         numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :skip_points_fine,  numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :skip_time_penalty, numericality: { only_integer: true, greater_than_or_equal_to: 0 }

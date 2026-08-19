@@ -1083,6 +1083,8 @@ en:
       access_pass:
         game: "Game"
       game:
+        level_completion_points: "Points for a level"
+        game_completion_points: "Points for finishing"
         max_skips: "Skips allowed"
         skip_points_fine: "Points deducted"
         skip_time_penalty: "Time penalty"

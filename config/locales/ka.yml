@@ -1133,6 +1133,8 @@ ka:
       access_pass:
         game: "თამაში"
       game:
+        level_completion_points: "ქულები დონეზე"
+        game_completion_points: "ქულები დასრულებაზე"
         max_skips: "დაშვებული გამოტოვებები"
         skip_points_fine: "ჩამოჭრილი ქულა"
         skip_time_penalty: "ჯარიმის დრო"

@@ -346,6 +346,7 @@ tr:
     translation_key_missing: "Yapay zeka ile çeviri kullanılamıyor: API anahtarı ayarlanmamış."
     not_registered_for_game: "Takımınız bu oyuna kayıtlı değil."
     no_access_pass: "Bu oyun için erişim gerekiyor. Düzenleyiciye başvurun."
+    access_revoked: "Bu oyuna erişim geri alındı"
     access_code:
       unknown: "Böyle bir kod bulunamadı"
       redeemed: "Bu kod zaten kullanılmış"
@@ -866,6 +867,8 @@ tr:
     paused: "Oyun düzenleyici tarafından duraklatıldı. Yerinizde kalın ve devam etmesini bekleyin."
     withdrawn:
       title: "Oyun durduruldu"
+    pass_revoked:
+      what_to_do: "Oyunun düzenleyicisiyle iletişime geçin."
     index:
       title: '"%{name}" adlı oyun'
       team: "Takım"

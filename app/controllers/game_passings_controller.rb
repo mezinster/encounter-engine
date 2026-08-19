@@ -42,6 +42,7 @@ class GamePassingsController < ApplicationController
   # and explains itself; the state-changing actions land them on that same
   # explanation rather than on an error.
   before_action :halt_if_withdrawn, except: [ :index, :show_results ]
+  before_action :halt_if_pass_revoked, except: [ :index, :show_results ]
   before_action :find_or_create_game_passing, except: [:show_results, :index]
   before_action :ensure_team_not_exited, except: [:index, :show_results]
   before_action :ensure_team_member, except: [:index, :show_results]
@@ -239,6 +240,30 @@ class GamePassingsController < ApplicationController
 
     if request.get?
       render "game_passings/withdrawn"
+    else
+      redirect_to show_current_level_path(:game_id => @game.id)
+    end
+  end
+
+  # Rendered rather than raised, for the reason the withdrawn notice above is:
+  # a bare 401 says "you are not authorised", which is true here and useless --
+  # it does not say WHAT CHANGED or what to do. The stranger's message is
+  # actively wrong for this team: they did have access, and telling them to ask
+  # the organiser about access the organiser deliberately took away is a
+  # runaround.
+  #
+  # Only when NO live pass remains. A team whose pass was revoked but who holds
+  # a replacement plays on -- that is the same rule that gives a finished team
+  # with a spare pass a fresh attempt.
+  def halt_if_pass_revoked
+    return unless @game.pass_required?
+    return if @team.nil?
+    return if AccessPass.next_for(@game, @team).present?
+    return unless AccessPass.where(:game_id => @game.id, :team_id => @team.id)
+                            .where.not(:revoked_at => nil).exists?
+
+    if request.get?
+      render "game_passings/pass_revoked"
     else
       redirect_to show_current_level_path(:game_id => @game.id)
     end
@@ -676,11 +701,29 @@ class GamePassingsController < ApplicationController
     # method's own comment) -- newest first, which is provably the live one
     # whenever a live one exists.
     attempt = GamePassing.gated_attempt_for(@game, @team)
-    return attempt if attempt && !attempt.access_pass.spent?
 
+    # live?, not !spent?. spent? is finished_at.present? and says NOTHING about
+    # revocation, so an attempt whose pass an operator had revoked was served
+    # and the team played on -- revocation was honoured only by
+    # AccessPass.next_for, which decides who may START and is consulted only
+    # when there is no attempt to serve.
+    return attempt if attempt && attempt.access_pass.live?
+
+    # A replacement pass wins over a finished attempt: a team who bought
+    # another go gets one rather than being handed the old result.
     pass = AccessPass.next_for(@game, @team)
-    raise Authentication::Unauthorized, t("errors.no_access_pass") if pass.nil?
+    return build_gated_attempt(pass) if pass
 
+    # Nothing left to play. A FINISHED attempt is served read-only rather than
+    # refused: the code used to treat "your attempt is finished" as "you have
+    # no attempt", which handed a paying customer who completed the game the
+    # message written for a stranger who never bought anything.
+    return attempt if attempt&.finished?
+
+    raise Authentication::Unauthorized, t("errors.no_access_pass")
+  end
+
+  def build_gated_attempt(pass)
     GamePassing.create!(:team => @team, :game => @game,
                         :game_run => nil, :access_pass => pass,
                         :current_level => @game.levels.first)

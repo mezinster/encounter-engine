@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_19_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_19_130000) do
   create_table "access_codes", force: :cascade do |t|
     t.integer "game_id", null: false
     t.string "code_digest", null: false
@@ -258,7 +258,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_19_120000) do
     t.integer "created_by_id"
     t.datetime "created_at", null: false
     t.text "note"
-    t.index ["game_passing_id", "level_id", "reason"], name: "index_point_transactions_per_level", unique: true, where: "level_id IS NOT NULL"
+    t.index ["game_passing_id", "level_id", "reason"], name: "index_point_transactions_per_level", unique: true, where: "level_id IS NOT NULL AND reason <> 'adjustment'"
     t.index ["game_passing_id", "reason"], name: "index_point_transactions_per_attempt", unique: true, where: "level_id IS NULL AND reason <> 'adjustment'"
     t.index ["team_id"], name: "index_point_transactions_on_team_id"
   end

@@ -1090,6 +1090,8 @@ ru:
       access_pass:
         game: "Игра"
       game:
+        level_completion_points: "Начисление за уровень"
+        game_completion_points: "Начисление за прохождение"
         max_skips: "Число пропусков"
         skip_points_fine: "Списание очков"
         skip_time_penalty: "Штрафное время"

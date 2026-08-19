@@ -117,6 +117,34 @@ describe GamePassing do
     end
   end
 
+  # A3. end! sets status "ended" and deliberately does NOT stamp finished_at,
+  # so an ended passing keeps its current_level and was skippable on both
+  # paths. Concretely: a six-hour night game hits its deadline, the author ends
+  # it, and a team still walking to a location could spend points and a cap
+  # slot to advance inside a run that has already concluded -- taking something
+  # from them in exchange for a move that cannot change their standing.
+  describe "a run the author ended" do
+    it "cannot be skipped" do
+      game, one, _two = skippable_game
+      passing = create_game_passing(:game => game, :level => one)
+      passing.end!
+      expect(passing.reload.current_level).to eq(one)
+
+      expect { passing.skip_level!(captain) }.to raise_error(ArgumentError)
+      expect(PointTransaction.where(:game_passing_id => passing.id).count).to eq(0)
+    end
+
+    # end! is a no-op on a team that had already walked off, so exited? stays
+    # the reason there -- but both must refuse, and one guard now covers both.
+    it "cannot be skipped after the team exited either" do
+      game, one, _two = skippable_game
+      passing = create_game_passing(:game => game, :level => one)
+      passing.exit!
+
+      expect { passing.skip_level!(captain) }.to raise_error(ArgumentError)
+    end
+  end
+
   # S5. This is the example the whole ordering argument rests on. It must fail
   # if charge_skip! and advance! are swapped.
   describe "charging before advancing" do

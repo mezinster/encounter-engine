@@ -174,4 +174,58 @@ RSpec.describe VMScale::Policy do
       expect(described_class.decide(with_busy_points(3))["verdict"]).to eq("hold")
     end
   end
+
+  describe "the budget ceiling" do
+    # On B2s and breaching. The next rung, B2ms at $70.08 + $7.50 baseline,
+    # is $77.58 against a $45 ceiling -- and past the subscription's credit,
+    # which disables rather than degrades when it runs out.
+    let(:cornered) do
+      build do |i|
+        i["current_size"] = "Standard_B2s"
+        flood(i, "cpu_credits_remaining", "min", 40.0)
+      end
+    end
+
+    it "does not propose an unaffordable rung" do
+      expect(described_class.decide(cornered)["verdict"]).to eq("at_budget_ceiling")
+    end
+
+    it "proposes no target at all" do
+      expect(described_class.decide(cornered)["target"]).to be_nil
+    end
+
+    it "keeps the breach in the reasons, and names the money" do
+      reasons = described_class.decide(cornered)["reasons"].join
+      expect(reasons).to match(/cpu credits/)
+      expect(reasons).to match(/Standard_B2ms would cost \$77\.58\/mo, over the \$45\.00 ceiling/)
+    end
+
+    it "still proposes the rung when it is affordable" do
+      affordable = build do |i|
+        i["current_size"] = "Standard_B2s"
+        i["budget_ceiling_usd"] = 90
+        flood(i, "cpu_credits_remaining", "min", 40.0)
+      end
+      expect(described_class.decide(affordable)["target"]).to eq("Standard_B2ms")
+    end
+
+    it "moves one rung even when the breach is dramatic" do
+      dire = build do |i|
+        flood(i, "cpu_credits_remaining", "min", 0.0)
+        flood(i, "available_memory_bytes", "min", 1024)
+      end
+      # From B1ms that is B2s, never a jump straight to B2ms.
+      expect(described_class.decide(dire)["target"]).to eq("Standard_B2s")
+    end
+
+    it "holds at the top of the ladder" do
+      topped = build do |i|
+        i["current_size"] = "Standard_B2ms"
+        flood(i, "cpu_credits_remaining", "min", 40.0)
+      end
+      result = described_class.decide(topped)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join).to match(/is the top of the ladder/)
+    end
+  end
 end

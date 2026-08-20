@@ -44,7 +44,26 @@ module VMScale
                        breached + ["#{current} is the top of the ladder"])
       end
 
+      cost    = monthly_total(input, target)
+      ceiling = input.fetch("budget_ceiling_usd").to_f
+      if cost > ceiling
+        # A distinct verdict on purpose. Folding this into "hold" would hide
+        # the most important signal the engine can produce; folding it into
+        # "scale_up" would propose an action that takes the subscription --
+        # and therefore the platform -- offline.
+        return verdict("at_budget_ceiling", current, nil, found,
+                       breached + [format("%s would cost $%.2f/mo, over the $%.2f ceiling",
+                                          target, cost, ceiling)])
+      end
+
       verdict("scale_up", current, target, found, breached)
+    end
+
+    def monthly_total(input, size)
+      rung = input.fetch("ladder").find { |r| r.fetch("size") == size }
+      raise KeyError, "#{size} is not on the ladder" if rung.nil?
+
+      rung.fetch("usd").to_f + input.fetch("baseline_usd").to_f
     end
 
     def breaches(input)

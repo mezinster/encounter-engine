@@ -437,6 +437,8 @@ ka:
       duration: "%{hours} სთ %{minutes} წთ"
       playing: "თამაშობს: %{count}"
       played: "თამაშობდა: %{count}"
+      passes_issued: "გაცემული წვდომა: %{count}"
+      completed: "დაასრულა: %{count}"
       view: "(ნახვა)"
       stats: "(სტატისტიკა)"
       live_channel: "(პირდაპირი ეთერი)"

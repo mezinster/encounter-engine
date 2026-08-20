@@ -281,4 +281,161 @@ describe "the games listing", type: :request do
       expect(ten).to eq(one)
     end
   end
+
+  # The participants cell on a gated row. "N / max" and the running-vs-finished
+  # choice both stop applying to a commercial game: it has no cap worth naming
+  # (max_team_number defaults to 100 and gates nothing -- neither pass issuing
+  # nor code redemption consults can_request?) and no run lifecycle, since
+  # Game#status reports :available for the whole of its life. So it gets three
+  # figures instead, and they are DERIVED, every one of them: an operator can
+  # flip access_mode back and the free counters return untouched, because
+  # nothing here was ever stored.
+  #
+  # Before this, the cell showed a gated game either "0 / 100" (born gated, no
+  # entry can exist) or the stale free-era registration count it carried into
+  # the conversion -- never anything about the passes it actually sold.
+  describe "the participants cell on a gated row" do
+    let(:team) { create_team(:captain => create_user) }
+    # Built FROM a level, not `create_game` then `create_level(:game => g)`:
+    # build_level's default hash calls create_game eagerly, before .merge
+    # overrides it, so the second form leaves a stray extra game in the
+    # listing -- which is exactly the kind of row these examples count.
+    let(:level) { create_level }
+    let(:game) do
+      g = level.game
+      g.update!(:visibility => "listed", :name => "Платная",
+                :access_mode => "pass_required", :max_team_number => 100)
+      g
+    end
+
+    # game_run_id nil IS the gated selector: a commercial attempt is runless by
+    # design (the paid-game design, task 6), which is also why the run-scoped
+    # counts beside this one cannot see it.
+    def gated_attempt(team, attrs = {})
+      pass = create_access_pass(:game => game, :team => team)
+      GamePassing.create!({ :team => team, :game => game, :game_run => nil,
+                            :access_pass => pass,
+                            :current_level => game.levels.first }.merge(attrs))
+    end
+
+    it "counts the passes issued" do
+      3.times { create_access_pass(:game => game, :team => create_team) }
+
+      get games_path
+
+      expect(response.body).to include(I18n.t("games.list.passes_issued", :count => 3))
+    end
+
+    # "Currently holds access", not "was ever handed one": a revoked pass is an
+    # entitlement the operator took back.
+    it "leaves a revoked pass out of the issued figure" do
+      create_access_pass(:game => game, :team => create_team)
+      revoked = create_access_pass(:game => game, :team => create_team)
+      revoked.update!(:revoked_at => Time.now)
+
+      get games_path
+
+      expect(response.body).to include(I18n.t("games.list.passes_issued", :count => 1))
+    end
+
+    it "counts an attempt in progress as playing" do
+      gated_attempt(team)
+
+      get games_path
+
+      expect(response.body).to include(I18n.t("games.list.playing", :count => 1))
+    end
+
+    # COMPLETED, not merely finished -- finished_at set and not exited, the same
+    # pair Game#pass_standings sorts and the same pair AccessPass#spent? reduces
+    # to. A team that quit is in neither figure, and that is deliberate: the two
+    # lines of this cell have never claimed a subset relation.
+    it "counts a completed attempt as finished, and a quit as neither" do
+      gated_attempt(team, :finished_at => Time.now)
+      gated_attempt(create_team, :finished_at => Time.now, :status => "exited")
+
+      get games_path
+
+      expect(response.body).to include(I18n.t("games.list.completed", :count => 1))
+      expect(response.body).not_to include(I18n.t("games.list.playing", :count => 1))
+    end
+
+    # Peers, both counting attempts, so they share a line separated by a
+    # middot -- unlike the cap-and-participation pair on a scheduled row, which
+    # stays on two lines precisely so it claims no relation between them.
+    it "joins the two attempt figures when both are non-zero" do
+      gated_attempt(team)
+      gated_attempt(create_team, :finished_at => Time.now)
+
+      get games_path
+
+      expect(response.body).to include(
+        "#{I18n.t('games.list.playing', :count => 1)} · #{I18n.t('games.list.completed', :count => 1)}"
+      )
+    end
+
+    # 0 issued is informative for an operator -- nobody has bought yet -- so it
+    # renders. The other two suppress at zero, exactly as
+    # game_participation_text already does for a scheduled row.
+    it "shows a zero issued figure but suppresses the other two" do
+      game
+
+      get games_path
+
+      expect(response.body).to include(I18n.t("games.list.passes_issued", :count => 0))
+      expect(response.body).not_to include(I18n.t("games.list.playing", :count => 0))
+      expect(response.body).not_to include(I18n.t("games.list.completed", :count => 0))
+    end
+
+    it "drops the registration cap, which gates nothing on a paid game" do
+      game
+
+      get games_path
+
+      expect(response.body).not_to include("0 / 100")
+    end
+
+    # The whole point of deriving rather than storing. Nothing below is undone
+    # on the way back -- entries, requested_teams_number and run-scoped
+    # passings are all untouched by a conversion, so the original cell returns.
+    it "returns the free counters when the game is converted back" do
+      registered = create_team(:captain => create_user)
+      create_game_entry(:game => game, :team => registered, :status => "accepted")
+      game.reserve_place_for_team!
+      gated_attempt(team)
+
+      game.update!(:access_mode => "scheduled")
+
+      get games_path
+
+      expect(response.body).to include("1 / 100")
+      expect(response.body).not_to include(I18n.t("games.list.passes_issued", :count => 1))
+    end
+
+    it "does not grow the query count as the number of gated rows grows" do
+      gated_attempt(team)
+      one = count_queries { get games_path }
+
+      9.times do
+        other = create_game(:is_draft => false, :access_mode => "pass_required")
+        create_access_pass(:game => other, :team => create_team)
+      end
+      ten = count_queries { get games_path }
+
+      expect(ten).to eq(one)
+    end
+
+    # The guard that keeps the new queries off every listing that has no gated
+    # row at all -- the same shape gated_play_status uses, and what keeps the
+    # flat-count examples above honest.
+    it "issues no pass query at all for a listing with no gated row" do
+      running_game("Обычная")
+      without_gated = count_queries { get games_path }
+
+      game
+      with_gated = count_queries { get games_path }
+
+      expect(with_gated).to be > without_gated
+    end
+  end
 end

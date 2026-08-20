@@ -460,6 +460,8 @@ tr:
       duration: "%{hours} sa %{minutes} dk"
       playing: "oynayan: %{count}"
       played: "oynayan (bitmiş): %{count}"
+      passes_issued: "verilen erişim: %{count}"
+      completed: "bitiren: %{count}"
       view: "(görüntüle)"
       stats: "(istatistik)"
       live_channel: "(canlı yayın)"

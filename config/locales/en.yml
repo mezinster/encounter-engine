@@ -414,6 +414,8 @@ en:
       duration: "%{hours}h %{minutes}m"
       playing: "playing: %{count}"
       played: "played: %{count}"
+      passes_issued: "access issued: %{count}"
+      completed: "finished: %{count}"
       view: "(view)"
       stats: "(statistics)"
       live_channel: "(live feed)"

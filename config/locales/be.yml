@@ -433,6 +433,8 @@ be:
       duration: "%{hours} г %{minutes} хв"
       playing: "гуляюць: %{count}"
       played: "гулялі: %{count}"
+      passes_issued: "доступаў: %{count}"
+      completed: "прайшлі: %{count}"
       view: "(паглядзець)"
       stats: "(статыстыка)"
       live_channel: "(прамы эфір)"

@@ -1127,6 +1127,7 @@ pl:
       access_pass:
         game: "Gra"
       game:
+        access_mode: "Dostęp do gry"
         level_completion_points: "Naliczenie za poziom"
         game_completion_points: "Naliczenie za ukończenie"
         max_skips: "Liczba pominięć"
@@ -1184,6 +1185,8 @@ pl:
               greater_than: "Zakres liczby drużyn to od 1 do 10000"
               less_than: "Zakres liczby drużyn to od 1 do 10000"
               exceeds_requested: "Liczba drużyn, które złożyły zgłoszenie, przekracza zadaną wartość"
+            access_mode:
+              access_still_owed: "nie można wyłączyć: drużyny nie wykorzystały jeszcze przyznanego dostępu (%{count}). Odbierz dostęp albo poczekaj, aż zagrają."
             starts_at:
               in_the_past: "Wybrano datę z przeszłości. Tak nie można :-)"
               needed_to_unpublish_access: "zwykła gra musi mieć datę startu w przyszłości — podaj nową, aby przestać sprzedawać dostęp do tej gry"

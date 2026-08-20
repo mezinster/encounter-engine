@@ -98,6 +98,7 @@ class Game < ApplicationRecord
   validates :access_mode, :inclusion => { :in => ACCESS_MODES }
 
   validate :game_starts_in_the_future
+  validate :access_still_owed
   validate :valid_max_num
 
   validate :deadline_is_in_future
@@ -743,6 +744,39 @@ protected
   # and whose _changed? predicate is therefore not on this object at all.
   def becoming_scheduled?
     access_mode_changed? && !pass_required?
+  end
+
+  # A game may not stop selling access while teams are still holding access
+  # they paid for and have not used.
+  #
+  # Without this, the conversion stranded every one of them, silently and
+  # permanently. #find_or_create_game_passing stops consulting #gated_passing
+  # the instant pass_required? goes false, so a paid team is judged by
+  # may_start_passing? instead -- which asks for a GameEntry they have no way
+  # to hold, since GameEntriesController refuses applications on a gated game.
+  # Their pass stays live for ever (nothing spends it), so it never even shows
+  # as consumed in the access console. A team caught MID-RUN lost more than
+  # access: their half-finished attempt survives as a runless row that no
+  # route can reach.
+  #
+  # REFUSED rather than repaired, and that is the decision rather than the
+  # easy way out. The alternatives all guess at something only a human can
+  # decide -- whether an unused pass is owed a refund, whether a paid
+  # entitlement converts into a free place, whether a team mid-run should be
+  # moved into a cohort they never registered for. Refusing puts the choice in
+  # front of the operator while they can still act on it, and names the size
+  # of the job so they can judge it.
+  #
+  # Scoped to the CONVERSION, not to the game: a gated game that is happily
+  # selling access must stay editable by its operator, so an ordinary save is
+  # never touched.
+  def access_still_owed
+    return unless becoming_scheduled?
+
+    owed = AccessPass.outstanding_for(self).size
+    return if owed.zero?
+
+    self.errors.add(:access_mode, :access_still_owed, :count => owed)
   end
 
   def valid_max_num

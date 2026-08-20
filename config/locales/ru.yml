@@ -1052,7 +1052,7 @@ ru:
       model: "Модель"
       locales: "Языки"
       tokens: "Токены"
-      token_counts: "ввод %{input}, вывод %{output}, из кэша %{cached}"
+      token_counts: "ввод %{input}, вывод %{output}, в кэш %{written}, из кэша %{cached}"
       failed: "Не переведено"
       cancel: "Остановить"
       retry: "Повторить"

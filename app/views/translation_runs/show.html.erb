@@ -20,8 +20,14 @@
   <dt><%= t("translations.show.locales") %></dt>
   <dd><%= @run.target_locale_list.map { |l| t("locales.#{l}") }.join(", ") %></dd>
   <dt><%= t("translations.show.tokens") %></dt>
+  <%# Both cache figures, because either one alone is unreadable. A write with
+      no read beside it is a prefix billed at 1.25x that nothing ever reused;
+      a read with no write is a hit on a prefix an earlier run left behind.
+      input_tokens is the uncached remainder only, so it cannot tell them
+      apart -- runs before this column existed carry a 0 they never measured. %>
   <dd><%= t("translations.show.token_counts", :input => @run.input_tokens,
                                               :output => @run.output_tokens,
+                                              :written => @run.cache_write_tokens,
                                               :cached => @run.cache_read_tokens) %></dd>
   <%# The pre-flight figure, beside the real one. Shown only when there is one:
       runs created before the pre-flight existed carry a zero, and a zero here

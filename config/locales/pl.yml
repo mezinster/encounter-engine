@@ -1063,7 +1063,7 @@ pl:
       model: "Model"
       locales: "Języki"
       tokens: "Tokeny"
-      token_counts: "wejście %{input}, wyjście %{output}, z pamięci podręcznej %{cached}"
+      token_counts: "wejście %{input}, wyjście %{output}, do pamięci podręcznej %{written}, z pamięci podręcznej %{cached}"
       failed: "Nieprzetłumaczone"
       cancel: "Zatrzymaj"
       retry: "Powtórz"

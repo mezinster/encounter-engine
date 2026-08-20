@@ -32,7 +32,8 @@ describe Translation::Runner do
       end
 
       Translation::Client::Result.new(:texts => texts, :input_tokens => 100,
-                                      :output_tokens => 50, :cache_read_tokens => 10)
+                                      :output_tokens => 50, :cache_read_tokens => 10,
+                                      :cache_write_tokens => 400)
     end
   end
 
@@ -106,6 +107,50 @@ describe Translation::Runner do
 
     expect(run.reload.cache_read_tokens).to be > 0
     expect(run.input_tokens).to be > 0
+  end
+
+  # Without this the run page cannot tell "caching did nothing" from "caching
+  # cost us 25% extra", because both report a small input and a zero read.
+  it "accumulates cache writes onto the run, not only cache reads" do
+    described_class.new(run, :client => FakeClient.new).call
+
+    expect(run.reload.cache_write_tokens).to be > 0
+  end
+
+  # A cache breakpoint pays for itself only when the same prefix is sent more
+  # than once. One target locale means one call per unit, so the 1.25x write is
+  # never amortised -- every production run to date was single-locale and paid
+  # that surcharge on every call.
+  describe "the cache breakpoint" do
+    def run_targeting(locales)
+      TranslationRun.create!(:game => game, :actor => actor, :model => "claude-opus-5",
+                             :state => TranslationRun::PENDING,
+                             :target_locale_list => locales,
+                             :fields_total => described_class.plan(game, locales).size)
+    end
+
+    it "is switched off for a single-locale run" do
+      expect(Translation::Client).to receive(:new)
+        .with(hash_including(:cache => false)).and_return(FakeClient.new)
+
+      described_class.new(run_targeting(%w[en])).call
+    end
+
+    it "stays on when there is more than one locale to amortise it over" do
+      expect(Translation::Client).to receive(:new)
+        .with(hash_including(:cache => true)).and_return(FakeClient.new)
+
+      described_class.new(run_targeting(%w[en pl])).call
+    end
+
+    # The game's own language is dropped before the run starts, so a run
+    # targeting it plus one other has exactly one call per prefix.
+    it "counts only locales the run will actually translate into" do
+      expect(Translation::Client).to receive(:new)
+        .with(hash_including(:cache => false)).and_return(FakeClient.new)
+
+      described_class.new(run_targeting(%w[ru en])).call
+    end
   end
 
   # Resumability. The unique index is the mechanism; this proves it works.

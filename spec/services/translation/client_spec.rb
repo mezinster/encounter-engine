@@ -20,7 +20,8 @@ describe Translation::Client do
            :usage => double("usage",
                             :input_tokens  => usage.fetch(:input, 100),
                             :output_tokens => usage.fetch(:output, 50),
-                            :cache_read_input_tokens => usage.fetch(:cache_read, 0)))
+                            :cache_read_input_tokens => usage.fetch(:cache_read, 0),
+                            :cache_creation_input_tokens => usage.fetch(:cache_write, 0)))
   end
 
   it "returns translated text keyed by field key" do
@@ -44,6 +45,20 @@ describe Translation::Client do
     expect(result.cache_read_tokens).to eq(800)
   end
 
+  # The WRITE, not only the read. A prefix written and never read is billed at
+  # 1.25x and shows up nowhere else: input_tokens reports only the uncached
+  # remainder, so a run that wrote 41,000 tokens and read none looks identical
+  # to a run that cached nothing at all. Production ran that way four times
+  # before anyone could see it.
+  it "carries the cache write back, so an unread write cannot hide" do
+    allow(messages).to receive(:create)
+      .and_return(api_response([], :usage => { :input => 96, :cache_write => 4_041 }))
+
+    result = client.translate(:unit => unit, :locale => "pl")
+
+    expect(result.cache_write_tokens).to eq(4_041)
+  end
+
   # The cache breakpoint sits on the SOURCE block, so the only thing after it
   # is "translate into X". Move it and every locale after the first becomes a
   # cache miss.
@@ -57,6 +72,38 @@ describe Translation::Client do
     end
 
     client.translate(:unit => unit, :locale => "pl")
+  end
+
+  # A breakpoint nobody reads is not free: the write costs 1.25x where a plain
+  # call costs 1x. One target locale means one call per unit, so the write can
+  # never be amortised and the marker is a guaranteed 25% surcharge on input.
+  describe "with caching switched off" do
+    let(:uncached) do
+      described_class.new(:api_key => "sk-ant-test", :model => "claude-opus-5", :cache => false)
+    end
+
+    before { allow(uncached).to receive(:messages).and_return(messages) }
+
+    it "sends the source block with no cache breakpoint" do
+      expect(messages).to receive(:create) do |args|
+        expect(args[:system_].last).not_to have_key(:cache_control)
+        expect(args[:system_].last[:text]).to include("Ночной город")
+        api_response([])
+      end
+
+      uncached.translate(:unit => unit, :locale => "pl")
+    end
+
+    # One body, two callers. An estimate built from a differently-shaped body
+    # stops describing the run, and nothing would fail to say so.
+    it "counts the same breakpoint-free body" do
+      expect(messages).to receive(:count_tokens) do |args|
+        expect(args[:system_].last).not_to have_key(:cache_control)
+        double("count", :input_tokens => 1)
+      end
+
+      uncached.count_input_tokens(:unit => unit, :locale => "pl")
+    end
   end
 
   # stop_reason is read BEFORE content. Code that indexes content[0]

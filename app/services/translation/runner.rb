@@ -14,6 +14,11 @@
 # readable once the first response begins streaming, so firing a unit's locales
 # concurrently means all of them pay full price. Nothing is waiting on this
 # work, so sequential costs nothing.
+#
+# All of which assumes there IS a second locale. With one, each prefix is sent
+# exactly once, the 1.25x write is never amortised, and the breakpoint becomes
+# a ~25% surcharge on input -- which is what every run in production did before
+# #client started switching it off (see there).
 module Translation
   class Runner
     def self.plan(game, locales)
@@ -104,8 +109,11 @@ module Translation
       units = units_for(game, effective)
       return 0 if units.empty?
 
+      # Same breakpoint decision the run itself will make (see #client), so the
+      # estimate keeps pricing the body that will actually be sent.
       client ||= Client.new(:api_key => ENV["ANTHROPIC_API_KEY"],
-                            :model   => Setting.enum("translation_model"))
+                            :model   => Setting.enum("translation_model"),
+                            :cache   => effective.size > 1)
 
       baselines = effective.map do |locale|
         client.count_input_tokens(:unit   => Unit.raw("estimate:baseline", BASELINE_SOURCE),
@@ -300,9 +308,13 @@ module Translation
           @run.increment!(:fields_done)
         end
 
-        @run.increment!(:input_tokens,      result.input_tokens)
-        @run.increment!(:output_tokens,     result.output_tokens)
-        @run.increment!(:cache_read_tokens, result.cache_read_tokens)
+        @run.increment!(:input_tokens,       result.input_tokens)
+        @run.increment!(:output_tokens,      result.output_tokens)
+        @run.increment!(:cache_read_tokens,  result.cache_read_tokens)
+        # The write, beside the read. A read with no write beside it is a
+        # cross-run cache hit; a write with no read is money spent for nothing.
+        # Only the pair distinguishes them.
+        @run.increment!(:cache_write_tokens, result.cache_write_tokens)
       end
     end
 
@@ -310,8 +322,18 @@ module Translation
       @run.update!(:state => state, :finished_at => Time.now)
     end
 
+    # A breakpoint is worth its 1.25x write only if something reads it. Each
+    # unit's prefix is sent once per locale, so a run with one effective locale
+    # sends every prefix exactly once and every write is dead weight -- which
+    # is what all four production runs did before this guard existed.
+    #
+    # Run-level, not per-unit. A multi-locale run can still contain a unit that
+    # only one locale is missing (see #translate's `outstanding` filter), and
+    # that unit's write goes unread. Modelling that would mean deciding per
+    # call rather than per client, for a case worth a rounding error.
     def client
-      @client ||= Client.new(:api_key => ENV["ANTHROPIC_API_KEY"], :model => @run.model)
+      @client ||= Client.new(:api_key => ENV["ANTHROPIC_API_KEY"], :model => @run.model,
+                             :cache   => locales.size > 1)
     end
   end
 end

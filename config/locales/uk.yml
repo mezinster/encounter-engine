@@ -1057,7 +1057,7 @@ uk:
       model: "Модель"
       locales: "Мови"
       tokens: "Токени"
-      token_counts: "вхід %{input}, вихід %{output}, з кешу %{cached}"
+      token_counts: "вхід %{input}, вихід %{output}, у кеш %{written}, з кешу %{cached}"
       failed: "Не перекладено"
       cancel: "Зупинити"
       retry: "Повторити"

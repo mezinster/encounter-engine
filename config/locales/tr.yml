@@ -1102,7 +1102,7 @@ tr:
       model: "Model"
       locales: "Diller"
       tokens: "Token"
-      token_counts: "giriş %{input}, çıkış %{output}, önbellekten %{cached}"
+      token_counts: "giriş %{input}, çıkış %{output}, önbelleğe %{written}, önbellekten %{cached}"
       failed: "Çevrilmedi"
       cancel: "Durdur"
       retry: "Yeniden dene"

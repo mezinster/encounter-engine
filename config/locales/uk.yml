@@ -431,6 +431,8 @@ uk:
       duration: "%{hours} год %{minutes} хв"
       playing: "грають: %{count}"
       played: "грали: %{count}"
+      passes_issued: "доступів: %{count}"
+      completed: "пройшли: %{count}"
       view: "(переглянути)"
       stats: "(статистика)"
       live_channel: "(прямий ефір)"

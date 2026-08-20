@@ -32,6 +32,58 @@ module GamesHelper
                 .transform_values { |passes| passes.any?(&:live?) }
   end
 
+  # The three figures a COMMERCIAL row shows, keyed by game id: how many teams
+  # currently hold access, how many are mid-attempt, how many finished.
+  # Two queries for the whole listing, and none at all when it holds no gated
+  # row -- the same self-guarding shape as #gated_play_status above, which is
+  # what keeps the flat-count examples in spec/requests/games_listing_spec.rb
+  # true for a scheduled-only listing.
+  #
+  # A gated row cannot reuse #game_team_counts below. Every figure there is
+  # scoped to the current RUN, and a commercial attempt has game_run_id NULL by
+  # design (the paid-game design, task 6), so those counts are structurally
+  # blind to it -- which is how a converted game came to show its stale
+  # free-era registration count while selling passes nobody could see.
+  #
+  # DERIVED, never stored, and that is the requirement rather than an
+  # implementation detail: an operator can set access_mode back to "scheduled"
+  # and the free counters must return to exactly what they were. They do,
+  # because a conversion touches no row this reads -- entries,
+  # requested_teams_number and run-scoped passings all survive it untouched.
+  # A denormalised counter is precisely the thing that would then need
+  # un-winding.
+  def gated_participation_counts(games)
+    gated_ids = games.select(&:pass_required?).map(&:id)
+    return {} if gated_ids.empty?
+
+    @gated_participation_counts ||= {}
+    @gated_participation_counts[gated_ids.sort] ||= begin
+      # game_run_id NULL IS the gated selector -- see above. Scoping on
+      # access_mode instead would also sweep in the run-scoped passings a
+      # converted game carries from its free era.
+      attempts = GamePassing.where(:game_id => gated_ids, :game_run_id => nil)
+
+      {
+        # Not revoked: this answers "how many teams currently hold access",
+        # not "how many were ever handed one". A revoked pass is an
+        # entitlement the operator took back, and AccessPass#live? treats it
+        # as gone everywhere else.
+        :issued    => AccessPass.where(:game_id => gated_ids, :revoked_at => nil)
+                                .group(:game_id).count,
+        # The scopes, not a hand-written predicate. Both carry the nullable-
+        # status care that a plain `NOT IN` gets wrong -- see :playing in
+        # #game_team_counts below, which is the same trap and which this
+        # change stopped restating inline.
+        :playing   => attempts.in_progress.group(:game_id).count,
+        # COMPLETED, not merely finished: finished_at set and not exited, the
+        # same pair Game#pass_standings sorts and the same pair
+        # AccessPass#spent? reduces to. Anything else would let this listing
+        # disagree with the standings, or with whether a pass was consumed.
+        :completed => attempts.completed.group(:game_id).count
+      }
+    end
+  end
+
   # Team counts for a whole listing in two queries, regardless of how many
   # games it holds.
   #
@@ -70,30 +122,26 @@ module GamesHelper
       # has no id.
       run_ids = games.map { |game| game.current_run.id }.compact
 
-      # "playing" (games.list.playing, shown on a running game) means
-      # *currently* playing: finished_at nil excludes teams that finished
-      # normally or exited (exit! always sets finished_at), and the status
-      # exclusion additionally excludes teams an operator ended (end! sets
-      # status "ended" without touching finished_at, so finished_at alone
-      # would not catch it).
-      #
-      # status is nullable and nil is the ordinary in-progress value (nothing
-      # sets it on creation), so a plain `.where.not(:status => %w[exited
-      # ended])` would generate `status NOT IN (...)`, which under SQL's
-      # three-valued logic is NULL -- and therefore excluded -- for every
-      # nil-status row. That would have zeroed out the common case. The
-      # explicit `.where(:status => nil).or(...)` keeps nil rows in.
-      still_playing = GamePassing.where(:game_run_id => run_ids, :finished_at => nil)
-
       {
         # Deliberately NOT game.game_entries.with_status("accepted").count --
         # with_status is a scope, and a scope builds a new relation, so it
         # re-queries even when the association is already loaded. That exact
         # mistake shipped to review on the quiz branch.
         :registered => GameEntry.where(:game_run_id => run_ids, :status => "accepted").group(:game_id).count,
-        :playing    => still_playing.where(:status => nil)
-                                     .or(still_playing.where.not(:status => %w[exited ended]))
-                                     .group(:game_id).count,
+        # "playing" (games.list.playing, shown on a running game) means
+        # *currently* playing, which is exactly GamePassing.in_progress: no
+        # finished_at (excluding teams that finished normally or exited, since
+        # exit! always stamps it) and status not "ended" (an operator-ended
+        # team keeps finished_at nil, so the timestamp alone would miss them).
+        #
+        # This was an inline relation restating that scope character for
+        # character, including the `.where(:status => nil).or(...)` form --
+        # which is not stylistic: status is nullable and nil is the ordinary
+        # in-progress value, so a plain `.where.not(:status => %w[exited
+        # ended])` generates `status NOT IN (...)`, NULL under SQL's
+        # three-valued logic, and would silently zero out the common case.
+        # Now stated once, in the model, and read here.
+        :playing    => GamePassing.where(:game_run_id => run_ids).in_progress.group(:game_id).count,
         # "played" (games.list.played, shown on a finished game) means *took
         # part at all* -- every passing created for this run, regardless of how
         # it ended.

@@ -414,6 +414,8 @@ ru:
       duration: "%{hours} ч %{minutes} мин"
       playing: "играют: %{count}"
       played: "играли: %{count}"
+      passes_issued: "доступов: %{count}"
+      completed: "прошли: %{count}"
       view: "(просмотреть)"
       stats: "(статистика)"
       live_channel: "(прямой эфир)"

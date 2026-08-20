@@ -438,6 +438,8 @@ pl:
       duration: "%{hours} godz. %{minutes} min"
       playing: "grają: %{count}"
       played: "grali: %{count}"
+      passes_issued: "przyznane dostępy: %{count}"
+      completed: "ukończyli: %{count}"
       view: "(zobacz)"
       stats: "(statystyki)"
       live_channel: "(transmisja na żywo)"

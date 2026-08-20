@@ -112,6 +112,14 @@ how the engine learns when the last resize happened without storing it. The GitH
 human-readable log. There was no reason to invent a state store, and not inventing one removes the
 entire class of bug where the stored state says `B2s` and the VM says `B1ms`.
 
+**The Activity Log is the one input that may not be readable**, because it is a subscription-level
+resource and the reader identity is scoped to a single VM. Rather than let the cooldown quietly
+stop existing, `gather.sh` reports `activity_log_readable: false` when the query fails, and the
+engine appends a reason line saying the cooldown is not in force to **every** verdict it produces
+while that holds. Degrading silently is the failure this repository has been bitten by most often —
+a `skip` that reads as a pass, a pending example nobody counts. A cooldown that has stopped
+applying must be as loud as one that fires.
+
 ### V5 — credits, not CPU percentage
 
 This is the decision that makes the system work rather than cry wolf, and §1 is the evidence.
@@ -253,6 +261,7 @@ Input (stdin, JSON):
   "baseline_usd":       7.5,            // non-compute spend: IP, disks, DNS
   "ladder":             [{"size": "...", "usd": 17.52, "floor": true}, ...],
   "last_resize_utc":    "2026-08-09T22:47:43Z" | null,
+  "activity_log_readable": true,        // false => the cooldown is not in force
   "now_utc":            "2026-08-20T19:00:00Z",
   "metrics": {
     "cpu_percent":            [{"t": "...", "avg": 5.1, "max": 71.0}, ...],

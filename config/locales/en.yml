@@ -1098,6 +1098,7 @@ en:
       access_pass:
         game: "Game"
       game:
+        access_mode: "Game access"
         level_completion_points: "Points for a level"
         game_completion_points: "Points for finishing"
         max_skips: "Skips allowed"
@@ -1158,6 +1159,8 @@ en:
               greater_than: "Team count must be between 1 and 10000"
               less_than: "Team count must be between 1 and 10000"
               exceeds_requested: "The number of teams that have already applied exceeds this limit"
+            access_mode:
+              access_still_owed: "cannot be switched off: teams still hold access they have not used (%{count}). Revoke it, or wait until they have played."
             starts_at:
               in_the_past: "You picked a date in the past. That's not allowed :-)"
               needed_to_unpublish_access: "a scheduled game needs a start date in the future — set one to stop selling access to this game"

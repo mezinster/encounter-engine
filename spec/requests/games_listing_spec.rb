@@ -398,11 +398,17 @@ describe "the games listing", type: :request do
     # The whole point of deriving rather than storing. Nothing below is undone
     # on the way back -- entries, requested_teams_number and run-scoped
     # passings are all untouched by a conversion, so the original cell returns.
+    # A COMPLETED attempt, not an in-progress one, because a game may not stop
+    # selling access while a team still holds access it has not used
+    # (Game#access_still_owed -- added after this example, which used to
+    # convert out from under a team mid-run). It is the truer fixture anyway:
+    # the game sold access, the team played, and only then did the operator
+    # convert it back.
     it "returns the free counters when the game is converted back" do
       registered = create_team(:captain => create_user)
       create_game_entry(:game => game, :team => registered, :status => "accepted")
       game.reserve_place_for_team!
-      gated_attempt(team)
+      gated_attempt(team, :finished_at => Time.now)
 
       game.update!(:access_mode => "scheduled")
 

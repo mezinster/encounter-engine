@@ -46,6 +46,34 @@ class AccessPass < ApplicationRecord
     !revoked? && !spent?
   end
 
+  # "Somebody still owes this team something." The population an operator has
+  # to settle before they may stop selling access to a game -- see
+  # Game#access_still_owed, which is the only caller and the reason this is a
+  # separate question from #live? at all.
+  #
+  # #live? asks "may this team start playing", and is right for that. This one
+  # differs in exactly one state: an attempt the OPERATOR ended. end! sets
+  # status "ended" and deliberately leaves finished_at nil (see its own
+  # comment, and #spent? above), so such a pass is live FOR EVER -- it can
+  # never be spent, and AccessPassesController#destroy refuses to revoke a
+  # pass whose attempt exists. Counting it as owed would make the game
+  # permanently unconvertible with no action available to anyone, which is a
+  # worse answer than letting the operator who ended that run proceed.
+  def outstanding?
+    live? && attempt&.status != "ended"
+  end
+
+  # Loaded and filtered in Ruby rather than expressed in SQL, for the reason
+  # .next_for gives above: the predicate depends on the attempt through a LEFT
+  # JOIN, a game holds a handful of passes, and a SQL form would restate
+  # #outstanding?'s encoding in a second place that could drift from it.
+  # Preloads the attempt so the filter costs one query rather than N.
+  def self.outstanding_for(game)
+    where(:game_id => game.id, :revoked_at => nil)
+      .includes(:attempt)
+      .select(&:outstanding?)
+  end
+
   # The pass an attempt should consume: oldest first, so a team granted three
   # passes uses them in the order they were issued.
   #

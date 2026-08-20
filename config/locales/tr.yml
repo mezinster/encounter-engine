@@ -1166,6 +1166,7 @@ tr:
       access_pass:
         game: "Oyun"
       game:
+        access_mode: "Oyun erişimi"
         level_completion_points: "Seviye puanı"
         game_completion_points: "Bitirme puanı"
         max_skips: "İzin verilen atlama sayısı"
@@ -1223,6 +1224,8 @@ tr:
               greater_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
               less_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
               exceeds_requested: "Başvuran takım sayısı belirlenen sayıyı aşıyor"
+            access_mode:
+              access_still_owed: "kapatılamaz: takımlar verilen erişimi henüz kullanmadı (%{count}). Erişimi geri alın ya da oynamalarını bekleyin."
             starts_at:
               in_the_past: "Geçmişten bir tarih seçtiniz. Böyle olmaz :-)"
               needed_to_unpublish_access: "programlı bir oyunun başlangıç tarihi gelecekte olmalı — bu oyunun erişim satışını durdurmak için yeni bir tarih girin"

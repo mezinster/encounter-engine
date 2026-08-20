@@ -209,6 +209,23 @@ RSpec.describe VMScale::Policy do
       expect(described_class.decide(affordable)["target"]).to eq("Standard_B2ms")
     end
 
+    it "treats a rung costing exactly the ceiling as affordable" do
+      # The engine refuses a rung that BREACHES the ceiling, and a cost equal to
+      # it does not breach it -- so the comparison is `>`, not `>=`. Pinned
+      # because that choice is otherwise invisible: mutating it to `>=` passes
+      # every other example in this file.
+      #
+      # The ceiling is written as the sum rather than the literal 77.58 so that
+      # it is bit-identical to what monthly_total computes. The same two Floats
+      # added in the same order cannot disagree; a decimal literal could.
+      exact = build do |i|
+        i["current_size"] = "Standard_B2s"
+        i["budget_ceiling_usd"] = 70.08 + 7.5
+        flood(i, "cpu_credits_remaining", "min", 40.0)
+      end
+      expect(described_class.decide(exact)["target"]).to eq("Standard_B2ms")
+    end
+
     it "moves one rung even when the breach is dramatic" do
       dire = build do |i|
         flood(i, "cpu_credits_remaining", "min", 0.0)

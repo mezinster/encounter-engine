@@ -677,6 +677,7 @@ pl:
       password_label: "Hasło"
       password_confirmation_label: "Potwierdzenie"
       submit: "Zarejestruj się"
+      submitting: "Rejestrujemy…"
     edit:
       title: 'Edycja profilu gracza %{nickname}'
       nickname_label: "Twoje imię"
@@ -1185,6 +1186,7 @@ pl:
               exceeds_requested: "Liczba drużyn, które złożyły zgłoszenie, przekracza zadaną wartość"
             starts_at:
               in_the_past: "Wybrano datę z przeszłości. Tak nie można :-)"
+              needed_to_unpublish_access: "zwykła gra musi mieć datę startu w przyszłości — podaj nową, aby przestać sprzedawać dostęp do tej gry"
             registration_deadline:
               in_the_past: "Podano ostateczny termin rejestracji z przeszłości, tak nie można :-)"
               after_game_start: "Podano ostateczny termin rejestracji późniejszy niż data rozpoczęcia gry, tak nie można :-)"

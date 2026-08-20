@@ -708,6 +708,7 @@ tr:
       password_label: "Parola"
       password_confirmation_label: "Doğrulama"
       submit: "Kaydol"
+      submitting: "Kaydediliyor…"
     edit:
       title: '%{nickname} adlı oyuncunun profilini düzenleme'
       nickname_label: "Adınız"
@@ -1224,6 +1225,7 @@ tr:
               exceeds_requested: "Başvuran takım sayısı belirlenen sayıyı aşıyor"
             starts_at:
               in_the_past: "Geçmişten bir tarih seçtiniz. Böyle olmaz :-)"
+              needed_to_unpublish_access: "programlı bir oyunun başlangıç tarihi gelecekte olmalı — bu oyunun erişim satışını durdurmak için yeni bir tarih girin"
             registration_deadline:
               in_the_past: "Son kayıt tarihini geçmişten seçtiniz, böyle olmaz :-)"
               after_game_start: "Son kayıt tarihini oyunun başlangıç tarihinden sonraya koydunuz, böyle olmaz :-)"

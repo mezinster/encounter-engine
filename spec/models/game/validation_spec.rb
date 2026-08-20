@@ -89,5 +89,47 @@ describe Game do
         @game.should be_valid
       end
     end
+
+    # The rule is "you may not SET a start date in the past", and it was
+    # written as "a game may not HAVE one" -- which is the same thing only
+    # until a save touches something else. A gated game's starts_at is
+    # meaningless and ages past on its own (the exemption above exists for
+    # exactly that), so the moment an operator converted one back to
+    # scheduled, every later save was refused over a field nobody had
+    # touched. Reported 2026-08-20.
+    #
+    # Converting back still needs a real date -- a scheduled game whose start
+    # is in the past would be `started?` on the spot, with no registration
+    # window at all -- so the refusal stays. What changes is that it names the
+    # conversion instead of complaining about a date the author did not type,
+    # and that it stops firing on saves that leave the schedule alone.
+    describe "when a game becomes scheduled while its start date is stale" do
+      let(:game) do
+        g = create_game(:starts_at => 2.days.from_now, :access_mode => "pass_required")
+        set_game_schedule!(g, :starts_at => 3.days.ago)
+        g.reload
+      end
+
+      it "refuses the conversion" do
+        game.access_mode = "scheduled"
+
+        expect(game).not_to be_valid
+      end
+
+      it "explains that a scheduled game needs a future date, rather than blaming the date" do
+        game.access_mode = "scheduled"
+        game.valid?
+
+        expect(game.errors[:starts_at]).to include(I18n.t("activerecord.errors.models.game.attributes.starts_at.needed_to_unpublish_access"))
+      end
+
+      it "accepts the conversion when a future date comes with it" do
+        game.access_mode = "scheduled"
+        game.starts_at = 2.days.from_now
+
+        expect(game).to be_valid
+      end
+    end
+
   end
 end

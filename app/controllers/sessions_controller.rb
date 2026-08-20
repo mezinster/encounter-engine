@@ -5,7 +5,14 @@ class SessionsController < ApplicationController
   def create
     # login_param = :email in the Merb app (merb/merb-auth/strategies.rb:9):
     # users authenticate by e-mail address, not nickname.
-    user = User.find_by(email: params[:email])
+    #
+    # Normalised the same way User#normalise_email normalises what it stores,
+    # so the two always meet. Stored addresses are canonical from the
+    # 2026-08-20 migration onward, but what a person TYPES still is not: a
+    # browser that ignores type="email", a password manager replaying an old
+    # capitalised value, or a desktop habit all send it as typed. Without
+    # this, those cases answer "wrong credentials" to a correct password.
+    user = User.find_by(email: params[:email].to_s.strip.downcase)
 
     if user&.authenticate(params[:password])
       # merb-auth abandoned (cleared) the session on login

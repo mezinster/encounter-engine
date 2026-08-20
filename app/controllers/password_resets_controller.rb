@@ -17,7 +17,12 @@ class PasswordResetsController < ApplicationController
       return
     end
 
-    user = User.find_by(email: params[:email].to_s.strip)
+    # downcase as well as strip, matching User#normalise_email. This lookup
+    # matters more than the login one: it is where a player who cannot get in
+    # goes next, and it answers the same "check your mail" either way -- so a
+    # case mismatch here is a dead end with no error message at all to
+    # explain it.
+    user = User.find_by(email: params[:email].to_s.strip.downcase)
 
     if user
       token = user.issue_reset_password_token!

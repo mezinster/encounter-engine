@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_19_140000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_20_130000) do
   create_table "access_codes", force: :cascade do |t|
     t.integer "game_id", null: false
     t.string "code_digest", null: false
@@ -375,6 +375,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_19_140000) do
     t.string "reset_password_token_digest"
     t.datetime "reset_password_sent_at"
     t.boolean "is_operator", default: false, null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["nickname"], name: "index_users_on_nickname", unique: true
     t.index ["reset_password_token_digest"], name: "index_users_on_reset_password_token_digest"
   end
 

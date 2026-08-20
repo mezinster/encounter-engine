@@ -1031,7 +1031,7 @@ en:
       model: "Model"
       locales: "Languages"
       tokens: "Tokens"
-      token_counts: "input %{input}, output %{output}, from cache %{cached}"
+      token_counts: "input %{input}, output %{output}, to cache %{written}, from cache %{cached}"
       failed: "Not translated"
       cancel: "Stop"
       retry: "Retry"

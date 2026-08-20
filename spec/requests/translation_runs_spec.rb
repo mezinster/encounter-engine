@@ -197,6 +197,27 @@ describe "starting a translation run", type: :request do
     expect(run.reload.state).to eq(TranslationRun::RUNNING)
   end
 
+  # The run page is the only place anyone sees whether the caching design is
+  # earning its keep, and until now it showed only the READ. A run that wrote a
+  # large prefix and never read it back -- the shape every production run had
+  # -- rendered identically to a run that cached nothing, because input_tokens
+  # reports the uncached remainder alone.
+  #
+  # Asserting the literal Russian rather than I18n.t(...): a missing key makes
+  # `include(I18n.t(key))` compare a translation-missing string against itself
+  # and pass, so the interpolation could vanish with the spec still green.
+  it "shows what a run wrote to the cache, not only what it read" do
+    run = TranslationRun.create!(:game => game, :actor => superadmin,
+                                 :model => "claude-opus-5",
+                                 :state => TranslationRun::SUCCEEDED,
+                                 :input_tokens => 1_365, :output_tokens => 13_657,
+                                 :cache_write_tokens => 41_502, :cache_read_tokens => 0)
+
+    get game_translation_run_path(game, run)
+
+    expect(response.body).to include("в кэш 41502, из кэша 0")
+  end
+
   it "still sweeps stale runs when someone tries to start a new one" do
     stale = TranslationRun.create!(:game => game, :actor => superadmin,
                                    :model => "claude-opus-5",

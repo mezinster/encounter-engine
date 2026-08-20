@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_20_130000) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_20_150000) do
   create_table "access_codes", force: :cascade do |t|
     t.integer "game_id", null: false
     t.string "code_digest", null: false
@@ -346,6 +346,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_20_130000) do
     t.datetime "finished_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "cache_write_tokens", default: 0, null: false
     t.index ["game_id", "state"], name: "index_translation_runs_on_game_id_and_state"
     t.index ["game_id"], name: "index_translation_runs_one_active_per_game", unique: true, where: "state IN ('pending', 'running')"
   end

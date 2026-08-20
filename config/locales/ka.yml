@@ -1081,7 +1081,7 @@ ka:
       model: "მოდელი"
       locales: "ენები"
       tokens: "ტოკენები"
-      token_counts: "შეყვანა %{input}, გამოტანა %{output}, კეშიდან %{cached}"
+      token_counts: "შეყვანა %{input}, გამოტანა %{output}, კეშში %{written}, კეშიდან %{cached}"
       failed: "არ ითარგმნა"
       cancel: "შეჩერება"
       retry: "გამეორება"

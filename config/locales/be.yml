@@ -1050,7 +1050,7 @@ be:
       model: "Мадэль"
       locales: "Мовы"
       tokens: "Токены"
-      token_counts: "уваход %{input}, выхад %{output}, з кэша %{cached}"
+      token_counts: "уваход %{input}, выхад %{output}, у кэш %{written}, з кэша %{cached}"
       failed: "Не перакладзена"
       cancel: "Спыніць"
       retry: "Паўтарыць"

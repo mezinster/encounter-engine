@@ -11,6 +11,9 @@ class GameEntriesController < ApplicationController
   # for why "a captain" is not a sufficient check in this controller.
   before_action :ensure_captain_of_target_team, except: [:accept, :reject]
   before_action :ensure_game_is_not_withdrawn, only: [:new, :reopen]
+  # Only the actions that CREATE or GRANT a registration. recall/reject/cancel
+  # stay open on a gated game -- see the method below.
+  before_action :ensure_game_is_not_gated, only: [:new, :reopen, :accept]
 
   # GameEntry.of(@team, @game.current_run) is deliberately not used for this
   # check: it
@@ -128,5 +131,27 @@ class GameEntriesController < ApplicationController
   # a withdrawal one. This guard stands on its own.
   def ensure_game_is_not_withdrawn
     raise Authentication::Unauthorized, t("errors.game_is_withdrawn") if @game&.withdrawn?
+  end
+
+  # A commercial game admits teams through AccessPass and nothing else:
+  # GamePassingsController#find_or_create_game_passing short-circuits to
+  # #gated_passing for a gated game, so an "accepted" GameEntry authorises
+  # exactly nothing there. Every gated screen already assumes this entry
+  # cannot exist -- shared/_current_games_status.html.erb says so in a
+  # comment -- but until this filter, nothing stopped one being made: a gated
+  # game is `notstarted` by construction (Game#started? reads starts_at and
+  # knows nothing about access_mode), so it sat in dashboard/_coming_games
+  # offering "Подать заявку" beside the scheduled games. The entry reserved
+  # one of the game's places and counted towards the public participant
+  # figure, and then /play answered 401.
+  #
+  # Scoped to the three actions that CREATE or GRANT a registration. The
+  # release actions -- recall, reject, cancel -- must keep working on a gated
+  # game: access_mode is editable (GamesController#game_params, operators
+  # only), so a scheduled game carrying live entries can become gated under
+  # everyone, and withdrawing such an entry is both the captain's only exit
+  # and what returns the reserved place.
+  def ensure_game_is_not_gated
+    raise Authentication::Unauthorized, t("errors.game_is_gated") if @game&.pass_required?
   end
 end

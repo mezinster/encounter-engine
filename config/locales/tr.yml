@@ -275,6 +275,7 @@ tr:
       reject: "Reddet"
       accepted_notice: "Takım kabul edildi: %{team}"
       rejected_notice: "Başvuru reddedildi: %{team}"
+      gated_note: "Bu oyun erişimle oynanır — başvuru kabul edilemez. Takım “Oyun erişimi” sayfasından kabul edilir."
       back: "Oyun listesine dön"
     games:
       index:
@@ -362,6 +363,7 @@ tr:
     game_already_started: "Oyun başladıktan sonra düzenlenemez"
     game_is_locked: "Oyunun düzenlenmesi yönetici tarafından donduruldu"
     game_is_withdrawn: "Oyun yayından kaldırıldı"
+    game_is_gated: "Bu oyun başvuru kabul etmiyor: erişim kodu gerekir"
     game_is_not_testing: "Oyun test modunda değil"
     bad_test_token: "Test bağlantısı geçersiz"
     must_be_recipient: "Bu işlemi yapmak için davetin alıcısı olmalısınız"

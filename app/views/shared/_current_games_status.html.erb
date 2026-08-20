@@ -7,14 +7,27 @@
   <% end %>
 <%# A gated game never creates a GameEntry, so game_entry is nil here rather
     than carrying some third status -- this is the whole reason it's a
-    separate branch. gated_live is the caller's job, not this partial's: it
-    is computed once per listing (not per row) from the team's access_passes,
-    exactly the shape GamesHelper#game_team_counts already uses for the
-    scheduled columns beside this one, and passing it in is what keeps this
-    partial from re-querying per row and reintroducing the N+1
-    games_listing_spec.rb pins. local_assigns, not a bare reference: a caller
-    that never passes it (the dashboard's started-games widget, which has no
-    gated rows today) must default to "no access" rather than raise. %>
+    separate branch. That invariant is enforced now, by
+    GameEntriesController#ensure_game_is_not_gated; it was only ever ASSERTED
+    here, and until that filter existed the dashboard offered "Подать заявку"
+    on gated games and every branch below was simply skipped for a team who
+    had used it.
+
+    A caller must therefore pass game_entry nil for a gated game rather than
+    whatever GameEntry.of returns: an entry accepted before an operator
+    flipped the game's access_mode still exists, and this branch order would
+    hand it the play link with no pass behind it.
+
+    gated_live is the caller's job, not this partial's: it is computed once
+    per listing (not per row) from the team's access_passes, exactly the shape
+    GamesHelper#game_team_counts already uses for the scheduled columns beside
+    this one, and passing it in is what keeps this partial from re-querying
+    per row and reintroducing the N+1 games_listing_spec.rb pins.
+    local_assigns, not a bare reference, so a caller that never passes it
+    defaults to "no access" rather than raising -- but every caller in the
+    app does pass it, and a gated row is reachable from all of them: a gated
+    game has no schedule, so whether it counts as `started?` is decided by
+    whatever starts_at happens to hold. %>
 <% elsif game.pass_required? %>
   <% if local_assigns[:gated_live] %>
     <%= link_to t("shared.current_games_status.play"), show_current_level_path(game_id: game.id) %>

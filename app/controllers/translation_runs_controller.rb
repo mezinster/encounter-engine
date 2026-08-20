@@ -56,11 +56,19 @@ class TranslationRunsController < ApplicationController
               :state => TranslationRun::PENDING,
               :target_locale_list => locales,
               :fields_total => work.size,
-              # Carried from the confirmation screen rather than recomputed:
-              # count_tokens is one round trip per unit per locale, and doing
-              # the whole pre-flight twice would double the wait for no new
-              # information. The figure is informational only -- it drives no
-              # decision here -- and only a superadmin can reach this action.
+              # Carried from the confirmation screen rather than recomputed.
+              #
+              # The reason originally given here was that count_tokens is one
+              # round trip per unit per locale -- true when written, and no
+              # longer: Runner.estimate_input_tokens now batches into one
+              # baseline call per locale plus bulk calls, precisely so a large
+              # multi-locale game could not 502 the confirmation screen.
+              #
+              # It is still not recomputed, for a reason that survives: the
+              # figure is informational, it drives no decision at this point,
+              # and re-running the pre-flight would spend real API calls to
+              # produce a number nobody reads twice. Only a superadmin can
+              # reach this action, so a hand-edited value costs nothing.
               :estimated_input_tokens => params[:estimated_input_tokens].to_i
             )
           rescue ActiveRecord::RecordNotUnique

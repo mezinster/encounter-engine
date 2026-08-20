@@ -66,13 +66,12 @@ class GamePassingsController < ApplicationController
   # were 401 before gated_passing started serving a finished attempt; this
   # restores "safe" without reintroducing "refused".
   #
-  # Scoped to pass_required? deliberately (see halt_if_gated_attempt_finished
-  # itself), NOT because the same shape of bug can't happen on a non-gated
-  # game -- current_run.passing_for(@team) (find_or_create_game_passing's
-  # OTHER branch) serves a finished-but-not-exited passing there too, with no
-  # finished? filter of its own, so exit_game looks reachable on one there as
-  # well. That branch was not touched by the gated-finish change and the bug,
-  # if real, is pre-existing -- reported, not fixed here.
+  # This shipped scoped to pass_required?, with a note that the same shape of
+  # bug looked reachable on a non-gated game and was pre-existing -- reported,
+  # not fixed there. It was real: GameRun#passing_for is
+  # `passings.of_team(team).first`, no finished? filter, so a team that
+  # finished a FREE game could rewrite its own result from the play screen's
+  # own button. The scope is gone and this now guards both kinds of game.
   # confirm_skip is on this list for a different reason from the other two: it
   # writes nothing, and skip_level refuses a finished attempt on its own
   # (GamePassing#skip_level! raises "run is over" before charge_skip!). What it
@@ -80,7 +79,7 @@ class GamePassingsController < ApplicationController
   # whose ONLY possible outcome is that refusal -- the exact state #confirm_skip
   # already checks both halves of "this team can skip" to avoid. F5 of the
   # whole-branch review.
-  before_action :halt_if_gated_attempt_finished,
+  before_action :halt_if_attempt_finished,
                 only: [ :exit_game, :get_current_level_tip, :confirm_skip ]
   before_action :ensure_author, only: [:index]
   before_action :ensure_game_not_paused, only: [ :post_answer, :exit_game, :confirm_skip, :skip_level ]
@@ -1049,14 +1048,23 @@ class GamePassingsController < ApplicationController
   # back-button exit press lands where a fresh GET would, rather than raising
   # or crashing.
   #
-  # Scoped to pass_required? on purpose: this task's regression is entirely
-  # within gated_passing (the ONLY thing that changed to start serving a
-  # finished attempt rather than refusing it), so this guard is scoped to
-  # match it exactly, not to "fix finished-passing safety" in general. A
-  # non-gated game reaches find_or_create_game_passing's OTHER branch, which
-  # this task never touched.
-  def halt_if_gated_attempt_finished
-    return unless @game.pass_required?
+  # NOT scoped to pass_required?, and the history is why this comment stays.
+  # It shipped scoped, deliberately: the regression it was written for lived
+  # entirely inside gated_passing, and widening it then would have folded a
+  # pre-existing bug into a commit whose whole justification was "I broke this,
+  # here is the repair".
+  #
+  # That pre-existing bug is this one. GamePassing#exit! stamps finished_at
+  # AFRESH and sets status "exited", so a team reaching it after finishing does
+  # not leave a race -- it overwrites the record of having won one. Measured on
+  # the free path: +7200s and the run gone from the finish protocol.
+  #
+  # render_finished_passing already does the right thing for both kinds of
+  # game -- the finish screen for a gated attempt, show_results for a
+  # run-scoped one -- and was already where a finished passing landed via
+  # show_current_level. So this takes nothing away: it stops three actions that
+  # assume a live run from reaching one that is over.
+  def halt_if_attempt_finished
     return unless @game_passing.finished?
 
     render_finished_passing

@@ -180,14 +180,20 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **782 leaf
-  keys** each: `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **964 leaf
+  keys** each (measured 2026-08-20): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
   live in `config/locales/{en,ru,uk,ka,tr,be,pl}.yml`. **Count the keys rather than trusting this
-  number**; it was documented as 489 for some time after it was 587, and as 725 for some time
-  after it was 764 — this entry has now been stale twice, in the file that warns about it.
+  number**; it was documented as 489 for some time after it was 587, as 725 for some time after it
+  was 764, and as 782 for some time after it was 964 — this entry has now been stale three times,
+  in the file that warns about it. Recount rather than reason about it:
+
+```bash
+ruby -ryaml -e 'def leaves(h,p="") h.flat_map { |k,v| v.is_a?(Hash) ? leaves(v,"#{p}#{k}.") : ["#{p}#{k}"] } end
+               puts leaves(YAML.unsafe_load_file("config/locales/ru.yml")["ru"]).size'
+```
 - **Subset-of-`ru` is not completeness, and the gap is invisible.** A locale file carrying nothing
   but its seven endonyms satisfies every check in `spec/i18n_spec.rb`, and fallbacks then render
   the *Russian* play screen mid-game to a player who chose another language — nothing raises,

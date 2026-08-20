@@ -104,4 +104,40 @@ RSpec.describe VMScale::Policy do
       expect(described_class.decide(just_outside)["verdict"]).to eq("scale_up")
     end
   end
+
+  describe "the memory floor" do
+    let(:starved) { build { |i| flood(i, "available_memory_bytes", "min", 180 * 1024 * 1024) } }
+
+    it "proposes the next rung up" do
+      result = described_class.decide(starved)
+      expect(result["verdict"]).to eq("scale_up")
+      expect(result["target"]).to eq("Standard_B2s")
+    end
+
+    it "reports megabytes rather than bytes" do
+      expect(described_class.decide(starved)["reasons"].join)
+        .to match(/available memory: min 180 MB below the 200 MB floor/)
+    end
+
+    it "does not fire at the measured production worst case" do
+      # 472 MB was the lowest observed in the seven days to 2026-08-20.
+      breathing = build { |i| flood(i, "available_memory_bytes", "min", 472 * 1024 * 1024) }
+      expect(described_class.decide(breathing)["verdict"]).to eq("hold")
+    end
+
+    it "turns over exactly at 200 MB" do
+      just_inside  = build { |i| flood(i, "available_memory_bytes", "min", 200 * 1024 * 1024) }
+      just_outside = build { |i| flood(i, "available_memory_bytes", "min", 200 * 1024 * 1024 - 1) }
+
+      expect(described_class.decide(just_inside)["verdict"]).to eq("hold")
+      expect(described_class.decide(just_outside)["verdict"]).to eq("scale_up")
+    end
+
+    it "never infers a breach from an absent reading" do
+      # gather.sh drops points Azure had no data for. A dropped point must not
+      # read as zero bytes free, which would be the most severe breach possible.
+      blank = build { |i| i["metrics"]["available_memory_bytes"].each { |p| p.delete("min") } }
+      expect(described_class.decide(blank)["reasons"].join).not_to match(/available memory/)
+    end
+  end
 end

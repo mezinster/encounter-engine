@@ -59,6 +59,12 @@ module VMScale
                         lowest, floor, (CREDIT_FLOOR_FRACTION * 100).round, ceiling)
       end
 
+      lowest_memory = minimum(metrics["available_memory_bytes"])
+      if lowest_memory && lowest_memory < MEMORY_FLOOR_BYTES
+        found << format("available memory: min %d MB below the %d MB floor",
+                        (lowest_memory / MB).round, MEMORY_FLOOR_BYTES / MB)
+      end
+
       found
     end
 

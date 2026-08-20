@@ -653,6 +653,7 @@ en:
       password_label: "Password"
       password_confirmation_label: "Confirmation"
       submit: "Sign up"
+      submitting: "Signing up…"
     edit:
       title: 'Editing player profile %{nickname}'
       nickname_label: "Your name"
@@ -1159,6 +1160,7 @@ en:
               exceeds_requested: "The number of teams that have already applied exceeds this limit"
             starts_at:
               in_the_past: "You picked a date in the past. That's not allowed :-)"
+              needed_to_unpublish_access: "a scheduled game needs a start date in the future — set one to stop selling access to this game"
             registration_deadline:
               in_the_past: "You set a registration deadline in the past. That's not allowed :-)"
               after_game_start: "You set a registration deadline later than the game's start date. That's not allowed :-)"

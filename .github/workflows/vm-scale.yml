@@ -132,10 +132,17 @@ jobs:
 
       # Only when something is being proposed. A comment every fifteen minutes
       # would be 96 a day and nobody would read the one that mattered.
+      # Reports the EFFECTIVE verdict, not the engine's. On a manual dispatch
+      # those differ, and reading the file would log "hold — B1ms → —" directly
+      # above an "Apply → success (target B2s)" from the same run: a decision
+      # log stating that the system applied a resize it had decided against.
+      # Found by the first dry-run smoke test, which produced exactly that pair.
       - name: Record the proposal
         if: steps.decide.outputs.verdict != 'hold'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERDICT: ${{ steps.decide.outputs.verdict }}
+          TARGET: ${{ steps.decide.outputs.target }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
@@ -146,8 +153,12 @@ jobs:
             exit 1
           fi
           {
-            echo "**\`$(jq -r .verdict verdict.json)\`** — $(jq -r .current verdict.json) → $(jq -r '.target // "—"' verdict.json)"
+            echo "**\`$VERDICT\`** — $(jq -r .current verdict.json) → ${TARGET:-—}"
             echo
+            if [ "$VERDICT" = manual ]; then
+              printf 'Requested by hand. The engine read the same data as `%s`:\n\n' \
+                "$(jq -r .verdict verdict.json)"
+            fi
             jq -r '.reasons[] | "- \(.)"' verdict.json
             echo
             echo "[run]($RUN_URL)"

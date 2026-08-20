@@ -47,4 +47,61 @@ RSpec.describe VMScale::Policy do
       )
     end
   end
+
+  # Drive every point of a series to a fixed value, in both the 3-hour window
+  # and the 14-day hourly rollup, so a case cannot accidentally stay quiet in
+  # one window while breaching in the other.
+  #
+  # Also clears last_resize_utc. Task 7 adds a 48-hour cooldown that suppresses
+  # proposals after a recent resize; the captured fixture's value is far older
+  # than that today, but a fixture recaptured just after a VM write would make
+  # every synthetic scale_up case below return `hold` for an unrelated reason,
+  # which reads exactly like a broken threshold.
+  def flood(input, series, key, value)
+    input["metrics"][series].each { |p| p[key] = value }
+    input["metrics"]["hourly_14d"][series].each { |p| p[key] = value }
+    input["last_resize_utc"] = nil
+  end
+
+  describe "credit depletion" do
+    # 22% of the 288 ceiling, well under the 30% floor.
+    let(:draining) do
+      build do |i|
+        flood(i, "cpu_credits_remaining", "min", 63.4)
+        i["metrics"]["credits_max_7d"] = 288.0
+      end
+    end
+
+    it "proposes the next rung up" do
+      result = described_class.decide(draining)
+      expect(result["verdict"]).to eq("scale_up")
+      expect(result["target"]).to eq("Standard_B2s")
+    end
+
+    it "names the numbers in the reason" do
+      expect(described_class.decide(draining)["reasons"].join)
+        .to match(/cpu credits: min 63\.4 below 86\.4/)
+    end
+
+    it "does not fire while the bank is nearly full" do
+      # The measured production reality: CPU peaks at 99% and costs 3 credits.
+      expect(described_class.decide(build)["verdict"]).to eq("hold")
+    end
+
+    # Mutation check: the threshold must be load-bearing. A value just inside
+    # the floor must hold, and a value just outside it must fire.
+    it "turns over exactly at 30% of the 7-day maximum" do
+      just_inside = build do |i|
+        flood(i, "cpu_credits_remaining", "min", 86.5)
+        i["metrics"]["credits_max_7d"] = 288.0
+      end
+      just_outside = build do |i|
+        flood(i, "cpu_credits_remaining", "min", 86.3)
+        i["metrics"]["credits_max_7d"] = 288.0
+      end
+
+      expect(described_class.decide(just_inside)["verdict"]).to eq("hold")
+      expect(described_class.decide(just_outside)["verdict"]).to eq("scale_up")
+    end
+  end
 end

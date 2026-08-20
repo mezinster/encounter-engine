@@ -28,8 +28,48 @@ module VMScale
     module_function
 
     def decide(input)
-      verdict("hold", input.fetch("current_size"), nil, evidence(input),
-              ["no threshold breached"])
+      current  = input.fetch("current_size")
+      found    = evidence(input)
+      breached = breaches(input)
+
+      return scale_up(input, current, found, breached) if breached.any?
+
+      verdict("hold", current, nil, found, ["no threshold breached"])
+    end
+
+    def scale_up(input, current, found, breached)
+      target = step(input.fetch("ladder"), current, +1)
+      if target.nil?
+        return verdict("hold", current, nil, found,
+                       breached + ["#{current} is the top of the ladder"])
+      end
+
+      verdict("scale_up", current, target, found, breached)
+    end
+
+    def breaches(input)
+      metrics = input.fetch("metrics")
+      found   = []
+
+      ceiling = metrics.fetch("credits_max_7d").to_f
+      lowest  = minimum(metrics["cpu_credits_remaining"])
+      floor   = ceiling * CREDIT_FLOOR_FRACTION
+      if lowest && ceiling.positive? && lowest < floor
+        found << format("cpu credits: min %.1f below %.1f (%d%% of the 7-day max %.1f)",
+                        lowest, floor, (CREDIT_FLOOR_FRACTION * 100).round, ceiling)
+      end
+
+      found
+    end
+
+    def step(ladder, current, direction)
+      here = ladder.index { |rung| rung.fetch("size") == current }
+      return nil if here.nil?
+
+      there = here + direction
+      return nil if there.negative? || there >= ladder.size
+
+      ladder[there].fetch("size")
     end
 
     def evidence(input)

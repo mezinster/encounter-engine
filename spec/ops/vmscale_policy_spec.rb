@@ -2,6 +2,7 @@
 
 require "spec_helper"
 require "json"
+require "English"
 require_relative "../../ops/vmscale/policy"
 
 RSpec.describe VMScale::Policy do
@@ -463,6 +464,27 @@ RSpec.describe VMScale::Policy do
         i["metrics"]["hourly_14d"].each_value { |s| s.reject! { |p| p["t"].start_with?(missing) } }
       end
       expect(described_class.decide(holed)["verdict"]).to eq("hold")
+    end
+  end
+
+  describe "the command line" do
+    let(:script)  { File.expand_path("../../ops/vmscale/policy.rb", __dir__) }
+    let(:fixture) { File.expand_path("../fixtures/vmscale/input-quiet-2026-08-20.json", __dir__) }
+
+    it "prints a verdict and exits 0" do
+      output = `ruby #{script} < #{fixture}`
+      expect($CHILD_STATUS.exitstatus).to eq(0)
+      expect(JSON.parse(output)["verdict"]).to eq("hold")
+    end
+
+    it "exits non-zero on malformed input" do
+      `echo 'not json' | ruby #{script} 2>/dev/null`
+      expect($CHILD_STATUS.exitstatus).not_to eq(0)
+    end
+
+    it "exits non-zero rather than guessing when a key is missing" do
+      `echo '{}' | ruby #{script} 2>/dev/null`
+      expect($CHILD_STATUS.exitstatus).not_to eq(0)
     end
   end
 end

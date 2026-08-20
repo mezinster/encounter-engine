@@ -265,3 +265,10 @@ module VMScale
     end
   end
 end
+
+# Deliberately not a `bin/` script and not wired into Rails. An uncaught
+# exception here is the correct behaviour: a non-zero exit means the engine
+# itself failed, and the workflow must not proceed on a verdict it did not get.
+if $PROGRAM_NAME == __FILE__
+  puts JSON.pretty_generate(VMScale::Policy.decide(JSON.parse($stdin.read)))
+end

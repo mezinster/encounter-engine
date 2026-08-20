@@ -799,6 +799,7 @@ ka:
       team_room: "გუნდის ოთახი"
       create_team: "გუნდის შექმნა"
       all_games: "დომენის ყველა თამაში"
+      teams: "გუნდები"
       logout: "გასვლა"
       login_legend: "შესვლა"
       login: "შესვლა"

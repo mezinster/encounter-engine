@@ -39,9 +39,13 @@
           A form, not a link: no Turbo and no rails-ujs here, so link_to with
           method: :post would silently issue a GET. %>
       <td>
-        <% unless @current_user.captain? ||
-                  @current_user.team == team ||
-                  @pending_team_ids.include?(team.id) %>
+        <%# logged_in? first, and it is not belt-and-braces: the page is public
+            now, so @current_user is nil for a guest and the three checks below
+            would raise. A guest has nothing to apply with either --
+            TeamJoinRequestsController#create requires a session. %>
+        <% if logged_in? && !(@current_user.captain? ||
+                              @current_user.team == team ||
+                              @pending_team_ids.include?(team.id)) %>
           <%= form_with url: team_join_requests_path(:team_id => team.id), method: :post do %>
             <%= submit_tag t("teams.index.apply"), :class => "btn" %>
           <% end %>

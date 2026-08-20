@@ -758,6 +758,7 @@ en:
       team_room: "Team room"
       create_team: "Create a team"
       all_games: "All games in this domain"
+      teams: "Teams"
       logout: "Log out"
       login_legend: "Log in"
       login: "Log in"

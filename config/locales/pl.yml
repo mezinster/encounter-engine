@@ -777,6 +777,7 @@ pl:
       team_room: "Pokój drużyny"
       create_team: "Utwórz drużynę"
       all_games: "Wszystkie gry domeny"
+      teams: "Drużyny"
       logout: "Wyloguj się"
       login_legend: "Logowanie"
       login: "Zaloguj się"

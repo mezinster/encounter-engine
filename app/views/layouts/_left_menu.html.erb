@@ -27,6 +27,15 @@
       <%= link_to t("layout.left_menu.all_games"), games_path %>
     </li>
 
+    <%# The team leaderboard. It was reachable only from the dashboard --
+        and there only `unless member_of_any_team?` -- and from the team
+        room, where «Все команды» reads as "go find another team" rather
+        than "see the standings". Both of those framings are recruitment;
+        this one is the ranking. %>
+    <li>
+      <%= link_to t("layout.left_menu.teams"), teams_path %>
+    </li>
+
     <%# Inside the logged_in? branch, so current_user is guaranteed. The admin
         screens are scattered across four paths that are easy to forget and are
         linked from nowhere else -- the console links onward to the others, but
@@ -69,6 +78,10 @@
 
     <li>
       <%= link_to t("layout.left_menu.signup"), signup_path %>
+    </li>
+
+    <li>
+      <%= link_to t("layout.left_menu.teams"), teams_path %>
     </li>
   </ul>
 <% end %>

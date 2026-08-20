@@ -1,0 +1,5 @@
+[
+  { "size": "Standard_B1ms", "vcpu": 1, "ram_gib": 2, "usd": 17.52, "floor": true },
+  { "size": "Standard_B2s",  "vcpu": 2, "ram_gib": 4, "usd": 35.04 },
+  { "size": "Standard_B2ms", "vcpu": 2, "ram_gib": 8, "usd": 70.08 }
+]

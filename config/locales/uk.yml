@@ -777,6 +777,7 @@ uk:
       team_room: "Кімната команди"
       create_team: "Створити команду"
       all_games: "Усі ігри домену"
+      teams: "Команди"
       logout: "Вийти"
       login_legend: "Вхід"
       login: "Увійти"

@@ -772,6 +772,7 @@ be:
       team_room: "Пакой каманды"
       create_team: "Стварыць каманду"
       all_games: "Усе гульні дамена"
+      teams: "Каманды"
       logout: "Выйсці"
       login_legend: "Уваход"
       login: "Увайсці"

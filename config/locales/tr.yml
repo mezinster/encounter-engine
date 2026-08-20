@@ -808,6 +808,7 @@ tr:
       team_room: "Takım odası"
       create_team: "Takım oluştur"
       all_games: "Alan adındaki tüm oyunlar"
+      teams: "Takımlar"
       logout: "Çıkış yap"
       login_legend: "Giriş"
       login: "Giriş yap"

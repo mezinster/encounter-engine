@@ -61,6 +61,37 @@ RSpec.describe "layouts/application", type: :view do
     expect(rendered).to include(I18n.t("layout.left_menu.create_team"))
     expect(rendered).to include(new_team_path)
   end
+
+  # The literal, not I18n.t: an assertion written as include(I18n.t(key))
+  # cannot fail on a key that resolves to something wrong, because both sides
+  # move together. The point of these two is that the LINK exists at all, so
+  # the label is pinned by hand.
+  it "offers the teams leaderboard to a signed-in viewer" do
+    # Built out here, not inside the block: define_singleton_method's body
+    # runs in the VIEW's binding, where the fixture helpers do not exist.
+    user = create_user
+
+    view.define_singleton_method(:logged_in?) { true }
+    view.define_singleton_method(:current_user) { user }
+
+    render
+
+    expect(rendered).to include("Команды")
+    expect(rendered).to include(teams_path)
+  end
+
+  # The guest half. The leaderboard is public, so the way in has to be too --
+  # without this the only guest links are Войти/Зарегистрироваться and the
+  # page is reachable by typing the URL and nothing else.
+  it "offers the teams leaderboard to a guest" do
+    view.define_singleton_method(:logged_in?) { false }
+    view.define_singleton_method(:current_user) { nil }
+
+    render
+
+    expect(rendered).to include("Команды")
+    expect(rendered).to include(teams_path)
+  end
 end
 
 RSpec.describe "layouts/in_game", type: :view do

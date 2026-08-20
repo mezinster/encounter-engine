@@ -773,6 +773,7 @@ ru:
       team_room: "Комната команды"
       create_team: "Создать команду"
       all_games: "Все игры домена"
+      teams: "Команды"
       logout: "Выйти"
       login_legend: "Вход"
       login: "Войти"

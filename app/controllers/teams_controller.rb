@@ -1,6 +1,10 @@
 # -*- encoding : utf-8 -*-
 class TeamsController < ApplicationController
-  before_action :require_authentication!, :except => [ :show ]
+  # index joins show as public: it is the team leaderboard, and #show -- the
+  # page it links every row to -- has been readable without an account all
+  # along, so gating the list guarded nothing the detail page did not already
+  # give away. Everything below still requires a session.
+  before_action :require_authentication!, :except => [ :show, :index ]
   before_action :ensure_not_member_of_any_team, only: [:new, :create]
 
   # Discovery for join requests. `resources :teams` already routed index and
@@ -16,7 +20,13 @@ class TeamsController < ApplicationController
     @teams = Team.includes(:captain, :members).order(:name)
     # One query for the viewer's pending applications rather than one per
     # row, for the same reason.
-    @pending_team_ids = TeamJoinRequest.pending.of_user(current_user).pluck(:team_id)
+    #
+    # Empty for a guest rather than skipped conditionally at the call site:
+    # `of_user` is `where(:user_id => user.id)`, so a nil viewer raises
+    # NoMethodError rather than matching nothing. Removing an auth filter
+    # retypes current_user from User to User? for every line downstream, and
+    # this is one of the two places that noticed.
+    @pending_team_ids = logged_in? ? TeamJoinRequest.pending.of_user(current_user).pluck(:team_id) : []
 
     # Four grouped queries for the whole page, whatever the number of teams.
     # Never a lookup per row: teams_index_spec.rb pins a flat count, and this

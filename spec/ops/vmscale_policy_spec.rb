@@ -245,4 +245,80 @@ RSpec.describe VMScale::Policy do
       expect(result["reasons"].join).to match(/is the top of the ladder/)
     end
   end
+
+  describe "suppressors" do
+    let(:breaching) { build { |i| flood(i, "cpu_credits_remaining", "min", 40.0) } }
+
+    it "holds within 48 hours of the last resize" do
+      recent = build do |i|
+        flood(i, "cpu_credits_remaining", "min", 40.0)
+        i["now_utc"]         = "2026-08-20T19:00:00Z"
+        i["last_resize_utc"] = "2026-08-20T13:00:00Z"
+      end
+      result = described_class.decide(recent)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join).to match(/cooldown: 42\.0h of 48h remaining/)
+    end
+
+    it "proposes again once the cooldown has expired" do
+      stale = build do |i|
+        flood(i, "cpu_credits_remaining", "min", 40.0)
+        i["now_utc"]         = "2026-08-20T19:00:00Z"
+        i["last_resize_utc"] = "2026-08-18T13:00:00Z"
+      end
+      expect(described_class.decide(stale)["verdict"]).to eq("scale_up")
+    end
+
+    it "has no cooldown when the VM has never been resized" do
+      never = build do |i|
+        flood(i, "cpu_credits_remaining", "min", 40.0)
+        i["last_resize_utc"] = nil
+      end
+      expect(described_class.decide(never)["verdict"]).to eq("scale_up")
+    end
+
+    it "says so on every verdict when the activity log cannot be read" do
+      # Degrading silently is the failure this repository is bitten by most
+      # often. A cooldown that has stopped applying must be as loud as one
+      # that fires.
+      blind = build { |i| i["activity_log_readable"] = false }
+      expect(described_class.decide(blind)["reasons"].join)
+        .to match(/activity log unreadable: the cooldown is not in force/)
+    end
+
+    it "will not propose a size the cluster does not offer" do
+      stranded = build do |i|
+        flood(i, "cpu_credits_remaining", "min", 40.0)
+        i["resize_options"] = ["Standard_B1ms"]
+      end
+      result = described_class.decide(stranded)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join)
+        .to match(/Standard_B2s is not offered by the cluster this VM sits on/)
+    end
+
+    it "never infers a breach from a short window" do
+      thin = build { |i| i["metrics"]["cpu_percent"] = i["metrics"]["cpu_percent"].first(10) }
+      result = described_class.decide(thin)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join)
+        .to match(/insufficient data: cpu_percent returned 10 of 36 expected points/)
+    end
+
+    it "never infers a breach from a missing credit ceiling" do
+      unanchored = build { |i| i["metrics"]["credits_max_7d"] = 0 }
+      result = described_class.decide(unanchored)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join).to match(/credits_max_7d is missing or zero/)
+    end
+
+    it "checks the cooldown before the data, so a fresh resize is never masked" do
+      both = build do |i|
+        i["metrics"]["cpu_percent"] = i["metrics"]["cpu_percent"].first(10)
+        i["now_utc"]         = "2026-08-20T19:00:00Z"
+        i["last_resize_utc"] = "2026-08-20T13:00:00Z"
+      end
+      expect(described_class.decide(both)["reasons"].join).to match(/cooldown/)
+    end
+  end
 end

@@ -24,17 +24,58 @@ module VMScale
     QUIET_DAYS_REQUIRED   = 14
     COOLDOWN_HOURS        = 48
     MB                    = 1024 * 1024
+    REQUIRED_SERIES       = %w[cpu_percent available_memory_bytes cpu_credits_remaining].freeze
 
     module_function
 
     def decide(input)
-      current  = input.fetch("current_size")
-      found    = evidence(input)
+      current = input.fetch("current_size")
+      found   = evidence(input)
+      caveats = input.fetch("activity_log_readable", true) ? [] :
+                  ["activity log unreadable: the cooldown is not in force"]
+
+      # Checked first, and before the data check, so that a resize minutes old
+      # is never masked by an unrelated metrics gap.
+      if (remaining = cooldown_remaining_hours(input))
+        return verdict("hold", current, nil, found, caveats +
+          [format("cooldown: %.1fh of %dh remaining since the last resize",
+                  remaining, COOLDOWN_HOURS)])
+      end
+
+      if (gap = metrics_gap(input))
+        return verdict("hold", current, nil, found, caveats + [gap])
+      end
+
       breached = breaches(input)
+      return scale_up(input, current, found, caveats + breached) if breached.any?
 
-      return scale_up(input, current, found, breached) if breached.any?
+      verdict("hold", current, nil, found, caveats + ["no threshold breached"])
+    end
 
-      verdict("hold", current, nil, found, ["no threshold breached"])
+    def cooldown_remaining_hours(input)
+      last = input["last_resize_utc"]
+      return nil if last.nil? || last.to_s.empty?
+
+      elapsed = (Time.parse(input.fetch("now_utc")) - Time.parse(last)) / 3600.0
+      return nil if elapsed.negative? || elapsed >= COOLDOWN_HOURS
+
+      COOLDOWN_HOURS - elapsed
+    end
+
+    def metrics_gap(input)
+      metrics = input.fetch("metrics")
+
+      REQUIRED_SERIES.each do |name|
+        size = (metrics[name] || []).size
+        if size < WINDOW_POINTS
+          return "insufficient data: #{name} returned #{size} of #{WINDOW_POINTS} expected points"
+        end
+      end
+
+      return "insufficient data: credits_max_7d is missing or zero" unless
+        metrics["credits_max_7d"].to_f.positive?
+
+      nil
     end
 
     def scale_up(input, current, found, breached)
@@ -42,6 +83,14 @@ module VMScale
       if target.nil?
         return verdict("hold", current, nil, found,
                        breached + ["#{current} is the top of the ladder"])
+      end
+
+      unless input.fetch("resize_options").include?(target)
+        # This list is a property of the physical cluster the VM sits on. A
+        # target absent from it would need a deallocate/start cycle rather than
+        # a reboot -- a materially different operation, never by surprise.
+        return verdict("hold", current, nil, found,
+                       breached + ["#{target} is not offered by the cluster this VM sits on"])
       end
 
       cost    = monthly_total(input, target)

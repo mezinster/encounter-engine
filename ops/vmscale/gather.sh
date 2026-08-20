@@ -8,6 +8,9 @@
 # Requires: az (already logged in) and jq. Both are present on ubuntu-latest.
 set -euo pipefail
 
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
 RG="${RG:-MEZINEU}"
 VM="${VM:-web}"
 LADDER="${LADDER:-ops/vmscale/ladder.json}"
@@ -30,8 +33,8 @@ window() {  # $1 = interval, $2 = start time
      --aggregation Average Minimum -o json
 }
 
-W3H="$(window PT5M "$FROM_3H")"
-W14D="$(window PT1H "$FROM_14D")"
+window PT5M "$FROM_3H"  > "$TMP/w3h.json"
+window PT1H "$FROM_14D" > "$TMP/w14d.json"
 
 # What "30% of peak credits" is measured against. Taken as an observed maximum
 # rather than assumed from the SKU, because the banked ceiling depends on how
@@ -62,6 +65,13 @@ fi
 # ABSENT, not zero. `select(has($key))` drops those. This is load-bearing: a
 # missing `minimum` on Available Memory Bytes coerced to 0 would manufacture the
 # most severe breach the engine can see, out of nothing.
+#
+# --slurpfile rather than --argjson for the two windows: Linux caps a single
+# exec() argument at MAX_ARG_STRLEN (128 KiB), separately from and far below
+# ARG_MAX, and fourteen days of hourly metrics is ~155 KB. --argjson fails with
+# "Argument list too long" on any real data set -- including on the CI runner,
+# so this is a correctness fix rather than a defensive one. --slurpfile binds an
+# array of the file's documents, hence the [0].
 jq -n \
   --arg     size        "$SIZE" \
   --argjson options     "$OPTIONS" \
@@ -72,8 +82,8 @@ jq -n \
   --arg     last        "$LAST_RESIZE" \
   --argjson readable    "$ACTIVITY_READABLE" \
   --argjson credits_max "$CREDITS_MAX_7D" \
-  --argjson w3h         "$W3H" \
-  --argjson w14d        "$W14D" \
+  --slurpfile w3h       "$TMP/w3h.json" \
+  --slurpfile w14d      "$TMP/w14d.json" \
   '
   def pick($src; $metric; $key; $out):
     [ $src.value[]
@@ -99,7 +109,7 @@ jq -n \
     last_resize_utc:        (if $last == "" then null else $last end),
     activity_log_readable:  $readable,
     metrics: (
-      shape($w3h)
-      + { credits_max_7d: $credits_max, hourly_14d: shape($w14d) }
+      shape($w3h[0])
+      + { credits_max_7d: $credits_max, hourly_14d: shape($w14d[0]) }
     )
   }'

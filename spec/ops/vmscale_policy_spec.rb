@@ -140,4 +140,38 @@ RSpec.describe VMScale::Policy do
       expect(described_class.decide(blank)["reasons"].join).not_to match(/available memory/)
     end
   end
+
+  describe "sustained cpu" do
+    # Set the first N points busy and the rest idle, in the 3-hour window only.
+    #
+    # Clears last_resize_utc for the same reason `flood` does: Task 7's cooldown
+    # would otherwise suppress these proposals if the fixture were ever
+    # recaptured shortly after a VM write.
+    def with_busy_points(count)
+      build do |i|
+        i["last_resize_utc"] = nil
+        i["metrics"]["cpu_percent"].each_with_index do |point, index|
+          point["avg"] = index < count ? 95.0 : 3.0
+        end
+      end
+    end
+
+    it "fires once twelve of the window's points are busy" do
+      expect(described_class.decide(with_busy_points(12))["verdict"]).to eq("scale_up")
+    end
+
+    it "holds at eleven" do
+      expect(described_class.decide(with_busy_points(11))["verdict"]).to eq("hold")
+    end
+
+    it "counts the busy points in the reason" do
+      expect(described_class.decide(with_busy_points(20))["reasons"].join)
+        .to match(/sustained cpu: 20 of \d+ points above 80%/)
+    end
+
+    it "ignores a brief spike, however severe" do
+      # Three five-minute points at 99% is what a deploy looks like.
+      expect(described_class.decide(with_busy_points(3))["verdict"]).to eq("hold")
+    end
+  end
 end

@@ -65,6 +65,13 @@ module VMScale
                         (lowest_memory / MB).round, MEMORY_FLOOR_BYTES / MB)
       end
 
+      window = metrics["cpu_percent"] || []
+      busy   = busy_points(window)
+      if busy >= CPU_BUSY_POINTS
+        found << format("sustained cpu: %d of %d points above %d%%",
+                        busy, window.size, CPU_BUSY_PERCENT.round)
+      end
+
       found
     end
 

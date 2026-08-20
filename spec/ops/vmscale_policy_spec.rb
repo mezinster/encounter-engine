@@ -436,5 +436,33 @@ RSpec.describe VMScale::Policy do
       expect(described_class.decide(just_under)["verdict"]).to eq("scale_down")
       expect(described_class.decide(just_over)["verdict"]).to eq("hold")
     end
+
+    it "stops the streak at a day missing from one series" do
+      # Azure returned CPU and credits for that day but no memory. That day is
+      # unknown, not calm, and everything older than it is unreachable.
+      gapped = build do |i|
+        i["current_size"] = "Standard_B2s"
+        with_quiet_history(i, 15)
+        third_day = Time.parse(i.fetch("now_utc")) - (3 * 86_400)
+        missing   = third_day.strftime("%Y-%m-%d")
+        i["metrics"]["hourly_14d"]["available_memory_bytes"].reject! { |p| p["t"].start_with?(missing) }
+      end
+      result = described_class.decide(gapped)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join).to match(/of 14 quiet days/)
+    end
+
+    it "does not count a streak across a hole in every series" do
+      # A whole day absent from all three. Iterating the key list would step
+      # straight over it and keep counting; walking calendar days cannot.
+      holed = build do |i|
+        i["current_size"] = "Standard_B2s"
+        with_quiet_history(i, 15)
+        third_day = Time.parse(i.fetch("now_utc")) - (3 * 86_400)
+        missing   = third_day.strftime("%Y-%m-%d")
+        i["metrics"]["hourly_14d"].each_value { |s| s.reject! { |p| p["t"].start_with?(missing) } }
+      end
+      expect(described_class.decide(holed)["verdict"]).to eq("hold")
+    end
   end
 end

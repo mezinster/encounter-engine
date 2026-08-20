@@ -180,6 +180,13 @@ module VMScale
     # deploys and translation runs while spending three credits a week; a daily
     # maximum would score every day busy and scale-down could never fire. An
     # hour whose AVERAGE exceeds 80% can only be sustained load.
+    #
+    # Walks calendar days backwards rather than iterating the date keys, and
+    # requires every series to have data for a day before counting it. A day
+    # missing from one series is UNKNOWN, not quiet. The engine already refuses
+    # to infer a breach from data it does not have; inferring calm is the same
+    # error facing the other way, and it is the worse of the two -- it ends in a
+    # proposal to shrink the machine on evidence that was never collected.
     def quiet_days(input)
       metrics = input.fetch("metrics")
       hourly  = metrics["hourly_14d"]
@@ -192,13 +199,20 @@ module VMScale
       memory  = by_day(hourly["available_memory_bytes"]) { |hours| minimum(hours) }
       credits = by_day(hourly["cpu_credits_remaining"]) { |hours| minimum(hours) }
 
+      latest = (busy.keys & memory.keys & credits.keys).max
+      return 0 if latest.nil?
+
       streak = 0
-      (busy.keys | memory.keys | credits.keys).sort.reverse_each do |day|
+      cursor = Time.parse("#{latest}T00:00:00Z")
+      loop do
+        day = cursor.strftime("%Y-%m-%d")
+        break unless busy.key?(day) && memory.key?(day) && credits.key?(day)
         break if busy[day]
         break if memory[day] && memory[day] < MEMORY_FLOOR_BYTES
         break if credits[day] && ceiling.positive? && credits[day] < floor
 
         streak += 1
+        cursor -= 86_400
       end
       streak
     end

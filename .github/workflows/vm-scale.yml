@@ -1,0 +1,234 @@
+# Proposes a VM resize; never performs one unasked.
+#
+# The `apply` job carries `environment: vm-resize`, and the Azure identity it
+# uses has exactly one federated credential whose subject IS that environment.
+# GitHub does not mint an OIDC token for a protected environment until a
+# required reviewer approves, so a bug in policy.rb cannot resize anything --
+# not because the code declines, but because it cannot obtain a credential
+# Azure will accept. Approval and authorisation are the same act.
+#
+# One workflow with two jobs rather than a poller dispatching a second
+# workflow: GitHub refuses to create a run from a workflow_dispatch triggered
+# with GITHUB_TOKEN, and the workarounds are a PAT this repository does not use
+# or a GitHub App.
+#
+# Setup: docs/runbooks/vm-scaling-setup.md
+# Design: docs/superpowers/specs/2026-08-20-vm-scaling-track-1-design.md
+name: VM scale
+
+on:
+  schedule:
+    # GitHub's scheduler is best-effort and can run 10-20 minutes late under
+    # platform load, so this means "you hear within roughly half an hour", not
+    # fifteen minutes. Acceptable because nothing here acts on its own.
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Size to resize to, or 'auto' for the policy engine's verdict"
+        type: choice
+        default: auto
+        options: [auto, Standard_B1ms, Standard_B2s, Standard_B2ms]
+      dry_run:
+        description: "Do everything except the resize itself"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+  actions: read
+
+env:
+  RG: MEZINEU
+  VM: web
+  LADDER: ops/vmscale/ladder.json
+  BUDGET_CEILING_USD: "45"
+  BASELINE_USD: "7.5"
+  LOG_ISSUE_LABEL: vm-scaling-log
+  HEALTH_URL: https://game.mezin.eu/up
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    outputs:
+      verdict: ${{ steps.decide.outputs.verdict }}
+      target: ${{ steps.decide.outputs.target }}
+      apply: ${{ steps.decide.outputs.apply }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # gather.sh resolves ops/vmscale/ladder.json relative to the working
+      # directory, which checkout leaves at the repository root.
+      - name: Authenticate to Azure (read-only identity)
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        with:
+          client-id: ${{ secrets.AZURE_VMSCALE_READER_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Gather the load profile
+        run: ./ops/vmscale/gather.sh > input.json
+
+      - name: Decide
+        id: decide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MANUAL_TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          ruby ops/vmscale/policy.rb < input.json > verdict.json
+          cat verdict.json
+
+          VERDICT=$(jq -r .verdict verdict.json)
+          TARGET=$(jq -r '.target // empty' verdict.json)
+
+          # A manual dispatch with an explicit size overrides the engine. This
+          # is the documented scale-down path, and it uses the same gate.
+          if [ -n "${MANUAL_TARGET:-}" ] && [ "${MANUAL_TARGET}" != "auto" ]; then
+            VERDICT=manual
+            TARGET="$MANUAL_TARGET"
+          fi
+
+          APPLY=false
+          case "$VERDICT" in
+            scale_up|scale_down|manual) APPLY=true ;;
+          esac
+
+          # A fifteen-minute cron against a persistent breach would queue a
+          # fresh approval every fifteen minutes. At most one is ever pending.
+          # A manual dispatch is always honoured -- it is the operator asking.
+          if [ "$APPLY" = true ] && [ "$VERDICT" != manual ]; then
+            WAITING=$(gh run list --workflow vm-scale.yml --status waiting \
+                        --json databaseId --jq 'length')
+            if [ "$WAITING" -gt 0 ]; then
+              echo "an approval is already pending; not queueing a second"
+              APPLY=false
+            fi
+          fi
+
+          {
+            echo "verdict=$VERDICT"
+            echo "target=$TARGET"
+            echo "apply=$APPLY"
+          } >> "$GITHUB_OUTPUT"
+
+      # Every run leaves its evidence here, including the quiet ones. A log that
+      # records only exceptions cannot answer "was it quiet, or was the poller
+      # broken?" -- which is the question this whole system exists to answer
+      # over months.
+      - name: Write the run summary
+        run: |
+          {
+            echo "### VM scale — \`$(jq -r .verdict verdict.json)\`"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            jq -r '.evidence | to_entries[] | "| \(.key) | \(.value) |"' verdict.json
+            echo
+            jq -r '.reasons[] | "- \(.)"' verdict.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Only when something is being proposed. A comment every fifteen minutes
+      # would be 96 a day and nobody would read the one that mattered.
+      - name: Record the proposal
+        if: steps.decide.outputs.verdict != 'hold'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          ISSUE=$(gh issue list --label "$LOG_ISSUE_LABEL" --state open --limit 1 \
+                    --json number --jq '.[0].number // empty')
+          if [ -z "$ISSUE" ]; then
+            echo "no open issue labelled $LOG_ISSUE_LABEL — see docs/runbooks/vm-scaling-setup.md"
+            exit 1
+          fi
+          {
+            echo "**\`$(jq -r .verdict verdict.json)\`** — $(jq -r .current verdict.json) → $(jq -r '.target // "—"' verdict.json)"
+            echo
+            jq -r '.reasons[] | "- \(.)"' verdict.json
+            echo
+            echo "[run]($RUN_URL)"
+          } | gh issue comment "$ISSUE" --body-file -
+
+  apply:
+    needs: observe
+    if: needs.observe.outputs.apply == 'true'
+    runs-on: ubuntu-latest
+    environment: vm-resize
+    concurrency:
+      # Queue rather than cancel: two approved resizes must never overlap, and
+      # a run performing one must never be killed partway.
+      group: vm-scale-apply
+      cancel-in-progress: false
+    env:
+      TARGET: ${{ needs.observe.outputs.target }}
+      DRY_RUN: ${{ inputs.dry_run || false }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Authenticate to Azure (operator identity)
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        with:
+          client-id: ${{ secrets.AZURE_VMSCALE_OPERATOR_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # The approval may be minutes or days old. Nothing from the proposal is
+      # trusted; every check is made again here.
+      - name: Re-verify the target
+        run: |
+          set -euo pipefail
+          jq -e --arg t "$TARGET" 'any(.[]; .size == $t)' "$LADDER" > /dev/null \
+            || { echo "$TARGET is not on the allowlist in $LADDER"; exit 1; }
+
+          CURRENT=$(az vm show -g "$RG" -n "$VM" --query hardwareProfile.vmSize -o tsv)
+          echo "current=$CURRENT target=$TARGET dry_run=$DRY_RUN"
+          if [ "$CURRENT" = "$TARGET" ]; then
+            echo "already $TARGET; nothing to do"
+            echo "NOOP=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          # A target absent from this list would need a deallocate/start cycle
+          # rather than a reboot. That is a materially different operation and
+          # must never happen by surprise.
+          az vm list-vm-resize-options -g "$RG" -n "$VM" --query '[].name' -o tsv \
+            | grep -qx "$TARGET" \
+            || { echo "$TARGET is not offered by this VM's current cluster"; exit 1; }
+
+      - name: Resize
+        if: env.NOOP != 'true' && env.DRY_RUN != 'true'
+        run: az vm resize -g "$RG" -n "$VM" --size "$TARGET"
+
+      # Routing a manual operation through CI buys exactly this: the
+      # confirmation a hand-typed `az vm resize` never gives you.
+      - name: Wait for the app to answer
+        if: env.NOOP != 'true' && env.DRY_RUN != 'true'
+        run: |
+          for attempt in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$HEALTH_URL" || true)
+            if [ "$code" = "200" ]; then
+              echo "up after ${attempt} attempt(s)"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "$HEALTH_URL did not return 200 within ten minutes"
+          exit 1
+
+      - name: Record the outcome
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          ISSUE=$(gh issue list --label "$LOG_ISSUE_LABEL" --state open --limit 1 \
+                    --json number --jq '.[0].number // empty')
+          [ -n "$ISSUE" ] || exit 0
+          gh issue comment "$ISSUE" --body \
+            "Apply → \`$JOB_STATUS\` (target \`$TARGET\`, dry-run \`$DRY_RUN\`, no-op \`${NOOP:-false}\`) · [run]($RUN_URL)"

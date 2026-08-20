@@ -524,6 +524,53 @@ and returns `[]` rather than 500ing — see the class comment and
 `spec/models/game_passing/answered_questions_spec.rb` ("legacy pre-coder format" spec) for the
 reasoning and proof.
 
+## VM scaling proposals
+
+`.github/workflows/vm-scale.yml` watches the production VM's load every fifteen minutes and
+**proposes** a resize; it never performs one unasked. `ops/vmscale/gather.sh` makes every `az` call
+and prints one JSON document; `ops/vmscale/policy.rb` is a pure function from that document to a
+verdict — no network, no shelling out, no clock (`now_utc` arrives in the input) — which is why it
+is testable from fixtures and why `spec/ops/vmscale_policy_spec.rb` needs `spec_helper` rather than
+`rails_helper`. The shell gathers, the Ruby decides, the environment authorises.
+
+Four things about it are non-obvious:
+
+- **The primary trigger is CPU *credit depletion*, not CPU percentage.** On a burstable SKU 100%
+  CPU is the product working — this VM peaks at 99% most days and spent three credits of 288 in the
+  week it was measured. Running the bank down is what throttles it to a 20% baseline, and at that
+  point the site is unusable while `Percentage CPU` reports a serene 20%. A threshold on CPU% fires
+  constantly and means nothing. Memory has its own trigger because it is the axis with an actual
+  floor, and there is no graceful degradation on it — the OOM killer takes Postgres or Puma, and
+  recovery is a restore rather than a resize.
+- **The approval is the authorisation, not a check in the code.** The `apply` job carries
+  `environment: vm-resize`, and `ee-vmscale-operator-oidc` has exactly one federated credential
+  whose subject is that environment. GitHub does not mint a token for a protected environment until
+  a reviewer approves, so a bug in `policy.rb` cannot resize anything — it cannot obtain a
+  credential Azure will accept. That guarantee is configuration, not code:
+  `docs/runbooks/vm-scaling-setup.md` §5 re-verifies it, and it is worth re-running after any change
+  to the identities or the environment.
+- **The OIDC subject carries numeric IDs and the plain form matches nothing.** This repository has
+  immutable subject claims enabled, so the real subject is
+  `repo:mezinster@10500786/encounter-engine@1322568945:environment:…`. Azure matches by exact
+  string; a credential registered as `repo:mezinster/encounter-engine:…` fails only at the first
+  real run, with `AADSTS70021: No matching federated identity record found`. The comment in
+  `deploy.yml` asserted the plain form for months and was wrong. Read the live value from
+  `ee-deploy-oidc` rather than any comment, including this one.
+- **Absent data is never read as reassuring.** The engine refuses to infer a breach from a short
+  metrics window, and equally refuses to infer *calm* from a gap in the 14-day rollup — a day
+  missing from any series is unknown, not quiet. The second direction is the one that bites: a
+  missed breach declines to act, while an inflated quiet streak proposes shrinking the machine on
+  evidence nobody gathered. `gather.sh` drops metric points whose aggregation key Azure omitted
+  rather than defaulting them to zero, for the same reason.
+
+Scaling **down** uses the same workflow and the same gate — dispatch it manually with a `target`.
+`az vm resize -g MEZINEU -n web --size Standard_B1ms` from a laptop always works too, and nothing
+here can intercept it. The 48-hour cooldown suppresses **proposals** only; it is not a lock.
+
+Design, costs, and the deferred alternatives (blue/green, managed Postgres, and why the second is a
+prerequisite for the first) are in
+`docs/superpowers/specs/2026-08-20-vm-scaling-track-1-design.md`.
+
 ## Deployment
 
 Kamal 2, to a single Ubuntu VM on Azure — one instance serves every community, not one Heroku app

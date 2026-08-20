@@ -217,8 +217,9 @@ RSpec.describe VMScale::Policy do
       # every other example in this file.
       #
       # The ceiling is written as the sum rather than the literal 77.58 so that
-      # it is bit-identical to what monthly_total computes. The same two Floats
-      # added in the same order cannot disagree; a decimal literal could.
+      # it is bit-identical to what monthly_total computes. These two happen to
+      # be equal as literals on this Ruby, but a test whose entire subject is an
+      # equality boundary should not rest on that coincidence.
       exact = build do |i|
         i["current_size"] = "Standard_B2s"
         i["budget_ceiling_usd"] = 70.08 + 7.5
@@ -303,7 +304,7 @@ RSpec.describe VMScale::Policy do
       result = described_class.decide(thin)
       expect(result["verdict"]).to eq("hold")
       expect(result["reasons"].join)
-        .to match(/insufficient data: cpu_percent returned 10 of 36 expected points/)
+        .to match(/insufficient data: cpu_percent returned 10 of 36 expected points, below the 30 needed/)
     end
 
     it "never infers a breach from a missing credit ceiling" do
@@ -334,6 +335,26 @@ RSpec.describe VMScale::Policy do
       result = described_class.decide(skewed)
       expect(result["verdict"]).to eq("hold")
       expect(result["reasons"].join).to match(/cooldown: 48\.0h of 48h remaining/)
+    end
+
+    it "has no opinion about a size that is not on the ladder" do
+      # A manual `az vm resize` can leave the VM on a size this ladder does not
+      # list. Reporting it as both the top and the floor would be worse than
+      # useless -- it would be false in two directions at once.
+      off_ladder = build { |i| i["current_size"] = "Standard_D2s_v3" }
+      result = described_class.decide(off_ladder)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join).to match(/Standard_D2s_v3 is not on the ladder/)
+    end
+
+    it "tolerates a window one bucket short of nominal" do
+      # Azure routinely delivers the newest five-minute bucket late. Demanding
+      # all 36 would report insufficient data on most runs.
+      ragged = build { |i| i["metrics"]["cpu_percent"] = i["metrics"]["cpu_percent"].first(30) }
+      expect(described_class.decide(ragged)["reasons"].join).not_to match(/insufficient data/)
+
+      too_thin = build { |i| i["metrics"]["cpu_percent"] = i["metrics"]["cpu_percent"].first(29) }
+      expect(described_class.decide(too_thin)["reasons"].join).to match(/insufficient data/)
     end
 
     it "lifts the cooldown at exactly forty-eight hours" do
@@ -464,6 +485,19 @@ RSpec.describe VMScale::Policy do
         i["metrics"]["hourly_14d"].each_value { |s| s.reject! { |p| p["t"].start_with?(missing) } }
       end
       expect(described_class.decide(holed)["verdict"]).to eq("hold")
+    end
+
+    it "says the rollup is unavailable rather than reporting a streak of zero" do
+      # Absent is not busy. "0 of 14 quiet days" would state something the
+      # engine does not know.
+      blind = build do |i|
+        i["current_size"] = "Standard_B2s"
+        i["metrics"]["hourly_14d"] = nil
+      end
+      result = described_class.decide(blind)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join).to match(/14-day rollup is unavailable/)
+      expect(result["reasons"].join).not_to match(/0 of 14 quiet days/)
     end
   end
 

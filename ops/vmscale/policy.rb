@@ -21,6 +21,12 @@ module VMScale
     CPU_BUSY_PERCENT      = 80.0
     CPU_BUSY_POINTS       = 12
     WINDOW_POINTS         = 36
+    # A three-hour window is nominally 36 five-minute buckets, and a real
+    # capture returns exactly that -- no headroom at all. Azure routinely
+    # delivers the newest bucket late, so demanding all 36 would report
+    # insufficient data on most runs. Five sixths is enough to judge a
+    # three-hour window and leaves room for the ragged edge.
+    MINIMUM_WINDOW_POINTS = 30
     QUIET_DAYS_REQUIRED   = 14
     COOLDOWN_HOURS        = 48
     MB                    = 1024 * 1024
@@ -33,6 +39,17 @@ module VMScale
       found   = evidence(input)
       caveats = input.fetch("activity_log_readable", true) ? [] :
                   ["activity log unreadable: the cooldown is not in force"]
+
+      # Reachable in practice: the design keeps a manual `az vm resize` as an
+      # escape hatch, so the VM can be on a size this ladder does not list.
+      # Without this, `step` returns nil for an unknown size and both
+      # directions read that as "you are at the end" -- reporting the same VM
+      # as the top of the ladder AND the floor, and going inert while logging
+      # something false.
+      unless input.fetch("ladder").any? { |rung| rung.fetch("size") == current }
+        return verdict("hold", current, nil, found, caveats +
+          ["#{current} is not on the ladder; this engine has no opinion about it"])
+      end
 
       # Checked first, and before the data check, so that a resize minutes old
       # is never masked by an unrelated metrics gap.
@@ -74,8 +91,8 @@ module VMScale
 
       REQUIRED_SERIES.each do |name|
         size = (metrics[name] || []).size
-        if size < WINDOW_POINTS
-          return "insufficient data: #{name} returned #{size} of #{WINDOW_POINTS} expected points"
+        if size < MINIMUM_WINDOW_POINTS
+          return "insufficient data: #{name} returned #{size} of #{WINDOW_POINTS} expected points, below the #{MINIMUM_WINDOW_POINTS} needed"
         end
       end
 
@@ -151,6 +168,17 @@ module VMScale
     end
 
     def scale_down(input, current, found, caveats)
+      # Absent is not busy. quiet_days returns 0 both when the VM was busy
+      # yesterday and when Azure returned no 14-day rollup at all, and
+      # reporting the second as "0 of 14 quiet days" states something the
+      # engine does not know. The 3-hour window has had this guard since the
+      # suppressors landed; the 14-day window never got one.
+      hourly = input.fetch("metrics")["hourly_14d"]
+      if hourly.nil? || REQUIRED_SERIES.any? { |series| (hourly[series] || []).empty? }
+        return verdict("hold", current, nil, found, caveats +
+          ["no threshold breached; the 14-day rollup is unavailable, so no quiet streak can be established"])
+      end
+
       quiet  = found.fetch("quiet_days")
       target = step(input.fetch("ladder"), current, -1)
 

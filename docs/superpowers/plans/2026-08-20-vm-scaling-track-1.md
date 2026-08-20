@@ -27,7 +27,7 @@
   - `QUIET_DAYS_REQUIRED = 14`, `COOLDOWN_HOURS = 48`
   - `budget_ceiling_usd` default `45`, `baseline_usd` default `7.5`
 - **The ladder is `Standard_B1ms` → `Standard_B2s` → `Standard_B2ms`**, ascending, floor first. Both directions move exactly one rung.
-- **Azure targets:** resource group `MEZINEU`, VM `web`, subscription `5fe2e416-5389-40ea-a0a0-f8ae1ad8d19f`, health URL `https://game.mezin.eu/up`.
+- **Azure targets:** resource group `MEZINEU`, VM `web`, subscription `<subscription-id>` (`az account show --query id -o tsv`), health URL `https://game.mezin.eu/up`.
 
 ---
 
@@ -1379,7 +1379,7 @@ issued until a human approves**. That rests entirely on the configuration below,
 re-verifies it rather than assuming it.
 
 ```bash
-export SUB=5fe2e416-5389-40ea-a0a0-f8ae1ad8d19f
+export SUB=$(az account show --query id -o tsv)
 export RG=MEZINEU
 export REPO=mezinster/encounter-engine
 export VM_ID=$(az vm show -g $RG -n web --query id -o tsv)

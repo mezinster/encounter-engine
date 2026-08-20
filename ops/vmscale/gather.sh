@@ -42,7 +42,7 @@ window PT1H "$FROM_14D" > "$TMP/w14d.json"
 CREDITS_MAX_7D="$(az monitor metrics list --resource "$ID" \
     --metric "CPU Credits Remaining" --interval PT1H \
     --start-time "$FROM_7D" --end-time "$NOW" --aggregation Maximum -o json \
-  | jq '[.value[0].timeseries[0].data[] | .maximum // empty] | max // 0')"
+  | jq '[.value[0].timeseries[0].data[]? | .maximum // empty] | max // 0')"
 
 # The Activity Log is a SUBSCRIPTION-level resource and this identity is scoped
 # to one VM, so this query may legitimately be forbidden. It must not be fatal
@@ -85,10 +85,14 @@ jq -n \
   --slurpfile w3h       "$TMP/w3h.json" \
   --slurpfile w14d      "$TMP/w14d.json" \
   '
+  # data[]? rather than data[]: Azure returns an empty `timeseries` array for a
+  # metric it has no data for at all, and iterating null aborts jq. That would
+  # fail the whole script and leave the insufficient-data verdict in policy.rb
+  # unreachable by the one situation it exists for.
   def pick($src; $metric; $key; $out):
     [ $src.value[]
       | select(.name.value == $metric)
-      | .timeseries[0].data[]
+      | .timeseries[0].data[]?
       | select(has($key))
       | { t: .timeStamp, ($out): .[$key] } ];
 

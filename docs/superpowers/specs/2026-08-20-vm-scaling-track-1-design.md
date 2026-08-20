@@ -340,18 +340,22 @@ manufacture the most severe breach the engine can see, out of nothing.
 `spec/ops/vmscale_policy_spec.rb` requires `spec_helper`, not `rails_helper`, so it costs nothing in
 boot time and runs inside an ordinary `bundle exec rspec` with no new gate to remember.
 
-Fixtures:
+Only one fixture exists on disk: `input-quiet-2026-08-20.json`, real captured `gather.sh` output
+against the production VM. Every other case in the table below is built in the spec by mutating a
+deep copy of that one fixture, rather than living as its own hand-written JSON file — hand-authored
+fixtures drift away from what Azure actually returns, and a schema change would leave seven stale
+files silently out of step with the real shape instead of breaking all seven cases at once.
 
-| Fixture | Must yield |
+| Case | Must yield |
 |---|---|
-| `quiet-2026-08-20.json` — today's real seven-day metrics | `hold` |
-| `credits-draining.json` — credits at 22% of max | `scale_up` → `Standard_B2s` |
-| `memory-floor.json` — 180 MB minimum available | `scale_up` → `Standard_B2s` |
-| `sustained-cpu.json` — 20 of 36 points above 80%, credits healthy | `scale_up` |
-| `already-b2s-breaching.json` — on `B2s`, breaching, `B2ms` unaffordable | `at_budget_ceiling` |
-| `quiet-14-days-on-b2s.json` | `scale_down` → `Standard_B1ms` |
-| `within-cooldown.json` — breaching, last resize 6 h ago | `hold`, with the cooldown named in `reasons` |
-| `target-not-offered.json` — `B2s` absent from `resize_options` | `hold`, with the reason named |
+| `input-quiet-2026-08-20.json` — today's real seven-day metrics | `hold` |
+| credits at 22% of max | `scale_up` → `Standard_B2s` |
+| 180 MB minimum available | `scale_up` → `Standard_B2s` |
+| 20 of 36 points above 80%, credits healthy | `scale_up` |
+| on `B2s`, breaching, `B2ms` unaffordable | `at_budget_ceiling` |
+| quiet 14 days on `B2s` | `scale_down` → `Standard_B1ms` |
+| breaching, last resize 6 h ago | `hold`, with the cooldown named in `reasons` |
+| `B2s` absent from `resize_options` | `hold`, with the reason named |
 
 The first fixture is the important one. Real measured data that must return `hold` is the guard
 against a threshold that looks reasonable in the abstract and fires constantly in production —

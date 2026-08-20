@@ -141,10 +141,19 @@ above the floor. The asymmetry is deliberate: scaling up spends money against a 
 reboot either way, so a hair-trigger down-proposal would trade real downtime for pennies.
 
 Evaluating fourteen days at five-minute granularity would be 4,032 points per metric on every run,
-so the workflow supplies a second, coarser series — `daily_14d`, one row per day carrying that
-day's CPU maximum, memory minimum and credit minimum. The engine applies the same three thresholds
-to those daily extremes. A day whose *extreme* is inside the thresholds was quiet by definition, so
-the coarse series loses no signal that matters here.
+so the workflow supplies a second, coarser series: the same three metrics at **hourly** granularity
+over fourteen days — 336 points each, which is cheap. The engine groups them by date itself.
+
+A day is **quiet** when all three hold across its hours: no hour averaged above 80% CPU, the
+minimum available memory stayed above the floor, and the minimum credit balance stayed above 30% of
+the seven-day maximum.
+
+Note what the CPU criterion is *not*. An earlier draft tested each day's CPU **maximum** against the
+80% line, which would have been wrong in a way the measured data makes obvious: this VM hits 90–99%
+on most days, from deploys and translation runs, while spending three credits a week. Every day
+would have scored as busy and scale-down could never fire. A daily maximum cannot tell a
+five-minute spike from a sustained load. An hour whose *average* exceeds 80% can only be sustained,
+which is why the rollup counts busy hours rather than peaks.
 
 **Both directions move one rung at a time.** A breach on `B1ms` proposes `B2s`, never `B2ms`, even
 if the evidence is dramatic — a bigger jump is a decision to make deliberately, with the smaller
@@ -187,10 +196,11 @@ its own outcome because it is its own situation.
 
 ### V8 + V9 + V10 — what the machine does, and what only you do
 
-On a breach the poller comments on the long-lived decision Issue **and** dispatches the resize
-workflow. The run then sits pending on the `vm-resize` environment, which pushes a notification
-with an Approve button. Nothing executes. If it is never approved it expires after 30 days and
-fails, which is the correct outcome.
+On a breach the poller comments on the long-lived decision Issue, and the same run's second job
+sits pending on the `vm-resize` environment, which pushes a notification with an Approve button.
+Nothing executes. If it is never approved it expires after 30 days and fails, which is the correct
+outcome. (§4 explains why this is one workflow with two jobs rather than a poller dispatching a
+second workflow — the obvious construction is blocked by GitHub's anti-recursion rule.)
 
 Scale-down goes through the same workflow and the same gate. A separate ungated down-only path was
 considered and rejected: it would require a third identity holding standing Virtual Machine
@@ -249,8 +259,11 @@ Input (stdin, JSON):
     "available_memory_bytes": [{"t": "...", "min": 494927872}, ...],
     "cpu_credits_remaining":  [{"t": "...", "min": 285.1}, ...],
     "credits_max_7d":         288.0,
-    "daily_14d": [{"d": "2026-08-19", "cpu_max": 72.2,
-                   "mem_min": 494927872, "credits_min": 285.1}, ...]
+    "hourly_14d": {                       // same three series, PT1H, 14 days
+      "cpu_percent":            [{"t": "...", "avg": 5.1}, ...],
+      "available_memory_bytes": [{"t": "...", "min": 494927872}, ...],
+      "cpu_credits_remaining":  [{"t": "...", "min": 285.1}, ...]
+    }
   }
 }
 ```
@@ -279,14 +292,37 @@ exceptions cannot answer "was it quiet, or was the poller broken?"
 |---|---|
 | `ops/vmscale/policy.rb` | The pure decision function. Ruby stdlib only — no Bundler, no Rails. |
 | `ops/vmscale/ladder.json` | Sizes, prices, floor flag. The one place a price is written down. |
-| `.github/workflows/vm-scale-observe.yml` | Cron poller. Reader identity. Gathers, decides, comments, dispatches. |
-| `.github/workflows/vm-scale-apply.yml` | `workflow_dispatch`. `environment: vm-resize`. Operator identity. Executes. |
+| `ops/vmscale/gather.sh` | Every `az` call, reshaped by `jq` into one JSON document on stdout. |
+| `.github/workflows/vm-scale.yml` | Two jobs: `observe` (reader identity) then `apply` (gated). |
 | `spec/ops/vmscale_policy_spec.rb` | Unit tests. Requires `spec_helper` only — does not boot Rails. |
 | `spec/fixtures/vmscale/*.json` | Metric fixtures, including today's real measurements. |
 
 `policy.rb` deliberately does not live under `app/` or `lib/`. It is not part of the Rails
 application, must not be autoloaded, and must remain runnable as `ruby ops/vmscale/policy.rb` on a
 bare runner with no bundle installed.
+
+**Why one workflow with two jobs, rather than a poller that dispatches a second workflow.**
+The obvious construction — the poller calls `gh workflow run vm-scale-apply.yml` — cannot work:
+GitHub does not create a workflow run from a `workflow_dispatch` triggered with `GITHUB_TOKEN`, a
+deliberate anti-recursion rule. The alternatives are a PAT, which this repository does not use and
+has been burned by before, or a GitHub App. Neither is worth it, because putting `apply` in the
+same run as `observe` gets the same behaviour for free: a job carrying `environment: vm-resize`
+pauses that run pending approval, and its OIDC subject is the environment, exactly as V1 requires.
+
+That construction also fixes a problem the two-workflow version would have had. A cron running
+every fifteen minutes against a persistent breach would queue a fresh approval request every
+fifteen minutes. The `observe` job therefore checks for an already-waiting run of this workflow and
+declines to produce a second one, so at most one approval is ever pending.
+
+`gather.sh` exists because reshaping three Azure Monitor responses is real work that would bloat
+the workflow YAML, and because it draws the line the design depends on: **the shell script gathers
+and the Ruby decides.** No threshold, comparison, or verdict appears in `gather.sh` — it is the
+untested half by necessity, so it must hold nothing worth testing.
+
+One detail in `gather.sh` is load-bearing rather than stylistic: a metric point for an interval
+Azure had no data for arrives with the aggregation key **absent**, not zero. Those points are
+dropped, never defaulted. A missing `minimum` on `Available Memory Bytes` coerced to `0` would
+manufacture the most severe breach the engine can see, out of nothing.
 
 ---
 

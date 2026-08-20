@@ -345,4 +345,96 @@ RSpec.describe VMScale::Policy do
       expect(described_class.decide(exact)["verdict"]).to eq("scale_up")
     end
   end
+
+  describe "scaling down" do
+    # Replace the hourly rollup with `days` whole calendar dates of uniformly
+    # quiet hours, ending on the day BEFORE now_utc's date.
+    #
+    # Whole dates rather than `days * 24` rolling hours: rolling hours straddle
+    # date boundaries, so thirteen days of them yields fourteen distinct date
+    # keys, and an example asserting a streak of thirteen would see fourteen.
+    #
+    # Clears last_resize_utc for the same reason `flood` does -- Task 7's
+    # cooldown would otherwise suppress these proposals if the fixture were ever
+    # recaptured shortly after a VM write.
+    def with_quiet_history(input, days)
+      input["last_resize_utc"] = nil
+      finish = Time.parse(input.fetch("now_utc")) - 86_400
+      dates  = (0...days).map { |back| (finish - (back * 86_400)).strftime("%Y-%m-%d") }
+      hours  = dates.flat_map do |date|
+        (0..23).map { |hour| { "t" => format("%sT%02d:00:00Z", date, hour) } }
+      end
+
+      input["metrics"]["hourly_14d"] = {
+        "cpu_percent"            => hours.map { |h| h.merge("avg" => 4.0) },
+        "available_memory_bytes" => hours.map { |h| h.merge("min" => 900 * 1024 * 1024) },
+        "cpu_credits_remaining"  => hours.map { |h| h.merge("min" => 287.0) }
+      }
+      input
+    end
+
+    let(:on_b2s) do
+      build do |i|
+        i["current_size"] = "Standard_B2s"
+        with_quiet_history(i, 15)
+      end
+    end
+
+    it "proposes the rung below after fourteen quiet days" do
+      result = described_class.decide(on_b2s)
+      expect(result["verdict"]).to eq("scale_down")
+      expect(result["target"]).to eq("Standard_B1ms")
+    end
+
+    it "holds at thirteen" do
+      nearly = build do |i|
+        i["current_size"] = "Standard_B2s"
+        with_quiet_history(i, 13)
+      end
+      result = described_class.decide(nearly)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join).to match(/13 of 14 quiet days/)
+    end
+
+    it "resets the streak on a single busy hour" do
+      # One hour averaging above 80% can only be sustained load, unlike a daily
+      # maximum, which cannot tell a five-minute deploy spike from real work.
+      interrupted = build do |i|
+        i["current_size"] = "Standard_B2s"
+        with_quiet_history(i, 15)
+        i["metrics"]["hourly_14d"]["cpu_percent"][60]["avg"] = 88.0
+      end
+      expect(described_class.decide(interrupted)["verdict"]).to eq("hold")
+    end
+
+    it "never proposes below the floor" do
+      floored = build { |i| with_quiet_history(i, 15) }   # already Standard_B1ms
+      result = described_class.decide(floored)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join).to match(/Standard_B1ms is the floor/)
+    end
+
+    it "reports the streak as evidence" do
+      expect(described_class.decide(on_b2s)["evidence"]["quiet_days"]).to be >= 14
+    end
+
+    it "breaks the streak at exactly the busy-hour line" do
+      # Hours, not daily maxima. An hour whose AVERAGE exceeds 80% can only be
+      # sustained load; a daily maximum could not tell a five-minute deploy
+      # spike from real work, and this VM peaks at 90-99% on most days.
+      just_under = build do |i|
+        i["current_size"] = "Standard_B2s"
+        with_quiet_history(i, 15)
+        i["metrics"]["hourly_14d"]["cpu_percent"][60]["avg"] = 79.9
+      end
+      just_over = build do |i|
+        i["current_size"] = "Standard_B2s"
+        with_quiet_history(i, 15)
+        i["metrics"]["hourly_14d"]["cpu_percent"][60]["avg"] = 80.1
+      end
+
+      expect(described_class.decide(just_under)["verdict"]).to eq("scale_down")
+      expect(described_class.decide(just_over)["verdict"]).to eq("hold")
+    end
+  end
 end

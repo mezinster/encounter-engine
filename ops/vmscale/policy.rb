@@ -49,7 +49,7 @@ module VMScale
       breached = breaches(input)
       return scale_up(input, current, found, caveats + breached) if breached.any?
 
-      verdict("hold", current, nil, found, caveats + ["no threshold breached"])
+      scale_down(input, current, found, caveats)
     end
 
     def cooldown_remaining_hours(input)
@@ -150,6 +150,64 @@ module VMScale
       found
     end
 
+    def scale_down(input, current, found, caveats)
+      quiet  = found.fetch("quiet_days")
+      target = step(input.fetch("ladder"), current, -1)
+
+      if target.nil?
+        return verdict("hold", current, nil, found,
+                       caveats + ["no threshold breached; #{current} is the floor"])
+      end
+
+      if quiet < QUIET_DAYS_REQUIRED
+        return verdict("hold", current, nil, found,
+                       caveats + ["no threshold breached; #{quiet} of #{QUIET_DAYS_REQUIRED} quiet days"])
+      end
+
+      unless input.fetch("resize_options").include?(target)
+        return verdict("hold", current, nil, found,
+                       caveats + ["#{quiet} quiet days, but #{target} is not offered by the cluster this VM sits on"])
+      end
+
+      verdict("scale_down", current, target, found, caveats + ["#{quiet} consecutive quiet days"])
+    end
+
+    # A day is quiet when no hour averaged above the CPU line, the lowest
+    # available memory stayed above the floor, and the lowest credit balance
+    # stayed above 30% of the seven-day peak.
+    #
+    # Hours, not daily maxima. This VM peaks at 90-99% on most days from
+    # deploys and translation runs while spending three credits a week; a daily
+    # maximum would score every day busy and scale-down could never fire. An
+    # hour whose AVERAGE exceeds 80% can only be sustained load.
+    def quiet_days(input)
+      metrics = input.fetch("metrics")
+      hourly  = metrics["hourly_14d"]
+      return 0 if hourly.nil?
+
+      ceiling = metrics.fetch("credits_max_7d").to_f
+      floor   = ceiling * CREDIT_FLOOR_FRACTION
+
+      busy    = by_day(hourly["cpu_percent"]) { |hours| busy_points(hours).positive? }
+      memory  = by_day(hourly["available_memory_bytes"]) { |hours| minimum(hours) }
+      credits = by_day(hourly["cpu_credits_remaining"]) { |hours| minimum(hours) }
+
+      streak = 0
+      (busy.keys | memory.keys | credits.keys).sort.reverse_each do |day|
+        break if busy[day]
+        break if memory[day] && memory[day] < MEMORY_FLOOR_BYTES
+        break if credits[day] && ceiling.positive? && credits[day] < floor
+
+        streak += 1
+      end
+      streak
+    end
+
+    def by_day(points)
+      (points || []).group_by { |point| point.fetch("t")[0, 10] }
+                    .transform_values { |hours| yield(hours) }
+    end
+
     def step(ladder, current, direction)
       here = ladder.index { |rung| rung.fetch("size") == current }
       return nil if here.nil?
@@ -170,7 +228,7 @@ module VMScale
         "memory_min_mb"   => ((minimum(metrics["available_memory_bytes"]) || 0) / MB).round,
         "credits_min"     => (minimum(metrics["cpu_credits_remaining"]) || 0).round(1),
         "credits_max_7d"  => metrics["credits_max_7d"],
-        "quiet_days"      => 0
+        "quiet_days"      => quiet_days(input)
       }
     end
 

@@ -115,7 +115,38 @@ gh secret set AZURE_VMSCALE_READER_CLIENT_ID   --repo $REPO --body "$READER_CLIE
 gh secret set AZURE_VMSCALE_OPERATOR_CLIENT_ID --repo $REPO --body "$OPERATOR_CLIENT"
 ```
 
-`AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID` already exist for the deploy workflow and are reused.
+**`AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID` are NOT already available**, and an earlier draft
+of this runbook claimed they were. Every Azure secret in this repository is scoped to the
+**`production` environment** — `deploy.yml` can read them only because its job declares that
+environment. A job with no environment, or with a different one, sees nothing, and
+`azure/login` then fails with:
+
+```
+Login failed with Error: Using auth-type: SERVICE_PRINCIPAL. Not all values are present.
+Ensure 'client-id' and 'tenant-id' are supplied.
+```
+
+which reads as a broken secret rather than an unreadable one. Both jobs here need these, and they
+sit in two different environments, so set them at repository level:
+
+```bash
+gh secret set AZURE_TENANT_ID       --repo $REPO --body "$(az account show --query tenantId -o tsv)"
+gh secret set AZURE_SUBSCRIPTION_ID --repo $REPO --body "$SUB"
+```
+
+Repository level is the right home for these two specifically. A tenant ID and a subscription ID
+are **identifiers, not credentials** — they appear in every resource ID — and grant nothing without
+a token. The authority stays in the OIDC federation, which is scoped to one VM per identity. Fork
+pull requests never receive secrets, so a public repository does not widen this. Do not put the
+client IDs of any identity holding write permissions at repository level on the same reasoning
+without checking what that identity can do.
+
+Confirm which scope holds what, since the difference is invisible until a run fails:
+
+```bash
+gh secret list --repo $REPO                      # repository level
+gh secret list --repo $REPO --env production     # the deploy workflow's
+```
 
 ## 4. The decision log issue
 

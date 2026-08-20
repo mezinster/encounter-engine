@@ -56,8 +56,15 @@ module VMScale
       last = input["last_resize_utc"]
       return nil if last.nil? || last.to_s.empty?
 
-      elapsed = (Time.parse(input.fetch("now_utc")) - Time.parse(last)) / 3600.0
-      return nil if elapsed.negative? || elapsed >= COOLDOWN_HOURS
+      # Clamped at zero rather than bailing out when `last` is in the future.
+      # A future-dated resize means the runner's clock and the Activity Log's
+      # disagree, and the likeliest reason by far is that a resize has only just
+      # happened -- so the cooldown belongs at its fullest, not absent. Bailing
+      # out failed OPEN in precisely the case that warrants most caution. The
+      # suppression stays bounded either way: it lapses 48 hours after now_utc
+      # however absurd the timestamp is, and every verdict names it.
+      elapsed = [(Time.parse(input.fetch("now_utc")) - Time.parse(last)) / 3600.0, 0.0].max
+      return nil if elapsed >= COOLDOWN_HOURS
 
       COOLDOWN_HOURS - elapsed
     end

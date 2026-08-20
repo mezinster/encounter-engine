@@ -320,5 +320,29 @@ RSpec.describe VMScale::Policy do
       end
       expect(described_class.decide(both)["reasons"].join).to match(/cooldown/)
     end
+
+    it "suppresses rather than proposes when the last resize is dated in the future" do
+      # Clock skew between the runner and the Activity Log. The likeliest cause
+      # is a resize that just landed, so this must not fail open into proposing
+      # a reboot minutes after one.
+      skewed = build do |i|
+        flood(i, "cpu_credits_remaining", "min", 40.0)
+        i["now_utc"]         = "2026-08-20T19:00:00Z"
+        i["last_resize_utc"] = "2026-08-20T21:00:00Z"
+      end
+      result = described_class.decide(skewed)
+      expect(result["verdict"]).to eq("hold")
+      expect(result["reasons"].join).to match(/cooldown: 48\.0h of 48h remaining/)
+    end
+
+    it "lifts the cooldown at exactly forty-eight hours" do
+      # The boundary is `>=`, so 48.0h elapsed is expired, not expiring.
+      exact = build do |i|
+        flood(i, "cpu_credits_remaining", "min", 40.0)
+        i["now_utc"]         = "2026-08-20T19:00:00Z"
+        i["last_resize_utc"] = "2026-08-18T19:00:00Z"
+      end
+      expect(described_class.decide(exact)["verdict"]).to eq("scale_up")
+    end
   end
 end

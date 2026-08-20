@@ -77,16 +77,25 @@ approval. That is not what this does.
 
 `.github/workflows/deploy.yml` already establishes the pattern this borrows. Its Azure identity is
 a user-assigned managed identity whose federated credential trusts exactly one subject —
-`repo:mezinster/encounter-engine:environment:production` — and which holds Network Contributor on
-one NSG and nothing else. **The subject is environment-scoped**, and GitHub does not mint an OIDC
-token for a protected environment until a required reviewer approves.
+`repo:mezinster@10500786/encounter-engine@1322568945:environment:production` — and which holds
+Network Contributor on one NSG and nothing else. **The subject is environment-scoped**, and GitHub
+does not mint an OIDC token for a protected environment until a required reviewer approves.
+
+Note the numeric IDs. This repository has GitHub's **immutable OIDC subject claims** enabled, so
+the subject carries `owner@ownerID/repo@repoID` rather than the plain `owner/repo` most
+documentation shows. Azure matches a federated credential's subject by exact string, so a
+credential registered in the plain form never matches anything, and the failure surfaces only at
+the first real run as `AADSTS70021: No matching federated identity record found`. This was very
+nearly written into the setup: the comment in `deploy.yml` recorded the plain form, and it was
+wrong. Derive the IDs (`gh api /repos/<repo> --jq .id`) rather than copying them — a rename changes
+the login and name but not the IDs, and only a delete-and-recreate changes the IDs.
 
 So Track 1 adds two identities of its own rather than widening that one:
 
 | Identity | Federated subject | Azure role | Scope |
 |---|---|---|---|
-| `vmscale-reader` | `repo:mezinster/encounter-engine:ref:refs/heads/master` | Monitoring Reader, Reader | the `web` VM |
-| `vmscale-operator` | `repo:mezinster/encounter-engine:environment:vm-resize` | Virtual Machine Contributor | the `web` VM |
+| `ee-vmscale-reader-oidc` | `…@1322568945:ref:refs/heads/master` | Monitoring Reader, Reader | the `web` VM |
+| `ee-vmscale-operator-oidc` | `…@1322568945:environment:vm-resize` | Virtual Machine Contributor | the `web` VM |
 
 The poller runs unattended every fifteen minutes and can only read. The operator identity has no
 usable token in existence until a human approves. A bug in `policy.rb`, a mistuned threshold, or
@@ -403,10 +412,10 @@ are written down with their checks:
 
 1. The `vm-resize` GitHub Environment has a required reviewer.
    `gh api repos/mezinster/encounter-engine/environments/vm-resize`
-2. `vmscale-operator` has **exactly one** federated credential, subject
-   `repo:mezinster/encounter-engine:environment:vm-resize`.
-   `az identity federated-credential list --identity-name vmscale-operator -g MEZINEU`
-3. `vmscale-reader` holds **no** write role anywhere.
+2. `ee-vmscale-operator-oidc` has **exactly one** federated credential, and its subject ends
+   `:environment:vm-resize` and shares its prefix with `ee-deploy-oidc`'s.
+   `az identity federated-credential list --identity-name ee-vmscale-operator-oidc -g MEZINEU`
+3. `ee-vmscale-reader-oidc` holds **no** write role anywhere.
    `az role assignment list --assignee <reader-principal-id> --all -o table`
 4. Neither identity holds a role at subscription or resource-group scope — both are scoped to the
    `web` VM resource id alone.

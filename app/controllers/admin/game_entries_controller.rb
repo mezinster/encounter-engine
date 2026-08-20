@@ -12,6 +12,10 @@ class Admin::GameEntriesController < ApplicationController
   before_action :require_superadmin!
   before_action :find_game
   before_action :find_entry, only: [ :accept, :reject ]
+  # accept only, matching GameEntriesController: rejecting is a release, and
+  # it is the only way to clear a stale row -- and give its reserved place
+  # back -- on a game that was flipped to pass_required under live entries.
+  before_action :ensure_game_is_not_gated, only: :accept
 
   def index
     @run = @game.current_run
@@ -59,5 +63,15 @@ class Admin::GameEntriesController < ApplicationController
   # Admin::TeamsController#set_captain finding its member through the team.
   def find_entry
     @entry = GameEntry.of_run(@game.current_run).find(params[:id])
+  end
+
+  # A commercial game admits teams through AccessPass alone, so accepting an
+  # entry on one grants nothing at all -- /play resolves a gated game through
+  # #gated_passing and never consults GameEntry. See
+  # GameEntriesController#ensure_game_is_not_gated for the whole story; this
+  # is the same refusal at the operator's door, which is a separate controller
+  # only because accept's button never rendered for a superadmin.
+  def ensure_game_is_not_gated
+    raise Authentication::Unauthorized, t("errors.game_is_gated") if @game&.pass_required?
   end
 end

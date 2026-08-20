@@ -229,6 +229,7 @@ en:
       reject: "Reject"
       accepted_notice: "Team accepted: %{team}"
       rejected_notice: "Application rejected: %{team}"
+      gated_note: "This game is played by access — an application cannot be accepted. Admit a team from “Game access”."
       back: "Back to the games list"
     games:
       index:
@@ -316,6 +317,7 @@ en:
     game_already_started: "You can't edit a game after it has started"
     game_is_locked: "Editing this game has been frozen by an administrator"
     game_is_withdrawn: "This game has been withdrawn"
+    game_is_gated: "This game does not take applications: an access code is required"
     game_is_not_testing: "This game is not in testing mode"
     bad_test_token: "This test link is not valid"
     must_be_recipient: "You must be the invitation's recipient to perform this action"

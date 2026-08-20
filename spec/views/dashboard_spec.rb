@@ -36,11 +36,17 @@ RSpec.describe "dashboard/_my_team", type: :view do
 end
 
 RSpec.describe "dashboard/_coming_games", type: :view do
+  # logged_in? alongside current_user, for the same reason current_user is
+  # stubbed at all: both are helper_methods on ApplicationController, and a
+  # view spec's controller is ActionView::TestCase::TestController, which has
+  # neither. The partial reads logged_in? through GamesHelper#gated_play_status
+  # -- the batched pass lookup behind the gated rows' play/redeem link.
   it "marks the author on their own upcoming game" do
     author = create_user
     game = create_game(author: author, starts_at: 1.day.from_now)
     assign(:current_user, author)
     view.define_singleton_method(:current_user) { author }
+    view.define_singleton_method(:logged_in?) { true }
 
     render partial: "dashboard/coming_games"
 
@@ -60,6 +66,7 @@ RSpec.describe "dashboard/_coming_games", type: :view do
     assign(:current_user, captain)
     assign(:team, team)
     view.define_singleton_method(:current_user) { captain }
+    view.define_singleton_method(:logged_in?) { true }
 
     render partial: "dashboard/coming_games"
 

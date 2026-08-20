@@ -5,6 +5,17 @@
     the application can address any other one. %>
 <p><strong><%= t("admin.entries.run", :ordinal => @run.ordinal) %></strong></p>
 
+<%# Answering "why can I not accept this team" on the screen that refuses it,
+    the same way the finished-paid-game screens answer why a paid team cannot
+    play. A gated game takes no applications at all now
+    (GameEntriesController#ensure_game_is_not_gated), so anything listed below
+    is a leftover from before its access_mode was set -- and admission is a
+    pass, issued from the access console. %>
+<% if @game.pass_required? %>
+  <p class="hint-text"><%= t("admin.entries.gated_note") %></p>
+  <p><%= link_to t("games.show.manage_access"), game_access_passes_path(@game), class: "btn" %></p>
+<% end %>
+
 <fieldset class="card">
   <legend><%= t("admin.entries.pending") %></legend>
   <% if @pending.empty? %>
@@ -15,9 +26,18 @@
         <li>
           <%= entry.team&.name %>
           <div class="game-control">
-            <%= button_to t("admin.entries.accept"),
-                          accept_admin_game_entry_path(@game, entry),
-                          :method => :post, :class => "btn" %>
+            <%# No accept on a gated game -- Admin::GameEntriesController
+                refuses it, and offering a control the action refuses is a
+                promise the page cannot keep (games/show.html.erb's phrase,
+                about its own hand-over form). Reject stays: these rows can
+                only be stale ones, from before an operator set the game's
+                access_mode, and rejecting is what clears them and returns
+                the place they reserved. %>
+            <% unless @game.pass_required? %>
+              <%= button_to t("admin.entries.accept"),
+                            accept_admin_game_entry_path(@game, entry),
+                            :method => :post, :class => "btn" %>
+            <% end %>
             <%= button_to t("admin.entries.reject"),
                           reject_admin_game_entry_path(@game, entry),
                           :method => :post, :class => "btn btn--danger" %>

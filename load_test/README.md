@@ -37,6 +37,18 @@ fetches it once per VU. Re-fetching before every POST would add a phantom GET
 ahead of every write in the play loop Task 9 adds, which would distort the
 read/write ratio the whole test exists to measure.
 
+`csrfFrom` reads the `<meta name="csrf-token">` tag before the hidden form
+field, because `csrf_meta_tags` is rendered by both layouts
+(`application.html.erb` and `in_game.html.erb`) and so is present on every
+page in the app, including the dashboard a captain lands on after login and
+the play screen Task 9 drives. A hidden `authenticity_token` form field is
+not guaranteed on those pages — the dashboard renders one only if some
+unrelated, not-yet-started game happens to exist in whatever database the
+run points at, which is incidental global state, not a property of being
+logged in. The form-field regex stays as a fallback for pages that render a
+form but no meta tag (there are none in this app today, but the fallback is
+cheap and keeps the function from being tied to one specific page's markup).
+
 ## Why every check asserts on body, never on status alone
 
 k6 follows redirects by default. A failed `POST /login` still lands on a `200`

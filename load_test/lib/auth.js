@@ -6,10 +6,24 @@ import { check, fail } from 'k6';
 // unmasking for the SESSION. So this is scraped once per VU and cached:
 // re-fetching before every POST would add a phantom GET to every write and
 // distort the read/write ratio the whole test is trying to measure.
+//
+// Two sources, meta first. csrf_meta_tags is rendered by BOTH layouts
+// (application.html.erb and in_game.html.erb), so every page carries a
+// token. The hidden form field is not guaranteed: the dashboard a captain
+// lands on after login renders a form only if some unrelated not-yet-started
+// game happens to exist (an unscoped Game.notstarted query in
+// _coming_games.html.erb), which is incidental global state, not a property
+// of being logged in. Rails masks the token per render but accepts any valid
+// unmasking for the session, so either source yields a token good for every
+// later POST.
 export function csrfFrom(res) {
-  const m = res.body.match(/name="authenticity_token"\s+value="([^"]+)"/);
-  if (!m) fail('no authenticity_token in response body');
-  return m[1];
+  const meta = res.body.match(/name="csrf-token"\s+content="([^"]+)"/);
+  if (meta) return meta[1];
+
+  const field = res.body.match(/name="authenticity_token"\s+value="([^"]+)"/);
+  if (field) return field[1];
+
+  fail('no CSRF token in response body');
 }
 
 export function login(base, team) {

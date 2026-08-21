@@ -18,7 +18,7 @@ module LoadTest
 
     def initialize(source_game:, teams:, cohort_id:, base_url: nil)
       @source_game = source_game
-      @teams       = Integer(teams)
+      @teams       = Integer(teams.to_s, 10)
       @cohort_id   = cohort_id
       @base_url    = base_url || ENV.fetch("LOAD_TEST_BASE_URL", "http://localhost:3000")
     end

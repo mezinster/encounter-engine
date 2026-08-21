@@ -76,4 +76,9 @@ describe LoadTest::Seeder do
 
     expect { seeder.seed! }.to raise_error(LoadTest::Seeder::CohortPresent)
   end
+
+  it "accepts a team count as a zero-padded string, as rake would pass it" do
+    expect(described_class.new(:source_game => source, :teams => "03",
+                               :cohort_id => "lt-test-a").seed![:teams].size).to eq(3)
+  end
 end

@@ -199,11 +199,19 @@ module LoadTest
 
     attr_reader :cohort_id
 
+    # base_url defaults through LoadTest.resolve_base_url, not a bare
+    # ENV.fetch -- that method is the ONE place both seeding doors' fallback
+    # lives (see its own comment for the incident this fixes and the
+    # LOAD_TEST_BASE_URL -> APP_HOST -> localhost precedence). The console
+    # (Admin::LoadTestsController#seed) never hits this default: it always
+    # passes `request.base_url`, which is strictly better information than
+    # anything derivable from ENV, so don't "simplify" that call site into
+    # routing through this fallback too.
     def initialize(source_game:, teams:, cohort_id:, base_url: nil)
       @source_game = source_game
       @teams       = Integer(teams.to_s, 10)
       @cohort_id   = cohort_id
-      @base_url    = base_url || ENV.fetch("LOAD_TEST_BASE_URL", "http://localhost:3000")
+      @base_url    = base_url || LoadTest.resolve_base_url
     end
 
     def seed!

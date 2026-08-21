@@ -51,4 +51,43 @@ module LoadTest
 
     raise Refused, "set LOAD_TEST_CONFIRM=#{cohort_id} to confirm this against production"
   end
+
+  # The rake seed task's only source of a base_url -- there is no request to
+  # read one from (contrast Admin::LoadTestsController#seed, which has a real
+  # request and uses `request.base_url` directly, never this method; see the
+  # comment there for why the two doors deliberately stay different). A
+  # cohort seeded here with no LOAD_TEST_BASE_URL used to fall back straight
+  # to "http://localhost:3000", which produced a healthy-looking manifest
+  # (cohort id, 120 teams) that pointed nowhere: the failure only surfaced
+  # twenty minutes later, on a different machine, as a k6 "connection
+  # refused" buried in a log. APP_HOST is already set in the production
+  # container for mailer URLs (config/deploy.yml, config/environments/
+  # production.rb), so it is derivable with nothing new to remember.
+  #
+  # Precedence: an operator who sets LOAD_TEST_BASE_URL explicitly means it,
+  # and wins outright over everything else; otherwise APP_HOST; otherwise
+  # localhost, for a bare development checkout that has neither.
+  #
+  # Refuses instead of guessing when it matters: seeding is cheap to redo in
+  # seconds, so a wrong guess should be caught before it wastes anyone's
+  # time, not discovered mid-run against production. `live?` is the same
+  # two-signal check `guard!` uses (environment name OR postgres adapter), so
+  # this refuses in exactly the situations `guard!` already treats as live.
+  def self.resolve_base_url(env: ENV)
+    url = if env["LOAD_TEST_BASE_URL"].present?
+            env["LOAD_TEST_BASE_URL"]
+          elsif env["APP_HOST"].present?
+            "https://#{env["APP_HOST"]}"
+          else
+            "http://localhost:3000"
+          end
+
+    if live? && url.match?(%r{\Ahttps?://(localhost|127\.0\.0\.1)(:|/|\z)})
+      raise Refused,
+            "base_url resolved to #{url.inspect} while LoadTest.live? is true -- " \
+            "set LOAD_TEST_BASE_URL (or APP_HOST, which it derives from) to a real host"
+    end
+
+    url
+  end
 end

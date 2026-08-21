@@ -38,12 +38,25 @@ describe LoadTest::GameCloner do
 
   # The half that matters. Asserting what was NOT copied is what catches a
   # future association on Game being swept into every clone by accident.
+  #
+  # All eight of Game's history/permission/file associations are checked here
+  # -- logs, game_entries, game_passings, access_passes, access_codes,
+  # point_transactions, translation_runs, game_files -- not a subset, since a
+  # partial list would give false assurance about exactly the associations it
+  # omits. access_passes and translation_runs are asserted empty without a
+  # source-side row: creating one of either requires setup this example
+  # otherwise has no reason to carry (a gated game for the former, no fixture
+  # helper at all for the latter), so those two assertions pin "the cloner
+  # never populates this association" rather than "the cloner drops this
+  # specific row" -- still enough to catch a future has_many swept in by
+  # autosave, which is the failure mode this test exists for.
   it "copies no history, permission or files from the source" do
     source = create_game
-    create_level(:game => source, :correct_answer => "aaa")
+    level = create_level(:game => source, :correct_answer => "aaa")
     team = create_team(:captain => create_user)
     GameEntry.create!(:game => source, :team => team, :status => "accepted")
     create_game_file(:game => source)
+    create_log(:game => source, :level => level, :team => team)
 
     clone = described_class.new(source).call(:name => "scratch", :author => author)
 
@@ -52,5 +65,8 @@ describe LoadTest::GameCloner do
     expect(clone.game_files).to be_empty
     expect(clone.access_codes).to be_empty
     expect(clone.point_transactions).to be_empty
+    expect(clone.logs).to be_empty
+    expect(clone.access_passes).to be_empty
+    expect(clone.translation_runs).to be_empty
   end
 end

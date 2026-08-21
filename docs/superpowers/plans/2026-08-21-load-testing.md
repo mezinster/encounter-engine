@@ -758,11 +758,27 @@ namespace :load_test do
     puts "  LOAD_TEST_CONFIRM=#{cohort_id} bin/rails 'load_test:teardown[#{cohort_id}]'"
   end
 
+  # teardown! validates the id against the cohort actually present and refuses
+  # on a mismatch, so a stale id cannot destroy a live cohort -- the guard below
+  # only compares two copies of what the operator typed, and cannot catch that
+  # on its own. The one escape hatch: if the cohort's GAME is already gone but
+  # its users are not, status reports no cohort id and only `teardown!(nil)`
+  # sweeps them. That is a real state (a half-finished manual cleanup), so the
+  # task documents it rather than leaving an operator to conclude the rows are
+  # unreachable.
   desc "Remove a load-test cohort: rake load_test:teardown[lt-2026-08-21-ab]"
   task :teardown, [ :cohort_id ] => :environment do |_t, args|
     cohort_id = args.fetch(:cohort_id)
     LoadTest.guard!(cohort_id)
-    puts "removed #{LoadTest::Seeder.teardown!(cohort_id)} rows"
+    begin
+      puts "removed #{LoadTest::Seeder.teardown!(cohort_id)} rows"
+    rescue ArgumentError => e
+      warn e.message
+      warn "If the cohort's game was already removed by hand, status cannot name"
+      warn "the cohort and only `load_test:teardown[]` (empty id) will sweep the"
+      warn "leftover accounts. Check `load_test:status` first."
+      raise
+    end
     puts "status: #{LoadTest::Seeder.status.inspect}"
   end
 

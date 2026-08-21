@@ -998,14 +998,25 @@ class Admin::LoadTestsController < ApplicationController
       :cohort_id   => cohort_id,
       :base_url    => request.base_url
     ).seed!
-    store_manifest(manifest)
-
-    # AFTER the change has landed, and with details: "someone ran a load test"
-    # is not an audit trail. AdminAudit records by an explicit call per action
-    # on purpose -- see the concern's own comment.
+    # Audited HERE, before the manifest write, and the order is load-bearing.
+    # AdminAudit says to record after the change has landed -- the change is the
+    # seed, not the file. ManifestFile uses File::EXCL, so a pre-existing path
+    # raises Errno::EEXIST after seed! has committed; with the audit call below
+    # the write, that leaves hundreds of production accounts with no record of
+    # who created them and a 500 in the operator's browser.
     record_admin_action("load_test_seed", Game.find(manifest[:game_id]),
                         "cohort=#{cohort_id}, source=#{params[:source_game_id]}, " \
                         "teams=#{manifest[:teams].size}")
+
+    begin
+      store_manifest(manifest)
+    rescue Errno::EEXIST
+      # The cohort is live and recorded; only the credentials file is missing.
+      # Name it so the operator can still tear down what they just created.
+      return redirect_to(admin_load_test_path,
+                         :alert => t("admin.load_test.manifest_exists", :cohort => cohort_id))
+    end
+
     redirect_to admin_load_test_path, :notice => t("admin.load_test.seeded")
   rescue LoadTest::Seeder::CohortPresent, LoadTest::Refused => e
     redirect_to admin_load_test_path, :alert => e.message
@@ -1262,6 +1273,7 @@ Under `ru:` → `admin:` in `config/locales/ru.yml`:
       torn_down: "Когорта удалена."
       not_confirmed: "Подтверждение не совпадает — ничего не сделано."
       no_manifest: "Манифест недоступен в этой сессии."
+      manifest_exists: "Когорта %{cohort} создана, но манифест не записан: файл уже существует."
 ```
 
 - [ ] **Step 5: Add the same block to the other six locale files**
@@ -1286,6 +1298,7 @@ Under `ru:` → `admin:` in `config/locales/ru.yml`:
       torn_down: "Cohort removed."
       not_confirmed: "Confirmation did not match — nothing was done."
       no_manifest: "No manifest available in this session."
+      manifest_exists: "Cohort %{cohort} was created, but the manifest was not written: that file already exists."
 ```
 
 Then `uk`, `ka`, `tr`, `be`, `pl`. Two rules from `CLAUDE.md` apply:
@@ -1323,7 +1336,7 @@ git stash && BEFORE=$(eval "$COUNT") && git stash pop && AFTER=$(eval "$COUNT")
 echo "before=$BEFORE after=$AFTER delta=$((AFTER - BEFORE))"
 ```
 
-Expected: `delta=16` — the sixteen keys in the block above. Any other number
+Expected: `delta=17` — the seventeen keys in the block above. Any other number
 means a key was missed or duplicated. Then update the absolute figure recorded
 in `CLAUDE.md`'s i18n section to `$AFTER` in the same commit, and do the same
 for the other six locale files (each must gain the same 16).

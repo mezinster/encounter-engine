@@ -1216,7 +1216,29 @@ Expected: FAIL — the stub view carries the title but not the warning text, so
 "warns that seeding writes real accounts" and "reports that no cohort is
 present" both fail on missing body content.
 
-- [ ] **Step 3: Write the view**
+- [ ] **Step 3: Convert Task 5's plain Russian literals to `t()` calls**
+
+Task 5 deliberately used string literals, because its Global Constraints forbade
+`t()` before the keys existed. This task owns the i18n, so those move now. There
+are six in `app/controllers/admin/load_tests_controller.rb` and one in the stub
+view:
+
+| line | literal | key |
+|---|---|---|
+| ~55 | `"Когорта … создана, но манифест не записан…"` | `admin.load_test.manifest_exists` (takes `:cohort`) |
+| ~58 | `"Когорта загружена"` | `admin.load_test.seeded` |
+| ~91 | `"Когорта удалена"` | `admin.load_test.torn_down` |
+| ~99 | `"Манифест недоступен"` | `admin.load_test.no_manifest` |
+| ~128 | `"Идентификатор когорты не подтверждён"` | `admin.load_test.not_confirmed` |
+| ~133 | `"Идентификатор когорты должен состоять…"` | `admin.load_test.invalid_cohort_id` |
+
+Line numbers are approximate — match on the string, not the number. The existing
+request specs assert on some of these literals; update those assertions to the
+**new literal Russian from `ru.yml`**, never to `I18n.t(...)`. An assertion
+written as `include(I18n.t("some.key"))` passes even when the key is missing,
+because both sides resolve to the same "translation missing" string.
+
+- [ ] **Step 4: Write the view**
 
 ```erb
 <%# app/views/admin/load_tests/show.html.erb %>
@@ -1265,7 +1287,7 @@ present" both fail on missing body content.
 <% end %>
 ```
 
-- [ ] **Step 4: Add the Russian keys**
+- [ ] **Step 5: Add the Russian keys**
 
 Under `ru:` → `admin:` in `config/locales/ru.yml`:
 
@@ -1288,9 +1310,10 @@ Under `ru:` → `admin:` in `config/locales/ru.yml`:
       not_confirmed: "Подтверждение не совпадает — ничего не сделано."
       no_manifest: "Манифест недоступен в этой сессии."
       manifest_exists: "Когорта %{cohort} создана, но манифест не записан: файл уже существует."
+      invalid_cohort_id: "Идентификатор когорты должен состоять из латинских букв, цифр и дефисов."
 ```
 
-- [ ] **Step 5: Add the same block to the other six locale files**
+- [ ] **Step 6: Add the same block to the other six locale files**
 
 `en.yml` must be an exact structural match — `spec/i18n_spec.rb` enforces `ru`↔`en` parity and will fail on any key present in one and absent from the other. English:
 
@@ -1313,13 +1336,14 @@ Under `ru:` → `admin:` in `config/locales/ru.yml`:
       not_confirmed: "Confirmation did not match — nothing was done."
       no_manifest: "No manifest available in this session."
       manifest_exists: "Cohort %{cohort} was created, but the manifest was not written: that file already exists."
+      invalid_cohort_id: "A cohort id may contain only Latin letters, digits and hyphens."
 ```
 
 Then `uk`, `ka`, `tr`, `be`, `pl`. Two rules from `CLAUDE.md` apply:
 - **Turkish:** `%{cohort}` is a user-typed value, so no case suffix may attach to it. Write `«%{cohort}» kimlikli kohort` ("the cohort with id X") rather than suffixing the placeholder. Check by rendering with a consonant-final and a vowel-final value.
 - **Georgian:** move any case ending onto a preceding common noun rather than onto the interpolated value, for the same reason.
 
-- [ ] **Step 6: Add the nav link**
+- [ ] **Step 7: Add the nav link**
 
 In `app/views/admin/dashboard/show.html.erb`, beside the existing settings link:
 
@@ -1329,7 +1353,7 @@ In `app/views/admin/dashboard/show.html.erb`, beside the existing settings link:
 
 Match the surrounding markup — read the file first and follow whatever list structure is already there rather than assuming `<li>`.
 
-- [ ] **Step 7: Run the i18n and console specs**
+- [ ] **Step 8: Run the i18n and console specs**
 
 ```bash
 bundle exec rspec spec/i18n_spec.rb spec/requests/admin/load_tests_spec.rb spec/requests/admin_audit_spec.rb
@@ -1337,7 +1361,7 @@ bundle exec rspec spec/i18n_spec.rb spec/requests/admin/load_tests_spec.rb spec/
 
 Expected: all pass. A failure in `spec/i18n_spec.rb` naming a key means `ru` and `en` have diverged — fix the file, not the spec.
 
-- [ ] **Step 8: Confirm the key count moved by exactly 16**
+- [ ] **Step 9: Confirm the key count moved by exactly 18**
 
 Measure the delta; do not compare against a remembered absolute. `CLAUDE.md`
 records its own baseline as having been stale three times and says to recount
@@ -1350,12 +1374,16 @@ git stash && BEFORE=$(eval "$COUNT") && git stash pop && AFTER=$(eval "$COUNT")
 echo "before=$BEFORE after=$AFTER delta=$((AFTER - BEFORE))"
 ```
 
-Expected: `delta=17` — the seventeen keys in the block above. Any other number
+Expected: `delta=18` — the eighteen keys in the block above.
+
+**The baseline is 966, not the 964 `CLAUDE.md` records** — measured 2026-08-21. That
+file warns that its own figure has been stale three times; it is stale again.
+Update it to the measured `$AFTER`. Any other number
 means a key was missed or duplicated. Then update the absolute figure recorded
 in `CLAUDE.md`'s i18n section to `$AFTER` in the same commit, and do the same
 for the other six locale files (each must gain the same 16).
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 git add app/views/admin/load_tests/show.html.erb app/views/admin/dashboard/show.html.erb \

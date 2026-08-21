@@ -81,4 +81,14 @@ describe LoadTest::Seeder do
     expect(described_class.new(:source_game => source, :teams => "03",
                                :cohort_id => "lt-test-a").seed![:teams].size).to eq(3)
   end
+
+  # Seeding runs against PRODUCTION on run night, and production's SMTP is
+  # Gmail, which suspends senders that trip its spam heuristics -- see the class
+  # comment on RequestThrottling. Today no model or lib code mails at all (every
+  # send site is in a controller), so seeding is silent. This pins that: an
+  # after_create mailer added to User would otherwise start mailing hundreds of
+  # addresses from production with nothing to catch it.
+  it "sends no mail while seeding" do
+    expect { seeder.seed! }.not_to change { ActionMailer::Base.deliveries.size }
+  end
 end

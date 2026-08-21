@@ -14,6 +14,65 @@ module LoadTest
     EMAIL_DOMAIN     = "loadtest.invalid".freeze
     MEMBERS_PER_TEAM = 3
 
+    # Shared by game_name (which writes it) and status (which reads the cohort
+    # id back off it). A literal in two places is one edit away from silently
+    # breaking status.
+    GAME_NAME_PREFIX = "НЕ ИГРА — нагрузочный тест ".freeze
+
+    class << self
+      # Explicit deletion in dependency order, NOT a cascade. See the comment
+      # on the teardown spec: GameRun has_many :passings carries no
+      # dependent: option deliberately, so destroying the game leaves the
+      # passings behind. Anything relying on cascades here would leave rows in
+      # production and report success.
+      def teardown!(cohort_id)
+        users = User.where("email LIKE ?", "%@#{EMAIL_DOMAIN}")
+        teams = Team.where(:id => users.select(:team_id))
+        games = Game.where(:author_id => users.select(:id))
+        runs  = GameRun.where(:game_id => games.select(:id))
+
+        # Materialised NOW, deliberately. `teams` above is a lazy relation whose
+        # subquery reads users.team_id -- and update_all below sets exactly that
+        # column to NULL. Left lazy, the subquery would return nothing by the
+        # time delete_all ran, the teams would survive, and the row-count
+        # example in the spec would be the only thing that noticed.
+        team_ids = users.pluck(:team_id).compact.uniq
+        game_ids = games.pluck(:id)
+
+        removed = 0
+        ActiveRecord::Base.transaction do
+          removed += PointTransaction.where(:team_id => team_ids).delete_all
+          removed += GamePassing.where(:game_run_id => runs.select(:id)).delete_all
+          removed += GameEntry.where(:game_run_id => runs.select(:id)).delete_all
+          removed += TestAdmission.where(:game_run_id => runs.select(:id)).delete_all
+          removed += AccessPass.where(:game_id => game_ids).delete_all
+          # Detach before deleting the teams so users.team_id never dangles
+          # even if a later delete raises and the transaction unwinds midway.
+          users.update_all(:team_id => nil)
+          removed += Team.where(:id => team_ids).delete_all
+          # destroy_all, not delete_all: levels/questions/answers/hints hang off
+          # the game by dependent: :destroy and there is no FK to cascade here.
+          Game.where(:id => game_ids).each { |game| game.destroy! ; removed += 1 }
+          removed += users.delete_all
+        end
+        removed
+      end
+
+      # The cohort id comes from the seeded GAME's name, never from a nickname.
+      # Recovering it from a nickname needs a pattern, and every pattern is
+      # wrong for some id: /\A(lt-[^-]+-[^-]+)-/ reads the specs' "lt-test-a"
+      # correctly and turns the rake task's own "lt-2026-08-21-ab" into
+      # "lt-2026-08", because the date's hyphens eat the pattern. A spec using
+      # only the short form stays green while the console misreports. The game
+      # name is a fixed prefix followed by the id verbatim -- nothing to parse.
+      def status
+        users = User.where("email LIKE ?", "%@#{EMAIL_DOMAIN}")
+        game  = Game.where("name LIKE ?", "#{GAME_NAME_PREFIX}%").order(:id).first
+        { :cohort_id => game && game.name.delete_prefix(GAME_NAME_PREFIX),
+          :users     => users.count }
+      end
+    end
+
     attr_reader :cohort_id
 
     def initialize(source_game:, teams:, cohort_id:, base_url: nil)
@@ -39,7 +98,7 @@ module LoadTest
     private
 
     def game_name
-      "НЕ ИГРА — нагрузочный тест #{@cohort_id}"
+      "#{GAME_NAME_PREFIX}#{@cohort_id}"
     end
 
     def prefix

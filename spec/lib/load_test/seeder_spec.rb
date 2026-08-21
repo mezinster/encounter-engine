@@ -91,4 +91,58 @@ describe LoadTest::Seeder do
   it "sends no mail while seeding" do
     expect { seeder.seed! }.not_to change { ActionMailer::Base.deliveries.size }
   end
+
+  describe "teardown" do
+    # GameRun declares has_many :passings with NO dependent: option, on
+    # purpose -- a passing is the record of a race somebody ran. So destroying
+    # the game does NOT remove game_passings, and load-test rows would sit in
+    # production for ever. This example is the guard for exactly that.
+    TRACKED = [ User, Team, Game, Level, Question, Answer, Hint,
+                GameRun, TestAdmission, GameEntry, GamePassing,
+                PointTransaction, AccessPass ].freeze
+
+    it "restores every touched table to its pre-seed row count" do
+      before_counts = TRACKED.to_h { |model| [ model.name, model.count ] }
+
+      described_class.new(:source_game => source, :teams => 3,
+                          :cohort_id => "lt-test-a").seed!
+      described_class.teardown!("lt-test-a")
+
+      expect(TRACKED.to_h { |model| [ model.name, model.count ] }).to eq(before_counts)
+    end
+
+    it "leaves the source game and its levels untouched" do
+      described_class.new(:source_game => source, :teams => 2,
+                          :cohort_id => "lt-test-a").seed!
+      described_class.teardown!("lt-test-a")
+
+      expect(Game.find(source.id).levels.count).to eq(2)
+    end
+
+    it "reports no cohort once torn down" do
+      described_class.new(:source_game => source, :teams => 2,
+                          :cohort_id => "lt-test-a").seed!
+      described_class.teardown!("lt-test-a")
+
+      expect(described_class.status[:cohort_id]).to be_nil
+    end
+
+    # The guard for the parsing bug this method was originally written with.
+    # A date-shaped id is what the rake task actually generates; the specs'
+    # "lt-test-a" is the one shape under which a nickname regex looks correct.
+    it "reports a date-shaped cohort id intact, as the rake task generates it" do
+      described_class.new(:source_game => source, :teams => 1,
+                          :cohort_id => "lt-2026-08-21-ab").seed!
+
+      expect(described_class.status[:cohort_id]).to eq("lt-2026-08-21-ab")
+    end
+
+    it "reports the cohort while it is present" do
+      described_class.new(:source_game => source, :teams => 2,
+                          :cohort_id => "lt-test-a").seed!
+
+      expect(described_class.status[:cohort_id]).to eq("lt-test-a")
+      expect(described_class.status[:users]).to eq(2 * 3 + 1)
+    end
+  end
 end

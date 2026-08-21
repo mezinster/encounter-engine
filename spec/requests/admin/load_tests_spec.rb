@@ -18,7 +18,7 @@ describe "the load-test console", type: :request do
   end
 
   # The manifest path is fixed and predictable (cohort id -> filename), by
-  # design -- see the comment on Admin::LoadTestsController#store_manifest and
+  # design -- see the comment on Admin::LoadTestsController#manifest_path and
   # the matching hazard documented in lib/tasks/load_test.rake. Real usage
   # never collides because only one cohort exists at a time; this spec file
   # reuses the same cohort id "lt-test-a" across several examples in one
@@ -28,6 +28,18 @@ describe "the load-test console", type: :request do
   before do
     stale = File.join(Dir.tmpdir, "lt-test-a.json")
     File.delete(stale) if File.exist?(stale)
+  end
+
+  # #seed now spawns a background Thread (see the controller's own comment on
+  # why: ten minutes in a Puma thread was the entire 2026-08-21 incident).
+  # Every example below except the one specifically about the ordering runs
+  # that block INLINE instead of racing a real thread, by stubbing the one
+  # seam the controller calls through -- #run_in_background -- to invoke its
+  # block synchronously rather than spawning anything. This is what
+  # "run the thread inline in specs" means throughout this file.
+  before do
+    allow_any_instance_of(Admin::LoadTestsController)
+      .to receive(:run_in_background) { |_, &block| block.call }
   end
 
   it "refuses an ordinary signed-in user" do
@@ -79,15 +91,32 @@ describe "the load-test console", type: :request do
     }.to change(Team, :count).by(2)
   end
 
-  # Before this fix, LoadTest.guard!(cohort_id) read ENV["LOAD_TEST_CONFIRM"]
-  # directly -- a variable this Puma process never has set (it exists nowhere
-  # in config/deploy.yml or .kamal/secrets, by design: it's a per-run
-  # confirmation, not a standing one). So in a live-shaped environment, EVERY
-  # console seed raised LoadTest::Refused regardless of what the operator
-  # typed, and the console could never execute its own documented procedure
-  # (docs/runbooks/load-test.md §2). Stubbing live? true here reproduces that
-  # shape without touching Rails.env or the database adapter, and proves the
-  # guard now reads the operator's typed confirmation instead.
+  # Proves the controller returns before the seed itself has run, rather than
+  # merely running it fast -- the point of moving it off the request thread
+  # at all. #run_in_background is stubbed here (overriding the file-level
+  # before block above) to CAPTURE its block instead of calling it, so the
+  # response can be inspected before anything the seed does exists.
+  it "redirects immediately, saying seeding has started, before the seed itself has run" do
+    sign_in(superadmin)
+    source # see the eager-evaluation comment on the earlier mismatch example
+    captured = nil
+    allow_any_instance_of(Admin::LoadTestsController)
+      .to receive(:run_in_background) { |_, &block| captured = block }
+
+    expect {
+      post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
+    }.not_to change(Team, :count)
+
+    expect(response).to redirect_to(admin_load_test_path)
+    follow_redirect!
+    # The literal Russian "seeding started" notice, not "cohort created" --
+    # the whole point is that this redirect happens before seeding runs, so
+    # it cannot yet know whether the cohort will exist.
+    expect(response.body).to include("Посев запущен.")
+
+    expect { captured.call }.to change(Team, :count).by(2)
+  end
+
   it "seeds in a live (production-shaped) environment when the typed cohort id matches" do
     allow(LoadTest).to receive(:live?).and_return(true)
     sign_in(superadmin)
@@ -101,7 +130,7 @@ describe "the load-test console", type: :request do
     # The literal Russian success notice, not a guard refusal -- see the
     # comment further down on why this file asserts literal strings rather
     # than comparing against I18n.t.
-    expect(response.body).to include("Когорта создана.")
+    expect(response.body).to include("Посев запущен.")
   end
 
   it "refuses to seed in a live (production-shaped) environment when the typed cohort id does not match" do
@@ -114,15 +143,18 @@ describe "the load-test console", type: :request do
     }.not_to change(User, :count)
   end
 
-  # store_manifest writes to a fixed, predictable path (Dir.tmpdir/<cohort
-  # id>.json) with O_EXCL, so a pre-existing file there -- a leftover from an
-  # earlier rake seed under the same id, most plausibly -- makes the write
-  # raise Errno::EEXIST. seed! has already committed the cohort to the
-  # database by that point. The controller must not let that turn into a 500
-  # that leaves the cohort both live and unrecorded: the audit entry has to
-  # be written, and the operator has to be told the cohort id so they can
-  # still find and tear it down.
-  it "records the seed and redirects, rather than 500ing, when the manifest write collides with an existing file" do
+  # store_manifest used to write to a fixed, predictable path
+  # (Dir.tmpdir/<cohort id>.json) with O_EXCL, so a pre-existing file there --
+  # a leftover from an earlier rake seed under the same id, most plausibly --
+  # made the write raise Errno::EEXIST. seed! has already committed the
+  # cohort to the database by that point, and the AdminAction has already
+  # been recorded. Now that seeding runs in a background thread, a raise
+  # there cannot turn into a 500 or an alert on the redirect the way it once
+  # could -- there is no request left to carry it -- so it goes through the
+  # same Rails.cache path any other thread failure does (see
+  # Admin::LoadTestsController#perform_seed), and the console surfaces it on
+  # the next page load instead.
+  it "records the seed and surfaces the manifest-collision message, rather than losing the cohort" do
     sign_in(superadmin)
     stale_path = File.join(Dir.tmpdir, "lt-test-a.json")
     File.write(stale_path, "stale")
@@ -134,6 +166,15 @@ describe "the load-test console", type: :request do
 
       expect(response).to redirect_to(admin_load_test_path)
       expect(AdminAction.newest_first.first.action).to eq("load_test_seed")
+
+      get admin_load_test_path
+      expect(response.body)
+        .to include("Когорта lt-test-a создана, но манифест не записан: файл уже существует.")
+
+      # Shown once, then cleared -- a resolved failure must not keep
+      # reappearing on every later visit to the console.
+      get admin_load_test_path
+      expect(response.body).not_to include("манифест не записан")
     ensure
       File.delete(stale_path) if File.exist?(stale_path)
     end
@@ -150,12 +191,12 @@ describe "the load-test console", type: :request do
   # GameCloner itself is fixed now (available_locales/access_mode are no
   # longer copied from the source), so the ORIGINAL failure can no longer be
   # reproduced end-to-end through this controller -- which is the point of the
-  # fix. To pin the controller's OWN behaviour (rescue and redirect with the
+  # fix. To pin the controller's OWN behaviour (rescue and surface the
   # underlying messages) independently of whatever GameCloner happens to
   # guarantee today, this stubs LoadTest::Seeder.new to return a double whose
   # #seed! raises ActiveRecord::RecordInvalid directly, carrying a record with
   # a known, deterministic error message.
-  it "redirects with an alert carrying the validation messages, rather than raising, when the clone is invalid" do
+  it "surfaces the validation messages via the console, rather than raising, when the clone is invalid" do
     sign_in(superadmin)
     source # see the eager-evaluation comment on the earlier mismatch example
 
@@ -170,26 +211,65 @@ describe "the load-test console", type: :request do
     }.not_to change(Team, :count)
 
     expect(response).to redirect_to(admin_load_test_path)
-    follow_redirect!
+    get admin_load_test_path
     expect(response.body).to include("boom, специально невалидная запись")
   end
 
-  # The manifest holds a live password per seeded captain and measures ~20 KB at
-  # 120 teams, against a 4096-byte cookie. Putting it in the session would both
-  # overflow and ship production credentials to the browser on every request.
-  it "keeps the manifest itself out of the session, storing only a path" do
+  # Errors are surfaced, not swallowed: a generic failure inside the thread
+  # (anything that is not one of the three specifically-translated exception
+  # classes -- CohortPresent, AlreadySeeding, RecordInvalid) still has to
+  # reach the operator, not vanish because there is no request left to carry
+  # a flash.
+  it "surfaces a generic failure via the console rather than losing it silently" do
     sign_in(superadmin)
+    source # see the eager-evaluation comment on the earlier mismatch example
+
+    seeder = instance_double(LoadTest::Seeder)
+    allow(LoadTest::Seeder).to receive(:new).and_return(seeder)
+    allow(seeder).to receive(:seed!).and_raise(StandardError, "kaboom, совершенно неожиданно")
 
     post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
 
-    expect(session[:load_test_manifest]).to be_nil
-    expect(session[:load_test_manifest_path]).to be_present
-    expect(session[:load_test_manifest_path]).not_to include("@loadtest.invalid")
+    get admin_load_test_path
+    expect(response.body).to include("Не удалось создать когорту")
   end
 
-  it "offers the manifest as a download after seeding" do
+  # Attributed from the thread, not from the request -- current_user is
+  # request state and the thread outlives the request. See
+  # Admin::LoadTestsController#perform_seed and #write_admin_action.
+  it "attributes the seed's audit entry to the actor who triggered it" do
+    sign_in(superadmin)
+
+    post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
+
+    entry = AdminAction.newest_first.first
+    expect(entry.action).to eq("load_test_seed")
+    expect(entry.actor_label).to eq(superadmin.nickname)
+  end
+
+  # #status[:seeding] is derived from the lock (LoadTest::Seeder#seed! holds
+  # it for the whole method), not a new table -- see the class comment. Only
+  # the RENDERING is under test here; the lock itself has its own spec in
+  # spec/lib/load_test/seeder_spec.rb.
+  it "shows a seeding-in-progress state instead of offering to seed again" do
+    sign_in(superadmin)
+    allow(LoadTest::Seeder).to receive(:status)
+      .and_return(:cohort_id => nil, :users => 0, :seeding => true)
+
+    get admin_load_test_path
+
+    expect(response.body).to include("Идёт посев когорты")
+    # Neither form is offered while a seed is already in flight -- offering
+    # the seed form here is exactly the double-submit that caused the
+    # 2026-08-21 incident.
+    expect(response.body).not_to include('name="teams"')
+  end
+
+  it "downloads the manifest without ever having stored its path in the session" do
     sign_in(superadmin)
     post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
+
+    expect(session[:load_test_manifest_path]).to be_nil
 
     get admin_load_test_manifest_path
 
@@ -240,14 +320,16 @@ describe "the load-test console", type: :request do
   # exactly where a cleaner or a container restart intervenes between the two
   # calls). Seeder.teardown! has already committed the deletion by the time
   # the manifest cleanup runs, so a raise there must not turn a successful
-  # teardown into a 500 with no audit record of who did it. Stubs only the
-  # ONE call with this specific path -- and_call_original on the general stub
-  # keeps every other File.unlink call in the request (Rails internals
-  # included) working normally.
+  # teardown into a 500 with no audit record of who did it. The path is
+  # derived from the cohort id (#manifest_path), the same one #manifest and
+  # perform_seed use -- there is no session entry to read it back from any
+  # more. Stubs only the ONE call with this specific path -- and_call_original
+  # on the general stub keeps every other File.unlink call in the request
+  # (Rails internals included) working normally.
   it "records the teardown and redirects, rather than 500ing, when the manifest cannot be removed" do
     sign_in(superadmin)
     post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
-    manifest_path = session[:load_test_manifest_path]
+    manifest_path = File.join(Dir.tmpdir, "lt-test-a.json")
 
     allow(File).to receive(:unlink).and_call_original
     allow(File).to receive(:unlink).with(manifest_path).and_raise(Errno::EACCES)

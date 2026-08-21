@@ -18,10 +18,14 @@ require "rails_helper"
 # repeating them, because a hand-kept list in a spec drifts the same way the
 # locale file did.
 describe "admin audit action names" do
-  # The three call shapes that write an audit row, all of which take the action
+  # The four call shapes that write an audit row, all of which take the action
   # as their first argument: record_admin_action (the concern itself),
-  # and interventions_controller's audit/audit_level wrappers around it.
-  CALL = /(?:record_admin_action|audit|audit_level)\(\s*"([a-z_]+)"/
+  # interventions_controller's audit/audit_level wrappers around it, and
+  # Admin::LoadTestsController#write_admin_action -- the one call site that
+  # cannot use record_admin_action itself, because it runs inside a
+  # background thread with no current_user to read (see that method's
+  # comment).
+  CALL = /(?:record_admin_action|audit|audit_level|write_admin_action)\(\s*"([a-z_]+)"/
 
   def recorded_actions
     Dir[Rails.root.join("app/controllers/**/*.rb")]

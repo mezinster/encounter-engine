@@ -99,4 +99,16 @@ namespace :load_test do
   task :status => :environment do
     puts LoadTest::Seeder.status.inspect
   end
+
+  # Recovery for the shape of problem TranslationRun.sweep_stale! exists for
+  # on that feature: a background operation died and left state behind. Here
+  # there is no row to sweep -- the seeding lock (LoadTest::Seeder#seed!,
+  # taken around the whole method) IS the state, and it is only ever left
+  # held if a process holding it was killed outright rather than allowed to
+  # unwind through its own ensure. See docs/runbooks/load-test.md.
+  desc "Force-release the seeding lock left behind by a killed process or thread"
+  task :force_unlock => :environment do
+    LoadTest::Seeder.force_unlock!
+    puts "status: #{LoadTest::Seeder.status.inspect}"
+  end
 end

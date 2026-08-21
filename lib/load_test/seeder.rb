@@ -7,9 +7,26 @@
 # generated per run and never constant, the addresses are unroutable, and
 # seeding refuses while a previous cohort is still present so a forgotten
 # teardown blocks the next run instead of silently doubling up.
+#
+# A FOURTH property was added on 2026-08-21, after an incident: a superadmin
+# pressed "Create cohort" twice, seven seconds apart, because the first
+# request gave no feedback for ten minutes. Both requests seeded 120 teams
+# concurrently -- #existing_cohort below reads COMMITTED rows, and ten
+# minutes of seeding inside one transaction commits nothing until the very
+# end, so both requests saw an empty database and both proceeded. #seed! now
+# takes a session-scoped lock (#with_seed_lock) around the whole method,
+# which is invisible to MVCC in exactly the way a row count is not.
+require "zlib"
+
 module LoadTest
   class Seeder
     class CohortPresent < StandardError; end
+    # Distinct from CohortPresent on purpose: CohortPresent means a cohort
+    # already exists (committed rows); AlreadySeeding means one is still
+    # being BUILT (nothing committed yet) -- the two incidents that produced
+    # them are different, and conflating the message would send an operator
+    # looking for a cohort that has no rows to find.
+    class AlreadySeeding < StandardError; end
 
     EMAIL_DOMAIN     = "loadtest.invalid".freeze
     MEMBERS_PER_TEAM = 3
@@ -18,6 +35,30 @@ module LoadTest
     # id back off it). A literal in two places is one edit away from silently
     # breaking status.
     GAME_NAME_PREFIX = "НЕ ИГРА — нагрузочный тест ".freeze
+
+    # A single, fixed key: only one cohort is ever seeded at a time, so there
+    # is nothing to namespace by. crc32 of a literal name rather than a bare
+    # magic integer, so the key's origin is legible without this comment.
+    # PostgreSQL requires advisory lock ids to fit a signed 64-bit integer;
+    # crc32 is 32 bits, comfortably inside that.
+    LOCK_KEY = Zlib.crc32("load_test_seeder").freeze
+
+    # sqlite (development, test -- production is always Postgres, see
+    # LoadTest.live?) has no real advisory lock: supports_advisory_locks? is
+    # false and the adapter's own get_advisory_lock is a no-op (returns nil,
+    # not true -- see AbstractAdapter). Rails.cache is :memory_store and
+    # process-global here (see CLAUDE.md), which is an adequate single-process
+    # stand-in for local development -- explicit, rather than silently
+    # skipping locking altogether on the adapter that dev and CI both run on.
+    LOCAL_LOCK_CACHE_KEY = "load_test:seeding".freeze
+
+    # Read and cleared by Admin::LoadTestsController#show. Written by the
+    # background thread the controller spawns when #seed! raises -- see the
+    # controller's own comment for why a thread cannot fall back to a flash.
+    # Process-local and does NOT survive a restart; that is acceptable
+    # because the durable signal that something went wrong is that no cohort
+    # appears, not this message.
+    ERROR_CACHE_KEY = "load_test:last_error".freeze
 
     class << self
       # Explicit deletion in dependency order, NOT a cascade. See the comment
@@ -99,7 +140,60 @@ module LoadTest
         users = User.where("email LIKE ?", "%@#{EMAIL_DOMAIN}")
         game  = Game.where("name LIKE ?", "#{GAME_NAME_PREFIX}%").order(:id).first
         { :cohort_id => game && game.name.delete_prefix(GAME_NAME_PREFIX),
-          :users     => users.count }
+          :users     => users.count,
+          :seeding   => seeding? }
+      end
+
+      # True while a seed is in progress anywhere -- this process or another
+      # -- WITHOUT holding the lock ourselves for longer than an instant. A
+      # committed-row check cannot answer this (see the class comment); the
+      # lock can, because it is held for the FULL duration of #seed!, not
+      # just its final commit.
+      #
+      # The Postgres branch is a peek, not a hold: attempt the lock, and if
+      # we get it, nobody else has it, so release immediately and report
+      # false. If we don't get it, someone else holds it -- report true
+      # without having taken anything.
+      def seeding?
+        conn = ActiveRecord::Base.connection
+        return Rails.cache.read(LOCAL_LOCK_CACHE_KEY).present? unless conn.supports_advisory_locks?
+
+        if conn.get_advisory_lock(LOCK_KEY)
+          conn.release_advisory_lock(LOCK_KEY)
+          false
+        else
+          true
+        end
+      end
+
+      # Force-releases a seeding lock left behind by a killed process or
+      # thread -- the same shape of problem TranslationRun.sweep_stale!
+      # exists for, except there is no row to mark FAILED here: the lock
+      # itself IS the state, so there is nothing to sweep on a timer, only
+      # something to release on request. See docs/runbooks/load-test.md.
+      #
+      # On sqlite this is just clearing the process-local flag. On Postgres a
+      # session-scoped advisory lock cannot be released from a DIFFERENT
+      # session than the one that took it -- pg_advisory_unlock only works
+      # inside the owning session -- so the only way to force it loose from
+      # here is to end that session. pg_locks records which backend PID holds
+      # it; pg_advisory_lock(key)'s single-bigint form is stored there as
+      # classid = key >> 32, objid = key & 0xffffffff (documented Postgres
+      # behaviour, not this application's invention). Neither suite runs
+      # against a real Postgres server (see CLAUDE.md's "Neither suite covers
+      # config/environments/production.rb" note for the same shape of gap),
+      # so this is unexercised by either -- verify with `bin/rails
+      # load_test:status` after using it.
+      def force_unlock!
+        conn = ActiveRecord::Base.connection
+        return Rails.cache.delete(LOCAL_LOCK_CACHE_KEY) unless conn.supports_advisory_locks?
+
+        conn.execute(<<~SQL.squish)
+          SELECT pg_terminate_backend(l.pid)
+          FROM pg_locks l
+          WHERE l.locktype = 'advisory' AND l.granted
+            AND ((l.classid::bigint << 32) | l.objid::bigint) = #{LOCK_KEY}
+        SQL
       end
     end
 
@@ -121,17 +215,60 @@ module LoadTest
       # rake teardown command and the console both already show.
       raise CohortPresent, "cohort #{self.class.status[:cohort_id]} still present" if existing_cohort
 
-      ActiveRecord::Base.transaction do
-        author = create_account("author")
-        game   = GameCloner.new(@source_game).call(:name => game_name, :author => author)
-        run    = open_run(game)
-        teams  = Array.new(@teams) { |i| build_team(game, run, i) }
+      with_seed_lock do
+        ActiveRecord::Base.transaction do
+          author = create_account("author")
+          game   = GameCloner.new(@source_game).call(:name => game_name, :author => author)
+          run    = open_run(game)
+          teams  = Array.new(@teams) { |i| build_team(game, run, i) }
 
-        manifest(game, run, teams)
+          manifest(game, run, teams)
+        end
       end
     end
 
     private
+
+    # See the class comment: a committed-row check cannot see a seed already
+    # in flight, because nothing is committed until this whole method's
+    # transaction finishes. A session-scoped advisory lock can, because it is
+    # held for the full duration below, not just the final commit.
+    #
+    # Non-blocking on purpose (get_advisory_lock is pg_try_advisory_lock, not
+    # pg_advisory_lock): a second concurrent request must be REFUSED
+    # immediately, not queued to wait ten minutes behind the first -- that
+    # would just move the "ten minutes with no feedback" incident from
+    # "silently doubled up" to "silently queued", not fix it.
+    #
+    # Released in ensure: a Postgres advisory lock is bound to the SESSION
+    # (the connection), and returning the connection to the pool does not end
+    # the session -- a lock leaked here by an exception would block every
+    # future seed until the process restarts. See ::force_unlock! for the
+    # recovery if that ever happens anyway.
+    def with_seed_lock
+      conn = ActiveRecord::Base.connection
+
+      unless conn.supports_advisory_locks?
+        raise AlreadySeeding, "another seed is already in progress" if
+          Rails.cache.read(LOCAL_LOCK_CACHE_KEY)
+
+        Rails.cache.write(LOCAL_LOCK_CACHE_KEY, true)
+        begin
+          return yield
+        ensure
+          Rails.cache.delete(LOCAL_LOCK_CACHE_KEY)
+        end
+      end
+
+      raise AlreadySeeding, "another seed is already in progress" unless
+        conn.get_advisory_lock(LOCK_KEY)
+
+      begin
+        yield
+      ensure
+        conn.release_advisory_lock(LOCK_KEY)
+      end
+    end
 
     def game_name
       "#{GAME_NAME_PREFIX}#{@cohort_id}"
@@ -151,12 +288,31 @@ module LoadTest
       @password ||= SecureRandom.alphanumeric(32)
     end
 
+    # Hashed ONCE for the whole cohort, not once per account. bcrypt's cost
+    # factor makes a single hash deliberately expensive (that is the point of
+    # bcrypt), and #password above is the same value for all 361 accounts a
+    # 120-team cohort creates -- so hashing it 361 times, once per
+    # User.create!, was recomputing one identical digest 361 times over. That
+    # was the entire ten minutes of the 2026-08-21 incident (see the class
+    # comment): #create_account below now assigns this digest directly
+    # instead of the plaintext, so User's before_save encrypt_password
+    # callback (which only runs `if: -> { password.present? }`) never fires.
+    #
+    # This does NOT weaken the load test. The cost factor is baked into the
+    # stored digest string itself, not recomputed at read time, so
+    # User#authenticate still performs a full-cost bcrypt VERIFY on every
+    # login during the actual k6 run -- the login stampede the test exists to
+    # measure is untouched. Only the one-time setup cost of BUILDING the
+    # cohort changes.
+    def password_digest
+      @password_digest ||= BCrypt::Password.create(password)
+    end
+
     def create_account(label)
       nickname = "#{prefix}#{label}-#{SecureRandom.hex(4)}"
-      User.create!(:nickname              => nickname,
-                   :email                 => "#{nickname}@#{EMAIL_DOMAIN}",
-                   :password              => password,
-                   :password_confirmation => password)
+      User.create!(:nickname        => nickname,
+                   :email           => "#{nickname}@#{EMAIL_DOMAIN}",
+                   :password_digest => password_digest)
     end
 
     # starts_at in the PAST: GamePassingsController refuses play with

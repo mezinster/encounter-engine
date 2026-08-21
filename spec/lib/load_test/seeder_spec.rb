@@ -31,6 +31,25 @@ describe LoadTest::Seeder do
     expect(User.find_by(:email => entry[:email]).authenticate(entry[:password])).to be_truthy
   end
 
+  # The guard for the 2026-08-21 incident's actual cause: 361 bcrypt hashes
+  # for a 120-team cohort, one per User.create!, of a password that is
+  # IDENTICAL across every seeded account (#password memoises one value per
+  # cohort). #create_account now assigns a pre-computed password_digest
+  # instead of the plaintext, so the expensive part (BCrypt::Password.create)
+  # only ever runs once per cohort. This is the guard for that: if a future
+  # change reverted to passing :password per account, this would go red
+  # (different digests, one per bcrypt salt) even though the previous
+  # example above -- which only checks ONE account authenticates -- would
+  # stay green and notice nothing.
+  it "hashes the shared cohort password once, not once per account" do
+    seeder(:teams => 3).seed!
+
+    digests = User.where("email LIKE ?", "%@loadtest.invalid").pluck(:password_digest)
+
+    expect(digests).not_to be_empty
+    expect(digests.uniq.size).to eq(1)
+  end
+
   it "addresses every seeded account at the reserved .invalid TLD" do
     manifest = seeder.seed!
 
@@ -91,6 +110,60 @@ describe LoadTest::Seeder do
     seeder.seed!
 
     expect { seeder.seed! }.to raise_error(LoadTest::Seeder::CohortPresent)
+  end
+
+  # The actual fix for the 2026-08-21 incident: #existing_cohort above reads
+  # COMMITTED rows, and a seed in flight commits nothing until its whole
+  # transaction finishes -- ten minutes, pre-speed-fix -- so a second request
+  # arriving in that window saw an empty database and proceeded anyway, which
+  # is exactly what happened. A session-scoped lock, held for the FULL
+  # duration of #seed!, is what a committed-row check cannot be.
+  describe "the seeding lock" do
+    # Real Postgres concurrency isn't reachable from one process against one
+    # sqlite connection, so both branches are exercised by stubbing the
+    # adapter directly -- this app's development/test database (sqlite) has
+    # supports_advisory_locks? == false, so the Postgres branch below would
+    # otherwise never run at all under either suite.
+    it "refuses a concurrent seed when Postgres reports the advisory lock already held" do
+      allow(ActiveRecord::Base.connection).to receive(:supports_advisory_locks?).and_return(true)
+      allow(ActiveRecord::Base.connection).to receive(:get_advisory_lock).and_return(false)
+
+      expect { seeder.seed! }.to raise_error(LoadTest::Seeder::AlreadySeeding)
+    end
+
+    # The sqlite fallback, exercised WITHOUT stubbing anything -- this really
+    # is the branch development and CI run under, so a lock "held" is
+    # simulated the same way #with_seed_lock itself would leave it: writing
+    # the same cache flag it writes.
+    it "refuses a concurrent seed on the sqlite fallback while the process-local flag is set" do
+      Rails.cache.write(LoadTest::Seeder::LOCAL_LOCK_CACHE_KEY, true)
+
+      expect { seeder.seed! }.to raise_error(LoadTest::Seeder::AlreadySeeding)
+    end
+
+    # Release-in-ensure is the whole point: a Postgres advisory lock is bound
+    # to the SESSION, so a lock leaked by a mid-seed exception would block
+    # every future seed until the process restarts, not just this one call.
+    it "releases the sqlite fallback lock after a seed that raises" do
+      allow(LoadTest::GameCloner).to receive(:new).and_raise(StandardError, "boom")
+
+      expect { seeder.seed! }.to raise_error(StandardError, "boom")
+
+      expect(Rails.cache.read(LoadTest::Seeder::LOCAL_LOCK_CACHE_KEY)).to be_nil
+      expect(LoadTest::Seeder.status[:seeding]).to be(false)
+    end
+
+    it "releases a stubbed Postgres advisory lock after a seed that raises" do
+      allow(ActiveRecord::Base.connection).to receive(:supports_advisory_locks?).and_return(true)
+      allow(ActiveRecord::Base.connection).to receive(:get_advisory_lock).and_return(true)
+      released = false
+      allow(ActiveRecord::Base.connection).to receive(:release_advisory_lock) { released = true }
+      allow(LoadTest::GameCloner).to receive(:new).and_raise(StandardError, "boom")
+
+      expect { seeder.seed! }.to raise_error(StandardError, "boom")
+
+      expect(released).to be(true)
+    end
   end
 
   it "accepts a team count as a zero-padded string, as rake would pass it" do

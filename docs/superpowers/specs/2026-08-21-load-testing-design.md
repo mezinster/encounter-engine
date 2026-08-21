@@ -111,8 +111,9 @@ The play path needs substantial state before a single request is meaningful.
   cohort needs `test_admissions` rows. `user_id` stays NULL so the admission is
   team-wide, which the unique index permits.
 * **`GamePassing`** per team, pre-advanced to **varied** level depths.
-* **~30 `Level`s**, each with a known code (via `correct_answer`), with mixed
-  `wrong_answer_penalty` and `any_code_passes`.
+* **Levels — cloned from a real game by default** (§4.2.1), synthetic only as a
+  fallback. Cloning is both the cheapest way to supply prerequisites and the
+  more honest test: real level text and real code counts, not filler.
 
 Varied depth is not cosmetic. `GamePassing#answered_questions` goes through
 `AnsweredQuestionsCoder`, which re-serialises the whole blob on every accepted
@@ -175,6 +176,68 @@ bin/rails load_test:status
 k6 reads it through `SharedArray`, so 200 VUs share one parsed copy rather than
 holding 200. The manifest is written outside the repo, is gitignored, and is
 deleted by teardown.
+
+### 4.2.1 Cloning a source game
+
+`LoadTest::GameCloner` deep-copies an existing game into the scratch game. **No
+clone or duplicate logic exists anywhere in this codebase today** — this is new.
+
+Copied: the `Game` row (renamed, re-authored to the throwaway author), its
+`levels` in `position` order, and each level's `questions`, `answers` and
+`hints`.
+
+Deliberately not copied: `logs`, `game_entries`, `game_passings`, `access_passes`,
+`access_codes`, `point_transactions`, `translation_runs` — history and
+permission belonging to the real game, none of it meaningful in a clone — and
+`game_files`.
+
+**The `game_files` omission is a known, accepted inaccuracy.** A cloned level
+whose text references an attached file will render that reference broken, so a
+cloned level page is somewhat lighter than the original. It is called out here
+rather than fixed because copying the blobs would multiply storage on a host
+with ~1.1 GB spare, to make page weight marginally more accurate on a test whose
+bottleneck is CPU.
+
+The cloner is a plain class under `lib/load_test/`, not a `Game` instance
+method: it is a load-testing concern and must not become a general-purpose
+"duplicate game" feature by accident.
+
+### 4.2.2 The superadmin console screen
+
+`GET /admin/load_test` plus `POST` actions for seed and teardown, following the
+established console shape exactly:
+
+* `Admin::LoadTestsController` with `include SecurityFilters`, `include
+  AdminAudit`, `before_action :require_authentication!`, `before_action
+  :require_superadmin!` — the same four lines every other admin controller
+  carries.
+* The form supplies the prerequisites: source game (a select of existing games),
+  team count, answer mix, and a **typed confirmation of the cohort id** before
+  either destructive button acts. A button that creates hundreds of production
+  users must not be one misclick.
+* The screen shows current cohort status and offers the manifest as a download,
+  so the operator never needs SSH to obtain it.
+
+**Audit is mandatory, and is a task in its own right.** `AdminAudit` records by
+an explicit `record_admin_action` call at each site, never an `around_action` —
+the concern's own comment explains that a filter deciding auditability by
+inspecting the request is precisely the construct that silently stops covering
+new actions. Both seed and teardown call it with details (cohort id, source
+game, team count), and `spec/requests/admin_audit_spec.rb` **enumerates the
+audited actions**, so it must be updated deliberately.
+
+**i18n cost, priced deliberately.** Admin screens in this repo are fully
+translated (`app/views/admin/users/show.html.erb` runs every label through
+`t("admin.users.show.*")`). A new screen therefore needs an `admin.load_test.*`
+block in **all seven** locale files; `raise_on_missing_translations` in the test
+environment turns an omission into a red build rather than a cosmetic gap. This
+roughly doubles the size of the work relative to the rake-only design and was
+accepted as such.
+
+**The rake tasks remain**, and remain the interface used on run night from the
+generator VM. The console is an additional front door onto the same
+`LoadTest::Seeder`, not a replacement — a screen that reimplemented the logic
+would drift from it.
 
 **Production guard:** under `RAILS_ENV=production` both tasks refuse unless
 `LOAD_TEST_CONFIRM` matches the cohort id — not because it would be run by
@@ -334,6 +397,22 @@ countdown examples reporting *pending* in CI for a fortnight while reading as
 passes, and a HEIC support check that reported success on a machine that could
 not decode a byte.
 
+**The cloner — RSpec.** That a clone reproduces level count, `position` order,
+codes and hints; and — the example that matters — that it copies **none** of the
+excluded associations. Asserting what was *not* copied is the half that catches
+a future association being added to `Game` and silently swept into every clone.
+
+**The admin screen — request specs**, matching the console's existing coverage:
+that a non-superadmin is refused, that seed and teardown each write an
+`AdminAction`, and that the typed cohort-id confirmation is actually enforced
+rather than merely rendered. `spec/requests/admin_audit_spec.rb` gains both new
+actions.
+
+**i18n — the existing guards do the work.** `spec/i18n_spec.rb` enforces exact
+`ru`/`en` parity and will fail on a key added to one and not the other. The five
+machine-produced locales need the block too, since `locales`-adjacent gaps in
+admin chrome fall back silently rather than loudly.
+
 **Gates before merge:** full `bundle exec rspec`; the inherited 228/2325
 Cucumber contract still green; and `bin/rails zeitwerk:check`, which is not a
 formality here because `lib/load_test/` gets autoloaded.
@@ -343,6 +422,12 @@ formality here because `lib/load_test/` gets autoloaded.
 | Path | What |
 |---|---|
 | `lib/load_test/seeder.rb` | cohort creation, teardown, status |
+| `lib/load_test/game_cloner.rb` | deep-copy of a source game (§4.2.1) |
+| `app/controllers/admin/load_tests_controller.rb` | console screen (§4.2.2) |
+| `app/views/admin/load_tests/show.html.erb` | the form, status and manifest link |
+| `config/locales/*.yml` | `admin.load_test.*` in all seven |
+| `spec/lib/load_test/game_cloner_spec.rb` | clone specs, incl. what is NOT copied |
+| `spec/requests/admin/load_tests_spec.rb` | guards, audit, confirmation |
 | `lib/tasks/load_test.rake` | thin shell over the above |
 | `spec/lib/load_test/seeder_spec.rb` | seeder specs, incl. row-count restoration |
 | `load_test/main.js` | k6 entry point, phase selection |
@@ -362,3 +447,6 @@ formality here because `lib/load_test/` gets autoloaded.
    must be deleted explicitly as §5.3 assumes.
 3. The real per-request CPU cost, which decides whether the §4.3 plateau ladder
    (10→120) brackets the ceiling or needs re-scaling after the first run.
+4. Whether a cloned level whose text references a `game_file` renders an error
+   or merely a broken link (§4.2.1). An error would make the clone unusable and
+   would force either copying the files or rewriting the text on clone.

@@ -31,14 +31,29 @@ class Admin::LoadTestsController < ApplicationController
       :cohort_id   => cohort_id,
       :base_url    => request.base_url
     ).seed!
-    store_manifest(manifest)
 
     # AFTER the change has landed, and with details: "someone ran a load test"
     # is not an audit trail. AdminAudit records by an explicit call per action
-    # on purpose -- see the concern's own comment.
+    # on purpose -- see the concern's own comment. Recorded HERE, immediately
+    # once seed! returns, rather than after store_manifest below: seed! is
+    # what touched the database, and a manifest-write failure (predictable
+    # path, O_EXCL -- see store_manifest's comment) must not be able to leave
+    # a committed cohort with no audit record of who created it.
     record_admin_action("load_test_seed", Game.find(manifest[:game_id]),
                         "cohort=#{cohort_id}, source=#{params[:source_game_id]}, " \
                         "teams=#{manifest[:teams].size}")
+
+    begin
+      store_manifest(manifest)
+    rescue Errno::EEXIST
+      # The cohort is live AND recorded above -- only the credentials file is
+      # missing. Name the cohort so the operator can still find and tear down
+      # what was just created, rather than 500ing and leaving them with
+      # nothing to go on.
+      return redirect_to admin_load_test_path,
+                         :alert => "Когорта #{cohort_id} создана, но манифест не записан: файл уже существует."
+    end
+
     redirect_to admin_load_test_path, :notice => "Когорта загружена"
   rescue LoadTest::Seeder::CohortPresent, LoadTest::Refused => e
     redirect_to admin_load_test_path, :alert => e.message

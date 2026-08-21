@@ -79,6 +79,31 @@ describe "the load-test console", type: :request do
     }.to change(Team, :count).by(2)
   end
 
+  # store_manifest writes to a fixed, predictable path (Dir.tmpdir/<cohort
+  # id>.json) with O_EXCL, so a pre-existing file there -- a leftover from an
+  # earlier rake seed under the same id, most plausibly -- makes the write
+  # raise Errno::EEXIST. seed! has already committed the cohort to the
+  # database by that point. The controller must not let that turn into a 500
+  # that leaves the cohort both live and unrecorded: the audit entry has to
+  # be written, and the operator has to be told the cohort id so they can
+  # still find and tear it down.
+  it "records the seed and redirects, rather than 500ing, when the manifest write collides with an existing file" do
+    sign_in(superadmin)
+    stale_path = File.join(Dir.tmpdir, "lt-test-a.json")
+    File.write(stale_path, "stale")
+
+    begin
+      expect {
+        post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
+      }.to change(Team, :count).by(2)
+
+      expect(response).to redirect_to(admin_load_test_path)
+      expect(AdminAction.newest_first.first.action).to eq("load_test_seed")
+    ensure
+      File.delete(stale_path) if File.exist?(stale_path)
+    end
+  end
+
   # The manifest holds a live password per seeded captain and measures ~20 KB at
   # 120 teams, against a 4096-byte cookie. Putting it in the session would both
   # overflow and ship production credentials to the browser on every request.

@@ -9,7 +9,8 @@ Phase 2, the k6 side that reads it and hits the app's real routes.
 |---|---|
 | `lib/manifest.js` | Loads the manifest JSON once per run (via `SharedArray`, not per-VU) and hands out one team per VU. |
 | `lib/auth.js` | Scrapes the CSRF token and logs a VU in through the real `/login` form. |
-| `main.js` | Entry point. Currently login-only — Task 9 replaces it with the two-phase play loop. |
+| `lib/play.js` | One play cycle: GET the current level, think, POST an answer (mostly wrong, by design), think again. |
+| `main.js` | Entry point. Two phases, selected by `--env PHASE`: `ramp` (default) steps arrival rate up to find the ceiling and aborts on a threshold breach; `hold` runs a fixed rate to completion regardless. |
 
 ## Running
 
@@ -18,13 +19,23 @@ export PATH="$HOME/.local/bin:$PATH"   # k6 is installed here, not /usr/local/bi
 bin/rails 'load_test:seed[1,5]'         # source_game_id, teams -- prints the manifest path it wrote
 bin/rails server &
 
-k6 run --env MANIFEST=/tmp/<cohort>.json --vus 2 --iterations 2 load_test/main.js
+k6 run --env MANIFEST=/tmp/<cohort>.json --env PHASE=ramp --env BASE_URL=http://localhost:3000 load_test/main.js
+k6 run --env MANIFEST=/tmp/<cohort>.json --env PHASE=hold --env RATE=20 --env BASE_URL=http://localhost:3000 load_test/main.js
 ```
 
+Both phases define their own `scenarios` in `options`, so **`--vus`/`--iterations`/`--duration`
+on the CLI don't work here** — k6 treats any of those flags as a request to run a single
+CLI-configured scenario against a function literally named `default`, which this script doesn't
+export (`ramp`/`hold` both `exec: 'session'`), and refuses to start
+(`function 'default' not found in exports`). To bound a local smoke test, either let the `ramp`
+stages run (they're short near the start) or send the process a SIGINT after the desired time and
+let k6 print its partial summary and exit, rather than passing `--duration`.
+
 `--env BASE_URL` overrides the manifest's own `base_url` (useful for pointing
-the same manifest at a different host without re-seeding). `--env PHASE` and
-`--env RATE` are read by the two-phase runner Task 9 adds; `main.js` in its
-current, login-only form does not use them.
+the same manifest at a different host without re-seeding). `--env RATE` sets the `hold` phase's
+constant arrival rate (iterations per minute; default 20) and is ignored by `ramp`. `--env
+WRONG_SHARE` (default 0.85) is `lib/play.js`'s share of deliberately-wrong answers — raise it
+towards 1 for a smoke test you don't want to accidentally finish the seeded game.
 
 **Never commit a manifest.** It carries live team passwords in plaintext.
 Manifests are written to `/tmp` by the seeder and stay there.
@@ -91,3 +102,30 @@ capable of failing, not just of passing:
 Re-run both whenever `lib/auth.js` changes in a way that touches what a check
 asserts on — including a change to `login()`'s own check predicate, which is
 exactly what broke the first time (see above).
+
+## Why `main.js` sets `noCookiesReset: true`
+
+k6 resets each VU's cookie jar at the **start of every iteration** by default. JS module scope
+(the `let token = null;` cache in `main.js`) is per-VU and survives fine, but the session cookie
+that token depends on does not: without this flag, a VU logs in successfully on iteration 1, k6
+throws its cookies away before iteration 2, `GET /play/:id` on iteration 2 comes back
+unauthenticated (redirected to `/login`), and the still-cached token from iteration 1 no longer
+matches that reset session — so `POST /play/:id` 422s with "Can't verify CSRF token authenticity"
+on every iteration from the second one onward, for the rest of the VU's life. Confirmed directly
+with a scratch script that dumped `http.cookieJar().cookiesForURL()`: `{}` at the top of iteration
+2 on the same VU that had just logged in. `noCookiesReset: true` makes the jar persist across a
+VU's iterations, matching what the per-VU login cache assumes. If you ever see `checks` pass on
+iteration 1 of a smoke test and then collapse afterward, this is the first thing to check.
+
+## Mutation-testing the abort brake
+
+`ramp`'s `abortOnFail` thresholds are the one safety property standing between a runaway local
+script and a production host with co-tenant services on it. Prove they actually fire, not just
+that they're present in the options object: temporarily change `p(95)<2000` to something no real
+response can satisfy (`p(95)<1`) and re-run `PHASE=ramp`. Expect k6 to exit non-zero (99) within
+roughly the `delayAbortEval` window with `thresholds on metrics '...' were crossed; at least one
+has abortOnFail enabled, stopping test prematurely`, and the run summary to show interrupted
+iterations rather than a clean stop. **Restore the real threshold afterward** — this is not a
+committed test, it's a manual check to re-run whenever the threshold values or `abortOnFail`
+wiring change. `hold` deliberately has no brake of its own: its whole purpose is to keep running
+past the point where the VM's CPU credits run out, which is a threshold breach by design.

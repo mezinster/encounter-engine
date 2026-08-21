@@ -22,6 +22,12 @@
 - **Isolate the test database** if another session may be running the suite: `DATABASE_URL="sqlite3:$SCRATCH/test.sqlite3" bundle exec rspec ...`.
 - **Answer mix default is 85% wrong / 15% correct.** SLO thresholds are `p(95) < 2000ms` and `http_req_failed rate < 0.02`.
 - **Never commit a manifest.** It contains live credentials for production accounts.
+- **Nothing in the load path may touch a mailing endpoint.** Production SMTP is
+  Gmail, which suspends senders that trip its spam heuristics (see the class
+  comment on `RequestThrottling`). Signup, invitations and password reset are the
+  six send sites, all in controllers; the k6 scenario uses `/login` and
+  `/play/:game_id` only, and must never be extended to registration. Seeding
+  itself writes at the model layer and is silent — pinned by a spec.
 
 ---
 

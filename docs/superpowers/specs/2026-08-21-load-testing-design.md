@@ -128,6 +128,14 @@ database. Mitigations are part of the design, not operational discipline:
 
 * a fresh random 32-character password generated per run — never a constant,
   never committed;
+* **nothing mails.** Production SMTP is Gmail, which suspends senders that trip
+  its spam heuristics — `RequestThrottling`'s class comment records that hazard
+  already. All six mailer send sites are in controllers; no model or `lib` code
+  mails at all, so the seeder's model-layer writes cannot produce a message. A
+  spec pins this, because an `after_create` mailer on `User` would otherwise
+  start mailing hundreds of production addresses silently. The corollary binds
+  the k6 scenario too: it drives `/login` and `/play/:game_id` only, and must
+  never be extended to registration;
 * addresses under `@loadtest.invalid`, a reserved TLD, so no mail can reach a
   real recipient even if something decides to send some;
 * a distinctive nickname prefix carrying the cohort id, so the cohort is

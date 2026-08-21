@@ -96,19 +96,74 @@ describe LoadTest::Seeder do
     # GameRun declares has_many :passings with NO dependent: option, on
     # purpose -- a passing is the record of a race somebody ran. So destroying
     # the game does NOT remove game_passings, and load-test rows would sit in
-    # production for ever. This example is the guard for exactly that.
-    TRACKED = [ User, Team, Game, Level, Question, Answer, Hint,
-                GameRun, TestAdmission, GameEntry, GamePassing,
-                PointTransaction, AccessPass ].freeze
+    # production for ever. This example is the guard for exactly that. Log,
+    # Invitation, TeamJoinRequest and GameLocalePreference carry the identical
+    # trap on Game/User/Team respectively, and are tracked for the same
+    # reason.
+    #
+    # A `let`, not a top-level constant: a constant defined inside a
+    # `describe` block lands on top-level `Object`, not on this example
+    # group.
+    let(:tracked) do
+      [ User, Team, Game, Level, Question, Answer, Hint,
+        GameRun, TestAdmission, GameEntry, GamePassing,
+        PointTransaction, AccessPass, Log, Invitation,
+        TeamJoinRequest, GameLocalePreference ]
+    end
 
     it "restores every touched table to its pre-seed row count" do
-      before_counts = TRACKED.to_h { |model| [ model.name, model.count ] }
+      before_counts = tracked.to_h { |model| [ model.name, model.count ] }
 
-      described_class.new(:source_game => source, :teams => 3,
-                          :cohort_id => "lt-test-a").seed!
+      manifest = described_class.new(:source_game => source, :teams => 3,
+                                     :cohort_id => "lt-test-a").seed!
+
+      # seed! itself never writes any of these -- they are what gameplay
+      # writes (an answer, an invite, a join request, a locale switch), which
+      # the real k6 run does and the seeder does not. A tracked table left at
+      # 0 before and 0 after proves nothing about whether its deletion line
+      # in teardown! actually runs -- which is exactly how the Log leak this
+      # example now guards against went unnoticed. One real row per table,
+      # attached to the seeded cohort, so each deletion is genuinely
+      # exercised.
+      #
+      # Built directly rather than through create_hint/create_access_pass:
+      # both helpers default an argument via a hash literal evaluated BEFORE
+      # `.merge(options)` runs (create_level, create_team respectively -- the
+      # same eager-evaluation trap the comment on `source` above documents),
+      # so passing :level/:team through them would still silently create an
+      # extra, un-tracked-by-cohort Game/Level/Team alongside the one we ask
+      # for and inflate the "after" counts for reasons that have nothing to
+      # do with teardown.
+      game    = Game.find(manifest[:game_id])
+      team    = Team.find(manifest[:teams].first[:team_id])
+      captain = team.captain
+      author  = game.author
+      level   = game.levels.first
+      passing = GamePassing.find_by!(:game_id => game.id, :team_id => team.id)
+
+      create_log(:game => game, :level => level, :team => team)
+      Hint.create!(:level => level, :text => "Test hint", :delay => 60)
+      create_game_entry(:game => game, :team_id => team.id)
+      create_point_transaction(:passing => passing)
+      game.update_column(:access_mode, "pass_required")
+      AccessPass.create!(:game => game, :team => team, :source => "operator_invite")
+      create_invitation(:for => author, :from => team)
+      TeamJoinRequest.create!(:user => author, :team => team)
+      GameLocalePreference.create!(:user => captain, :game => game, :locale => "en")
+
       described_class.teardown!("lt-test-a")
 
-      expect(TRACKED.to_h { |model| [ model.name, model.count ] }).to eq(before_counts)
+      expect(tracked.to_h { |model| [ model.name, model.count ] }).to eq(before_counts)
+    end
+
+    it "refuses to tear down a cohort that is not the one present" do
+      described_class.new(:source_game => source, :teams => 2,
+                          :cohort_id => "lt-test-a").seed!
+
+      expect { described_class.teardown!("wrong-id") }.to raise_error(ArgumentError)
+      # Nothing was deleted: the real cohort is still fully present.
+      expect(described_class.status[:cohort_id]).to eq("lt-test-a")
+      expect(described_class.status[:users]).to eq(2 * 3 + 1)
     end
 
     it "leaves the source game and its levels untouched" do

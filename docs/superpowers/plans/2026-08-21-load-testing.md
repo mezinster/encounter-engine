@@ -146,6 +146,11 @@ module LoadTest
         clone = Game.new(@source.attributes.slice(*GAME_ATTRIBUTES))
         clone.name   = name
         clone.author = author
+        # max_team_number is NOT a games column -- it lives on the run -- but
+        # Game validates it unconditionally (app/models/game.rb:83, numericality
+        # with no `on:` and no allow_nil), unlike GameRun's own copy which is
+        # `on: :open`. A bare save! therefore fails on a nil the clone never set.
+        clone.max_team_number = @source.max_team_number
         clone.save!
         @source.levels.order(:position).each { |level| copy_level(level, clone) }
       end

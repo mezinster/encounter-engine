@@ -18,11 +18,18 @@ namespace :load_test do
     cohort_id = ENV.fetch("LOAD_TEST_COHORT") { "lt-#{Date.today}-#{SecureRandom.hex(2)}" }
     LoadTest.guard!(cohort_id)
 
+    # Resolved (and, if live, validated) BEFORE the seeder is built, so an
+    # operator sees exactly what the manifest will contain -- see
+    # LoadTest.resolve_base_url for the LOAD_TEST_BASE_URL -> APP_HOST ->
+    # localhost precedence and the guard against seeding a live cohort with a
+    # manifest that points at localhost.
+    base_url = LoadTest.resolve_base_url
+
     manifest = LoadTest::Seeder.new(
       :source_game => Game.find(args.fetch(:source_game_id)),
       :teams       => args.fetch(:teams),
       :cohort_id   => cohort_id,
-      :base_url    => ENV["LOAD_TEST_BASE_URL"]
+      :base_url    => base_url
     ).seed!
 
     # seed! already committed above -- the cohort is live in the database by
@@ -33,6 +40,7 @@ namespace :load_test do
     # exact teardown command FIRST, before anything can raise, then explain
     # what didn't happen and re-raise so the failure still surfaces.
     puts "cohort:   #{cohort_id}"
+    puts "base_url: #{base_url}"
     puts
     puts "TEARDOWN IS MANDATORY. When the run is over:"
     puts "  LOAD_TEST_CONFIRM=#{cohort_id} bin/rails 'load_test:teardown[#{cohort_id}]'"

@@ -112,6 +112,46 @@ describe "load_test rake tasks" do
     end
   end
 
+  # The whole point of resolving base_url in the rake task itself (rather
+  # than leaving it to Seeder's own default) is so the operator sees it
+  # printed -- a manifest that silently pointed at localhost is exactly what
+  # produced the incident this fixes (see LoadTest.resolve_base_url).
+  describe "load_test:seed prints the resolved base_url" do
+    it "prints base_url beside the cohort id, derived from APP_HOST when LOAD_TEST_BASE_URL is unset" do
+      game = create_game
+      create_level(:game => game, :name => "L1", :correct_answer => "aaa")
+
+      Dir.mktmpdir("load-test-base-url-spec") do |dir|
+        manifest_path      = File.join(dir, "manifest.json")
+        original_manifest  = ENV["LOAD_TEST_MANIFEST"]
+        original_cohort    = ENV["LOAD_TEST_COHORT"]
+        original_base_url  = ENV["LOAD_TEST_BASE_URL"]
+        original_app_host  = ENV["APP_HOST"]
+        ENV["LOAD_TEST_MANIFEST"]  = manifest_path
+        ENV["LOAD_TEST_COHORT"]    = "lt-base-url-spec"
+        ENV.delete("LOAD_TEST_BASE_URL")
+        ENV["APP_HOST"] = "game.mezin.eu"
+
+        output = StringIO.new
+        original_stdout = $stdout
+        $stdout = output
+
+        begin
+          Rake::Task["load_test:seed"].invoke(game.id.to_s, "1")
+        ensure
+          $stdout = original_stdout
+          ENV["LOAD_TEST_MANIFEST"] = original_manifest
+          ENV["LOAD_TEST_COHORT"]   = original_cohort
+          ENV["LOAD_TEST_BASE_URL"] = original_base_url
+          ENV["APP_HOST"]           = original_app_host
+        end
+
+        expect(output.string).to include("base_url: https://game.mezin.eu")
+        expect(JSON.parse(File.read(manifest_path))["base_url"]).to eq("https://game.mezin.eu")
+      end
+    end
+  end
+
   # seed! commits before the manifest is ever written, so a write failure
   # (here: O_EXCL finding a pre-existing file, the realistic case -- a stale
   # manifest at a predictable path) must not strand the operator with a live,

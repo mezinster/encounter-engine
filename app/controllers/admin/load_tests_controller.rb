@@ -53,6 +53,11 @@ class Admin::LoadTestsController < ApplicationController
     # t() calls) would silently come back in the wrong language without this.
     source_game_id = params[:source_game_id]
     teams           = params[:teams]
+    # request.base_url deliberately, NOT LoadTest.resolve_base_url: a real
+    # request already knows the exact scheme+host+port it was reached on,
+    # which is strictly better information than anything derivable from
+    # LOAD_TEST_BASE_URL/APP_HOST. resolve_base_url exists for the rake task,
+    # which has no request to ask -- don't "unify" this call site onto it.
     base_url        = request.base_url
     actor_id        = current_user&.id
     actor_label     = current_user&.nickname

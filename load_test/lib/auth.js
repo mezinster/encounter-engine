@@ -17,6 +17,22 @@ import { check, fail } from 'k6';
 // unmasking for the session, so either source yields a token good for every
 // later POST.
 export function csrfFrom(res) {
+  // A connection-level failure (refused, timed out, DNS, TLS...) never gets
+  // as far as an HTTP response body -- k6 leaves res.body null/undefined and
+  // puts the real cause on res.error/res.error_code instead. Matching against
+  // that body unconditionally threw a bare TypeError ("Cannot read property
+  // 'match' of undefined or null") which named this function, not the actual
+  // problem -- on the night this shipped, that obscured a load-test manifest
+  // pointing at localhost for several minutes, because the loud repeated
+  // error pointed at "CSRF" while the real cause (connection refused) sat
+  // quietly one line above it. Check for a body first and fail with the
+  // connection-level facts k6 actually gives us, so the two failures read
+  // differently.
+  if (!res.body) {
+    fail(`no response body from ${res.url} (status ${res.status}, ` +
+         `error: ${res.error} [${res.error_code}])`);
+  }
+
   const meta = res.body.match(/name="csrf-token"\s+content="([^"]+)"/);
   if (meta) return meta[1];
 

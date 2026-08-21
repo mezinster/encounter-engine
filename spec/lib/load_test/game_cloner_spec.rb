@@ -69,4 +69,43 @@ describe LoadTest::GameCloner do
     expect(clone.access_passes).to be_empty
     expect(clone.translation_runs).to be_empty
   end
+
+  # The regression test for the production 422. A real multi-locale game has
+  # content_translations backing every declared locale, which is exactly what
+  # copy_level does NOT copy (see the GAME_ATTRIBUTES comment) -- so a clone
+  # that inherited the source's available_locales verbatim would declare
+  # languages it has translated nothing into, and Game's own completeness
+  # validation (declared_locales_are_translated_before_publication) would
+  # refuse to save it. That is the exact failure from production: "Игра
+  # объявляет языки, на которые переведено не всё".
+  #
+  # update_column bypasses Game's validations to set up the source, the same
+  # established pattern spec/requests/option_translations_spec.rb uses --
+  # available_locales can only reach "ru,en" on a saved, non-draft game
+  # through a route that skips declared_locales_are_translated_before_publication,
+  # since going through the validated setter on an untranslated listed game
+  # would refuse to save the SOURCE for the identical reason.
+  #
+  # Against the pre-fix GAME_ATTRIBUTES (which copied available_locales
+  # verbatim), this example raises ActiveRecord::RecordInvalid on
+  # described_class.new(source).call(...) rather than returning a saved clone.
+  it "declares only its own primary locale, even when the source declares several" do
+    source = create_game
+    create_level(:game => source, :correct_answer => "aaa")
+    source.update_column(:available_locales, "ru,en")
+
+    clone = described_class.new(source).call(:name => "scratch", :author => author)
+
+    expect(clone).to be_persisted
+    expect(clone.available_locale_list).to eq([ clone.primary_locale ])
+  end
+
+  it "forces the clone's access_mode to scheduled, even when the source is gated" do
+    source = create_game(:access_mode => "pass_required")
+    create_level(:game => source, :correct_answer => "aaa")
+
+    clone = described_class.new(source).call(:name => "scratch", :author => author)
+
+    expect(clone.access_mode).to eq("scheduled")
+  end
 end

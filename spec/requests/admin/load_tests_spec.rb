@@ -139,6 +139,41 @@ describe "the load-test console", type: :request do
     end
   end
 
+  # Production bug: a source game whose GameCloner-produced clone fails one of
+  # Game's own validations (originally: available_locales inherited from the
+  # source, declaring languages the clone has zero content_translations for --
+  # see lib/load_test/game_cloner.rb) reached the operator as Rails' raw 422
+  # error page, because #seed did not rescue ActiveRecord::RecordInvalid. On a
+  # console whose entire point is to be safer than the command line, that is
+  # the wrong failure mode.
+  #
+  # GameCloner itself is fixed now (available_locales/access_mode are no
+  # longer copied from the source), so the ORIGINAL failure can no longer be
+  # reproduced end-to-end through this controller -- which is the point of the
+  # fix. To pin the controller's OWN behaviour (rescue and redirect with the
+  # underlying messages) independently of whatever GameCloner happens to
+  # guarantee today, this stubs LoadTest::Seeder.new to return a double whose
+  # #seed! raises ActiveRecord::RecordInvalid directly, carrying a record with
+  # a known, deterministic error message.
+  it "redirects with an alert carrying the validation messages, rather than raising, when the clone is invalid" do
+    sign_in(superadmin)
+    source # see the eager-evaluation comment on the earlier mismatch example
+
+    invalid_record = Game.new
+    invalid_record.errors.add(:base, "boom, специально невалидная запись")
+    seeder = instance_double(LoadTest::Seeder)
+    allow(LoadTest::Seeder).to receive(:new).and_return(seeder)
+    allow(seeder).to receive(:seed!).and_raise(ActiveRecord::RecordInvalid.new(invalid_record))
+
+    expect {
+      post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
+    }.not_to change(Team, :count)
+
+    expect(response).to redirect_to(admin_load_test_path)
+    follow_redirect!
+    expect(response.body).to include("boom, специально невалидная запись")
+  end
+
   # The manifest holds a live password per seeded captain and measures ~20 KB at
   # 120 teams, against a 4096-byte cookie. Putting it in the session would both
   # overflow and ship production credentials to the browser on every request.

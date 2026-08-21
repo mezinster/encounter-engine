@@ -307,6 +307,7 @@ en:
       invalid_cohort_id: "A cohort id may contain only Latin letters, digits and hyphens."
       cohort_present: "Cohort %{cohort} already exists."
       refused: "Refused by the production safety guard."
+      invalid_clone: "Could not create the game clone: %{errors}"
   answers:
     must_have_at_least_one_variant: "There must be at least one answer code"
     index:

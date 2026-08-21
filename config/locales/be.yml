@@ -326,6 +326,7 @@ be:
       invalid_cohort_id: "Ідэнтыфікатар кагорты павінен складацца з лацінскіх літар, лічбаў і дэфісаў."
       cohort_present: "Кагорта %{cohort} ужо існуе."
       refused: "Дзеянне адхілена праверкай бяспекі production."
+      invalid_clone: "Не ўдалося стварыць клон гульні: %{errors}"
   answers:
     must_have_at_least_one_variant: "Павінен быць хаця б адзін варыянт кода"
     index:

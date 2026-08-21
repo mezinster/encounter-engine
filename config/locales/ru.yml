@@ -307,6 +307,7 @@ ru:
       invalid_cohort_id: "Идентификатор когорты должен состоять из латинских букв, цифр и дефисов."
       cohort_present: "Когорта %{cohort} уже существует."
       refused: "Действие отклонено проверкой безопасности production."
+      invalid_clone: "Не удалось создать клон игры: %{errors}"
   answers:
     must_have_at_least_one_variant: "Должен быть хотя бы один вариант кода"
     index:

@@ -378,7 +378,7 @@ describe "auditing administrative changes", type: :request do
     before { sign_in(superadmin) }
 
     # The manifest path is fixed and predictable (cohort id -> filename), by
-    # design -- see Admin::LoadTestsController#store_manifest and the matching
+    # design -- see Admin::LoadTestsController#manifest_path and the matching
     # hazard documented in lib/tasks/load_test.rake. Real usage never collides
     # because only one cohort exists at a time; this file reuses cohort id
     # "lt-test-a" across two examples in one process, so it clears any
@@ -387,6 +387,16 @@ describe "auditing administrative changes", type: :request do
     before do
       stale = File.join(Dir.tmpdir, "lt-test-a.json")
       File.delete(stale) if File.exist?(stale)
+    end
+
+    # Seeding runs off the request thread now (see the controller's own
+    # comment). Run it inline here so the examples below -- which assert on
+    # the audit row a completed seed writes -- don't have to race a real
+    # background thread. Same technique as
+    # spec/requests/admin/load_tests_spec.rb.
+    before do
+      allow_any_instance_of(Admin::LoadTestsController)
+        .to receive(:run_in_background) { |_, &block| block.call }
     end
 
     it "records seeding a load-test cohort, naming the cohort and team count" do

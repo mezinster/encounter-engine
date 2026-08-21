@@ -3,6 +3,12 @@
 # The console front door onto LoadTest::Seeder. It does not reimplement any of
 # it: a screen holding its own copy of the seeding logic would drift from the
 # rake task, and the two are used on the same night by the same person.
+#
+# Seeding itself runs off the request thread. #seed! took ten minutes for a
+# 120-team cohort before 2026-08-21's speed fix, and ten minutes in a Puma
+# thread is wrong regardless of how fast that fix makes it -- see
+# docs/superpowers/specs/2026-08-21-load-testing-design.md and
+# TranslationRunsController's identical Thread pattern, which this mirrors.
 class Admin::LoadTestsController < ApplicationController
   include SecurityFilters
   include AdminAudit
@@ -13,6 +19,13 @@ class Admin::LoadTestsController < ApplicationController
   def show
     @status = LoadTest::Seeder.status
     @games  = Game.order(:name)
+    # Written by the background thread below when it fails; read once and
+    # cleared so the console does not keep repeating a resolved failure on
+    # every later visit. Process-local (Rails.cache) and does not survive a
+    # restart -- acceptable, because the durable signal that something went
+    # wrong is that no cohort appears, not this message.
+    @seed_error = Rails.cache.read(LoadTest::Seeder::ERROR_CACHE_KEY)
+    Rails.cache.delete(LoadTest::Seeder::ERROR_CACHE_KEY) if @seed_error
   end
 
   def seed
@@ -26,61 +39,41 @@ class Admin::LoadTestsController < ApplicationController
     # if `confirmed?` were ever removed or bypassed, rather than silently
     # trusting the caller the way `LoadTest.guard!(cohort_id)` alone would
     # (its default reads LOAD_TEST_CONFIRM, which is never set in this
-    # process -- see the Puma/rake split in lib/load_test.rb).
+    # process -- see the Puma/rake split in lib/load_test.rb). Kept
+    # synchronous: it is fast (no database write at all), unlike the seed
+    # itself below.
     LoadTest.guard!(cohort_id, :confirmation => params[:confirm_cohort_id])
-    manifest = LoadTest::Seeder.new(
-      :source_game => Game.find(params[:source_game_id]),
-      :teams       => params[:teams],
-      :cohort_id   => cohort_id,
-      :base_url    => request.base_url
-    ).seed!
 
-    # AFTER the change has landed, and with details: "someone ran a load test"
-    # is not an audit trail. AdminAudit records by an explicit call per action
-    # on purpose -- see the concern's own comment. Recorded HERE, immediately
-    # once seed! returns, rather than after store_manifest below: seed! is
-    # what touched the database, and a manifest-write failure (predictable
-    # path, O_EXCL -- see store_manifest's comment) must not be able to leave
-    # a committed cohort with no audit record of who created it.
-    record_admin_action("load_test_seed", Game.find(manifest[:game_id]),
-                        "cohort=#{cohort_id}, source=#{params[:source_game_id]}, " \
-                        "teams=#{manifest[:teams].size}")
+    # Captured as plain values, not read inside the thread below: current_user
+    # is request state (session/warden), and the thread outlives this request
+    # -- see AdminAudit's comment on why record_admin_action itself cannot be
+    # reused there. I18n.locale is thread-local, too -- a new Thread starts at
+    # I18n.default_locale regardless of what this request negotiated, so a
+    # non-default-locale operator's eventual failure message (perform_seed's
+    # t() calls) would silently come back in the wrong language without this.
+    source_game_id = params[:source_game_id]
+    teams           = params[:teams]
+    base_url        = request.base_url
+    actor_id        = current_user&.id
+    actor_label     = current_user&.nickname
+    locale          = I18n.locale
 
-    begin
-      store_manifest(manifest)
-    rescue Errno::EEXIST
-      # The cohort is live AND recorded above -- only the credentials file is
-      # missing. Name the cohort so the operator can still find and tear down
-      # what was just created, rather than 500ing and leaving them with
-      # nothing to go on.
-      return redirect_to admin_load_test_path,
-                         :alert => t("admin.load_test.manifest_exists", :cohort => cohort_id)
+    run_in_background do
+      I18n.with_locale(locale) do
+        perform_seed(source_game_id, teams, cohort_id, base_url, actor_id, actor_label)
+      end
     end
 
-    redirect_to admin_load_test_path, :notice => t("admin.load_test.seeded")
-  # Translated keys, never e.message: LoadTest::Seeder::CohortPresent's
-  # message interpolates whatever LoadTest::Seeder.status[:cohort_id] returns
-  # (see that class), and LoadTest::Refused's is a hardcoded English sentence
-  # meant for a rake operator's terminal -- neither belongs verbatim on a
-  # screen where every other string is translated. cohort_id here is the id
-  # the operator just typed, the same value either exception is about.
-  rescue LoadTest::Seeder::CohortPresent
-    redirect_to admin_load_test_path,
-               :alert => t("admin.load_test.cohort_present", :cohort => cohort_id)
+    redirect_to admin_load_test_path, :notice => t("admin.load_test.seed_started")
+  # LoadTest::Seeder::CohortPresent, LoadTest::Seeder::AlreadySeeding and
+  # ActiveRecord::RecordInvalid used to be rescued here too, back when #seed!
+  # ran synchronously in this action. Now it runs in the thread spawned
+  # above, so those three surface through perform_seed's own rescue and
+  # Rails.cache instead -- see that method. Only LoadTest::Refused is still
+  # raised synchronously (by the guard! call above, before any thread
+  # exists), so it is the only one still rescued here.
   rescue LoadTest::Refused
     redirect_to admin_load_test_path, :alert => t("admin.load_test.refused")
-  # The clone (or one of the levels under it) failed a model validation --
-  # e.g. GameCloner producing a Game whose available_locales declares a
-  # language it has no translations for. seed! rolls that back inside its own
-  # transaction (Game.transaction in GameCloner#call), so nothing is left
-  # half-created; the operator just needs to see WHY, which e.record.errors
-  # carries and a bare 500 page would not. This is a console whose whole job
-  # is to be safer than the command line, so a bad clone has to read back as
-  # an alert with the real validation messages, not Rails' default error page.
-  rescue ActiveRecord::RecordInvalid => e
-    redirect_to admin_load_test_path,
-               :alert => t("admin.load_test.invalid_clone",
-                           :errors => e.record.errors.full_messages.join("; "))
   end
 
   def teardown
@@ -88,7 +81,8 @@ class Admin::LoadTestsController < ApplicationController
     return refuse unless confirmed?(cohort_id)
     return refuse_invalid unless valid_cohort_id?(cohort_id)
 
-    # See the matching comment in #seed.
+    # See the matching comment in #seed. Teardown stays synchronous
+    # throughout -- it is fast, and the operator should see it finish.
     LoadTest.guard!(cohort_id, :confirmation => params[:confirm_cohort_id])
     removed = LoadTest::Seeder.teardown!(cohort_id)
 
@@ -102,14 +96,15 @@ class Admin::LoadTestsController < ApplicationController
 
     # The credentials outlive the accounts otherwise. Best-effort: a manifest
     # we cannot remove is worth a warning, not a 500 on a teardown that
-    # already succeeded.
-    path = session.delete(:load_test_manifest_path)
+    # already succeeded. The path is DERIVED from the cohort id (see
+    # #manifest_path), not read back from anywhere -- there is nothing to
+    # read it back from now that seeding no longer stashes it in the session.
     begin
-      File.unlink(path) if path.present?
+      File.unlink(manifest_path(cohort_id))
     rescue Errno::ENOENT
       # Already gone -- nothing to do.
     rescue SystemCallError => e
-      Rails.logger.warn("[load_test] could not remove manifest #{path}: #{e.class}")
+      Rails.logger.warn("[load_test] could not remove manifest #{manifest_path(cohort_id)}: #{e.class}")
     end
 
     redirect_to admin_load_test_path, :notice => t("admin.load_test.torn_down")
@@ -117,8 +112,16 @@ class Admin::LoadTestsController < ApplicationController
     redirect_to admin_load_test_path, :alert => t("admin.load_test.refused")
   end
 
+  # The path is derived from the cohort id currently present, never stored in
+  # the session: the background thread #seed spawns has no session to write
+  # to (it outlives the request), so deriving the path here is what makes
+  # this action work at all once seeding is off the request thread, and it
+  # removes the session dependency entirely rather than replacing it with
+  # another one.
   def manifest
-    path = session[:load_test_manifest_path]
+    cohort_id = LoadTest::Seeder.status[:cohort_id]
+    path      = cohort_id.present? ? manifest_path(cohort_id) : nil
+
     if path.blank? || !File.exist?(path)
       return redirect_to(admin_load_test_path, :alert => t("admin.load_test.no_manifest"))
     end
@@ -130,7 +133,7 @@ class Admin::LoadTestsController < ApplicationController
   private
 
   # A slug, not free text. cohort_id is written verbatim into a filesystem
-  # path (Dir.tmpdir/#{cohort_id}.json -- see store_manifest) and, inside the
+  # path (Dir.tmpdir/#{cohort_id}.json -- see manifest_path) and, inside the
   # seeder, into nicknames and e-mail local parts. ManifestFile.write! only
   # refuses paths under Rails.root, so a "../" segment elsewhere on disk is
   # not caught there. This is not remotely exploitable on its own -- only a
@@ -156,28 +159,102 @@ class Admin::LoadTestsController < ApplicationController
     redirect_to admin_load_test_path, :alert => t("admin.load_test.invalid_cohort_id")
   end
 
-  # The PATH in the session, never the manifest itself -- and this is not a
-  # preference, it is the only thing that works.
+  # Cohort id -> filename, fixed and predictable, by design: real usage never
+  # has two cohorts at once, so there is nothing to disambiguate. Shared by
+  # #manifest (reads it back), #teardown (removes it) and perform_seed
+  # (writes it), so the three cannot drift into different naming schemes.
+  def manifest_path(cohort_id)
+    File.join(Dir.tmpdir, "#{cohort_id}.json")
+  end
+
+  # Rails.application.executor.wrap is load-bearing, not ceremony: a bare
+  # Thread leaks a connection from the pool and does not participate in code
+  # reloading -- see the identical comment on TranslationRunsController#start,
+  # which this mirrors. Split into its own method (rather than calling
+  # Thread.new directly from #seed) so specs can run the block inline instead
+  # of racing a real background thread -- see
+  # spec/requests/admin/load_tests_spec.rb.
+  def run_in_background
+    Thread.new { Rails.application.executor.wrap { yield } }
+  end
+
+  # Everything #seed used to do synchronously between calling seed! and
+  # rendering a response, now run off the request thread. Ordering mirrors
+  # what #seed did before this fix: seed! first (it is what touches the
+  # database), the audit row immediately after (a manifest-write failure must
+  # not be able to leave a committed cohort with no record of who created
+  # it), the manifest write last.
   #
-  # This app uses Rails' default COOKIE session store (nothing in config/ sets
-  # another), so anything put in the session is serialised into a 4096-byte
-  # cookie. A 120-team manifest measures 20,365 bytes: the seed would commit to
-  # the database and then raise ActionDispatch::Cookies::CookieOverflow on the
-  # redirect, leaving a live cohort in production and the operator holding
-  # nothing -- the same stranding failure as the EEXIST case in the rake task.
-  #
-  # It is also the wrong place on its own terms: the manifest holds a live
-  # password for every seeded captain, and a cookie is sent to the browser and
-  # back on every subsequent request.
-  #
-  # LoadTest::ManifestFile.write! already creates the file atomically at 0600
-  # and refuses any path under Rails.root, so the console reuses it rather than
-  # growing a second copy of that logic. The file lives in the container's
-  # temporary directory and does not survive a deploy, which is the right
-  # lifetime for credentials: if it is lost, tear the cohort down and re-seed.
-  def store_manifest(manifest)
-    session[:load_test_manifest_path] =
-      LoadTest::ManifestFile.write!(manifest,
-                                    :path => File.join(Dir.tmpdir, "#{manifest[:cohort_id]}.json"))
+  # current_user is not available here -- there is no request by the time
+  # this runs -- so actor_id/actor_label arrive as plain values captured by
+  # #seed before the thread was spawned, and the AdminAction row is built
+  # directly rather than through record_admin_action (which reads
+  # current_user itself).
+  def perform_seed(source_game_id, teams, cohort_id, base_url, actor_id, actor_label)
+    manifest = LoadTest::Seeder.new(
+      :source_game => Game.find(source_game_id),
+      :teams       => teams,
+      :cohort_id   => cohort_id,
+      :base_url    => base_url
+    ).seed!
+
+    game = Game.find(manifest[:game_id])
+    write_admin_action("load_test_seed", :actor_id => actor_id, :actor_label => actor_label,
+                       :target => game,
+                       :details => "cohort=#{cohort_id}, source=#{source_game_id}, " \
+                                   "teams=#{manifest[:teams].size}")
+
+    LoadTest::ManifestFile.write!(manifest, :path => manifest_path(manifest[:cohort_id]))
+  rescue Errno::EEXIST
+    # The cohort is live AND recorded above -- only the credentials file is
+    # missing. Name the cohort so the operator can still find and tear down
+    # what was just created, rather than leaving them with nothing to go on.
+    Rails.logger.warn("[load_test] manifest for cohort #{cohort_id} already exists, not overwritten")
+    Rails.cache.write(LoadTest::Seeder::ERROR_CACHE_KEY,
+                      t("admin.load_test.manifest_exists", :cohort => cohort_id))
+  # Errors are surfaced, not swallowed: logged in full here (this is the only
+  # place any trace of them survives, since nothing is watching this thread),
+  # and reduced to a short operator-facing message the console shows once.
+  # LoadTest::Seeder::CohortPresent, LoadTest::Seeder::AlreadySeeding and
+  # ActiveRecord::RecordInvalid get their own translated message, matching
+  # what #seed used to rescue synchronously before this fix moved seed! off
+  # the request thread; anything else gets a generic one.
+  rescue StandardError => e
+    Rails.logger.error("[load_test] seed failed for cohort #{cohort_id}: " \
+                       "#{e.class}: #{e.message}\n#{Array(e.backtrace).join("\n")}")
+    Rails.cache.write(LoadTest::Seeder::ERROR_CACHE_KEY, seed_error_message(e, cohort_id))
+  end
+
+  def seed_error_message(error, cohort_id)
+    case error
+    when LoadTest::Seeder::CohortPresent
+      t("admin.load_test.cohort_present", :cohort => LoadTest::Seeder.status[:cohort_id] || cohort_id)
+    when LoadTest::Seeder::AlreadySeeding
+      t("admin.load_test.already_seeding")
+    when ActiveRecord::RecordInvalid
+      t("admin.load_test.invalid_clone", :errors => error.record.errors.full_messages.join("; "))
+    else
+      t("admin.load_test.seed_failed")
+    end
+  end
+
+  # Same fields as AdminAudit#record_admin_action, but taking the actor
+  # explicitly instead of reading current_user -- the background thread this
+  # runs in has no request to read it from. Named differently (not
+  # record_admin_action) on purpose, so it cannot accidentally be called from
+  # request context expecting current_user to be consulted; matched by
+  # spec/i18n_audit_actions_spec.rb's CALL regex alongside record_admin_action
+  # itself, so a new action name written through this method is still found
+  # mechanically rather than needing a second, hand-kept list.
+  def write_admin_action(action, actor_id:, actor_label:, target: nil, details: nil)
+    AdminAction.create!(
+      :actor_id     => actor_id,
+      :actor_label  => actor_label,
+      :action       => action.to_s,
+      :target_type  => target&.class&.name,
+      :target_id    => target&.id,
+      :target_label => AdminAction.label_for(target),
+      :details      => details
+    )
   end
 end

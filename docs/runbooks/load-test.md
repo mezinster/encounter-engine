@@ -124,7 +124,12 @@ Go to `/admin/load_test` on the production instance:
    ramp ladder in mind — 120 teams matches `load_test/main.js`'s plateaus).
 2. Type the cohort id into both the cohort field and the confirmation field
    — the console refuses a mismatch.
-3. Submit. The screen will show the cohort id and row counts on success.
+3. Submit. **The screen redirects immediately, saying seeding has started —
+   it does not wait for it to finish.** Seeding 120 teams still takes real
+   time (well under the old ten minutes, but not instant); the console shows
+   "seeding in progress" while it runs and the cohort id and row counts once
+   it lands. Reload the page rather than submitting again — a second submit
+   while one is already running is refused, not queued.
 4. Download the manifest from the console (the "manifest" link/button) to
    your machine. **Do not open it in anything that logs its contents** (a
    browser devtools network tab, a shared clipboard manager) — it is full of
@@ -367,6 +372,35 @@ publicly-visible scratch game.
    On roughly 1.1 GB of spare memory on the host, a Puma worker that grew
    under load does not necessarily shrink back on its own once the load
    stops.
+
+### Recovery: the console is stuck showing "seeding in progress"
+
+Seeding takes a Postgres advisory lock for the whole of `Seeder#seed!`, and
+that lock is what the console's "seeding in progress" state actually reads
+(`LoadTest::Seeder.status[:seeding]` — see `lib/load_test/seeder.rb`). It is
+released in an `ensure`, so it survives a normal failure (a bad clone, a
+refused concurrent seed) without any help. It only stays held if the process
+holding it was killed outright — a Puma worker OOM-killed, a `kamal app boot`
+mid-seed — rather than allowed to unwind through that `ensure`.
+
+If the console still says seeding is in progress well past how long a seed
+should reasonably take, and no cohort has appeared:
+
+```bash
+bundle exec kamal app exec "bin/rails load_test:force_unlock"
+```
+
+This prints `status:` afterward — confirm it shows `seeding: false`. On
+Postgres this works by finding and terminating the specific backend still
+holding the lock (a session-scoped advisory lock can only be released from
+inside its own session, so ending that session is the only way to force it
+loose from here); on the sqlite-backed development/test environments it is
+just clearing a cache flag. Same mechanism as `TranslationRun.sweep_stale!`
+one screen over: a background operation died and left state behind, and this
+is the deliberate way to say so and move on — not something that runs on a
+timer, because false-positively releasing a lock a real seed still holds
+would let two seeds run at once, which is the exact incident this exists to
+prevent.
 
 ### Recovery: the cohort's game was removed by hand
 

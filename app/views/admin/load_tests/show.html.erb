@@ -3,7 +3,17 @@
 
 <p class="warning"><%= t("admin.load_test.warning") %></p>
 
-<% if @status[:cohort_id].present? %>
+<% if @seed_error.present? %>
+  <p class="alert"><%= @seed_error %></p>
+<% end %>
+
+<% if @status[:seeding] %>
+  <%# Seeding runs off the request thread now (see the controller), so
+      nothing is committed yet -- @status[:cohort_id] is still blank while
+      this is true, and offering the seed form again here is exactly the
+      double-submit that caused the 2026-08-21 incident. %>
+  <p><%= t("admin.load_test.seeding") %></p>
+<% elsif @status[:cohort_id].present? %>
   <p>
     <%= t("admin.load_test.present", :cohort => @status[:cohort_id], :users => @status[:users]) %>
     <%= link_to t("admin.load_test.download_manifest"), admin_load_test_manifest_path %>

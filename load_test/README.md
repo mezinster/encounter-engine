@@ -205,3 +205,35 @@ for the POST check, a real "the app accepted this" response) without the marker.
   level), but it means the "answer accepted" check can never reach a true 100% pass rate against a
   cohort that's actually being played to completion — a small, expected amount of noise, not a
   regression to chase.
+
+## Scenarios
+
+`--env PHASE=` selects one. **A target is always a team count, never a rate.**
+
+| phase | what it asks | knobs |
+|---|---|---|
+| `ramp` | how many teams can play at once, once they are in | `LADDER` (default `120,250,500,1000`) |
+| `stampede` | what happens when every team arrives together | `TEAMS`, `STAMPEDE_WINDOW` (default `30s`) |
+| `hold` | what happens after the CPU credit bank drains | `TEAMS`, runs 40 minutes |
+
+**`stampede` is the one that matters most, and it exists because of a
+measurement.** On 2026-08-21, against production on a `Standard_B1ms`:
+
+| arrival | p95 | errors |
+|---|---|---|
+| 120 teams over 22 minutes | **196 ms** | 0% |
+| 120 teams over 30 seconds | **5 860 ms** | 0% |
+
+Same app, same box, same team count. Nothing failed in either — the second just
+got thirty times slower, because 91 bcrypt logins landed together on one vCPU
+and `has_secure_password` makes each one deliberately expensive. A real
+encounter game does exactly that at the whistle, so `ramp` alone measures the
+easier half of the question.
+
+`ramp` and `stampede` both abort on an SLO breach; `hold` deliberately does not,
+because running past a breach is its whole purpose.
+
+An unknown `PHASE` refuses rather than falling through to the ramp, and every
+phase refuses if it would drive more virtual users than the manifest has teams —
+VUs are assigned to teams by modulo, so oversubscribing silently points many
+sessions at one game passing and measures nothing real.

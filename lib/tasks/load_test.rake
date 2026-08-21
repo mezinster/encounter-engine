@@ -27,22 +27,25 @@ namespace :load_test do
   # teardown! validates the id against the cohort actually present and refuses
   # on a mismatch, so a stale id cannot destroy a live cohort -- the guard below
   # only compares two copies of what the operator typed, and cannot catch that
-  # on its own. The one escape hatch: if the cohort's GAME is already gone but
-  # its users are not, status reports no cohort id and only `teardown!(nil)`
-  # sweeps them. That is a real state (a half-finished manual cleanup), so the
-  # task documents it rather than leaving an operator to conclude the rows are
-  # unreachable.
+  # on its own.
+  #
+  # A cohort whose game was already removed by hand cannot be named by
+  # `status`, so this task cannot confirm it either -- LoadTest.guard! refuses
+  # a blank cohort id in production outright, on purpose (a blank id can never
+  # be confirmed, so it must never be treated as authorised). Sweeping those
+  # leftovers is a deliberate out-of-band action, not a rake flag:
+  #   bin/rails runner 'puts LoadTest::Seeder.teardown!(nil)'
+  # which bypasses the guard because the operator chose to step outside it.
+  # This belongs in an operator runbook, not behind a rake flag.
   desc "Remove a load-test cohort: rake load_test:teardown[lt-2026-08-21-ab]"
   task :teardown, [ :cohort_id ] => :environment do |_t, args|
-    cohort_id = args.fetch(:cohort_id)
+    cohort_id = args[:cohort_id]
     LoadTest.guard!(cohort_id)
     begin
       puts "removed #{LoadTest::Seeder.teardown!(cohort_id)} rows"
     rescue ArgumentError => e
       warn e.message
-      warn "If the cohort's game was already removed by hand, status cannot name"
-      warn "the cohort and only `load_test:teardown[]` (empty id) will sweep the"
-      warn "leftover accounts. Check `load_test:status` first."
+      warn "Check `load_test:status` to see what cohort id (if any) is actually present."
       raise
     end
     puts "status: #{LoadTest::Seeder.status.inspect}"

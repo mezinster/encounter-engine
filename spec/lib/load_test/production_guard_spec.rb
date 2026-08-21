@@ -32,4 +32,18 @@ describe "LoadTest.guard!" do
 
     expect { LoadTest.guard!("lt-a", :environment => "production") }.not_to raise_error
   end
+
+  it "refuses a nil cohort id in production even when nothing is confirmed" do
+    ENV.delete("LOAD_TEST_CONFIRM")
+
+    expect { LoadTest.guard!(nil, :environment => "production") }
+      .to raise_error(LoadTest::Refused)
+  end
+
+  it "refuses an empty cohort id that matches an empty confirmation" do
+    ENV["LOAD_TEST_CONFIRM"] = ""
+
+    expect { LoadTest.guard!("", :environment => "production") }
+      .to raise_error(LoadTest::Refused)
+  end
 end

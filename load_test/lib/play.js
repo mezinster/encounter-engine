@@ -35,7 +35,17 @@ export function playOnce(base, token) {
     authenticity_token: token,
   });
   check(res, {
-    'answer accepted by the app': (r) => r.status !== 422 && r.status < 500,
+    // Status alone isn't enough: a redirect (e.g. a session silently lost)
+    // is neither 422 nor >=500, so a status-only check would report a
+    // dropped POST as "accepted". Assert on body content too, the same
+    // playbar-form marker the GET check uses above -- the response after
+    // an answer is the play screen either way (next level, or the same one
+    // again on a wrong guess). Known false negative: a correct answer that
+    // finishes the WHOLE game renders the finish screen instead, which also
+    // lacks this marker -- see README's note on this check for the other
+    // known false negative (a paused game).
+    'answer accepted by the app': (r) =>
+      r.status !== 422 && r.status < 500 && r.body.includes('playbar-form'),
   });
 
   sleep(randomBetween(5, 20));

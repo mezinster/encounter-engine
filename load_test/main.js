@@ -4,31 +4,43 @@ import { login } from './lib/auth.js';
 import { playOnce } from './lib/play.js';
 
 const PHASE = __ENV.PHASE || 'ramp';
-const RATE  = Number(__ENV.RATE || 20);
+const TEAMS = Number(__ENV.TEAMS || 60);
 
+// ramping-vus, NOT ramping-arrival-rate. One VU is one team.
+//
+// Teams are a closed population: a fixed number exist (see the seeded manifest),
+// and if the app slows down a team WAITS -- it does not spawn a second team to
+// compensate. ramping-arrival-rate models the opposite: an OPEN population where
+// `target` is iterations STARTED per second, a different quantity from "concurrent
+// teams" by a factor of the iteration duration -- which play.js's own think times
+// (20-90s + 5-20s) make ~67.5s on average. Read as an arrival rate, the "10 -> 120"
+// plateaus below (which the design doc labels team counts) would ask for 675-8100
+// concurrent VUs and generate up to 240 req/s against a one-vCPU host, instead of
+// the ~3.6 req/s that 120 real teams, each idling most of the time, actually
+// produce. With ramping-arrival-rate and this project's maxVUs, the pool would
+// starve before the FIRST plateau (10/s needs 675 VUs; maxVUs was 400), so the
+// run would report k6's own VU exhaustion as "the ceiling" -- the opposite of
+// this project's purpose. See task-9-fix-report.md for the measured numbers.
+//
+// Each plateau pairs a short ramp so the target is actually reached, then holds
+// it for the full 4m so the measurement is a steady-state read, not a transient.
 const RAMP = {
-  executor: 'ramping-arrival-rate',
-  startRate: 0,
-  timeUnit: '1s',
-  preAllocatedVUs: 200,
-  maxVUs: 400,
+  executor: 'ramping-vus',
+  startVUs: 0,
   stages: [
-    { target: 10,  duration: '4m' },
-    { target: 20,  duration: '4m' },
-    { target: 40,  duration: '4m' },
-    { target: 80,  duration: '4m' },
-    { target: 120, duration: '4m' },
+    { target: 10,  duration: '30s' }, { target: 10,  duration: '4m' },
+    { target: 20,  duration: '30s' }, { target: 20,  duration: '4m' },
+    { target: 40,  duration: '30s' }, { target: 40,  duration: '4m' },
+    { target: 80,  duration: '30s' }, { target: 80,  duration: '4m' },
+    { target: 120, duration: '30s' }, { target: 120, duration: '4m' },
   ],
   exec: 'session',
 };
 
 const HOLD = {
-  executor: 'constant-arrival-rate',
-  rate: RATE,
-  timeUnit: '1m',
+  executor: 'constant-vus',
+  vus: TEAMS,          // ~70% of the ramp's last clean plateau
   duration: '40m',
-  preAllocatedVUs: 200,
-  maxVUs: 400,
   exec: 'session',
 };
 

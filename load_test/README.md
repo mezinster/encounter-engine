@@ -10,7 +10,7 @@ Phase 2, the k6 side that reads it and hits the app's real routes.
 | `lib/manifest.js` | Loads the manifest JSON once per run (via `SharedArray`, not per-VU) and hands out one team per VU. |
 | `lib/auth.js` | Scrapes the CSRF token and logs a VU in through the real `/login` form. |
 | `lib/play.js` | One play cycle: GET the current level, think, POST an answer (mostly wrong, by design), think again. |
-| `main.js` | Entry point. Two phases, selected by `--env PHASE`: `ramp` (default) steps arrival rate up to find the ceiling and aborts on a threshold breach; `hold` runs a fixed rate to completion regardless. |
+| `main.js` | Entry point. Two phases, selected by `--env PHASE`: `ramp` (default) steps the number of **concurrent VUs** (one VU = one team) up through plateaus to find the ceiling and aborts on a threshold breach; `hold` holds a fixed VU count -- a fixed team count, not a request rate -- to completion regardless. |
 
 ## Running
 
@@ -20,7 +20,7 @@ bin/rails 'load_test:seed[1,5]'         # source_game_id, teams -- prints the ma
 bin/rails server &
 
 k6 run --env MANIFEST=/tmp/<cohort>.json --env PHASE=ramp --env BASE_URL=http://localhost:3000 load_test/main.js
-k6 run --env MANIFEST=/tmp/<cohort>.json --env PHASE=hold --env RATE=20 --env BASE_URL=http://localhost:3000 load_test/main.js
+k6 run --env MANIFEST=/tmp/<cohort>.json --env PHASE=hold --env TEAMS=60 --env BASE_URL=http://localhost:3000 load_test/main.js
 ```
 
 Both phases define their own `scenarios` in `options`, so **`--vus`/`--iterations`/`--duration`
@@ -31,9 +31,24 @@ export (`ramp`/`hold` both `exec: 'session'`), and refuses to start
 stages run (they're short near the start) or send the process a SIGINT after the desired time and
 let k6 print its partial summary and exit, rather than passing `--duration`.
 
+**A `target`/`TEAMS` number here is a team count, not a request rate.** Both scenarios are
+VU-based (`ramping-vus` / `constant-vus`), and one VU is one team, deliberately: teams are a
+*closed* population — a fixed number exist, and if the app slows down a team waits rather than
+spawning a second one to compensate. An *arrival-rate* executor (`ramping-arrival-rate` /
+`constant-arrival-rate`) models the opposite, *open* population, where `target`/`rate` means
+iterations **started per unit time** — a different quantity from "concurrent teams" by a factor of
+the iteration duration, which `lib/play.js`'s own think times (20-90s + 5-20s sleeps) make ~67.5s
+on average. An earlier version of this file used `ramping-arrival-rate` with the same "10 → 120"
+numbers the design doc calls team counts; read as an arrival rate they'd have asked for 675-8100
+concurrent VUs and generated up to 240 req/s against a one-vCPU host, instead of the ~3.6 req/s
+120 real, mostly-idling teams actually produce — and with the pool sized for the intended reading,
+it would have starved before the *first* plateau, silently reporting k6's own VU exhaustion as
+"the ceiling." See `main.js`'s comment on `RAMP` and `task-9-fix-report.md` for the numbers.
+
 `--env BASE_URL` overrides the manifest's own `base_url` (useful for pointing
-the same manifest at a different host without re-seeding). `--env RATE` sets the `hold` phase's
-constant arrival rate (iterations per minute; default 20) and is ignored by `ramp`. `--env
+the same manifest at a different host without re-seeding). `--env TEAMS` sets the `hold` phase's
+constant VU count (default 60 — pick something around 70% of the ramp's last clean plateau) and is
+ignored by `ramp`, whose plateaus are fixed in `main.js`. `--env
 WRONG_SHARE` (default 0.85) is `lib/play.js`'s share of deliberately-wrong answers — raise it
 towards 1 for a smoke test you don't want to accidentally finish the seeded game.
 
@@ -129,3 +144,24 @@ iterations rather than a clean stop. **Restore the real threshold afterward** �
 committed test, it's a manual check to re-run whenever the threshold values or `abortOnFail`
 wiring change. `hold` deliberately has no brake of its own: its whole purpose is to keep running
 past the point where the VM's CPU credits run out, which is a threshold breach by design.
+
+## `playbar-form` has two known false negatives, both legitimate states
+
+Both checks in `lib/play.js` look for the `playbar-form` marker (`app/views/game_passings/
+show_current_level.html.erb:220`), which repo-wide appears in exactly that one view and its own
+CSS rule — nothing else in the app renders it, so a positive match is trustworthy. A *negative*
+match is not automatically a bug, though: two states genuinely render `show_current_level` (or,
+for the POST check, a real "the app accepted this" response) without the marker.
+
+- **A paused game.** The form is wrapped `unless @game.paused?` in the view, so a game an author
+  has paused mid-run serves a 200 with no `playbar-form` while the play screen is otherwise showing
+  correctly. If a whole cohort's "on the level screen" check rate drops together, check whether the
+  game got paused before chasing a script or app bug.
+- **A correct answer that finishes the whole game.** `GamePassingsController#post_answer` renders
+  `render_finished_passing` instead of `show_current_level` when `check_answer!` completes the last
+  level — a real, successful POST, correctly reported by the `status !== 422 && status < 500` half
+  of the check, but the `playbar-form` half will be false for that one request. With the default
+  `WRONG_SHARE=0.85` this is rare (15% of answers are even candidates, and only on the game's last
+  level), but it means the "answer accepted" check can never reach a true 100% pass rate against a
+  cohort that's actually being played to completion — a small, expected amount of noise, not a
+  regression to chase.

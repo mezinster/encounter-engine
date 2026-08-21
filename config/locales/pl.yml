@@ -331,6 +331,7 @@ pl:
       invalid_cohort_id: "Identyfikator kohorty może zawierać tylko litery łacińskie, cyfry i myślniki."
       cohort_present: "Kohorta %{cohort} już istnieje."
       refused: "Działanie odrzucone przez zabezpieczenie produkcyjne."
+      invalid_clone: "Nie udało się utworzyć klonu gry: %{errors}"
   answers:
     must_have_at_least_one_variant: "Musi być co najmniej jeden wariant kodu"
     index:

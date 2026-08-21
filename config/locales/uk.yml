@@ -324,6 +324,7 @@ uk:
       invalid_cohort_id: "Ідентифікатор когорти повинен складатися з латинських літер, цифр і дефісів."
       cohort_present: "Когорта %{cohort} вже існує."
       refused: "Дію відхилено перевіркою безпеки production."
+      invalid_clone: "Не вдалося створити клон гри: %{errors}"
   answers:
     must_have_at_least_one_variant: "Має бути хоча б один варіант коду"
     index:

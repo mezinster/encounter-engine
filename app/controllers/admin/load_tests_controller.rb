@@ -69,6 +69,18 @@ class Admin::LoadTestsController < ApplicationController
                :alert => t("admin.load_test.cohort_present", :cohort => cohort_id)
   rescue LoadTest::Refused
     redirect_to admin_load_test_path, :alert => t("admin.load_test.refused")
+  # The clone (or one of the levels under it) failed a model validation --
+  # e.g. GameCloner producing a Game whose available_locales declares a
+  # language it has no translations for. seed! rolls that back inside its own
+  # transaction (Game.transaction in GameCloner#call), so nothing is left
+  # half-created; the operator just needs to see WHY, which e.record.errors
+  # carries and a bare 500 page would not. This is a console whose whole job
+  # is to be safer than the command line, so a bad clone has to read back as
+  # an alert with the real validation messages, not Rails' default error page.
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to admin_load_test_path,
+               :alert => t("admin.load_test.invalid_clone",
+                           :errors => e.record.errors.full_messages.join("; "))
   end
 
   def teardown

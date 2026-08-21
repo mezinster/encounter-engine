@@ -15,8 +15,12 @@ module LoadTest
     # cloned level referencing a file renders that reference broken, which is
     # accepted rather than fixed, because copying blobs to a host with ~1.1 GB
     # spare buys marginal page weight on a CPU-bound test.
+    #
+    # available_locales and access_mode are deliberately absent too, even
+    # though the source game carries values for both -- #call below sets
+    # both explicitly instead of copying them. See the comments there.
     GAME_ATTRIBUTES = %w[
-      description primary_locale available_locales visibility access_mode
+      description primary_locale visibility
       points_enabled level_completion_points game_completion_points
       max_skips skip_points_fine skip_time_penalty
     ].freeze
@@ -35,6 +39,31 @@ module LoadTest
         clone = Game.new(@source.attributes.slice(*GAME_ATTRIBUTES))
         clone.name   = name
         clone.author = author
+        # available_locales is NOT copied from the source. copy_level below
+        # copies each level's own-language text but never touches
+        # content_translations, so a clone that declared the source's full
+        # available_locales would announce languages it has zero translated
+        # fields for -- Game's completeness validation
+        # (available_locales_are_known and friends, plus the
+        # missing_translations check behind them) then refuses to save it.
+        # That is exactly the production 422: "Игра объявляет языки, на
+        # которые переведено не всё". The load test drives one locale and
+        # never switches, so translations carry no measurement value here --
+        # copying them would be real work (content_translations rows per
+        # level/hint/question/option) for a case nothing exercises. Declaring
+        # only the clone's own primary_locale (already copied via
+        # GAME_ATTRIBUTES) keeps it complete by construction.
+        clone.available_locales = clone.primary_locale
+        # access_mode is likewise NOT copied. The design
+        # (docs/superpowers/specs/2026-08-21-load-testing-design.md, section
+        # 4.1) requires the seeded game be access_mode: "scheduled" --
+        # GamePassingsController only offers the play path it needs. A
+        # "pass_required" source (or any other mode) would clone a gated
+        # game that the load test's own teams cannot get past: every seeded
+        # team hits the no_access_pass branch instead of playing, which
+        # defeats the point of seeding them. Forced here rather than left to
+        # whatever the source happens to be.
+        clone.access_mode = "scheduled"
         # max_team_number lives on the run, not on GAME_ATTRIBUTES, but Game
         # itself validates it unconditionally (games.rb, `validates
         # :max_team_number, numericality: ...`, no `on:` and no `allow_nil`)

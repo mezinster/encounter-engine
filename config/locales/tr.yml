@@ -353,6 +353,7 @@ tr:
       invalid_cohort_id: "Kohort kimliği yalnızca Latin harfleri, rakamlar ve tire içerebilir."
       cohort_present: "«%{cohort}» kimlikli kohort zaten mevcut."
       refused: "İşlem production güvenlik denetimi tarafından reddedildi."
+      invalid_clone: "Oyun klonu oluşturulamadı: %{errors}"
   answers:
     must_have_at_least_one_variant: "En az bir kod seçeneği olmalıdır"
     index:

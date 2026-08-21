@@ -368,12 +368,43 @@ deliberately — its comment records that a passing is the record of a race
 somebody ran. Destroying the game therefore does **not** remove
 `game_passings`, and load-test rows would persist in production indefinitely.
 
-Teardown deletes in dependency order — `point_transactions`, `game_passings`,
-`test_admissions`, `game_entries`, `access_passes`, users, teams, then the game
-with its levels —
-and then **asserts every touched table is back to its pre-seed row count**,
-failing loudly if not. `load_test:status` exists so the clean state can be
-confirmed days later.
+Teardown deletes in dependency order — `logs`, `point_transactions`,
+`game_passings`, `game_entries`, `test_admissions`, `access_passes`,
+`invitations`, `team_join_requests`, `game_locale_preferences`, users, teams,
+then the game with its levels — and then **asserts every touched table is back
+to its pre-seed row count**, failing loudly if not. `load_test:status` exists so
+the clean state can be confirmed days later.
+
+**`logs` is the entry this design got wrong first, and it is the largest table a
+run writes.** `Game has_many :logs` (`app/models/game.rb:62`) carries no
+`dependent:` option — the identical trap described just above for
+`:game_passings`, which is declared two lines further down the same file — and
+`GamePassingsController#save_log` writes a row on *every* answer POST, which is
+the entire per-VU loop. A 120-team, 40-minute run would therefore have left on
+the order of ten thousand orphaned rows in production while teardown reported
+success. The omission was found by probing a scratch database, not by reading
+the list again.
+
+**A second class of survivor: `delete_all` runs no callbacks.** `User` declares
+`invitations`, `team_join_requests` and `game_locale_preferences` as
+`dependent: :destroy` (`app/models/user.rb:23-25`), and `Team` declares the
+first two (`app/models/team.rb:21-22`). Deleting rows in bulk skips every one.
+The play screen's content-language switcher is what writes
+`game_locale_preferences`, and `user.rb:17-21` records that an orphaned
+`team_join_request` 500s an unrelated captain's team room — so these are deleted
+explicitly rather than left to a callback that will not run.
+
+**Teardown validates the cohort id it is given** against the cohort actually
+present, and refuses on a mismatch. Scoping deletion by e-mail domain alone means
+`teardown!("yesterdays-cohort")` deletes *today's* and reports success — and the
+production guard cannot catch that, because it compares the operator's typed
+confirmation against the operator's typed argument, never against reality.
+
+**A tracked table that is empty on both sides proves nothing.** The row-count
+example must create a row in every table it tracks — `point_transactions` above
+all, since the real run writes to that ledger on every correct answer — or the
+corresponding deletion line is unverified and can be removed without turning the
+suite red.
 
 ## 6. Verification
 

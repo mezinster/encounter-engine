@@ -901,6 +901,19 @@ describe "the load-test console", type: :request do
     }.to change(Team, :count).by(2)
   end
 
+  # The manifest holds a live password per seeded captain and measures ~20 KB at
+  # 120 teams, against a 4096-byte cookie. Putting it in the session would both
+  # overflow and ship production credentials to the browser on every request.
+  it "keeps the manifest itself out of the session, storing only a path" do
+    sign_in(superadmin)
+
+    post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
+
+    expect(session[:load_test_manifest]).to be_nil
+    expect(session[:load_test_manifest_path]).to be_present
+    expect(session[:load_test_manifest_path]).not_to include("@loadtest.invalid")
+  end
+
   it "offers the manifest as a download after seeding" do
     sign_in(superadmin)
     post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
@@ -1004,7 +1017,9 @@ class Admin::LoadTestsController < ApplicationController
 
     LoadTest.guard!(cohort_id)
     removed = LoadTest::Seeder.teardown!(cohort_id)
-    session.delete(:load_test_manifest)
+    # The credentials outlive the accounts otherwise.
+    path = session.delete(:load_test_manifest_path)
+    File.unlink(path) if path.present? && File.exist?(path)
 
     record_admin_action("load_test_teardown", nil,
                         "cohort=#{cohort_id}, rows=#{removed}")
@@ -1014,11 +1029,13 @@ class Admin::LoadTestsController < ApplicationController
   end
 
   def manifest
-    stored = session[:load_test_manifest]
-    return redirect_to(admin_load_test_path, :alert => t("admin.load_test.no_manifest")) if stored.blank?
+    path = session[:load_test_manifest_path]
+    if path.blank? || !File.exist?(path)
+      return redirect_to(admin_load_test_path, :alert => t("admin.load_test.no_manifest"))
+    end
 
-    send_data stored, :filename => "load-test-manifest.json",
-                      :type => "application/json", :disposition => "attachment"
+    send_data File.read(path), :filename => "load-test-manifest.json",
+                               :type => "application/json", :disposition => "attachment"
   end
 
   private
@@ -1031,10 +1048,29 @@ class Admin::LoadTestsController < ApplicationController
     redirect_to admin_load_test_path, :alert => t("admin.load_test.not_confirmed")
   end
 
-  # The session, not the filesystem: this carries live credentials, and the
-  # container's writable layer is not somewhere they should outlive a deploy.
+  # The PATH in the session, never the manifest itself -- and this is not a
+  # preference, it is the only thing that works.
+  #
+  # This app uses Rails' default COOKIE session store (nothing in config/ sets
+  # another), so anything put in the session is serialised into a 4096-byte
+  # cookie. A 120-team manifest measures 20,365 bytes: the seed would commit to
+  # the database and then raise ActionDispatch::Cookies::CookieOverflow on the
+  # redirect, leaving a live cohort in production and the operator holding
+  # nothing -- the same stranding failure as the EEXIST case in the rake task.
+  #
+  # It is also the wrong place on its own terms: the manifest holds a live
+  # password for every seeded captain, and a cookie is sent to the browser and
+  # back on every subsequent request.
+  #
+  # LoadTest::ManifestFile.write! already creates the file atomically at 0600
+  # and refuses any path under Rails.root, so the console reuses it rather than
+  # growing a second copy of that logic. The file lives in the container's
+  # temporary directory and does not survive a deploy, which is the right
+  # lifetime for credentials: if it is lost, tear the cohort down and re-seed.
   def store_manifest(manifest)
-    session[:load_test_manifest] = JSON.pretty_generate(manifest)
+    session[:load_test_manifest_path] =
+      LoadTest::ManifestFile.write!(manifest,
+                                    :path => File.join(Dir.tmpdir, "#{manifest[:cohort_id]}.json"))
   end
 end
 ```

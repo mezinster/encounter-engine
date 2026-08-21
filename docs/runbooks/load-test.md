@@ -490,3 +490,20 @@ the app got faster or held steady; it may mean the ledger write is still not bei
 7. Verify closed: az network nsg rule list --resource-group encounter-loadgen --nsg-name loadgenNSG
 8. Teardown:     console teardown -> delete your local manifest copy -> load_test:status nil -> provision.sh destroy -> kamal app boot if needed
 ```
+
+## The performance probe
+
+This runbook is the **manual** procedure — for exploratory work, where you want
+to watch, change your mind, and try something else.
+
+When the point is to produce a result that can be compared to another result
+later, use the probe instead: `.github/workflows/perf-probe.yml`, dispatched with
+a source game, a team count, a scenario and a generator. It seeds, measures its
+own network baseline, runs k6, commits a record to `docs/perf/results/`, and
+tears down the cohort and the generator under `always()`.
+
+It **never resizes the host** — it records the shape it finds. Comparing host
+shapes means accumulating runs across resizes made for other reasons, which
+`vm-scale.yml` proposes and gates separately.
+
+See `docs/perf/README.md` for what a record holds and why.

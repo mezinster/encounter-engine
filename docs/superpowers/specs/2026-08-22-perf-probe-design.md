@@ -151,7 +151,8 @@ beside the code that produced it.
 ```json
 { "at": "2026-08-21T20:15Z", "note": "first stampede",
   "host":      { "size": "Standard_B1ms", "vcpu": 1, "ram_gib": 2,
-                 "credits_pct_start": 96 },
+                 "cpu_credits_remaining_start": 287.9,
+                 "cpu_credits_max_7d": 288.0 },
   "generator": { "kind": "vm", "region": "westeurope",
                  "baseline_warm_ms": 13.5 },
   "game":      { "id": 4, "levels": 71 },
@@ -166,7 +167,18 @@ beside the code that produced it.
 run**, because none of it can be reconstructed afterwards. Two fields earn
 particular mention:
 
-* **`credits_pct_start`** looks like noise and is not. This is a burstable VM:
+* **The two credit fields, and why there are two.** "CPU Credits Remaining" is
+  an absolute **count**, not a percentage — a `Standard_B1ms` banks up to 288,
+  so a reading of 287.9 is a full tank rather than an alarming number. Different
+  sizes have different ceilings, so a bare count cannot be compared across
+  shapes; `cpu_credits_max_7d` is the denominator that lets a reader normalise.
+  `ops/vmscale/policy.rb` takes the same approach under the same name.
+
+  *(This design originally called the field `credits_pct_start`, which was
+  simply wrong — the name asserted a percentage the metric does not provide, and
+  only running it revealed that.)*
+
+  The reason to record it at all: this is a burstable VM,
   the same load against a full credit bank and a drained one gives different
   answers, and a k6 summary knows nothing about it. Without this field, two
   runs a month apart could differ by host shape, by game, by code — or purely
@@ -181,7 +193,7 @@ field that is sometimes a fact and sometimes a guess is worse than one that is
 honestly absent. `baseline_warm_ms` is the operative value in both cases — it is
 measured, not asserted, and it is what comparisons actually use.
 
-**`credits_pct_start` assumes a burstable host.** All three shapes on
+**`cpu_credits_remaining_start` assumes a burstable host.** All three shapes on
 `ops/vmscale/ladder.json` are B-series, so it is always available today. If the
 ladder ever gains a non-burstable size the field becomes `null` there, and its
 absence is itself information: a shape with no credit bank cannot exhibit the

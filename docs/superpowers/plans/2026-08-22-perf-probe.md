@@ -148,7 +148,7 @@ describe Perf::BuildRecord do
     described_class.call({
       :summary   => summary,
       :host      => { "size" => "Standard_B1ms", "vcpu" => 1, "ram_gib" => 2,
-                      "credits_pct_start" => 96 },
+                      "cpu_credits_remaining_start" => 287.9 },
       :generator => { "kind" => "vm", "region" => "westeurope",
                       "baseline_warm_ms" => 13.5 },
       :game      => { "id" => 4, "levels" => 71 },
@@ -161,7 +161,7 @@ describe Perf::BuildRecord do
   it "carries every parameter that could explain a difference" do
     r = call
     expect(r["host"]["size"]).to eq("Standard_B1ms")
-    expect(r["host"]["credits_pct_start"]).to eq(96)
+    expect(r["host"]["cpu_credits_remaining_start"]).to eq(287.9)
     expect(r["generator"]["baseline_warm_ms"]).to eq(13.5)
     expect(r["game"]).to eq("id" => 4, "levels" => 71)
     expect(r["run"]).to include("scenario" => "stampede", "teams" => 120)
@@ -325,7 +325,7 @@ git commit -m "Turn a k6 summary and its surrounding facts into a durable record
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `baseline.sh <url>` printing `{"baseline_warm_ms": 13.5}`; `host_facts.sh` printing `{"size":"Standard_B1ms","vcpu":1,"ram_gib":2,"credits_pct_start":96}`.
+- Produces: `baseline.sh <url>` printing `{"baseline_warm_ms": 13.5}`; `host_facts.sh` printing `{"size":"Standard_B1ms","vcpu":1,"ram_gib":2,"cpu_credits_remaining_start":287.9,"cpu_credits_max_7d":288.0}`.
 
 - [ ] **Step 1: Write `baseline.sh`**
 
@@ -368,40 +368,67 @@ printf '%s\n' "${samples[@]}" | sort -n | awk '
 
 ```bash
 #!/usr/bin/env bash
-# The host shape and its CPU credit balance, at the moment of the run.
+# The host's shape and its CPU credit standing, at the moment of the run.
 #
-# credits_pct_start looks like noise and is not: this is a burstable VM, and the
+# The credit fields look like noise and are not. This is a burstable VM: the
 # same load against a full credit bank and a drained one gives different
-# answers. A k6 summary knows nothing about it, so without this field two runs a
+# answers, and a k6 summary knows nothing about it. Without them, two runs a
 # month apart could differ by host shape, by game, by code -- or purely by how
 # idle the machine happened to be beforehand.
 #
-# ops/vmscale/gather.sh already reads both from Azure for the scaling policy;
-# this is the same two queries, kept separate because gather.sh returns a much
-# larger document shaped for policy.rb rather than for a record.
+# Read BEFORE load is applied. Afterwards it would record the balance the run
+# itself produced, which is a different fact wearing the same name.
+#
+# TWO credit fields, not one, and the second is what makes the first mean
+# anything. "CPU Credits Remaining" is an absolute COUNT, not a percentage --
+# a Standard_B1ms banks up to 288, so a reading of 287.7 is a nearly full tank
+# rather than an alarming number. Different sizes have different ceilings, so a
+# bare count cannot be compared across shapes; the observed 7-day maximum is the
+# denominator that lets a reader normalise. ops/vmscale/policy.rb takes the same
+# approach, calling it credits_max_7d.
+#
+# ops/vmscale/gather.sh already reads these for the scaling policy. This is the
+# same queries kept separate, because that script returns a much larger document
+# shaped for policy.rb rather than for a record.
 set -euo pipefail
 RG="${RG:-MEZINEU}"
 VM="${VM:-web}"
 
 ID="$(az vm show -g "$RG" -n "$VM" --query id -o tsv)"
 SIZE="$(az vm show -g "$RG" -n "$VM" --query hardwareProfile.vmSize -o tsv)"
+LOC="$(az vm show -g "$RG" -n "$VM" --query location -o tsv)"
 
-read -r VCPU RAM_MB <<<"$(az vm list-sizes -l "$(az vm show -g "$RG" -n "$VM" --query location -o tsv)" \
-  --query "[?name=='${SIZE}'].[numberOfCores,memoryInMb]" -o tsv)"
+# list-skus, not the deprecated list-sizes, which warns on every invocation.
+CAPS="$(az vm list-skus -l "$LOC" --size "$SIZE" --resource-type virtualMachines \
+  --query "[0].capabilities[?name=='vCPUs' || name=='MemoryGB'].[name,value]" -o tsv)"
+VCPU="$(awk '$1=="vCPUs"    {print $2}' <<<"$CAPS")"
+RAM="$(awk  '$1=="MemoryGB" {print $2}' <<<"$CAPS")"
 
-CREDITS="$(az monitor metrics list --resource "$ID" \
-  --metric "CPU Credits Remaining" --aggregation Minimum \
-  --interval PT5M --offset 15m \
-  --query "value[0].timeseries[0].data[?minimum!=null] | [-1].minimum" -o tsv 2>/dev/null || echo "")"
+credit_metric() {
+  az monitor metrics list --resource "$ID" \
+    --metric "CPU Credits Remaining" --aggregation "$1" \
+    --interval "$2" --offset "$3" \
+    --query "value[0].timeseries[0].data[?$4!=null] | $5" -o tsv 2>/dev/null || true
+}
 
-jq -n --arg size "$SIZE" --argjson vcpu "${VCPU:-null}" \
-      --argjson ram "$(awk -v m="${RAM_MB:-0}" 'BEGIN{printf "%d", m/1024}')" \
-      --arg credits "${CREDITS:-}" \
-  '{ size: $size, vcpu: $vcpu, ram_gib: $ram,
-     credits_pct_start: (if $credits == "" then null else ($credits | tonumber) end) }'
+# Absent data is never read as reassuring: a missing reading is UNKNOWN, and
+# null says so. Defaulting to 0 would mean "credits exhausted", the opposite
+# conclusion, and would make an unmeasured run look like a throttled one.
+NOW="$(credit_metric Minimum PT5M 30m minimum '[-1].minimum')"
+MAX7D="$(credit_metric Maximum PT1H 7d maximum 'max_by(@, &maximum).maximum')"
+
+jq -n \
+  --arg size "$SIZE" --arg vcpu "${VCPU:-}" --arg ram "${RAM:-}" \
+  --arg now "${NOW:-}" --arg max7d "${MAX7D:-}" \
+  'def num($s): if $s == "" or $s == "None" then null else ($s | tonumber) end;
+   { size: $size,
+     vcpu:    num($vcpu),
+     ram_gib: num($ram),
+     cpu_credits_remaining_start: num($now),
+     cpu_credits_max_7d:          num($max7d) }'
 ```
 
-**`credits_pct_start` is `null` when Azure has no datapoint**, not zero. The spec is explicit that absent data must never read as reassuring — a missing credit reading is unknown, and zero would mean "exhausted", which is the opposite conclusion.
+**`cpu_credits_remaining_start` is `null` when Azure has no datapoint**, not zero. The spec is explicit that absent data must never read as reassuring — a missing credit reading is unknown, and zero would mean "exhausted", which is the opposite conclusion.
 
 - [ ] **Step 3: Verify both against reality**
 
@@ -410,7 +437,7 @@ jq -n --arg size "$SIZE" --argjson vcpu "${VCPU:-null}" \
 RG=MEZINEU VM=web ./ops/perf/host_facts.sh
 ```
 
-Expected: a JSON object from each, `size` reading `Standard_B1ms`, `vcpu` 1, `ram_gib` 2, and a plausible `credits_pct_start`. Both are read-only — `baseline.sh` issues ten trivial GETs and `host_facts.sh` only queries Azure. Paste both outputs into your report.
+Expected: a JSON object from each, `size` reading `Standard_B1ms`, `vcpu` 1, `ram_gib` 2, and a plausible `cpu_credits_remaining_start`. Both are read-only — `baseline.sh` issues ten trivial GETs and `host_facts.sh` only queries Azure. Paste both outputs into your report.
 
 Also confirm `baseline.sh` exits non-zero against an unreachable URL: `./ops/perf/baseline.sh http://127.0.0.1:9/up; echo "exit=$?"` must print a non-zero exit and an error on stderr.
 
@@ -503,7 +530,7 @@ live password for every seeded captain and every answer code in the source game.
 ```
 
 This runs after the Azure OIDC login and needs no SSH — it queries Azure, not
-the host. It must come **before** load is applied: `credits_pct_start` means the
+the host. It must come **before** load is applied: `cpu_credits_remaining_start` means the
 balance the run started with, and reading it afterwards would record the balance
 the run itself produced.
 
@@ -616,7 +643,7 @@ git commit -m "Add the performance probe workflow"
 
 - [ ] **Step 1: Explain the record directory**
 
-`docs/perf/README.md`: what a record is, what each field means, why `credits_pct_start` and `baseline_warm_ms` exist (a burstable host and a selectable generator), and the worked example — 120 teams at p95 196ms and p95 5860ms on the same box — so the next reader understands immediately why comparing bare numbers is unsafe.
+`docs/perf/README.md`: what a record is, what each field means, why `cpu_credits_remaining_start` and `baseline_warm_ms` exist (a burstable host and a selectable generator), and the worked example — 120 teams at p95 196ms and p95 5860ms on the same box — so the next reader understands immediately why comparing bare numbers is unsafe.
 
 - [ ] **Step 2: Point the runbook at the probe**
 

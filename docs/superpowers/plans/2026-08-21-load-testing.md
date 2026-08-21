@@ -1692,13 +1692,20 @@ git commit -m "Ramp and hold phases for the k6 play loop"
 - [ ] **Step 1: Write cloud-init**
 
 ```yaml
-# load_test/cloud-init.yml
+#cloud-config
+# ^ MUST be the literal first line. cloud-init's type_from_starts_with() strips
+# whitespace only -- it does NOT skip leading comment lines -- so a header even
+# one comment line down makes the file classify as plain text, find no handler,
+# and be silently ignored. The VM boots, SSH works, and only `k6 version` fails.
+# Verify with:
+#   python3 -c "from cloudinit.handlers import type_from_starts_with; \
+#               print(type_from_starts_with(open('load_test/cloud-init.yml').read()))"
+# It must print text/cloud-config, not None.
 #
 # cloud-init rather than an Ansible play, despite ansible/ being this repo's
 # convention for host config: ansible/inventory.ini is pinned to the `mezin`
 # ssh alias because WSL2 reaches that host through a ProxyCommand, so an
 # ephemeral host would mean editing the inventory for every run.
-#cloud-config
 package_update: true
 runcmd:
   - curl -fsSL https://github.com/grafana/k6/releases/download/v0.52.0/k6-v0.52.0-linux-amd64.tar.gz -o /tmp/k6.tgz

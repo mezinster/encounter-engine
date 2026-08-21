@@ -715,6 +715,17 @@ module LoadTest
 
   def self.guard!(cohort_id, environment: Rails.env)
     return unless environment.to_s == "production"
+
+    # A blank id can never be confirmed, and this is checked BEFORE the
+    # comparison rather than after. ENV["LOAD_TEST_CONFIRM"] is nil when unset
+    # and the rake argument is nil when omitted, so `nil == nil` would read as
+    # "confirmed" and authorise a nil-scoped sweep -- which matches the entire
+    # cohort by e-mail domain -- against production with no confirmation at all.
+    # An empty string pairs the same way.
+    if cohort_id.to_s.empty?
+      raise Refused, "a blank cohort id cannot be confirmed against production"
+    end
+
     return if ENV["LOAD_TEST_CONFIRM"] == cohort_id
 
     raise Refused, "set LOAD_TEST_CONFIRM=#{cohort_id} to confirm this against production"
@@ -759,24 +770,30 @@ namespace :load_test do
   end
 
   # teardown! validates the id against the cohort actually present and refuses
-  # on a mismatch, so a stale id cannot destroy a live cohort -- the guard below
-  # only compares two copies of what the operator typed, and cannot catch that
-  # on its own. The one escape hatch: if the cohort's GAME is already gone but
-  # its users are not, status reports no cohort id and only `teardown!(nil)`
-  # sweeps them. That is a real state (a half-finished manual cleanup), so the
-  # task documents it rather than leaving an operator to conclude the rows are
-  # unreachable.
+  # on a mismatch, so a stale id cannot destroy a live cohort -- the guard only
+  # compares two copies of what the operator typed, and cannot catch that on its
+  # own.
+  #
+  # args[:cohort_id], not args.fetch: an omitted id must reach the guard as nil
+  # and be refused there, rather than raising KeyError before any check runs.
+  #
+  # A cohort whose GAME was removed by hand cannot be named by status, so this
+  # task cannot confirm it and will refuse. Sweeping those leftovers is a
+  # deliberate out-of-band action -- `bin/rails runner 'puts
+  # LoadTest::Seeder.teardown!(nil)'` -- which bypasses the guard because the
+  # operator chose to step outside it. That belongs in the runbook, not behind a
+  # rake flag: a guarded task must not offer an unguarded path.
   desc "Remove a load-test cohort: rake load_test:teardown[lt-2026-08-21-ab]"
   task :teardown, [ :cohort_id ] => :environment do |_t, args|
-    cohort_id = args.fetch(:cohort_id)
+    cohort_id = args[:cohort_id]
     LoadTest.guard!(cohort_id)
     begin
       puts "removed #{LoadTest::Seeder.teardown!(cohort_id)} rows"
     rescue ArgumentError => e
       warn e.message
-      warn "If the cohort's game was already removed by hand, status cannot name"
-      warn "the cohort and only `load_test:teardown[]` (empty id) will sweep the"
-      warn "leftover accounts. Check `load_test:status` first."
+      warn "Check `load_test:status` first. If the cohort's game was removed by"
+      warn "hand, status cannot name it and this task cannot confirm it; see"
+      warn "docs/runbooks/load-test.md for the out-of-band sweep."
       raise
     end
     puts "status: #{LoadTest::Seeder.status.inspect}"

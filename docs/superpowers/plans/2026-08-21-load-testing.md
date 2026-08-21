@@ -326,7 +326,12 @@ module LoadTest
 
     def initialize(source_game:, teams:, cohort_id:, base_url: nil)
       @source_game = source_game
-      @teams       = Integer(teams, 10)
+      # Integer(teams.to_s, 10), not Integer(teams, 10): the latter raises
+      # "base specified for non string value" when handed an Integer, which
+      # every spec does. Dropping the base instead is also wrong -- Integer("08")
+      # raises -- and both real callers pass a string (rake args always are;
+      # params[:teams] is one too), so a zero-padded count is reachable.
+      @teams       = Integer(teams.to_s, 10)
       @cohort_id   = cohort_id
       @base_url    = base_url || ENV.fetch("LOAD_TEST_BASE_URL", "http://localhost:3000")
     end

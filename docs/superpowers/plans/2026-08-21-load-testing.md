@@ -505,6 +505,16 @@ Append to `spec/lib/load_test/seeder_spec.rb`:
       expect(described_class.status[:cohort_id]).to be_nil
     end
 
+    # The guard for the parsing bug this method was originally written with.
+    # A date-shaped id is what the rake task actually generates; the specs'
+    # "lt-test-a" is the one shape under which a nickname regex looks correct.
+    it "reports a date-shaped cohort id intact, as the rake task generates it" do
+      described_class.new(:source_game => source, :teams => 1,
+                          :cohort_id => "lt-2026-08-21-ab").seed!
+
+      expect(described_class.status[:cohort_id]).to eq("lt-2026-08-21-ab")
+    end
+
     it "reports the cohort while it is present" do
       described_class.new(:source_game => source, :teams => 2,
                           :cohort_id => "lt-test-a").seed!
@@ -522,7 +532,20 @@ Expected: FAIL — `undefined method 'teardown!'`.
 
 - [ ] **Step 3: Implement teardown and status**
 
-Add to `LoadTest::Seeder`, inside the class:
+First extract the game-name prefix into a constant so `status` and `game_name`
+cannot drift apart. Beside the existing constants in `LoadTest::Seeder`:
+
+```ruby
+    # Shared by game_name (which writes it) and status (which reads the cohort
+    # id back off it). A literal in two places is one edit away from silently
+    # breaking status.
+    GAME_NAME_PREFIX = "НЕ ИГРА — нагрузочный тест ".freeze
+```
+
+and change `game_name` to `"#{GAME_NAME_PREFIX}#{@cohort_id}"`. Its output must
+be byte-identical to before — the existing Task 2 specs will tell you if it is not.
+
+Then add to `LoadTest::Seeder`, inside the class:
 
 ```ruby
     class << self
@@ -564,10 +587,17 @@ Add to `LoadTest::Seeder`, inside the class:
         removed
       end
 
+      # The cohort id comes from the seeded GAME's name, never from a nickname.
+      # Recovering it from a nickname needs a pattern, and every pattern is
+      # wrong for some id: /\A(lt-[^-]+-[^-]+)-/ reads the specs' "lt-test-a"
+      # correctly and turns the rake task's own "lt-2026-08-21-ab" into
+      # "lt-2026-08", because the date's hyphens eat the pattern. A spec using
+      # only the short form stays green while the console misreports. The game
+      # name is a fixed prefix followed by the id verbatim -- nothing to parse.
       def status
         users = User.where("email LIKE ?", "%@#{EMAIL_DOMAIN}")
-        first = users.order(:id).first
-        { :cohort_id => first && first.nickname[/\A(lt-[^-]+-[^-]+)-/, 1],
+        game  = Game.where("name LIKE ?", "#{GAME_NAME_PREFIX}%").order(:id).first
+        { :cohort_id => game && game.name.delete_prefix(GAME_NAME_PREFIX),
           :users     => users.count }
       end
     end
@@ -576,7 +606,7 @@ Add to `LoadTest::Seeder`, inside the class:
 - [ ] **Step 4: Run the whole seeder spec**
 
 Run: `bundle exec rspec spec/lib/load_test/seeder_spec.rb`
-Expected: PASS, 13 examples, 0 failures.
+Expected: PASS, 16 examples, 0 failures (11 from Task 2, 5 added here).
 
 If the row-count example fails, read which model differs — that is the point of the example. Do not relax it to `be >=`; add the missing deletion.
 

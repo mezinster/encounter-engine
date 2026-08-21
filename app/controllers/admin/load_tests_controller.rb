@@ -3,11 +3,6 @@
 # The console front door onto LoadTest::Seeder. It does not reimplement any of
 # it: a screen holding its own copy of the seeding logic would drift from the
 # rake task, and the two are used on the same night by the same person.
-#
-# Flash messages here are plain Russian string literals, NOT t() calls. Task 6
-# owns this screen's i18n and its seven locale files; no admin.load_test.* key
-# exists yet, and the test environment raises on a missing translation --
-# calling t() here would turn every example that reaches these lines red.
 class Admin::LoadTestsController < ApplicationController
   include SecurityFilters
   include AdminAudit
@@ -52,10 +47,10 @@ class Admin::LoadTestsController < ApplicationController
       # what was just created, rather than 500ing and leaving them with
       # nothing to go on.
       return redirect_to admin_load_test_path,
-                         :alert => "Когорта #{cohort_id} создана, но манифест не записан: файл уже существует."
+                         :alert => t("admin.load_test.manifest_exists", :cohort => cohort_id)
     end
 
-    redirect_to admin_load_test_path, :notice => "Когорта загружена"
+    redirect_to admin_load_test_path, :notice => t("admin.load_test.seeded")
   rescue LoadTest::Seeder::CohortPresent, LoadTest::Refused => e
     redirect_to admin_load_test_path, :alert => e.message
   end
@@ -88,7 +83,7 @@ class Admin::LoadTestsController < ApplicationController
       Rails.logger.warn("[load_test] could not remove manifest #{path}: #{e.class}")
     end
 
-    redirect_to admin_load_test_path, :notice => "Когорта удалена"
+    redirect_to admin_load_test_path, :notice => t("admin.load_test.torn_down")
   rescue LoadTest::Refused => e
     redirect_to admin_load_test_path, :alert => e.message
   end
@@ -96,7 +91,7 @@ class Admin::LoadTestsController < ApplicationController
   def manifest
     path = session[:load_test_manifest_path]
     if path.blank? || !File.exist?(path)
-      return redirect_to(admin_load_test_path, :alert => "Манифест недоступен")
+      return redirect_to(admin_load_test_path, :alert => t("admin.load_test.no_manifest"))
     end
 
     send_data File.read(path), :filename => "load-test-manifest.json",
@@ -125,12 +120,11 @@ class Admin::LoadTestsController < ApplicationController
   end
 
   def refuse
-    redirect_to admin_load_test_path, :alert => "Идентификатор когорты не подтверждён"
+    redirect_to admin_load_test_path, :alert => t("admin.load_test.not_confirmed")
   end
 
   def refuse_invalid
-    redirect_to admin_load_test_path,
-               :alert => "Идентификатор когорты должен состоять из латинских букв, цифр и дефисов"
+    redirect_to admin_load_test_path, :alert => t("admin.load_test.invalid_cohort_id")
   end
 
   # The PATH in the session, never the manifest itself -- and this is not a

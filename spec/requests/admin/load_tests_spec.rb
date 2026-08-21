@@ -179,4 +179,24 @@ describe "the load-test console", type: :request do
            :params => seed_params(:confirm => "../escape", :cohort => "../escape")
     }.not_to change(User, :count)
   end
+
+  # The literal Russian, NOT include(I18n.t(...)). Asserting against I18n.t
+  # passes even when the key is missing, because both sides resolve to the same
+  # "translation missing" string -- a vacuous assertion.
+  it "names the screen and warns that seeding writes real accounts" do
+    sign_in(superadmin)
+
+    get admin_load_test_path
+
+    expect(response.body).to include("Нагрузочное тестирование")
+    expect(response.body).to include("создаёт настоящие учётные записи")
+  end
+
+  it "reports that no cohort is present on a clean database" do
+    sign_in(superadmin)
+
+    get admin_load_test_path
+
+    expect(response.body).to include("Когорта не создана")
+  end
 end

@@ -1524,8 +1524,17 @@ export function login(base, team) {
   // Body content, NEVER status alone. k6 follows redirects, so a failed login
   // returns a cheerful 200 for the rest of the run and a status-only check
   // reports a flawless test against an app it never authenticated to.
+  //
+  // And it must be a POSITIVE assertion. This check was originally written as
+  // `!r.body.includes('name="password"')` -- "the response is not the login
+  // form" -- which is satisfied by infinitely many pages, including Rails'
+  // own 422 error page (there is no public/422.html here). The CSRF mutation
+  // in step 7 duly reported 100% passing checks against a run that got a 422
+  // on every request. `href="/logout"` is rendered only inside
+  // `<% if logged_in? %>` in app/views/layouts/_left_menu.html.erb, so it is
+  // true of an authenticated page and of nothing else.
   const ok = check(res, {
-    'logged in': (r) => !r.body.includes('name="password"'),
+    'logged in': (r) => r.body.includes('href="/logout"'),
   });
   if (!ok) fail(`login failed for ${team.email}`);
 
@@ -1573,6 +1582,11 @@ k6 run --env MANIFEST=/tmp/broken.json --vus 2 --iterations 2 load_test/main.js
 ```
 
 Expected: **FAILS** with `login failed`. If this passes, the check is vacuous and the whole harness is worthless — fix it before going further. This is the exact failure mode `CLAUDE.md` records twice (the countdown examples reporting pending for a fortnight; the HEIC check reporting success on a machine that could not decode a byte).
+
+**A negative assertion will pass this mutation and fail the next one.** Asserting
+"not the login form" is satisfied by any page that is not the login form,
+including an error page — which is precisely what step 7 produces. Assert
+something only an authenticated page has.
 
 - [ ] **Step 7: MUTATION TEST — break the CSRF token and confirm 422**
 

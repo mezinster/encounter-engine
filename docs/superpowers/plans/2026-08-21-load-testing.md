@@ -1449,14 +1449,24 @@ git push -u origin feature/load-testing
 
 - [ ] **Step 1: Install k6 locally**
 
+Install to a **user-writable** path — `/usr/local/bin` is not writable here and
+`sudo` would stall an unattended run:
+
 ```bash
+mkdir -p "$HOME/.local/bin"
 curl -fsSL https://github.com/grafana/k6/releases/download/v0.52.0/k6-v0.52.0-linux-amd64.tar.gz \
-  | tar xz --strip-components=1 -C /tmp k6-v0.52.0-linux-amd64/k6
-sudo install /tmp/k6 /usr/local/bin/k6
+  | tar xz --strip-components=1 -C "$HOME/.local/bin" k6-v0.52.0-linux-amd64/k6
+chmod +x "$HOME/.local/bin/k6"
+export PATH="$HOME/.local/bin:$PATH"
 k6 version
 ```
 
-Expected: a version string. If the release tag 404s, list current tags with `gh release list -R grafana/k6` and use the newest v0.5x.
+Expected: a version string. If the release tag 404s, list current tags with
+`gh release list -R grafana/k6` and use the newest v0.5x. Every later k6 command
+in this task needs `export PATH="$HOME/.local/bin:$PATH"` in its shell.
+
+The generator VM in Task 10 installs to `/usr/local/bin` via cloud-init, which
+runs as root there — that is a different machine and not a contradiction.
 
 - [ ] **Step 2: Write the manifest module**
 

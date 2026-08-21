@@ -180,16 +180,16 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **986 leaf
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **988 leaf
   keys** each (measured 2026-08-21): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
   live in `config/locales/{en,ru,uk,ka,tr,be,pl}.yml`. **Count the keys rather than trusting this
   number**; it was documented as 489 for some time after it was 587, as 725 for some time after it
-  was 764, as 782 for some time after it was 964, and as 964 for some time after it was 966 — this
-  entry has now been stale four times, in the file that warns about it. Recount rather than reason
-  about it:
+  was 764, as 782 for some time after it was 964, as 964 for some time after it was 966, and as 986
+  for some time after it was 988 — this entry has now been stale five times, in the file that warns
+  about it. Recount rather than reason about it:
 
 ```bash
 ruby -ryaml -e 'def leaves(h,p="") h.flat_map { |k,v| v.is_a?(Hash) ? leaves(v,"#{p}#{k}.") : ["#{p}#{k}"] } end

@@ -1,6 +1,6 @@
 // load_test/lib/play.js
 import http from 'k6/http';
-import { check, sleep } from 'k6';
+import { check, fail, sleep } from 'k6';
 import { manifest } from './manifest.js';
 
 const WRONG_SHARE = Number(__ENV.WRONG_SHARE || 0.85);
@@ -21,6 +21,9 @@ function randomBetween(a, b) {
 function pickCode(team) {
   if (Math.random() < WRONG_SHARE) return `wrong-${Math.floor(Math.random() * 1e9)}`;
   const codes = manifest().codes[team.level_id];
+  if (!codes || codes.length === 0) {
+    fail(`no codes for level ${team.level_id} — is this manifest older than the level_id field?`);
+  }
   return codes[Math.floor(Math.random() * codes.length)];
 }
 

@@ -389,7 +389,7 @@ bundle exec kamal app exec "bin/rails runner 'puts LoadTest::Seeder.teardown!(ni
 This matches (and removes) everything under the load-test e-mail domain
 regardless of the game row, which is why it bypasses the id-confirmation
 guard — the operator is choosing to step outside it, not being let through
-it by accident. Confirm afterward with `load_test:status` same as step 2
+it by accident. Confirm afterward with `load_test:status` same as step 3
 above.
 
 ---

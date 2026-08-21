@@ -1,10 +1,34 @@
 // load_test/main.js
+import { fail } from 'k6';
 import { manifest, teamFor } from './lib/manifest.js';
 import { login } from './lib/auth.js';
 import { playOnce } from './lib/play.js';
 
 const PHASE = __ENV.PHASE || 'ramp';
 const TEAMS = Number(__ENV.TEAMS || 60);
+
+// Team count per plateau, not a rate -- see the README. Defaulted higher than
+// the original 10/20/40/80/120: the 2026-08-21 production run sat under 10%
+// CPU at 120 teams (load average 0.20), so that ladder never got near a
+// ceiling. Override with --env LADDER for a different run.
+const LADDER = (__ENV.LADDER || '120,250,500,1000').split(',').map(Number);
+
+// teamFor(vu) assigns teams by `vu % teams.length`. If the ramp's top
+// plateau exceeds the seeded cohort, VUs wrap around and several concurrent
+// sessions land on the same team -- many simultaneous writers against one
+// GamePassing, which is not a model of anything and would silently produce a
+// meaningless ceiling. Fail loudly at startup instead of discovering this
+// from a garbled result. Only the ramp phase drives the ladder; `hold` uses
+// `TEAMS` and is unaffected.
+if (PHASE === 'ramp') {
+  const topPlateau = LADDER[LADDER.length - 1];
+  const seededTeams = manifest().teams.length;
+  if (topPlateau > seededTeams) {
+    fail(`LADDER's top plateau (${topPlateau}) exceeds the seeded cohort ` +
+      `(${seededTeams} teams). Seed at least ${topPlateau} teams before ` +
+      `running this ladder, or lower LADDER to match what's seeded.`);
+  }
+}
 
 // ramping-vus, NOT ramping-arrival-rate. One VU is one team.
 //
@@ -13,27 +37,23 @@ const TEAMS = Number(__ENV.TEAMS || 60);
 // compensate. ramping-arrival-rate models the opposite: an OPEN population where
 // `target` is iterations STARTED per second, a different quantity from "concurrent
 // teams" by a factor of the iteration duration -- which play.js's own think times
-// (20-90s + 5-20s) make ~67.5s on average. Read as an arrival rate, the "10 -> 120"
-// plateaus below (which the design doc labels team counts) would ask for 675-8100
-// concurrent VUs and generate up to 240 req/s against a one-vCPU host, instead of
-// the ~3.6 req/s that 120 real teams, each idling most of the time, actually
-// produce. With ramping-arrival-rate and this project's maxVUs, the pool would
-// starve before the FIRST plateau (10/s needs 675 VUs; maxVUs was 400), so the
-// run would report k6's own VU exhaustion as "the ceiling" -- the opposite of
-// this project's purpose. See task-9-fix-report.md for the measured numbers.
+// (20-90s + 5-20s) make ~67.5s on average. Read as an arrival rate, LADDER's
+// plateaus (which the design doc labels team counts) would ask for orders of
+// magnitude more concurrent VUs than the team count and generate a request rate
+// no real cohort this size produces. With ramping-arrival-rate and this project's
+// maxVUs, the pool would starve before the FIRST plateau, so the run would report
+// k6's own VU exhaustion as "the ceiling" -- the opposite of this project's
+// purpose. See task-9-fix-report.md for the measured numbers.
 //
 // Each plateau pairs a short ramp so the target is actually reached, then holds
 // it for the full 4m so the measurement is a steady-state read, not a transient.
 const RAMP = {
   executor: 'ramping-vus',
   startVUs: 0,
-  stages: [
-    { target: 10,  duration: '30s' }, { target: 10,  duration: '4m' },
-    { target: 20,  duration: '30s' }, { target: 20,  duration: '4m' },
-    { target: 40,  duration: '30s' }, { target: 40,  duration: '4m' },
-    { target: 80,  duration: '30s' }, { target: 80,  duration: '4m' },
-    { target: 120, duration: '30s' }, { target: 120, duration: '4m' },
-  ],
+  stages: LADDER.flatMap((target) => [
+    { target, duration: '30s' },
+    { target, duration: '4m' },
+  ]),
   exec: 'session',
 };
 

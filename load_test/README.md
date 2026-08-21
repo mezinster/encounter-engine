@@ -48,9 +48,23 @@ it would have starved before the *first* plateau, silently reporting k6's own VU
 `--env BASE_URL` overrides the manifest's own `base_url` (useful for pointing
 the same manifest at a different host without re-seeding). `--env TEAMS` sets the `hold` phase's
 constant VU count (default 60 — pick something around 70% of the ramp's last clean plateau) and is
-ignored by `ramp`, whose plateaus are fixed in `main.js`. `--env
+ignored by `ramp`. `--env
 WRONG_SHARE` (default 0.85) is `lib/play.js`'s share of deliberately-wrong answers — raise it
 towards 1 for a smoke test you don't want to accidentally finish the seeded game.
+
+**`--env LADDER` sets the `ramp` phase's plateaus** (default `120,250,500,1000`) and is ignored by
+`hold`. Each comma-separated number is a **team count for one plateau**, not a rate — one VU is one
+team, same as `TEAMS` above — and `main.js` turns each into a 30s ramp followed by a 4m hold, same
+shape as before this was configurable. **The seeded cohort must be at least as large as the top
+plateau.** `teamFor(vu)` (`lib/manifest.js`) assigns teams to VUs by `vu % teams.length`, so a
+ladder that outruns the seed doesn't error on its own — it wraps around, and several concurrent VUs
+land on the same team, which means several simultaneous sessions submitting answers against one
+`GamePassing`. That isn't a model of anything, and the ceiling it reports would be meaningless
+without saying so. `main.js` guards this at startup: if `LADDER`'s top plateau exceeds
+`manifest().teams.length`, the `ramp` phase fails immediately with a message naming both numbers,
+before any VU runs. Raise the default higher than you think you need: the 2026-08-21 production run
+sat under 10% CPU (load average 0.20) at the old top plateau of 120, so that ladder never got
+anywhere near a ceiling.
 
 **`WRONG_SHARE` is the share of answer POSTs that are wrong, not the app's own accept rate.**
 `pickCode()` now draws a "correct" answer from `manifest().codes[team.level_id]` — the specific
@@ -64,6 +78,19 @@ relative to the cheap wrong-answer path (a log row). `level_id` is the team's *s
 this is exact at the top of a run and drifts low as the team actually answers correctly and
 advances — accepted as much closer than the old behaviour, not perfect; this harness doesn't track
 live level state.
+
+**The points-ledger write this paragraph mentions is not actually reachable, as currently seeded.**
+`GamePassing#award_points_for` (`app/models/game_passing.rb:603`) does `return if
+game_run&.is_testing?` *before* any `PointTransaction.award!` call, and every run this harness seeds
+has `is_testing: true` (§4.1.2 of the design). So a "correct" answer here always takes the cheaper
+of the two accept-path costs — `answered_questions` re-serialisation only, never the ledger write —
+regardless of `points_enabled`. The 2026-08-21 production run confirms it: `point_transactions: 0`
+against 1069 log rows. `points_enabled: true` is still forced on the seeded game
+(`lib/load_test/game_cloner.rb`) because the design specifies it, but forcing it does not make the
+ledger reachable — the two requirements conflict; see
+`docs/superpowers/specs/2026-08-21-load-testing-design.md` §4.1.3 for the full account and the two
+ways an owner could resolve it. Every ceiling this harness has reported so far is optimistic by
+whatever that write costs.
 
 **Never commit a manifest.** It carries live team passwords in plaintext.
 Manifests are written to `/tmp` by the seeder and stay there.

@@ -16,12 +16,21 @@ module LoadTest
     # accepted rather than fixed, because copying blobs to a host with ~1.1 GB
     # spare buys marginal page weight on a CPU-bound test.
     #
-    # available_locales and access_mode are deliberately absent too, even
-    # though the source game carries values for both -- #call below sets
-    # both explicitly instead of copying them. See the comments there.
+    # available_locales, access_mode and points_enabled are deliberately
+    # absent too, even though the source game carries values for all three --
+    # #call below sets each explicitly instead of copying it. See the
+    # comments there.
+    #
+    # This is the third attribute pulled out of this list for exactly this
+    # reason (available_locales and access_mode were the first two, both
+    # fixing production 422s). The pattern: an attribute the design
+    # *specifies* a value for must be set explicitly here, never copied from
+    # the source -- copying silently reintroduces whatever the source
+    # happened to have, which is a different bug every time depending on
+    # which game gets cloned.
     GAME_ATTRIBUTES = %w[
       description primary_locale visibility
-      points_enabled level_completion_points game_completion_points
+      level_completion_points game_completion_points
       max_skips skip_points_fine skip_time_penalty
     ].freeze
 
@@ -64,6 +73,15 @@ module LoadTest
         # defeats the point of seeding them. Forced here rather than left to
         # whatever the source happens to be.
         clone.access_mode = "scheduled"
+        # points_enabled is likewise NOT copied. The design
+        # (docs/superpowers/specs/2026-08-21-load-testing-design.md, section
+        # 4.1) requires the seeded game have points_enabled: true --
+        # point_transactions writes are part of the real cost of an accepted
+        # answer, and testing with points off measures a cheaper app than we
+        # run. A source game with points off would silently clone a cheaper
+        # test than the design calls for; forced here rather than left to
+        # whatever the source happens to have.
+        clone.points_enabled = true
         # max_team_number lives on the run, not on GAME_ATTRIBUTES, but Game
         # itself validates it unconditionally (games.rb, `validates
         # :max_team_number, numericality: ...`, no `on:` and no `allow_nil`)

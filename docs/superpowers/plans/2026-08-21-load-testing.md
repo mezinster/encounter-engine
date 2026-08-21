@@ -1028,12 +1028,26 @@ class Admin::LoadTestsController < ApplicationController
 
     LoadTest.guard!(cohort_id)
     removed = LoadTest::Seeder.teardown!(cohort_id)
-    # The credentials outlive the accounts otherwise.
-    path = session.delete(:load_test_manifest_path)
-    File.unlink(path) if path.present? && File.exist?(path)
 
+    # Audited immediately, before the manifest cleanup, for the same reason as
+    # in #seed. The change that touched the database is the teardown; the unlink
+    # below can raise, and a raise there must not be able to erase the record of
+    # who deleted a live cohort.
     record_admin_action("load_test_teardown", nil,
                         "cohort=#{cohort_id}, rows=#{removed}")
+
+    # The credentials outlive the accounts otherwise. Best effort: a manifest we
+    # cannot remove is worth a warning, not a 500 on a teardown that succeeded.
+    # No File.exist? guard -- exist?-then-unlink is a TOCTOU race and /tmp is
+    # exactly where a cleaner intervenes; the ENOENT rescue IS the check.
+    path = session.delete(:load_test_manifest_path)
+    begin
+      File.unlink(path) if path.present?
+    rescue Errno::ENOENT
+      # Already gone.
+    rescue SystemCallError => e
+      Rails.logger.warn("[load_test] could not remove manifest #{path}: #{e.class}")
+    end
     redirect_to admin_load_test_path, :notice => t("admin.load_test.torn_down")
   rescue LoadTest::Refused => e
     redirect_to admin_load_test_path, :alert => e.message

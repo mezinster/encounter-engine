@@ -266,14 +266,40 @@ load_test/
   lib/manifest.js  # SharedArray over the seeder's JSON
 ```
 
-**Phase `ramp`** — `ramping-arrival-rate`, plateaus at 10 → 20 → 40 → 80 → 120
-teams, four minutes each, `abortOnFail: true` on `p(95)<2000` and
-`http_req_failed rate<0.02`, with `delayAbortEval: '30s'` so one cold-start
-outlier cannot kill a run before there is a meaningful sample.
+**Phase `ramp`** — `ramping-vus`, plateaus at 10 → 20 → 40 → 80 → 120 teams,
+each a 30-second ramp followed by a four-minute hold, `abortOnFail: true` on
+`p(95)<2000` and `http_req_failed rate<0.02`, with `delayAbortEval: '30s'` so
+one cold-start outlier cannot kill a run before there is a meaningful sample.
 
-**Phase `hold`** — `constant-arrival-rate` at `--env RATE=<70% of ceiling>` for
-40 minutes, no abort, thresholds recorded rather than enforced. This is the run
-that outlives the credit bank.
+**Phase `hold`** — `constant-vus` at `--env TEAMS=<70% of ceiling>` for 40
+minutes, no abort, thresholds recorded rather than enforced. This is the run that
+outlives the credit bank.
+
+**A VU-based executor, deliberately, and the first version got this wrong.** The
+plan originally specified `ramping-arrival-rate`, whose `target` is *iterations
+started per second* — a different quantity from "concurrent teams" by the
+iteration duration, which the think times make about 67.5 seconds. Read as an
+arrival rate, the same plateau ladder asks for 675 concurrent VUs at the bottom
+and 8,100 at the top; the configured pool of 400 would have starved before the
+first plateau and reported its own exhaustion as the app's ceiling, and a large
+enough pool would have fired roughly 240 requests/second at a one-vCPU host
+instead of the ~3.6 that 120 real teams produce.
+
+Teams are a **closed population**: 120 exist, and when the app slows a team waits
+rather than another team appearing. `ramping-vus` models exactly that, and one VU
+is one team — the quantity this design has always meant. Measured after the fix:
+peak VUs exactly 120, steady-state 3.11 requests/second against a 3.56
+prediction.
+
+**One artifact of that choice, which the runbook must explain.** VU-based
+executors start newly-ramped VUs without stagger, so every plateau step-up fires
+a synchronous burst of logins — each a bcrypt verify. The burst is real load and
+resembles the start-of-game stampede, but it lands inside the 30-second ramp
+window, and k6's summary `p(95)` is computed across the whole run. An operator
+reading the aggregate p95 as "the ceiling" would be booking bcrypt cost as play
+cost. Read the settled portion of each plateau, not the seconds after a step-up —
+and check any abort that fires immediately after a step-up against the burst
+before believing it.
 
 The per-VU flow, from the real routes:
 

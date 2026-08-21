@@ -1552,152 +1552,66 @@ play logic is layered on top.
 // load_test/main.js
 import { manifest, teamFor } from './lib/manifest.js';
 import { login } from './lib/auth.js';
-
-export default function () {
-  const base = __ENV.BASE_URL || manifest().base_url;
-  login(base, teamFor(__VU));
-}
-```
-
-- [ ] **Step 5: Seed a small local cohort and prove the login works**
-
-```bash
-bin/rails 'load_test:seed[1,5]'    # note the manifest path it prints
-bin/rails server &                 # dev server on :3000
-k6 run --env MANIFEST=/tmp/<cohort>.json --vus 2 --iterations 2 load_test/main.js
-```
-
-Expected: 0 failed checks, `logged in` at 100%.
-
-- [ ] **Step 6: MUTATION TEST — break the password and confirm it goes red**
-
-```bash
-python3 -c "
-import json,sys
-p=sys.argv[1]; d=json.load(open(p))
-for t in d['teams']: t['password']='wrong'
-json.dump(d,open('/tmp/broken.json','w'))
-" /tmp/<cohort>.json
-k6 run --env MANIFEST=/tmp/broken.json --vus 2 --iterations 2 load_test/main.js
-```
-
-Expected: **FAILS** with `login failed`. If this passes, the check is vacuous and the whole harness is worthless — fix it before going further. This is the exact failure mode `CLAUDE.md` records twice (the countdown examples reporting pending for a fortnight; the HEIC check reporting success on a machine that could not decode a byte).
-
-**A negative assertion will pass this mutation and fail the next one.** Asserting
-"not the login form" is satisfied by any page that is not the login form,
-including an error page — which is precisely what step 7 produces. Assert
-something only an authenticated page has.
-
-- [ ] **Step 7: MUTATION TEST — break the CSRF token and confirm 422**
-
-Temporarily change `csrfFrom` to `return 'invalid';` and re-run.
-Expected: HTTP 422 from Rails' `protect_from_forgery`, surfaced as failed checks. Revert the change afterwards.
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add load_test/
-git commit -m "Log a k6 virtual user in, and prove the check can fail"
-```
-
----
-
-### Task 9: the play loop and the two phases
-
-**Files:**
-- Create: `load_test/lib/play.js`
-- Modify: `load_test/main.js`
-
-**Interfaces:**
-- Consumes: `login`, `manifest`, `teamFor`, `allCodes`.
-- Produces: exported scenario functions `ramp` and `hold`.
-
-- [ ] **Step 1: Write the play module**
-
-```js
-// load_test/lib/play.js
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { allCodes, manifest } from './manifest.js';
-
-const WRONG_SHARE = Number(__ENV.WRONG_SHARE || 0.85);
-
-function randomBetween(a, b) {
-  return a + Math.random() * (b - a);
-}
-
-function pickCode() {
-  if (Math.random() < WRONG_SHARE) return `wrong-${Math.floor(Math.random() * 1e9)}`;
-  const codes = allCodes();
-  return codes[Math.floor(Math.random() * codes.length)];
-}
-
-export function playOnce(base, token) {
-  const gameId = manifest().game_id;
-
-  const page = http.get(`${base}/play/${gameId}`);
-  check(page, {
-    // A distinguishing marker from the real play screen, not a status code.
-    'on the level screen': (r) => r.body.includes('playbar-form'),
-  });
-
-  // The model, not padding. This app never polls -- the only setInterval is the
-  // client-side countdown, which never contacts the server -- so an idle team
-  // costs zero requests. Without think time the script would generate roughly
-  // two orders of magnitude more traffic than the team count implies.
-  sleep(randomBetween(20, 90));
-
-  const res = http.post(`${base}/play/${gameId}`, {
-    answer: pickCode(),
-    authenticity_token: token,
-  });
-  check(res, {
-    'answer accepted by the app': (r) => r.status !== 422 && r.status < 500,
-  });
-
-  sleep(randomBetween(5, 20));
-}
-```
-
-- [ ] **Step 2: Write `main.js` with both phases**
-
-```js
-// load_test/main.js
-import { manifest, teamFor } from './lib/manifest.js';
-import { login } from './lib/auth.js';
 import { playOnce } from './lib/play.js';
 
 const PHASE = __ENV.PHASE || 'ramp';
-const RATE  = Number(__ENV.RATE || 20);
+const TEAMS = Number(__ENV.TEAMS || 60);
 
+// ramping-vus, NOT ramping-arrival-rate. One VU is one team.
+//
+// Teams are a closed population: a fixed number exist (see the seeded manifest),
+// and if the app slows down a team WAITS -- it does not spawn a second team to
+// compensate. ramping-arrival-rate models the opposite: an OPEN population where
+// `target` is iterations STARTED per second, a different quantity from "concurrent
+// teams" by a factor of the iteration duration -- which play.js's own think times
+// (20-90s + 5-20s) make ~67.5s on average. Read as an arrival rate, the "10 -> 120"
+// plateaus below (which the design doc labels team counts) would ask for 675-8100
+// concurrent VUs and generate up to 240 req/s against a one-vCPU host, instead of
+// the ~3.6 req/s that 120 real teams, each idling most of the time, actually
+// produce. With ramping-arrival-rate and this project's maxVUs, the pool would
+// starve before the FIRST plateau (10/s needs 675 VUs; maxVUs was 400), so the
+// run would report k6's own VU exhaustion as "the ceiling" -- the opposite of
+// this project's purpose. See task-9-fix-report.md for the measured numbers.
+//
+// Each plateau pairs a short ramp so the target is actually reached, then holds
+// it for the full 4m so the measurement is a steady-state read, not a transient.
 const RAMP = {
-  executor: 'ramping-arrival-rate',
-  startRate: 0,
-  timeUnit: '1s',
-  preAllocatedVUs: 200,
-  maxVUs: 400,
+  executor: 'ramping-vus',
+  startVUs: 0,
   stages: [
-    { target: 10,  duration: '4m' },
-    { target: 20,  duration: '4m' },
-    { target: 40,  duration: '4m' },
-    { target: 80,  duration: '4m' },
-    { target: 120, duration: '4m' },
+    { target: 10,  duration: '30s' }, { target: 10,  duration: '4m' },
+    { target: 20,  duration: '30s' }, { target: 20,  duration: '4m' },
+    { target: 40,  duration: '30s' }, { target: 40,  duration: '4m' },
+    { target: 80,  duration: '30s' }, { target: 80,  duration: '4m' },
+    { target: 120, duration: '30s' }, { target: 120, duration: '4m' },
   ],
   exec: 'session',
 };
 
 const HOLD = {
-  executor: 'constant-arrival-rate',
-  rate: RATE,
-  timeUnit: '1m',
+  executor: 'constant-vus',
+  vus: TEAMS,          // ~70% of the ramp's last clean plateau
   duration: '40m',
-  preAllocatedVUs: 200,
-  maxVUs: 400,
   exec: 'session',
 };
 
 export const options = {
   scenarios: PHASE === 'hold' ? { hold: HOLD } : { ramp: RAMP },
+  // k6 resets each VU's cookie jar at the START of every iteration by default,
+  // regardless of module-scope JS state -- confirmed directly: a debug script
+  // that dumped http.cookieJar().cookiesForURL() showed an EMPTY jar at the
+  // top of iteration 2, on the same VU that had just logged in successfully
+  // in iteration 1. Without this flag, every VU authenticates once and then
+  // silently loses its session on iteration 2 onward: show_current_level
+  // redirects an unauthenticated GET to /login (302), and the cached CSRF
+  // token from iteration 1 -- still the only one `session()` ever has, since
+  // the login cache below is what's supposed to make re-login unnecessary --
+  // no longer matches that reset session, so post_answer 422s with "Can't
+  // verify CSRF token authenticity" on every subsequent iteration. That would
+  // have made the per-VU login cache below a no-op in practice: correct in
+  // theory, silently defeated by k6's own default. See task-9-report.md for
+  // the reproduction.
+  noCookiesReset: true,
   // abortOnFail only in the ramp. The hold deliberately runs to completion:
   // its whole purpose is to observe what happens after the CPU credit bank
   // empties, which is a threshold breach by design, not a reason to stop.
@@ -1894,7 +1808,7 @@ Create `docs/runbooks/load-test.md` containing, in this order and with commands 
 2. **Seed** via `/admin/load_test`, download the manifest, and log in by hand as one seeded captain before launching anything.
 3. **Provision** the generator, copy the manifest and `load_test/` up.
 4. **Ramp:** `k6 run --env PHASE=ramp --env MANIFEST=~/manifest.json main.js`. Record the last plateau that did not abort — that is the burst ceiling.
-5. **Hold:** `k6 run --env PHASE=hold --env RATE=<70% of ceiling> main.js` for 40 minutes. Watch credits drain; the latency at the moment they reach zero is the number that predicts hour two of a real game.
+5. **Hold:** `k6 run --env PHASE=hold --env TEAMS=<70% of ceiling> main.js` for 40 minutes. Watch credits drain; the latency at the moment they reach zero is the number that predicts hour two of a real game.
 6. **Abort criteria a human owns**, which k6 cannot see: credits draining faster than the plateau schedule predicts; distress in danted, the squid proxies on 3128-3130/8080-8081, or the two APRS forwarders; any sign of a real user on the box.
 7. **Verify the generator is closed** before copying the manifest up:
    `az network nsg rule list --resource-group encounter-loadgen --nsg-name loadgenNSG -o table`

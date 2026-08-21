@@ -14,6 +14,12 @@ Rails.application.routes.draw do
     # Operator-tunable rate limits. GET shows the form, PATCH saves it.
     get   "/settings", to: "settings#show",   as: :settings
     patch "/settings", to: "settings#update"
+    # Load-test cohorts. A singular resource: there is one cohort at a time by
+    # construction -- Seeder refuses to build a second while one is present.
+    get  "/load_test",          to: "load_tests#show",     as: :load_test
+    post "/load_test/seed",     to: "load_tests#seed",     as: :load_test_seed
+    post "/load_test/teardown", to: "load_tests#teardown", as: :load_test_teardown
+    get  "/load_test/manifest", to: "load_tests#manifest", as: :load_test_manifest
     # The console is otherwise read-only -- editing rides the author's own
     # forms. Authorship is the exception: there is no author's form an operator
     # can borrow when the point is that the current author cannot or will not

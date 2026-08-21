@@ -18,6 +18,13 @@ module EncounterEngine
   class Application < Rails::Application
     config.load_defaults 8.0
 
+    # lib/ is not autoloaded by default under Rails 8's Zeitwerk setup, so
+    # lib/load_test/game_cloner.rb would otherwise need a manual require.
+    # `tasks` stays ignored -- Rake tasks are loaded by Rake itself, not
+    # autoloaded as constants, and Zeitwerk would otherwise expect each one
+    # to define a matching class/module.
+    config.autoload_lib(ignore: %w[tasks])
+
     # Platform copy is translated; game content is not. See config/locales.
     #
     # The communities this platform serves. ru and en are complete and held to

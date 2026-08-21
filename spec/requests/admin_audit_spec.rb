@@ -367,4 +367,55 @@ describe "auditing administrative changes", type: :request do
       expect(response.body).to include("Команда Кентавры")
     end
   end
+
+  describe "load-test cohorts" do
+    let(:source) do
+      g = create_game
+      create_level(:game => g, :correct_answer => "aaa")
+      g
+    end
+
+    before { sign_in(superadmin) }
+
+    # The manifest path is fixed and predictable (cohort id -> filename), by
+    # design -- see Admin::LoadTestsController#store_manifest and the matching
+    # hazard documented in lib/tasks/load_test.rake. Real usage never collides
+    # because only one cohort exists at a time; this file reuses cohort id
+    # "lt-test-a" across two examples in one process, so it clears any
+    # leftover file itself rather than hitting the real, documented
+    # Errno::EEXIST from LoadTest::ManifestFile.write!'s O_EXCL.
+    before do
+      stale = File.join(Dir.tmpdir, "lt-test-a.json")
+      File.delete(stale) if File.exist?(stale)
+    end
+
+    it "records seeding a load-test cohort, naming the cohort and team count" do
+      post admin_load_test_seed_path,
+           :params => { :source_game_id => source.id, :teams => 2,
+                        :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
+
+      entry = AdminAction.newest_first.first
+      expect(entry.action).to eq("load_test_seed")
+      expect(entry.details).to include("cohort=lt-test-a")
+      expect(entry.details).to include("teams=2")
+    end
+
+    it "records tearing one down" do
+      post admin_load_test_seed_path,
+           :params => { :source_game_id => source.id, :teams => 2,
+                        :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
+      post admin_load_test_teardown_path,
+           :params => { :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
+
+      expect(AdminAction.newest_first.first.action).to eq("load_test_teardown")
+    end
+
+    it "records nothing when the confirmation does not match" do
+      expect {
+        post admin_load_test_seed_path,
+             :params => { :source_game_id => source.id, :teams => 2,
+                          :cohort_id => "lt-test-a", :confirm_cohort_id => "no" }
+      }.not_to change(AdminAction, :count)
+    end
+  end
 end

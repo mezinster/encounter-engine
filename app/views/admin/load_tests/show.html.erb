@@ -1,0 +1,44 @@
+<%# app/views/admin/load_tests/show.html.erb %>
+<h2><%= t("admin.load_test.title") %></h2>
+
+<p class="warning"><%= t("admin.load_test.warning") %></p>
+
+<% if @status[:cohort_id].present? %>
+  <p>
+    <%= t("admin.load_test.present", :cohort => @status[:cohort_id], :users => @status[:users]) %>
+    <%= link_to t("admin.load_test.download_manifest"), admin_load_test_manifest_path %>
+  </p>
+
+  <%= form_with url: admin_load_test_teardown_path, method: :post do %>
+    <%= hidden_field_tag :cohort_id, @status[:cohort_id] %>
+    <div class="field">
+      <%= label_tag :confirm_cohort_id,
+            t("admin.load_test.confirm_label", :cohort => @status[:cohort_id]) %>
+      <%= text_field_tag :confirm_cohort_id, nil, :autocomplete => "off" %>
+    </div>
+    <%= submit_tag t("admin.load_test.teardown"), :class => "btn btn--danger" %>
+  <% end %>
+<% else %>
+  <p><%= t("admin.load_test.absent") %></p>
+
+  <%= form_with url: admin_load_test_seed_path, method: :post do %>
+    <div class="field">
+      <%= label_tag :source_game_id, t("admin.load_test.source_game") %>
+      <%= select_tag :source_game_id,
+            options_from_collection_for_select(@games, :id, :name) %>
+    </div>
+    <div class="field">
+      <%= label_tag :teams, t("admin.load_test.teams") %>
+      <%= number_field_tag :teams, 120, :min => 1, :max => 1000 %>
+    </div>
+    <div class="field">
+      <%= label_tag :cohort_id, t("admin.load_test.cohort_id") %>
+      <%= text_field_tag :cohort_id, "lt-#{Date.today}-a", :autocomplete => "off" %>
+    </div>
+    <div class="field">
+      <%= label_tag :confirm_cohort_id, t("admin.load_test.confirm_new_label") %>
+      <%= text_field_tag :confirm_cohort_id, nil, :autocomplete => "off" %>
+    </div>
+    <%= submit_tag t("admin.load_test.seed"), :class => "btn btn--go" %>
+  <% end %>
+<% end %>

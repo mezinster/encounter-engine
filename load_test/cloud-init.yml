@@ -1,0 +1,24 @@
+#cloud-config
+# load_test/cloud-init.yml
+#
+# cloud-init rather than an Ansible play, despite ansible/ being this repo's
+# convention for host config: ansible/inventory.ini is pinned to the `mezin`
+# ssh alias because WSL2 reaches that host through a ProxyCommand, so an
+# ephemeral host would mean editing the inventory for every run.
+#
+# `#cloud-config` MUST be the literal first line -- cloud-init's
+# type_from_starts_with() only strips leading whitespace before checking the
+# header, it does not skip leading comment lines. A file with explanatory
+# comments before the header is classified as plain text, cloud-init finds no
+# handler for it, and does nothing -- silently: the VM still boots and SSH
+# still works, only k6 never gets installed. Verified with cloud-init's own
+# parser:
+#   python3 -c "from cloudinit.handlers import type_from_starts_with as f; \
+#     print(f(open('load_test/cloud-init.yml').read()))"
+# must print text/cloud-config, not None.
+package_update: true
+runcmd:
+  - curl -fsSL https://github.com/grafana/k6/releases/download/v0.52.0/k6-v0.52.0-linux-amd64.tar.gz -o /tmp/k6.tgz
+  - tar xzf /tmp/k6.tgz --strip-components=1 -C /tmp k6-v0.52.0-linux-amd64/k6
+  - install /tmp/k6 /usr/local/bin/k6
+  - /usr/local/bin/k6 version

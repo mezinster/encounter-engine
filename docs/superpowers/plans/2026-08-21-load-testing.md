@@ -556,15 +556,16 @@ Then add to `LoadTest::Seeder`, inside the class:
       # production and report success.
       def teardown!(cohort_id)
         users = User.where("email LIKE ?", "%@#{EMAIL_DOMAIN}")
-        teams = Team.where(:id => users.select(:team_id))
         games = Game.where(:author_id => users.select(:id))
         runs  = GameRun.where(:game_id => games.select(:id))
 
-        # Materialised NOW, deliberately. `teams` above is a lazy relation whose
-        # subquery reads users.team_id -- and update_all below sets exactly that
-        # column to NULL. Left lazy, the subquery would return nothing by the
-        # time delete_all ran, the teams would survive, and the row-count
-        # example in the spec would be the only thing that noticed.
+        # Ids are materialised NOW, before the detach below, and the teams are
+        # deleted through `Team.where(:id => team_ids)` rather than through a
+        # relation. A relation like `Team.where(:id => users.select(:team_id))`
+        # is lazy: its subquery reads users.team_id, and update_all below sets
+        # exactly that column to NULL, so by the time delete_all ran it would
+        # match nothing. The teams would survive in production and only the
+        # row-count example would notice.
         team_ids = users.pluck(:team_id).compact.uniq
         game_ids = games.pluck(:id)
 

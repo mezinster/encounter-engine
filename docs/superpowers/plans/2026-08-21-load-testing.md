@@ -731,7 +731,7 @@ git commit -m "Drive the load-test seeder from rake, guarded in production"
 
 **Interfaces:**
 - Consumes: `LoadTest::Seeder`, `LoadTest.guard!`.
-- Produces: routes `admin_load_test_path` (GET), `seed_admin_load_test_path` (POST), `teardown_admin_load_test_path` (POST), `manifest_admin_load_test_path` (GET). Audit action names `"load_test_seed"` and `"load_test_teardown"`.
+- Produces: routes `admin_load_test_path` (GET), `admin_load_test_seed_path` (POST), `admin_load_test_teardown_path` (POST), `admin_load_test_manifest_path` (GET). Audit action names `"load_test_seed"` and `"load_test_teardown"`.
 
 - [ ] **Step 1: Write the failing request spec**
 
@@ -784,7 +784,7 @@ describe "the load-test console", type: :request do
     sign_in(superadmin)
 
     expect {
-      post seed_admin_load_test_path, :params => seed_params(:confirm => "wrong")
+      post admin_load_test_seed_path, :params => seed_params(:confirm => "wrong")
     }.not_to change(User, :count)
   end
 
@@ -792,15 +792,15 @@ describe "the load-test console", type: :request do
     sign_in(superadmin)
 
     expect {
-      post seed_admin_load_test_path, :params => seed_params(:confirm => "lt-test-a")
+      post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
     }.to change(Team, :count).by(2)
   end
 
   it "offers the manifest as a download after seeding" do
     sign_in(superadmin)
-    post seed_admin_load_test_path, :params => seed_params(:confirm => "lt-test-a")
+    post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
 
-    get manifest_admin_load_test_path
+    get admin_load_test_manifest_path
 
     expect(response.headers["Content-Disposition"]).to include("attachment")
     expect(JSON.parse(response.body)["teams"].size).to eq(2)
@@ -808,10 +808,10 @@ describe "the load-test console", type: :request do
 
   it "tears the cohort down again" do
     sign_in(superadmin)
-    post seed_admin_load_test_path, :params => seed_params(:confirm => "lt-test-a")
+    post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
 
     expect {
-      post teardown_admin_load_test_path,
+      post admin_load_test_teardown_path,
            :params => { :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
     }.to change(Team, :count).by(-2)
   end
@@ -831,12 +831,23 @@ Inside the existing `namespace :admin do` block in `config/routes.rb`, after the
     # Load-test cohorts. A singular resource: there is one cohort at a time by
     # construction -- Seeder refuses to build a second while one is present.
     get  "/load_test",          to: "load_tests#show",     as: :load_test
-    post "/load_test/seed",     to: "load_tests#seed",     as: :seed_load_test
-    post "/load_test/teardown", to: "load_tests#teardown", as: :teardown_load_test
-    get  "/load_test/manifest", to: "load_tests#manifest", as: :manifest_load_test
+    post "/load_test/seed",     to: "load_tests#seed",     as: :load_test_seed
+    post "/load_test/teardown", to: "load_tests#teardown", as: :load_test_teardown
+    get  "/load_test/manifest", to: "load_tests#manifest", as: :load_test_manifest
 ```
 
-Note the route helpers this produces are `admin_load_test_path`, `seed_admin_load_test_path`, `teardown_admin_load_test_path` and `manifest_admin_load_test_path` — matching the spec above.
+**The `as:` values matter and are easy to get backwards.** `namespace :admin`
+prefixes the helper, exactly as the existing `admin_settings_path` shows — so
+`as: :load_test_seed` yields `admin_load_test_seed_path`, and writing
+`as: :seed_load_test` would yield `admin_seed_load_test_path` instead, which is
+not what the specs, the controller or the view call. Confirm with:
+
+```bash
+bin/rails routes -g load_test
+```
+
+Expected helper names: `admin_load_test`, `admin_load_test_seed`,
+`admin_load_test_teardown`, `admin_load_test_manifest`.
 
 - [ ] **Step 4: Implement the controller**
 
@@ -953,7 +964,7 @@ Append inside the top-level `describe` in `spec/requests/admin_audit_spec.rb`:
     before { sign_in(superadmin) }
 
     it "records seeding a load-test cohort, naming the cohort and team count" do
-      post seed_admin_load_test_path,
+      post admin_load_test_seed_path,
            :params => { :source_game_id => source.id, :teams => 2,
                         :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
 
@@ -964,10 +975,10 @@ Append inside the top-level `describe` in `spec/requests/admin_audit_spec.rb`:
     end
 
     it "records tearing one down" do
-      post seed_admin_load_test_path,
+      post admin_load_test_seed_path,
            :params => { :source_game_id => source.id, :teams => 2,
                         :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
-      post teardown_admin_load_test_path,
+      post admin_load_test_teardown_path,
            :params => { :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
 
       expect(AdminAction.newest_first.first.action).to eq("load_test_teardown")
@@ -975,7 +986,7 @@ Append inside the top-level `describe` in `spec/requests/admin_audit_spec.rb`:
 
     it "records nothing when the confirmation does not match" do
       expect {
-        post seed_admin_load_test_path,
+        post admin_load_test_seed_path,
              :params => { :source_game_id => source.id, :teams => 2,
                           :cohort_id => "lt-test-a", :confirm_cohort_id => "no" }
       }.not_to change(AdminAction, :count)
@@ -1050,10 +1061,10 @@ present" both fail on missing body content.
 <% if @status[:cohort_id].present? %>
   <p>
     <%= t("admin.load_test.present", :cohort => @status[:cohort_id], :users => @status[:users]) %>
-    <%= link_to t("admin.load_test.download_manifest"), manifest_admin_load_test_path %>
+    <%= link_to t("admin.load_test.download_manifest"), admin_load_test_manifest_path %>
   </p>
 
-  <%= form_with url: teardown_admin_load_test_path, method: :post do %>
+  <%= form_with url: admin_load_test_teardown_path, method: :post do %>
     <%= hidden_field_tag :cohort_id, @status[:cohort_id] %>
     <div class="field">
       <%= label_tag :confirm_cohort_id,
@@ -1065,7 +1076,7 @@ present" both fail on missing body content.
 <% else %>
   <p><%= t("admin.load_test.absent") %></p>
 
-  <%= form_with url: seed_admin_load_test_path, method: :post do %>
+  <%= form_with url: admin_load_test_seed_path, method: :post do %>
     <div class="field">
       <%= label_tag :source_game_id, t("admin.load_test.source_game") %>
       <%= select_tag :source_game_id,
@@ -1158,14 +1169,23 @@ bundle exec rspec spec/i18n_spec.rb spec/requests/admin/load_tests_spec.rb spec/
 
 Expected: all pass. A failure in `spec/i18n_spec.rb` naming a key means `ru` and `en` have diverged — fix the file, not the spec.
 
-- [ ] **Step 8: Confirm the key count moved as expected**
+- [ ] **Step 8: Confirm the key count moved by exactly 16**
+
+Measure the delta; do not compare against a remembered absolute. `CLAUDE.md`
+records its own baseline as having been stale three times and says to recount
+rather than reason about it.
 
 ```bash
-ruby -ryaml -e 'def leaves(h,p="") h.flat_map { |k,v| v.is_a?(Hash) ? leaves(v,"#{p}#{k}.") : ["#{p}#{k}"] } end
-               puts leaves(YAML.unsafe_load_file("config/locales/ru.yml")["ru"]).size'
+COUNT='ruby -ryaml -e "def leaves(h,p=%q()) h.flat_map { |k,v| v.is_a?(Hash) ? leaves(v,%Q(#{p}#{k}.)) : [%Q(#{p}#{k})] } end
+                       puts leaves(YAML.unsafe_load_file(%q(config/locales/ru.yml))[%q(ru)]).size"'
+git stash && BEFORE=$(eval "$COUNT") && git stash pop && AFTER=$(eval "$COUNT")
+echo "before=$BEFORE after=$AFTER delta=$((AFTER - BEFORE))"
 ```
 
-Expected: 964 + 17 = 981. If it differs, a key was missed or duplicated. Update the count recorded in `CLAUDE.md`'s i18n section in the same commit — that entry has been stale three times and this is how it happens.
+Expected: `delta=16` — the sixteen keys in the block above. Any other number
+means a key was missed or duplicated. Then update the absolute figure recorded
+in `CLAUDE.md`'s i18n section to `$AFTER` in the same commit, and do the same
+for the other six locale files (each must gain the same 16).
 
 - [ ] **Step 9: Commit**
 
@@ -1472,10 +1492,19 @@ export const options = {
   },
 };
 
+// Module scope in k6 is PER VU, so this caches one login per virtual user for
+// the whole run. Logging in every iteration would put a bcrypt verify on every
+// play cycle, which measures a login storm rather than steady play and would
+// report a sustained ceiling far below the truth -- defeating the entire point
+// of the hold phase. (Modelling the real start-of-game login stampede wants its
+// own scenario and its own design pass; it is out of scope here.)
+let token = null;
+
 export function session() {
   const base = __ENV.BASE_URL || manifest().base_url;
-  const team = teamFor(__VU);
-  const token = login(base, team);
+  if (token === null) {
+    token = login(base, teamFor(__VU));
+  }
   playOnce(base, token);
 }
 ```

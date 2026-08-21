@@ -136,4 +136,47 @@ describe "the load-test console", type: :request do
            :params => { :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
     }.to change(Team, :count).by(-2)
   end
+
+  # File.unlink can fail for reasons other than "the file is already gone" --
+  # permissions, a read-only remount, anything SystemCallError covers -- and
+  # the old exist?/unlink pair was a TOCTOU race on top of that (/tmp is
+  # exactly where a cleaner or a container restart intervenes between the two
+  # calls). Seeder.teardown! has already committed the deletion by the time
+  # the manifest cleanup runs, so a raise there must not turn a successful
+  # teardown into a 500 with no audit record of who did it. Stubs only the
+  # ONE call with this specific path -- and_call_original on the general stub
+  # keeps every other File.unlink call in the request (Rails internals
+  # included) working normally.
+  it "records the teardown and redirects, rather than 500ing, when the manifest cannot be removed" do
+    sign_in(superadmin)
+    post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
+    manifest_path = session[:load_test_manifest_path]
+
+    allow(File).to receive(:unlink).and_call_original
+    allow(File).to receive(:unlink).with(manifest_path).and_raise(Errno::EACCES)
+
+    expect {
+      post admin_load_test_teardown_path,
+           :params => { :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
+    }.to change(Team, :count).by(-2)
+
+    expect(response).to redirect_to(admin_load_test_path)
+    expect(AdminAction.newest_first.first.action).to eq("load_test_teardown")
+  end
+
+  # cohort_id is written verbatim into a filesystem path (see
+  # Admin::LoadTestsController::COHORT_ID's comment) and, inside the seeder,
+  # into nicknames and e-mail local parts. Not remotely exploitable -- only a
+  # superadmin reaches this action -- but a path-shaped id must still be
+  # refused at the door rather than failing confusingly deep inside the
+  # seeder's e-mail validation.
+  it "creates nothing when the cohort id is not a safe slug" do
+    sign_in(superadmin)
+    source # see the eager-evaluation comment above -- keep it out of the window below
+
+    expect {
+      post admin_load_test_seed_path,
+           :params => seed_params(:confirm => "../escape", :cohort => "../escape")
+    }.not_to change(User, :count)
+  end
 end

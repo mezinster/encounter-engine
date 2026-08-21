@@ -23,6 +23,7 @@ class Admin::LoadTestsController < ApplicationController
   def seed
     cohort_id = params[:cohort_id].to_s
     return refuse unless confirmed?(cohort_id)
+    return refuse_invalid unless valid_cohort_id?(cohort_id)
 
     LoadTest.guard!(cohort_id)
     manifest = LoadTest::Seeder.new(
@@ -62,15 +63,31 @@ class Admin::LoadTestsController < ApplicationController
   def teardown
     cohort_id = params[:cohort_id].to_s
     return refuse unless confirmed?(cohort_id)
+    return refuse_invalid unless valid_cohort_id?(cohort_id)
 
     LoadTest.guard!(cohort_id)
     removed = LoadTest::Seeder.teardown!(cohort_id)
-    # The credentials outlive the accounts otherwise.
-    path = session.delete(:load_test_manifest_path)
-    File.unlink(path) if path.present? && File.exist?(path)
 
+    # Audited immediately, before the manifest cleanup below. The change that
+    # touched the database is the teardown; File.unlink below can raise (the
+    # exist?/unlink pair is a TOCTOU race, and /tmp is where a cleaner
+    # intervenes), and a raise there must not be able to erase the record of
+    # who deleted a live cohort. Mirrors the identical fix in #seed.
     record_admin_action("load_test_teardown", nil,
                         "cohort=#{cohort_id}, rows=#{removed}")
+
+    # The credentials outlive the accounts otherwise. Best-effort: a manifest
+    # we cannot remove is worth a warning, not a 500 on a teardown that
+    # already succeeded.
+    path = session.delete(:load_test_manifest_path)
+    begin
+      File.unlink(path) if path.present?
+    rescue Errno::ENOENT
+      # Already gone -- nothing to do.
+    rescue SystemCallError => e
+      Rails.logger.warn("[load_test] could not remove manifest #{path}: #{e.class}")
+    end
+
     redirect_to admin_load_test_path, :notice => "Когорта удалена"
   rescue LoadTest::Refused => e
     redirect_to admin_load_test_path, :alert => e.message
@@ -88,12 +105,32 @@ class Admin::LoadTestsController < ApplicationController
 
   private
 
+  # A slug, not free text. cohort_id is written verbatim into a filesystem
+  # path (Dir.tmpdir/#{cohort_id}.json -- see store_manifest) and, inside the
+  # seeder, into nicknames and e-mail local parts. ManifestFile.write! only
+  # refuses paths under Rails.root, so a "../" segment elsewhere on disk is
+  # not caught there. This is not remotely exploitable on its own -- only a
+  # superadmin reaches this action, and a superadmin can already delete
+  # production data outright -- but an id shaped like a path or containing
+  # characters e-mail validation rejects would otherwise fail confusingly
+  # deep inside the seeder instead of here, at the door.
+  COHORT_ID = /\A[a-z0-9][a-z0-9-]{2,63}\z/
+
+  def valid_cohort_id?(cohort_id)
+    COHORT_ID.match?(cohort_id)
+  end
+
   def confirmed?(cohort_id)
     cohort_id.present? && params[:confirm_cohort_id].to_s == cohort_id
   end
 
   def refuse
     redirect_to admin_load_test_path, :alert => "Идентификатор когорты не подтверждён"
+  end
+
+  def refuse_invalid
+    redirect_to admin_load_test_path,
+               :alert => "Идентификатор когорты должен состоять из латинских букв, цифр и дефисов"
   end
 
   # The PATH in the session, never the manifest itself -- and this is not a

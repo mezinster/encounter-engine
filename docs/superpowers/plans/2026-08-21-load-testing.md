@@ -555,6 +555,12 @@ Then add to `LoadTest::Seeder`, inside the class:
       # passings behind. Anything relying on cascades here would leave rows in
       # production and report success.
       def teardown!(cohort_id)
+        present = status[:cohort_id]
+        unless present == cohort_id
+          raise ArgumentError,
+                "cohort #{cohort_id.inspect} is not the cohort present (#{present.inspect})"
+        end
+
         users = User.where("email LIKE ?", "%@#{EMAIL_DOMAIN}")
         games = Game.where(:author_id => users.select(:id))
         runs  = GameRun.where(:game_id => games.select(:id))
@@ -562,7 +568,7 @@ Then add to `LoadTest::Seeder`, inside the class:
         # Ids are materialised NOW, before the detach below, and the teams are
         # deleted through `Team.where(:id => team_ids)` rather than through a
         # relation. A relation like `Team.where(:id => users.select(:team_id))`
-        # is lazy: its subquery reads users.team_id, and update_all below sets
+        # is lazy: its subquery reads users.team_id, and `update_all` below sets
         # exactly that column to NULL, so by the time delete_all ran it would
         # match nothing. The teams would survive in production and only the
         # row-count example would notice.
@@ -572,16 +578,35 @@ Then add to `LoadTest::Seeder`, inside the class:
         removed = 0
         ActiveRecord::Base.transaction do
           removed += PointTransaction.where(:team_id => team_ids).delete_all
+          # Logs are the largest table a run writes -- one per answer POST --
+          # and Game#logs carries no dependent: option, matching game_passings.
+          # Deleted here, before the games are destroyed, by the same game_ids
+          # already materialised above.
+          removed += Log.where(:game_id => game_ids).delete_all
           removed += GamePassing.where(:game_run_id => runs.select(:id)).delete_all
           removed += GameEntry.where(:game_run_id => runs.select(:id)).delete_all
           removed += TestAdmission.where(:game_run_id => runs.select(:id)).delete_all
           removed += AccessPass.where(:game_id => game_ids).delete_all
+          # Invitation/TeamJoinRequest are keyed by EITHER a user or a team on
+          # either side (for_user_id/to_team_id, user_id/team_id), so both
+          # sides of the cohort have to be checked -- a seeded user invited by
+          # an outsider, or an outsider's request against a seeded team, is
+          # exactly as real as the reverse. Users' ids, unlike their team_id,
+          # are never mutated by this method, so reading them lazily off
+          # `users` here is safe -- the row-count example would tell us if it
+          # were not.
+          removed += Invitation.where(:for_user_id => users.select(:id))
+                                .or(Invitation.where(:to_team_id => team_ids)).delete_all
+          removed += TeamJoinRequest.where(:user_id => users.select(:id))
+                                    .or(TeamJoinRequest.where(:team_id => team_ids)).delete_all
+          removed += GameLocalePreference.where(:user_id => users.select(:id)).delete_all
           # Detach before deleting the teams so users.team_id never dangles
           # even if a later delete raises and the transaction unwinds midway.
           users.update_all(:team_id => nil)
           removed += Team.where(:id => team_ids).delete_all
-          # destroy_all, not delete_all: levels/questions/answers/hints hang off
-          # the game by dependent: :destroy and there is no FK to cascade here.
+          # game.destroy!, not delete_all: levels/questions/answers/hints/runs/
+          # game_entries/access_codes hang off the game by dependent: :destroy
+          # and there is no FK to cascade here.
           Game.where(:id => game_ids).each { |game| game.destroy! ; removed += 1 }
           removed += users.delete_all
         end

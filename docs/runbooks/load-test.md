@@ -168,8 +168,18 @@ can take a minute or two after the VM reports "running"):
 ssh azureuser@<ip> k6 version
 ```
 
-If that fails, wait a minute and retry before assuming something is wrong —
-`az vm create` returning does not mean cloud-init has finished.
+If that fails right after the VM comes up, it's worth one retry after a
+minute — `az vm create` returning does not mean cloud-init has finished yet.
+**But if it is still failing after that, do not keep waiting: a missing `k6`
+is not a timing problem, it's a sign cloud-init did not run `runcmd` at all**
+(most likely `load_test/cloud-init.yml`'s `#cloud-config` header is no longer
+the file's literal first line — cloud-init only recognizes it there, and
+silently treats anything else as plain text with no error). Check what
+actually happened on the VM instead of retrying blind:
+
+```bash
+ssh azureuser@<ip> sudo cat /var/log/cloud-init-output.log
+```
 
 ---
 

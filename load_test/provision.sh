@@ -19,7 +19,14 @@ case "${1:-}" in
   create)
     # The operator's own address, for the one inbound rule below. Same source
     # the deploy workflow uses (.github/workflows/deploy.yml:131).
-    MY_IP=$(curl -fsS --max-time 10 https://api.ipify.org || curl -fsS --max-time 10 https://ifconfig.me)
+    # `|| true` on the end, not just between the two curls: under `set -e`,
+    # `X=$(a || b)` still aborts the script AT THE ASSIGNMENT if both `a` and
+    # `b` fail, before the explicit check below ever runs -- the friendly
+    # error message would be unreachable dead code. Confirmed directly:
+    #   bash -c 'set -euo pipefail; X=$(false || false); echo "reached"'
+    # prints nothing. The trailing `|| true` absorbs that exit so the check
+    # on the next line is what actually fires.
+    MY_IP="$(curl -fsS --max-time 10 https://api.ipify.org || curl -fsS --max-time 10 https://ifconfig.me || true)"
     [ -n "$MY_IP" ] || { echo "could not determine this machine's public IP" >&2; exit 1; }
 
     az group create --name "$RG" --location "$LOCATION" --output none

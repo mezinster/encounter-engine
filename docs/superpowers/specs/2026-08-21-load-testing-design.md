@@ -314,6 +314,28 @@ The load generator is created in **its own resource group**, and teardown is
 NIC, NSG, public IP and OS disk behind, quietly billing. Deleting the group
 removes everything or fails loudly.
 
+**The generator is closed to the internet, and this matters more than it looks:
+it holds the manifest** — a live password for every seeded captain plus every
+level's answer codes. An SSH port open to the world on a box holding production
+credentials is a real exposure, not a hygiene point.
+
+It is created with `--nsg-rule NONE`, so no allow-SSH-from-anywhere rule is
+generated and Azure's default `DenyAllInBound` governs. One rule is then added
+allowing 22 from the operator's own address only — the same just-in-time pattern
+`.github/workflows/deploy.yml:131-156` already uses for deploys, where a rule
+scoped to `${RUNNER_IP}/32` is created and deleted within the same job.
+
+**The public IP stays, and is for outbound only.** Azure retired default
+outbound access in September 2025, so a VM with no public IP and no NAT gateway
+has no internet at all — which defeats the entire purpose, since the generator's
+only job is to reach `game.mezin.eu`. A Standard-SKU public IP is closed to
+inbound by default and opens only where the NSG says so.
+
+A zero-inbound variant exists — driving the VM through `az vm run-command
+invoke`, which reaches the guest agent over its outbound connection and needs no
+open port at all. It is rejected here because a ramp has to be *watched* and
+abortable, and run-command returns its output at the end rather than streaming.
+
 Configuration is **cloud-init**, not an Ansible play. Ansible would match the
 repo's convention, but `ansible/inventory.ini` is pinned to the `mezin` ssh
 alias because WSL2 reaches the host through a `ProxyCommand`; an ephemeral host

@@ -5,8 +5,24 @@
 module LoadTest
   class Refused < StandardError; end
 
-  def self.guard!(cohort_id, environment: Rails.env)
-    return unless environment.to_s == "production"
+  # Two independent triggers, because neither alone is sufficient. The
+  # environment NAME misses `DATABASE_URL=<prod> bin/rails ...`, which
+  # replaces the connection while Rails.env stays "development" -- verified
+  # directly, this is not theoretical. The ADAPTER misses the documented
+  # production-boot probe in CLAUDE.md, which runs RAILS_ENV=production
+  # against a scratch sqlite file. Production is the only postgresql
+  # environment in config/database.yml (development/test are sqlite3), so
+  # any postgres connection is treated as live regardless of what the
+  # environment is called. Both false-positive directions are safe: a
+  # postgres staging database gets refused rather than allowed, which is the
+  # correct way to be wrong.
+  def self.live?(environment: Rails.env, db_config: ActiveRecord::Base.connection_db_config)
+    environment.to_s == "production" || db_config.adapter.to_s.start_with?("postgres")
+  end
+
+  def self.guard!(cohort_id, environment: Rails.env,
+                  db_config: ActiveRecord::Base.connection_db_config)
+    return unless live?(:environment => environment, :db_config => db_config)
 
     # A blank id can never be confirmed, and this is checked BEFORE the
     # comparison rather than after. ENV["LOAD_TEST_CONFIRM"] is nil when unset

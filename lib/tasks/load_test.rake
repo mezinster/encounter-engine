@@ -3,6 +3,18 @@
 namespace :load_test do
   desc "Seed a load-test cohort from a source game: rake load_test:seed[42,120]"
   task :seed, [ :source_game_id, :teams ] => :environment do |_t, args|
+    # A random cohort id can never be confirmed in advance: if LOAD_TEST_COHORT
+    # is unset, `guard!` below would refuse with a printed id that changes on
+    # every retry, since it's re-generated each run -- an instruction the
+    # operator can never actually follow. Refuse BEFORE generating one instead,
+    # so the fix is "set both variables to the same value", not "read the
+    # error and try again forever".
+    if LoadTest.live? && ENV["LOAD_TEST_COHORT"].to_s.empty?
+      raise LoadTest::Refused,
+            "set LOAD_TEST_COHORT=<id> and LOAD_TEST_CONFIRM=<the same id> " \
+            "to run this against production -- a generated id can't be confirmed in advance"
+    end
+
     cohort_id = ENV.fetch("LOAD_TEST_COHORT") { "lt-#{Date.today}-#{SecureRandom.hex(2)}" }
     LoadTest.guard!(cohort_id)
 
@@ -13,9 +25,9 @@ namespace :load_test do
       :base_url    => ENV["LOAD_TEST_BASE_URL"]
     ).seed!
 
-    path = ENV.fetch("LOAD_TEST_MANIFEST", "/tmp/#{cohort_id}.json")
-    File.write(path, JSON.pretty_generate(manifest))
-    File.chmod(0600, path)
+    path = LoadTest::ManifestFile.write!(
+      manifest, :path => ENV.fetch("LOAD_TEST_MANIFEST", "/tmp/#{cohort_id}.json")
+    )
 
     puts "cohort:   #{cohort_id}"
     puts "manifest: #{path}  (contains live credentials -- never commit it)"

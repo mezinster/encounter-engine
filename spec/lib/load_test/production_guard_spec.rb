@@ -46,4 +46,47 @@ describe "LoadTest.guard!" do
     expect { LoadTest.guard!("", :environment => "production") }
       .to raise_error(LoadTest::Refused)
   end
+
+  # DATABASE_URL overrides the live connection without touching Rails.env --
+  # verified directly: RAILS_ENV stays "development" while the adapter and
+  # database both change. So the environment NAME alone is not sufficient;
+  # the connection's own adapter is the second, independent signal, and
+  # production is the only postgresql environment in config/database.yml.
+  it "refuses a postgres connection even when the environment name says development" do
+    ENV.delete("LOAD_TEST_CONFIRM")
+    db_config = double(:adapter => "postgresql")
+
+    expect {
+      LoadTest.guard!("lt-a", :environment => "development", :db_config => db_config)
+    }.to raise_error(LoadTest::Refused)
+  end
+
+  it "still refuses production when the connection itself is sqlite" do
+    ENV.delete("LOAD_TEST_CONFIRM")
+    db_config = double(:adapter => "sqlite3")
+
+    expect {
+      LoadTest.guard!("lt-a", :environment => "production", :db_config => db_config)
+    }.to raise_error(LoadTest::Refused)
+  end
+
+  it "allows a sqlite connection outside production" do
+    ENV.delete("LOAD_TEST_CONFIRM")
+    db_config = double(:adapter => "sqlite3")
+
+    expect {
+      LoadTest.guard!("lt-a", :environment => "development", :db_config => db_config)
+    }.not_to raise_error
+  end
+
+  # Every example above passes :environment explicitly. Mutate the keyword
+  # default (environment: Rails.env) to a literal "development" and every one
+  # of those examples stays green -- the rake tasks call guard! with a single
+  # argument, exactly the call shape this example pins.
+  it "reads Rails.env when no environment is given, the way the rake tasks call it" do
+    allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("production"))
+    ENV.delete("LOAD_TEST_CONFIRM")
+
+    expect { LoadTest.guard!("lt-a") }.to raise_error(LoadTest::Refused)
+  end
 end

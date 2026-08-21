@@ -1809,6 +1809,21 @@ Create `docs/runbooks/load-test.md` containing, in this order and with commands 
 3. **Provision** the generator, copy the manifest and `load_test/` up.
 4. **Ramp:** `k6 run --env PHASE=ramp --env MANIFEST=~/manifest.json main.js`. Record the last plateau that did not abort — that is the burst ceiling.
 5. **Hold:** `k6 run --env PHASE=hold --env TEAMS=<70% of ceiling> main.js` for 40 minutes. Watch credits drain; the latency at the moment they reach zero is the number that predicts hour two of a real game.
+5a. **How to read the numbers, which is not obvious.** VU-based executors start
+   newly-ramped VUs without stagger, so **every plateau step-up fires a
+   synchronous burst of logins** -- each one a bcrypt verify, deliberately
+   expensive. Three consequences the operator must know:
+   * A latency spike in the first seconds of a plateau's 30-second ramp window is
+     **expected** and is not evidence of an app ceiling.
+   * k6's end-of-run `p(95)` is computed across the **whole run**, so five step-up
+     bursts inflate it relative to the steady-play latency that actually matters.
+     Read the settled four-minute portion of each plateau -- the periodic
+     `running (...)` progress lines, or a time-series sink via `--out` -- rather
+     than trusting the single aggregate figure as "the" ceiling.
+   * `abortOnFail` is likewise evaluated over the run so far, so a large enough
+     burst could trip it while steady-state latency is fine. **An abort firing
+     immediately after a step-up must be checked against the burst before it is
+     read as "over capacity at this plateau."**
 6. **Abort criteria a human owns**, which k6 cannot see: credits draining faster than the plateau schedule predicts; distress in danted, the squid proxies on 3128-3130/8080-8081, or the two APRS forwarders; any sign of a real user on the box.
 7. **Verify the generator is closed** before copying the manifest up:
    `az network nsg rule list --resource-group encounter-loadgen --nsg-name loadgenNSG -o table`

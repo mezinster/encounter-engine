@@ -12,10 +12,32 @@ describe "the teams index", type: :request do
     put login_path, :params => { :email => user.email, :password => "1234" }
   end
 
-  it "refuses a guest" do
+  # Was "refuses a guest", asserting the redirect that `require_authentication!`
+  # produced. The page is the team leaderboard and is now public: teams#show
+  # already was, so a team's name, captain and per-run points were readable
+  # without an account before this change -- index widens the same door rather
+  # than opening a new one.
+  it "shows the standings to a guest" do
+    captain = create_user
+    team = create_team(:captain => captain)
+
     get teams_path
 
-    expect(response).to redirect_to(login_path)
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(team.name)
+    expect(response.body).to include(captain.nickname)
+  end
+
+  # A guest has no application to make: TeamJoinRequestsController#create
+  # requires authentication, so rendering the control would be a promise the
+  # action refuses to keep -- the same reasoning as the captain and own-team
+  # cases below.
+  it "does not offer a guest an apply form" do
+    team = create_team(:captain => create_user)
+
+    get teams_path
+
+    expect(response.body).not_to include(team_join_requests_path(:team_id => team.id))
   end
 
   it "lists teams with their captains" do
@@ -84,6 +106,20 @@ describe "the teams index", type: :request do
   # one so the assertion is about the gradient, not a magic number.
   it "keeps the query count flat as the number of teams grows" do
     sign_in(create_user)
+    2.times { create_team(:captain => create_user) }
+    small = count_queries { get teams_path }
+
+    6.times { create_team(:captain => create_user) }
+    large = count_queries { get teams_path }
+
+    expect(large).to be <= small + 1
+  end
+
+  # The same guard on the guest path, which skips the pending-applications
+  # query entirely and so runs different code. This file's own comment above
+  # records that this class of guard has been broken repeatedly; a public page
+  # is the one most worth holding flat.
+  it "keeps the query count flat for a guest as the number of teams grows" do
     2.times { create_team(:captain => create_user) }
     small = count_queries { get teams_path }
 

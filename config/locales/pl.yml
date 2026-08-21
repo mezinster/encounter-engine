@@ -461,6 +461,8 @@ pl:
       duration: "%{hours} godz. %{minutes} min"
       playing: "grają: %{count}"
       played: "grali: %{count}"
+      passes_issued: "przyznane dostępy: %{count}"
+      completed: "ukończyli: %{count}"
       view: "(zobacz)"
       stats: "(statystyki)"
       live_channel: "(transmisja na żywo)"
@@ -698,6 +700,7 @@ pl:
       password_label: "Hasło"
       password_confirmation_label: "Potwierdzenie"
       submit: "Zarejestruj się"
+      submitting: "Rejestrujemy…"
     edit:
       title: 'Edycja profilu gracza %{nickname}'
       nickname_label: "Twoje imię"
@@ -800,6 +803,7 @@ pl:
       team_room: "Pokój drużyny"
       create_team: "Utwórz drużynę"
       all_games: "Wszystkie gry domeny"
+      teams: "Drużyny"
       logout: "Wyloguj się"
       login_legend: "Logowanie"
       login: "Zaloguj się"
@@ -1082,7 +1086,7 @@ pl:
       model: "Model"
       locales: "Języki"
       tokens: "Tokeny"
-      token_counts: "wejście %{input}, wyjście %{output}, z pamięci podręcznej %{cached}"
+      token_counts: "wejście %{input}, wyjście %{output}, do pamięci podręcznej %{written}, z pamięci podręcznej %{cached}"
       failed: "Nieprzetłumaczone"
       cancel: "Zatrzymaj"
       retry: "Powtórz"
@@ -1146,6 +1150,7 @@ pl:
       access_pass:
         game: "Gra"
       game:
+        access_mode: "Dostęp do gry"
         level_completion_points: "Naliczenie za poziom"
         game_completion_points: "Naliczenie za ukończenie"
         max_skips: "Liczba pominięć"
@@ -1203,8 +1208,11 @@ pl:
               greater_than: "Zakres liczby drużyn to od 1 do 10000"
               less_than: "Zakres liczby drużyn to od 1 do 10000"
               exceeds_requested: "Liczba drużyn, które złożyły zgłoszenie, przekracza zadaną wartość"
+            access_mode:
+              access_still_owed: "nie można wyłączyć: drużyny nie wykorzystały jeszcze przyznanego dostępu (%{count}). Odbierz dostęp albo poczekaj, aż zagrają."
             starts_at:
               in_the_past: "Wybrano datę z przeszłości. Tak nie można :-)"
+              needed_to_unpublish_access: "zwykła gra musi mieć datę startu w przyszłości — podaj nową, aby przestać sprzedawać dostęp do tej gry"
             registration_deadline:
               in_the_past: "Podano ostateczny termin rejestracji z przeszłości, tak nie można :-)"
               after_game_start: "Podano ostateczny termin rejestracji późniejszy niż data rozpoczęcia gry, tak nie można :-)"

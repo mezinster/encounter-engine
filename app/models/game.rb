@@ -98,6 +98,7 @@ class Game < ApplicationRecord
   validates :access_mode, :inclusion => { :in => ACCESS_MODES }
 
   validate :game_starts_in_the_future
+  validate :access_still_owed
   validate :valid_max_num
 
   validate :deadline_is_in_future
@@ -700,13 +701,82 @@ protected
   # author_finished!/withdraw!/whatever save on a game that was authored as
   # scheduled and later converted, or one whose starts_at was simply never
   # cleared.
+  # The refusal is unchanged; only the WORDING of it now depends on what the
+  # author actually did.
+  #
+  # Reported 2026-08-20: an operator converting a paid game back to scheduled
+  # was told "Вы выбрали дату из прошлого" -- about a date they had not
+  # touched. A gated game's starts_at means nothing and ages past on its own
+  # (the pass_required? exemption above exists for exactly that), so the
+  # stale value it had been carrying became the visible complaint the instant
+  # the game stopped being gated, with nothing on the page connecting it to
+  # the dropdown they had just changed.
+  #
+  # Refusing is still right, and the conversion still fails without a fresh
+  # date: a scheduled game whose start is in the past is `started?` on the
+  # spot, with no registration window, so teams could pour into a game the
+  # author thought they were still preparing. What was wrong was the
+  # explanation, and an unactionable error on a field the author cannot
+  # connect to their edit is indistinguishable from a broken form.
+  #
+  # NOT narrowed to "only police saves that touch the schedule", which was
+  # tried and reverted: "a running game does not pass its own validations" is
+  # a property this codebase is BUILT on, not an oversight. pause!, withdraw!
+  # and unlock all route around it with update_column, translation-proposal
+  # acceptance has a whole graceful-degradation path for it, and three specs
+  # pin it deliberately -- including a guard-on-the-guard in
+  # spec/requests/translation_proposal_review_spec.rb whose comment says that
+  # if the fixture ever stops being invalid, every example under it passes
+  # vacuously. Relaxing this validation quietly disarms all of that. It may
+  # well be worth doing; it is its own change, with its own review.
   def game_starts_in_the_future
     return if self.draft?
     return if self.pass_required?
+    return unless self.author_finished_at.nil?
+    return if self.starts_at.nil? || self.starts_at >= Time.now
 
-    if self.author_finished_at.nil? and self.starts_at and self.starts_at < Time.now
-      self.errors.add(:starts_at, :in_the_past)
-    end
+    self.errors.add(:starts_at, becoming_scheduled? ? :needed_to_unpublish_access : :in_the_past)
+  end
+
+  # "The author just turned access off", which is the one case where blaming
+  # the date is a lie. access_mode is a column on games, so plain dirty
+  # tracking answers this -- unlike starts_at, which is delegated to the run
+  # and whose _changed? predicate is therefore not on this object at all.
+  def becoming_scheduled?
+    access_mode_changed? && !pass_required?
+  end
+
+  # A game may not stop selling access while teams are still holding access
+  # they paid for and have not used.
+  #
+  # Without this, the conversion stranded every one of them, silently and
+  # permanently. #find_or_create_game_passing stops consulting #gated_passing
+  # the instant pass_required? goes false, so a paid team is judged by
+  # may_start_passing? instead -- which asks for a GameEntry they have no way
+  # to hold, since GameEntriesController refuses applications on a gated game.
+  # Their pass stays live for ever (nothing spends it), so it never even shows
+  # as consumed in the access console. A team caught MID-RUN lost more than
+  # access: their half-finished attempt survives as a runless row that no
+  # route can reach.
+  #
+  # REFUSED rather than repaired, and that is the decision rather than the
+  # easy way out. The alternatives all guess at something only a human can
+  # decide -- whether an unused pass is owed a refund, whether a paid
+  # entitlement converts into a free place, whether a team mid-run should be
+  # moved into a cohort they never registered for. Refusing puts the choice in
+  # front of the operator while they can still act on it, and names the size
+  # of the job so they can judge it.
+  #
+  # Scoped to the CONVERSION, not to the game: a gated game that is happily
+  # selling access must stay editable by its operator, so an ordinary save is
+  # never touched.
+  def access_still_owed
+    return unless becoming_scheduled?
+
+    owed = AccessPass.outstanding_for(self).size
+    return if owed.zero?
+
+    self.errors.add(:access_mode, :access_still_owed, :count => owed)
   end
 
   def valid_max_num

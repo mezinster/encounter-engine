@@ -6,8 +6,12 @@ module Translation
   class Client
     Error = Class.new(StandardError)
 
+    # cache_write_tokens is not decoration beside cache_read_tokens: it is the
+    # only way to see caching FAILING. input_tokens reports the uncached
+    # remainder alone, so a call that wrote 4,000 tokens at 1.25x and a call
+    # that cached nothing both report a tiny input and a zero read.
     Result = Struct.new(:texts, :input_tokens, :output_tokens, :cache_read_tokens,
-                        :keyword_init => true)
+                        :cache_write_tokens, :keyword_init => true)
 
     # An array of {key, text} rather than an object with dynamic property
     # names: JSON Schema cannot express "one property per field", and a fixed
@@ -55,9 +59,15 @@ module Translation
       ENV["ANTHROPIC_API_KEY"].present?
     end
 
-    def initialize(api_key:, model:)
+    # cache: whether to place a cache breakpoint on the source block. True is
+    # right whenever the same prefix will be sent more than once -- which is
+    # what a multi-locale run does, and the whole reason the runner loops units
+    # outer. With ONE target locale each prefix is sent exactly once, the write
+    # premium can never be amortised, and the marker is a straight surcharge.
+    def initialize(api_key:, model:, cache: true)
       @api_key = api_key
       @model   = model
+      @cache   = cache
     end
 
     def translate(unit:, locale:)
@@ -103,16 +113,24 @@ module Translation
         },
         :system_ => [
           { :type => "text", :text => RULES },
-          # The breakpoint. Everything up to and including this block is
-          # identical across every target locale for this unit, so the first
-          # locale writes the cache at 1.25x and the rest read it at 0.1x.
-          { :type => "text", :text => unit.source_text,
-            :cache_control => { :type => "ephemeral" } }
+          source_block(unit)
         ],
         :messages => [
           { :role => "user", :content => "Translate the above into #{language_name(locale)}." }
         ]
       }
+    end
+
+    # The breakpoint, when there is one. Everything up to and including this
+    # block is identical across every target locale for this unit, so the first
+    # locale writes the cache at 1.25x and the rest read it at 0.1x -- and the
+    # marker has to sit on the LAST stable block, with the varying instruction
+    # after it in :messages, or the prefix match never holds.
+    def source_block(unit)
+      block = { :type => "text", :text => unit.source_text }
+      return block unless @cache
+
+      block.merge(:cache_control => { :type => "ephemeral" })
     end
 
     def messages
@@ -136,9 +154,10 @@ module Translation
       usage = response.usage
       Result.new(
         :texts             => texts,
-        :input_tokens      => usage&.input_tokens.to_i,
-        :output_tokens     => usage&.output_tokens.to_i,
-        :cache_read_tokens => usage&.cache_read_input_tokens.to_i
+        :input_tokens       => usage&.input_tokens.to_i,
+        :output_tokens      => usage&.output_tokens.to_i,
+        :cache_read_tokens  => usage&.cache_read_input_tokens.to_i,
+        :cache_write_tokens => usage&.cache_creation_input_tokens.to_i
       )
     end
   end

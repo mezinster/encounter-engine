@@ -37,7 +37,13 @@ class User < ApplicationRecord
   # any character, so "user@localhost" passed by consuming the final "t" as
   # the separator. No address used anywhere in the suites is affected by
   # tightening it.
-  validates :email, presence: true, uniqueness: true,
+  # case_sensitive: false is belt-and-braces behind #normalise_email below --
+  # with normalisation in place every stored address is already lower case, so
+  # a case-sensitive check would give the same answer. It is here for the row
+  # that gets in another way (a fixture, a console session, an import), so
+  # "one account per address" does not quietly become "one account per
+  # spelling".
+  validates :email, presence: true, uniqueness: { case_sensitive: false },
                     format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i }
   validates :nickname, presence: true, uniqueness: true
   validates :password, length: { minimum: 4 }, confirmation: true, if: :password_required?
@@ -62,6 +68,11 @@ class User < ApplicationRecord
   }.freeze
 
   before_validation :normalise_contact_handles
+  # BEFORE validation, not before save: the format check below runs against
+  # the normalised value, so " ivan@mail.ru " is accepted rather than refused
+  # over a space the user cannot see. A phone keyboard adds one on paste more
+  # often than not.
+  before_validation :normalise_email
 
   def member_of_any_team?
     !! team
@@ -363,5 +374,28 @@ class User < ApplicationRecord
       # views can test presence to decide whether to render a row at all.
       self[field] = value.presence
     end
+  end
+
+  # One canonical spelling per address, whatever produced the row.
+  #
+  # Reported from production on 2026-08-20: iPhones capitalise the first
+  # letter in a plain text input, the signup form was the app's last
+  # `text_field :email` (login and password reset were already email fields,
+  # which is why the failure was one-directional), and the address went in as
+  # "Ivan@mail.ru". Every lookup in the app is an exact `find_by(email:)`, so
+  # the lowercase address the player typed afterwards matched nothing -- not
+  # at login, and not at password reset either, which is the escape hatch a
+  # locked-out player reaches for next.
+  #
+  # The form is fixed too and is the actual root cause, but a form fix only
+  # covers the browsers that honour it. This covers the rest -- and is what
+  # lets the unique index on this column mean one account per ADDRESS.
+  #
+  # nil stays nil rather than becoming "": presence is validated, and "" would
+  # turn a missing address into a differently-worded failure.
+  def normalise_email
+    return if self.email.nil?
+
+    self.email = self.email.strip.downcase
   end
 end

@@ -115,10 +115,23 @@ jobs:
       # Rather than widening the allowlist permanently, each run opens 22 to its
       # own address and closes it again. Authentication is OIDC federation
       # against a user-assigned managed identity whose federated credential
-      # trusts exactly one subject —
-      # repo:mezinster/encounter-engine:environment:production — and which holds
-      # Network Contributor on this one NSG and nothing else. No Azure
-      # credential is stored in GitHub.
+      # trusts exactly one subject — and which holds Network Contributor on this
+      # one NSG and nothing else. No Azure credential is stored in GitHub.
+      #
+      # That subject is NOT the plain repo:owner/name form this comment used to
+      # claim. This repository has GitHub's immutable OIDC subject claims
+      # enabled, so the real subject carries numeric IDs:
+      #
+      #   repo:mezinster@10500786/encounter-engine@1322568945:environment:production
+      #
+      # Azure matches the subject by exact string, so a credential registered in
+      # the plain form matches nothing and fails only at the first real run,
+      # with AADSTS70021: No matching federated identity record found. The
+      # corrected form was found while setting up the VM scaling identities,
+      # which were about to be registered wrongly by trusting this comment.
+      # Read the live value rather than any comment:
+      #   az identity federated-credential list --identity-name ee-deploy-oidc \
+      #     -g MEZINEU --query "[].subject" -o tsv
       - name: Authenticate to Azure
         uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
         with:

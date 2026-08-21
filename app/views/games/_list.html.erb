@@ -6,6 +6,7 @@
     rather than letting it scroll the whole page sideways. %>
 <% counts = game_team_counts(games) %>
 <% gated_status = gated_play_status(games) %>
+<% gated_counts = gated_participation_counts(games) %>
 
 <div class="table-wrap">
 <%# Deliberately NOT class="game-list". That class is used by nine other views
@@ -54,11 +55,42 @@
           at all (GamePassingsController#may_start_passing?), so the second
           figure is not always a subset of the first and the claim would
           sometimes be false. %>
+      <%# A commercial row answers different questions, so it gets different
+          figures. "N / max" does not apply: max_team_number gates nothing on a
+          gated game (neither pass issuing nor code redemption consults
+          can_request?), and a game born gated can only ever read "0 / 100"
+          while a converted one shows the stale free-era count it carried in.
+          Nor does the running-vs-finished choice game_participation_text makes,
+          because Game#status reports :available for the whole of a paid game's
+          life -- teams mid-attempt and teams finished exist at the same moment,
+          with no lifecycle instant to pick between them.
+
+          The issued figure renders even at zero -- "nobody has bought yet" is
+          what an operator opens this page to learn -- while the other two
+          suppress, matching game_participation_text's own `if count > 0`. And
+          they are still three separate figures rather than a sentence claiming
+          a subset: a team that QUIT is in none of them. %>
       <td data-label="<%= t("games.list.participants") %>">
-        <%= counts[:registered].fetch(game.id, 0) %> / <%= game.max_team_number %>
-        <% participation = game_participation_text(game, counts) %>
-        <% if participation %>
-          <div class="participation"><%= participation %></div>
+        <% if game.pass_required? %>
+          <%= t("games.list.passes_issued", :count => gated_counts[:issued].fetch(game.id, 0)) %>
+          <% playing   = gated_counts[:playing].fetch(game.id, 0) %>
+          <% completed = gated_counts[:completed].fetch(game.id, 0) %>
+          <%# Middot between these two, unlike the cap-and-participation pair
+              above which deliberately keeps its figures on separate lines:
+              these are peers, both counting attempts, so joining them states
+              no relation the reader has to untangle. %>
+          <% figures = [] %>
+          <% figures << t("games.list.playing", :count => playing) if playing > 0 %>
+          <% figures << t("games.list.completed", :count => completed) if completed > 0 %>
+          <% if figures.any? %>
+            <div class="participation"><%= figures.join(" · ") %></div>
+          <% end %>
+        <% else %>
+          <%= counts[:registered].fetch(game.id, 0) %> / <%= game.max_team_number %>
+          <% participation = game_participation_text(game, counts) %>
+          <% if participation %>
+            <div class="participation"><%= participation %></div>
+          <% end %>
         <% end %>
       </td>
       <%# Every link below keeps its exact text, order and visibility

@@ -1,0 +1,5229 @@
+{
+  "current_size": "Standard_B1ms",
+  "resize_options": [
+    "Standard_B1ls",
+    "Standard_B1ms",
+    "Standard_B1s",
+    "Standard_B2ms",
+    "Standard_B2s",
+    "Standard_B4ms",
+    "Standard_B8ms",
+    "Standard_B12ms",
+    "Standard_B16ms",
+    "Standard_B20ms",
+    "Standard_D1_v2",
+    "Standard_D2_v2",
+    "Standard_D3_v2",
+    "Standard_D4_v2",
+    "Standard_D5_v2",
+    "Standard_D11_v2",
+    "Standard_D12_v2",
+    "Standard_D13_v2",
+    "Standard_D14_v2",
+    "Standard_D15_v2",
+    "Standard_D2_v2_Promo",
+    "Standard_D3_v2_Promo",
+    "Standard_D4_v2_Promo",
+    "Standard_D5_v2_Promo",
+    "Standard_D11_v2_Promo",
+    "Standard_D12_v2_Promo",
+    "Standard_D13_v2_Promo",
+    "Standard_D14_v2_Promo",
+    "Standard_DS2_v2_Promo",
+    "Standard_DS3_v2_Promo",
+    "Standard_DS4_v2_Promo",
+    "Standard_DS5_v2_Promo",
+    "Standard_DS11_v2_Promo",
+    "Standard_DS12_v2_Promo",
+    "Standard_DS13_v2_Promo",
+    "Standard_DS14_v2_Promo",
+    "Standard_F1",
+    "Standard_F2",
+    "Standard_F4",
+    "Standard_F8",
+    "Standard_F16",
+    "Standard_A1_v2",
+    "Standard_A2m_v2",
+    "Standard_A2_v2",
+    "Standard_A4m_v2",
+    "Standard_A4_v2",
+    "Standard_A8m_v2",
+    "Standard_A8_v2",
+    "Standard_D2_v3",
+    "Standard_D4_v3",
+    "Standard_D8_v3",
+    "Standard_D16_v3",
+    "Standard_D32_v3",
+    "Standard_D48_v3",
+    "Standard_D64_v3",
+    "Standard_E2_v3",
+    "Standard_E4_v3",
+    "Standard_E8_v3",
+    "Standard_E16_v3",
+    "Standard_E20_v3",
+    "Standard_E32_v3",
+    "Standard_D1",
+    "Standard_D2",
+    "Standard_D3",
+    "Standard_D4",
+    "Standard_D11",
+    "Standard_D12",
+    "Standard_D13",
+    "Standard_D14",
+    "Standard_DS1_v2",
+    "Standard_DS2_v2",
+    "Standard_DS3_v2",
+    "Standard_DS4_v2",
+    "Standard_DS5_v2",
+    "Standard_DS11-1_v2",
+    "Standard_DS11_v2",
+    "Standard_DS12-1_v2",
+    "Standard_DS12-2_v2",
+    "Standard_DS12_v2",
+    "Standard_DS13-2_v2",
+    "Standard_DS13-4_v2",
+    "Standard_DS13_v2",
+    "Standard_DS14-4_v2",
+    "Standard_DS14-8_v2",
+    "Standard_DS14_v2",
+    "Standard_DS15_v2",
+    "Standard_F1s",
+    "Standard_F2s",
+    "Standard_F4s",
+    "Standard_F8s",
+    "Standard_F16s",
+    "Standard_D2s_v3",
+    "Standard_D4s_v3",
+    "Standard_D8s_v3",
+    "Standard_D16s_v3",
+    "Standard_D32s_v3",
+    "Standard_D48s_v3",
+    "Standard_D64s_v3",
+    "Standard_E2s_v3",
+    "Standard_E4-2s_v3",
+    "Standard_E4s_v3",
+    "Standard_E8-2s_v3",
+    "Standard_E8-4s_v3",
+    "Standard_E8s_v3",
+    "Standard_E16-4s_v3",
+    "Standard_E16-8s_v3",
+    "Standard_E16s_v3",
+    "Standard_E20s_v3",
+    "Standard_E32-8s_v3",
+    "Standard_E32-16s_v3",
+    "Standard_E32s_v3",
+    "Standard_DS1",
+    "Standard_DS2",
+    "Standard_DS3",
+    "Standard_DS4",
+    "Standard_DS11",
+    "Standard_DS12",
+    "Standard_DS13",
+    "Standard_DS14",
+    "Standard_E2_v4",
+    "Standard_E4_v4",
+    "Standard_E8_v4",
+    "Standard_E16_v4",
+    "Standard_E20_v4",
+    "Standard_E32_v4",
+    "Standard_E2d_v4",
+    "Standard_E4d_v4",
+    "Standard_E8d_v4",
+    "Standard_E16d_v4",
+    "Standard_E20d_v4",
+    "Standard_E32d_v4",
+    "Standard_E2s_v4",
+    "Standard_E4-2s_v4",
+    "Standard_E4s_v4",
+    "Standard_E8-2s_v4",
+    "Standard_E8-4s_v4",
+    "Standard_E8s_v4",
+    "Standard_E16-4s_v4",
+    "Standard_E16-8s_v4",
+    "Standard_E16s_v4",
+    "Standard_E20s_v4",
+    "Standard_E32-8s_v4",
+    "Standard_E32-16s_v4",
+    "Standard_E32s_v4",
+    "Standard_E2ds_v4",
+    "Standard_E4-2ds_v4",
+    "Standard_E4ds_v4",
+    "Standard_E8-2ds_v4",
+    "Standard_E8-4ds_v4",
+    "Standard_E8ds_v4",
+    "Standard_E16-4ds_v4",
+    "Standard_E16-8ds_v4",
+    "Standard_E16ds_v4",
+    "Standard_E20ds_v4",
+    "Standard_E32-8ds_v4",
+    "Standard_E32-16ds_v4",
+    "Standard_E32ds_v4",
+    "Standard_D2d_v4",
+    "Standard_D4d_v4",
+    "Standard_D8d_v4",
+    "Standard_D16d_v4",
+    "Standard_D32d_v4",
+    "Standard_D48d_v4",
+    "Standard_D64d_v4",
+    "Standard_D2_v4",
+    "Standard_D4_v4",
+    "Standard_D8_v4",
+    "Standard_D16_v4",
+    "Standard_D32_v4",
+    "Standard_D48_v4",
+    "Standard_D64_v4",
+    "Standard_D2ds_v4",
+    "Standard_D4ds_v4",
+    "Standard_D8ds_v4",
+    "Standard_D16ds_v4",
+    "Standard_D32ds_v4",
+    "Standard_D48ds_v4",
+    "Standard_D64ds_v4",
+    "Standard_D2s_v4",
+    "Standard_D4s_v4",
+    "Standard_D8s_v4",
+    "Standard_D16s_v4",
+    "Standard_D32s_v4",
+    "Standard_D48s_v4",
+    "Standard_D64s_v4",
+    "Standard_F2s_v2",
+    "Standard_F4s_v2",
+    "Standard_F8s_v2",
+    "Standard_F16s_v2",
+    "Standard_F32s_v2",
+    "Standard_F48s_v2",
+    "Standard_F64s_v2",
+    "Standard_F72s_v2",
+    "Standard_E48_v3",
+    "Standard_E64_v3",
+    "Standard_E48s_v3",
+    "Standard_E64-16s_v3",
+    "Standard_E64-32s_v3",
+    "Standard_E64s_v3",
+    "Standard_E48_v4",
+    "Standard_E64_v4",
+    "Standard_E48d_v4",
+    "Standard_E64d_v4",
+    "Standard_E48s_v4",
+    "Standard_E64-16s_v4",
+    "Standard_E64-32s_v4",
+    "Standard_E64s_v4",
+    "Standard_E80is_v4",
+    "Standard_E48ds_v4",
+    "Standard_E64-16ds_v4",
+    "Standard_E64-32ds_v4",
+    "Standard_E64ds_v4",
+    "Standard_E80ids_v4",
+    "Standard_D2a_v4",
+    "Standard_D4a_v4",
+    "Standard_D8a_v4",
+    "Standard_D16a_v4",
+    "Standard_D32a_v4",
+    "Standard_D48a_v4",
+    "Standard_D64a_v4",
+    "Standard_D96a_v4",
+    "Standard_D2as_v4",
+    "Standard_D4as_v4",
+    "Standard_D8as_v4",
+    "Standard_D16as_v4",
+    "Standard_D32as_v4",
+    "Standard_D48as_v4",
+    "Standard_D64as_v4",
+    "Standard_D96as_v4",
+    "Standard_E2a_v4",
+    "Standard_E4a_v4",
+    "Standard_E8a_v4",
+    "Standard_E16a_v4",
+    "Standard_E20a_v4",
+    "Standard_E32a_v4",
+    "Standard_E48a_v4",
+    "Standard_E64a_v4",
+    "Standard_E96a_v4",
+    "Standard_E2as_v4",
+    "Standard_E4-2as_v4",
+    "Standard_E4as_v4",
+    "Standard_E8-2as_v4",
+    "Standard_E8-4as_v4",
+    "Standard_E8as_v4",
+    "Standard_E16-4as_v4",
+    "Standard_E16-8as_v4",
+    "Standard_E16as_v4",
+    "Standard_E20as_v4",
+    "Standard_E32-8as_v4",
+    "Standard_E32-16as_v4",
+    "Standard_E32as_v4",
+    "Standard_E48as_v4",
+    "Standard_E64-16as_v4",
+    "Standard_E64-32as_v4",
+    "Standard_E64as_v4",
+    "Standard_E96-24as_v4",
+    "Standard_E96-48as_v4",
+    "Standard_E96as_v4",
+    "Standard_E96ias_v4",
+    "Standard_D2as_v5",
+    "Standard_D4as_v5",
+    "Standard_D8as_v5",
+    "Standard_D16as_v5",
+    "Standard_D32as_v5",
+    "Standard_D48as_v5",
+    "Standard_D64as_v5",
+    "Standard_D96as_v5",
+    "Standard_E2as_v5",
+    "Standard_E4-2as_v5",
+    "Standard_E4as_v5",
+    "Standard_E8-2as_v5",
+    "Standard_E8-4as_v5",
+    "Standard_E8as_v5",
+    "Standard_E16-4as_v5",
+    "Standard_E16-8as_v5",
+    "Standard_E16as_v5",
+    "Standard_E20as_v5",
+    "Standard_E32-8as_v5",
+    "Standard_E32-16as_v5",
+    "Standard_E32as_v5",
+    "Standard_E48as_v5",
+    "Standard_E64-16as_v5",
+    "Standard_E64-32as_v5",
+    "Standard_E64as_v5",
+    "Standard_E96-24as_v5",
+    "Standard_E96-48as_v5",
+    "Standard_E96as_v5",
+    "Standard_E112ias_v5",
+    "Standard_D2ads_v5",
+    "Standard_D4ads_v5",
+    "Standard_D8ads_v5",
+    "Standard_D16ads_v5",
+    "Standard_D32ads_v5",
+    "Standard_D48ads_v5",
+    "Standard_D64ads_v5",
+    "Standard_D96ads_v5",
+    "Standard_E2ads_v5",
+    "Standard_E4-2ads_v5",
+    "Standard_E4ads_v5",
+    "Standard_E8-2ads_v5",
+    "Standard_E8-4ads_v5",
+    "Standard_E8ads_v5",
+    "Standard_E16-4ads_v5",
+    "Standard_E16-8ads_v5",
+    "Standard_E16ads_v5",
+    "Standard_E20ads_v5",
+    "Standard_E32-8ads_v5",
+    "Standard_E32-16ads_v5",
+    "Standard_E32ads_v5",
+    "Standard_E48ads_v5",
+    "Standard_E64-16ads_v5",
+    "Standard_E64-32ads_v5",
+    "Standard_E64ads_v5",
+    "Standard_E96-24ads_v5",
+    "Standard_E96-48ads_v5",
+    "Standard_E96ads_v5",
+    "Standard_E112iads_v5",
+    "Standard_B2als_v2",
+    "Standard_B2as_v2",
+    "Standard_B2ats_v2",
+    "Standard_B4als_v2",
+    "Standard_B4as_v2",
+    "Standard_B8als_v2",
+    "Standard_B8as_v2",
+    "Standard_B16als_v2",
+    "Standard_B16as_v2",
+    "Standard_B32als_v2",
+    "Standard_B32as_v2",
+    "Standard_M64",
+    "Standard_M64m",
+    "Standard_M128",
+    "Standard_M128m",
+    "Standard_M8-2ms",
+    "Standard_M8-4ms",
+    "Standard_M8ms",
+    "Standard_M16-4ms",
+    "Standard_M16-8ms",
+    "Standard_M16ms",
+    "Standard_M32-8ms",
+    "Standard_M32-16ms",
+    "Standard_M32ls",
+    "Standard_M32ms",
+    "Standard_M32ts",
+    "Standard_M64-16ms",
+    "Standard_M64-32ms",
+    "Standard_M64ls",
+    "Standard_M64ms",
+    "Standard_M64s",
+    "Standard_M128-32ms",
+    "Standard_M128-64ms",
+    "Standard_M128ms",
+    "Standard_M128s",
+    "Standard_M32ms_v2",
+    "Standard_M64ms_v2",
+    "Standard_M64s_v2",
+    "Standard_M128ms_v2",
+    "Standard_M128s_v2",
+    "Standard_M192ims_v2",
+    "Standard_M192is_v2",
+    "Standard_M32dms_v2",
+    "Standard_M64dms_v2",
+    "Standard_M64ds_v2",
+    "Standard_M128dms_v2",
+    "Standard_M128ds_v2",
+    "Standard_M192idms_v2",
+    "Standard_M192ids_v2",
+    "Standard_L8as_v3",
+    "Standard_L16as_v3",
+    "Standard_L32as_v3",
+    "Standard_L48as_v3",
+    "Standard_L64as_v3",
+    "Standard_L80as_v3",
+    "Standard_D2as_v6",
+    "Standard_D4as_v6",
+    "Standard_D8as_v6",
+    "Standard_D16as_v6",
+    "Standard_D32as_v6",
+    "Standard_D48as_v6",
+    "Standard_D64as_v6",
+    "Standard_D96as_v6",
+    "Standard_E2as_v6",
+    "Standard_E4as_v6",
+    "Standard_E8as_v6",
+    "Standard_E16as_v6",
+    "Standard_E20as_v6",
+    "Standard_E32as_v6",
+    "Standard_E48as_v6",
+    "Standard_E64as_v6",
+    "Standard_E96as_v6",
+    "Standard_D2ads_v6",
+    "Standard_D4ads_v6",
+    "Standard_D8ads_v6",
+    "Standard_D16ads_v6",
+    "Standard_D32ads_v6",
+    "Standard_D48ads_v6",
+    "Standard_D64ads_v6",
+    "Standard_D96ads_v6",
+    "Standard_D2als_v6",
+    "Standard_D4als_v6",
+    "Standard_D8als_v6",
+    "Standard_D16als_v6",
+    "Standard_D32als_v6",
+    "Standard_D48als_v6",
+    "Standard_D64als_v6",
+    "Standard_D96als_v6",
+    "Standard_D2alds_v6",
+    "Standard_D4alds_v6",
+    "Standard_D8alds_v6",
+    "Standard_D16alds_v6",
+    "Standard_D32alds_v6",
+    "Standard_D48alds_v6",
+    "Standard_D64alds_v6",
+    "Standard_D96alds_v6",
+    "Standard_E2ads_v6",
+    "Standard_E4ads_v6",
+    "Standard_E8ads_v6",
+    "Standard_E16ads_v6",
+    "Standard_E20ads_v6",
+    "Standard_E32ads_v6",
+    "Standard_E48ads_v6",
+    "Standard_E64ads_v6",
+    "Standard_E96-24ads_v6",
+    "Standard_E96-48ads_v6",
+    "Standard_E96ads_v6",
+    "Standard_F2as_v6",
+    "Standard_F4as_v6",
+    "Standard_F8as_v6",
+    "Standard_F16as_v6",
+    "Standard_F32as_v6",
+    "Standard_F48as_v6",
+    "Standard_F64as_v6",
+    "Standard_F2als_v6",
+    "Standard_F4als_v6",
+    "Standard_F8als_v6",
+    "Standard_F16als_v6",
+    "Standard_F32als_v6",
+    "Standard_F48als_v6",
+    "Standard_F64als_v6",
+    "Standard_F2ams_v6",
+    "Standard_F4ams_v6",
+    "Standard_F8ams_v6",
+    "Standard_F16ams_v6",
+    "Standard_F32ams_v6",
+    "Standard_F48ams_v6",
+    "Standard_F64ams_v6",
+    "Standard_HC44-16rs",
+    "Standard_HC44-32rs",
+    "Standard_HC44rs",
+    "Standard_L2aos_v4",
+    "Standard_L4aos_v4",
+    "Standard_L8aos_v4",
+    "Standard_L12aos_v4",
+    "Standard_L16aos_v4",
+    "Standard_L24aos_v4",
+    "Standard_L32aos_v4",
+    "Standard_L2as_v4",
+    "Standard_L4as_v4",
+    "Standard_L8as_v4",
+    "Standard_L16as_v4",
+    "Standard_L32as_v4",
+    "Standard_L48as_v4",
+    "Standard_L64as_v4",
+    "Standard_L80as_v4",
+    "Standard_L96as_v4",
+    "Standard_D2ds_v5",
+    "Standard_D4ds_v5",
+    "Standard_D8ds_v5",
+    "Standard_D16ds_v5",
+    "Standard_D32ds_v5",
+    "Standard_D48ds_v5",
+    "Standard_D64ds_v5",
+    "Standard_D96ds_v5",
+    "Standard_D2d_v5",
+    "Standard_D4d_v5",
+    "Standard_D8d_v5",
+    "Standard_D16d_v5",
+    "Standard_D32d_v5",
+    "Standard_D48d_v5",
+    "Standard_D64d_v5",
+    "Standard_D96d_v5",
+    "Standard_D2s_v5",
+    "Standard_D4s_v5",
+    "Standard_D8s_v5",
+    "Standard_D16s_v5",
+    "Standard_D32s_v5",
+    "Standard_D48s_v5",
+    "Standard_D64s_v5",
+    "Standard_D96s_v5",
+    "Standard_D2_v5",
+    "Standard_D4_v5",
+    "Standard_D8_v5",
+    "Standard_D16_v5",
+    "Standard_D32_v5",
+    "Standard_D48_v5",
+    "Standard_D64_v5",
+    "Standard_D96_v5",
+    "Standard_E2ds_v5",
+    "Standard_E4-2ds_v5",
+    "Standard_E4ds_v5",
+    "Standard_E8-2ds_v5",
+    "Standard_E8-4ds_v5",
+    "Standard_E8ds_v5",
+    "Standard_E16-4ds_v5",
+    "Standard_E16-8ds_v5",
+    "Standard_E16ds_v5",
+    "Standard_E20ds_v5",
+    "Standard_E32-8ds_v5",
+    "Standard_E32-16ds_v5",
+    "Standard_E32ds_v5",
+    "Standard_E48ds_v5",
+    "Standard_E64-16ds_v5",
+    "Standard_E64-32ds_v5",
+    "Standard_E64ds_v5",
+    "Standard_E96-24ds_v5",
+    "Standard_E96-48ds_v5",
+    "Standard_E96ds_v5",
+    "Standard_E104ids_v5",
+    "Standard_E2d_v5",
+    "Standard_E4d_v5",
+    "Standard_E8d_v5",
+    "Standard_E16d_v5",
+    "Standard_E20d_v5",
+    "Standard_E32d_v5",
+    "Standard_E48d_v5",
+    "Standard_E64d_v5",
+    "Standard_E96d_v5",
+    "Standard_E104id_v5",
+    "Standard_E2s_v5",
+    "Standard_E4-2s_v5",
+    "Standard_E4s_v5",
+    "Standard_E8-2s_v5",
+    "Standard_E8-4s_v5",
+    "Standard_E8s_v5",
+    "Standard_E16-4s_v5",
+    "Standard_E16-8s_v5",
+    "Standard_E16s_v5",
+    "Standard_E20s_v5",
+    "Standard_E32-8s_v5",
+    "Standard_E32-16s_v5",
+    "Standard_E32s_v5",
+    "Standard_E48s_v5",
+    "Standard_E64-16s_v5",
+    "Standard_E64-32s_v5",
+    "Standard_E64s_v5",
+    "Standard_E96-24s_v5",
+    "Standard_E96-48s_v5",
+    "Standard_E96s_v5",
+    "Standard_E104is_v5",
+    "Standard_E2_v5",
+    "Standard_E4_v5",
+    "Standard_E8_v5",
+    "Standard_E16_v5",
+    "Standard_E20_v5",
+    "Standard_E32_v5",
+    "Standard_E48_v5",
+    "Standard_E64_v5",
+    "Standard_E96_v5",
+    "Standard_E104i_v5",
+    "Standard_E2bs_v5",
+    "Standard_E4bs_v5",
+    "Standard_E8bs_v5",
+    "Standard_E16bs_v5",
+    "Standard_E32bs_v5",
+    "Standard_E48bs_v5",
+    "Standard_E64bs_v5",
+    "Standard_E96bs_v5",
+    "Standard_E112ibs_v5",
+    "Standard_E2bds_v5",
+    "Standard_E4bds_v5",
+    "Standard_E8bds_v5",
+    "Standard_E16bds_v5",
+    "Standard_E32bds_v5",
+    "Standard_E48bds_v5",
+    "Standard_E64bds_v5",
+    "Standard_E96bds_v5",
+    "Standard_E112ibds_v5",
+    "Standard_D2ls_v5",
+    "Standard_D4ls_v5",
+    "Standard_D8ls_v5",
+    "Standard_D16ls_v5",
+    "Standard_D32ls_v5",
+    "Standard_D48ls_v5",
+    "Standard_D64ls_v5",
+    "Standard_D96ls_v5",
+    "Standard_D2lds_v5",
+    "Standard_D4lds_v5",
+    "Standard_D8lds_v5",
+    "Standard_D16lds_v5",
+    "Standard_D32lds_v5",
+    "Standard_D48lds_v5",
+    "Standard_D64lds_v5",
+    "Standard_D96lds_v5",
+    "Standard_B2ls_v2",
+    "Standard_B2s_v2",
+    "Standard_B2ts_v2",
+    "Standard_B4ls_v2",
+    "Standard_B4s_v2",
+    "Standard_B8ls_v2",
+    "Standard_B8s_v2",
+    "Standard_B16ls_v2",
+    "Standard_B16s_v2",
+    "Standard_B32ls_v2",
+    "Standard_B32s_v2",
+    "Standard_NV6ads_A10_v5",
+    "Standard_NV12ads_A10_v5",
+    "Standard_NV18ads_A10_v5",
+    "Standard_NV36adms_A10_v5",
+    "Standard_NV36ads_A10_v5",
+    "Standard_NV72ads_A10_v5",
+    "Standard_L8s_v3",
+    "Standard_L16s_v3",
+    "Standard_L32s_v3",
+    "Standard_L48s_v3",
+    "Standard_L64s_v3",
+    "Standard_L80s_v3",
+    "Standard_D2pls_v6",
+    "Standard_D4pls_v6",
+    "Standard_D8pls_v6",
+    "Standard_D16pls_v6",
+    "Standard_D32pls_v6",
+    "Standard_D48pls_v6",
+    "Standard_D64pls_v6",
+    "Standard_D96pls_v6",
+    "Standard_D2pds_v6",
+    "Standard_D4pds_v6",
+    "Standard_D8pds_v6",
+    "Standard_D16pds_v6",
+    "Standard_D32pds_v6",
+    "Standard_D48pds_v6",
+    "Standard_D64pds_v6",
+    "Standard_D2plds_v6",
+    "Standard_D4plds_v6",
+    "Standard_D8plds_v6",
+    "Standard_D16plds_v6",
+    "Standard_D32plds_v6",
+    "Standard_D48plds_v6",
+    "Standard_D64plds_v6",
+    "Standard_D96plds_v6",
+    "Standard_D2ps_v6",
+    "Standard_D4ps_v6",
+    "Standard_D8ps_v6",
+    "Standard_D16ps_v6",
+    "Standard_D32ps_v6",
+    "Standard_D48ps_v6",
+    "Standard_D64ps_v6",
+    "Standard_E2pds_v6",
+    "Standard_E4pds_v6",
+    "Standard_E8pds_v6",
+    "Standard_E16pds_v6",
+    "Standard_E32pds_v6",
+    "Standard_E2ps_v6",
+    "Standard_E4ps_v6",
+    "Standard_E8ps_v6",
+    "Standard_E16ps_v6",
+    "Standard_E32ps_v6",
+    "Standard_NC4as_T4_v3",
+    "Standard_NC8as_T4_v3",
+    "Standard_NC16as_T4_v3",
+    "Standard_NC64as_T4_v3",
+    "Standard_DC2as_v6",
+    "Standard_DC4as_v6",
+    "Standard_DC8as_v6",
+    "Standard_DC16as_v6",
+    "Standard_DC32as_v6",
+    "Standard_DC48as_v6",
+    "Standard_DC64as_v6",
+    "Standard_DC96as_v6",
+    "Standard_DC2ads_v6",
+    "Standard_DC4ads_v6",
+    "Standard_DC8ads_v6",
+    "Standard_DC16ads_v6",
+    "Standard_DC32ads_v6",
+    "Standard_DC48ads_v6",
+    "Standard_DC64ads_v6",
+    "Standard_DC96ads_v6",
+    "Standard_EC2as_v6",
+    "Standard_EC4as_v6",
+    "Standard_EC8as_v6",
+    "Standard_EC16as_v6",
+    "Standard_EC32as_v6",
+    "Standard_EC48as_v6",
+    "Standard_EC64as_v6",
+    "Standard_EC96as_v6",
+    "Standard_EC2ads_v6",
+    "Standard_EC4ads_v6",
+    "Standard_EC8ads_v6",
+    "Standard_EC16ads_v6",
+    "Standard_EC32ads_v6",
+    "Standard_EC48ads_v6",
+    "Standard_EC64ads_v6",
+    "Standard_EC96ads_v6",
+    "Standard_NV4ads_V710_v5",
+    "Standard_NV8ads_V710_v5",
+    "Standard_NV12ads_V710_v5",
+    "Standard_NV24ads_V710_v5",
+    "Standard_NC40ads_H100_v5",
+    "Standard_NC80adis_H100_v5",
+    "Standard_ND96amsr_A100_v4",
+    "Standard_ND40rs_v2",
+    "Standard_NC6s_v3",
+    "Standard_NC12s_v3",
+    "Standard_NC24rs_v3",
+    "Standard_NC24s_v3",
+    "Standard_NG8ads_V620_v1",
+    "Standard_NG16ads_V620_v1",
+    "Standard_NG32adms_V620_v1",
+    "Standard_NG32ads_V620_v1",
+    "Standard_NV6s_v2",
+    "Standard_NV12s_v2",
+    "Standard_NV24s_v2",
+    "Standard_NV12s_v3",
+    "Standard_NV24s_v3",
+    "Standard_NV48s_v3",
+    "Standard_NCC40ads_H100_v5",
+    "Standard_NC24ads_A100_v4",
+    "Standard_NC48ads_A100_v4",
+    "Standard_NC96ads_A100_v4"
+  ],
+  "ladder": [
+    {
+      "size": "Standard_B1ms",
+      "vcpu": 1,
+      "ram_gib": 2,
+      "usd": 17.52,
+      "floor": true
+    },
+    {
+      "size": "Standard_B2s",
+      "vcpu": 2,
+      "ram_gib": 4,
+      "usd": 35.04
+    },
+    {
+      "size": "Standard_B2ms",
+      "vcpu": 2,
+      "ram_gib": 8,
+      "usd": 70.08
+    }
+  ],
+  "budget_ceiling_usd": 45,
+  "baseline_usd": 7.5,
+  "now_utc": "2026-08-20T19:48:52Z",
+  "last_resize_utc": "2026-08-14T23:12:17.5688762Z",
+  "activity_log_readable": true,
+  "metrics": {
+    "cpu_percent": [
+      {
+        "t": "2026-08-20T16:48:00Z",
+        "avg": 4.8
+      },
+      {
+        "t": "2026-08-20T16:53:00Z",
+        "avg": 2.372
+      },
+      {
+        "t": "2026-08-20T16:58:00Z",
+        "avg": 8.135
+      },
+      {
+        "t": "2026-08-20T17:03:00Z",
+        "avg": 5.57
+      },
+      {
+        "t": "2026-08-20T17:08:00Z",
+        "avg": 2.536
+      },
+      {
+        "t": "2026-08-20T17:13:00Z",
+        "avg": 2.4579999999999997
+      },
+      {
+        "t": "2026-08-20T17:18:00Z",
+        "avg": 8.442
+      },
+      {
+        "t": "2026-08-20T17:23:00Z",
+        "avg": 8.634
+      },
+      {
+        "t": "2026-08-20T17:28:00Z",
+        "avg": 8.299
+      },
+      {
+        "t": "2026-08-20T17:33:00Z",
+        "avg": 5.131
+      },
+      {
+        "t": "2026-08-20T17:38:00Z",
+        "avg": 2.597
+      },
+      {
+        "t": "2026-08-20T17:43:00Z",
+        "avg": 2.42
+      },
+      {
+        "t": "2026-08-20T17:48:00Z",
+        "avg": 4.858
+      },
+      {
+        "t": "2026-08-20T17:53:00Z",
+        "avg": 2.425
+      },
+      {
+        "t": "2026-08-20T17:58:00Z",
+        "avg": 8.262
+      },
+      {
+        "t": "2026-08-20T18:03:00Z",
+        "avg": 4.772
+      },
+      {
+        "t": "2026-08-20T18:08:00Z",
+        "avg": 2.582
+      },
+      {
+        "t": "2026-08-20T18:13:00Z",
+        "avg": 2.4219999999999997
+      },
+      {
+        "t": "2026-08-20T18:18:00Z",
+        "avg": 13.868
+      },
+      {
+        "t": "2026-08-20T18:23:00Z",
+        "avg": 3.901
+      },
+      {
+        "t": "2026-08-20T18:28:00Z",
+        "avg": 18.741
+      },
+      {
+        "t": "2026-08-20T18:33:00Z",
+        "avg": 2.467
+      },
+      {
+        "t": "2026-08-20T18:38:00Z",
+        "avg": 2.568
+      },
+      {
+        "t": "2026-08-20T18:43:00Z",
+        "avg": 4.732
+      },
+      {
+        "t": "2026-08-20T18:48:00Z",
+        "avg": 2.52
+      },
+      {
+        "t": "2026-08-20T18:53:00Z",
+        "avg": 2.421111111111111
+      },
+      {
+        "t": "2026-08-20T18:58:00Z",
+        "avg": 9.906
+      },
+      {
+        "t": "2026-08-20T19:03:00Z",
+        "avg": 3.141
+      },
+      {
+        "t": "2026-08-20T19:08:00Z",
+        "avg": 2.5420000000000003
+      },
+      {
+        "t": "2026-08-20T19:13:00Z",
+        "avg": 4.061
+      },
+      {
+        "t": "2026-08-20T19:18:00Z",
+        "avg": 3.02
+      },
+      {
+        "t": "2026-08-20T19:23:00Z",
+        "avg": 4.163
+      },
+      {
+        "t": "2026-08-20T19:28:00Z",
+        "avg": 9.907
+      },
+      {
+        "t": "2026-08-20T19:33:00Z",
+        "avg": 3.127
+      },
+      {
+        "t": "2026-08-20T19:38:00Z",
+        "avg": 2.537
+      },
+      {
+        "t": "2026-08-20T19:43:00Z",
+        "avg": 4.01
+      }
+    ],
+    "available_memory_bytes": [
+      {
+        "t": "2026-08-20T16:48:00Z",
+        "min": 900726784.0
+      },
+      {
+        "t": "2026-08-20T16:53:00Z",
+        "min": 899678208.0
+      },
+      {
+        "t": "2026-08-20T16:58:00Z",
+        "min": 899678208.0
+      },
+      {
+        "t": "2026-08-20T17:03:00Z",
+        "min": 896532480.0
+      },
+      {
+        "t": "2026-08-20T17:08:00Z",
+        "min": 895483904.0
+      },
+      {
+        "t": "2026-08-20T17:13:00Z",
+        "min": 901775360.0
+      },
+      {
+        "t": "2026-08-20T17:18:00Z",
+        "min": 896532480.0
+      },
+      {
+        "t": "2026-08-20T17:23:00Z",
+        "min": 815792128.0
+      },
+      {
+        "t": "2026-08-20T17:28:00Z",
+        "min": 892338176.0
+      },
+      {
+        "t": "2026-08-20T17:33:00Z",
+        "min": 914358272.0
+      },
+      {
+        "t": "2026-08-20T17:38:00Z",
+        "min": 912261120.0
+      },
+      {
+        "t": "2026-08-20T17:43:00Z",
+        "min": 946864128.0
+      },
+      {
+        "t": "2026-08-20T17:48:00Z",
+        "min": 926941184.0
+      },
+      {
+        "t": "2026-08-20T17:53:00Z",
+        "min": 934281216.0
+      },
+      {
+        "t": "2026-08-20T17:58:00Z",
+        "min": 901775360.0
+      },
+      {
+        "t": "2026-08-20T18:03:00Z",
+        "min": 935329792.0
+      },
+      {
+        "t": "2026-08-20T18:08:00Z",
+        "min": 935329792.0
+      },
+      {
+        "t": "2026-08-20T18:13:00Z",
+        "min": 948961280.0
+      },
+      {
+        "t": "2026-08-20T18:18:00Z",
+        "min": 898629632.0
+      },
+      {
+        "t": "2026-08-20T18:23:00Z",
+        "min": 962592768.0
+      },
+      {
+        "t": "2026-08-20T18:28:00Z",
+        "min": 803209216.0
+      },
+      {
+        "t": "2026-08-20T18:33:00Z",
+        "min": 936378368.0
+      },
+      {
+        "t": "2026-08-20T18:38:00Z",
+        "min": 937426944.0
+      },
+      {
+        "t": "2026-08-20T18:43:00Z",
+        "min": 966787072.0
+      },
+      {
+        "t": "2026-08-20T18:48:00Z",
+        "min": 970981376.0
+      },
+      {
+        "t": "2026-08-20T18:53:00Z",
+        "min": 985661440.0
+      },
+      {
+        "t": "2026-08-20T18:58:00Z",
+        "min": 945815552.0
+      },
+      {
+        "t": "2026-08-20T19:03:00Z",
+        "min": 945815552.0
+      },
+      {
+        "t": "2026-08-20T19:08:00Z",
+        "min": 942669824.0
+      },
+      {
+        "t": "2026-08-20T19:13:00Z",
+        "min": 926941184.0
+      },
+      {
+        "t": "2026-08-20T19:18:00Z",
+        "min": 929038336.0
+      },
+      {
+        "t": "2026-08-20T19:23:00Z",
+        "min": 936378368.0
+      },
+      {
+        "t": "2026-08-20T19:28:00Z",
+        "min": 919601152.0
+      },
+      {
+        "t": "2026-08-20T19:33:00Z",
+        "min": 948961280.0
+      },
+      {
+        "t": "2026-08-20T19:38:00Z",
+        "min": 948961280.0
+      },
+      {
+        "t": "2026-08-20T19:43:00Z",
+        "min": 932184064.0
+      }
+    ],
+    "cpu_credits_remaining": [
+      {
+        "t": "2026-08-20T16:48:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T16:53:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T16:58:00Z",
+        "min": 287.89
+      },
+      {
+        "t": "2026-08-20T17:03:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T17:08:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T17:13:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T17:18:00Z",
+        "min": 287.93
+      },
+      {
+        "t": "2026-08-20T17:23:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T17:28:00Z",
+        "min": 287.88
+      },
+      {
+        "t": "2026-08-20T17:33:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T17:38:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T17:43:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T17:48:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T17:53:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T17:58:00Z",
+        "min": 287.89
+      },
+      {
+        "t": "2026-08-20T18:03:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T18:08:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T18:13:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T18:18:00Z",
+        "min": 287.73
+      },
+      {
+        "t": "2026-08-20T18:23:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T18:28:00Z",
+        "min": 287.54
+      },
+      {
+        "t": "2026-08-20T18:33:00Z",
+        "min": 287.9
+      },
+      {
+        "t": "2026-08-20T18:38:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T18:43:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T18:48:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T18:53:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T18:58:00Z",
+        "min": 287.89
+      },
+      {
+        "t": "2026-08-20T19:03:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T19:08:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T19:13:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T19:18:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T19:23:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T19:28:00Z",
+        "min": 287.89
+      },
+      {
+        "t": "2026-08-20T19:33:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T19:38:00Z",
+        "min": 288.0
+      },
+      {
+        "t": "2026-08-20T19:43:00Z",
+        "min": 288.0
+      }
+    ],
+    "credits_max_7d": 288.0,
+    "hourly_14d": {
+      "cpu_percent": [
+        {
+          "t": "2026-08-06T19:48:00Z",
+          "avg": 4.157333333333333
+        },
+        {
+          "t": "2026-08-06T20:48:00Z",
+          "avg": 3.8625
+        },
+        {
+          "t": "2026-08-06T21:48:00Z",
+          "avg": 3.3643333333333336
+        },
+        {
+          "t": "2026-08-06T22:48:00Z",
+          "avg": 3.3888333333333334
+        },
+        {
+          "t": "2026-08-06T23:48:00Z",
+          "avg": 4.084491525423729
+        },
+        {
+          "t": "2026-08-07T00:48:00Z",
+          "avg": 3.4550833333333335
+        },
+        {
+          "t": "2026-08-07T01:48:00Z",
+          "avg": 3.327622950819672
+        },
+        {
+          "t": "2026-08-07T02:48:00Z",
+          "avg": 4.066333333333334
+        },
+        {
+          "t": "2026-08-07T03:48:00Z",
+          "avg": 3.23135593220339
+        },
+        {
+          "t": "2026-08-07T04:48:00Z",
+          "avg": 4.785491803278689
+        },
+        {
+          "t": "2026-08-07T05:48:00Z",
+          "avg": 5.202166666666667
+        },
+        {
+          "t": "2026-08-07T06:48:00Z",
+          "avg": 3.3645762711864404
+        },
+        {
+          "t": "2026-08-07T07:48:00Z",
+          "avg": 3.131311475409836
+        },
+        {
+          "t": "2026-08-07T08:48:00Z",
+          "avg": 2.9103333333333334
+        },
+        {
+          "t": "2026-08-07T09:48:00Z",
+          "avg": 3.0858333333333334
+        },
+        {
+          "t": "2026-08-07T10:48:00Z",
+          "avg": 3.3329661016949155
+        },
+        {
+          "t": "2026-08-07T11:48:00Z",
+          "avg": 3.2562295081967214
+        },
+        {
+          "t": "2026-08-07T12:48:00Z",
+          "avg": 4.073916666666666
+        },
+        {
+          "t": "2026-08-07T13:48:00Z",
+          "avg": 3.570847457627119
+        },
+        {
+          "t": "2026-08-07T14:48:00Z",
+          "avg": 3.449918032786885
+        },
+        {
+          "t": "2026-08-07T15:48:00Z",
+          "avg": 3.4810833333333333
+        },
+        {
+          "t": "2026-08-07T16:48:00Z",
+          "avg": 3.4756666666666667
+        },
+        {
+          "t": "2026-08-07T17:48:00Z",
+          "avg": 3.4926666666666666
+        },
+        {
+          "t": "2026-08-07T18:48:00Z",
+          "avg": 4.96
+        },
+        {
+          "t": "2026-08-07T19:48:00Z",
+          "avg": 3.239327731092437
+        },
+        {
+          "t": "2026-08-07T20:48:00Z",
+          "avg": 3.335583333333333
+        },
+        {
+          "t": "2026-08-07T21:48:00Z",
+          "avg": 3.1910833333333333
+        },
+        {
+          "t": "2026-08-07T22:48:00Z",
+          "avg": 3.30425
+        },
+        {
+          "t": "2026-08-07T23:48:00Z",
+          "avg": 4.0929166666666665
+        },
+        {
+          "t": "2026-08-08T00:48:00Z",
+          "avg": 3.334491525423729
+        },
+        {
+          "t": "2026-08-08T01:48:00Z",
+          "avg": 4.7780000000000005
+        },
+        {
+          "t": "2026-08-08T02:48:00Z",
+          "avg": 3.541393442622951
+        },
+        {
+          "t": "2026-08-08T03:48:00Z",
+          "avg": 3.6108474576271186
+        },
+        {
+          "t": "2026-08-08T04:48:00Z",
+          "avg": 3.986311475409836
+        },
+        {
+          "t": "2026-08-08T05:48:00Z",
+          "avg": 4.303833333333333
+        },
+        {
+          "t": "2026-08-08T06:48:00Z",
+          "avg": 3.89575
+        },
+        {
+          "t": "2026-08-08T07:48:00Z",
+          "avg": 3.445333333333333
+        },
+        {
+          "t": "2026-08-08T08:48:00Z",
+          "avg": 4.0568333333333335
+        },
+        {
+          "t": "2026-08-08T09:48:00Z",
+          "avg": 3.6365833333333333
+        },
+        {
+          "t": "2026-08-08T10:48:00Z",
+          "avg": 3.9926666666666666
+        },
+        {
+          "t": "2026-08-08T11:48:00Z",
+          "avg": 4.558135593220339
+        },
+        {
+          "t": "2026-08-08T12:48:00Z",
+          "avg": 3.1060833333333333
+        },
+        {
+          "t": "2026-08-08T13:48:00Z",
+          "avg": 3.0756557377049183
+        },
+        {
+          "t": "2026-08-08T14:48:00Z",
+          "avg": 3.0623333333333336
+        },
+        {
+          "t": "2026-08-08T15:48:00Z",
+          "avg": 3.3872500000000003
+        },
+        {
+          "t": "2026-08-08T16:48:00Z",
+          "avg": 3.3319166666666664
+        },
+        {
+          "t": "2026-08-08T17:48:00Z",
+          "avg": 4.8148333333333335
+        },
+        {
+          "t": "2026-08-08T18:48:00Z",
+          "avg": 3.772268907563025
+        },
+        {
+          "t": "2026-08-08T19:48:00Z",
+          "avg": 3.7164462809917356
+        },
+        {
+          "t": "2026-08-08T20:48:00Z",
+          "avg": 3.589322033898305
+        },
+        {
+          "t": "2026-08-08T21:48:00Z",
+          "avg": 3.1729166666666666
+        },
+        {
+          "t": "2026-08-08T22:48:00Z",
+          "avg": 3.342704918032787
+        },
+        {
+          "t": "2026-08-08T23:48:00Z",
+          "avg": 3.4967796610169493
+        },
+        {
+          "t": "2026-08-09T00:48:00Z",
+          "avg": 4.6317213114754106
+        },
+        {
+          "t": "2026-08-09T01:48:00Z",
+          "avg": 4.131016949152542
+        },
+        {
+          "t": "2026-08-09T02:48:00Z",
+          "avg": 3.5458196721311475
+        },
+        {
+          "t": "2026-08-09T03:48:00Z",
+          "avg": 3.5308333333333333
+        },
+        {
+          "t": "2026-08-09T04:48:00Z",
+          "avg": 3.5121008403361342
+        },
+        {
+          "t": "2026-08-09T05:48:00Z",
+          "avg": 4.80525
+        },
+        {
+          "t": "2026-08-09T06:48:00Z",
+          "avg": 3.9482500000000003
+        },
+        {
+          "t": "2026-08-09T07:48:00Z",
+          "avg": 3.39325
+        },
+        {
+          "t": "2026-08-09T08:48:00Z",
+          "avg": 3.8433333333333333
+        },
+        {
+          "t": "2026-08-09T09:48:00Z",
+          "avg": 3.3570833333333336
+        },
+        {
+          "t": "2026-08-09T10:48:00Z",
+          "avg": 3.33325
+        },
+        {
+          "t": "2026-08-09T11:48:00Z",
+          "avg": 3.5665833333333334
+        },
+        {
+          "t": "2026-08-09T12:48:00Z",
+          "avg": 3.226525423728814
+        },
+        {
+          "t": "2026-08-09T13:48:00Z",
+          "avg": 4.444344262295083
+        },
+        {
+          "t": "2026-08-09T14:48:00Z",
+          "avg": 3.3789830508474576
+        },
+        {
+          "t": "2026-08-09T15:48:00Z",
+          "avg": 3.8522499999999997
+        },
+        {
+          "t": "2026-08-09T16:48:00Z",
+          "avg": 3.2842622950819673
+        },
+        {
+          "t": "2026-08-09T17:48:00Z",
+          "avg": 3.32375
+        },
+        {
+          "t": "2026-08-09T18:48:00Z",
+          "avg": 3.646666666666667
+        },
+        {
+          "t": "2026-08-09T19:48:00Z",
+          "avg": 4.094666666666667
+        },
+        {
+          "t": "2026-08-09T20:48:00Z",
+          "avg": 3.33925
+        },
+        {
+          "t": "2026-08-09T21:48:00Z",
+          "avg": 3.373220338983051
+        },
+        {
+          "t": "2026-08-09T22:48:00Z",
+          "avg": 6.48125
+        },
+        {
+          "t": "2026-08-09T23:48:00Z",
+          "avg": 4.456065573770491
+        },
+        {
+          "t": "2026-08-10T00:48:00Z",
+          "avg": 4.2844999999999995
+        },
+        {
+          "t": "2026-08-10T01:48:00Z",
+          "avg": 4.403389830508475
+        },
+        {
+          "t": "2026-08-10T02:48:00Z",
+          "avg": 4.465999999999999
+        },
+        {
+          "t": "2026-08-10T03:48:00Z",
+          "avg": 4.2852500000000004
+        },
+        {
+          "t": "2026-08-10T04:48:00Z",
+          "avg": 5.5418032786885245
+        },
+        {
+          "t": "2026-08-10T05:48:00Z",
+          "avg": 6.0640833333333335
+        },
+        {
+          "t": "2026-08-10T06:48:00Z",
+          "avg": 5.274666666666667
+        },
+        {
+          "t": "2026-08-10T07:48:00Z",
+          "avg": 5.782916666666667
+        },
+        {
+          "t": "2026-08-10T08:48:00Z",
+          "avg": 5.827583333333333
+        },
+        {
+          "t": "2026-08-10T09:48:00Z",
+          "avg": 5.867966101694915
+        },
+        {
+          "t": "2026-08-10T10:48:00Z",
+          "avg": 6.5448360655737705
+        },
+        {
+          "t": "2026-08-10T11:48:00Z",
+          "avg": 5.5360000000000005
+        },
+        {
+          "t": "2026-08-10T12:48:00Z",
+          "avg": 4.773504273504273
+        },
+        {
+          "t": "2026-08-10T13:48:00Z",
+          "avg": 4.634083333333334
+        },
+        {
+          "t": "2026-08-10T14:48:00Z",
+          "avg": 5.494083333333333
+        },
+        {
+          "t": "2026-08-10T15:48:00Z",
+          "avg": 6.3326229508196725
+        },
+        {
+          "t": "2026-08-10T16:48:00Z",
+          "avg": 5.848166666666667
+        },
+        {
+          "t": "2026-08-10T17:48:00Z",
+          "avg": 4.258916666666667
+        },
+        {
+          "t": "2026-08-10T18:48:00Z",
+          "avg": 5.419666666666667
+        },
+        {
+          "t": "2026-08-10T19:48:00Z",
+          "avg": 4.31875
+        },
+        {
+          "t": "2026-08-10T20:48:00Z",
+          "avg": 4.2517499999999995
+        },
+        {
+          "t": "2026-08-10T21:48:00Z",
+          "avg": 4.210916666666667
+        },
+        {
+          "t": "2026-08-10T22:48:00Z",
+          "avg": 5.272881355932204
+        },
+        {
+          "t": "2026-08-10T23:48:00Z",
+          "avg": 4.4377868852459015
+        },
+        {
+          "t": "2026-08-11T00:48:00Z",
+          "avg": 4.215416666666667
+        },
+        {
+          "t": "2026-08-11T01:48:00Z",
+          "avg": 4.2828333333333335
+        },
+        {
+          "t": "2026-08-11T02:48:00Z",
+          "avg": 5.541083333333333
+        },
+        {
+          "t": "2026-08-11T03:48:00Z",
+          "avg": 5.051610169491526
+        },
+        {
+          "t": "2026-08-11T04:48:00Z",
+          "avg": 4.52925
+        },
+        {
+          "t": "2026-08-11T05:48:00Z",
+          "avg": 7.380163934426229
+        },
+        {
+          "t": "2026-08-11T06:48:00Z",
+          "avg": 4.25975
+        },
+        {
+          "t": "2026-08-11T07:48:00Z",
+          "avg": 4.2665
+        },
+        {
+          "t": "2026-08-11T08:48:00Z",
+          "avg": 4.3332500000000005
+        },
+        {
+          "t": "2026-08-11T09:48:00Z",
+          "avg": 4.989916666666667
+        },
+        {
+          "t": "2026-08-11T10:48:00Z",
+          "avg": 4.57625
+        },
+        {
+          "t": "2026-08-11T11:48:00Z",
+          "avg": 4.546271186440678
+        },
+        {
+          "t": "2026-08-11T12:48:00Z",
+          "avg": 4.469590163934426
+        },
+        {
+          "t": "2026-08-11T13:48:00Z",
+          "avg": 4.535916666666666
+        },
+        {
+          "t": "2026-08-11T14:48:00Z",
+          "avg": 4.599333333333333
+        },
+        {
+          "t": "2026-08-11T15:48:00Z",
+          "avg": 5.365847457627118
+        },
+        {
+          "t": "2026-08-11T16:48:00Z",
+          "avg": 4.537377049180328
+        },
+        {
+          "t": "2026-08-11T17:48:00Z",
+          "avg": 4.546101694915254
+        },
+        {
+          "t": "2026-08-11T18:48:00Z",
+          "avg": 4.476229508196721
+        },
+        {
+          "t": "2026-08-11T19:48:00Z",
+          "avg": 4.498583333333333
+        },
+        {
+          "t": "2026-08-11T20:48:00Z",
+          "avg": 4.519416666666667
+        },
+        {
+          "t": "2026-08-11T21:48:00Z",
+          "avg": 4.5150420168067225
+        },
+        {
+          "t": "2026-08-11T22:48:00Z",
+          "avg": 5.213916666666666
+        },
+        {
+          "t": "2026-08-11T23:48:00Z",
+          "avg": 5.102833333333334
+        },
+        {
+          "t": "2026-08-12T00:48:00Z",
+          "avg": 5.346166666666666
+        },
+        {
+          "t": "2026-08-12T01:48:00Z",
+          "avg": 4.54075
+        },
+        {
+          "t": "2026-08-12T02:48:00Z",
+          "avg": 4.88775
+        },
+        {
+          "t": "2026-08-12T03:48:00Z",
+          "avg": 4.548416666666666
+        },
+        {
+          "t": "2026-08-12T04:48:00Z",
+          "avg": 4.710593220338983
+        },
+        {
+          "t": "2026-08-12T05:48:00Z",
+          "avg": 4.833360655737705
+        },
+        {
+          "t": "2026-08-12T06:48:00Z",
+          "avg": 5.179083333333334
+        },
+        {
+          "t": "2026-08-12T07:48:00Z",
+          "avg": 4.595833333333333
+        },
+        {
+          "t": "2026-08-12T08:48:00Z",
+          "avg": 4.405084745762712
+        },
+        {
+          "t": "2026-08-12T09:48:00Z",
+          "avg": 4.538114754098361
+        },
+        {
+          "t": "2026-08-12T10:48:00Z",
+          "avg": 4.802083333333333
+        },
+        {
+          "t": "2026-08-12T11:48:00Z",
+          "avg": 4.896166666666667
+        },
+        {
+          "t": "2026-08-12T12:48:00Z",
+          "avg": 5.868220338983051
+        },
+        {
+          "t": "2026-08-12T13:48:00Z",
+          "avg": 5.223442622950819
+        },
+        {
+          "t": "2026-08-12T14:48:00Z",
+          "avg": 5.5
+        },
+        {
+          "t": "2026-08-12T15:48:00Z",
+          "avg": 4.580416666666666
+        },
+        {
+          "t": "2026-08-12T16:48:00Z",
+          "avg": 4.453916666666667
+        },
+        {
+          "t": "2026-08-12T17:48:00Z",
+          "avg": 5.225666666666667
+        },
+        {
+          "t": "2026-08-12T18:48:00Z",
+          "avg": 4.54275
+        },
+        {
+          "t": "2026-08-12T19:48:00Z",
+          "avg": 5.2379999999999995
+        },
+        {
+          "t": "2026-08-12T20:48:00Z",
+          "avg": 4.5845
+        },
+        {
+          "t": "2026-08-12T21:48:00Z",
+          "avg": 4.5449166666666665
+        },
+        {
+          "t": "2026-08-12T22:48:00Z",
+          "avg": 4.602333333333333
+        },
+        {
+          "t": "2026-08-12T23:48:00Z",
+          "avg": 4.56775
+        },
+        {
+          "t": "2026-08-13T00:48:00Z",
+          "avg": 5.337666666666666
+        },
+        {
+          "t": "2026-08-13T01:48:00Z",
+          "avg": 4.307583333333333
+        },
+        {
+          "t": "2026-08-13T02:48:00Z",
+          "avg": 4.399333333333333
+        },
+        {
+          "t": "2026-08-13T03:48:00Z",
+          "avg": 4.2965
+        },
+        {
+          "t": "2026-08-13T04:48:00Z",
+          "avg": 5.0873333333333335
+        },
+        {
+          "t": "2026-08-13T05:48:00Z",
+          "avg": 5.744237288135594
+        },
+        {
+          "t": "2026-08-13T06:48:00Z",
+          "avg": 5.218360655737705
+        },
+        {
+          "t": "2026-08-13T07:48:00Z",
+          "avg": 4.639327731092437
+        },
+        {
+          "t": "2026-08-13T08:48:00Z",
+          "avg": 4.60525
+        },
+        {
+          "t": "2026-08-13T09:48:00Z",
+          "avg": 4.647333333333333
+        },
+        {
+          "t": "2026-08-13T10:48:00Z",
+          "avg": 5.343916666666667
+        },
+        {
+          "t": "2026-08-13T11:48:00Z",
+          "avg": 4.2515
+        },
+        {
+          "t": "2026-08-13T12:48:00Z",
+          "avg": 5.624067796610169
+        },
+        {
+          "t": "2026-08-13T13:48:00Z",
+          "avg": 5.227166666666666
+        },
+        {
+          "t": "2026-08-13T14:48:00Z",
+          "avg": 4.556229508196721
+        },
+        {
+          "t": "2026-08-13T15:48:00Z",
+          "avg": 4.559916666666667
+        },
+        {
+          "t": "2026-08-13T16:48:00Z",
+          "avg": 4.560420168067227
+        },
+        {
+          "t": "2026-08-13T17:48:00Z",
+          "avg": 4.516776859504132
+        },
+        {
+          "t": "2026-08-13T18:48:00Z",
+          "avg": 6.935583333333333
+        },
+        {
+          "t": "2026-08-13T19:48:00Z",
+          "avg": 5.830847457627119
+        },
+        {
+          "t": "2026-08-13T20:48:00Z",
+          "avg": 4.744098360655737
+        },
+        {
+          "t": "2026-08-13T21:48:00Z",
+          "avg": 4.718083333333333
+        },
+        {
+          "t": "2026-08-13T22:48:00Z",
+          "avg": 4.869915254237288
+        },
+        {
+          "t": "2026-08-13T23:48:00Z",
+          "avg": 4.608416666666667
+        },
+        {
+          "t": "2026-08-14T00:48:00Z",
+          "avg": 4.772950819672131
+        },
+        {
+          "t": "2026-08-14T01:48:00Z",
+          "avg": 4.819237288135593
+        },
+        {
+          "t": "2026-08-14T02:48:00Z",
+          "avg": 5.316229508196722
+        },
+        {
+          "t": "2026-08-14T03:48:00Z",
+          "avg": 4.622833333333333
+        },
+        {
+          "t": "2026-08-14T04:48:00Z",
+          "avg": 4.885416666666667
+        },
+        {
+          "t": "2026-08-14T05:48:00Z",
+          "avg": 4.646
+        },
+        {
+          "t": "2026-08-14T06:48:00Z",
+          "avg": 4.597416666666667
+        },
+        {
+          "t": "2026-08-14T07:48:00Z",
+          "avg": 4.622416666666667
+        },
+        {
+          "t": "2026-08-14T08:48:00Z",
+          "avg": 6.098333333333333
+        },
+        {
+          "t": "2026-08-14T09:48:00Z",
+          "avg": 4.686000000000001
+        },
+        {
+          "t": "2026-08-14T10:48:00Z",
+          "avg": 4.647372881355932
+        },
+        {
+          "t": "2026-08-14T11:48:00Z",
+          "avg": 4.750491803278688
+        },
+        {
+          "t": "2026-08-14T12:48:00Z",
+          "avg": 5.9928333333333335
+        },
+        {
+          "t": "2026-08-14T13:48:00Z",
+          "avg": 4.725083333333333
+        },
+        {
+          "t": "2026-08-14T14:48:00Z",
+          "avg": 4.680833333333334
+        },
+        {
+          "t": "2026-08-14T15:48:00Z",
+          "avg": 5.5594166666666665
+        },
+        {
+          "t": "2026-08-14T16:48:00Z",
+          "avg": 4.684537815126051
+        },
+        {
+          "t": "2026-08-14T17:48:00Z",
+          "avg": 4.41275
+        },
+        {
+          "t": "2026-08-14T18:48:00Z",
+          "avg": 4.6193333333333335
+        },
+        {
+          "t": "2026-08-14T19:48:00Z",
+          "avg": 5.260666666666666
+        },
+        {
+          "t": "2026-08-14T20:48:00Z",
+          "avg": 4.59425
+        },
+        {
+          "t": "2026-08-14T21:48:00Z",
+          "avg": 10.05084745762712
+        },
+        {
+          "t": "2026-08-14T22:48:00Z",
+          "avg": 12.778770491803279
+        },
+        {
+          "t": "2026-08-14T23:48:00Z",
+          "avg": 4.4355
+        },
+        {
+          "t": "2026-08-15T00:48:00Z",
+          "avg": 4.214416666666667
+        },
+        {
+          "t": "2026-08-15T01:48:00Z",
+          "avg": 4.227916666666667
+        },
+        {
+          "t": "2026-08-15T02:48:00Z",
+          "avg": 4.539083333333334
+        },
+        {
+          "t": "2026-08-15T03:48:00Z",
+          "avg": 4.958833333333333
+        },
+        {
+          "t": "2026-08-15T04:48:00Z",
+          "avg": 4.557333333333333
+        },
+        {
+          "t": "2026-08-15T05:48:00Z",
+          "avg": 4.5272499999999996
+        },
+        {
+          "t": "2026-08-15T06:48:00Z",
+          "avg": 4.772333333333333
+        },
+        {
+          "t": "2026-08-15T07:48:00Z",
+          "avg": 4.555499999999999
+        },
+        {
+          "t": "2026-08-15T08:48:00Z",
+          "avg": 4.670249999999999
+        },
+        {
+          "t": "2026-08-15T09:48:00Z",
+          "avg": 4.5649999999999995
+        },
+        {
+          "t": "2026-08-15T10:48:00Z",
+          "avg": 5.45325
+        },
+        {
+          "t": "2026-08-15T11:48:00Z",
+          "avg": 6.614
+        },
+        {
+          "t": "2026-08-15T12:48:00Z",
+          "avg": 4.857627118644068
+        },
+        {
+          "t": "2026-08-15T13:48:00Z",
+          "avg": 5.382499999999999
+        },
+        {
+          "t": "2026-08-15T14:48:00Z",
+          "avg": 5.187868852459016
+        },
+        {
+          "t": "2026-08-15T15:48:00Z",
+          "avg": 4.604
+        },
+        {
+          "t": "2026-08-15T16:48:00Z",
+          "avg": 5.1088135593220345
+        },
+        {
+          "t": "2026-08-15T17:48:00Z",
+          "avg": 4.652213114754098
+        },
+        {
+          "t": "2026-08-15T18:48:00Z",
+          "avg": 5.312250000000001
+        },
+        {
+          "t": "2026-08-15T19:48:00Z",
+          "avg": 4.665
+        },
+        {
+          "t": "2026-08-15T20:48:00Z",
+          "avg": 4.697166666666666
+        },
+        {
+          "t": "2026-08-15T21:48:00Z",
+          "avg": 4.548500000000001
+        },
+        {
+          "t": "2026-08-15T22:48:00Z",
+          "avg": 4.886949152542373
+        },
+        {
+          "t": "2026-08-15T23:48:00Z",
+          "avg": 5.044918032786885
+        },
+        {
+          "t": "2026-08-16T00:48:00Z",
+          "avg": 4.603559322033899
+        },
+        {
+          "t": "2026-08-16T01:48:00Z",
+          "avg": 4.679416666666667
+        },
+        {
+          "t": "2026-08-16T02:48:00Z",
+          "avg": 4.732666666666666
+        },
+        {
+          "t": "2026-08-16T03:48:00Z",
+          "avg": 4.794666666666667
+        },
+        {
+          "t": "2026-08-16T04:48:00Z",
+          "avg": 4.641416666666667
+        },
+        {
+          "t": "2026-08-16T05:48:00Z",
+          "avg": 5.975583333333334
+        },
+        {
+          "t": "2026-08-16T06:48:00Z",
+          "avg": 4.660749999999999
+        },
+        {
+          "t": "2026-08-16T07:48:00Z",
+          "avg": 5.416250000000001
+        },
+        {
+          "t": "2026-08-16T08:48:00Z",
+          "avg": 4.982033898305085
+        },
+        {
+          "t": "2026-08-16T09:48:00Z",
+          "avg": 5.513360655737705
+        },
+        {
+          "t": "2026-08-16T10:48:00Z",
+          "avg": 5.226166666666667
+        },
+        {
+          "t": "2026-08-16T11:48:00Z",
+          "avg": 4.365166666666667
+        },
+        {
+          "t": "2026-08-16T12:48:00Z",
+          "avg": 6.465169491525423
+        },
+        {
+          "t": "2026-08-16T13:48:00Z",
+          "avg": 5.01983606557377
+        },
+        {
+          "t": "2026-08-16T14:48:00Z",
+          "avg": 4.585416666666666
+        },
+        {
+          "t": "2026-08-16T15:48:00Z",
+          "avg": 4.594915254237288
+        },
+        {
+          "t": "2026-08-16T16:48:00Z",
+          "avg": 6.453278688524589
+        },
+        {
+          "t": "2026-08-16T17:48:00Z",
+          "avg": 4.147118644067796
+        },
+        {
+          "t": "2026-08-16T18:48:00Z",
+          "avg": 4.425491803278688
+        },
+        {
+          "t": "2026-08-16T19:48:00Z",
+          "avg": 5.447416666666667
+        },
+        {
+          "t": "2026-08-16T20:48:00Z",
+          "avg": 4.556666666666667
+        },
+        {
+          "t": "2026-08-16T21:48:00Z",
+          "avg": 4.52575
+        },
+        {
+          "t": "2026-08-16T22:48:00Z",
+          "avg": 5.0482499999999995
+        },
+        {
+          "t": "2026-08-16T23:48:00Z",
+          "avg": 4.578416666666667
+        },
+        {
+          "t": "2026-08-17T00:48:00Z",
+          "avg": 4.6450000000000005
+        },
+        {
+          "t": "2026-08-17T01:48:00Z",
+          "avg": 4.517459016393443
+        },
+        {
+          "t": "2026-08-17T02:48:00Z",
+          "avg": 5.423416666666666
+        },
+        {
+          "t": "2026-08-17T03:48:00Z",
+          "avg": 4.533833333333333
+        },
+        {
+          "t": "2026-08-17T04:48:00Z",
+          "avg": 5.136583333333333
+        },
+        {
+          "t": "2026-08-17T05:48:00Z",
+          "avg": 4.752166666666667
+        },
+        {
+          "t": "2026-08-17T06:48:00Z",
+          "avg": 4.5423728813559325
+        },
+        {
+          "t": "2026-08-17T07:48:00Z",
+          "avg": 4.820655737704918
+        },
+        {
+          "t": "2026-08-17T08:48:00Z",
+          "avg": 5.916333333333333
+        },
+        {
+          "t": "2026-08-17T09:48:00Z",
+          "avg": 4.553361344537815
+        },
+        {
+          "t": "2026-08-17T10:48:00Z",
+          "avg": 6.383193277310925
+        },
+        {
+          "t": "2026-08-17T11:48:00Z",
+          "avg": 4.561157024793388
+        },
+        {
+          "t": "2026-08-17T12:48:00Z",
+          "avg": 4.578666666666667
+        },
+        {
+          "t": "2026-08-17T13:48:00Z",
+          "avg": 4.670916666666667
+        },
+        {
+          "t": "2026-08-17T14:48:00Z",
+          "avg": 4.5633333333333335
+        },
+        {
+          "t": "2026-08-17T15:48:00Z",
+          "avg": 4.578416666666667
+        },
+        {
+          "t": "2026-08-17T16:48:00Z",
+          "avg": 5.296694915254237
+        },
+        {
+          "t": "2026-08-17T17:48:00Z",
+          "avg": 4.675491803278688
+        },
+        {
+          "t": "2026-08-17T18:48:00Z",
+          "avg": 4.3758333333333335
+        },
+        {
+          "t": "2026-08-17T19:48:00Z",
+          "avg": 4.192833333333334
+        },
+        {
+          "t": "2026-08-17T20:48:00Z",
+          "avg": 4.570833333333334
+        },
+        {
+          "t": "2026-08-17T21:48:00Z",
+          "avg": 4.9155
+        },
+        {
+          "t": "2026-08-17T22:48:00Z",
+          "avg": 4.926896551724138
+        },
+        {
+          "t": "2026-08-17T23:48:00Z",
+          "avg": 5.724666666666667
+        },
+        {
+          "t": "2026-08-18T00:48:00Z",
+          "avg": 5.207166666666667
+        },
+        {
+          "t": "2026-08-18T01:48:00Z",
+          "avg": 4.562833333333333
+        },
+        {
+          "t": "2026-08-18T02:48:00Z",
+          "avg": 4.87275
+        },
+        {
+          "t": "2026-08-18T03:48:00Z",
+          "avg": 5.055499999999999
+        },
+        {
+          "t": "2026-08-18T04:48:00Z",
+          "avg": 4.477416666666667
+        },
+        {
+          "t": "2026-08-18T05:48:00Z",
+          "avg": 5.464166666666667
+        },
+        {
+          "t": "2026-08-18T06:48:00Z",
+          "avg": 5.053
+        },
+        {
+          "t": "2026-08-18T07:48:00Z",
+          "avg": 4.858416666666667
+        },
+        {
+          "t": "2026-08-18T08:48:00Z",
+          "avg": 4.584416666666667
+        },
+        {
+          "t": "2026-08-18T09:48:00Z",
+          "avg": 4.698083333333333
+        },
+        {
+          "t": "2026-08-18T10:48:00Z",
+          "avg": 4.780666666666666
+        },
+        {
+          "t": "2026-08-18T11:48:00Z",
+          "avg": 5.489333333333334
+        },
+        {
+          "t": "2026-08-18T12:48:00Z",
+          "avg": 5.418083333333333
+        },
+        {
+          "t": "2026-08-18T13:48:00Z",
+          "avg": 5.71925
+        },
+        {
+          "t": "2026-08-18T14:48:00Z",
+          "avg": 4.32925
+        },
+        {
+          "t": "2026-08-18T15:48:00Z",
+          "avg": 4.374333333333333
+        },
+        {
+          "t": "2026-08-18T16:48:00Z",
+          "avg": 4.294833333333333
+        },
+        {
+          "t": "2026-08-18T17:48:00Z",
+          "avg": 4.310333333333333
+        },
+        {
+          "t": "2026-08-18T18:48:00Z",
+          "avg": 5.09025
+        },
+        {
+          "t": "2026-08-18T19:48:00Z",
+          "avg": 5.1245
+        },
+        {
+          "t": "2026-08-18T20:48:00Z",
+          "avg": 4.397
+        },
+        {
+          "t": "2026-08-18T21:48:00Z",
+          "avg": 4.342583333333334
+        },
+        {
+          "t": "2026-08-18T22:48:00Z",
+          "avg": 4.654750000000001
+        },
+        {
+          "t": "2026-08-18T23:48:00Z",
+          "avg": 5.162999999999999
+        },
+        {
+          "t": "2026-08-19T00:48:00Z",
+          "avg": 4.319500000000001
+        },
+        {
+          "t": "2026-08-19T01:48:00Z",
+          "avg": 4.328916666666667
+        },
+        {
+          "t": "2026-08-19T02:48:00Z",
+          "avg": 5.363333333333333
+        },
+        {
+          "t": "2026-08-19T03:48:00Z",
+          "avg": 4.796666666666667
+        },
+        {
+          "t": "2026-08-19T04:48:00Z",
+          "avg": 5.554833333333334
+        },
+        {
+          "t": "2026-08-19T05:48:00Z",
+          "avg": 4.771583333333334
+        },
+        {
+          "t": "2026-08-19T06:48:00Z",
+          "avg": 4.8115
+        },
+        {
+          "t": "2026-08-19T07:48:00Z",
+          "avg": 4.6538135593220336
+        },
+        {
+          "t": "2026-08-19T08:48:00Z",
+          "avg": 6.256
+        },
+        {
+          "t": "2026-08-19T09:48:00Z",
+          "avg": 4.7295
+        },
+        {
+          "t": "2026-08-19T10:48:00Z",
+          "avg": 4.644583333333333
+        },
+        {
+          "t": "2026-08-19T11:48:00Z",
+          "avg": 5.395
+        },
+        {
+          "t": "2026-08-19T12:48:00Z",
+          "avg": 4.796
+        },
+        {
+          "t": "2026-08-19T13:48:00Z",
+          "avg": 4.67725
+        },
+        {
+          "t": "2026-08-19T14:48:00Z",
+          "avg": 5.29675
+        },
+        {
+          "t": "2026-08-19T15:48:00Z",
+          "avg": 4.338666666666667
+        },
+        {
+          "t": "2026-08-19T16:48:00Z",
+          "avg": 4.430750000000001
+        },
+        {
+          "t": "2026-08-19T17:48:00Z",
+          "avg": 5.690333333333333
+        },
+        {
+          "t": "2026-08-19T18:48:00Z",
+          "avg": 4.2348333333333334
+        },
+        {
+          "t": "2026-08-19T19:48:00Z",
+          "avg": 4.28225
+        },
+        {
+          "t": "2026-08-19T20:48:00Z",
+          "avg": 4.327916666666667
+        },
+        {
+          "t": "2026-08-19T21:48:00Z",
+          "avg": 5.19625
+        },
+        {
+          "t": "2026-08-19T22:48:00Z",
+          "avg": 4.563416666666667
+        },
+        {
+          "t": "2026-08-19T23:48:00Z",
+          "avg": 4.301916666666667
+        },
+        {
+          "t": "2026-08-20T00:48:00Z",
+          "avg": 4.366083333333333
+        },
+        {
+          "t": "2026-08-20T01:48:00Z",
+          "avg": 4.3228333333333335
+        },
+        {
+          "t": "2026-08-20T02:48:00Z",
+          "avg": 4.546916666666666
+        },
+        {
+          "t": "2026-08-20T03:48:00Z",
+          "avg": 5.012166666666667
+        },
+        {
+          "t": "2026-08-20T04:48:00Z",
+          "avg": 5.170416666666667
+        },
+        {
+          "t": "2026-08-20T05:48:00Z",
+          "avg": 6.16575
+        },
+        {
+          "t": "2026-08-20T06:48:00Z",
+          "avg": 4.322166666666666
+        },
+        {
+          "t": "2026-08-20T07:48:00Z",
+          "avg": 5.55125
+        },
+        {
+          "t": "2026-08-20T08:48:00Z",
+          "avg": 6.362166666666667
+        },
+        {
+          "t": "2026-08-20T09:48:00Z",
+          "avg": 4.386333333333334
+        },
+        {
+          "t": "2026-08-20T10:48:00Z",
+          "avg": 4.394416666666667
+        },
+        {
+          "t": "2026-08-20T11:48:00Z",
+          "avg": 5.979583333333333
+        },
+        {
+          "t": "2026-08-20T12:48:00Z",
+          "avg": 5.2891666666666675
+        },
+        {
+          "t": "2026-08-20T13:48:00Z",
+          "avg": 4.481333333333334
+        },
+        {
+          "t": "2026-08-20T14:48:00Z",
+          "avg": 4.380166666666667
+        },
+        {
+          "t": "2026-08-20T15:48:00Z",
+          "avg": 4.353666666666667
+        },
+        {
+          "t": "2026-08-20T16:48:00Z",
+          "avg": 5.116166666666667
+        },
+        {
+          "t": "2026-08-20T17:48:00Z",
+          "avg": 5.9665
+        },
+        {
+          "t": "2026-08-20T18:48:00Z",
+          "avg": 4.295210084033614
+        }
+      ],
+      "available_memory_bytes": [
+        {
+          "t": "2026-08-06T19:48:00Z",
+          "min": 757071872.0
+        },
+        {
+          "t": "2026-08-06T20:48:00Z",
+          "min": 800063488.0
+        },
+        {
+          "t": "2026-08-06T21:48:00Z",
+          "min": 846200832.0
+        },
+        {
+          "t": "2026-08-06T22:48:00Z",
+          "min": 860880896.0
+        },
+        {
+          "t": "2026-08-06T23:48:00Z",
+          "min": 831520768.0
+        },
+        {
+          "t": "2026-08-07T00:48:00Z",
+          "min": 825229312.0
+        },
+        {
+          "t": "2026-08-07T01:48:00Z",
+          "min": 838860800.0
+        },
+        {
+          "t": "2026-08-07T02:48:00Z",
+          "min": 819986432.0
+        },
+        {
+          "t": "2026-08-07T03:48:00Z",
+          "min": 834666496.0
+        },
+        {
+          "t": "2026-08-07T04:48:00Z",
+          "min": 816840704.0
+        },
+        {
+          "t": "2026-08-07T05:48:00Z",
+          "min": 806354944.0
+        },
+        {
+          "t": "2026-08-07T06:48:00Z",
+          "min": 804257792.0
+        },
+        {
+          "t": "2026-08-07T07:48:00Z",
+          "min": 797966336.0
+        },
+        {
+          "t": "2026-08-07T08:48:00Z",
+          "min": 796917760.0
+        },
+        {
+          "t": "2026-08-07T09:48:00Z",
+          "min": 801112064.0
+        },
+        {
+          "t": "2026-08-07T10:48:00Z",
+          "min": 788529152.0
+        },
+        {
+          "t": "2026-08-07T11:48:00Z",
+          "min": 789577728.0
+        },
+        {
+          "t": "2026-08-07T12:48:00Z",
+          "min": 795869184.0
+        },
+        {
+          "t": "2026-08-07T13:48:00Z",
+          "min": 788529152.0
+        },
+        {
+          "t": "2026-08-07T14:48:00Z",
+          "min": 773849088.0
+        },
+        {
+          "t": "2026-08-07T15:48:00Z",
+          "min": 886046720.0
+        },
+        {
+          "t": "2026-08-07T16:48:00Z",
+          "min": 922746880.0
+        },
+        {
+          "t": "2026-08-07T17:48:00Z",
+          "min": 925892608.0
+        },
+        {
+          "t": "2026-08-07T18:48:00Z",
+          "min": 887095296.0
+        },
+        {
+          "t": "2026-08-07T19:48:00Z",
+          "min": 944766976.0
+        },
+        {
+          "t": "2026-08-07T20:48:00Z",
+          "min": 943718400.0
+        },
+        {
+          "t": "2026-08-07T21:48:00Z",
+          "min": 944766976.0
+        },
+        {
+          "t": "2026-08-07T22:48:00Z",
+          "min": 929038336.0
+        },
+        {
+          "t": "2026-08-07T23:48:00Z",
+          "min": 890241024.0
+        },
+        {
+          "t": "2026-08-08T00:48:00Z",
+          "min": 903872512.0
+        },
+        {
+          "t": "2026-08-08T01:48:00Z",
+          "min": 870318080.0
+        },
+        {
+          "t": "2026-08-08T02:48:00Z",
+          "min": 929038336.0
+        },
+        {
+          "t": "2026-08-08T03:48:00Z",
+          "min": 933232640.0
+        },
+        {
+          "t": "2026-08-08T04:48:00Z",
+          "min": 901775360.0
+        },
+        {
+          "t": "2026-08-08T05:48:00Z",
+          "min": 892338176.0
+        },
+        {
+          "t": "2026-08-08T06:48:00Z",
+          "min": 855638016.0
+        },
+        {
+          "t": "2026-08-08T07:48:00Z",
+          "min": 852492288.0
+        },
+        {
+          "t": "2026-08-08T08:48:00Z",
+          "min": 852492288.0
+        },
+        {
+          "t": "2026-08-08T09:48:00Z",
+          "min": 859832320.0
+        },
+        {
+          "t": "2026-08-08T10:48:00Z",
+          "min": 836763648.0
+        },
+        {
+          "t": "2026-08-08T11:48:00Z",
+          "min": 823132160.0
+        },
+        {
+          "t": "2026-08-08T12:48:00Z",
+          "min": 849346560.0
+        },
+        {
+          "t": "2026-08-08T13:48:00Z",
+          "min": 834666496.0
+        },
+        {
+          "t": "2026-08-08T14:48:00Z",
+          "min": 805306368.0
+        },
+        {
+          "t": "2026-08-08T15:48:00Z",
+          "min": 788529152.0
+        },
+        {
+          "t": "2026-08-08T16:48:00Z",
+          "min": 782237696.0
+        },
+        {
+          "t": "2026-08-08T17:48:00Z",
+          "min": 788529152.0
+        },
+        {
+          "t": "2026-08-08T18:48:00Z",
+          "min": 801112064.0
+        },
+        {
+          "t": "2026-08-08T19:48:00Z",
+          "min": 805306368.0
+        },
+        {
+          "t": "2026-08-08T20:48:00Z",
+          "min": 786432000.0
+        },
+        {
+          "t": "2026-08-08T21:48:00Z",
+          "min": 783286272.0
+        },
+        {
+          "t": "2026-08-08T22:48:00Z",
+          "min": 773849088.0
+        },
+        {
+          "t": "2026-08-08T23:48:00Z",
+          "min": 778043392.0
+        },
+        {
+          "t": "2026-08-09T00:48:00Z",
+          "min": 784334848.0
+        },
+        {
+          "t": "2026-08-09T01:48:00Z",
+          "min": 759169024.0
+        },
+        {
+          "t": "2026-08-09T02:48:00Z",
+          "min": 911212544.0
+        },
+        {
+          "t": "2026-08-09T03:48:00Z",
+          "min": 925892608.0
+        },
+        {
+          "t": "2026-08-09T04:48:00Z",
+          "min": 922746880.0
+        },
+        {
+          "t": "2026-08-09T05:48:00Z",
+          "min": 787480576.0
+        },
+        {
+          "t": "2026-08-09T06:48:00Z",
+          "min": 749731840.0
+        },
+        {
+          "t": "2026-08-09T07:48:00Z",
+          "min": 937426944.0
+        },
+        {
+          "t": "2026-08-09T08:48:00Z",
+          "min": 910163968.0
+        },
+        {
+          "t": "2026-08-09T09:48:00Z",
+          "min": 908066816.0
+        },
+        {
+          "t": "2026-08-09T10:48:00Z",
+          "min": 921698304.0
+        },
+        {
+          "t": "2026-08-09T11:48:00Z",
+          "min": 888143872.0
+        },
+        {
+          "t": "2026-08-09T12:48:00Z",
+          "min": 887095296.0
+        },
+        {
+          "t": "2026-08-09T13:48:00Z",
+          "min": 808452096.0
+        },
+        {
+          "t": "2026-08-09T14:48:00Z",
+          "min": 887095296.0
+        },
+        {
+          "t": "2026-08-09T15:48:00Z",
+          "min": 860880896.0
+        },
+        {
+          "t": "2026-08-09T16:48:00Z",
+          "min": 853540864.0
+        },
+        {
+          "t": "2026-08-09T17:48:00Z",
+          "min": 850395136.0
+        },
+        {
+          "t": "2026-08-09T18:48:00Z",
+          "min": 851443712.0
+        },
+        {
+          "t": "2026-08-09T19:48:00Z",
+          "min": 862978048.0
+        },
+        {
+          "t": "2026-08-09T20:48:00Z",
+          "min": 847249408.0
+        },
+        {
+          "t": "2026-08-09T21:48:00Z",
+          "min": 832569344.0
+        },
+        {
+          "t": "2026-08-09T22:48:00Z",
+          "min": 736100352.0
+        },
+        {
+          "t": "2026-08-09T23:48:00Z",
+          "min": 754974720.0
+        },
+        {
+          "t": "2026-08-10T00:48:00Z",
+          "min": 749731840.0
+        },
+        {
+          "t": "2026-08-10T01:48:00Z",
+          "min": 757071872.0
+        },
+        {
+          "t": "2026-08-10T02:48:00Z",
+          "min": 764411904.0
+        },
+        {
+          "t": "2026-08-10T03:48:00Z",
+          "min": 713031680.0
+        },
+        {
+          "t": "2026-08-10T04:48:00Z",
+          "min": 757071872.0
+        },
+        {
+          "t": "2026-08-10T05:48:00Z",
+          "min": 781189120.0
+        },
+        {
+          "t": "2026-08-10T06:48:00Z",
+          "min": 785383424.0
+        },
+        {
+          "t": "2026-08-10T07:48:00Z",
+          "min": 767557632.0
+        },
+        {
+          "t": "2026-08-10T08:48:00Z",
+          "min": 771751936.0
+        },
+        {
+          "t": "2026-08-10T09:48:00Z",
+          "min": 774897664.0
+        },
+        {
+          "t": "2026-08-10T10:48:00Z",
+          "min": 789577728.0
+        },
+        {
+          "t": "2026-08-10T11:48:00Z",
+          "min": 767557632.0
+        },
+        {
+          "t": "2026-08-10T12:48:00Z",
+          "min": 918552576.0
+        },
+        {
+          "t": "2026-08-10T13:48:00Z",
+          "min": 927989760.0
+        },
+        {
+          "t": "2026-08-10T14:48:00Z",
+          "min": 886046720.0
+        },
+        {
+          "t": "2026-08-10T15:48:00Z",
+          "min": 745537536.0
+        },
+        {
+          "t": "2026-08-10T16:48:00Z",
+          "min": 904921088.0
+        },
+        {
+          "t": "2026-08-10T17:48:00Z",
+          "min": 934281216.0
+        },
+        {
+          "t": "2026-08-10T18:48:00Z",
+          "min": 903872512.0
+        },
+        {
+          "t": "2026-08-10T19:48:00Z",
+          "min": 909115392.0
+        },
+        {
+          "t": "2026-08-10T20:48:00Z",
+          "min": 910163968.0
+        },
+        {
+          "t": "2026-08-10T21:48:00Z",
+          "min": 898629632.0
+        },
+        {
+          "t": "2026-08-10T22:48:00Z",
+          "min": 810549248.0
+        },
+        {
+          "t": "2026-08-10T23:48:00Z",
+          "min": 902823936.0
+        },
+        {
+          "t": "2026-08-11T00:48:00Z",
+          "min": 887095296.0
+        },
+        {
+          "t": "2026-08-11T01:48:00Z",
+          "min": 846200832.0
+        },
+        {
+          "t": "2026-08-11T02:48:00Z",
+          "min": 853540864.0
+        },
+        {
+          "t": "2026-08-11T03:48:00Z",
+          "min": 666894336.0
+        },
+        {
+          "t": "2026-08-11T04:48:00Z",
+          "min": 862978048.0
+        },
+        {
+          "t": "2026-08-11T05:48:00Z",
+          "min": 787480576.0
+        },
+        {
+          "t": "2026-08-11T06:48:00Z",
+          "min": 808452096.0
+        },
+        {
+          "t": "2026-08-11T07:48:00Z",
+          "min": 789577728.0
+        },
+        {
+          "t": "2026-08-11T08:48:00Z",
+          "min": 782237696.0
+        },
+        {
+          "t": "2026-08-11T09:48:00Z",
+          "min": 764411904.0
+        },
+        {
+          "t": "2026-08-11T10:48:00Z",
+          "min": 793772032.0
+        },
+        {
+          "t": "2026-08-11T11:48:00Z",
+          "min": 761266176.0
+        },
+        {
+          "t": "2026-08-11T12:48:00Z",
+          "min": 796917760.0
+        },
+        {
+          "t": "2026-08-11T13:48:00Z",
+          "min": 789577728.0
+        },
+        {
+          "t": "2026-08-11T14:48:00Z",
+          "min": 763363328.0
+        },
+        {
+          "t": "2026-08-11T15:48:00Z",
+          "min": 785383424.0
+        },
+        {
+          "t": "2026-08-11T16:48:00Z",
+          "min": 779091968.0
+        },
+        {
+          "t": "2026-08-11T17:48:00Z",
+          "min": 779091968.0
+        },
+        {
+          "t": "2026-08-11T18:48:00Z",
+          "min": 775946240.0
+        },
+        {
+          "t": "2026-08-11T19:48:00Z",
+          "min": 913309696.0
+        },
+        {
+          "t": "2026-08-11T20:48:00Z",
+          "min": 910163968.0
+        },
+        {
+          "t": "2026-08-11T21:48:00Z",
+          "min": 915406848.0
+        },
+        {
+          "t": "2026-08-11T22:48:00Z",
+          "min": 874512384.0
+        },
+        {
+          "t": "2026-08-11T23:48:00Z",
+          "min": 815792128.0
+        },
+        {
+          "t": "2026-08-12T00:48:00Z",
+          "min": 904921088.0
+        },
+        {
+          "t": "2026-08-12T01:48:00Z",
+          "min": 919601152.0
+        },
+        {
+          "t": "2026-08-12T02:48:00Z",
+          "min": 907018240.0
+        },
+        {
+          "t": "2026-08-12T03:48:00Z",
+          "min": 919601152.0
+        },
+        {
+          "t": "2026-08-12T04:48:00Z",
+          "min": 840957952.0
+        },
+        {
+          "t": "2026-08-12T05:48:00Z",
+          "min": 882900992.0
+        },
+        {
+          "t": "2026-08-12T06:48:00Z",
+          "min": 823132160.0
+        },
+        {
+          "t": "2026-08-12T07:48:00Z",
+          "min": 905969664.0
+        },
+        {
+          "t": "2026-08-12T08:48:00Z",
+          "min": 882900992.0
+        },
+        {
+          "t": "2026-08-12T09:48:00Z",
+          "min": 870318080.0
+        },
+        {
+          "t": "2026-08-12T10:48:00Z",
+          "min": 864026624.0
+        },
+        {
+          "t": "2026-08-12T11:48:00Z",
+          "min": 891289600.0
+        },
+        {
+          "t": "2026-08-12T12:48:00Z",
+          "min": 876609536.0
+        },
+        {
+          "t": "2026-08-12T13:48:00Z",
+          "min": 807403520.0
+        },
+        {
+          "t": "2026-08-12T14:48:00Z",
+          "min": 852492288.0
+        },
+        {
+          "t": "2026-08-12T15:48:00Z",
+          "min": 852492288.0
+        },
+        {
+          "t": "2026-08-12T16:48:00Z",
+          "min": 835715072.0
+        },
+        {
+          "t": "2026-08-12T17:48:00Z",
+          "min": 826277888.0
+        },
+        {
+          "t": "2026-08-12T18:48:00Z",
+          "min": 832569344.0
+        },
+        {
+          "t": "2026-08-12T19:48:00Z",
+          "min": 835715072.0
+        },
+        {
+          "t": "2026-08-12T20:48:00Z",
+          "min": 844103680.0
+        },
+        {
+          "t": "2026-08-12T21:48:00Z",
+          "min": 847249408.0
+        },
+        {
+          "t": "2026-08-12T22:48:00Z",
+          "min": 825229312.0
+        },
+        {
+          "t": "2026-08-12T23:48:00Z",
+          "min": 825229312.0
+        },
+        {
+          "t": "2026-08-13T00:48:00Z",
+          "min": 815792128.0
+        },
+        {
+          "t": "2026-08-13T01:48:00Z",
+          "min": 952107008.0
+        },
+        {
+          "t": "2026-08-13T02:48:00Z",
+          "min": 940572672.0
+        },
+        {
+          "t": "2026-08-13T03:48:00Z",
+          "min": 941621248.0
+        },
+        {
+          "t": "2026-08-13T04:48:00Z",
+          "min": 864026624.0
+        },
+        {
+          "t": "2026-08-13T05:48:00Z",
+          "min": 936378368.0
+        },
+        {
+          "t": "2026-08-13T06:48:00Z",
+          "min": 918552576.0
+        },
+        {
+          "t": "2026-08-13T07:48:00Z",
+          "min": 964689920.0
+        },
+        {
+          "t": "2026-08-13T08:48:00Z",
+          "min": 951058432.0
+        },
+        {
+          "t": "2026-08-13T09:48:00Z",
+          "min": 960495616.0
+        },
+        {
+          "t": "2026-08-13T10:48:00Z",
+          "min": 831520768.0
+        },
+        {
+          "t": "2026-08-13T11:48:00Z",
+          "min": 942669824.0
+        },
+        {
+          "t": "2026-08-13T12:48:00Z",
+          "min": 943718400.0
+        },
+        {
+          "t": "2026-08-13T13:48:00Z",
+          "min": 868220928.0
+        },
+        {
+          "t": "2026-08-13T14:48:00Z",
+          "min": 947912704.0
+        },
+        {
+          "t": "2026-08-13T15:48:00Z",
+          "min": 933232640.0
+        },
+        {
+          "t": "2026-08-13T16:48:00Z",
+          "min": 922746880.0
+        },
+        {
+          "t": "2026-08-13T17:48:00Z",
+          "min": 931135488.0
+        },
+        {
+          "t": "2026-08-13T18:48:00Z",
+          "min": 805306368.0
+        },
+        {
+          "t": "2026-08-13T19:48:00Z",
+          "min": 803209216.0
+        },
+        {
+          "t": "2026-08-13T20:48:00Z",
+          "min": 834666496.0
+        },
+        {
+          "t": "2026-08-13T21:48:00Z",
+          "min": 851443712.0
+        },
+        {
+          "t": "2026-08-13T22:48:00Z",
+          "min": 759169024.0
+        },
+        {
+          "t": "2026-08-13T23:48:00Z",
+          "min": 753926144.0
+        },
+        {
+          "t": "2026-08-14T00:48:00Z",
+          "min": 759169024.0
+        },
+        {
+          "t": "2026-08-14T01:48:00Z",
+          "min": 761266176.0
+        },
+        {
+          "t": "2026-08-14T02:48:00Z",
+          "min": 738197504.0
+        },
+        {
+          "t": "2026-08-14T03:48:00Z",
+          "min": 746586112.0
+        },
+        {
+          "t": "2026-08-14T04:48:00Z",
+          "min": 756023296.0
+        },
+        {
+          "t": "2026-08-14T05:48:00Z",
+          "min": 767557632.0
+        },
+        {
+          "t": "2026-08-14T06:48:00Z",
+          "min": 758120448.0
+        },
+        {
+          "t": "2026-08-14T07:48:00Z",
+          "min": 762314752.0
+        },
+        {
+          "t": "2026-08-14T08:48:00Z",
+          "min": 784334848.0
+        },
+        {
+          "t": "2026-08-14T09:48:00Z",
+          "min": 764411904.0
+        },
+        {
+          "t": "2026-08-14T10:48:00Z",
+          "min": 749731840.0
+        },
+        {
+          "t": "2026-08-14T11:48:00Z",
+          "min": 757071872.0
+        },
+        {
+          "t": "2026-08-14T12:48:00Z",
+          "min": 764411904.0
+        },
+        {
+          "t": "2026-08-14T13:48:00Z",
+          "min": 763363328.0
+        },
+        {
+          "t": "2026-08-14T14:48:00Z",
+          "min": 753926144.0
+        },
+        {
+          "t": "2026-08-14T15:48:00Z",
+          "min": 783286272.0
+        },
+        {
+          "t": "2026-08-14T16:48:00Z",
+          "min": 917504000.0
+        },
+        {
+          "t": "2026-08-14T17:48:00Z",
+          "min": 890241024.0
+        },
+        {
+          "t": "2026-08-14T18:48:00Z",
+          "min": 902823936.0
+        },
+        {
+          "t": "2026-08-14T19:48:00Z",
+          "min": 835715072.0
+        },
+        {
+          "t": "2026-08-14T20:48:00Z",
+          "min": 927989760.0
+        },
+        {
+          "t": "2026-08-14T21:48:00Z",
+          "min": 743440384.0
+        },
+        {
+          "t": "2026-08-14T22:48:00Z",
+          "min": 494927872.0
+        },
+        {
+          "t": "2026-08-14T23:48:00Z",
+          "min": 912261120.0
+        },
+        {
+          "t": "2026-08-15T00:48:00Z",
+          "min": 894435328.0
+        },
+        {
+          "t": "2026-08-15T01:48:00Z",
+          "min": 871366656.0
+        },
+        {
+          "t": "2026-08-15T02:48:00Z",
+          "min": 836763648.0
+        },
+        {
+          "t": "2026-08-15T03:48:00Z",
+          "min": 795869184.0
+        },
+        {
+          "t": "2026-08-15T04:48:00Z",
+          "min": 853540864.0
+        },
+        {
+          "t": "2026-08-15T05:48:00Z",
+          "min": 814743552.0
+        },
+        {
+          "t": "2026-08-15T06:48:00Z",
+          "min": 856686592.0
+        },
+        {
+          "t": "2026-08-15T07:48:00Z",
+          "min": 864026624.0
+        },
+        {
+          "t": "2026-08-15T08:48:00Z",
+          "min": 817889280.0
+        },
+        {
+          "t": "2026-08-15T09:48:00Z",
+          "min": 822083584.0
+        },
+        {
+          "t": "2026-08-15T10:48:00Z",
+          "min": 803209216.0
+        },
+        {
+          "t": "2026-08-15T11:48:00Z",
+          "min": 821035008.0
+        },
+        {
+          "t": "2026-08-15T12:48:00Z",
+          "min": 779091968.0
+        },
+        {
+          "t": "2026-08-15T13:48:00Z",
+          "min": 764411904.0
+        },
+        {
+          "t": "2026-08-15T14:48:00Z",
+          "min": 812646400.0
+        },
+        {
+          "t": "2026-08-15T15:48:00Z",
+          "min": 786432000.0
+        },
+        {
+          "t": "2026-08-15T16:48:00Z",
+          "min": 774897664.0
+        },
+        {
+          "t": "2026-08-15T17:48:00Z",
+          "min": 760217600.0
+        },
+        {
+          "t": "2026-08-15T18:48:00Z",
+          "min": 764411904.0
+        },
+        {
+          "t": "2026-08-15T19:48:00Z",
+          "min": 751828992.0
+        },
+        {
+          "t": "2026-08-15T20:48:00Z",
+          "min": 749731840.0
+        },
+        {
+          "t": "2026-08-15T21:48:00Z",
+          "min": 767557632.0
+        },
+        {
+          "t": "2026-08-15T22:48:00Z",
+          "min": 769654784.0
+        },
+        {
+          "t": "2026-08-15T23:48:00Z",
+          "min": 893386752.0
+        },
+        {
+          "t": "2026-08-16T00:48:00Z",
+          "min": 894435328.0
+        },
+        {
+          "t": "2026-08-16T01:48:00Z",
+          "min": 897581056.0
+        },
+        {
+          "t": "2026-08-16T02:48:00Z",
+          "min": 912261120.0
+        },
+        {
+          "t": "2026-08-16T03:48:00Z",
+          "min": 922746880.0
+        },
+        {
+          "t": "2026-08-16T04:48:00Z",
+          "min": 905969664.0
+        },
+        {
+          "t": "2026-08-16T05:48:00Z",
+          "min": 848297984.0
+        },
+        {
+          "t": "2026-08-16T06:48:00Z",
+          "min": 951058432.0
+        },
+        {
+          "t": "2026-08-16T07:48:00Z",
+          "min": 900726784.0
+        },
+        {
+          "t": "2026-08-16T08:48:00Z",
+          "min": 882900992.0
+        },
+        {
+          "t": "2026-08-16T09:48:00Z",
+          "min": 799014912.0
+        },
+        {
+          "t": "2026-08-16T10:48:00Z",
+          "min": 849346560.0
+        },
+        {
+          "t": "2026-08-16T11:48:00Z",
+          "min": 846200832.0
+        },
+        {
+          "t": "2026-08-16T12:48:00Z",
+          "min": 800063488.0
+        },
+        {
+          "t": "2026-08-16T13:48:00Z",
+          "min": 764411904.0
+        },
+        {
+          "t": "2026-08-16T14:48:00Z",
+          "min": 825229312.0
+        },
+        {
+          "t": "2026-08-16T15:48:00Z",
+          "min": 794820608.0
+        },
+        {
+          "t": "2026-08-16T16:48:00Z",
+          "min": 775946240.0
+        },
+        {
+          "t": "2026-08-16T17:48:00Z",
+          "min": 789577728.0
+        },
+        {
+          "t": "2026-08-16T18:48:00Z",
+          "min": 774897664.0
+        },
+        {
+          "t": "2026-08-16T19:48:00Z",
+          "min": 754974720.0
+        },
+        {
+          "t": "2026-08-16T20:48:00Z",
+          "min": 789577728.0
+        },
+        {
+          "t": "2026-08-16T21:48:00Z",
+          "min": 772800512.0
+        },
+        {
+          "t": "2026-08-16T22:48:00Z",
+          "min": 781189120.0
+        },
+        {
+          "t": "2026-08-16T23:48:00Z",
+          "min": 787480576.0
+        },
+        {
+          "t": "2026-08-17T00:48:00Z",
+          "min": 783286272.0
+        },
+        {
+          "t": "2026-08-17T01:48:00Z",
+          "min": 768606208.0
+        },
+        {
+          "t": "2026-08-17T02:48:00Z",
+          "min": 787480576.0
+        },
+        {
+          "t": "2026-08-17T03:48:00Z",
+          "min": 783286272.0
+        },
+        {
+          "t": "2026-08-17T04:48:00Z",
+          "min": 799014912.0
+        },
+        {
+          "t": "2026-08-17T05:48:00Z",
+          "min": 779091968.0
+        },
+        {
+          "t": "2026-08-17T06:48:00Z",
+          "min": 877658112.0
+        },
+        {
+          "t": "2026-08-17T07:48:00Z",
+          "min": 737148928.0
+        },
+        {
+          "t": "2026-08-17T08:48:00Z",
+          "min": 770703360.0
+        },
+        {
+          "t": "2026-08-17T09:48:00Z",
+          "min": 724566016.0
+        },
+        {
+          "t": "2026-08-17T10:48:00Z",
+          "min": 768606208.0
+        },
+        {
+          "t": "2026-08-17T11:48:00Z",
+          "min": 859832320.0
+        },
+        {
+          "t": "2026-08-17T12:48:00Z",
+          "min": 860880896.0
+        },
+        {
+          "t": "2026-08-17T13:48:00Z",
+          "min": 836763648.0
+        },
+        {
+          "t": "2026-08-17T14:48:00Z",
+          "min": 845152256.0
+        },
+        {
+          "t": "2026-08-17T15:48:00Z",
+          "min": 839909376.0
+        },
+        {
+          "t": "2026-08-17T16:48:00Z",
+          "min": 801112064.0
+        },
+        {
+          "t": "2026-08-17T17:48:00Z",
+          "min": 852492288.0
+        },
+        {
+          "t": "2026-08-17T18:48:00Z",
+          "min": 844103680.0
+        },
+        {
+          "t": "2026-08-17T19:48:00Z",
+          "min": 849346560.0
+        },
+        {
+          "t": "2026-08-17T20:48:00Z",
+          "min": 858783744.0
+        },
+        {
+          "t": "2026-08-17T21:48:00Z",
+          "min": 808452096.0
+        },
+        {
+          "t": "2026-08-17T22:48:00Z",
+          "min": 804257792.0
+        },
+        {
+          "t": "2026-08-17T23:48:00Z",
+          "min": 796917760.0
+        },
+        {
+          "t": "2026-08-18T00:48:00Z",
+          "min": 866123776.0
+        },
+        {
+          "t": "2026-08-18T01:48:00Z",
+          "min": 898629632.0
+        },
+        {
+          "t": "2026-08-18T02:48:00Z",
+          "min": 893386752.0
+        },
+        {
+          "t": "2026-08-18T03:48:00Z",
+          "min": 910163968.0
+        },
+        {
+          "t": "2026-08-18T04:48:00Z",
+          "min": 909115392.0
+        },
+        {
+          "t": "2026-08-18T05:48:00Z",
+          "min": 851443712.0
+        },
+        {
+          "t": "2026-08-18T06:48:00Z",
+          "min": 785383424.0
+        },
+        {
+          "t": "2026-08-18T07:48:00Z",
+          "min": 876609536.0
+        },
+        {
+          "t": "2026-08-18T08:48:00Z",
+          "min": 874512384.0
+        },
+        {
+          "t": "2026-08-18T09:48:00Z",
+          "min": 840957952.0
+        },
+        {
+          "t": "2026-08-18T10:48:00Z",
+          "min": 872415232.0
+        },
+        {
+          "t": "2026-08-18T11:48:00Z",
+          "min": 858783744.0
+        },
+        {
+          "t": "2026-08-18T12:48:00Z",
+          "min": 831520768.0
+        },
+        {
+          "t": "2026-08-18T13:48:00Z",
+          "min": 808452096.0
+        },
+        {
+          "t": "2026-08-18T14:48:00Z",
+          "min": 817889280.0
+        },
+        {
+          "t": "2026-08-18T15:48:00Z",
+          "min": 768606208.0
+        },
+        {
+          "t": "2026-08-18T16:48:00Z",
+          "min": 763363328.0
+        },
+        {
+          "t": "2026-08-18T17:48:00Z",
+          "min": 761266176.0
+        },
+        {
+          "t": "2026-08-18T18:48:00Z",
+          "min": 751828992.0
+        },
+        {
+          "t": "2026-08-18T19:48:00Z",
+          "min": 779091968.0
+        },
+        {
+          "t": "2026-08-18T20:48:00Z",
+          "min": 750780416.0
+        },
+        {
+          "t": "2026-08-18T21:48:00Z",
+          "min": 754974720.0
+        },
+        {
+          "t": "2026-08-18T22:48:00Z",
+          "min": 759169024.0
+        },
+        {
+          "t": "2026-08-18T23:48:00Z",
+          "min": 772800512.0
+        },
+        {
+          "t": "2026-08-19T00:48:00Z",
+          "min": 864026624.0
+        },
+        {
+          "t": "2026-08-19T01:48:00Z",
+          "min": 882900992.0
+        },
+        {
+          "t": "2026-08-19T02:48:00Z",
+          "min": 778043392.0
+        },
+        {
+          "t": "2026-08-19T03:48:00Z",
+          "min": 779091968.0
+        },
+        {
+          "t": "2026-08-19T04:48:00Z",
+          "min": 758120448.0
+        },
+        {
+          "t": "2026-08-19T05:48:00Z",
+          "min": 766509056.0
+        },
+        {
+          "t": "2026-08-19T06:48:00Z",
+          "min": 883949568.0
+        },
+        {
+          "t": "2026-08-19T07:48:00Z",
+          "min": 886046720.0
+        },
+        {
+          "t": "2026-08-19T08:48:00Z",
+          "min": 725614592.0
+        },
+        {
+          "t": "2026-08-19T09:48:00Z",
+          "min": 884998144.0
+        },
+        {
+          "t": "2026-08-19T10:48:00Z",
+          "min": 886046720.0
+        },
+        {
+          "t": "2026-08-19T11:48:00Z",
+          "min": 785383424.0
+        },
+        {
+          "t": "2026-08-19T12:48:00Z",
+          "min": 882900992.0
+        },
+        {
+          "t": "2026-08-19T13:48:00Z",
+          "min": 889192448.0
+        },
+        {
+          "t": "2026-08-19T14:48:00Z",
+          "min": 819986432.0
+        },
+        {
+          "t": "2026-08-19T15:48:00Z",
+          "min": 887095296.0
+        },
+        {
+          "t": "2026-08-19T16:48:00Z",
+          "min": 833617920.0
+        },
+        {
+          "t": "2026-08-19T17:48:00Z",
+          "min": 876609536.0
+        },
+        {
+          "t": "2026-08-19T18:48:00Z",
+          "min": 851443712.0
+        },
+        {
+          "t": "2026-08-19T19:48:00Z",
+          "min": 839909376.0
+        },
+        {
+          "t": "2026-08-19T20:48:00Z",
+          "min": 811597824.0
+        },
+        {
+          "t": "2026-08-19T21:48:00Z",
+          "min": 782237696.0
+        },
+        {
+          "t": "2026-08-19T22:48:00Z",
+          "min": 838860800.0
+        },
+        {
+          "t": "2026-08-19T23:48:00Z",
+          "min": 815792128.0
+        },
+        {
+          "t": "2026-08-20T00:48:00Z",
+          "min": 807403520.0
+        },
+        {
+          "t": "2026-08-20T01:48:00Z",
+          "min": 805306368.0
+        },
+        {
+          "t": "2026-08-20T02:48:00Z",
+          "min": 806354944.0
+        },
+        {
+          "t": "2026-08-20T03:48:00Z",
+          "min": 731906048.0
+        },
+        {
+          "t": "2026-08-20T04:48:00Z",
+          "min": 780140544.0
+        },
+        {
+          "t": "2026-08-20T05:48:00Z",
+          "min": 715128832.0
+        },
+        {
+          "t": "2026-08-20T06:48:00Z",
+          "min": 785383424.0
+        },
+        {
+          "t": "2026-08-20T07:48:00Z",
+          "min": 775946240.0
+        },
+        {
+          "t": "2026-08-20T08:48:00Z",
+          "min": 750780416.0
+        },
+        {
+          "t": "2026-08-20T09:48:00Z",
+          "min": 765460480.0
+        },
+        {
+          "t": "2026-08-20T10:48:00Z",
+          "min": 872415232.0
+        },
+        {
+          "t": "2026-08-20T11:48:00Z",
+          "min": 736100352.0
+        },
+        {
+          "t": "2026-08-20T12:48:00Z",
+          "min": 873463808.0
+        },
+        {
+          "t": "2026-08-20T13:48:00Z",
+          "min": 915406848.0
+        },
+        {
+          "t": "2026-08-20T14:48:00Z",
+          "min": 890241024.0
+        },
+        {
+          "t": "2026-08-20T15:48:00Z",
+          "min": 893386752.0
+        },
+        {
+          "t": "2026-08-20T16:48:00Z",
+          "min": 815792128.0
+        },
+        {
+          "t": "2026-08-20T17:48:00Z",
+          "min": 803209216.0
+        },
+        {
+          "t": "2026-08-20T18:48:00Z",
+          "min": 919601152.0
+        }
+      ],
+      "cpu_credits_remaining": [
+        {
+          "t": "2026-08-06T19:48:00Z",
+          "min": 287.72
+        },
+        {
+          "t": "2026-08-06T20:48:00Z",
+          "min": 287.63
+        },
+        {
+          "t": "2026-08-06T21:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-06T22:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-06T23:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-07T00:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-07T01:48:00Z",
+          "min": 287.83
+        },
+        {
+          "t": "2026-08-07T02:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-07T03:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-07T04:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-07T05:48:00Z",
+          "min": 287.6
+        },
+        {
+          "t": "2026-08-07T06:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-07T07:48:00Z",
+          "min": 287.91
+        },
+        {
+          "t": "2026-08-07T08:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-07T09:48:00Z",
+          "min": 287.91
+        },
+        {
+          "t": "2026-08-07T10:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-07T11:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-07T12:48:00Z",
+          "min": 287.61
+        },
+        {
+          "t": "2026-08-07T13:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-07T14:48:00Z",
+          "min": 287.77
+        },
+        {
+          "t": "2026-08-07T15:48:00Z",
+          "min": 287.83
+        },
+        {
+          "t": "2026-08-07T16:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-07T17:48:00Z",
+          "min": 287.83
+        },
+        {
+          "t": "2026-08-07T18:48:00Z",
+          "min": 287.63
+        },
+        {
+          "t": "2026-08-07T19:48:00Z",
+          "min": 287.91
+        },
+        {
+          "t": "2026-08-07T20:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-07T21:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-07T22:48:00Z",
+          "min": 287.91
+        },
+        {
+          "t": "2026-08-07T23:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-08T00:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-08T01:48:00Z",
+          "min": 287.61
+        },
+        {
+          "t": "2026-08-08T02:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-08T03:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-08T04:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-08T05:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-08T06:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-08T07:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-08T08:48:00Z",
+          "min": 287.77
+        },
+        {
+          "t": "2026-08-08T09:48:00Z",
+          "min": 287.72
+        },
+        {
+          "t": "2026-08-08T10:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-08T11:48:00Z",
+          "min": 287.63
+        },
+        {
+          "t": "2026-08-08T12:48:00Z",
+          "min": 287.91
+        },
+        {
+          "t": "2026-08-08T13:48:00Z",
+          "min": 287.91
+        },
+        {
+          "t": "2026-08-08T14:48:00Z",
+          "min": 287.91
+        },
+        {
+          "t": "2026-08-08T15:48:00Z",
+          "min": 287.91
+        },
+        {
+          "t": "2026-08-08T16:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-08T17:48:00Z",
+          "min": 287.64
+        },
+        {
+          "t": "2026-08-08T18:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-08T19:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-08T20:48:00Z",
+          "min": 287.7
+        },
+        {
+          "t": "2026-08-08T21:48:00Z",
+          "min": 287.83
+        },
+        {
+          "t": "2026-08-08T22:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-08T23:48:00Z",
+          "min": 287.83
+        },
+        {
+          "t": "2026-08-09T00:48:00Z",
+          "min": 287.65
+        },
+        {
+          "t": "2026-08-09T01:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-09T02:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-09T03:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-09T04:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-09T05:48:00Z",
+          "min": 287.7
+        },
+        {
+          "t": "2026-08-09T06:48:00Z",
+          "min": 287.63
+        },
+        {
+          "t": "2026-08-09T07:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-09T08:48:00Z",
+          "min": 287.61
+        },
+        {
+          "t": "2026-08-09T09:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-09T10:48:00Z",
+          "min": 287.83
+        },
+        {
+          "t": "2026-08-09T11:48:00Z",
+          "min": 287.83
+        },
+        {
+          "t": "2026-08-09T12:48:00Z",
+          "min": 287.83
+        },
+        {
+          "t": "2026-08-09T13:48:00Z",
+          "min": 287.65
+        },
+        {
+          "t": "2026-08-09T14:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-09T15:48:00Z",
+          "min": 287.83
+        },
+        {
+          "t": "2026-08-09T16:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-09T17:48:00Z",
+          "min": 287.83
+        },
+        {
+          "t": "2026-08-09T18:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-09T19:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-09T20:48:00Z",
+          "min": 287.71
+        },
+        {
+          "t": "2026-08-09T21:48:00Z",
+          "min": 287.77
+        },
+        {
+          "t": "2026-08-09T22:48:00Z",
+          "min": 287.54
+        },
+        {
+          "t": "2026-08-09T23:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-10T00:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-10T01:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-10T02:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-10T03:48:00Z",
+          "min": 287.76
+        },
+        {
+          "t": "2026-08-10T04:48:00Z",
+          "min": 287.6
+        },
+        {
+          "t": "2026-08-10T05:48:00Z",
+          "min": 287.69
+        },
+        {
+          "t": "2026-08-10T06:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-10T07:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-10T08:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-10T09:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-10T10:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-10T11:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-10T12:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-10T13:48:00Z",
+          "min": 287.77
+        },
+        {
+          "t": "2026-08-10T14:48:00Z",
+          "min": 287.78
+        },
+        {
+          "t": "2026-08-10T15:48:00Z",
+          "min": 287.19
+        },
+        {
+          "t": "2026-08-10T16:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-10T17:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-10T18:48:00Z",
+          "min": 287.75
+        },
+        {
+          "t": "2026-08-10T19:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-10T20:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-10T21:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-10T22:48:00Z",
+          "min": 287.63
+        },
+        {
+          "t": "2026-08-10T23:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-11T00:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-11T01:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-11T02:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-11T03:48:00Z",
+          "min": 287.55
+        },
+        {
+          "t": "2026-08-11T04:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-11T05:48:00Z",
+          "min": 286.92
+        },
+        {
+          "t": "2026-08-11T06:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-11T07:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-11T08:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-11T09:48:00Z",
+          "min": 287.62
+        },
+        {
+          "t": "2026-08-11T10:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-11T11:48:00Z",
+          "min": 287.78
+        },
+        {
+          "t": "2026-08-11T12:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-11T13:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-11T14:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-11T15:48:00Z",
+          "min": 287.58
+        },
+        {
+          "t": "2026-08-11T16:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-11T17:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-11T18:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-11T19:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-11T20:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-11T21:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-11T22:48:00Z",
+          "min": 287.58
+        },
+        {
+          "t": "2026-08-11T23:48:00Z",
+          "min": 287.69
+        },
+        {
+          "t": "2026-08-12T00:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-12T01:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T02:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-12T03:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T04:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-12T05:48:00Z",
+          "min": 287.75
+        },
+        {
+          "t": "2026-08-12T06:48:00Z",
+          "min": 287.59
+        },
+        {
+          "t": "2026-08-12T07:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-12T08:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T09:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T10:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-12T11:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T12:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-12T13:48:00Z",
+          "min": 287.59
+        },
+        {
+          "t": "2026-08-12T14:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T15:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T16:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T17:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T18:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-12T19:48:00Z",
+          "min": 287.6
+        },
+        {
+          "t": "2026-08-12T20:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T21:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T22:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-12T23:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-13T00:48:00Z",
+          "min": 287.72
+        },
+        {
+          "t": "2026-08-13T01:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-13T02:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-13T03:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-13T04:48:00Z",
+          "min": 287.69
+        },
+        {
+          "t": "2026-08-13T05:48:00Z",
+          "min": 287.75
+        },
+        {
+          "t": "2026-08-13T06:48:00Z",
+          "min": 287.6
+        },
+        {
+          "t": "2026-08-13T07:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-13T08:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-13T09:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-13T10:48:00Z",
+          "min": 287.69
+        },
+        {
+          "t": "2026-08-13T11:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-13T12:48:00Z",
+          "min": 287.69
+        },
+        {
+          "t": "2026-08-13T13:48:00Z",
+          "min": 287.59
+        },
+        {
+          "t": "2026-08-13T14:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-13T15:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-13T16:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-13T17:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-13T18:48:00Z",
+          "min": 287.74
+        },
+        {
+          "t": "2026-08-13T19:48:00Z",
+          "min": 287.54
+        },
+        {
+          "t": "2026-08-13T20:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-13T21:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-13T22:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-13T23:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-14T00:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-14T01:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-14T02:48:00Z",
+          "min": 287.59
+        },
+        {
+          "t": "2026-08-14T03:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-14T04:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-14T05:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-14T06:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-14T07:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-14T08:48:00Z",
+          "min": 287.58
+        },
+        {
+          "t": "2026-08-14T09:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-14T10:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-14T11:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-14T12:48:00Z",
+          "min": 287.6
+        },
+        {
+          "t": "2026-08-14T13:48:00Z",
+          "min": 287.75
+        },
+        {
+          "t": "2026-08-14T14:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-14T15:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-14T16:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-14T17:48:00Z",
+          "min": 287.78
+        },
+        {
+          "t": "2026-08-14T18:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-14T19:48:00Z",
+          "min": 287.57
+        },
+        {
+          "t": "2026-08-14T20:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-14T21:48:00Z",
+          "min": 287.4
+        },
+        {
+          "t": "2026-08-14T22:48:00Z",
+          "min": 285.1
+        },
+        {
+          "t": "2026-08-14T23:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-15T00:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-15T01:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-15T02:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-15T03:48:00Z",
+          "min": 287.56
+        },
+        {
+          "t": "2026-08-15T04:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-15T05:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-15T06:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-15T07:48:00Z",
+          "min": 287.76
+        },
+        {
+          "t": "2026-08-15T08:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-15T09:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-15T10:48:00Z",
+          "min": 287.56
+        },
+        {
+          "t": "2026-08-15T11:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-15T12:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-15T13:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-15T14:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-15T15:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-15T16:48:00Z",
+          "min": 287.56
+        },
+        {
+          "t": "2026-08-15T17:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-15T18:48:00Z",
+          "min": 287.44
+        },
+        {
+          "t": "2026-08-15T19:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-15T20:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-15T21:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-15T22:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-15T23:48:00Z",
+          "min": 287.56
+        },
+        {
+          "t": "2026-08-16T00:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-16T01:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-16T02:48:00Z",
+          "min": 287.76
+        },
+        {
+          "t": "2026-08-16T03:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-16T04:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-16T05:48:00Z",
+          "min": 287.27
+        },
+        {
+          "t": "2026-08-16T06:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-16T07:48:00Z",
+          "min": 287.68
+        },
+        {
+          "t": "2026-08-16T08:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-16T09:48:00Z",
+          "min": 287.72
+        },
+        {
+          "t": "2026-08-16T10:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-16T11:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-16T12:48:00Z",
+          "min": 287.48
+        },
+        {
+          "t": "2026-08-16T13:48:00Z",
+          "min": 287.57
+        },
+        {
+          "t": "2026-08-16T14:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-16T15:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-16T16:48:00Z",
+          "min": 287.25
+        },
+        {
+          "t": "2026-08-16T17:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-16T18:48:00Z",
+          "min": 287.9
+        },
+        {
+          "t": "2026-08-16T19:48:00Z",
+          "min": 287.57
+        },
+        {
+          "t": "2026-08-16T20:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-16T21:48:00Z",
+          "min": 287.76
+        },
+        {
+          "t": "2026-08-16T22:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-16T23:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-17T00:48:00Z",
+          "min": 287.82
+        },
+        {
+          "t": "2026-08-17T01:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-17T02:48:00Z",
+          "min": 287.57
+        },
+        {
+          "t": "2026-08-17T03:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-17T04:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-17T05:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-17T06:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-17T07:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-17T08:48:00Z",
+          "min": 287.76
+        },
+        {
+          "t": "2026-08-17T09:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-17T10:48:00Z",
+          "min": 287.43
+        },
+        {
+          "t": "2026-08-17T11:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-17T12:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-17T13:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-17T14:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-17T15:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-17T16:48:00Z",
+          "min": 287.52
+        },
+        {
+          "t": "2026-08-17T17:48:00Z",
+          "min": 287.77
+        },
+        {
+          "t": "2026-08-17T18:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-17T19:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-17T20:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-17T21:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-17T22:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-17T23:48:00Z",
+          "min": 287.6
+        },
+        {
+          "t": "2026-08-18T00:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-18T01:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-18T02:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-18T03:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-18T04:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-18T05:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-18T06:48:00Z",
+          "min": 287.61
+        },
+        {
+          "t": "2026-08-18T07:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-18T08:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-18T09:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-18T10:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-18T11:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-18T12:48:00Z",
+          "min": 287.77
+        },
+        {
+          "t": "2026-08-18T13:48:00Z",
+          "min": 287.51
+        },
+        {
+          "t": "2026-08-18T14:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-18T15:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-18T16:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-18T17:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-18T18:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-18T19:48:00Z",
+          "min": 287.56
+        },
+        {
+          "t": "2026-08-18T20:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-18T21:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-18T22:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-18T23:48:00Z",
+          "min": 287.7
+        },
+        {
+          "t": "2026-08-19T00:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-19T01:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-19T02:48:00Z",
+          "min": 287.6
+        },
+        {
+          "t": "2026-08-19T03:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-19T04:48:00Z",
+          "min": 287.74
+        },
+        {
+          "t": "2026-08-19T05:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-19T06:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-19T07:48:00Z",
+          "min": 287.77
+        },
+        {
+          "t": "2026-08-19T08:48:00Z",
+          "min": 287.68
+        },
+        {
+          "t": "2026-08-19T09:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-19T10:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-19T11:48:00Z",
+          "min": 287.81
+        },
+        {
+          "t": "2026-08-19T12:48:00Z",
+          "min": 287.78
+        },
+        {
+          "t": "2026-08-19T13:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-19T14:48:00Z",
+          "min": 287.58
+        },
+        {
+          "t": "2026-08-19T15:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-19T16:48:00Z",
+          "min": 287.69
+        },
+        {
+          "t": "2026-08-19T17:48:00Z",
+          "min": 287.74
+        },
+        {
+          "t": "2026-08-19T18:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-19T19:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-19T20:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-19T21:48:00Z",
+          "min": 287.55
+        },
+        {
+          "t": "2026-08-19T22:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-19T23:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-20T00:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-20T01:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-20T02:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-20T03:48:00Z",
+          "min": 287.57
+        },
+        {
+          "t": "2026-08-20T04:48:00Z",
+          "min": 287.8
+        },
+        {
+          "t": "2026-08-20T05:48:00Z",
+          "min": 287.21
+        },
+        {
+          "t": "2026-08-20T06:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-20T07:48:00Z",
+          "min": 287.79
+        },
+        {
+          "t": "2026-08-20T08:48:00Z",
+          "min": 287.74
+        },
+        {
+          "t": "2026-08-20T09:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-20T10:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-20T11:48:00Z",
+          "min": 287.58
+        },
+        {
+          "t": "2026-08-20T12:48:00Z",
+          "min": 287.74
+        },
+        {
+          "t": "2026-08-20T13:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-20T14:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-20T15:48:00Z",
+          "min": 287.89
+        },
+        {
+          "t": "2026-08-20T16:48:00Z",
+          "min": 287.88
+        },
+        {
+          "t": "2026-08-20T17:48:00Z",
+          "min": 287.54
+        },
+        {
+          "t": "2026-08-20T18:48:00Z",
+          "min": 287.89
+        }
+      ]
+    }
+  }
+}

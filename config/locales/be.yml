@@ -456,6 +456,8 @@ be:
       duration: "%{hours} г %{minutes} хв"
       playing: "гуляюць: %{count}"
       played: "гулялі: %{count}"
+      passes_issued: "доступаў: %{count}"
+      completed: "прайшлі: %{count}"
       view: "(паглядзець)"
       stats: "(статыстыка)"
       live_channel: "(прамы эфір)"
@@ -693,6 +695,7 @@ be:
       password_label: "Пароль"
       password_confirmation_label: "Пацвярджэнне"
       submit: "Зарэгістравацца"
+      submitting: "Рэгіструем…"
     edit:
       title: 'Рэдагаванне профілю гульца %{nickname}'
       nickname_label: "Ваша імя"
@@ -795,6 +798,7 @@ be:
       team_room: "Пакой каманды"
       create_team: "Стварыць каманду"
       all_games: "Усе гульні дамена"
+      teams: "Каманды"
       logout: "Выйсці"
       login_legend: "Уваход"
       login: "Увайсці"
@@ -1069,7 +1073,7 @@ be:
       model: "Мадэль"
       locales: "Мовы"
       tokens: "Токены"
-      token_counts: "уваход %{input}, выхад %{output}, з кэша %{cached}"
+      token_counts: "уваход %{input}, выхад %{output}, у кэш %{written}, з кэша %{cached}"
       failed: "Не перакладзена"
       cancel: "Спыніць"
       retry: "Паўтарыць"
@@ -1133,6 +1137,7 @@ be:
       access_pass:
         game: "Гульня"
       game:
+        access_mode: "Доступ да гульні"
         level_completion_points: "Налічэнне за ўзровень"
         game_completion_points: "Налічэнне за праходжанне"
         max_skips: "Лік пропускаў"
@@ -1190,8 +1195,11 @@ be:
               greater_than: "Дыяпазон колькасці каманд ад 1 да 10000"
               less_than: "Дыяпазон колькасці каманд ад 1 да 10000"
               exceeds_requested: "Колькасць каманд, якія падалі заяўку, перавышае зададзены лік"
+            access_mode:
+              access_still_owed: "нельга адключыць: каманды яшчэ не скарысталіся выдадзеным доступам (%{count}). Адклічце доступ або дачакайцеся праходжання."
             starts_at:
               in_the_past: "Вы выбралі дату з мінулага. Так нельга :-)"
+              needed_to_unpublish_access: "у звычайнай гульні дата старту павінна быць у будучыні — укажыце новую, каб перавесці гульню з доступу па кодзе"
             registration_deadline:
               in_the_past: "Вы ўказалі крайні тэрмін рэгістрацыі з мінулага, так нельга :-)"
               after_game_start: "Вы ўказалі крайні тэрмін рэгістрацыі пазнейшы за дату пачатку гульні, так нельга :-)"

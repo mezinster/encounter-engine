@@ -454,6 +454,8 @@ uk:
       duration: "%{hours} год %{minutes} хв"
       playing: "грають: %{count}"
       played: "грали: %{count}"
+      passes_issued: "доступів: %{count}"
+      completed: "пройшли: %{count}"
       view: "(переглянути)"
       stats: "(статистика)"
       live_channel: "(прямий ефір)"
@@ -691,6 +693,7 @@ uk:
       password_label: "Пароль"
       password_confirmation_label: "Підтвердження"
       submit: "Зареєструватися"
+      submitting: "Реєструємо…"
     edit:
       title: 'Редагування профілю гравця %{nickname}'
       nickname_label: "Ваше ім'я"
@@ -800,6 +803,7 @@ uk:
       team_room: "Кімната команди"
       create_team: "Створити команду"
       all_games: "Усі ігри домену"
+      teams: "Команди"
       logout: "Вийти"
       login_legend: "Вхід"
       login: "Увійти"
@@ -1076,7 +1080,7 @@ uk:
       model: "Модель"
       locales: "Мови"
       tokens: "Токени"
-      token_counts: "вхід %{input}, вихід %{output}, з кешу %{cached}"
+      token_counts: "вхід %{input}, вихід %{output}, у кеш %{written}, з кешу %{cached}"
       failed: "Не перекладено"
       cancel: "Зупинити"
       retry: "Повторити"
@@ -1142,6 +1146,7 @@ uk:
       access_pass:
         game: "Гра"
       game:
+        access_mode: "Доступ до гри"
         level_completion_points: "Нарахування за рівень"
         game_completion_points: "Нарахування за проходження"
         max_skips: "Число пропусків"
@@ -1199,8 +1204,11 @@ uk:
               greater_than: "Діапазон кількості команд від 1 до 10000"
               less_than: "Діапазон кількості команд від 1 до 10000"
               exceeds_requested: "Кількість команд, які подали заявку, перевищує задане число"
+            access_mode:
+              access_still_owed: "не можна вимкнути: команди ще не скористалися виданим доступом (%{count}). Відкличте доступ або дочекайтеся проходження."
             starts_at:
               in_the_past: "Ви обрали дату з минулого. Так не можна :-)"
+              needed_to_unpublish_access: "у звичайної гри дата старту має бути в майбутньому — вкажіть нову, щоб перевести гру з доступу за кодом"
             registration_deadline:
               in_the_past: "Ви вказали кінцевий термін реєстрації з минулого, так не можна :-)"
               after_game_start: "Ви вказали кінцевий термін реєстрації пізніший за дату початку гри, так не можна :-)"

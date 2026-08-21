@@ -483,6 +483,8 @@ tr:
       duration: "%{hours} sa %{minutes} dk"
       playing: "oynayan: %{count}"
       played: "oynayan (bitmiş): %{count}"
+      passes_issued: "verilen erişim: %{count}"
+      completed: "bitiren: %{count}"
       view: "(görüntüle)"
       stats: "(istatistik)"
       live_channel: "(canlı yayın)"
@@ -729,6 +731,7 @@ tr:
       password_label: "Parola"
       password_confirmation_label: "Doğrulama"
       submit: "Kaydol"
+      submitting: "Kaydediliyor…"
     edit:
       title: '%{nickname} adlı oyuncunun profilini düzenleme'
       nickname_label: "Adınız"
@@ -831,6 +834,7 @@ tr:
       team_room: "Takım odası"
       create_team: "Takım oluştur"
       all_games: "Alan adındaki tüm oyunlar"
+      teams: "Takımlar"
       logout: "Çıkış yap"
       login_legend: "Giriş"
       login: "Giriş yap"
@@ -1121,7 +1125,7 @@ tr:
       model: "Model"
       locales: "Diller"
       tokens: "Token"
-      token_counts: "giriş %{input}, çıkış %{output}, önbellekten %{cached}"
+      token_counts: "giriş %{input}, çıkış %{output}, önbelleğe %{written}, önbellekten %{cached}"
       failed: "Çevrilmedi"
       cancel: "Durdur"
       retry: "Yeniden dene"
@@ -1185,6 +1189,7 @@ tr:
       access_pass:
         game: "Oyun"
       game:
+        access_mode: "Oyun erişimi"
         level_completion_points: "Seviye puanı"
         game_completion_points: "Bitirme puanı"
         max_skips: "İzin verilen atlama sayısı"
@@ -1242,8 +1247,11 @@ tr:
               greater_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
               less_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
               exceeds_requested: "Başvuran takım sayısı belirlenen sayıyı aşıyor"
+            access_mode:
+              access_still_owed: "kapatılamaz: takımlar verilen erişimi henüz kullanmadı (%{count}). Erişimi geri alın ya da oynamalarını bekleyin."
             starts_at:
               in_the_past: "Geçmişten bir tarih seçtiniz. Böyle olmaz :-)"
+              needed_to_unpublish_access: "programlı bir oyunun başlangıç tarihi gelecekte olmalı — bu oyunun erişim satışını durdurmak için yeni bir tarih girin"
             registration_deadline:
               in_the_past: "Son kayıt tarihini geçmişten seçtiniz, böyle olmaz :-)"
               after_game_start: "Son kayıt tarihini oyunun başlangıç tarihinden sonraya koydunuz, böyle olmaz :-)"

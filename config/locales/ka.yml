@@ -460,6 +460,8 @@ ka:
       duration: "%{hours} სთ %{minutes} წთ"
       playing: "თამაშობს: %{count}"
       played: "თამაშობდა: %{count}"
+      passes_issued: "გაცემული წვდომა: %{count}"
+      completed: "დაასრულა: %{count}"
       view: "(ნახვა)"
       stats: "(სტატისტიკა)"
       live_channel: "(პირდაპირი ეთერი)"
@@ -712,6 +714,7 @@ ka:
       password_label: "პაროლი"
       password_confirmation_label: "დადასტურება"
       submit: "რეგისტრაცია"
+      submitting: "მიმდინარეობს რეგისტრაცია…"
     edit:
       title: 'მოთამაშის პროფილის რედაქტირება: %{nickname}'
       nickname_label: "თქვენი სახელი"
@@ -822,6 +825,7 @@ ka:
       team_room: "გუნდის ოთახი"
       create_team: "გუნდის შექმნა"
       all_games: "დომენის ყველა თამაში"
+      teams: "გუნდები"
       logout: "გასვლა"
       login_legend: "შესვლა"
       login: "შესვლა"
@@ -1100,7 +1104,7 @@ ka:
       model: "მოდელი"
       locales: "ენები"
       tokens: "ტოკენები"
-      token_counts: "შეყვანა %{input}, გამოტანა %{output}, კეშიდან %{cached}"
+      token_counts: "შეყვანა %{input}, გამოტანა %{output}, კეშში %{written}, კეშიდან %{cached}"
       failed: "არ ითარგმნა"
       cancel: "შეჩერება"
       retry: "გამეორება"
@@ -1167,6 +1171,7 @@ ka:
       access_pass:
         game: "თამაში"
       game:
+        access_mode: "წვდომა თამაშზე"
         level_completion_points: "ქულები დონეზე"
         game_completion_points: "ქულები დასრულებაზე"
         max_skips: "დაშვებული გამოტოვებები"
@@ -1224,8 +1229,11 @@ ka:
               greater_than: "გუნდების რაოდენობის დიაპაზონია 1-დან 10000-მდე"
               less_than: "გუნდების რაოდენობის დიაპაზონია 1-დან 10000-მდე"
               exceeds_requested: "განაცხადის შემტანი გუნდების რაოდენობა აღემატება მითითებულ რიცხვს"
+            access_mode:
+              access_still_owed: "ვერ გამოირთვება: გუნდებს ჯერ არ გამოუყენებიათ გაცემული წვდომა (%{count}). გააუქმეთ წვდომა ან დაელოდეთ, სანამ ითამაშებენ."
             starts_at:
               in_the_past: "თქვენ აირჩიეთ წარსული თარიღი. ასე არ შეიძლება :-)"
+              needed_to_unpublish_access: "ჩვეულებრივ თამაშს სჭირდება მომავალი დაწყების თარიღი — მიუთითეთ ახალი, რომ თამაში წვდომის კოდით გაყიდვიდან მოხსნათ"
             registration_deadline:
               in_the_past: "თქვენ მიუთითეთ რეგისტრაციის ბოლო ვადა წარსულში, ასე არ შეიძლება :-)"
               after_game_start: "თქვენ მიუთითეთ რეგისტრაციის ბოლო ვადა თამაშის დაწყების თარიღზე გვიან, ასე არ შეიძლება :-)"

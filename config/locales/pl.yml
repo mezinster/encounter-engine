@@ -187,6 +187,8 @@ pl:
           revoke_access_codes: "Odebrał kody dostępu"
           unrevoke_access_codes: "Przywrócił kody dostępu"
           set_access_code_expiry: "Zmienił termin ważności kodów"
+          load_test_seed: "Utworzył kohortę testu obciążeniowego"
+          load_test_teardown: "Usunął kohortę testu obciążeniowego"
     settings:
       title: "Ustawienia limitów"
       explanation: "Limity rejestracji obowiązują dla jednego adresu IP w podanym okresie; 0 wyłącza limit. Limity plików obowiązują dla gry i dla całego serwera."

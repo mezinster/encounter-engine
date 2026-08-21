@@ -208,6 +208,8 @@ tr:
           revoke_access_codes: "Erişim kodlarını geri aldı"
           unrevoke_access_codes: "Erişim kodlarını geri verdi"
           set_access_code_expiry: "Erişim kodu süresini değiştirdi"
+          load_test_seed: "Yük testi kohortu oluşturdu"
+          load_test_teardown: "Yük testi kohortunu kaldırdı"
     settings:
       title: "Sınırlama ayarları"
       explanation: "Kayıt sınırlamaları belirtilen süre içinde tek bir IP adresi için geçerlidir; 0 sınırlamayı kapatır. Dosya sınırlamaları oyun başına ve sunucu genelinde geçerlidir."

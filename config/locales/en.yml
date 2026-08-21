@@ -163,6 +163,8 @@ en:
           revoke_access_codes: "Revoked access codes"
           unrevoke_access_codes: "Restored access codes"
           set_access_code_expiry: "Changed access-code expiry"
+          load_test_seed: "Created a load-test cohort"
+          load_test_teardown: "Removed a load-test cohort"
     settings:
       title: "Rate limits"
       explanation: "Signup limits apply per IP address per window; 0 disables the limit. File limits apply per game and across the whole server."

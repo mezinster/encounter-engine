@@ -108,4 +108,17 @@ describe LoadTest::GameCloner do
 
     expect(clone.access_mode).to eq("scheduled")
   end
+
+  # The regression test for the 2026-08-21 production run, which cloned a
+  # source game with points off and got a scratch game that could never
+  # exercise the points ledger -- the design (section 4.1) requires
+  # points_enabled: true regardless of what the source has.
+  it "forces the clone's points_enabled to true, even when the source has it false" do
+    source = create_game(:points_enabled => false)
+    create_level(:game => source, :correct_answer => "aaa")
+
+    clone = described_class.new(source).call(:name => "scratch", :author => author)
+
+    expect(clone.points_enabled).to eq(true)
+  end
 end

@@ -120,16 +120,24 @@ against them in §5.
 
 Go to `/admin/load_test` on the production instance:
 
-1. Pick a source game to clone, and a team count (start with the top of the
-   ramp ladder in mind — 120 teams matches `load_test/main.js`'s plateaus).
+1. Pick a source game to clone, and a team count **at least as large as the
+   top plateau you intend to run** — `load_test/main.js`'s `--env LADDER`
+   default is `120,250,500,1000` as of 2026-08-21 (see §9's baseline entry
+   for why it was raised from the old 120-team top). Seed fewer than the top
+   plateau and `main.js` refuses to start the ramp phase rather than letting
+   VUs silently double up on teams — see `load_test/README.md`. If you don't
+   need the full ladder, seed to match a smaller `--env LADDER` instead of
+   seeding 1000 teams every time.
 2. Type the cohort id into both the cohort field and the confirmation field
    — the console refuses a mismatch.
 3. Submit. **The screen redirects immediately, saying seeding has started —
-   it does not wait for it to finish.** Seeding 120 teams still takes real
-   time (well under the old ten minutes, but not instant); the console shows
-   "seeding in progress" while it runs and the cohort id and row counts once
-   it lands. Reload the page rather than submitting again — a second submit
-   while one is already running is refused, not queued.
+   it does not wait for it to finish.** Seeding takes real time proportional
+   to the team count (well under the old ten-minutes-per-120 baseline, but
+   not instant, and a 1000-team seed takes meaningfully longer than a
+   120-team one); the console shows "seeding in progress" while it runs and
+   the cohort id and row counts once it lands. Reload the page rather than
+   submitting again — a second submit while one is already running is
+   refused, not queued.
 4. Download the manifest from the console (the "manifest" link/button) to
    your machine. **Do not open it in anything that logs its contents** (a
    browser devtools network tab, a shared clipboard manager) — it is full of
@@ -205,9 +213,14 @@ its own scenarios per phase and k6 refuses to start if you pass any of
 those (`function 'default' not found in exports`). See
 `load_test/README.md`'s "Running" section if you need the reason again.
 
-This steps concurrent teams through 10 → 20 → 40 → 80 → 120, each a 30s ramp
-followed by a 4-minute hold, and aborts automatically (exit code 99) if
-`p(95)` crosses 2000ms or the error rate crosses 2% for 30 seconds straight.
+This steps concurrent teams through the plateaus in `--env LADDER`
+(default `120,250,500,1000` since 2026-08-21 — see §9's baseline entry for
+why), each a 30s ramp followed by a 4-minute hold, and aborts automatically
+(exit code 99) if `p(95)` crosses 2000ms or the error rate crosses 2% for 30
+seconds straight. **The seeded cohort must be at least as large as the top
+plateau** — §2 step 1 below covers seeding enough teams; if it isn't,
+`main.js` refuses to start and names both numbers rather than silently
+wrapping VUs onto shared teams (see `load_test/README.md`).
 
 **Record the last plateau that completed its full 4-minute hold without
 aborting.** That number is the burst ceiling — the capacity of a VM that
@@ -425,6 +438,43 @@ regardless of the game row, which is why it bypasses the id-confirmation
 guard — the operator is choosing to step outside it, not being let through
 it by accident. Confirm afterward with `load_test:status` same as step 3
 above.
+
+---
+
+## 9. Measured baselines
+
+The next operator needs a comparand — a run with no prior baseline can't tell "slow" from "normal."
+Add a dated entry here after every real run.
+
+### 2026-08-21
+
+First real run against production. Source game cloned: **Викторина** (71 levels). Generator: a
+laptop in Georgia — the app is in westeurope, so roughly 77ms of the numbers below is network, not
+app time (measured warm-connection baseline 94ms; the app's own reported time was 16-17ms). 120
+concurrent teams, 22m30s ramp through all five plateaus (10 → 20 → 40 → 80 → 120, the pre-`LADDER`
+hard-coded steps), **no abort**.
+
+| metric | value | threshold |
+|---|---|---|
+| `http_req_duration` | p95=196ms, med=98ms, avg=115ms, max=1.1s | p95<2000ms |
+| `http_req_failed` | 0.00% (0 of 2544) | <2% |
+| `checks` | 99.78% | >99% |
+| `iteration_duration` | avg=1m7s (model predicted 67.5s) | — |
+| throughput at the 120 plateau | ~3.6 req/s (model predicted 3.56) | — |
+| app CPU at 120 teams | 2-10%, load average 0.20 | — |
+
+**120 teams is nowhere near the ceiling** — the box never got close to strained, which is why the
+`LADDER` default was raised (`load_test/main.js`, `load_test/README.md`) to `120,250,500,1000` for
+the next run.
+
+**This baseline was taken with the points ledger NOT exercised.** `is_testing: true` on the run
+(required by §4.1.2 of the design for the visibility mitigation) makes `GamePassing
+#award_points_for` return before any `PointTransaction.award!` call, regardless of
+`points_enabled` — confirmed directly: `point_transactions: 0` against `1069` log rows this run.
+See `docs/superpowers/specs/2026-08-21-load-testing-design.md` §4.1.3 for the full account. Every
+number above is therefore optimistic by whatever that write costs, and **is not directly comparable
+to a future run where this is resolved** — a lower or similar p95 next time does not by itself mean
+the app got faster or held steady; it may mean the ledger write is still not being measured.
 
 ---
 

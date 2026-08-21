@@ -160,6 +160,64 @@ see that a game exists but cannot join it. The game is named unmistakably
 actually refuses an uninvited authenticated user. If it does not, the run must
 move to `access_mode: "pass_required"` instead.
 
+#### 4.1.3 KNOWN CONTRADICTION: `points_enabled: true` and `is_testing: true` cannot both take effect (found 2026-08-21, unresolved)
+
+**This subsection records a conflict this design shipped with; it is not a
+proposal and nothing below should be read as a fix.** §4.1 requires
+`points_enabled: true` specifically so the points ledger is exercised —
+"a correct answer advances the passing, re-serialises `answered_questions`
+and writes to the points ledger; a wrong one writes a log row. Those costs
+differ enough that the ratio matters." §4.1.2 requires `is_testing: true` on
+the run, because it is the mitigation carrying the weight against the
+publicly-visible scratch game.
+
+Those two requirements are mutually exclusive as written. `GamePassing
+#award_points_for` (`app/models/game_passing.rb:603`) is:
+
+```ruby
+def award_points_for(level, finishing)
+  return unless game&.points_enabled?
+  return if game_run&.is_testing?   # <- unconditional, no override
+  PointTransaction.award!(...)
+  ...
+end
+```
+
+`return if game_run&.is_testing?` fires before any `PointTransaction.award!`
+call, regardless of `points_enabled`. So for any cohort seeded the way §4.1
+and §4.1.2 both specify, the ledger write this design wants measured is
+categorically unreachable — not rare, not conditional on the answer mix,
+simply never executed. The 2026-08-21 production run confirms it directly:
+`point_transactions: 0` against `1069` log rows for the run.
+
+**Consequence for every number this design produces:** the measured ceiling
+is optimistic by whatever `PointTransaction.award!` costs per accepted
+answer, on top of whatever `AnsweredQuestionsCoder`'s re-serialisation
+already costs. Nobody has measured that delta, because nothing seeded under
+this design can produce it.
+
+**Resolving this needs an owner decision between two real options, not an
+engineering judgment call:**
+
+1. **Drop `is_testing: true`, gate admission with `pass_required` plus
+   issued `AccessPass`es instead.** This exercises the ledger honestly, but
+   removes the mitigation §4.1.2 relies on for the visibility problem —
+   `access_mode: "pass_required"` still leaves the game visible (§4.1.2's
+   `Game::VISIBILITIES` constraint doesn't change), so whatever protects an
+   uninvited authenticated user from joining has to come from the pass gate
+   holding, not from `is_testing`. §4.1.2's own "to confirm during
+   implementation" item is directly relevant here: if the pass gate has the
+   same property the test-token gate was supposed to have, this option is
+   sound; if not, this option reopens exactly the problem `is_testing` was
+   chosen to close.
+2. **Accept the gap.** Keep `is_testing: true`, report the ceiling as
+   "ledger-write cost not included," and treat this as a permanent,
+   documented limitation of what this harness can measure rather than
+   something to fix.
+
+Until the owner picks one, every ceiling this harness reports should be read
+with that caveat attached — see `load_test/README.md`.
+
 ### 4.2 Task interface
 
 `lib/tasks/load_test.rake` stays a thin shell; the logic lives in a plain

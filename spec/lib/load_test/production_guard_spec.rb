@@ -89,4 +89,19 @@ describe "LoadTest.guard!" do
 
     expect { LoadTest.guard!("lt-a") }.to raise_error(LoadTest::Refused)
   end
+
+  # The db_config: default carries the Critical fix (DATABASE_URL overriding
+  # the connection while Rails.env stays unchanged). Every example above that
+  # exercises a postgres connection injects a db_config double explicitly, so
+  # none of them would notice the default itself silently reverting to
+  # something that never checks the live connection. This is that check, the
+  # same shape as the Rails.env example above but for the other keyword.
+  it "reads the live connection when no db_config is given, the way the rake tasks call it" do
+    ENV.delete("LOAD_TEST_CONFIRM")
+    allow(ActiveRecord::Base).to receive(:connection_db_config)
+      .and_return(double(:adapter => "postgresql"))
+
+    expect { LoadTest.guard!("lt-a", :environment => "development") }
+      .to raise_error(LoadTest::Refused)
+  end
 end

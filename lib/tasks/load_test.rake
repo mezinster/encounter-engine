@@ -25,15 +25,30 @@ namespace :load_test do
       :base_url    => ENV["LOAD_TEST_BASE_URL"]
     ).seed!
 
-    path = LoadTest::ManifestFile.write!(
-      manifest, :path => ENV.fetch("LOAD_TEST_MANIFEST", "/tmp/#{cohort_id}.json")
-    )
-
+    # seed! already committed above -- the cohort is live in the database by
+    # this point, regardless of what happens next. If the manifest write fails
+    # (Errno::EEXIST from ManifestFile.write!'s O_EXCL, most likely a stale
+    # file at a predictable /tmp path), the operator must not be left with a
+    # live, unrecorded cohort and no way to find it: print the id and the
+    # exact teardown command FIRST, before anything can raise, then explain
+    # what didn't happen and re-raise so the failure still surfaces.
     puts "cohort:   #{cohort_id}"
-    puts "manifest: #{path}  (contains live credentials -- never commit it)"
     puts
     puts "TEARDOWN IS MANDATORY. When the run is over:"
     puts "  LOAD_TEST_CONFIRM=#{cohort_id} bin/rails 'load_test:teardown[#{cohort_id}]'"
+
+    begin
+      path = LoadTest::ManifestFile.write!(
+        manifest, :path => ENV.fetch("LOAD_TEST_MANIFEST", "/tmp/#{cohort_id}.json")
+      )
+      puts
+      puts "manifest: #{path}  (contains live credentials -- never commit it)"
+    rescue Errno::EEXIST => e
+      warn ""
+      warn "manifest NOT written: #{e.message}"
+      warn "the cohort above is live regardless -- the teardown command still applies"
+      raise
+    end
   end
 
   # teardown! validates the id against the cohort actually present and refuses

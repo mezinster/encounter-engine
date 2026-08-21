@@ -15,7 +15,3 @@ export function teamFor(vu) {
   const teams = manifest().teams;
   return teams[(vu - 1) % teams.length];
 }
-
-export function allCodes() {
-  return Object.values(manifest().codes).flat();
-}

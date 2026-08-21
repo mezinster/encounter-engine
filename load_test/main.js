@@ -82,11 +82,13 @@ export const options = {
 // of the hold phase. (Modelling the real start-of-game login stampede wants its
 // own scenario and its own design pass; it is out of scope here.)
 let token = null;
+let team = null;
 
 export function session() {
   const base = __ENV.BASE_URL || manifest().base_url;
   if (token === null) {
-    token = login(base, teamFor(__VU));
+    team = teamFor(__VU);
+    token = login(base, team);
   }
-  playOnce(base, token);
+  playOnce(base, token, team);
 }

@@ -305,6 +305,8 @@ en:
       no_manifest: "No manifest available in this session."
       manifest_exists: "Cohort %{cohort} was created, but the manifest was not written: that file already exists."
       invalid_cohort_id: "A cohort id may contain only Latin letters, digits and hyphens."
+      cohort_present: "Cohort %{cohort} already exists."
+      refused: "Refused by the production safety guard."
   answers:
     must_have_at_least_one_variant: "There must be at least one answer code"
     index:

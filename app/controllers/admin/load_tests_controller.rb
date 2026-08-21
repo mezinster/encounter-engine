@@ -20,7 +20,14 @@ class Admin::LoadTestsController < ApplicationController
     return refuse unless confirmed?(cohort_id)
     return refuse_invalid unless valid_cohort_id?(cohort_id)
 
-    LoadTest.guard!(cohort_id)
+    # The typed confirmation IS the console's per-operation confirmation --
+    # `confirmed?` above already enforced it. Passing it through here too
+    # makes the guard defence in depth: it still refuses in production even
+    # if `confirmed?` were ever removed or bypassed, rather than silently
+    # trusting the caller the way `LoadTest.guard!(cohort_id)` alone would
+    # (its default reads LOAD_TEST_CONFIRM, which is never set in this
+    # process -- see the Puma/rake split in lib/load_test.rb).
+    LoadTest.guard!(cohort_id, :confirmation => params[:confirm_cohort_id])
     manifest = LoadTest::Seeder.new(
       :source_game => Game.find(params[:source_game_id]),
       :teams       => params[:teams],
@@ -51,8 +58,17 @@ class Admin::LoadTestsController < ApplicationController
     end
 
     redirect_to admin_load_test_path, :notice => t("admin.load_test.seeded")
-  rescue LoadTest::Seeder::CohortPresent, LoadTest::Refused => e
-    redirect_to admin_load_test_path, :alert => e.message
+  # Translated keys, never e.message: LoadTest::Seeder::CohortPresent's
+  # message interpolates whatever LoadTest::Seeder.status[:cohort_id] returns
+  # (see that class), and LoadTest::Refused's is a hardcoded English sentence
+  # meant for a rake operator's terminal -- neither belongs verbatim on a
+  # screen where every other string is translated. cohort_id here is the id
+  # the operator just typed, the same value either exception is about.
+  rescue LoadTest::Seeder::CohortPresent
+    redirect_to admin_load_test_path,
+               :alert => t("admin.load_test.cohort_present", :cohort => cohort_id)
+  rescue LoadTest::Refused
+    redirect_to admin_load_test_path, :alert => t("admin.load_test.refused")
   end
 
   def teardown
@@ -60,7 +76,8 @@ class Admin::LoadTestsController < ApplicationController
     return refuse unless confirmed?(cohort_id)
     return refuse_invalid unless valid_cohort_id?(cohort_id)
 
-    LoadTest.guard!(cohort_id)
+    # See the matching comment in #seed.
+    LoadTest.guard!(cohort_id, :confirmation => params[:confirm_cohort_id])
     removed = LoadTest::Seeder.teardown!(cohort_id)
 
     # Audited immediately, before the manifest cleanup below. The change that
@@ -84,8 +101,8 @@ class Admin::LoadTestsController < ApplicationController
     end
 
     redirect_to admin_load_test_path, :notice => t("admin.load_test.torn_down")
-  rescue LoadTest::Refused => e
-    redirect_to admin_load_test_path, :alert => e.message
+  rescue LoadTest::Refused
+    redirect_to admin_load_test_path, :alert => t("admin.load_test.refused")
   end
 
   def manifest

@@ -113,7 +113,13 @@ module LoadTest
     end
 
     def seed!
-      raise CohortPresent, "cohort #{existing_cohort} still present" if existing_cohort
+      # The COHORT ID, not the e-mail existing_cohort returns below -- this
+      # message reaches an operator (rake stdout, or the console's flash via
+      # a t() key keyed off the exception class, never this string directly),
+      # and an e-mail local part built from a random hex nickname tells them
+      # nothing they can act on. status[:cohort_id] is the same value the
+      # rake teardown command and the console both already show.
+      raise CohortPresent, "cohort #{self.class.status[:cohort_id]} still present" if existing_cohort
 
       ActiveRecord::Base.transaction do
         author = create_account("author")
@@ -177,13 +183,22 @@ module LoadTest
       # team-wide, which the unique index permits.
       TestAdmission.create!(:game_run_id => run.id, :team_id => team.id)
 
+      level = level_for(game, index)
       GamePassing.create!(:game_id                  => game.id,
                           :team_id                  => team.id,
                           :game_run_id              => run.id,
-                          :current_level_id         => level_for(game, index).id,
+                          :current_level_id         => level.id,
                           :current_level_entered_at => Time.now)
 
-      { :email => captain.email, :password => password, :team_id => team.id }
+      # level_id is the team's STARTING level -- correctness in the app is
+      # per-level (GamePassing#check_answer! matches through
+      # current_level.find_question_by_answer), and this is what lets k6's
+      # pickCode() draw a "correct" answer from the right level's codes
+      # instead of the whole game's, which is off by roughly the level
+      # count. It drifts as the team actually answers correctly and advances
+      # -- acceptable, and much closer than not tracking level at all.
+      { :email => captain.email, :password => password, :team_id => team.id,
+        :level_id => level.id }
     end
 
     # Varied depth, not decoration: AnsweredQuestionsCoder re-serialises the

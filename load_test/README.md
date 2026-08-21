@@ -52,6 +52,19 @@ ignored by `ramp`, whose plateaus are fixed in `main.js`. `--env
 WRONG_SHARE` (default 0.85) is `lib/play.js`'s share of deliberately-wrong answers — raise it
 towards 1 for a smoke test you don't want to accidentally finish the seeded game.
 
+**`WRONG_SHARE` is the share of answer POSTs that are wrong, not the app's own accept rate.**
+`pickCode()` now draws a "correct" answer from `manifest().codes[team.level_id]` — the specific
+level the team's manifest entry says it started on (`lib/load_test/seeder.rb`'s `build_team`),
+never from every level's codes pooled together. Correctness in the app is per-level
+(`GamePassing#check_answer!` matches through `current_level.find_question_by_answer`), so pooling
+all codes together made a "correct" draw land on the team's actual current level only about
+`1/levels` of the time — roughly 30x below the designed 15% on a typical game, which under-exercised
+the expensive accept path (re-serialising `answered_questions`, writing to the points ledger)
+relative to the cheap wrong-answer path (a log row). `level_id` is the team's *starting* level, so
+this is exact at the top of a run and drifts low as the team actually answers correctly and
+advances — accepted as much closer than the old behaviour, not perfect; this harness doesn't track
+live level state.
+
 **Never commit a manifest.** It carries live team passwords in plaintext.
 Manifests are written to `/tmp` by the seeder and stay there.
 

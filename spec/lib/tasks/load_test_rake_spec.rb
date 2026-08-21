@@ -36,6 +36,66 @@ describe "load_test rake tasks" do
       expect { Rake::Task["load_test:teardown"].invoke("lt-a") }
         .to raise_error(LoadTest::Refused)
     end
+
+    # The manifest's `codes` are the SOURCE game's real answer codes, copied
+    # verbatim by GameCloner -- it stays meaningful long after the seeded
+    # accounts are gone. Before this fix only the console's teardown removed
+    # it; rake's left it sitting at a predictable path forever. Same path
+    # `load_test:seed` wrote (LOAD_TEST_MANIFEST, else the default), which is
+    # exactly the file the operator was told to keep -- see docs/runbooks.
+    it "deletes the manifest file the seed task wrote" do
+      game = create_game
+      create_level(:game => game, :name => "L1", :correct_answer => "aaa")
+
+      Dir.mktmpdir("load-test-teardown-manifest-spec") do |dir|
+        manifest_path = File.join(dir, "manifest.json")
+        original_manifest = ENV["LOAD_TEST_MANIFEST"]
+        original_cohort   = ENV["LOAD_TEST_COHORT"]
+        ENV["LOAD_TEST_MANIFEST"] = manifest_path
+        ENV["LOAD_TEST_COHORT"]   = "lt-teardown-spec"
+
+        begin
+          Rake::Task["load_test:seed"].invoke(game.id.to_s, "1")
+          expect(File.exist?(manifest_path)).to be true
+
+          Rake::Task["load_test:teardown"].invoke("lt-teardown-spec")
+
+          expect(File.exist?(manifest_path)).to be false
+        ensure
+          ENV["LOAD_TEST_MANIFEST"] = original_manifest
+          ENV["LOAD_TEST_COHORT"]   = original_cohort
+          File.delete(manifest_path) if File.exist?(manifest_path)
+        end
+      end
+    end
+
+    # Best-effort, mirroring the identical fix in
+    # Admin::LoadTestsController#teardown: a teardown that already removed
+    # every row in the database must not fail just because the manifest file
+    # is already gone (or, in production, some other SystemCallError).
+    it "does not raise when the manifest file is already gone" do
+      game = create_game
+      create_level(:game => game, :name => "L1", :correct_answer => "aaa")
+
+      Dir.mktmpdir("load-test-teardown-manifest-spec") do |dir|
+        manifest_path = File.join(dir, "manifest.json")
+        original_manifest = ENV["LOAD_TEST_MANIFEST"]
+        original_cohort   = ENV["LOAD_TEST_COHORT"]
+        ENV["LOAD_TEST_MANIFEST"] = manifest_path
+        ENV["LOAD_TEST_COHORT"]   = "lt-teardown-spec2"
+
+        begin
+          Rake::Task["load_test:seed"].invoke(game.id.to_s, "1")
+          File.delete(manifest_path)
+
+          expect { Rake::Task["load_test:teardown"].invoke("lt-teardown-spec2") }
+            .not_to raise_error
+        ensure
+          ENV["LOAD_TEST_MANIFEST"] = original_manifest
+          ENV["LOAD_TEST_COHORT"]   = original_cohort
+        end
+      end
+    end
   end
 
   describe "load_test:seed, in production" do

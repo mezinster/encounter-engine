@@ -86,7 +86,10 @@ tonight goes badly wrong.
 
 **The ramp and hold numbers only mean something next to this baseline.**
 Without it, a slow app under load and an app that was already slow cannot be
-told apart.
+told apart. This is a box-health check against an anonymous route, not a
+like-for-like comparand for the ramp/hold numbers below — those drive the
+authenticated, per-team `/play/:id` path, which costs more per request than
+`/` does.
 
 p95 with no load, ~10 minutes, from your own machine:
 
@@ -332,22 +335,31 @@ A cohort left standing is live production accounts with live passwords and a
 publicly-visible scratch game.
 
 1. From `/admin/load_test`, tear the cohort down (type the cohort id into
-   both fields, same confirmation pattern as seeding).
-2. Confirm it's actually gone:
+   both fields, same confirmation pattern as seeding). This also removes the
+   manifest copy sitting in the container's temp directory (or, if you seeded
+   from rake instead, run `bin/rails load_test:teardown[<cohort-id>]` — it
+   does the same cleanup for the copy `rake` wrote).
+2. **Delete your own local copy of the manifest too** — the file you
+   downloaded from the console in §2 step 4 (or `scp`'d down, if you went
+   that route). It carries the same live captain passwords as the copy the
+   teardown above just removed, and nothing deletes it for you. The
+   generator's own copy (the one you `scp`'d *up* to it in §3) does not need
+   separate handling — it goes away with the resource group in step 4 below.
+3. Confirm it's actually gone:
    ```bash
    bundle exec kamal app exec 'bin/rails load_test:status'
    ```
    Expect `{:cohort_id=>nil, :users=>0}`. If `cohort_id` is not nil, the
    teardown did not finish — do not walk away; go back to the console and
    retry, or use the recovery path below.
-3. Destroy the generator's resource group:
+4. Destroy the generator's resource group:
    ```bash
    ./load_test/provision.sh destroy
    az group exists --name encounter-loadgen   # poll until it prints false
    ```
    `provision.sh destroy` is asynchronous (`--no-wait`) — give it a minute
    before you trust `az group exists`.
-4. If Puma's memory looks high (check via `kamal app logs` or your usual
+5. If Puma's memory looks high (check via `kamal app logs` or your usual
    monitoring) after a heavy run, reboot the app:
    ```bash
    bundle exec kamal app boot
@@ -392,5 +404,5 @@ above.
 5. Hold:         k6 run --env PHASE=hold  --env TEAMS=<70% of ceiling> --env MANIFEST=~/manifest.json load_test/main.js
 6. Abort by hand on: credit drain, co-tenant distress, any real user
 7. Verify closed: az network nsg rule list --resource-group encounter-loadgen --nsg-name loadgenNSG
-8. Teardown:     console teardown -> load_test:status nil -> provision.sh destroy -> kamal app boot if needed
+8. Teardown:     console teardown -> delete your local manifest copy -> load_test:status nil -> provision.sh destroy -> kamal app boot if needed
 ```

@@ -79,6 +79,41 @@ describe "the load-test console", type: :request do
     }.to change(Team, :count).by(2)
   end
 
+  # Before this fix, LoadTest.guard!(cohort_id) read ENV["LOAD_TEST_CONFIRM"]
+  # directly -- a variable this Puma process never has set (it exists nowhere
+  # in config/deploy.yml or .kamal/secrets, by design: it's a per-run
+  # confirmation, not a standing one). So in a live-shaped environment, EVERY
+  # console seed raised LoadTest::Refused regardless of what the operator
+  # typed, and the console could never execute its own documented procedure
+  # (docs/runbooks/load-test.md §2). Stubbing live? true here reproduces that
+  # shape without touching Rails.env or the database adapter, and proves the
+  # guard now reads the operator's typed confirmation instead.
+  it "seeds in a live (production-shaped) environment when the typed cohort id matches" do
+    allow(LoadTest).to receive(:live?).and_return(true)
+    sign_in(superadmin)
+
+    expect {
+      post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
+    }.to change(Team, :count).by(2)
+
+    expect(response).to redirect_to(admin_load_test_path)
+    follow_redirect!
+    # The literal Russian success notice, not a guard refusal -- see the
+    # comment further down on why this file asserts literal strings rather
+    # than comparing against I18n.t.
+    expect(response.body).to include("Когорта создана.")
+  end
+
+  it "refuses to seed in a live (production-shaped) environment when the typed cohort id does not match" do
+    allow(LoadTest).to receive(:live?).and_return(true)
+    sign_in(superadmin)
+    source # see the eager-evaluation comment on the earlier mismatch example
+
+    expect {
+      post admin_load_test_seed_path, :params => seed_params(:confirm => "wrong")
+    }.not_to change(User, :count)
+  end
+
   # store_manifest writes to a fixed, predictable path (Dir.tmpdir/<cohort
   # id>.json) with O_EXCL, so a pre-existing file there -- a leftover from an
   # earlier rake seed under the same id, most plausibly -- makes the write
@@ -135,6 +170,33 @@ describe "the load-test console", type: :request do
       post admin_load_test_teardown_path,
            :params => { :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
     }.to change(Team, :count).by(-2)
+  end
+
+  # Same shape as the seed examples above: before this fix, guard! read
+  # ENV["LOAD_TEST_CONFIRM"] directly, so teardown was exactly as unreachable
+  # from the console in a live environment as seeding was.
+  it "tears the cohort down in a live (production-shaped) environment when the typed cohort id matches" do
+    sign_in(superadmin)
+    post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
+
+    allow(LoadTest).to receive(:live?).and_return(true)
+
+    expect {
+      post admin_load_test_teardown_path,
+           :params => { :cohort_id => "lt-test-a", :confirm_cohort_id => "lt-test-a" }
+    }.to change(Team, :count).by(-2)
+  end
+
+  it "refuses to tear down in a live (production-shaped) environment when the typed cohort id does not match" do
+    sign_in(superadmin)
+    post admin_load_test_seed_path, :params => seed_params(:confirm => "lt-test-a")
+
+    allow(LoadTest).to receive(:live?).and_return(true)
+
+    expect {
+      post admin_load_test_teardown_path,
+           :params => { :cohort_id => "lt-test-a", :confirm_cohort_id => "wrong" }
+    }.not_to change(Team, :count)
   end
 
   # File.unlink can fail for reasons other than "the file is already gone" --

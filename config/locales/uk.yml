@@ -322,6 +322,8 @@ uk:
       no_manifest: "Маніфест недоступний у цій сесії."
       manifest_exists: "Когорту %{cohort} створено, але маніфест не записано: файл вже існує."
       invalid_cohort_id: "Ідентифікатор когорти повинен складатися з латинських літер, цифр і дефісів."
+      cohort_present: "Когорта %{cohort} вже існує."
+      refused: "Дію відхилено перевіркою безпеки production."
   answers:
     must_have_at_least_one_variant: "Має бути хоча б один варіант коду"
     index:

@@ -1,7 +1,7 @@
 // load_test/lib/play.js
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { allCodes, manifest } from './manifest.js';
+import { manifest } from './manifest.js';
 
 const WRONG_SHARE = Number(__ENV.WRONG_SHARE || 0.85);
 
@@ -9,13 +9,22 @@ function randomBetween(a, b) {
   return a + Math.random() * (b - a);
 }
 
-function pickCode() {
+// Correctness is PER-LEVEL (app/models/game_passing.rb's check_answer! matches
+// through current_level.find_question_by_answer), so a "correct" draw has to
+// come from the team's own current level's codes, not the whole game's --
+// drawing from every level's codes made the true correct rate ~1/levels of
+// the intended (1 - WRONG_SHARE), roughly 30x too low on a typical game. team
+// carries the STARTING level id from the manifest (see lib/load_test/seeder.rb);
+// this is exactly right at the start of a run and drifts as the team actually
+// answers correctly and advances -- accepted rather than tracking live level
+// state, which this harness doesn't otherwise need.
+function pickCode(team) {
   if (Math.random() < WRONG_SHARE) return `wrong-${Math.floor(Math.random() * 1e9)}`;
-  const codes = allCodes();
+  const codes = manifest().codes[team.level_id];
   return codes[Math.floor(Math.random() * codes.length)];
 }
 
-export function playOnce(base, token) {
+export function playOnce(base, token, team) {
   const gameId = manifest().game_id;
 
   const page = http.get(`${base}/play/${gameId}`);
@@ -31,7 +40,7 @@ export function playOnce(base, token) {
   sleep(randomBetween(20, 90));
 
   const res = http.post(`${base}/play/${gameId}`, {
-    answer: pickCode(),
+    answer: pickCode(team),
     authenticity_token: token,
   });
   check(res, {

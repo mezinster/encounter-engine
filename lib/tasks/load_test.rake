@@ -75,6 +75,23 @@ namespace :load_test do
       warn "Check `load_test:status` to see what cohort id (if any) is actually present."
       raise
     end
+
+    # The credentials outlive the accounts otherwise -- the manifest's `codes`
+    # are the SOURCE game's real answer codes, copied verbatim by GameCloner,
+    # and stay meaningful long after the seeded accounts are gone. Mirrors
+    # the identical fix in Admin::LoadTestsController#teardown: best-effort,
+    # same path the seed task wrote (LOAD_TEST_MANIFEST, else the default),
+    # never lets a manifest we cannot remove turn a teardown that already
+    # succeeded into a failure.
+    manifest_path = ENV.fetch("LOAD_TEST_MANIFEST", "/tmp/#{cohort_id}.json")
+    begin
+      File.unlink(manifest_path)
+    rescue Errno::ENOENT
+      # Already gone -- nothing to do.
+    rescue SystemCallError => e
+      warn "[load_test] could not remove manifest #{manifest_path}: #{e.class}"
+    end
+
     puts "status: #{LoadTest::Seeder.status.inspect}"
   end
 

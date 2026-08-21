@@ -71,6 +71,22 @@ describe LoadTest::Seeder do
     expect(manifest[:codes].values.flatten).to match_array(%w[aaa bbb])
   end
 
+  # k6's pickCode() (load_test/lib/play.js) draws a "correct" answer from
+  # manifest.codes[team.level_id] -- a per-level lookup, not a pool of every
+  # level's codes -- because correctness in the app is per-level
+  # (GamePassing#check_answer!). Without this field the mix would land on
+  # the team's actual level roughly 1/levels of the intended rate. This pins
+  # both that the field exists and that it names a level the team's own
+  # entry in `codes` can actually answer.
+  it "gives each team its starting level id, matching a key in codes" do
+    manifest = seeder(:teams => 6).seed!
+
+    manifest[:teams].each do |team|
+      expect(team[:level_id]).to be_present
+      expect(manifest[:codes]).to have_key(team[:level_id].to_s)
+    end
+  end
+
   it "refuses to seed while another cohort is present" do
     seeder.seed!
 

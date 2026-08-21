@@ -33,6 +33,31 @@ describe "LoadTest.guard!" do
     expect { LoadTest.guard!("lt-a", :environment => "production") }.not_to raise_error
   end
 
+  # The console has no ENV var to set from a browser -- it passes the
+  # operator's typed confirmation explicitly instead. `confirmation:`
+  # defaults to the env var (the examples above, and every existing rake call
+  # site) but an explicit value must win, in both directions: a matching
+  # explicit confirmation must be accepted even with a DIFFERENT (or absent)
+  # LOAD_TEST_CONFIRM in the environment, and a mismatched explicit
+  # confirmation must still refuse even when LOAD_TEST_CONFIRM happens to
+  # match -- otherwise a stray env var on the Puma host would silently
+  # override what the operator actually typed.
+  it "accepts an explicit confirmation even when LOAD_TEST_CONFIRM disagrees or is unset" do
+    ENV.delete("LOAD_TEST_CONFIRM")
+
+    expect {
+      LoadTest.guard!("lt-a", :confirmation => "lt-a", :environment => "production")
+    }.not_to raise_error
+  end
+
+  it "refuses a mismatched explicit confirmation even when LOAD_TEST_CONFIRM happens to match" do
+    ENV["LOAD_TEST_CONFIRM"] = "lt-a"
+
+    expect {
+      LoadTest.guard!("lt-a", :confirmation => "wrong", :environment => "production")
+    }.to raise_error(LoadTest::Refused)
+  end
+
   it "refuses a nil cohort id in production even when nothing is confirmed" do
     ENV.delete("LOAD_TEST_CONFIRM")
 

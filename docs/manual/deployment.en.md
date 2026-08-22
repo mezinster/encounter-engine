@@ -6,6 +6,7 @@ How to run your own encounter-engine instance. Two paths, and the first is where
 - **[A real installation](#a-real-installation)** — your domain, your server, real games.
 
 User manual: [en.md](en.md). Русская версия: [deployment.ru.md](deployment.ru.md).
+Will it cope with a game night? [performance.en.md](performance.en.md).
 
 If you don't need a server of your own and just want to play, there is a
 [shared one](https://game.mezin.eu/). Installing is for people who want their own domain, their

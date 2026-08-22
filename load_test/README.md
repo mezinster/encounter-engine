@@ -208,6 +208,9 @@ for the POST check, a real "the app accepted this" response) without the marker.
 
 ## Scenarios
 
+*Plain-language explanation of all three, and why the difference matters:*
+*[`docs/manual/performance.en.md`](../docs/manual/performance.en.md) ([по-русски](../docs/manual/performance.ru.md)).*
+
 `--env PHASE=` selects one. **A target is always a team count, never a rate.**
 
 | phase | what it asks | knobs |

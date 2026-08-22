@@ -20,8 +20,49 @@ module Manual
     # alone and pinned every paragraph to its authoring width.
     OPTIONS = { :input => "GFM", :hard_wrap => false }.freeze
 
+    # Where a relative .md link points once it is on the web. Pinned to master
+    # rather than to the running commit: a reader following a link out of the
+    # manual wants the current document, and this app has no way to know which
+    # commit built it.
+    GITHUB_BLOB = "https://github.com/mezinster/encounter-engine/blob/master/".freeze
+
+    # The directory the manuals live in, which is what a relative link is
+    # relative TO. Not Rails.root: this resolves link text, not files on disk.
+    DOCUMENT_ROOT = "docs/manual".freeze
+
+    # The two documents this app serves itself. Everything else goes to GitHub.
+    IN_APP = { "ru.md" => :ru, "en.md" => :en }.freeze
+
     def self.call(markdown)
-      Kramdown::Document.new(markdown, OPTIONS).to_html
+      document = Nokogiri::HTML5.fragment(
+        Kramdown::Document.new(markdown, OPTIONS).to_html
+      )
+      rewrite_links(document)
+      document.to_html
     end
+
+    # Relative markdown links are correct in a repository and meaningless in a
+    # browser. ru.md/en.md become the app's own route WITH ?locale=, so that
+    # following one goes through LocaleSelection and is remembered in the
+    # session -- exactly as if the header switcher had been used. Anything else
+    # ending in .md is resolved against docs/manual and handed to GitHub.
+    def self.rewrite_links(document)
+      document.css("a[href]").each do |anchor|
+        href = anchor["href"]
+        next if href.start_with?("#", "http://", "https://", "mailto:")
+
+        path, fragment = href.split("#", 2)
+        suffix = fragment ? "##{fragment}" : ""
+
+        if (locale = IN_APP[path])
+          anchor["href"] =
+            "#{Rails.application.routes.url_helpers.manual_path(:locale => locale)}#{suffix}"
+        elsif path.end_with?(".md")
+          resolved = Pathname.new(DOCUMENT_ROOT).join(path).cleanpath
+          anchor["href"] = "#{GITHUB_BLOB}#{resolved}#{suffix}"
+        end
+      end
+    end
+    private_class_method :rewrite_links
   end
 end

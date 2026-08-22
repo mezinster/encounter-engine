@@ -55,4 +55,49 @@ describe Manual::Renderer do
     expect(doc.css("[id]").map { |node| node["id"] })
       .to include("руководство-пользователя", "игроку", "файлы-и-изображения")
   end
+
+  describe "the link pass" do
+    def hrefs(markdown)
+      Nokogiri::HTML5.fragment(Manual::Renderer.call(markdown))
+        .css("a[href]").map { |a| a["href"] }
+    end
+
+    it "sends the other language's manual through the app's own locale switch" do
+      expect(hrefs("Russian version: [ru.md](ru.md).")).to eq(["/manual?locale=ru"])
+    end
+
+    it "keeps a fragment when switching language" do
+      expect(hrefs("[en](en.md#for-players)")).to eq(["/manual?locale=en#for-players"])
+    end
+
+    # The deployment guide has no route: its readers do not have a running
+    # instance to read it on. GitHub renders it, with the anchors it was
+    # written against.
+    it "sends the deployment guide to GitHub, fragment intact" do
+      expect(hrefs("[install](deployment.ru.md#6-первый-администратор)")).to eq(
+        ["https://github.com/mezinster/encounter-engine/blob/master/docs/manual/deployment.ru.md#6-первый-администратор"]
+      )
+    end
+
+    it "resolves a link that climbs out of docs/manual" do
+      expect(hrefs("[restore](../runbooks/restore.md)")).to eq(
+        ["https://github.com/mezinster/encounter-engine/blob/master/docs/runbooks/restore.md"]
+      )
+    end
+
+    it "leaves in-page anchors and absolute URLs alone" do
+      expect(hrefs("[a](#игроку) and [b](https://game.mezin.eu/)"))
+        .to eq(["#игроку", "https://game.mezin.eu/"])
+    end
+
+    it "leaves no relative .md link anywhere in the shipped manuals" do
+      MANUAL_FILES.each do |path|
+        relative = hrefs(path.read).reject do |href|
+          href.start_with?("http://", "https://", "#", "mailto:")
+        end
+
+        expect(relative.grep(/\.md(#|\z)/)).to eq([]), "#{path.basename} still has a raw .md link"
+      end
+    end
+  end
 end

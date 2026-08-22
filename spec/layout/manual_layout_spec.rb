@@ -38,7 +38,12 @@ describe "the manual, measured", :layout, type: :request do
   it "never scrolls the page sideways on a phone" do
     result = measure(page_html, 390, 660, MANUAL_PROBE, :tmp_name => "manual-390.html")
 
-    expect(result["tables"]).to eq(6)
+    # Not eq(6): the exact table count is pinned in
+    # spec/services/manual/renderer_spec.rb, where a change to it belongs. This
+    # spec only needs to know the measurement found real content -- it must go
+    # red for a LAYOUT reason (overflow), never because someone added or
+    # removed a table in docs/manual/ru.md.
+    expect(result["tables"]).to be > 0
     expect(result["hOverflow"]).to eq(0)
     expect(result["widestTableWithinPage"]).to be(true)
     expect(result["scrollableTables"]).to be > 0

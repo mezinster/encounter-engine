@@ -37,6 +37,12 @@ gem "bcrypt", "~> 3.1"
 # content. Loaded only when a translation run actually starts -- see
 # Translation::Client.
 gem "anthropic", "~> 1.0"
+# The user manual is markdown in docs/manual, rendered at request time (see
+# app/services/manual/renderer.rb). Pure Ruby, so nothing new compiles in the
+# docker build stage. The GFM parser is what supplies tables and ``` fences;
+# kramdown's own dialect has neither in the form these files use.
+gem "kramdown", "~> 2.5"
+gem "kramdown-parser-gfm", "~> 1.1"
 
 group :development, :test do
   gem "rspec-rails", "~> 7.0"

@@ -1,0 +1,268 @@
+# An instrument you invoke, not a monitor on a schedule.
+#
+# It answers "how does this host shape, with this game, at this arrival rate,
+# actually perform" and commits a record that can still be compared months
+# later. It NEVER resizes anything -- see the design's section 3.1 for why
+# observation was chosen over on-demand resizing.
+#
+# The motivating measurement, 2026-08-21 against production on a Standard_B1ms:
+# 120 teams arriving over 22 minutes gave p95 196ms; the same 120 arriving over
+# 30 seconds gave p95 5860ms. Zero errors in both. A record holding only the
+# number would have been misleading within a month, which is why every parameter
+# that could explain a difference is captured at the moment of the run.
+#
+# Design: docs/superpowers/specs/2026-08-22-perf-probe-design.md
+name: Performance probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_game:
+        description: "Source game id to clone"
+        type: string
+        required: true
+      teams:
+        description: "Teams to seed"
+        type: string
+        default: "120"
+      scenario:
+        description: "Which question to ask"
+        type: choice
+        default: stampede
+        options: [stampede, ramp, hold]
+      generator:
+        description: "Where load comes from"
+        type: choice
+        default: runner
+        options: [runner, vm]
+      note:
+        description: "Free text, e.g. 'before the Postgres tuning'"
+        type: string
+        default: ""
+
+permissions:
+  contents: write   # commits the record
+  id-token: write   # OIDC to Azure, for the NSG hole and the host facts
+
+# Two probes at once would seed two cohorts, and the seeder's advisory lock
+# would refuse the second mid-workflow rather than politely queueing it.
+concurrency:
+  group: perf-probe
+  cancel-in-progress: false
+
+env:
+  APP_HOST: game.mezin.eu
+  RG: MEZINEU
+  VM: web
+  SSH_HOST: 23.100.7.86
+  SSH_USER: mezinster
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: ruby/setup-ruby@a4effe49ee8ee5b8b5091268c473a4628afb5651 # v1.245.0
+        with:
+          ruby-version: "3.3.12"
+
+      # The cohort id is generated BEFORE anything is seeded and exported
+      # immediately, so the always() teardown below knows what to remove even if
+      # seeding itself fails halfway through.
+      - name: Generate the cohort id
+        run: |
+          echo "COHORT=lt-$(date -u +%Y-%m-%dT%H%M)-probe" >> "$GITHUB_ENV"
+          echo "AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+
+      - name: Load the deploy SSH key
+        uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Read from the host itself over an already-trusted session, not scanned
+      # from the network -- ssh-keyscan trusts whatever answers. Same key and
+      # same reasoning as deploy.yml; if it stops matching, the host was rebuilt.
+      - name: Pin the host key
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo '23.100.7.86 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBESJGNohuozwA1DTg1Tjlghw/G0krguiE0Enw5BfMew' >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Authenticate to Azure
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # The NSG restricts port 22 to a short allowlist and GitHub runners are in
+      # none of it. Each run opens 22 to its own address and closes it again in
+      # the always() step at the end -- the same just-in-time hole deploy.yml
+      # punches, for the same reason.
+      - name: Open SSH to this runner only
+        run: |
+          RUNNER_IP=$(curl -fsS --max-time 10 https://api.ipify.org || curl -fsS --max-time 10 https://ifconfig.me)
+          [ -n "$RUNNER_IP" ] || { echo "could not determine runner IP"; exit 1; }
+          az network nsg rule create \
+            --resource-group mezineu --nsg-name webNSG \
+            --name "perf-jit-${{ github.run_id }}" \
+            --priority 901 --direction Inbound --access Allow --protocol Tcp \
+            --source-address-prefixes "${RUNNER_IP}/32" \
+            --destination-port-ranges 22 \
+            --description "JIT SSH for perf probe run ${{ github.run_id }}" \
+            --output none
+
+      # BEFORE load. cpu_credits_remaining_start means the balance the run
+      # started with; reading it afterwards would record the balance the run
+      # itself produced, which is a different fact wearing the same name.
+      - name: Gather the host shape and credit standing
+        run: ./ops/perf/host_facts.sh | tee host.json
+
+      - name: Seed the cohort
+        run: |
+          set -euo pipefail
+          ssh -o ConnectTimeout=30 "${SSH_USER}@${SSH_HOST}" \
+            "C=\$(docker ps --format '{{.Names}}' | grep encounter-engine-web)
+             docker exec -e LOAD_TEST_COHORT='${COHORT}' -e LOAD_TEST_CONFIRM='${COHORT}' \
+               -e LOAD_TEST_BASE_URL='https://${APP_HOST}' \
+               \"\$C\" bin/rails 'load_test:seed[${{ inputs.source_game }},${{ inputs.teams }}]' >/dev/null
+             docker exec \"\$C\" cat /tmp/${COHORT}.json" > manifest.json
+          chmod 600 manifest.json
+          # Never echoed, never an artifact: it holds a live password for every
+          # seeded captain and every answer code in the source game.
+          ruby -rjson -e '
+            m = JSON.parse(File.read("manifest.json"))
+            abort("manifest has no teams") if m["teams"].to_a.empty?
+            abort("manifest points at #{m["base_url"]}") unless m["base_url"].to_s.start_with?("https://")
+            File.write("game.json", JSON.generate("id" => m["game_id"], "levels" => m["codes"].size))
+            puts "seeded #{m["teams"].size} teams across #{m["codes"].size} levels"'
+
+      # No continue-on-error. A result with no baseline cannot be compared to
+      # anything and is not worth the traffic it would cost to produce.
+      - name: Measure this generator's baseline
+        run: ./ops/perf/baseline.sh "https://${APP_HOST}/up" | tee baseline.json
+
+      - name: Install k6
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://github.com/grafana/k6/releases/download/v0.52.0/k6-v0.52.0-linux-amd64.tar.gz \
+            | tar xz --strip-components=1 -C "$HOME/.local/bin" k6-v0.52.0-linux-amd64/k6
+          chmod +x "$HOME/.local/bin/k6"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # An aborted run is a RESULT the record must capture, not a build failure.
+      # This is the only step in the workflow allowed to continue on error.
+      - name: Run k6 from the runner
+        if: inputs.generator == 'runner'
+        continue-on-error: true
+        run: |
+          k6 run --summary-export summary.json \
+            --env PHASE=${{ inputs.scenario }} \
+            --env TEAMS=${{ inputs.teams }} \
+            --env BASE_URL="https://${APP_HOST}" \
+            --env MANIFEST="$PWD/manifest.json" \
+            load_test/main.js
+          echo "GEN_REGION=" >> "$GITHUB_ENV"
+
+      - name: Run k6 from a westeurope generator
+        if: inputs.generator == 'vm'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          ./load_test/provision.sh create | tee provision.log
+          IP=$(awk '/PublicIpAddress/{getline; getline; print $3}' provision.log)
+          [ -n "$IP" ] || IP=$(az vm show -d -g encounter-loadgen -n loadgen --query publicIps -o tsv)
+          scp -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 manifest.json "azureuser@${IP}:~/manifest.json"
+          scp -r -o ConnectTimeout=30 load_test "azureuser@${IP}:~/"
+          ssh -o ConnectTimeout=30 "azureuser@${IP}" \
+            "k6 run --summary-export summary.json \
+               --env PHASE=${{ inputs.scenario }} --env TEAMS=${{ inputs.teams }} \
+               --env BASE_URL=https://${APP_HOST} --env MANIFEST=/home/azureuser/manifest.json \
+               load_test/main.js" || true
+          scp -o ConnectTimeout=30 "azureuser@${IP}:~/summary.json" summary.json || true
+          echo "GEN_REGION=westeurope" >> "$GITHUB_ENV"
+
+      - name: Build and commit the record
+        run: |
+          set -euo pipefail
+          ruby -rjson -rfileutils -e '
+            require_relative "ops/perf/build_record"
+            # summary.json is absent when k6 died before writing one -- a crash,
+            # a startup guard refusing, an unreachable host. Still a fact about
+            # this host and this game on this date, recorded as "errored".
+            summary = File.exist?("summary.json") ? JSON.parse(File.read("summary.json")) : nil
+            region  = ENV["GEN_REGION"].to_s
+            record  = Perf::BuildRecord.new(
+              :summary   => summary,
+              :host      => JSON.parse(File.read("host.json")),
+              :generator => JSON.parse(File.read("baseline.json")).merge(
+                              "kind"   => ENV["GENERATOR"],
+                              "region" => region.empty? ? nil : region),
+              :game      => JSON.parse(File.read("game.json")),
+              :run       => { "at" => ENV["AT"], "note" => ENV["NOTE"],
+                              "scenario" => ENV["SCENARIO"], "teams" => ENV["TEAMS"].to_i },
+              :app       => { "sha" => ENV["GITHUB_SHA"][0, 7] })
+            path = File.join("docs/perf/results", record.filename)
+            FileUtils.mkdir_p(File.dirname(path))
+            File.write(path, JSON.pretty_generate(record.to_h) + "\n")
+            puts path
+            puts JSON.pretty_generate(record.to_h["result"])
+            File.write(ENV["GITHUB_ENV"], "RECORD=#{path}\n", mode: "a")'
+        env:
+          GENERATOR: ${{ inputs.generator }}
+          SCENARIO: ${{ inputs.scenario }}
+          TEAMS: ${{ inputs.teams }}
+          NOTE: ${{ inputs.note }}
+
+      - name: Commit the record
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$RECORD"
+          git commit -m "perf: ${{ inputs.scenario }}, ${{ inputs.teams }} teams, game ${{ inputs.source_game }}"
+          git push
+
+      # Every exit path, including cancellation. A silent failure here leaves
+      # hundreds of accounts in production.
+      - name: Tear down the cohort
+        if: always() && env.COHORT != ''
+        run: |
+          set -uo pipefail
+          ssh -o ConnectTimeout=30 "${SSH_USER}@${SSH_HOST}" \
+            "C=\$(docker ps --format '{{.Names}}' | grep encounter-engine-web)
+             docker exec -e LOAD_TEST_CONFIRM='${COHORT}' \"\$C\" \
+               bin/rails 'load_test:teardown[${COHORT}]'
+             docker exec \"\$C\" bin/rails load_test:status" | tee teardown.log
+          if ! grep -q ':cohort_id=>nil' teardown.log; then
+            echo "::error::TEARDOWN DID NOT COMPLETE for ${COHORT}. Recover with:"
+            echo "::error::ssh ${SSH_USER}@${SSH_HOST} \"docker exec -e LOAD_TEST_CONFIRM=${COHORT} <container> bin/rails 'load_test:teardown[${COHORT}]'\""
+            exit 1
+          fi
+
+      - name: Destroy the generator
+        if: always() && inputs.generator == 'vm'
+        run: ./load_test/provision.sh destroy || echo "::warning::generator destroy failed; check the encounter-loadgen resource group"
+
+      - name: Close SSH again
+        if: always()
+        run: |
+          for attempt in 1 2 3 4 5; do
+            az network nsg rule delete --resource-group mezineu --nsg-name webNSG \
+              --name "perf-jit-${{ github.run_id }}" --output none 2>/dev/null && exit 0
+            echo "cleanup attempt ${attempt} failed; retrying in 10s"
+            sleep 10
+          done
+          echo "::error::could not remove the JIT NSG rule perf-jit-${{ github.run_id }} -- remove it by hand"
+          exit 1
+
+      # summary.json ONLY. Never manifest.json.
+      - name: Upload the k6 summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: k6-summary-${{ github.run_id }}
+          path: summary.json
+          if-no-files-found: warn

@@ -30,6 +30,16 @@ if (PHASE === 'ramp') {
   }
 }
 
+// The stampede oversubscribes exactly the same way -- teamFor(vu) assigns by
+// modulo, so more VUs than teams means many sessions hammering one GamePassing.
+if (PHASE === 'stampede') {
+  const seededTeams = manifest().teams.length;
+  if (TEAMS > seededTeams) {
+    fail(`TEAMS (${TEAMS}) exceeds the seeded cohort (${seededTeams} teams). ` +
+      `Seed at least ${TEAMS} teams, or lower TEAMS to match what's seeded.`);
+  }
+}
+
 // ramping-vus, NOT ramping-arrival-rate. One VU is one team.
 //
 // Teams are a closed population: a fixed number exist (see the seeded manifest),
@@ -64,8 +74,38 @@ const HOLD = {
   exec: 'session',
 };
 
+// Every team arriving at once, which is what a real encounter game does at the
+// whistle. Measured 2026-08-21 against production: 120 teams over 22 minutes
+// gave p95 196ms; the same 120 arriving in 30 seconds gave p95 5860ms -- with
+// zero errors in both. The difference is 91 bcrypt logins landing together on
+// one vCPU, a cost no cache or index can reduce.
+//
+// The first measurement was produced by ACCIDENT, by passing a single-plateau
+// ladder that happened to ramp 0->120 inside the executor's 30s stage. This
+// scenario exists so the question can be asked deliberately.
+const STAMPEDE_WINDOW = __ENV.STAMPEDE_WINDOW || '30s';
+
+const STAMPEDE = {
+  executor: 'ramping-vus',
+  startVUs: 0,
+  stages: [
+    { target: TEAMS, duration: STAMPEDE_WINDOW },
+    { target: TEAMS, duration: '4m' },
+  ],
+  exec: 'session',
+};
+
+// A lookup, not a ternary: `PHASE=stampede` mistyped as `stamped` used to fall
+// through to the ramp and run a completely different test under the name you
+// asked for. An unknown phase must refuse.
+const SCENARIOS = { ramp: RAMP, hold: HOLD, stampede: STAMPEDE };
+if (!SCENARIOS[PHASE]) {
+  fail(`unknown PHASE ${JSON.stringify(PHASE)} -- expected one of ` +
+    `${Object.keys(SCENARIOS).join(', ')}`);
+}
+
 export const options = {
-  scenarios: PHASE === 'hold' ? { hold: HOLD } : { ramp: RAMP },
+  scenarios: { [PHASE]: SCENARIOS[PHASE] },
   // k6 resets each VU's cookie jar at the START of every iteration by default,
   // regardless of module-scope JS state -- confirmed directly: a debug script
   // that dumped http.cookieJar().cookiesForURL() showed an EMPTY jar at the
@@ -81,15 +121,18 @@ export const options = {
   // theory, silently defeated by k6's own default. See task-9-report.md for
   // the reproduction.
   noCookiesReset: true,
-  // abortOnFail only in the ramp. The hold deliberately runs to completion:
-  // its whole purpose is to observe what happens after the CPU credit bank
-  // empties, which is a threshold breach by design, not a reason to stop.
+  // abortOnFail everywhere EXCEPT the hold. The ramp and the stampede are both
+  // exploratory runs against production, on a host shared with danted, the
+  // squid proxies on 3128-3130/8080-8081 and two APRS forwarders -- the brake
+  // is what makes pointing them at it defensible. Only `hold` is meant to run
+  // past a breach, because observing what happens after the CPU credit bank
+  // empties is its entire purpose.
   thresholds: {
     'http_req_duration': [
-      { threshold: 'p(95)<2000', abortOnFail: PHASE === 'ramp', delayAbortEval: '30s' },
+      { threshold: 'p(95)<2000', abortOnFail: PHASE !== 'hold', delayAbortEval: '30s' },
     ],
     'http_req_failed': [
-      { threshold: 'rate<0.02', abortOnFail: PHASE === 'ramp', delayAbortEval: '30s' },
+      { threshold: 'rate<0.02', abortOnFail: PHASE !== 'hold', delayAbortEval: '30s' },
     ],
     'checks': ['rate>0.99'],
   },

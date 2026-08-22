@@ -65,10 +65,20 @@ Measured on the four real files, because the design depends on it:
 |---|---|---|---|---|
 | bytes | 29 204 | 50 369 | 14 352 | 22 512 |
 | lines | 687 | 656 | 356 | 355 |
-| table rows | 47 | 47 | 54 | 54 |
-| fenced code blocks | 2 | 2 | 28 | 28 |
+| headings | 44 | 44 | 17 | 17 |
+| rendered `<table>` | 6 | 6 | 6 | 6 |
+| rendered `<tr>` | 41 | 41 | 48 | 48 |
+| fenced code blocks | 1 | 1 | 16 | 16 |
+| internal anchor targets | 6 | 6 | 3 | 3 |
 | images | 0 | 0 | 0 | 0 |
 | raw HTML | 0 | 0 | 0 | 0 |
+
+Rendered counts, not grep counts: an earlier draft of this section said "47
+table rows" and "28 fenced code blocks", which were markdown lines beginning
+with `|` and with ``` at column zero. The `|` figure counts alignment rows as
+content, and the fence figure counts opening and closing lines separately while
+missing the fences indented inside list items. The numbers above come from
+parsing the files.
 
 Tables are at most three columns; the longest markdown table row is 135
 characters. There is no raw HTML — the one apparent match is `` `<service>-db` ``
@@ -92,15 +102,31 @@ alphabets:
 ](#файлы-и-изображения)       ← ### Файлы и изображения
 ```
 
-Most Ruby markdown libraries generate heading ids with an ASCII-centric slug
-that strips non-Latin characters outright, which would turn every Russian
-anchor into `section`, `section-1`, `section-2`. **The links would still
-render.** They would be clickable, styled, and land nowhere, and nothing would
-raise — the same failure shape this repository has recorded twice already
+A markdown library that generates heading ids with an ASCII-centric slug — and
+several do — strips non-Latin characters outright, turning every Russian anchor
+into `section`, `section-1`, `section-2`. **The links would still render.**
+They would be clickable, styled, and land nowhere, and nothing would raise —
+the same failure shape this repository has recorded twice already
 (`Vips.get_suffixes.include?(".heic")` returning true on a machine that cannot
 decode HEIC; the countdown examples reporting *pending* in CI for a fortnight).
 
-So the design does not delegate heading ids to the library. See §4.2.
+**Measured, on 2026-08-22, against kramdown 2.5.2 with `kramdown-parser-gfm`
+1.1.0: it does not have this problem.** Its `auto_ids` produced
+`руководство-пользователя`, `установка`, `6-первый-администратор` — and across
+all four files, **zero dead internal anchors and zero duplicate ids**.
+
+An earlier draft of this design responded to the hazard by writing our own
+GitHub-compatible slugger and turning `auto_ids` off. The measurement removed
+the reason for it, so it is gone: a hand-written slug rule that agrees with the
+library on every input we have is a component to maintain, plus a second rule
+to diverge from, in exchange for nothing.
+
+What survives is the **check**, which was always the load-bearing half. Nothing
+here guarantees kramdown's rule and GitHub's agree on headings these files do
+not yet contain, and a divergence is invisible by construction. So anchor
+integrity is asserted as a test over the real shipped files (§5.1), where a
+future heading whose id no longer matches the link pointing at it fails a build
+instead of quietly scrolling nowhere.
 
 ## 3. Why render at request time
 
@@ -169,17 +195,22 @@ Controller, cache, renderer and view are unaffected.
 
 ### 4.2 The rendering pipeline
 
-Four stages, each independently testable:
+Three stages, each independently testable:
 
-1. **Parse** — `kramdown` with `kramdown-parser-gfm` (`input: 'GFM'`). Pure
+1. **Parse** — `kramdown` with `kramdown-parser-gfm`, as
+   `Kramdown::Document.new(markdown, input: "GFM", hard_wrap: false)`. Pure
    Ruby, so no native extension enters the image; the GFM parser covers the
-   tables and ``` fences that §2 found. **`auto_ids` is off**, deliberately.
-   HTML input is escaped — nothing in these files needs raw HTML.
-2. **Anchor pass** — Nokogiri (already present via Rails) walks `h1`–`h6` and
-   assigns ids with our own GitHub-compatible slugger: Unicode-aware downcase,
-   drop everything that is not a letter, number, space, hyphen or underscore,
-   spaces to hyphens, duplicates suffixed `-1`, `-2`.
-3. **Link pass** — same Nokogiri document:
+   tables and fences §2 found; `auto_ids` stays **on**, which is what supplies
+   the heading ids (§2.1).
+
+   **`hard_wrap: false` is not cosmetic.** The GFM parser defaults it to true,
+   which renders every single newline as `<br>` — and these manuals are
+   hard-wrapped prose at about 85 columns. Measured with the default: 189
+   spurious `<br>` in `en.md`, 158 in `ru.md`, 71–72 in the deployment guides.
+   Every paragraph would render as a ragged column at its authoring width,
+   ignoring the browser's. With the option off: zero.
+2. **Link pass** — Nokogiri (already present via Rails) over the parsed
+   document:
 
    | href in the markdown | becomes |
    |---|---|
@@ -193,29 +224,34 @@ Four stages, each independently testable:
    precedence in `LocaleSelection`, which also writes `session[:locale]` — so
    choosing a language from inside the manual behaves exactly like choosing it
    from the header switcher.
-4. **Cache** — `Rails.cache.fetch(["manual", locale_used, digest])`. Keyed on
+3. **Cache** — `Rails.cache.fetch(["manual", locale_used, digest])`. Keyed on
    the **file digest**, not a constant: editing `ru.md` in development
    invalidates it without a restart, and a fresh container recomputes exactly
    once per document.
 
-### 4.3 Why we own the slugger
+### 4.3 Where heading ids come from, and what sub-project B inherits
 
-Every markdown library has its own slug rule, and if the library's rule
-disagrees with the anchors already written into these files, the links break
-silently (§2.1). Owning the slug generation makes it a function a test can be
-pointed at, with the real cases in it.
+From kramdown's `auto_ids`, for the reason measured in §2.1: on every heading
+these four files contain, it already produces the anchor the files were written
+against.
 
-It also sets B up correctly: a translated document's headings and its own
-internal links are slugged by the **same** function, so they agree with each
-other. This deliberately does not chase byte-parity with GitHub for Turkish
-`İ`, where Ruby's `downcase` and GitHub's differ — self-consistency inside one
-document is what makes a link work; parity with GitHub is not needed.
+This matters more for B than for A. A translated document's headings and its
+own internal links are generated by the **same** rule, so they agree with each
+other whatever that rule is — self-consistency inside one document is what
+makes a link work, and byte-parity with GitHub is neither needed nor worth
+pursuing (Ruby's `downcase` and GitHub's differ on Turkish `İ`, among others).
+B's obligation is therefore not to reproduce GitHub's slug, but to run the same
+anchor-integrity check of §5.1 over each proposed translation before it can be
+approved — a translated heading that breaks its own document's table of
+contents is exactly the class of damage `Translation::Flags` exists to catch
+and cannot currently see.
 
-CLAUDE.md's ban on Ruby-side `.upcase`/`.downcase` is about **user-facing
-text**, where locale-blind casing turns `i` into `I` rather than `İ`. An `id`
-attribute is machine-facing and never displayed; this is the one place that
-rule does not bite, and the reason is recorded here so the next reader does not
-have to re-derive it.
+One note for the reader who reaches for CLAUDE.md's ban on Ruby-side
+`.upcase`/`.downcase`: that rule is about **user-facing text**, where
+locale-blind casing turns `i` into `I` rather than `İ`. Heading ids are
+machine-facing and never displayed, which is why a downcasing slug rule is
+acceptable here — and why it is acceptable in kramdown's implementation of it
+too.
 
 ### 4.4 New dependencies
 
@@ -223,11 +259,15 @@ have to re-derive it.
 nothing new has to compile in the build stage. The `bundler-audit` CI job
 covers them like any other gem.
 
-The library choice is **provisional until proven on the real files**: the
-implementation plan's first task renders all four and checks tables, fences and
-anchors. If kramdown mangles any of them, `commonmarker` is the fallback and
-the rest of this design is unchanged — stages 2, 3 and 4 sit above the parser
-precisely so that swap costs one stage.
+The library choice was **proven on the real files before this design was
+finalised** (§2.1, §4.2): all four parse, with 6 tables and 1–16 code blocks
+each, zero dead anchors, zero duplicate ids, and — with `hard_wrap: false` —
+zero spurious `<br>`. The probe was thrown away; the implementation reproduces
+its assertions as the renderer spec of §5.1.
+
+Should kramdown ever have to be replaced, `commonmarker` is the fallback, and
+the link pass and cache sit above the parser so the swap costs one stage plus
+whatever the anchor-integrity spec then reports.
 
 ### 4.5 i18n
 
@@ -246,8 +286,7 @@ content. It is prose in a file, rendered verbatim.
 
 | Spec | What it pins |
 |---|---|
-| `spec/services/manual/slugger_spec.rb` | The real cases as a table: `Игроку → игроку`, `6. Первый администратор → 6-первый-администратор`, `For players → for-players`, `Файлы и изображения → файлы-и-изображения`, plus duplicate-heading suffixing |
-| `spec/services/manual/renderer_spec.rb` | **Anchor integrity over all four shipped files**: render, collect every `id`, collect every `href="#…"`, assert each resolves. Plus tables become `<table>`, fences become `<pre><code>`, and **no `.md` href survives the link pass** |
+| `spec/services/manual/renderer_spec.rb` | **Anchor integrity over all four shipped files**: render, collect every `id`, collect every `href="#…"`, assert each resolves, and assert no id is duplicated. Plus: the Cyrillic ids are the expected ones (`руководство-пользователя`, `6-первый-администратор`), tables become `<table>`, fences become `<pre><code>`, **no `.md` href survives the link pass**, and **no `<br>` is emitted** — the guard on `hard_wrap` (§4.2) |
 | `spec/services/manual/source_spec.rb` | Locale resolution and fallback; `locale_used` reports honestly; the digest changes when content does |
 | `spec/requests/manual_spec.rb` | 200 signed out and signed in; the fallback note present for `pl`, absent for `ru`; the menu link present in both branches |
 
@@ -328,9 +367,9 @@ this sub-project produces — that is the only way to get the anchors right.
 
 ## 7. Scope boundary
 
-**In:** the route, `Manual::Source`, the renderer, the slugger, the link pass,
-the cache, menu links in seven locale files, the specs of §5, the
-`.dockerignore` change, the `app-image` assertion.
+**In:** the route, `Manual::Source`, the renderer, the link pass, the cache,
+menu links in seven locale files, the specs of §5, the `.dockerignore` change,
+the `app-image` assertion.
 
 **Out:** translation of the manual (sub-project B), a table of contents,
 sidebar navigation, search, per-section pages, GitHub Pages, and any editing of

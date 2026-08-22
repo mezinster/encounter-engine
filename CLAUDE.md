@@ -240,6 +240,13 @@ ruby -ryaml -e 'def leaves(h,p="") h.flat_map { |k,v| v.is_a?(Hash) ? leaves(v,"
   comment too. **Turkish is the one to get reviewed first** if only one can be: it needed
   structural rewording rather than word-for-word translation (see below), so it has the most room
   to read oddly. Treat reported wording problems in any of the five as real.
+
+  **The same five languages now also have a machine-translated user manual** (`docs/manual/{uk,be,pl,tr,ka}.md`,
+  written 2026-08-22), and the manual is a far larger surface than the interface: 32–77 KB of prose
+  each against a few hundred short strings. Same status, same caveat, same bottleneck — each file
+  carries an HTML comment on its first line saying so, and every one names the source it was
+  translated from. `uk`/`be`/`pl` came from `ru.md`, `tr`/`ka` from `en.md`. If a native speaker is
+  ever available for one language, the manual is where their time buys the most.
 - **Turkish reworded every interpolated name rather than translating around it.** Turkish is
   agglutinative: a case suffix cannot attach to `%{team}`/`%{nickname}`/`%{game}`, because which
   suffix is correct depends on the name's final vowel and whether it ends in a consonant — and the
@@ -440,8 +447,13 @@ CI need no credential. See
 
 ## The user manual is served at runtime, not just read from a checkout
 
-`/manual` (`ManualController`, `Manual::Source`, `Manual::Renderer`) renders `docs/manual/{ru,en}.md`
-to HTML on request. That makes `docs/manual` the **one part of `docs/` that has to exist inside the
+`/manual` (`ManualController`, `Manual::Source`, `Manual::Renderer`) renders
+`docs/manual/<locale>.md` to HTML on request — all seven registered locales have one. Which locales
+are actually served is answered by `Manual::Source.available_locales`, derived from the files
+present rather than hard-coded; the renderer asks it so that a `](pl.md)` link inside a manual
+becomes this app's own `/manual?locale=pl` instead of a GitHub URL. A locale with no manual falls
+back to `ru` **and says so on the page** — `Manual::Source::Document#locale_used` is what the view
+reads to decide. That makes `docs/manual` the **one part of `docs/` that has to exist inside the
 container image** — everything else under `docs/` (security findings, design specs) is dev-only and
 `.dockerignore` excludes `docs` wholesale on purpose. The `!docs/manual` re-include line right after
 it is load-bearing, not incidental:

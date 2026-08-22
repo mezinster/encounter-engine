@@ -58,6 +58,31 @@ module Manual
       path_for(locale).exist?
     end
 
+    # Which locales have a manual of their own rather than falling back.
+    #
+    # Manual::Renderer asks, so that a ](xx.md) link inside a manual becomes
+    # this app's own /manual?locale=xx instead of a GitHub URL. That is a
+    # question about which manuals THIS APP SERVES, which is this object's
+    # business and nobody else's -- the alternative, a hard-coded pair in the
+    # renderer, was already stale the day a third translation landed.
+    #
+    # It matters more for sub-project B than for today: when a translation
+    # lives in the database rather than in a file, this method is what teaches
+    # the link pass that the locale is now served here.
+    #
+    # Filtered against the registered locales on purpose. docs/manual also
+    # holds deployment.*.md and performance.*.md, whose basenames are not
+    # locales and which this app does not serve.
+    def self.available_locales
+      registered = I18n.available_locales.map(&:to_s)
+
+      DIRECTORY.glob("*.md")
+               .map { |path| path.basename(".md").to_s }
+               .select { |name| registered.include?(name) }
+               .map(&:to_sym)
+               .sort
+    end
+
     def self.path_for(locale)
       DIRECTORY.join("#{locale}.md")
     end

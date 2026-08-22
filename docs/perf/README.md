@@ -7,6 +7,10 @@ shape it finds.
 
 Design: `docs/superpowers/specs/2026-08-22-perf-probe-design.md`
 
+**New to this?** [`docs/manual/performance.en.md`](../manual/performance.en.md) explains what
+`ramp`, `stampede` and `hold` are in plain language, and why the same 120 teams can be twenty
+times slower depending only on how fast they arrive. ([по-русски](../manual/performance.ru.md))
+
 ## Why a record rather than a number
 
 On 2026-08-21, against production on a `Standard_B1ms`:

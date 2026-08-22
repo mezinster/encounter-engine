@@ -272,10 +272,13 @@ whatever the anchor-integrity spec then reports.
 ### 4.5 i18n
 
 New keys in **all seven** locale files (`ru`, `en`, `uk`, `ka`, `tr`, `be`,
-`pl`): the left-menu label, the page title, and the fallback note. Missing keys
-fall back to `ru` and only raise when `ru` lacks them too, but
-`spec/i18n_spec.rb` enforces exact `ru`↔`en` parity, and writing all seven at
-once is cheaper than a follow-up.
+`pl`): the left-menu label and the fallback note. **Not** a page title —
+corrected here after the fact: this app has no per-page title mechanism.
+`app/views/layouts/application.html.erb` renders one global `t("layout.title")`
+for every page, so there is no per-view title slot for the manual to fill, and
+none was added. Missing keys fall back to `ru` and only raise when `ru` lacks
+them too, but `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity, and writing
+all seven at once is cheaper than a follow-up.
 
 The manual's **content** is never run through `t()` — same rule as game
 content. It is prose in a file, rendered verbatim.

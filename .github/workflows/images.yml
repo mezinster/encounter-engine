@@ -51,6 +51,31 @@ jobs:
           docker logs ee-smoke
           exit 1
 
+      # The one check in this repository capable of noticing that docs/manual
+      # is missing from the image. Every spec runs from a checkout, where these
+      # files always exist, so the whole suite stays green against an image
+      # that 404s -- the same seam that made the libvips package name look
+      # correct for months. The container from the previous step is still
+      # running as ee-smoke on the host network.
+      - name: Prove the manual is in the image and renders
+        run: |
+          code=$(curl -s -o /tmp/manual.html -w "%{http_code}" http://127.0.0.1:3000/manual)
+          if [ "$code" != "200" ]; then
+            echo "FAILED: /manual returned $code"
+            docker logs ee-smoke | tail -40
+            exit 1
+          fi
+          grep -q "Руководство пользователя" /tmp/manual.html || {
+            echo "FAILED: /manual answered 200 without the manual's own heading in it"
+            head -60 /tmp/manual.html
+            exit 1
+          }
+          grep -q "<table>" /tmp/manual.html || {
+            echo "FAILED: /manual rendered without tables -- the GFM parser is not active"
+            exit 1
+          }
+          echo "manual ok"
+
       # The RSpec job proves libvips exists on a Debian ruby image with an
       # apt-get step; that says nothing about the image we actually ship.
       # `bundle exec`, not bare ruby: the entrypoint is overridden here, so

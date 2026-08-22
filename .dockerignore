@@ -1,7 +1,12 @@
 .git
 .github
 .superpowers
+# docs/ is excluded wholesale -- security findings and design specs have no
+# business in a running container -- EXCEPT the manual, which the app serves
+# at /manual and therefore has to be able to read at runtime. See
+# app/services/manual/source.rb, which raises pointing back at this file.
 docs
+!docs/manual
 features
 spec
 tmp

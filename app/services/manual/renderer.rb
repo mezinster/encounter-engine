@@ -49,7 +49,7 @@ module Manual
     def self.rewrite_links(document)
       document.css("a[href]").each do |anchor|
         href = anchor["href"]
-        next if href.start_with?("#", "http://", "https://", "mailto:")
+        next if href.empty? || href.start_with?("#", "http://", "https://", "mailto:")
 
         path, fragment = href.split("#", 2)
         suffix = fragment ? "##{fragment}" : ""

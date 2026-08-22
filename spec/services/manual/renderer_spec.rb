@@ -90,6 +90,18 @@ describe Manual::Renderer do
         .to eq(["#игроку", "https://game.mezin.eu/"])
     end
 
+    # [text]() -- an empty href -- is valid GFM and kramdown renders it as
+    # <a href="">. A blank path is neither an in-app manual nor a .md link;
+    # it must be left alone rather than raising.
+    it "leaves an empty link href alone rather than raising" do
+      expect { hrefs("[empty link]().") }.not_to raise_error
+      expect(hrefs("[empty link]().")).to eq([""])
+    end
+
+    it "leaves a bare fragment-only href alone" do
+      expect(hrefs("[jump](#)")).to eq(["#"])
+    end
+
     it "leaves no relative .md link anywhere in the shipped manuals" do
       MANUAL_FILES.each do |path|
         relative = hrefs(path.read).reject do |href|

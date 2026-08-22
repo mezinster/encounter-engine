@@ -314,9 +314,11 @@ No `.feature` file is edited by this work, of either provenance.
 `spec/layout/`. 47 table rows at up to 135 characters, rendered at 390 px:
 tables get an `overflow-x: auto` wrapper, and the spec asserts **page-level
 horizontal overflow is 0** at 390×660 — the table scrolls, the page does not.
-The rules go in `public/stylesheets/layout.css` under a `.manual` scope, beside
-the existing layout rules; this app has no asset pipeline and no second place
-to put them.
+The rules go in `public/stylesheets/screens.css` under a `.manual` scope — that
+file is "page/screen-specific styling that doesn't belong in a shared
+component", which is what this is; `layout.css` is "page shells and the
+drawer". This app has no asset pipeline, so there is no third place to put
+them.
 Under the `:layout` tag, excluded from an ordinary `bundle exec rspec`, and
 **raising** rather than skipping when the browser binary is absent.
 

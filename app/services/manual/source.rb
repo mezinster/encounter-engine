@@ -11,6 +11,16 @@
 # locale_used is not a detail. Five of the seven registered locales have no
 # manual, and a reader who asked for Polish and got Russian is entitled to be
 # told that happened rather than left to conclude the site is broken.
+#
+# Trust class: what this returns is rendered with `raw` in
+# app/views/manual/show.html.erb. That is safe only because these are
+# repository-authored files, reviewed in a pull request before they ship in
+# the image -- kramdown's GFM parser passes raw HTML straight through
+# unescaped, so this document is a template rendered into every visitor's
+# browser, not inert text. A database-backed translation is a DIFFERENT trust
+# class -- user-influenced-at-best content a superadmin approved, not a PR
+# reviewer -- and sub-project B has to re-decide the `raw` call when it
+# replaces this seam, not inherit it from here.
 require "digest"
 
 module Manual

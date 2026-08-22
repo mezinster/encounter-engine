@@ -46,6 +46,22 @@ describe Manual::Renderer do
       it "emits no <br> for the source's own line wrapping" do
         expect(doc.css("br")).to be_empty
       end
+
+      it "renders fenced code blocks as pre > code" do
+        expect(doc.css("pre > code")).not_to be_empty
+      end
+
+      # app/views/manual/show.html.erb renders this HTML with `raw`, which is
+      # correct only because the content is repository-authored and
+      # PR-reviewed -- kramdown's GFM parser passes raw HTML straight through
+      # (verified separately: <script> and an onclick attribute both survive
+      # into the output), so `raw` is safe here only as long as the shipped
+      # files contain none. That is a fact about the FILES, checkable
+      # mechanically, not something to leave as an assertion in a comment.
+      it "ships no raw HTML, which is what makes `raw` in the view safe" do
+        expect(doc.css("script, style, iframe, object, embed")).to be_empty
+        expect(doc.css("*").select { |node| node.attributes.keys.any? { |name| name.start_with?("on") } }).to eq([])
+      end
     end
   end
 

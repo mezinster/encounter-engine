@@ -15,9 +15,18 @@ require "rails_helper"
 MANUAL_FILES = Rails.root.glob("docs/manual/*.md").sort.freeze
 
 describe Manual::Renderer do
-  it "is looking at all four manuals" do
-    expect(MANUAL_FILES.map { |path| path.basename.to_s })
-      .to eq(%w[deployment.en.md deployment.ru.md en.md ru.md])
+  # An anti-vacuity guard, not a manifest. Every example below is generated
+  # from this glob, so an empty or mis-rooted one would make the whole file
+  # pass by testing nothing -- which is the failure this example exists for.
+  #
+  # It deliberately does NOT pin the exact list. It used to, and
+  # docs/manual/performance.{en,ru}.md landed on master while this branch was
+  # open and turned the default RSpec run red for an ordinary documentation
+  # change. Guarding the glob is this example's job; policing which manuals
+  # exist is nobody's.
+  it "finds the manuals, including the two the app actually serves" do
+    expect(MANUAL_FILES.map { |path| path.basename.to_s }).to include("ru.md", "en.md")
+    expect(MANUAL_FILES.size).to be >= 4
   end
 
   MANUAL_FILES.each do |path|
@@ -52,8 +61,13 @@ describe Manual::Renderer do
         expect(doc.css("br")).to be_empty
       end
 
-      it "renders fenced code blocks as pre > code" do
-        expect(doc.css("pre > code")).not_to be_empty
+      # Correlated, not counted. The shipped set includes manuals with no
+      # fenced code at all (performance.{en,ru}.md), so "renders at least one
+      # <pre><code>" fails them for having nothing to render -- which it did.
+      # What must actually hold is that the two agree: fences in, <pre><code>
+      # out; none in, none out.
+      it "renders fenced code as <pre><code> exactly when the source has any" do
+        expect(doc.css("pre > code").empty?).to eq(!path.read.include?("```"))
       end
 
       # app/views/manual/show.html.erb renders this HTML with `raw`, which is

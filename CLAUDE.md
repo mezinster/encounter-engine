@@ -455,11 +455,18 @@ it is load-bearing, not incidental:
   `GET /manual` returns 200 against the built image, not a checkout — can see it.
 - **`docs/manual/*.md` is content now, not just documentation**, and editing it can redden the
   *default* `bundle exec rspec` run in ways a documentation-only contributor won't expect.
-  `spec/services/manual/renderer_spec.rb` renders the actual shipped files: renaming a heading breaks
-  the anchor-integrity examples if a `](#anchor)` still points at the old id, and adding a fifth file
-  under `docs/manual/` breaks the "is looking at all four manuals" example, which pins the file list by
-  name. Neither is a bug in the spec — both are the point of writing it against real files rather than
-  a fixture.
+  `spec/services/manual/renderer_spec.rb` renders the actual shipped files, so renaming a heading
+  breaks the anchor-integrity examples if a `](#anchor)` still points at the old id. That is the point
+  of writing it against real files rather than a fixture, and it applies to **every** file in
+  `docs/manual/`, not only the two the app serves — the performance manual, added by a different
+  branch, is covered by these specs without having asked to be.
+
+  What is *not* worth guarding: the spec originally pinned the exact file list by name, and
+  `performance.{en,ru}.md` landing on master took the default RSpec run red for an ordinary
+  documentation change. It now asserts only that the glob found the two served manuals and at least
+  four files — enough to catch a mis-rooted glob, which is all that example was ever for. The
+  fenced-code example learned the same lesson: it asserts fences and `<pre><code>` *correlate*, since
+  a manual is allowed to contain no code at all.
 
 ## Testing
 

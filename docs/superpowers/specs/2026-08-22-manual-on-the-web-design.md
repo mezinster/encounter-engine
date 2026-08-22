@@ -370,6 +370,29 @@ Jekyll/kramdown, which brings the anchor problem of §2.1 straight back. If a
 real documentation site is wanted later, it should be built on the converter
 this sub-project produces — that is the only way to get the anchors right.
 
+## 6.1 What actually happened next (added 2026-08-22, after implementation)
+
+Sub-project B was **not** the next step. The five missing locales got manuals as
+*files* instead: `docs/manual/{uk,be,pl,tr,ka}.md`, machine-translated, committed
+to the repository, live with **zero code change** because `Manual::Source` already
+resolved `docs/manual/#{locale}.md` by name.
+
+That is the seam of §4.1 paying for itself earlier than expected, and it changes
+what B is for. B is no longer "how the other languages get a manual" — they have
+one. B is "how a superadmin retranslates one without a deploy", which is a
+narrower and less urgent thing than this design assumed.
+
+Two consequences worth recording:
+
+* `Manual::Renderer` no longer hard-codes which filenames the app serves. It asks
+  `Manual::Source.available_locales`, so a `](pl.md)` link resolves to
+  `/manual?locale=pl` rather than to GitHub. When B stores a translation in the
+  database, that method is the single place that has to learn about it.
+* The fallback note of §4.1 is now unreachable through real content, because every
+  registered locale has a manual. Its tests drive a stubbed directory holding only
+  `ru.md` instead. The note is not dead code: it is what the next locale registered
+  ahead of being translated will show.
+
 ## 7. Scope boundary
 
 **In:** the route, `Manual::Source`, the renderer, the link pass, the cache,

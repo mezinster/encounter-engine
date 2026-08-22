@@ -30,8 +30,17 @@ module Manual
     # relative TO. Not Rails.root: this resolves link text, not files on disk.
     DOCUMENT_ROOT = "docs/manual".freeze
 
-    # The two documents this app serves itself. Everything else goes to GitHub.
-    IN_APP = { "ru.md" => :ru, "en.md" => :en }.freeze
+    # Which filenames this app serves itself, asked of Manual::Source rather
+    # than hard-coded here. Everything else ending in .md goes to GitHub.
+    #
+    # This used to be a frozen { "ru.md" => :ru, "en.md" => :en }, which was
+    # true for exactly as long as there were two manuals. Deriving it means a
+    # translation becomes reachable by the link pass the moment it exists --
+    # including, once sub-project B lands, a translation that exists only in
+    # the database.
+    def self.in_app_manuals
+      Manual::Source.available_locales.to_h { |locale| ["#{locale}.md", locale] }
+    end
 
     def self.call(markdown)
       document = Nokogiri::HTML5.fragment(
@@ -47,6 +56,8 @@ module Manual
     # session -- exactly as if the header switcher had been used. Anything else
     # ending in .md is resolved against docs/manual and handed to GitHub.
     def self.rewrite_links(document)
+      in_app = in_app_manuals
+
       document.css("a[href]").each do |anchor|
         href = anchor["href"]
         next if href.empty? || href.start_with?("#", "http://", "https://", "mailto:")
@@ -54,7 +65,7 @@ module Manual
         path, fragment = href.split("#", 2)
         suffix = fragment ? "##{fragment}" : ""
 
-        if (locale = IN_APP[path])
+        if (locale = in_app.fetch(path, nil))
           anchor["href"] =
             "#{Rails.application.routes.url_helpers.manual_path(:locale => locale)}#{suffix}"
         elsif path.end_with?(".md")

@@ -607,3 +607,32 @@ form.button_to { display: inline-block; }
 .manual {
   max-width: 70ch;
 }
+
+/* Vertical rhythm. base.css:64's `.main > * + *` only reaches DIRECT children
+   of .main -- every other view yields its blocks straight into .main, so it
+   has never had to reach further. This is the first view to wrap its content
+   in an element of its own (`<div class="manual">`), which puts every one of
+   the ~211 rendered blocks one level too deep for that rule to see. Nothing
+   else restores the spacing base.css:4-7 zeroed on h1-h4/p/ul/ol, or the
+   `list-style: none` base.css:55 puts on every <ul> -- so without this, the
+   manual is 43 headings flush against their neighbors, bullet lists
+   indistinguishable from prose, and a 16 076px-tall document. Neither suite
+   can see this: Capybara's rack_test driver parses no stylesheet, and a
+   request spec sees markup only. spec/layout/manual_layout_spec.rb has an
+   example that measures computed spacing for exactly that reason. */
+.manual > * + * {
+  margin-top: var(--space-4);
+}
+.manual h2, .manual h3 {
+  margin-top: var(--space-5);
+}
+.manual ul {
+  list-style: disc;
+  padding-left: var(--space-5);
+}
+.manual ol {
+  padding-left: var(--space-5);
+}
+.manual li + li {
+  margin-top: var(--space-2);
+}

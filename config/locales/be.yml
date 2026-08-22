@@ -803,10 +803,13 @@ be:
       create_team: "Стварыць каманду"
       all_games: "Усе гульні дамена"
       teams: "Каманды"
+      manual: "Дапаможнік"
       logout: "Выйсці"
       login_legend: "Уваход"
       login: "Увайсці"
       signup: "Зарэгістравацца"
+  manual:
+    fallback_note: "Дапаможнік яшчэ не перакладзены на вашу мову — паказана версія на мове «%{language}»."
   shared:
     times_in_zone: "Час паказаны ў поясе %{zone}"
     test_runs:

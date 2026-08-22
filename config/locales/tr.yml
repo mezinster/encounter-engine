@@ -839,10 +839,13 @@ tr:
       create_team: "Takım oluştur"
       all_games: "Alan adındaki tüm oyunlar"
       teams: "Takımlar"
+      manual: "Kılavuz"
       logout: "Çıkış yap"
       login_legend: "Giriş"
       login: "Giriş yap"
       signup: "Kaydol"
+  manual:
+    fallback_note: "Kılavuz henüz sizin dilinize çevrilmedi — «%{language}» dilindeki sürüm gösteriliyor."
   shared:
     times_in_zone: "Saatler %{zone} saat diliminde gösterilmiştir"
     test_runs:

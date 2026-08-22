@@ -180,19 +180,23 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **995 leaf
-  keys** each (measured 2026-08-21): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1001 leaf
+  keys** each (measured 2026-08-22): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
   live in `config/locales/{en,ru,uk,ka,tr,be,pl}.yml`. **Count the keys rather than trusting this
   number**; it was documented as 489 for some time after it was 587, as 725 for some time after it
   was 764, as 782 for some time after it was 964, as 964 while it was already 966, and as 967 while
-  it was already 973 — this entry has now been stale five times, in the file that warns about it,
+  it was already 973 — this entry has now been stale **six** times, in the file that warns about it,
   and twice it went stale the same day it was written. The fifth instance surfaced only because two
   branches each corrected it independently, to two different wrong numbers, and the merge forced
   someone to measure: neither 988 nor 967 was right, because the locale files had merged cleanly
-  underneath both claims. Recount rather than reason about it:
+  underneath both claims. The sixth: this entry said 995 (measured 2026-08-21) while the manual-on-
+  the-web branch was in flight; the real count at that branch's own starting point was already 999,
+  four keys past what this file claimed, before that branch had added anything of its own. It then
+  added two keys of its own (`left_menu.manual`, `manual.fallback_note`) to all seven files, landing
+  at 1001. Recount rather than reason about it:
 
 ```bash
 ruby -ryaml -e 'def leaves(h,p="") h.flat_map { |k,v| v.is_a?(Hash) ? leaves(v,"#{p}#{k}.") : ["#{p}#{k}"] } end
@@ -359,6 +363,20 @@ So:
   nothing scrolls inside anything else, and horizontal overflow is 0. Run it after **any** change
   to `.playbar`, `.play-body`, `.play-exit` or `.page--focused`. It is mutation-tested: un-sticking
   the bar, re-capping it into a scrollport, and forcing horizontal overflow each fail it.
+- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds three specs
+  now — `play_screen_layout_spec.rb`, `translate_panel_layout_spec.rb`, and (added alongside the
+  manual, 2026-08-22) `manual_layout_spec.rb` — all three driving the same
+  `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
+  spec once a second screen needed measuring. A new screen with real layout risk gets a fourth file
+  the same way, not a special case bolted onto an existing one.
+- The manual's own layout regression is why this file's rhythm assertion exists: `.manual`'s three
+  original examples (no page-level horizontal overflow at three viewports) all **passed** on the
+  page with `.manual > * + * { margin-top: var(--space-4) }` missing — a wrapper div one level
+  too deep for `.main > * + *` to reach left every heading and paragraph flush against its
+  neighbors, and none of the three examples measured spacing, only overflow. A fourth example
+  (computed `margin-top`, `list-style-type`, and inter-block gaps against the line's own leading)
+  is what actually catches that class of bug; the first three prove only that nothing scrolls
+  sideways, which readable prose was never at risk of doing.
 - The examples live in `spec/layout` and are **excluded** from an ordinary `bundle exec rspec` —
   `config.filter_run_excluding :layout` in `spec/rails_helper.rb` — because they need a browser
   binary CI does not install. *Excluded*, not skipped: a skipped example reports as pending, which
@@ -419,6 +437,36 @@ an entrypoint shim, and a new boot-time failure mode for the whole app, for one
 key. With the variable unset the feature is entirely absent, so development and
 CI need no credential. See
 `docs/superpowers/specs/2026-08-16-ai-translation-design.md`.
+
+## The user manual is served at runtime, not just read from a checkout
+
+`/manual` (`ManualController`, `Manual::Source`, `Manual::Renderer`) renders `docs/manual/{ru,en}.md`
+to HTML on request. That makes `docs/manual` the **one part of `docs/` that has to exist inside the
+container image** — everything else under `docs/` (security findings, design specs) is dev-only and
+`.dockerignore` excludes `docs` wholesale on purpose. The `!docs/manual` re-include line right after
+it is load-bearing, not incidental:
+
+- **Every spec in this repository runs from a checkout**, where `docs/manual` obviously exists. Delete
+  the `!docs/manual` line, or move the manuals somewhere else without updating it, and the entire
+  RSpec and Cucumber suite stays green while `/manual` 500s in production — `Manual::Source::Missing`,
+  raised only because the directory the image actually ships is missing the files. This is the exact
+  seam the libvips package-name entry under Setup describes: *the error existed only at the seam
+  between the image and a developer's machine.* Only the `Images / app-image` CI job — which asserts
+  `GET /manual` returns 200 against the built image, not a checkout — can see it.
+- **`docs/manual/*.md` is content now, not just documentation**, and editing it can redden the
+  *default* `bundle exec rspec` run in ways a documentation-only contributor won't expect.
+  `spec/services/manual/renderer_spec.rb` renders the actual shipped files, so renaming a heading
+  breaks the anchor-integrity examples if a `](#anchor)` still points at the old id. That is the point
+  of writing it against real files rather than a fixture, and it applies to **every** file in
+  `docs/manual/`, not only the two the app serves — the performance manual, added by a different
+  branch, is covered by these specs without having asked to be.
+
+  What is *not* worth guarding: the spec originally pinned the exact file list by name, and
+  `performance.{en,ru}.md` landing on master took the default RSpec run red for an ordinary
+  documentation change. It now asserts only that the glob found the two served manuals and at least
+  four files — enough to catch a mis-rooted glob, which is all that example was ever for. The
+  fenced-code example learned the same lesson: it asserts fences and `<pre><code>` *correlate*, since
+  a manual is allowed to contain no code at all.
 
 ## Testing
 

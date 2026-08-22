@@ -830,10 +830,13 @@ ka:
       create_team: "გუნდის შექმნა"
       all_games: "დომენის ყველა თამაში"
       teams: "გუნდები"
+      manual: "სახელმძღვანელო"
       logout: "გასვლა"
       login_legend: "შესვლა"
       login: "შესვლა"
       signup: "რეგისტრაცია"
+  manual:
+    fallback_note: "სახელმძღვანელო ჯერ არ არის თარგმნილი თქვენს ენაზე — ნაჩვენებია ვერსია «%{language}» ენაზე."
   shared:
     times_in_zone: "დრო ნაჩვენებია სარტყელში %{zone}"
     test_runs:

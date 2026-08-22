@@ -804,10 +804,13 @@ ru:
       create_team: "Создать команду"
       all_games: "Все игры домена"
       teams: "Команды"
+      manual: "Руководство"
       logout: "Выйти"
       login_legend: "Вход"
       login: "Войти"
       signup: "Зарегистрироваться"
+  manual:
+    fallback_note: "Руководство пока не переведено на ваш язык — показана версия на языке «%{language}»."
   shared:
     times_in_zone: "Время показано в поясе %{zone}"
     test_runs:

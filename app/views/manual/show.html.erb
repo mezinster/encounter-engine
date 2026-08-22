@@ -1,0 +1,14 @@
+<%# The rendered manual is trusted: it is markdown from this repository,
+    reviewed in a pull request and shipped in the image, so it goes out with
+    raw. Sub-project B changes that -- a translation produced by the Claude API
+    and stored in the database is not the same trust class, and the html_safe
+    decision has to be revisited there rather than inherited from here. %>
+<div class="manual">
+  <% if @locale_used.to_s != I18n.locale.to_s %>
+    <p class="flash flash--notice">
+      <%= t("manual.fallback_note", :language => t("locales.#{@locale_used}")) %>
+    </p>
+  <% end %>
+
+  <%= raw @manual_html %>
+</div>

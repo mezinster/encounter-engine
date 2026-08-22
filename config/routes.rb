@@ -6,6 +6,11 @@ Rails.application.routes.draw do
 
   root to: "index#index"
 
+  # The user manual, rendered from docs/manual/*.md at request time. Public on
+  # purpose: its first section is "signing up and signing in", written for
+  # someone who has done neither. See app/services/manual/source.rb.
+  get "/manual" => "manual#show", as: :manual
+
   # The superadmin console: a read-only listing of every game on the
   # instance. Editing rides the author's own forms (ensure_author admits
   # superadmins), so only :index exists here -- there is no second editor.

@@ -581,3 +581,29 @@ details[open] > .team-disclosure::after { content: "▴"; }
    file matches ".button_to" by name -- Rails emits the class at render time,
    not anywhere grep can find it in app/views. */
 form.button_to { display: inline-block; }
+
+/* --- The manual: one long markdown document ------------------------------
+   Authored as markdown, so the widest element on the page is a table nobody
+   sized for a phone: six of them, three columns, some rows 135 characters of
+   source wide.
+   `display: block` is what makes overflow-x apply to a <table> at all -- the
+   table becomes its own scrollport, so the TABLE scrolls sideways and the page
+   never does. spec/layout/manual_layout_spec.rb asserts exactly that. */
+.manual table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Same reasoning for code blocks: the deployment guide has 16 of them and some
+   lines are long. */
+.manual pre {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* A measure, not a width: unbroken prose across 1280px is unreadable, and
+   nothing else on this page constrains it. */
+.manual {
+  max-width: 70ch;
+}

@@ -162,6 +162,15 @@ th {
    :alert is kept for anything that sets Rails' own conventional key. */
 .flash--alert, .flash--error { border-left-color: var(--danger); }
 
+/* The manual's "this is the Russian version" note (app/views/manual/show
+   .html.erb) is neither success nor danger -- it is a plain fact about which
+   file got served. Without this rule it inherited the base .flash's --go
+   left border, the same green as a successful save, which told a reader who
+   got no manual in their language that something had gone right. --border
+   is the neutral token every other UI surface already uses for a dividing
+   line with no valence of its own. */
+.flash--notice { border-left-color: var(--border); }
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);

@@ -35,8 +35,13 @@ describe Manual::Renderer do
         expect(ids.tally.select { |_id, count| count > 1 }).to eq({})
       end
 
+      # Not eq(6): that pins today's table count, so an ordinary documentation
+      # edit that adds or removes a table would redden this spec for no
+      # layout- or rendering-related reason. What this example actually
+      # exists to prove is that the GFM parser is active at all -- >= 1 proves
+      # that just as well and stays green across a content-only edit.
       it "renders the markdown tables as tables" do
-        expect(doc.css("table").size).to eq(6)
+        expect(doc.css("table").size).to be >= 1
       end
 
       # hard_wrap: the GFM parser defaults it to TRUE, which turns every single
@@ -70,6 +75,39 @@ describe Manual::Renderer do
 
     expect(doc.css("[id]").map { |node| node["id"] })
       .to include("руководство-пользователя", "игроку", "файлы-и-изображения")
+  end
+
+  # The anchor-integrity examples above only check a document against
+  # ITSELF: they collect ids and hrefs from the same render. ru.md links to
+  # deployment.ru.md#6-первый-администратор, and nothing so far renders
+  # deployment.ru.md to prove that id actually exists there -- a renamed
+  # heading in the deployment guide would leave ru.md's link silently dead.
+  #
+  # Read the fragments straight off the markdown SOURCE with a regex, rather
+  # than rendering and mapping the GitHub URLs the link pass produces back to
+  # filenames: the source already names the file and the fragment side by
+  # side, and the link pass's job (proven separately, above) is exactly to
+  # turn that into a GitHub URL, so re-deriving it after the fact would only
+  # be testing the same link pass twice.
+  it "resolves every cross-file .md#fragment link to a real id in its target" do
+    cross_file_link = /\]\(([^)\s]+\.md)#([^)\s]+)\)/
+    checked = 0
+
+    MANUAL_FILES.each do |path|
+      path.read.scan(cross_file_link) do |target, fragment|
+        target_path = path.dirname.join(target).cleanpath
+        target_ids = Nokogiri::HTML5.fragment(Manual::Renderer.call(target_path.read))
+          .css("[id]").map { |node| node["id"] }
+
+        expect(target_ids).to include(fragment),
+          "#{path.basename}'s link to #{target}##{fragment} has no matching id in #{target_path.basename}"
+        checked += 1
+      end
+    end
+
+    # Guards the guard: if the regex ever stopped matching anything (a
+    # reformatted link, say), the loop above would pass vacuously.
+    expect(checked).to be > 0
   end
 
   describe "the link pass" do

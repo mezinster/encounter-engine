@@ -39,6 +39,22 @@ describe "the manual", type: :request do
     expect(response.body).not_to include("not yet available in your language")
   end
 
+  it "shows no fallback note for ru either" do
+    get manual_path(:locale => :ru)
+
+    expect(response.body).not_to include("Руководство пока не переведено")
+  end
+
+  # Ties renderer, controller, route and real content together in one
+  # request: ru.md contains a link to `](en.md)`, and this is the only spec
+  # that checks the link pass actually survives all the way into the bytes a
+  # browser receives, rather than into an intermediate Nokogiri fragment.
+  it "rewrites the link to the other language's manual into the app's own route" do
+    get manual_path
+
+    expect(response.body).to include(%(href="/manual?locale=en"))
+  end
+
   it "is linked from the left menu signed out" do
     get root_path
 

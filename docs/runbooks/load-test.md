@@ -493,6 +493,9 @@ the app got faster or held steady; it may mean the ledger write is still not bei
 
 ## The performance probe
 
+*If you are not sure what `ramp`, `stampede` and `hold` mean, start with*
+*[`docs/manual/performance.en.md`](../manual/performance.en.md) ([по-русски](../manual/performance.ru.md)).*
+
 This runbook is the **manual** procedure — for exploratory work, where you want
 to watch, change your mind, and try something else.
 

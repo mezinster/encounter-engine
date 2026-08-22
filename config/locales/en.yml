@@ -789,10 +789,13 @@ en:
       create_team: "Create a team"
       all_games: "All games in this domain"
       teams: "Teams"
+      manual: "Manual"
       logout: "Log out"
       login_legend: "Log in"
       login: "Log in"
       signup: "Sign up"
+  manual:
+    fallback_note: "The manual is not yet available in your language — showing the version in %{language}."
   shared:
     times_in_zone: "Times shown in %{zone}"
     test_runs:

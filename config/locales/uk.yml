@@ -808,10 +808,13 @@ uk:
       create_team: "Створити команду"
       all_games: "Усі ігри домену"
       teams: "Команди"
+      manual: "Посібник"
       logout: "Вийти"
       login_legend: "Вхід"
       login: "Увійти"
       signup: "Зареєструватися"
+  manual:
+    fallback_note: "Посібник ще не перекладено вашою мовою — показано версію мовою «%{language}»."
   shared:
     times_in_zone: "Час показано в поясі %{zone}"
     test_runs:

@@ -808,10 +808,13 @@ pl:
       create_team: "Utwórz drużynę"
       all_games: "Wszystkie gry domeny"
       teams: "Drużyny"
+      manual: "Podręcznik"
       logout: "Wyloguj się"
       login_legend: "Logowanie"
       login: "Zaloguj się"
       signup: "Zarejestruj się"
+  manual:
+    fallback_note: "Podręcznik nie został jeszcze przetłumaczony na Twój język — pokazano wersję w języku %{language}."
   shared:
     times_in_zone: "Czas podano w strefie %{zone}"
     test_runs:

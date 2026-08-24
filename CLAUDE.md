@@ -480,6 +480,49 @@ it is load-bearing, not incidental:
   fenced-code example learned the same lesson: it asserts fences and `<pre><code>` *correlate*, since
   a manual is allowed to contain no code at all.
 
+## The docs site is a second renderer over the same files
+
+`.github/workflows/docs-site.yml` publishes thirteen files from `docs/` to
+https://mezinster.github.io/encounter-engine/ — the seven user manuals, the two
+installation guides, the two performance guides, `runbooks/restore.md` and
+`perf/README.md`. `bin/stage-docs-site` copies them into `docs-site/build/`
+and MkDocs Material builds that.
+
+Three things about it are non-obvious:
+
+- **`docs/` is published by allowlist, not wholesale.** `docs/manual/*.md` goes
+  by glob — that directory is already the vetted-public set, since it is what
+  `.dockerignore` re-includes into the image — and everything else is named one
+  file at a time in `DocsSite::Stager::EXTRA_FILES`. `docs/superpowers/`,
+  `docs/security/` and `docs/handoff/` are not published, and the stager's
+  closure check **fails the build** if a published page links to any of them.
+  That check is the thing standing between "someone adds a helpful link" and
+  the security findings register acquiring a public, indexed URL.
+- **The anchors are the sharp edge, from the other side.**
+  `spec/services/manual/renderer_spec.rb` guards kramdown's anchors for the
+  in-app renderer; the Pages build renders the same files with
+  **Python-Markdown**, whose default slugifier strips non-ASCII entirely and
+  would break every `#6-первый-администратор` link *silently* — a wrong anchor
+  is not a 404. `mkdocs.yml` sets `toc.slugify` to a constructed
+  `pymdownx.slugs.slugify` with `case: lower` — the Unicode-preserving,
+  lowercasing form that matches kramdown's own anchors, with lowercasing not
+  optional (the factory's own default, `case: none`, builds clean but produces
+  capitalized anchors that don't match) — and `validation.anchors: warn`, which
+  `--strict` promotes to an error. Don't remove either.
+- **The five machine-translated manuals get a visible banner, derived from
+  their own first line.** The `<!-- Machine-translated ... -->` comment renders
+  to nothing, which is fine in a repository and not fine on an indexed public
+  page. The stager turns it into an admonition in the page's own language, and
+  **raises** if a file declares a machine translation for a locale
+  `DocsSite::Stager::BANNERS` has no text for — so a new translated manual
+  cannot publish unmarked. A locale that gets a native review loses its banner
+  by deleting that comment.
+
+The stager is plain stdlib Ruby with no Rails and no gems, specced from
+fixtures in `spec/docs_site/stager_spec.rb` — fixtures rather than the real
+`docs/`, so that editing a manual cannot redden the default `bundle exec rspec`
+run. The real files are checked by the closure check on every push and PR.
+
 ## Testing
 
 - **Cucumber** — `features/**/*.feature`, Russian Gherkin. **Two numbers, and the difference is the

@@ -267,20 +267,40 @@ Two settings, both required, neither optional:
 ```yaml
 markdown_extensions:
   - toc:
-      slugify: !!python/name:pymdownx.slugs.slugify
-      separator: "-"
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
 
 validation:
   anchors: warn      # with --strict, a warning is a failure
 ```
 
-`pymdownx.slugs.slugify` is Unicode-preserving and lowercasing, which is
-kramdown's behaviour. That it *matches* kramdown on these particular headings
-is an empirical claim, not a deduction — so `validation.anchors` is what makes
-it safe: MkDocs 1.6 resolves every `#fragment` against the anchors it actually
-generated and reports the misses by name, and `--strict` turns that into a red
-build. If the two slugifiers ever disagree, the build says so instead of
-shipping links that quietly go nowhere.
+`pymdownx.slugs.slugify` is itself a `**kwargs` factory — it *returns* the
+slug function rather than *being* it — so a bare `!!python/name:` reference
+hands `toc` the unconstructed factory, which `toc` then calls as
+`slugify(text, separator)` and raises `TypeError: slugify() takes 0
+positional arguments but 2 were given` on every page. It has to be
+constructed with `!!python/object/apply:` and `kwds:` instead, as shown above
+(verified against pymdown-extensions 10.21.3).
+
+`case: lower` is load-bearing, not decoration: the factory's own default is
+`case: none`, which builds cleanly — no error, no warning — but produces
+`id="Первый-администратор"` with a capital П, which does not match the
+lowercase anchors these files were authored against. A clean `--strict` build
+is not evidence the anchors are right; only `validation.anchors` is, because
+it resolves every `#fragment` against the anchors MkDocs actually generated
+rather than merely checking that slugification ran. Measured on the built
+`manual/deployment.ru` page: `id="6-первый-администратор"`, Cyrillic intact
+and lowercase, matching the source link byte for byte.
+
+That the constructed slugifier *matches* kramdown on these particular
+headings is an empirical claim, not a deduction — so `validation.anchors` is
+what makes it safe even beyond the casing check above: MkDocs 1.6 resolves
+every `#fragment` against the anchors it actually generated and reports the
+misses by name, and `--strict` turns that into a red build. If the two
+slugifiers ever disagree, the build says so instead of shipping links that
+quietly go nowhere.
 
 ## 5. Testing
 
@@ -325,6 +345,31 @@ phone measurement into a 500px one.
 
 If Material disappoints, that finding upgrades this section into a fourth
 `spec/layout/` file rather than being absorbed silently.
+
+**Measured 2026-08-24, against the built site served locally on
+`127.0.0.1:8099`, `chrome-headless-shell` at each of the three viewports,
+`/manual/ru/`.** `LayoutMeasurement#measure` was not reused (per the
+Rails-coupling and `file://` note above); instead a same-origin harness page
+loaded the real page in a full-viewport iframe and read back
+`document.documentElement.scrollWidth - clientWidth`, an
+`elementFromPoint()` hit test on the header's drawer-toggle
+(`label.md-header__button[for="__drawer"]`), and
+`getComputedStyle(...).fontSize` on the first `.md-content p`:
+
+| viewport | horizontal overflow | toggle hit-testable | body font-size |
+|---|---|---|---|
+| 390×680  | `0` | yes — `elementFromPoint` returned the toggle's own `<path>` (SVG icon), `toggle.contains(el) === true` | `16px` |
+| 375×553  | `0` | yes — same result as above | `16px` |
+| 1280×800 | `0` | not applicable — Material replaces the drawer toggle with a permanent sidebar at this width (`≥76.25em`); the toggle's own `getBoundingClientRect()` is `0×0` (not rendered, not merely hidden-but-present), so there is nothing to hit-test at this breakpoint by design | `16px` |
+
+Zero overflow at all three viewports, the toggle hit-testable everywhere it
+is meant to be present, and body text at 16px (not sub-16px) everywhere. The
+bet in this section holds on this one hand-check: Material's own responsive
+CSS produced a usable phone layout with no extra work from this repository.
+This does not retroactively make the layout regression-tested — a future
+change to `docs-site/mkdocs.yml`'s theme configuration is still unguarded —
+only that the one-time check this section promised came back clean, so no
+fourth `spec/layout/` file is added.
 
 The second gap is smaller and worth naming: **nothing verifies the deployed
 site matches the built one.** The workflow proves the artifact builds; that it

@@ -67,12 +67,17 @@ markdown_extensions:
 #
 # `omitted_files: warn` + `--strict` + the hand-written nav: below are doing
 # SECURITY work, not housekeeping, and it is not obvious from here. The stager
-# picks up docs/manual/*.md by glob; this pair is what makes that glob safe. A
-# file staged but absent from nav: fails the build, so a document only reaches
-# the public site once a human has named it in this file. Switching to MkDocs'
-# automatic navigation "to stop maintaining the list" would delete that gate
-# while looking purely cosmetic: every future file in docs/manual/ would then
-# publish itself, unreviewed. Keep nav: hand-written and keep this at warn.
+# picks up docs/manual/*.md by glob; a file staged but absent from nav: fails
+# the build, so a document only reaches the public site once a human has named
+# it in this file.
+#
+# It is the SECOND of two gates on that path, not the only one:
+# DocsSite::Stager::LABELS raises earlier, in Ruby, before MkDocs is invoked at
+# all. Switching to MkDocs' automatic navigation "to stop maintaining the list"
+# would delete this one and leave that one -- so a new manual would still fail,
+# from the stager, complaining about a label instead of a nav entry. Deleting
+# half a gate for a cosmetic gain, and a more confusing error when it fires.
+# Keep nav: hand-written and keep this at warn. See design §4.5.1.
 validation:
   omitted_files: warn
   absolute_links: warn

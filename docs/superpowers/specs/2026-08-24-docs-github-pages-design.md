@@ -217,23 +217,39 @@ So the sequence is: automatic staging, then a hard stop until a human names the
 file in `mkdocs.yml`'s `nav:` and in `LABELS`. Two one-line additions, and the
 diff shows somebody decided this document goes on the public web.
 
-### 4.5.1 `nav:` is a security control, not a table of contents
+### 4.5.1 Two gates stand between `docs/manual/` and the public web
 
-This is worth stating plainly because nothing about `nav:` looks load-bearing,
-and the obvious "improvement" removes it.
+This is worth stating plainly because neither gate looks load-bearing, and the
+obvious "improvement" removes one of them.
 
-`docs/manual/*.md` is picked up by a glob. The hand-written `nav:` — enforced by
-`validation.omitted_files` under `--strict` — is the **only** thing between "a
-file appeared in `docs/manual/`" and "a file is on the public, indexed web".
-MkDocs supports automatic navigation, which builds the nav from the directory
-tree; enabling it would look like removing a chore, would pass every test in
-this repository, and would silently convert `docs/manual/` into a directory that
-publishes whatever is dropped into it, unreviewed.
+`docs/manual/*.md` is picked up by a glob, and two independent checks — in two
+different languages, at two different moments — stand between "a file appeared
+in `docs/manual/`" and "a file is on the public, indexed web". **Both would have
+to be defeated:**
+
+1. **`DocsSite::Stager::LABELS` raises first**, inside the stager, before MkDocs
+   is invoked at all. `bin/stage-docs-site` exits 1 naming the file. Measured:
+   an unlabelled `manual/es.md` fails here, not at the build.
+2. **The hand-written `nav:` is enforced second**, by `validation.omitted_files`
+   under `--strict`. Measured: the same file, if it somehow reached the staged
+   tree unlabelled, gives `Aborted with 1 warnings in strict mode!` naming the
+   nav configuration.
+
+An earlier draft of this section called `nav:` "the only thing" in that path.
+It is not, and the correction matters in the direction that surprises people:
+MkDocs supports automatic navigation, and enabling it "to stop maintaining the
+list" removes gate 2 and **leaves gate 1** — so a new manual would still fail
+the build, from the stager, with a message about a missing label rather than a
+missing nav entry. That is a worse failure to diagnose, not an open door.
+
+The operative advice is unchanged: keep `nav:` hand-written and keep
+`omitted_files` at `warn`. Two gates on this path is the design, not
+redundancy — one of them is a Ruby constant and the other is a YAML list, and
+they fail for different reasons.
 
 Recorded here, and in a comment beside the `validation:` block in
 `docs-site/mkdocs.yml`, so that a contributor who reaches for automatic nav
-finds out first what it is holding up. Keep `nav:` hand-written and keep
-`omitted_files` at `warn`.
+finds out first what it is holding up.
 
 ### 4.6 The closure check
 

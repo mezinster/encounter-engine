@@ -3,6 +3,13 @@ name: Docs site
 # The paths filter is not tidiness. Without it every merge to master rebuilds
 # and redeploys a site that did not change, and this repository already runs
 # vm-scale.yml every fifteen minutes.
+#
+# The two lists below are duplicated verbatim, because GitHub Actions offers no
+# anchor for this key. Keep them identical, and note the asymmetry if they ever
+# drift: a path in `pull_request` but missing from `push` means merged changes
+# silently stop rebuilding the site -- nothing fails, the site just quietly
+# goes stale. The reverse merely runs a build the PR did not need, and is
+# visible immediately.
 on:
   push:
     branches: ["master"]
@@ -22,11 +29,6 @@ on:
       - "bin/stage-docs-site"
       - ".github/workflows/docs-site.yml"
   workflow_dispatch:
-
-# Two merges must not race a half-built site onto the live domain.
-concurrency:
-  group: pages
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -70,9 +72,22 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
 
+    # Two merges must not race a half-built site onto the live domain -- but the
+    # group belongs on THIS job, not on the workflow. At workflow level every
+    # pull_request run joined the same group, so a PR push could cancel a
+    # pending master deploy: a cancelled run is not a failed run, nobody is
+    # notified, and the public site silently stays a merge behind.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+
     permissions:
       pages: write
       id-token: write
+      # Naming any permission zeroes the rest, and deploy-pages resolves the
+      # uploaded artifact through the Actions API. Free if it turns out to be
+      # unnecessary; saves a failed first-ever deploy if it is not.
+      actions: read
 
     environment:
       name: github-pages

@@ -151,10 +151,20 @@ module DocsSite
 
     private
 
+    # Every File.read in this file names its encoding, and that is not
+    # decoration: File.read defaults to the locale's external encoding, so under
+    # LANG=C these files are read as US-ASCII and the first Cyrillic byte raises
+    # `invalid byte sequence in US-ASCII` -- from the regex scan, some way from
+    # the read that actually caused it. CI sets LANG=C.UTF-8 today, but ci.yml's
+    # RSpec job already runs inside a `container:` and matching that here is a
+    # plausible future edit.
     def stage(relative_path)
       destination = File.join(@out_root, relative_path)
       FileUtils.mkdir_p(File.dirname(destination))
-      File.write(destination, with_banner(relative_path, File.read(File.join(@docs_root, relative_path))))
+      File.write(
+        destination,
+        with_banner(relative_path, File.read(File.join(@docs_root, relative_path), :encoding => "UTF-8"))
+      )
     end
 
     def write_index
@@ -237,7 +247,7 @@ module DocsSite
       dangling = []
 
       staged.each do |relative_path|
-        markdown = File.read(File.join(@out_root, relative_path))
+        markdown = File.read(File.join(@out_root, relative_path), :encoding => "UTF-8")
 
         # RELATIVE_LINK has exactly one capturing group, so scan yields
         # one-element arrays; destructuring reads more plainly than

@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Stages the publishable subset of docs/ into docs-site/build/ for MkDocs.
+#
+# Everything interesting is in docs-site/stager.rb, which is a pure function
+# and has specs. This file is the part with side effects.
+require_relative "../docs-site/stager"
+
+root = File.expand_path("..", __dir__)
+out = File.join(root, "docs-site", "build")
+
+begin
+  staged = DocsSite::Stager.new(:docs_root => File.join(root, "docs"), :out_root => out).call
+rescue DocsSite::Stager::ClosureError, DocsSite::Stager::MissingBannerError => e
+  warn("bin/stage-docs-site: #{e.message}")
+  exit(1)
+end
+
+puts("staged #{staged.size} files into docs-site/build")
+staged.each { |relative_path| puts("  #{relative_path}") }

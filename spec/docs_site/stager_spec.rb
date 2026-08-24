@@ -100,4 +100,60 @@ RSpec.describe DocsSite::Stager do
       end
     end
   end
+
+  describe "the closure check" do
+    it "accepts a set whose links all resolve inside it" do
+      stage do |stager, _out|
+        expect { stager.call }.not_to raise_error
+      end
+    end
+
+    it "refuses a link pointing at a document that is not published" do
+      Dir.mktmpdir("docs-site-src") do |src|
+        FileUtils.cp_r(File.join(FIXTURE_DOCS, "."), src)
+        File.write(
+          File.join(src, "manual/en.md"),
+          File.read(File.join(src, "manual/en.md")) +
+            "\nSee [the findings](../secret/findings.md).\n"
+        )
+
+        stage(:docs_root => src) do |stager, _out|
+          expect { stager.call }
+            .to raise_error(DocsSite::Stager::ClosureError, %r{secret/findings\.md})
+        end
+      end
+    end
+
+    it "refuses a link broken by a rename" do
+      Dir.mktmpdir("docs-site-src") do |src|
+        FileUtils.cp_r(File.join(FIXTURE_DOCS, "."), src)
+        File.rename(File.join(src, "manual/en.md"), File.join(src, "manual/eng.md"))
+
+        stage(:docs_root => src) do |stager, _out|
+          expect { stager.call }
+            .to raise_error(DocsSite::Stager::ClosureError, %r{en\.md})
+        end
+      end
+    end
+
+    it "ignores absolute links and bare anchors, which are not its business" do
+      Dir.mktmpdir("docs-site-src") do |src|
+        FileUtils.cp_r(File.join(FIXTURE_DOCS, "."), src)
+        # The GitHub link is the load-bearing case: it ends in ".md" and starts
+        # with a letter, so a check that only excluded ":" as a leading
+        # character would report it as dangling and fail every real build.
+        File.write(
+          File.join(src, "manual/en.md"),
+          "# Manual\n\n" \
+          "[site](https://game.mezin.eu/) " \
+          "[spec](https://github.com/mezinster/encounter-engine/blob/master/docs/security/x.md) " \
+          "[top](#manual) [ru](ru.md)\n"
+        )
+
+        stage(:docs_root => src) do |stager, _out|
+          expect { stager.call }.not_to raise_error
+        end
+      end
+    end
+  end
 end

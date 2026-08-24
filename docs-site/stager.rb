@@ -12,10 +12,21 @@
 # check in #assert_closed is what stops a link from quietly dragging one of
 # them onto the public web.
 require "fileutils"
+require "set"
 
 module DocsSite
   class Stager
     class MissingBannerError < StandardError; end
+    class ClosureError < StandardError; end
+
+    # A markdown link target, with any #fragment split off.
+    #
+    # The lookahead is doing real work: excluding ":" from a leading character
+    # class is NOT enough, because "https://github.com/x/y/blob/master/z.md"
+    # begins with "h" and ends in ".md", so it would sail through as a relative
+    # link and be reported as dangling. Schemes and absolute paths are rejected
+    # as a whole, up front.
+    RELATIVE_LINK = %r{\]\(\s*(?!\w+://|/)(?<target>[^)\s#]+\.md)(?:\#[^)\s]*)?\s*\)}
 
     # The uniform first line of every machine-translated manual. It names both
     # the source and the date, so the banner is derived rather than maintained:
@@ -78,6 +89,7 @@ module DocsSite
     def call
       FileUtils.rm_rf(@out_root)
       sources.each { |relative_path| stage(relative_path) }
+      assert_closed
       sources
     end
 
@@ -120,6 +132,39 @@ module DocsSite
       return "#{admonition}\n#{markdown}" if heading.nil?
 
       lines.insert(heading + 1, "\n#{admonition}").join
+    end
+
+    # Every relative .md link in the published set must resolve to something
+    # else in the published set. Anything else is either a link onto a document
+    # this repository deliberately does not publish, or a link broken by a
+    # rename -- and the right response to both is a red build, not a quiet
+    # widening of the allowlist.
+    def assert_closed
+      published = sources.to_set
+      dangling = []
+
+      sources.each do |relative_path|
+        markdown = File.read(File.join(@docs_root, relative_path))
+
+        # RELATIVE_LINK has exactly one capturing group, so scan yields
+        # one-element arrays; destructuring reads more plainly than
+        # Regexp.last_match inside a block.
+        markdown.scan(RELATIVE_LINK).each do |(target)|
+          # Resolved as an absolute path rooted at "/" so that "../" is
+          # normalised by expand_path, then stripped back to a docs-relative
+          # path for comparison. Doing this on real filesystem paths would
+          # resolve against the machine instead of against the published set.
+          resolved = File.expand_path(target, File.dirname("/#{relative_path}")).delete_prefix("/")
+          dangling << "#{relative_path} -> #{target}" unless published.include?(resolved)
+        end
+      end
+
+      return if dangling.empty?
+
+      raise ClosureError,
+            "these links leave the published set:\n  #{dangling.join("\n  ")}\n" \
+            "Either the target belongs on the site (add it to EXTRA_FILES, deliberately), " \
+            "or the link is wrong."
     end
   end
 end

@@ -497,7 +497,24 @@ Three things about it are non-obvious:
   `docs/security/` and `docs/handoff/` are not published, and the stager's
   closure check **fails the build** if a published page links to any of them.
   That check is the thing standing between "someone adds a helpful link" and
-  the security findings register acquiring a public, indexed URL.
+  the security findings register acquiring a public, indexed URL. It scans the
+  **staged** tree, not `docs/` — the generated landing page exists in no source
+  directory — and `mkdocs build --strict` is a real second net beside it, not a
+  formality: `validation.links.not_found` parses the markdown properly and so
+  catches titled links (`](x.md "T")`) the closure check's regex does not.
+- **A new manual does NOT publish itself, and `nav:` is why.** The glob *stages*
+  a new `docs/manual/*.md` automatically and the build then **fails** until a
+  human names the file in `docs-site/mkdocs.yml`'s hand-written `nav:` and in
+  `DocsSite::Stager::LABELS` (which supplies the landing page's label, and
+  raises for a staged file it has no label for). That gate is doing security
+  work: `validation.omitted_files: warn` under `--strict` is the only thing
+  between "a file appeared in `docs/manual/`" and "a file is on the public,
+  indexed web". Switching to MkDocs' automatic navigation "to stop maintaining
+  the list" would delete it while looking cosmetic, and every test in this
+  repository would stay green. Also note **only `.md` is staged** — if a manual
+  ever gains an `![](screenshot.png)`, the image is not copied and `--strict`
+  fails on the unresolved link. Red rather than silent, but worth recognising
+  instead of debugging.
 - **The anchors are the sharp edge, from the other side.**
   `spec/services/manual/renderer_spec.rb` guards kramdown's anchors for the
   in-app renderer; the Pages build renders the same files with
@@ -557,10 +574,11 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 1934 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing).
-  This figure has now been wrong four times: 1603 while the real number was 1751, then 1751 while
-  it was 1829, then 1829 while it was 1851 — measured on 2026-08-16 before the AI translation
-  work began — and the Cucumber figure beside it was wrong once too. Which is the point of the
+- **RSpec** — 2820 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+  measured 2026-08-24 on the docs-site branch. This figure has now been wrong five times: 1603
+  while the real number was 1751, then 1751 while it was 1829, then 1829 while it was 1851 —
+  measured on 2026-08-16 before the AI translation work began — and it said 1934 while the real
+  number was 2820. The Cucumber figure beside it was wrong once too. Which is the point of the
   sentence that follows.
   **Do not trust a quoted RSpec count** — this number has moved eight times in a week and stale
   copies have been cited as current twice. Re-run it. The inherited 228/2325 is the stable figure.

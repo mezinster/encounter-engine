@@ -175,6 +175,25 @@ honest and always visible.
 
 `theme.language` is `ru`, matching the application's `DEFAULT_LOCALE`.
 
+**A generated landing page, `index.md`, is `nav:`'s first entry.** None of the
+thirteen source files is an index, MkDocs synthesises none, and `--strict` does
+not warn about the absence — so the site root served Material's 404 page. The
+stager writes `index.md` into the build directory (never into `docs/`): the
+site title, the four group headings above, and one bullet per published file.
+
+A meta-refresh redirect to `/manual/ru/` was rejected. It reads as the smaller
+change and is not: it strands the readers of the other six languages at a page
+in a language they did not ask for, on a site whose whole point is that the
+manual exists in seven.
+
+Its *membership* is derived from the staged set rather than hand-written, so it
+cannot list a page that is not published or omit one that is.
+`DocsSite::Stager::LABELS` holds only the display names — the endonyms `nav:`
+already uses — and **raises, naming the file, for any staged file it has no
+label for**. That is the same loud-failure idiom as the missing-banner check,
+and it is what stops a future manual from being staged by the glob and then
+missing from the site's only table of contents.
+
 ### 4.5 The allowlist
 
 `docs/manual/*.md` by **glob**, plus an explicit list naming
@@ -182,9 +201,39 @@ honest and always visible.
 
 The glob is safe precisely because `docs/manual/` is *already* the
 vetted-public directory — it is the one part of `docs/` that ships inside the
-Docker image. A new translation therefore publishes itself the day it lands,
-which is the desired behaviour. Everywhere else, adding a file to the site is a
-visible diff line in `bin/stage-docs-site`, which is the point.
+Docker image. Everywhere else, adding a file to the site is a visible diff line
+in `DocsSite::Stager::EXTRA_FILES`, which is the point.
+
+**A new translation does not publish itself, and that is deliberate.** An
+earlier draft of this section said it did. What actually happens when
+`docs/manual/es.md` lands is that the glob *stages* it and the build then
+**fails** — `validation.omitted_files: warn` plus `--strict` rejects a staged
+file that no `nav:` entry names, and `DocsSite::Stager::LABELS` raises for a
+staged file it has no label for. Measured: dropping `manual/es.md` into the
+staged tree gives `Aborted with 1 warnings in strict mode!`, naming the nav
+configuration.
+
+So the sequence is: automatic staging, then a hard stop until a human names the
+file in `mkdocs.yml`'s `nav:` and in `LABELS`. Two one-line additions, and the
+diff shows somebody decided this document goes on the public web.
+
+### 4.5.1 `nav:` is a security control, not a table of contents
+
+This is worth stating plainly because nothing about `nav:` looks load-bearing,
+and the obvious "improvement" removes it.
+
+`docs/manual/*.md` is picked up by a glob. The hand-written `nav:` — enforced by
+`validation.omitted_files` under `--strict` — is the **only** thing between "a
+file appeared in `docs/manual/`" and "a file is on the public, indexed web".
+MkDocs supports automatic navigation, which builds the nav from the directory
+tree; enabling it would look like removing a chore, would pass every test in
+this repository, and would silently convert `docs/manual/` into a directory that
+publishes whatever is dropped into it, unreviewed.
+
+Recorded here, and in a comment beside the `validation:` block in
+`docs-site/mkdocs.yml`, so that a contributor who reaches for automatic nav
+finds out first what it is holding up. Keep `nav:` hand-written and keep
+`omitted_files` at `warn`.
 
 ### 4.6 The closure check
 
@@ -201,8 +250,22 @@ One check, two failure modes, and the second is the one that matters:
 * A link **broken** by a rename, which today nothing catches for the files the
   app does not serve.
 
-`mkdocs build --strict` then runs as a second net, failing on any internal link
-or nav reference MkDocs itself cannot resolve.
+`mkdocs build --strict` then runs as a genuine second net rather than a
+formality, and the two are layered rather than redundant. The closure check is
+a **regex**, so it is the cheaper and more easily fooled of the pair: it does
+not match a titled link such as `](x.md "Title")`, which
+`validation.links.not_found` resolves properly, because MkDocs parses the
+markdown instead of pattern-matching it. What the closure check has that MkDocs
+does not is knowledge of the *allowlist*: it can tell "this link leaves the
+published set" from "this link is broken", and it runs before MkDocs is
+invoked at all. Neither subsumes the other; the file header of
+`docs-site/stager.rb` says so too, so that removing one because "the other
+already covers it" requires arguing with a comment first.
+
+The check reads the **staged** tree, not `docs/`. That is not interchangeable
+now that the stager generates `index.md`: the landing page exists in no source
+directory, so a check rooted at `docs/` structurally could not see the only
+links this repository writes for itself.
 
 ### 4.7 The machine-translation banner
 
@@ -240,8 +303,15 @@ SHA-pinned actions with `# vN` comments, step names that state the reason.
   separate `deploy` job with `environment: github-pages` and
   `permissions: {pages: write, id-token: write}`.
 * `workflow_dispatch` for manual rebuilds.
-* `concurrency: {group: pages, cancel-in-progress: false}`, so two merges cannot
-  race a half-built site onto the domain.
+* `concurrency: {group: pages, cancel-in-progress: false}` **on the `deploy`
+  job**, so two merges cannot race a half-built site onto the domain. The group
+  must not sit at workflow level, where the `pull_request` runs join it too: a
+  newly queued run cancels an already-pending one, so a PR push would cancel a
+  master deploy that was waiting its turn. A cancelled run is not a failed run —
+  nothing is reported, and the site silently stays a merge behind.
+* `permissions: {pages: write, id-token: write, actions: read}` on that job.
+  Naming any permission zeroes the rest, and `actions/deploy-pages@v4` resolves
+  the uploaded artifact through the Actions API.
 
 The `paths:` filter is not tidiness. Without it every merge to master rebuilds
 and redeploys, and this repository already runs `vm-scale.yml` every fifteen
@@ -257,10 +327,14 @@ renders with **Python-Markdown**, whose `toc` extension slugifies by
 *stripping non-ASCII characters entirely*.
 
 Under that default, `### 6. Первый администратор` produces an anchor with no
-Cyrillic in it at all, and the eleven intra- and inter-file links of the form
+Cyrillic in it at all, and every anchored cross-file link of the form
 `](deployment.ru.md#6-первый-администратор)` — plus in-page links such as
-`deployment.ru.md:79` — silently land at the top of the page instead of the
-section. Silently: a wrong anchor is not a 404.
+`deployment.ru.md:79` — silently lands at the top of the page instead of the
+section. Silently: a wrong anchor is not a 404. (Fourteen such links at the
+time of writing, by
+`grep -rno '](\([a-z0-9._-]*\)\.md#[^)]*)' docs/manual/ | wc -l`. Count them
+rather than quoting the number: CLAUDE.md records what happens to counts
+written down in this repository.)
 
 Two settings, both required, neither optional:
 

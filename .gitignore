@@ -48,3 +48,9 @@ CLAUDE.local.md
 # developer's local uploads land in a commit.
 /storage/*
 !/storage/.keep
+
+# Built by bin/stage-docs-site; never committed.
+/docs-site/build/
+
+# Built by `mkdocs build`; never committed.
+/docs-site/site/

@@ -51,3 +51,6 @@ CLAUDE.local.md
 
 # Built by bin/stage-docs-site; never committed.
 /docs-site/build/
+
+# Built by `mkdocs build`; never committed.
+/docs-site/site/

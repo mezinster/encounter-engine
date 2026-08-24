@@ -1,0 +1,99 @@
+# The documentation site published to GitHub Pages.
+#
+# This file lives OUTSIDE docs/ deliberately: docs/ is staged wholesale by
+# bin/stage-docs-site, and configuration that sat inside it would be published
+# as content. docs_dir points at the staged tree, never at docs/ itself --
+# docs/manual/*.md is application content, shipped in the Docker image and
+# rendered at request time by ManualController, and this build must not touch it.
+site_name: encounter-engine
+site_description: Free open source engine for "Encounter" urban games
+site_url: https://mezinster.github.io/encounter-engine/
+repo_url: https://github.com/mezinster/encounter-engine
+edit_uri: ""
+
+docs_dir: build
+site_dir: site
+
+theme:
+  name: material
+  # Matches the application's DEFAULT_LOCALE. The site is multilingual in
+  # content; the chrome has to pick one.
+  language: ru
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Тёмная тема
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Светлая тема
+
+markdown_extensions:
+  - admonition          # the machine-translation banners
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+      # Python-Markdown's DEFAULT slugifier strips non-ASCII entirely, which
+      # would turn "### 6. Первый администратор" into an anchor containing no
+      # Cyrillic and silently break every link pointing at it. This one is
+      # Unicode-preserving and lowercasing, which is kramdown's behaviour --
+      # and kramdown is what these files' anchors were authored against.
+      #
+      # pymdownx.slugs.slugify is itself a **kwargs factory -- it returns the
+      # slug function, it isn't the slug function -- so it has to be
+      # constructed with !!python/object/apply: and `kwds:`. A bare
+      # !!python/name: reference hands toc the unconstructed factory, which
+      # toc then calls as slugify(text, separator) and raises
+      # `TypeError: slugify() takes 0 positional arguments but 2 were given`.
+      # Verified against pymdown-extensions 10.21.3.
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+      separator: "-"
+
+# A wrong anchor is not a 404: without this, a slugifier mismatch lands the
+# reader at the top of the page and nothing reports it. MkDocs 1.6 resolves
+# every #fragment against the anchors it actually generated, and --strict
+# turns each miss into a failed build.
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+plugins:
+  - search:
+      # lunr-languages ships ru, en and tr -- and not uk, be, pl or ka. Those
+      # four are searchable without stemming. See the design doc §7.
+      lang:
+        - ru
+        - en
+        - tr
+
+nav:
+  - Руководство пользователя:
+      - Русский: manual/ru.md
+      - English: manual/en.md
+      - Українська: manual/uk.md
+      - Беларуская: manual/be.md
+      - Polski: manual/pl.md
+      - Türkçe: manual/tr.md
+      - ქართული: manual/ka.md
+  - Установка / Installation:
+      - Русский: manual/deployment.ru.md
+      - English: manual/deployment.en.md
+  - Нагрузочное тестирование / Performance:
+      - Русский: manual/performance.ru.md
+      - English: manual/performance.en.md
+      - Records: perf/README.md
+  - Runbooks:
+      - Restoring the database: runbooks/restore.md

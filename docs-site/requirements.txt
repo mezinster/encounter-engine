@@ -1,0 +1,8 @@
+# Pinned exactly: this is the only Python in the repository, and an
+# unpinned docs build that changes theme version on its own is a
+# surprise nobody is watching for.
+#
+# mkdocs must stay >= 1.6 -- validation.anchors, which is what stops the
+# Cyrillic heading anchors from silently breaking, was added there.
+mkdocs==1.6.1
+mkdocs-material==9.5.44

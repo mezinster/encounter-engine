@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **This plan has been executed.** Where a code block here differs from the file
+> that actually shipped, **the shipped file wins** — `docs-site/stager.rb`,
+> `docs-site/mkdocs.yml`, `.github/workflows/docs-site.yml`. Review found and
+> corrected real defects during and after implementation (the landing page, the
+> `slugify` form in Task 5, the concurrency scope), and the listings below are a
+> record of what was planned, not a source to copy from today.
+
 **Goal:** Publish thirteen existing markdown files from `docs/` as a static site at `https://mezinster.github.io/encounter-engine/`, built by GitHub Actions, without changing a single byte of the source files or anything under `app/`.
 
 **Architecture:** A pure-Ruby stager (`DocsSite::Stager`) copies an allowlisted subset of `docs/` into `docs-site/build/`, preserving relative paths so existing links resolve untouched; it injects a visible machine-translation banner into the five manuals whose first line declares one, and refuses to run if any relative `.md` link points outside the staged set. MkDocs Material then builds that directory. A workflow builds on pull requests and builds-and-deploys on master.
@@ -762,7 +769,20 @@ markdown_extensions:
       # Cyrillic and silently break every link pointing at it. This one is
       # Unicode-preserving and lowercasing, which is kramdown's behaviour --
       # and kramdown is what these files' anchors were authored against.
-      slugify: !!python/name:pymdownx.slugs.slugify
+      #
+      # CORRECTED DURING IMPLEMENTATION (this is not a transcription slip):
+      # this block originally read `slugify: !!python/name:pymdownx.slugs.slugify`.
+      # That bare form hands toc the unconstructed **kwargs factory, which toc
+      # then calls as slugify(text, separator), raising
+      # `TypeError: slugify() takes 0 positional arguments but 2 were given` on
+      # every page. It has to be constructed with !!python/object/apply: and
+      # `kwds:`, and `case: lower` is load-bearing rather than decorative --
+      # the factory's own default, `case: none`, produces capitalised anchors
+      # that match nothing these files link to. See design §4.9; the shipped
+      # file is docs-site/mkdocs.yml.
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
       separator: "-"
 
 # A wrong anchor is not a 404: without this, a slugifier mismatch lands the

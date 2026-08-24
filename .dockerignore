@@ -7,6 +7,17 @@
 # app/services/manual/source.rb, which raises pointing back at this file.
 docs
 !docs/manual
+# The GitHub Pages build. docs-site/build/ and docs-site/site/ are gitignored,
+# so `git status` never shows them and they are absent from CI's fresh
+# checkout -- but they are ~4.8 MB of staged markdown and rendered HTML in a
+# local build context, and the Dockerfile does `COPY . .`. Anyone who previews
+# the site and then runs `kamal deploy` from their laptop bakes them into the
+# production image. Same machine-seam class as the libvips package names and
+# the !docs/manual line above: master looks clean because CI never has these
+# directories to ship. (bin/stage-docs-site stays -- bin/ is copied wholesale
+# -- and would raise LoadError if anyone ran it inside the container. Nothing
+# does: the site is built in CI, from a checkout.)
+docs-site
 features
 spec
 tmp

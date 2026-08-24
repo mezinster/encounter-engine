@@ -64,6 +64,15 @@ markdown_extensions:
 # reader at the top of the page and nothing reports it. MkDocs 1.6 resolves
 # every #fragment against the anchors it actually generated, and --strict
 # turns each miss into a failed build.
+#
+# `omitted_files: warn` + `--strict` + the hand-written nav: below are doing
+# SECURITY work, not housekeeping, and it is not obvious from here. The stager
+# picks up docs/manual/*.md by glob; this pair is what makes that glob safe. A
+# file staged but absent from nav: fails the build, so a document only reaches
+# the public site once a human has named it in this file. Switching to MkDocs'
+# automatic navigation "to stop maintaining the list" would delete that gate
+# while looking purely cosmetic: every future file in docs/manual/ would then
+# publish itself, unreviewed. Keep nav: hand-written and keep this at warn.
 validation:
   omitted_files: warn
   absolute_links: warn
@@ -80,6 +89,11 @@ plugins:
         - tr
 
 nav:
+  # First, and the site root depends on it. MkDocs synthesises no index page of
+  # its own and --strict does not warn about the absence, so without this the
+  # advertised URL serves Material's 404. bin/stage-docs-site generates the
+  # file; DocsSite::Stager::LABELS holds the same labels this nav: does.
+  - index.md
   - Руководство пользователя:
       - Русский: manual/ru.md
       - English: manual/en.md

@@ -8,15 +8,28 @@
 # side effects on the real repository.
 #
 # The one rule this file exists to enforce is that docs/ is NOT publishable
-# wholesale. docs/superpowers/ and docs/security/ stay unpublished, and the
-# check in #assert_closed is what stops a link from quietly dragging one of
-# them onto the public web.
+# wholesale. docs/superpowers/ and docs/security/ stay unpublished, and two
+# independent checks stand between "someone adds a helpful link" and one of
+# them acquiring a public, indexed URL:
+#
+#   1. #assert_closed here, which scans the staged tree for relative .md links
+#      and fails on any target outside the staged set. It is a regex, so it is
+#      the cheaper and the more easily fooled of the two.
+#   2. `mkdocs build --strict`, whose validation.links.not_found resolves every
+#      link MkDocs itself parses -- including titled links such as
+#      `](x.md "t")` that RELATIVE_LINK's own pattern does not match.
+#
+# Neither subsumes the other: (1) runs before MkDocs and knows what the
+# allowlist is, so it can tell "outside the published set" from "broken"; (2)
+# parses markdown properly rather than by regex. Do not delete one because the
+# other exists.
 require "fileutils"
 require "set"
 
 module DocsSite
   class Stager
     class MissingBannerError < StandardError; end
+    class MissingLabelError < StandardError; end
     class ClosureError < StandardError; end
 
     # A markdown link target, with any #fragment split off.
@@ -69,28 +82,71 @@ module DocsSite
 
     # docs/manual is already the vetted-public directory: it is the one part of
     # docs/ that .dockerignore re-includes into the shipped image. So a glob is
-    # safe here, and a new translation publishes itself the day it lands.
+    # safe here -- but "safe" means *staged*, not *published*: a new manual is
+    # picked up automatically and then the build FAILS until somebody adds it
+    # to LABELS below and to mkdocs.yml's nav:. That gate is deliberate. A glob
+    # with no gate would be a directory that publishes whatever lands in it;
+    # the two hand-maintained lists are what turn "it appeared in docs/manual"
+    # into "a human decided it goes on the public web."
     MANUAL_GLOB = "manual/*.md"
 
     # Everything else is named one file at a time, so that widening the
     # published set is a visible diff line rather than a side effect.
     EXTRA_FILES = %w[runbooks/restore.md perf/README.md].freeze
 
+    # The generated landing page. MkDocs synthesises no index of its own and
+    # --strict does not warn about the absence, so without this the advertised
+    # site root serves Material's 404 page. Written into @out_root only --
+    # docs/ itself is never touched.
+    INDEX_FILE = "index.md"
+
+    # Display label and group heading per published file, in the order the
+    # landing page and mkdocs.yml's nav: list them. The labels are the endonyms
+    # nav: uses, so the two surfaces read the same.
+    #
+    # The *membership* of the landing page is derived from #sources rather than
+    # from this hash -- a second hand-written list of what is published could
+    # drift from what is actually staged. This hash only answers "what is that
+    # file called in Russian", and a staged file it has no answer for raises,
+    # the same way an unbannered machine translation does.
+    LABELS = {
+      "manual/ru.md" => ["Руководство пользователя", "Русский"],
+      "manual/en.md" => ["Руководство пользователя", "English"],
+      "manual/uk.md" => ["Руководство пользователя", "Українська"],
+      "manual/be.md" => ["Руководство пользователя", "Беларуская"],
+      "manual/pl.md" => ["Руководство пользователя", "Polski"],
+      "manual/tr.md" => ["Руководство пользователя", "Türkçe"],
+      "manual/ka.md" => ["Руководство пользователя", "ქართული"],
+      "manual/deployment.ru.md" => ["Установка / Installation", "Русский"],
+      "manual/deployment.en.md" => ["Установка / Installation", "English"],
+      "manual/performance.ru.md" => ["Нагрузочное тестирование / Performance", "Русский"],
+      "manual/performance.en.md" => ["Нагрузочное тестирование / Performance", "English"],
+      "perf/README.md" => ["Нагрузочное тестирование / Performance", "Records"],
+      "runbooks/restore.md" => ["Runbooks", "Restoring the database"]
+    }.freeze
+
     def initialize(docs_root:, out_root:)
       @docs_root = File.expand_path(docs_root)
       @out_root = File.expand_path(out_root)
     end
 
-    # Relative paths of everything that will be published, sorted.
+    # Relative paths of the source files that will be copied, sorted.
     def sources
       (Dir.glob(MANUAL_GLOB, :base => @docs_root) + EXTRA_FILES).uniq.sort
+    end
+
+    # Everything the build directory ends up holding: the copied sources plus
+    # the landing page, which has no source file at all.
+    def staged
+      (sources + [INDEX_FILE]).sort
     end
 
     def call
       FileUtils.rm_rf(@out_root)
       sources.each { |relative_path| stage(relative_path) }
+      write_index
       assert_closed
-      sources
+      staged
     end
 
     private
@@ -99,6 +155,36 @@ module DocsSite
       destination = File.join(@out_root, relative_path)
       FileUtils.mkdir_p(File.dirname(destination))
       File.write(destination, with_banner(relative_path, File.read(File.join(@docs_root, relative_path))))
+    end
+
+    def write_index
+      File.write(File.join(@out_root, INDEX_FILE), index_markdown)
+    end
+
+    # A table of contents and nothing else: the site's own title, one heading
+    # per group, one bullet per published file. Prose here would be a fourth
+    # copy of what the manuals already say, maintained by nobody.
+    def index_markdown
+      unlabelled = sources.reject { |relative_path| LABELS.key?(relative_path) }
+      unless unlabelled.empty?
+        raise MissingLabelError,
+              "#{unlabelled.join(", ")} is staged for publication but " \
+              "DocsSite::Stager::LABELS has no label for it, so the landing page cannot " \
+              "list it. Add it to LABELS and to docs-site/mkdocs.yml's nav: -- a published " \
+              "page reachable from neither is a page nobody will find."
+      end
+
+      # Ordered by LABELS, filtered to what was actually staged: the order is
+      # editorial (Русский first, not "be" first), the membership is not.
+      published = sources.to_set
+      groups = LABELS.each_with_object({}) do |(relative_path, (group, label)), accumulator|
+        next unless published.include?(relative_path)
+
+        (accumulator[group] ||= []) << "- [#{label}](#{relative_path})"
+      end
+
+      sections = groups.map { |group, links| "## #{group}\n\n#{links.join("\n")}\n" }
+      "# encounter-engine\n\n#{sections.join("\n")}"
     end
 
     # Additive and derived: files with no declaration pass through untouched,
@@ -139,12 +225,19 @@ module DocsSite
     # this repository deliberately does not publish, or a link broken by a
     # rename -- and the right response to both is a red build, not a quiet
     # widening of the allowlist.
+    #
+    # It reads the STAGED tree, not @docs_root, and that is not interchangeable:
+    # index.md is generated here and exists in no source directory, so a check
+    # rooted at @docs_root structurally could not see its links -- the only
+    # links in the system this repository writes itself. Reading the staged tree
+    # also means the check sees exactly the bytes MkDocs will render. Do not
+    # "simplify" it back to the sources.
     def assert_closed
-      published = sources.to_set
+      published = staged.to_set
       dangling = []
 
-      sources.each do |relative_path|
-        markdown = File.read(File.join(@docs_root, relative_path))
+      staged.each do |relative_path|
+        markdown = File.read(File.join(@out_root, relative_path))
 
         # RELATIVE_LINK has exactly one capturing group, so scan yields
         # one-element arrays; destructuring reads more plainly than

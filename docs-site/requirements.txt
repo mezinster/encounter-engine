@@ -6,3 +6,9 @@
 # Cyrillic heading anchors from silently breaking, was added there.
 mkdocs==1.6.1
 mkdocs-material==9.5.44
+
+# mkdocs.yml's toc.slugify pins pymdownx.slugs.slugify as a **kwargs
+# factory (case: lower); a resolver-chosen version of this transitive
+# dependency could change that shape and break the build with
+# "slugify() takes 0 positional arguments but 2 were given".
+pymdown-extensions==10.21.3

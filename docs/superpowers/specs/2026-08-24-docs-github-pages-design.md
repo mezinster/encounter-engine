@@ -313,10 +313,18 @@ added; the reliance is on Material's own mobile testing.
 
 This is a deliberate, stated bet rather than an oversight, and §4.2 is the
 argument for it. It will be checked once, by hand, during implementation: the
-built site measured at 390×680 with the existing
-`spec/support/layout_measurement.rb` harness, and the result reported. If
-Material disappoints, that finding upgrades this section rather than being
-absorbed silently.
+built site measured at 390×680, 375×553 and 1280×800, and the result reported.
+
+Note that `LayoutMeasurement#measure` itself is **not** reusable here — it is
+Rails-coupled, rewriting `href="/stylesheets/…"` against `Rails.root` and
+inlining an app image fixture, and it loads pages over `file://`, where a built
+site's own relative assets do not resolve. Only the browser that harness
+locates is portable, and it must be `chrome-headless-shell`: the full
+`chromium-*` build clamps windows to 500px, which would silently turn every
+phone measurement into a 500px one.
+
+If Material disappoints, that finding upgrades this section into a fourth
+`spec/layout/` file rather than being absorbed silently.
 
 The second gap is smaller and worth naming: **nothing verifies the deployed
 site matches the built one.** The workflow proves the artifact builds; that it

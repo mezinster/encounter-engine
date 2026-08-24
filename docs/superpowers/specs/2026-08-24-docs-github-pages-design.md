@@ -285,14 +285,17 @@ constructed with `!!python/object/apply:` and `kwds:` instead, as shown above
 (verified against pymdown-extensions 10.21.3).
 
 `case: lower` is load-bearing, not decoration: the factory's own default is
-`case: none`, which builds cleanly — no error, no warning — but produces
-`id="Первый-администратор"` with a capital П, which does not match the
-lowercase anchors these files were authored against. A clean `--strict` build
-is not evidence the anchors are right; only `validation.anchors` is, because
-it resolves every `#fragment` against the anchors MkDocs actually generated
-rather than merely checking that slugification ran. Measured on the built
-`manual/deployment.ru` page: `id="6-первый-администратор"`, Cyrillic intact
-and lowercase, matching the source link byte for byte.
+`case: none`, which produces `id="Первый-администратор"` with a capital П —
+not matching the lowercase anchors these files were authored against — and
+`validation.anchors` catches exactly that: with only this kwarg reverted to
+the default, `mkdocs build --strict` emits 56 warnings and aborts
+(`Aborted with 56 warnings in strict mode!`); without `--strict` it still
+emits the same 56 warnings rather than none. Measured on the built
+`manual/deployment.ru` page: `case: lower` produces
+`id="6-первый-администратор"`, Cyrillic intact and lowercase, matching the
+source link byte for byte; `case: none` produces
+`id="6-Первый-администратор"` on the same page, which is what the 56
+warnings are about.
 
 That the constructed slugifier *matches* kramdown on these particular
 headings is an empirical claim, not a deduction — so `validation.anchors` is

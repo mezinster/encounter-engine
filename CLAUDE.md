@@ -506,9 +506,11 @@ Three things about it are non-obvious:
   is not a 404. `mkdocs.yml` sets `toc.slugify` to a constructed
   `pymdownx.slugs.slugify` with `case: lower` — the Unicode-preserving,
   lowercasing form that matches kramdown's own anchors, with lowercasing not
-  optional (the factory's own default, `case: none`, builds clean but produces
-  capitalized anchors that don't match) — and `validation.anchors: warn`, which
-  `--strict` promotes to an error. Don't remove either.
+  optional (the factory's own default, `case: none`, produces capitalized
+  anchors that don't match — and `validation.anchors` catches it: reverting
+  just that kwarg makes `--strict` abort with 56 warnings) — and
+  `validation.anchors: warn`, which `--strict` promotes to an error. Don't
+  remove either.
 - **The five machine-translated manuals get a visible banner, derived from
   their own first line.** The `<!-- Machine-translated ... -->` comment renders
   to nothing, which is fine in a repository and not fine on an indexed public

@@ -178,10 +178,10 @@ module DocsSite
       unlabelled = sources.reject { |relative_path| LABELS.key?(relative_path) }
       unless unlabelled.empty?
         raise MissingLabelError,
-              "#{unlabelled.join(", ")} is staged for publication but " \
-              "DocsSite::Stager::LABELS has no label for it, so the landing page cannot " \
-              "list it. Add it to LABELS and to docs-site/mkdocs.yml's nav: -- a published " \
-              "page reachable from neither is a page nobody will find."
+              "staged for publication with no entry in DocsSite::Stager::LABELS, so the " \
+              "landing page cannot list it: #{unlabelled.join(", ")}. Add it to LABELS " \
+              "and to docs-site/mkdocs.yml's nav: -- mkdocs --strict fails on the second " \
+              "of those anyway, and a page in neither list is a page nobody finds."
       end
 
       # Ordered by LABELS, filtered to what was actually staged: the order is

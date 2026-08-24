@@ -12,7 +12,9 @@ out = File.join(root, "docs-site", "build")
 
 begin
   staged = DocsSite::Stager.new(:docs_root => File.join(root, "docs"), :out_root => out).call
-rescue DocsSite::Stager::ClosureError, DocsSite::Stager::MissingBannerError => e
+rescue DocsSite::Stager::ClosureError,
+       DocsSite::Stager::MissingBannerError,
+       DocsSite::Stager::MissingLabelError => e
   warn("bin/stage-docs-site: #{e.message}")
   exit(1)
 end

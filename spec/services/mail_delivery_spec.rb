@@ -50,6 +50,26 @@ describe MailDelivery do
     expect(described_class.attempt { :delivered }).to eq(true)
   end
 
+  # Truncation alone did NOT do this. The realistic sample below is 96
+  # characters, well under MESSAGE_LIMIT, so the cap removes nothing at all --
+  # which is why the original "truncated, so the address is safe" comment was
+  # wrong, and why this example exists rather than a length assertion alone.
+  it "keeps addresses out of the log while keeping the diagnosis in" do
+    allow(Rails.logger).to receive(:error)
+
+    described_class.attempt do
+      raise Net::SMTPFatalError.new(
+        "550 5.1.1 <ivan@example.com>: Recipient address rejected: User unknown"
+      )
+    end
+
+    expect(Rails.logger).to have_received(:error) do |line|
+      expect(line).not_to include("ivan@example.com")
+      expect(line).to include("550 5.1.1")
+      expect(line).to include("Recipient address rejected")
+    end
+  end
+
   it "logs the error class and a truncated message" do
     allow(Rails.logger).to receive(:error)
 

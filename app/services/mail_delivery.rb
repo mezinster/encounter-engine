@@ -46,9 +46,15 @@ class MailDelivery
     Errno::ENETUNREACH
   ].freeze
 
-  # An SMTP rejection quotes the offending recipient back at you, so the
-  # message is truncated rather than logged whole -- log aggregation is not
-  # where anyone's address should end up.
+  # An SMTP rejection quotes the offending recipient back at you, and
+  # TRUNCATION DOES NOT REMOVE IT -- that was this design's own bug, caught by a
+  # security review after the first implementation shipped. A real rejection
+  # ("550 5.1.1 <ivan@example.com>: Recipient address rejected: User unknown")
+  # is about 70 characters, far under any sane cap, so the address survived
+  # intact while a comment claimed otherwise. MESSAGE_LIMIT bounds the log
+  # line's LENGTH; redaction is what protects the address. Keep both, and do
+  # not "simplify" this back to truncation alone.
+  EMAIL_PATTERN = /[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}/
   MESSAGE_LIMIT = 200
 
   # Yields, and reports whether the mail got out.
@@ -61,9 +67,13 @@ class MailDelivery
     yield
     true
   rescue *TRANSPORT_ERRORS => e
-    Rails.logger.error(
-      "[mail] delivery failed: #{e.class}: #{e.message.to_s[0, MESSAGE_LIMIT]}"
-    )
+    Rails.logger.error("[mail] delivery failed: #{e.class}: #{redact(e.message)}")
     false
+  end
+
+  # Addresses out, diagnosis in: the SMTP code and the reason text are the whole
+  # reason this line exists, so redaction must not eat them.
+  def self.redact(message)
+    message.to_s.gsub(EMAIL_PATTERN, "[address]")[0, MESSAGE_LIMIT]
   end
 end

@@ -729,6 +729,12 @@ tr:
   users:
     create:
       check_your_mail: "E-postanızı kontrol edin"
+      mail_failed:
+        title: "Hesap oluşturuldu, ancak e-posta gönderilemedi"
+        explanation: "Parolanızı içeren e-postayı gönderemedik — posta hizmeti geçici olarak kullanılamıyor. Parolayı şimdi kaydedin: başka bir yolla öğrenmeniz mümkün değil."
+        password_label: "Parolanız"
+        change_hint: "Uygun olduğunuzda profilinizden değiştirin."
+        continue: "Kişisel sayfaya git"
     new:
       nickname_label: "Ad"
       email_label: "E-posta"

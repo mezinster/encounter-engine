@@ -674,6 +674,12 @@ en:
   users:
     create:
       check_your_mail: "Check your e-mail"
+      mail_failed:
+        title: "Account created, but we couldn't send the email"
+        explanation: "We couldn't email you your password — the mail service is temporarily unavailable. Save it now: there is no other way to recover it."
+        password_label: "Your password"
+        change_hint: "Change it in your profile whenever convenient."
+        continue: "Go to my dashboard"
     new:
       nickname_label: "Name"
       email_label: "Email"

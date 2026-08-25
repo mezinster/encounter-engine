@@ -198,6 +198,34 @@ $0.00025/message, but it needs domain verification, SPF/DKIM edits, an Entra app
 a **client secret that expires** — which converts "Google blocked us" into "the secret quietly
 expired on a Tuesday". It also shares a blast radius with the VM's own cloud account.
 
+### D9 — addresses are redacted, not truncated (a correction to this document)
+
+**This design was wrong when first written, and the error is recorded rather than quietly patched,
+because the wrong version is the instructive one.** D2 and §5 originally said that truncating an
+exception message to `MESSAGE_LIMIT` kept recipient addresses out of the log. It does not. A real
+rejection —
+
+```
+550 5.1.1 <ivan@example.com>: Recipient address rejected: User unknown
+```
+
+— is about 70 characters, so a 200-character cap removes nothing whatsoever. The comment asserted a
+mitigation that never mitigated, and a background security review caught it after Task 1 had already
+shipped. That is the exact failure this repository documents everywhere else: *a documented claim
+that reads as protection while protecting nothing.* Truncation bounds a log line's **length**; only
+redaction protects the **address**.
+
+Both layers are kept. `MailDelivery.redact` substitutes address-shaped substrings before truncating,
+and the SMTP code and reason text — the entire diagnostic value of the line — survive intact.
+
+**The same flaw was worse in the probe, and was fixed before implementation.** `ops/smtp/probe.rb`
+put a truncated error message into its verdict JSON, and `.github/workflows/smtp-probe.yml` embeds
+that JSON verbatim in a GitHub issue body. `mezinster/encounter-engine` is **public** (`gh repo view`
+confirms it), so an auth failure whose message echoed the authenticating address would have published
+it to the open internet rather than to a private container log. The probe redacts with its own copy
+of the pattern: it runs on a bare CI runner and must never require Rails, so sharing the constant
+with `MailDelivery` is not available and duplication is correct here.
+
 ---
 
 ## 2. The frozen feature files are untouched
@@ -293,7 +321,8 @@ test that checks only the happy cases.
    valuable example here: it fails the moment someone turns D4's discarded boolean into a message.
 4. **Invitation accept with a raising mailer still runs `reject_rest_of_invitations`** — a
    regression test for the bug that fixes itself, so that it stays fixed.
-5. The log line names the exception class and does **not** contain the generated password.
+5. The log line names the exception class and does **not** contain the generated password, **nor any
+   e-mail address**. See the correction in D9.
 
 **Probe** — `classify` driven from fixtures, no network, `spec_helper` not `rails_helper`, mirroring
 `spec/ops/vmscale_policy_spec.rb`.

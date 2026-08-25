@@ -125,6 +125,26 @@ describe MailDelivery do
     expect(described_class.attempt { :delivered }).to eq(true)
   end
 
+  # Truncation alone did NOT do this. The realistic sample below is 96
+  # characters, well under MESSAGE_LIMIT, so the cap removes nothing at all --
+  # which is why the original "truncated, so the address is safe" comment was
+  # wrong, and why this example exists rather than a length assertion alone.
+  it "keeps addresses out of the log while keeping the diagnosis in" do
+    allow(Rails.logger).to receive(:error)
+
+    described_class.attempt do
+      raise Net::SMTPFatalError.new(
+        "550 5.1.1 <ivan@example.com>: Recipient address rejected: User unknown"
+      )
+    end
+
+    expect(Rails.logger).to have_received(:error) do |line|
+      expect(line).not_to include("ivan@example.com")
+      expect(line).to include("550 5.1.1")
+      expect(line).to include("Recipient address rejected")
+    end
+  end
+
   it "logs the error class and a truncated message" do
     allow(Rails.logger).to receive(:error)
 
@@ -203,9 +223,15 @@ class MailDelivery
     Errno::ENETUNREACH
   ].freeze
 
-  # An SMTP rejection quotes the offending recipient back at you, so the
-  # message is truncated rather than logged whole -- log aggregation is not
-  # where anyone's address should end up.
+  # An SMTP rejection quotes the offending recipient back at you, and
+  # TRUNCATION DOES NOT REMOVE IT -- that was this design's own bug, caught by a
+  # security review after the first implementation shipped. A real rejection
+  # ("550 5.1.1 <ivan@example.com>: Recipient address rejected: User unknown")
+  # is about 70 characters, far under any sane cap, so the address survived
+  # intact while a comment claimed otherwise. MESSAGE_LIMIT bounds the log
+  # line's LENGTH; redaction is what protects the address. Keep both, and do
+  # not "simplify" this back to truncation alone.
+  EMAIL_PATTERN = /[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}/
   MESSAGE_LIMIT = 200
 
   # Yields, and reports whether the mail got out.
@@ -218,10 +244,14 @@ class MailDelivery
     yield
     true
   rescue *TRANSPORT_ERRORS => e
-    Rails.logger.error(
-      "[mail] delivery failed: #{e.class}: #{e.message.to_s[0, MESSAGE_LIMIT]}"
-    )
+    Rails.logger.error("[mail] delivery failed: #{e.class}: #{redact(e.message)}")
     false
+  end
+
+  # Addresses out, diagnosis in: the SMTP code and the reason text are the whole
+  # reason this line exists, so redaction must not eat them.
+  def self.redact(message)
+    message.to_s.gsub(EMAIL_PATTERN, "[address]")[0, MESSAGE_LIMIT]
   end
 end
 ```
@@ -232,7 +262,7 @@ end
 bundle exec rspec spec/services/mail_delivery_spec.rb
 ```
 
-Expected: all examples pass (18 of them: 14 transport, 2 that must propagate, 1 success, 1 log).
+Expected: all examples pass (19 of them: 14 transport, 2 that must propagate, 1 success, 2 log).
 
 - [ ] **Step 5: Verify autoloading is not confused by the new constant**
 
@@ -921,6 +951,22 @@ RSpec.describe SMTPProbe do
     expect(described_class.classify([broken("primary"), unconfigured("spare")])["verdict"]).to eq("down")
   end
 
+# The verdict JSON is embedded verbatim in a PUBLIC GitHub issue body by
+# .github/workflows/smtp-probe.yml, so an address in an error message would
+# be published, not merely logged. Truncation does not remove one: the
+# realistic case below is well under MESSAGE_LIMIT.
+it "redacts addresses out of an error message before it can be published" do
+  redacted = described_class.redact(
+    "553 5.7.1 <player@mezin.eu>: Sender address rejected: not owned by user encounter@gmail.com"
+  )
+
+  expect(redacted).not_to include("player@mezin.eu")
+  expect(redacted).not_to include("encounter@gmail.com")
+  # The diagnostic value must survive -- an unreadable log is its own defect.
+  expect(redacted).to include("553 5.7.1")
+  expect(redacted).to include("Sender address rejected")
+end
+
   it "names the error class in the summary so the issue title is useful" do
     result = described_class.classify([broken("primary"), ok("spare")])
 
@@ -966,7 +1012,21 @@ module SMTPProbe
   READ_TIMEOUT = 10
   MESSAGE_LIMIT = 200
 
+  # Redacted BEFORE the message enters the result hash, because that hash is
+  # published, not merely logged: .github/workflows/smtp-probe.yml embeds this
+  # JSON verbatim in a GitHub issue body, and this repository is public. Some
+  # servers echo the authenticating address back in an auth failure, so a
+  # truncate-only approach would put it on the open internet.
+  #
+  # Not shared with MailDelivery::EMAIL_PATTERN: this script runs on a bare CI
+  # runner and must never require Rails.
+  EMAIL_PATTERN = /[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}/
+
   module_function
+
+  def redact(message)
+    message.to_s.gsub(EMAIL_PATTERN, "[address]")[0, MESSAGE_LIMIT]
+  end
 
   # Connects, STARTTLS, AUTH, QUIT. Sends nothing.
   def check(role:, address:, port:, user_name:, password:)
@@ -984,7 +1044,7 @@ module SMTPProbe
     # StandardError is correct HERE, unlike in MailDelivery: this script's only
     # job is to report what went wrong, and every failure mode is interesting.
     { "role" => role, "configured" => true, "ok" => false,
-      "error_class" => e.class.to_s, "error" => e.message.to_s[0, MESSAGE_LIMIT] }
+      "error_class" => e.class.to_s, "error" => redact(e.message) }
   end
 
   # Pure. results -> verdict.
@@ -1043,7 +1103,7 @@ end
 bundle exec rspec spec/ops/smtp_probe_spec.rb
 ```
 
-Expected: 7 examples, 0 failures.
+Expected: 8 examples, 0 failures.
 
 - [ ] **Step 5: Confirm the script never sends and never leaks a password**
 

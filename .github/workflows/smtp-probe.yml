@@ -30,36 +30,46 @@ jobs:
         with:
           ruby-version: "3.3.12"
 
-      # The app's real SMTP host lives in config/deploy.yml, so the probe reads
-      # it from there rather than carrying its own copy. Without this the probe
-      # would keep testing Gmail after a cutover to Fastmail -- failing forever
-      # against the wrong host while the app sent mail correctly, and filing an
-      # issue every six hours to say so. Step 3 of the failover runbook edits
-      # that one line, and the probe follows it automatically.
-      - name: Read the app's configured SMTP host
+      # The app's real SMTP host, port, and HELO domain all live in
+      # config/deploy.yml, so the probe reads them from there rather than
+      # carrying its own copies. Without this the probe would keep testing
+      # Gmail on a stale port after a cutover to Fastmail -- failing forever
+      # against the wrong endpoint while the app sent mail correctly, and
+      # filing an issue every six hours to say so. Step 3 of the failover
+      # runbook edits config/deploy.yml, and the probe follows it
+      # automatically.
+      - name: Read the app's configured SMTP host, port, and HELO domain
         id: cfg
         run: |
           set -euo pipefail
-          ADDRESS=$(ruby -ryaml -e 'puts YAML.unsafe_load_file("config/deploy.yml").dig("env", "clear", "SMTP_ADDRESS")')
-          if [ -z "$ADDRESS" ]; then
-            echo "config/deploy.yml has no env.clear.SMTP_ADDRESS -- probe cannot know what to test"
-            exit 1
-          fi
-          echo "address=$ADDRESS" >> "$GITHUB_OUTPUT"
-          echo "probing primary host: $ADDRESS"
+          ruby -ryaml -e '
+            clear = YAML.unsafe_load_file("config/deploy.yml").dig("env", "clear")
+            address  = clear["SMTP_ADDRESS"]
+            port     = clear["SMTP_PORT"] || "587"
+            app_host = clear["APP_HOST"]
+            abort "config/deploy.yml has no env.clear.SMTP_ADDRESS -- probe cannot know what to test" if
+              address.to_s.empty?
+            File.open(ENV.fetch("GITHUB_OUTPUT"), "a") do |f|
+              f.puts "address=#{address}"
+              f.puts "port=#{port}"
+              f.puts "app_host=#{app_host}"
+            end
+            warn "probing primary host: #{address}:#{port}"
+          '
 
       - name: Probe both endpoints
         id: probe
         continue-on-error: true
         env:
           SMTP_ADDRESS: ${{ steps.cfg.outputs.address }}
-          SMTP_PORT: "587"
+          SMTP_PORT: ${{ steps.cfg.outputs.port }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_SPARE_ADDRESS: ${{ secrets.SMTP_SPARE_ADDRESS }}
           SMTP_SPARE_PORT: "587"
           SMTP_SPARE_USERNAME: ${{ secrets.SMTP_SPARE_USERNAME }}
           SMTP_SPARE_PASSWORD: ${{ secrets.SMTP_SPARE_PASSWORD }}
+          APP_HOST: ${{ steps.cfg.outputs.app_host }}
         run: |
           set +e
           ruby ops/smtp/probe.rb > verdict.json
@@ -69,17 +79,27 @@ jobs:
       # gh, not actions/github-script: this repo files issues with the gh CLI
       # (see vm-scale.yml), gh is preinstalled on runners, and that keeps a
       # third-party action out of the one step that holds issues: write.
+      #
+      # `if: failure() || ...`, not just the exit-code check: a hard failure in
+      # the `cfg` step above aborts the job BEFORE `probe` ever runs, and a step
+      # with only an implicit success() check is skipped whenever an earlier
+      # step failed -- so a cfg crash used to file no issue at all, directly
+      # contradicting the "a crash with no issue is the one outcome that leaves
+      # nobody informed" comment below. failure() makes this step run in that
+      # case too; verdict.json then won't exist, which the crashed-probe
+      # fallback below already handles correctly.
       - name: File an issue when the verdict is not ok
-        if: steps.probe.outputs.exit_code != '0'
+        if: failure() || steps.probe.outputs.exit_code != '0'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
           # jq -e fails on a missing or unparseable file, which IS the
-          # crashed-probe case. Fall back to a title saying so, rather than
-          # dying and filing nothing -- a crash with no issue is the one
-          # outcome that leaves nobody informed.
+          # crashed-probe case (cfg failed, or probe wrote nothing readable).
+          # Fall back to a title saying so, rather than dying and filing
+          # nothing -- a crash with no issue is the one outcome that leaves
+          # nobody informed.
           if SUMMARY=$(jq -er '.summary' verdict.json 2>/dev/null); then
             VERDICT=$(jq -r '.verdict' verdict.json)
           else
@@ -89,6 +109,7 @@ jobs:
 
           TITLE="SMTP probe: ${VERDICT} -- ${SUMMARY}"
           TITLE="${TITLE:0:200}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           {
             echo '```json'
@@ -99,14 +120,27 @@ jobs:
             echo
             echo 'A `degraded` verdict means the SITE IS FINE but the warm spare does'
             echo 'not authenticate -- fix it before it is needed, not after.'
+            echo
+            echo "[run]($RUN_URL)"
           } > issue-body.md
 
           # The label may not exist yet; gh issue create fails outright if it
           # does not, so ensure it first and ignore "already exists".
           gh label create smtp --description "SMTP credential probe" --color B60205 2>/dev/null || true
 
-          gh issue create --title "$TITLE" --body-file issue-body.md --label smtp
+          # Same pattern as vm-scale.yml: "A comment every fifteen minutes
+          # would be 96 a day and nobody would read the one that mattered."
+          # A weekend Gmail outage would otherwise file ~12 identical issues,
+          # and a low-urgency `degraded` verdict would file 4 a day until
+          # someone acts. Comment on the one open issue instead of opening a
+          # new one every run.
+          ISSUE=$(gh issue list --label smtp --state open --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$ISSUE" ]; then
+            gh issue comment "$ISSUE" --body-file issue-body.md
+          else
+            gh issue create --title "$TITLE" --body-file issue-body.md --label smtp
+          fi
 
       - name: Fail the run so the badge reflects reality
-        if: steps.probe.outputs.exit_code != '0'
+        if: failure() || steps.probe.outputs.exit_code != '0'
         run: exit 1

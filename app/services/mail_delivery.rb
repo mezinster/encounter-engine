@@ -28,6 +28,16 @@ class MailDelivery
   # own entry -- and it is the single most likely failure here, since a
   # blackholed connection is more common than a refused one.
   #
+  # EOFError and Errno::EPIPE cover the peer closing the connection outright --
+  # a greylisting relay, an over-quota Gmail dropping the session right after
+  # its 220 greeting, a load balancer reaping an idle connection. Errno::ECONNRESET
+  # above only covers an RST; a clean FIN (the far more common shape of "the
+  # other end hung up") surfaces to net/protocol.rb as a bare EOFError on read,
+  # or Errno::EPIPE if this process is still writing when the peer is already
+  # gone. Neither is caught by ECONNRESET. Reproduced against a real socket
+  # (server greets 220 then closes; server accepts then closes) -- both raised
+  # EOFError, uncaught, before these two entries were added.
+  #
   # The `require "net/smtp"` above is load-bearing. The mail gem requires
   # net/smtp lazily, only when SMTP delivery actually runs, and development and
   # test both use delivery_method = :test -- so Net::SMTPError is undefined in
@@ -43,7 +53,9 @@ class MailDelivery
     Errno::ECONNRESET,
     Errno::EHOSTUNREACH,
     Errno::ETIMEDOUT,
-    Errno::ENETUNREACH
+    Errno::ENETUNREACH,
+    EOFError,
+    Errno::EPIPE
   ].freeze
 
   # An SMTP rejection quotes the offending recipient back at you, and

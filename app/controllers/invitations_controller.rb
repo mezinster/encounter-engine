@@ -25,9 +25,19 @@ class InvitationsController < ApplicationController
       # Unlike password reset, there is no oracle to protect here: the captain
       # already knows who they invited. Silence would just leave them waiting
       # for a reply to a message that was never sent.
-      key = delivered ? "invitations.notice_sent" : "invitations.notice_sent_unnotified"
-      redirect_to new_invitation_path,
-                  notice: t(key, nickname: @invitation.recepient_nickname)
+      #
+      # alert:, not notice:, on the unnotified branch -- components.css gives
+      # .flash--alert a danger border and .flash--notice a neutral one, and
+      # #accept/#reject already warn in red for this same class of failure.
+      # Warning in grey here was the odd one out among the four invitation
+      # sites, not a deliberate distinction.
+      if delivered
+        redirect_to new_invitation_path,
+                    notice: t("invitations.notice_sent", nickname: @invitation.recepient_nickname)
+      else
+        redirect_to new_invitation_path,
+                    alert: t("invitations.notice_sent_unnotified", nickname: @invitation.recepient_nickname)
+      end
     else
       @all_users = User.all
       render :new, status: :unprocessable_entity

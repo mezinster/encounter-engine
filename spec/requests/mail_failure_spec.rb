@@ -116,7 +116,7 @@ describe "when SMTP is down", type: :request do
       post invitations_path, :params => { :invitation => { :recepient_nickname => player.nickname } }
 
       expect(Invitation.count).to eq(1)
-      expect(flash[:notice]).to eq(
+      expect(flash[:alert]).to eq(
         I18n.t("invitations.notice_sent_unnotified", :nickname => player.nickname, :locale => :ru)
       )
     end
@@ -139,6 +139,20 @@ describe "when SMTP is down", type: :request do
       expect(Invitation.count).to eq(0)
       expect(player.reload.team).to eq(team_a)
       expect(flash[:alert]).to eq(I18n.t("invitations.accept_unnotified", :locale => :ru))
+    end
+
+    # #reject was the one call site with zero coverage of either branch.
+    it "deletes the invitation and says the email did not go out" do
+      player = create_user
+      team   = create_team(:captain => create_user)
+      invitation = Invitation.create!(:to_team => team, :recepient_nickname => player.nickname)
+      sign_in(player)
+      break_smtp!
+
+      post reject_invitation_path(invitation)
+
+      expect(Invitation.exists?(invitation.id)).to be(false)
+      expect(flash[:alert]).to eq(I18n.t("invitations.reject_unnotified", :locale => :ru))
     end
   end
 end

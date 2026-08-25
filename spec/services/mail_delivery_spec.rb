@@ -23,7 +23,12 @@ describe MailDelivery do
       "Errno::ECONNRESET"            => Errno::ECONNRESET.new,
       "Errno::EHOSTUNREACH"          => Errno::EHOSTUNREACH.new,
       "Errno::ETIMEDOUT"             => Errno::ETIMEDOUT.new,
-      "Errno::ENETUNREACH"           => Errno::ENETUNREACH.new
+      "Errno::ENETUNREACH"           => Errno::ENETUNREACH.new,
+      # A clean FIN, not an RST -- Errno::ECONNRESET above does not cover this.
+      # Reproduced live: a server that greets 220 and then closes, or that
+      # accepts a line and then closes mid-conversation, raises exactly this.
+      "EOFError"                     => EOFError.new("end of file reached"),
+      "Errno::EPIPE"                 => Errno::EPIPE.new
     }.each do |name, error|
       it "returns false for #{name}" do
         expect(described_class.attempt { raise error }).to eq(false)

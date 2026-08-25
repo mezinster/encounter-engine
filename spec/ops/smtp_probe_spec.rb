@@ -47,21 +47,32 @@ RSpec.describe SMTPProbe do
     expect(described_class.classify([broken("primary"), unconfigured("spare")])["verdict"]).to eq("down")
   end
 
-# The verdict JSON is embedded verbatim in a PUBLIC GitHub issue body by
-# .github/workflows/smtp-probe.yml, so an address in an error message would
-# be published, not merely logged. Truncation does not remove one: the
-# realistic case below is well under MESSAGE_LIMIT.
-it "redacts addresses out of an error message before it can be published" do
-  redacted = described_class.redact(
-    "553 5.7.1 <player@mezin.eu>: Sender address rejected: not owned by user encounter@gmail.com"
-  )
+  # A deleted, renamed or mistyped SMTP_USERNAME secret is excluded from
+  # `failures` (it is not "configured"), so without this the summary read
+  # "down -- all configured SMTP endpoints authenticate" -- a self-contradicting
+  # issue title that hides exactly the failure it is reporting.
+  it "says the primary is not configured, rather than reporting a contradiction" do
+    result = described_class.classify([unconfigured("primary"), ok("spare")])
 
-  expect(redacted).not_to include("player@mezin.eu")
-  expect(redacted).not_to include("encounter@gmail.com")
-  # The diagnostic value must survive -- an unreadable log is its own defect.
-  expect(redacted).to include("553 5.7.1")
-  expect(redacted).to include("Sender address rejected")
-end
+    expect(result["verdict"]).to eq("down")
+    expect(result["summary"]).to include("primary not configured")
+  end
+
+  # The verdict JSON is embedded verbatim in a PUBLIC GitHub issue body by
+  # .github/workflows/smtp-probe.yml, so an address in an error message would
+  # be published, not merely logged. Truncation does not remove one: the
+  # realistic case below is well under MESSAGE_LIMIT.
+  it "redacts addresses out of an error message before it can be published" do
+    redacted = described_class.redact(
+      "553 5.7.1 <player@mezin.eu>: Sender address rejected: not owned by user encounter@gmail.com"
+    )
+
+    expect(redacted).not_to include("player@mezin.eu")
+    expect(redacted).not_to include("encounter@gmail.com")
+    # The diagnostic value must survive -- an unreadable log is its own defect.
+    expect(redacted).to include("553 5.7.1")
+    expect(redacted).to include("Sender address rejected")
+  end
 
   it "names the error class in the summary so the issue title is useful" do
     result = described_class.classify([broken("primary"), ok("spare")])

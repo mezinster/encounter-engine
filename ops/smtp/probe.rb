@@ -39,7 +39,7 @@ module SMTPProbe
   end
 
   # Connects, STARTTLS, AUTH, QUIT. Sends nothing.
-  def check(role:, address:, port:, user_name:, password:)
+  def check(role:, address:, port:, user_name:, password:, helo_domain:)
     return { "role" => role, "configured" => false, "ok" => false } if
       address.to_s.empty? || user_name.to_s.empty? || password.to_s.empty?
 
@@ -48,7 +48,15 @@ module SMTPProbe
     smtp.read_timeout = READ_TIMEOUT
     smtp.enable_starttls_auto
 
-    smtp.start(address, user_name, password, :plain) { }
+    # Net::SMTP#start's FIRST positional argument is the HELO/EHLO domain --
+    # the name this client announces itself as -- not the server it is
+    # talking to. Passing `address` here made the probe announce itself as
+    # smtp.gmail.com while talking to smtp.gmail.com. Gmail and Fastmail
+    # tolerate that, but a relay with a reject_unknown_helo_hostname-style
+    # policy would not, and the failure would be a false "down": an alarm
+    # for the probe's own bug. Production gets this right already --
+    # config/environments/production.rb passes domain: ENV.fetch("APP_HOST").
+    smtp.start(helo_domain, user_name, password, :plain) { }
     { "role" => role, "configured" => true, "ok" => true }
   rescue StandardError => e
     # StandardError is correct HERE, unlike in MailDelivery: this script's only
@@ -64,6 +72,7 @@ module SMTPProbe
 
     failures = results.select { |r| r["configured"] && !r["ok"] }
     notes    = []
+    notes << "primary not configured" if primary && !primary["configured"]
     notes << "spare not configured" if spare && !spare["configured"]
 
     verdict =
@@ -88,17 +97,23 @@ module SMTPProbe
 end
 
 if $PROGRAM_NAME == __FILE__
+  # Same HELO domain for both endpoints: it identifies this client (the app),
+  # not whichever server it happens to be talking to right now.
+  helo_domain = ENV["APP_HOST"] || "game.mezin.eu"
+
   results = [
     SMTPProbe.check(role: "primary",
-                    address:   ENV["SMTP_ADDRESS"] || "smtp.gmail.com",
-                    port:      ENV["SMTP_PORT"] || 587,
-                    user_name: ENV["SMTP_USERNAME"],
-                    password:  ENV["SMTP_PASSWORD"]),
+                    address:     ENV["SMTP_ADDRESS"] || "smtp.gmail.com",
+                    port:        ENV["SMTP_PORT"] || 587,
+                    user_name:   ENV["SMTP_USERNAME"],
+                    password:    ENV["SMTP_PASSWORD"],
+                    helo_domain: helo_domain),
     SMTPProbe.check(role: "spare",
-                    address:   ENV["SMTP_SPARE_ADDRESS"],
-                    port:      ENV["SMTP_SPARE_PORT"] || 587,
-                    user_name: ENV["SMTP_SPARE_USERNAME"],
-                    password:  ENV["SMTP_SPARE_PASSWORD"])
+                    address:     ENV["SMTP_SPARE_ADDRESS"],
+                    port:        ENV["SMTP_SPARE_PORT"] || 587,
+                    user_name:   ENV["SMTP_SPARE_USERNAME"],
+                    password:    ENV["SMTP_SPARE_PASSWORD"],
+                    helo_domain: helo_domain)
   ]
 
   verdict = SMTPProbe.classify(results)

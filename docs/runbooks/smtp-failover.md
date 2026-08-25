@@ -49,9 +49,11 @@ Any of:
 ## 2. Decide: `degraded` or `down`?
 
 The probe (`ops/smtp/probe.rb`) checks both endpoints every run — the primary (whatever
-`SMTP_ADDRESS`/`SMTP_USERNAME`/`SMTP_PASSWORD` currently are) and the warm spare, Fastmail, via its
-own `SMTP_SPARE_*` GitHub secrets, which the probe reads and the app never does. Its verdict is one
-of three:
+`SMTP_ADDRESS`/`SMTP_USERNAME`/`SMTP_PASSWORD` currently are) and the spare (whatever
+`SMTP_SPARE_*` currently are), which the probe reads and the app never does. **Primary and spare
+are roles, not fixed vendors** — before any cutover the primary is Gmail and the spare is Fastmail,
+but §3 swaps them: cutting over sets the outgoing vendor (Gmail) as the *new* spare, not just a
+retired credential nobody watches. Its verdict is one of three:
 
 | Verdict | Means | Do |
 |---|---|---|
@@ -72,7 +74,7 @@ to confirm.
 
 ## 3. Cut over (verdict is `down`)
 
-Three things change, in this order. **Do not skip the `MAIL_FROM` reasoning below** — there is no
+Four things change, in this order. **Do not skip the `MAIL_FROM` reasoning below** — there is no
 step for it because there is no second place to change it.
 
 1. **Update the GitHub secrets the app itself reads.** Set `SMTP_USERNAME` and `SMTP_PASSWORD` to
@@ -87,7 +89,21 @@ step for it because there is no second place to change it.
    gh secret set SMTP_PASSWORD
    ```
 
-2. **Change the one `SMTP_ADDRESS` line in `config/deploy.yml`** from `smtp.gmail.com` to
+2. **Point `SMTP_SPARE_*` at the endpoint you're moving away from — Gmail — not at Fastmail
+   again.** Skip this and the probe authenticates the same Fastmail credential twice under two
+   different role labels: `degraded` becomes structurally unreachable (there is no longer a
+   configured "spare" that can be found broken), which is exactly the alarm for "your fallback is
+   broken" going silent for as long as you're relying on the fallback. It also means Gmail is no
+   longer probed at all, so §4's "confirm with the probe before cutting back" instructs a check that
+   can no longer be performed. Set these to the credentials that were *just* the primary's:
+
+   ```bash
+   gh secret set SMTP_SPARE_ADDRESS   # smtp.gmail.com
+   gh secret set SMTP_SPARE_USERNAME  # the Gmail app username, just replaced above
+   gh secret set SMTP_SPARE_PASSWORD  # the Gmail app password, just replaced above
+   ```
+
+3. **Change the one `SMTP_ADDRESS` line in `config/deploy.yml`** from `smtp.gmail.com` to
    `smtp.fastmail.com` (it's commented — the comment points back at this file). Commit it:
 
    ```bash
@@ -97,7 +113,7 @@ step for it because there is no second place to change it.
 
    `MAIL_FROM` needs **no edit of its own**. `.kamal/secrets` derives it from `SMTP_USERNAME`
    (`MAIL_FROM=${SMTP_USERNAME}`), specifically so the From address can't drift from the credential
-   that's actually authenticating. Once step 1 lands, the From address becomes the spare's
+   that's actually authenticating. Once step 1 lands, the From address becomes the new primary's
    `@mezin.eu` address automatically on the next deploy.
 
    That address change is safe to send from without touching DNS: `mezin.eu`'s SPF record is
@@ -109,7 +125,7 @@ step for it because there is no second place to change it.
    of every run, so the six-hourly probe (and any manual dispatch) starts checking Fastmail the
    moment this commit lands, with no separate step to remember.
 
-3. **Push and dispatch the deploy workflow.**
+4. **Push and dispatch the deploy workflow.**
 
    ```bash
    git push
@@ -126,8 +142,9 @@ step for it because there is no second place to change it.
    gh workflow run smtp-probe.yml
    ```
 
-   It reads the primary host from `config/deploy.yml` at the start of the run (see §3 step 2), so
-   it is already checking Fastmail — no separate address to update here.
+   It reads the primary host from `config/deploy.yml` at the start of the run (see §3 step 3), so
+   it is already checking Fastmail as the primary — and Gmail as the spare, per step 2 — no separate
+   address to update here.
 
 2. Register a throwaway account on the live site and confirm the welcome letter actually arrives
    (not just that the probe authenticates — the probe never sends anything, by design, so it can't
@@ -138,12 +155,21 @@ step for it because there is no second place to change it.
 
 ## 5. Cut back
 
-Same three steps as §3, in reverse, once the primary (Gmail) is confirmed working again — don't cut
+Same four steps as §3, in reverse, once the primary (Gmail) is confirmed working again — don't cut
 back on a hunch, confirm with the probe first:
 
-1. `gh secret set SMTP_USERNAME` / `gh secret set SMTP_PASSWORD`, back to the primary's values.
-2. `config/deploy.yml`'s `SMTP_ADDRESS` back to `smtp.gmail.com`, commit.
-3. Push, `gh workflow run deploy.yml -f command=deploy`.
+1. `gh secret set SMTP_USERNAME` / `gh secret set SMTP_PASSWORD`, back to Gmail's values.
+2. **Point `SMTP_SPARE_*` back at Fastmail** — the endpoint you're moving away from this time.
+   Skipping this repeats the exact §3 step 2 mistake in the other direction: the probe would
+   authenticate Gmail twice under two role labels, `degraded` would go silent again, and Fastmail —
+   now the spare — would go unwatched.
+   ```bash
+   gh secret set SMTP_SPARE_ADDRESS   # smtp.fastmail.com
+   gh secret set SMTP_SPARE_USERNAME  # the Fastmail credential, just retired from primary above
+   gh secret set SMTP_SPARE_PASSWORD
+   ```
+3. `config/deploy.yml`'s `SMTP_ADDRESS` back to `smtp.gmail.com`, commit.
+4. Push, `gh workflow run deploy.yml -f command=deploy`.
 
 Then re-verify per §4 against the primary.
 

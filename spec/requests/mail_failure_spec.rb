@@ -68,4 +68,36 @@ describe "when SMTP is down", type: :request do
       expect(logged.join("\n")).to include("Net::SMTPAuthenticationError")
     end
   end
+
+  # THE important example in this file.
+  #
+  # PasswordResetsController#create sends only inside `if user`, so an SMTP
+  # exception fires ONLY when the address is registered. Any failure response
+  # that differs from the success response therefore answers the question
+  # "is this address registered?" -- rebuilding exactly the oracle that
+  # controller's identical-response design exists to prevent, and that
+  # SessionsController#create refuses to answer at login.
+  describe "password reset" do
+    it "answers identically for a registered and an unregistered address" do
+      break_smtp!
+      user = create_user
+
+      post password_resets_path, :params => { :email => user.email }
+      registered = [response.status, response.location, flash[:notice]]
+
+      post password_resets_path, :params => { :email => "nobody-at-all@example.com" }
+      unregistered = [response.status, response.location, flash[:notice]]
+
+      expect(registered).to eq(unregistered)
+    end
+
+    it "still issues the token, so a later retry can use it" do
+      break_smtp!
+      user = create_user
+
+      post password_resets_path, :params => { :email => user.email }
+
+      expect(user.reload.reset_password_token_digest).to be_present
+    end
+  end
 end

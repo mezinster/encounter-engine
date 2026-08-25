@@ -232,7 +232,7 @@ end
 bundle exec rspec spec/services/mail_delivery_spec.rb
 ```
 
-Expected: all examples pass (17 of them).
+Expected: all examples pass (18 of them: 14 transport, 2 that must propagate, 1 success, 1 log).
 
 - [ ] **Step 5: Verify autoloading is not confused by the new constant**
 

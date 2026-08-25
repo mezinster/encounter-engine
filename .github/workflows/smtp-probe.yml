@@ -30,11 +30,29 @@ jobs:
         with:
           ruby-version: "3.3.12"
 
+      # The app's real SMTP host lives in config/deploy.yml, so the probe reads
+      # it from there rather than carrying its own copy. Without this the probe
+      # would keep testing Gmail after a cutover to Fastmail -- failing forever
+      # against the wrong host while the app sent mail correctly, and filing an
+      # issue every six hours to say so. Step 3 of the failover runbook edits
+      # that one line, and the probe follows it automatically.
+      - name: Read the app's configured SMTP host
+        id: cfg
+        run: |
+          set -euo pipefail
+          ADDRESS=$(ruby -ryaml -e 'puts YAML.unsafe_load_file("config/deploy.yml").dig("env", "clear", "SMTP_ADDRESS")')
+          if [ -z "$ADDRESS" ]; then
+            echo "config/deploy.yml has no env.clear.SMTP_ADDRESS -- probe cannot know what to test"
+            exit 1
+          fi
+          echo "address=$ADDRESS" >> "$GITHUB_OUTPUT"
+          echo "probing primary host: $ADDRESS"
+
       - name: Probe both endpoints
         id: probe
         continue-on-error: true
         env:
-          SMTP_ADDRESS: smtp.gmail.com
+          SMTP_ADDRESS: ${{ steps.cfg.outputs.address }}
           SMTP_PORT: "587"
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}

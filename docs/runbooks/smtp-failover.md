@@ -104,6 +104,11 @@ step for it because there is no second place to change it.
    `v=spf1 include:spf.messagingengine.com ?all` — Fastmail, and only Fastmail — so a Fastmail
    sender is already SPF-aligned for `@mezin.eu`. Nothing to add, nothing to wait on propagating.
 
+   This one line also retargets the probe. `.github/workflows/smtp-probe.yml` no longer carries its
+   own copy of the host — it reads `env.clear.SMTP_ADDRESS` out of `config/deploy.yml` at the start
+   of every run, so the six-hourly probe (and any manual dispatch) starts checking Fastmail the
+   moment this commit lands, with no separate step to remember.
+
 3. **Push and dispatch the deploy workflow.**
 
    ```bash
@@ -121,15 +126,8 @@ step for it because there is no second place to change it.
    gh workflow run smtp-probe.yml
    ```
 
-   **Known gap, checked while writing this runbook:** `.github/workflows/smtp-probe.yml` hardcodes
-   its own `SMTP_ADDRESS: smtp.gmail.com` for the primary check — it does not read the host from
-   `config/deploy.yml`. After a real cutover, `SMTP_USERNAME`/`SMTP_PASSWORD` are Fastmail
-   credentials, but the probe's "primary" leg will still try to authenticate them against
-   `smtp.gmail.com`, which will fail. Expect the probe to report the primary as `down` (or the
-   whole run `degraded`/`down`) **even when the app itself is sending mail correctly through
-   Fastmail** — don't take that as a sign the cutover failed. Treat step 2 below (an actual send) as
-   the real verification until this is fixed; it wasn't in scope for this runbook to change the
-   workflow file.
+   It reads the primary host from `config/deploy.yml` at the start of the run (see §3 step 2), so
+   it is already checking Fastmail — no separate address to update here.
 
 2. Register a throwaway account on the live site and confirm the welcome letter actually arrives
    (not just that the probe authenticates — the probe never sends anything, by design, so it can't

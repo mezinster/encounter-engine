@@ -1,0 +1,79 @@
+# Proves the SMTP credentials still authenticate -- the live one AND the warm
+# spare -- without sending any mail. See
+# docs/superpowers/specs/2026-08-25-smtp-outage-resilience-design.md §D7.
+#
+# Six-hourly, not every fifteen minutes, and that is a deliberate trade: each
+# run performs a real AUTH from a GitHub runner IP, which is itself mildly
+# provocative to Gmail. Connect-only would avoid it but would not detect a
+# revoked app password, which is the failure being hunted.
+#
+# The spare is probed on every run even while the primary is healthy. An idle
+# fallback that nobody exercises is not a fallback.
+name: SMTP probe
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3.12"
+
+      - name: Probe both endpoints
+        id: probe
+        continue-on-error: true
+        env:
+          SMTP_ADDRESS: smtp.gmail.com
+          SMTP_PORT: "587"
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SPARE_ADDRESS: ${{ secrets.SMTP_SPARE_ADDRESS }}
+          SMTP_SPARE_PORT: "587"
+          SMTP_SPARE_USERNAME: ${{ secrets.SMTP_SPARE_USERNAME }}
+          SMTP_SPARE_PASSWORD: ${{ secrets.SMTP_SPARE_PASSWORD }}
+        run: |
+          set +e
+          ruby ops/smtp/probe.rb > verdict.json
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat verdict.json
+
+      - name: File an issue when the verdict is not ok
+        if: steps.probe.outputs.exit_code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const verdict = JSON.parse(fs.readFileSync('verdict.json', 'utf8'));
+            const title = `SMTP probe: ${verdict.verdict} — ${verdict.summary}`.slice(0, 200);
+            const body = [
+              '```json',
+              JSON.stringify(verdict, null, 2),
+              '```',
+              '',
+              'Cutover procedure: `docs/runbooks/smtp-failover.md`.',
+              '',
+              'A `degraded` verdict means the SITE IS FINE but the warm spare',
+              'does not authenticate — fix it before it is needed, not after.',
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['smtp'],
+            });
+
+      - name: Fail the run so the badge reflects reality
+        if: steps.probe.outputs.exit_code != '0'
+        run: exit 1

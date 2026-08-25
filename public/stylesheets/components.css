@@ -56,6 +56,23 @@
 .field { display: block; margin-bottom: var(--space-4); }
 .field > label { display: block; margin-bottom: var(--space-1); color: var(--text-dim); font-size: 0.9rem; }
 
+/* The one-time generated password shown on users/welcome_password when the
+   welcome letter couldn't be sent. SecureRandom.alphanumeric emits l/1/I and
+   O/0, and this is a string a user has to transcribe under time pressure,
+   often on a phone screen -- monospace tells those apart, the size bump makes
+   it legible at arm's length, and user-select: all means one tap/click
+   selects the whole thing instead of a partial drag. */
+.generated-password {
+  display: inline-block;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  user-select: all;
+}
+
 input[type="text"], input[type="email"], input[type="password"],
 input[type="date"], textarea, select {
   width: 100%;

@@ -100,4 +100,45 @@ describe "when SMTP is down", type: :request do
       expect(user.reload.reset_password_token_digest).to be_present
     end
   end
+
+  describe "invitations" do
+    def sign_in(user)
+      put login_path, :params => { :email => user.email, :password => "1234" }
+    end
+
+    it "creates the invitation and says the email did not go out" do
+      captain = create_user
+      create_team(:captain => captain)
+      player = create_user
+      sign_in(captain)
+      break_smtp!
+
+      post invitations_path, :params => { :invitation => { :recepient_nickname => player.nickname } }
+
+      expect(Invitation.count).to eq(1)
+      expect(flash[:notice]).to eq(
+        I18n.t("invitations.notice_sent_unnotified", :nickname => player.nickname, :locale => :ru)
+      )
+    end
+
+    # The regression test for a bug that fixes itself. Before MailDelivery, the
+    # mailer on line 37 raised, which skipped reject_rest_of_invitations
+    # entirely: the player was on the team, and every OTHER captain who had
+    # invited them kept a stale invitation and heard nothing.
+    it "still auto-rejects the other invitations when the mailer fails" do
+      player  = create_user
+      team_a  = create_team(:captain => create_user)
+      team_b  = create_team(:captain => create_user)
+      invite_a = Invitation.create!(:to_team => team_a, :recepient_nickname => player.nickname)
+      Invitation.create!(:to_team => team_b, :recepient_nickname => player.nickname)
+      sign_in(player)
+      break_smtp!
+
+      post accept_invitation_path(invite_a)
+
+      expect(Invitation.count).to eq(0)
+      expect(player.reload.team).to eq(team_a)
+      expect(flash[:alert]).to eq(I18n.t("invitations.accept_unnotified", :locale => :ru))
+    end
+  end
 end

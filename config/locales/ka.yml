@@ -401,6 +401,9 @@ ka:
       cancel: "შეცვლა"
   invitations:
     notice_sent: "მოწვევა გაეგზავნა მომხმარებელს %{nickname}"
+    notice_sent_unnotified: "მოთამაშისთვის სახელით «%{nickname}» მოწვევა შეიქმნა, მაგრამ წერილი ვერ გაიგზავნა"
+    accept_unnotified: "გუნდს შეუერთდით, მაგრამ ზოგიერთი შეტყობინება ვერ გაიგზავნა"
+    reject_unnotified: "მოწვევა უარყოფილია, მაგრამ შეტყობინება ვერ გაიგზავნა"
     new:
       recipient_label: "ახალი წევრის მოწვევა"
       submit: "მოწვევა"

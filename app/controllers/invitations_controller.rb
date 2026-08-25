@@ -18,9 +18,16 @@ class InvitationsController < ApplicationController
 
     if @invitation.save
       # Merb original: app/controllers/invitations.rb#send_invitation_notification.
-      NotificationMailer.invitation_notification(@invitation.for_user, @invitation.to_team).deliver_now
+      delivered = MailDelivery.attempt do
+        NotificationMailer.invitation_notification(@invitation.for_user, @invitation.to_team).deliver_now
+      end
+
+      # Unlike password reset, there is no oracle to protect here: the captain
+      # already knows who they invited. Silence would just leave them waiting
+      # for a reply to a message that was never sent.
+      key = delivered ? "invitations.notice_sent" : "invitations.notice_sent_unnotified"
       redirect_to new_invitation_path,
-                  notice: t("invitations.notice_sent", nickname: @invitation.recepient_nickname)
+                  notice: t(key, nickname: @invitation.recepient_nickname)
     else
       @all_users = User.all
       render :new, status: :unprocessable_entity
@@ -34,18 +41,35 @@ class InvitationsController < ApplicationController
     # Merb original: app/controllers/invitations.rb#send_accept_notification.
     # @invitation.delete only removes the DB row -- the in-memory object and
     # its already-resolved for_user/to_team associations are still valid.
-    NotificationMailer.accept_notification(@invitation.for_user, @invitation.to_team).deliver_now
+    delivered = MailDelivery.attempt do
+      NotificationMailer.accept_notification(@invitation.for_user, @invitation.to_team).deliver_now
+    end
 
-    reject_rest_of_invitations
+    # `&`, not `&&`: this must NOT short-circuit. Before MailDelivery existed a
+    # raise on the line above skipped this call entirely, leaving the join done
+    # and every other captain holding a stale invitation, un-notified.
+    delivered &= reject_rest_of_invitations
 
-    redirect_to dashboard_path
+    # One flash for both mail operations, never one per failed recipient.
+    if delivered
+      redirect_to dashboard_path
+    else
+      redirect_to dashboard_path, alert: t("invitations.accept_unnotified")
+    end
   end
 
   def reject
     @invitation.delete
     # Merb original: app/controllers/invitations.rb#send_reject_notification.
-    NotificationMailer.reject_notification(@invitation.for_user, @invitation.to_team).deliver_now
-    redirect_to dashboard_path
+    delivered = MailDelivery.attempt do
+      NotificationMailer.reject_notification(@invitation.for_user, @invitation.to_team).deliver_now
+    end
+
+    if delivered
+      redirect_to dashboard_path
+    else
+      redirect_to dashboard_path, alert: t("invitations.reject_unnotified")
+    end
   end
 
   private
@@ -71,9 +95,18 @@ class InvitationsController < ApplicationController
   # them is auto-rejected -- and each of those captains gets the same
   # reject_notification a manual #reject would have sent them.
   def reject_rest_of_invitations
+    all_delivered = true
+
     Invitation.for(current_user).each do |invitation|
       invitation.delete
-      NotificationMailer.reject_notification(invitation.for_user, invitation.to_team).deliver_now
+      # `&=` so one captain's failed notification never stops the loop: the
+      # invitations are deleted either way, and the caller reports a single
+      # summary rather than one flash per recipient.
+      all_delivered &= MailDelivery.attempt do
+        NotificationMailer.reject_notification(invitation.for_user, invitation.to_team).deliver_now
+      end
     end
+
+    all_delivered
   end
 end

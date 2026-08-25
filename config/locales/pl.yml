@@ -402,6 +402,9 @@ pl:
       cancel: "Zmień"
   invitations:
     notice_sent: "Do użytkownika %{nickname} zostało wysłane zaproszenie"
+    notice_sent_unnotified: "Zaproszenie dla gracza «%{nickname}» zostało utworzone, ale nie udało się wysłać wiadomości"
+    accept_unnotified: "Dołączenie do drużyny powiodło się, ale nie udało się wysłać części powiadomień"
+    reject_unnotified: "Zaproszenie zostało odrzucone, ale nie udało się wysłać powiadomienia"
     new:
       recipient_label: "Zaproś nowego członka"
       submit: "Zaproś"

@@ -424,6 +424,9 @@ tr:
       cancel: "Değiştir"
   invitations:
     notice_sent: "%{nickname} adlı kullanıcıya davet gönderildi"
+    notice_sent_unnotified: "«%{nickname}» adlı oyuncu için davet oluşturuldu, ancak e-posta gönderilemedi"
+    accept_unnotified: "Takıma katıldınız, ancak bazı bildirimler gönderilemedi"
+    reject_unnotified: "Davet reddedildi, ancak bildirim gönderilemedi"
     new:
       recipient_label: "Yeni üye davet et"
       submit: "Davet et"

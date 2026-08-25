@@ -378,6 +378,9 @@ en:
       cancel: "Change it"
   invitations:
     notice_sent: "An invitation was sent to %{nickname}"
+    notice_sent_unnotified: "Invitation for %{nickname} created, but the email could not be sent"
+    accept_unnotified: "You joined the team, but some notifications could not be sent"
+    reject_unnotified: "Invitation rejected, but the notification could not be sent"
     new:
       recipient_label: "Invite a new member"
       submit: "Invite"

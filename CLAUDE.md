@@ -180,8 +180,8 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1001 leaf
-  keys** each (measured 2026-08-22): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1009 leaf
+  keys** each (measured 2026-08-26): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
@@ -196,7 +196,13 @@ add steps there or Cucumber will auto-require them a second time.
   the-web branch was in flight; the real count at that branch's own starting point was already 999,
   four keys past what this file claimed, before that branch had added anything of its own. It then
   added two keys of its own (`left_menu.manual`, `manual.fallback_note`) to all seven files, landing
-  at 1001. Recount rather than reason about it:
+  at 1001. That count held through the manual-on-the-web branch's own merge — measured again at
+  1001 at the start of the SMTP outage resilience work (`fb7956c`) — and the SMTP branch then added
+  eight leaf keys of its own, across all seven files, for the two failure-visible UI changes: the
+  signup page that shows the generated password on screen when the welcome letter could not be
+  sent, and the invitation flash warning when a notification did not go out. 1001 + 8 = 1009 is
+  correct this time because it was verified against both endpoints, not assumed — recount rather
+  than reason about it:
 
 ```bash
 ruby -ryaml -e 'def leaves(h,p="") h.flat_map { |k,v| v.is_a?(Hash) ? leaves(v,"#{p}#{k}.") : ["#{p}#{k}"] } end
@@ -641,6 +647,25 @@ run. The real files are checked by the closure check on every push and PR.
   Ukrainian, Belarusian and Polish the predicate must **agree in gender with its own noun**
   (`Файл не выбран` masc, `Игра не выбрана` fem, `Имя файла не указано` neut), so the same English
   "can't be blank" becomes three different words depending on which attribute it follows.
+- **The mail-failure policy: rescue transport errors only, and redact rather than truncate.**
+  `MailDelivery.attempt { ... }` (`app/services/mail_delivery.rb`) wraps every `deliver_now` call
+  site and rescues a fixed list of SMTP *transport* errors — `Net::SMTPError`, timeouts,
+  `SocketError`, TLS errors, the `Errno::E*` connection failures — and deliberately never
+  `StandardError`. A bug in a mailer template or a `nil` recipient is a programming error, not an
+  outage, and rescuing it here would hide it as a false "the mail didn't send" rather than raising
+  where it belongs. The logged line (`Rails.logger.error("[mail] delivery failed: ...")`) carries
+  the error class and message, but the message is **redacted, not merely truncated** — an SMTP
+  rejection quotes the offending address back at you, and a real one runs ~70 characters, far under
+  `MESSAGE_LIMIT` (200), so a truncate-only cap does nothing to remove it. This was the design's
+  own bug, caught by a security review after the first implementation shipped. Two call sites
+  matter beyond "log and move on": `PasswordResetsController` discards the returned boolean
+  deliberately, so a failed delivery is indistinguishable from an unrecognised address — anything
+  else would let an attacker use mail-server errors to enumerate accounts. `UsersController#create`
+  does the opposite: on a failed welcome letter it shows the freshly generated password on the
+  signup success page once, since this app has no password-reset-by-email fallback for the very
+  account that just lost its only copy of the password. The four invitation call sites tell the
+  acting captain the notification did not go out, via a flash warning, but still complete the
+  invitation. See `docs/runbooks/smtp-failover.md` for the operational side.
 
 ## Conventions
 

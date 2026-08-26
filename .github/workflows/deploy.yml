@@ -179,12 +179,39 @@ jobs:
           echo "could not open port 22 after 5 attempts"
           exit 1
 
+      # The same resolver the probe uses, so the two cannot disagree about which
+      # vendor production is sending through. A bad MAIL_ROLE fails HERE, before
+      # anything is deployed, rather than shipping mail pointed at nowhere.
+      #
+      # Deliberately NOT gated on `inputs.command == 'deploy'`, unlike the
+      # verification steps below: `kamal setup` pushes the same env into the
+      # container as `kamal deploy` does, and config/environments/production.rb
+      # reads `ENV.fetch("SMTP_ADDRESS", "smtp.gmail.com")` -- `Hash#fetch`'s
+      # default only fires on an ABSENT key. A `setup` run skipping this step
+      # would still set SMTP_ADDRESS, just to "", which is present-and-empty,
+      # not absent -- so the default would never kick in and the host would
+      # boot with mail broken (address "", port 0) from its first deploy, with
+      # nothing failing to say so. Don't re-add this gate for symmetry with the
+      # steps below; it would reintroduce exactly that failure mode.
+      - name: Resolve which SMTP vendor to ship
+        id: mail
+        env:
+          MAIL_ROLE: ${{ vars.MAIL_ROLE }}
+        run: |
+          set -euo pipefail
+          ruby ops/smtp/roles.rb
+
       - name: Deploy
         env:
           SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_ADDRESS: ${{ steps.mail.outputs.live_host }}
+          SMTP_PORT: ${{ steps.mail.outputs.live_port }}
+          MAIL_ROLE: ${{ vars.MAIL_ROLE }}
+          SMTP_GMAIL_DEPLOY_USERNAME: ${{ secrets.SMTP_GMAIL_DEPLOY_USERNAME }}
+          SMTP_GMAIL_DEPLOY_PASSWORD: ${{ secrets.SMTP_GMAIL_DEPLOY_PASSWORD }}
+          SMTP_FASTMAIL_DEPLOY_USERNAME: ${{ secrets.SMTP_FASTMAIL_DEPLOY_USERNAME }}
+          SMTP_FASTMAIL_DEPLOY_PASSWORD: ${{ secrets.SMTP_FASTMAIL_DEPLOY_PASSWORD }}
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
           # Claude API key for superadmin-triggered translation. This step
           # enumerates every secret rather than inheriting them, so a secret
@@ -192,7 +219,27 @@ jobs:
           # expands to empty at deploy time -- the feature would simply be
           # absent in production, with nothing failing to say so.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: bundle exec kamal ${{ inputs.command }}
+        run: |
+          set -euo pipefail
+          case "$MAIL_ROLE" in
+            gmail)
+              export SMTP_USERNAME="$SMTP_GMAIL_DEPLOY_USERNAME"
+              export SMTP_PASSWORD="$SMTP_GMAIL_DEPLOY_PASSWORD" ;;
+            fastmail)
+              export SMTP_USERNAME="$SMTP_FASTMAIL_DEPLOY_USERNAME"
+              export SMTP_PASSWORD="$SMTP_FASTMAIL_DEPLOY_PASSWORD" ;;
+            *)
+              echo "MAIL_ROLE is '${MAIL_ROLE}' -- refusing to deploy mail configured for nobody" >&2
+              exit 1 ;;
+          esac
+
+          if [ -z "$SMTP_USERNAME" ] || [ -z "$SMTP_PASSWORD" ]; then
+            echo "the ${MAIL_ROLE} deploy credentials are empty -- are the environment secrets set?" >&2
+            exit 1
+          fi
+
+          echo "shipping mail via ${MAIL_ROLE} (${SMTP_ADDRESS}:${SMTP_PORT})"
+          bundle exec kamal ${{ inputs.command }}
 
       # `always()` matters more than it looks: without it a failed deploy leaves
       # port 22 open to that runner's address indefinitely, and the address is
@@ -253,6 +300,19 @@ jobs:
           # what keeps the next added field safe.
           KAMAL_COMMAND: ${{ inputs.command }}
           JOB_STATUS: ${{ job.status }}
+          # From the "Resolve which SMTP vendor to ship" step's own outputs,
+          # not re-derived: that step already ran ops/smtp/roles.rb and is the
+          # single source of truth both this summary and the Deploy step read
+          # from. Runs for both `deploy` and `setup` (see that step's comment),
+          # so these are populated on any run that gets past the resolve step
+          # itself -- including one that failed before the Deploy step. A run
+          # that fails earlier still, in "Authenticate to Azure" or "Open SSH
+          # to this runner only", never reaches the resolver: MAIL_HOST and
+          # MAIL_PORT are empty in that case, though MAIL_VENDOR still prints,
+          # since it comes from vars.MAIL_ROLE rather than the resolver.
+          MAIL_VENDOR: ${{ vars.MAIL_ROLE }}
+          MAIL_HOST: ${{ steps.mail.outputs.live_host }}
+          MAIL_PORT: ${{ steps.mail.outputs.live_port }}
         run: |
           # Read the target out of config/deploy.yml rather than writing the
           # address a fourth time (it is already there twice, plus the host-key
@@ -287,37 +347,10 @@ jobs:
             echo "| Result | ${result} |"
             echo "| Commit | \`${GITHUB_SHA:0:7}\` on \`${GITHUB_REF_NAME}\` |"
             echo "| Target host | \`${deploy_host}\` |"
+            echo "| Mail vendor | \`${MAIL_VENDOR}\` (${MAIL_HOST}:${MAIL_PORT}) |"
             echo "| SSH opened for | ${opened_for} |"
             echo "| JIT firewall rule | ${jit_rule} |"
           } >> "$GITHUB_STEP_SUMMARY"
-
-      # Same source config/deploy.yml that .github/workflows/smtp-probe.yml's
-      # `cfg` step reads -- mirrored narrowly (just the three values needed to
-      # dial out) rather than duplicated wholesale, so the host/port/HELO
-      # domain can never drift between the six-hourly probe and this
-      # deploy-time check. See that step's own comment for why these three
-      # values live in config/deploy.yml and not a copy pinned in a workflow.
-      #
-      # Gated the same as the verification step below -- see that step's
-      # comment for why (`deploy` only, and only once the deploy itself
-      # succeeded).
-      - name: Read the app's configured SMTP host, port, and HELO domain
-        id: smtp_cfg
-        if: success() && inputs.command == 'deploy'
-        run: |
-          set -euo pipefail
-          ruby -ryaml -e '
-            clear = YAML.unsafe_load_file("config/deploy.yml").dig("env", "clear")
-            address  = clear["SMTP_ADDRESS"]
-            port     = clear["SMTP_PORT"] || "587"
-            app_host = clear["APP_HOST"]
-            abort "config/deploy.yml has no env.clear.SMTP_ADDRESS" if address.to_s.empty?
-            File.open(ENV.fetch("GITHUB_OUTPUT"), "a") do |f|
-              f.puts "address=#{address}"
-              f.puts "port=#{port}"
-              f.puts "app_host=#{app_host}"
-            end
-          '
 
       # Proves the exact SMTP credential THIS deploy just shipped -- a
       # different credential from the one the six-hourly smtp-probe.yml
@@ -325,19 +358,28 @@ jobs:
       # inconsistency to "fix":
       #
       # This job already carries `environment: production` (see line 21), so
-      # it already holds the REAL secrets.SMTP_USERNAME/SMTP_PASSWORD with no
+      # it already holds the REAL SMTP_<VENDOR>_DEPLOY_USERNAME/PASSWORD
+      # secrets for whichever vendor MAIL_ROLE selects, with no
       # second approval needed -- that environment is exactly what an
       # unattended six-hourly schedule cannot use (required-reviewer
       # protected; see smtp-probe.yml's own comment on this). smtp-probe.yml
-      # instead authenticates with SMTP_PROBE_USERNAME/SMTP_PROBE_PASSWORD, a
-      # dedicated app password on the same Gmail account stored as a
-      # repository secret, which proves the ACCOUNT is healthy (catches
-      # suspension, the daily-quota trip, Google blocking the account,
-      # network/TLS breakage) but says nothing about whether the credential
-      # actually shipped to production still authenticates -- e.g. that
-      # specific credential being rotated or revoked elsewhere. This step
-      # closes exactly that gap, once per deploy, with the secret that
-      # matters, and needs no separate schedule or approval to do it.
+      # instead authenticates with SMTP_<VENDOR>_PROBE_USERNAME/PASSWORD,
+      # repository secrets stored one pair per vendor. Whether that pair is a
+      # DIFFERENT credential from the one this step verifies depends on the
+      # vendor: for Gmail it's a dedicated app password on the same account;
+      # for Fastmail it's the very same value as the deploy credential (see
+      # docs/runbooks/smtp-credentials.md §4). Either way, a green six-hourly
+      # probe proves the ACCOUNT is healthy (catches suspension, the
+      # daily-quota trip, the vendor blocking the account, network/TLS
+      # breakage). For Gmail it says nothing beyond that about whether the
+      # credential actually shipped to production still authenticates --
+      # the probe and deploy passwords are different values, so one being
+      # rotated or revoked elsewhere is invisible to the probe. For Fastmail
+      # the probe pair IS the deploy pair, so a green probe does exercise the
+      # shipped value -- but the two secret entries are still separate and
+      # can drift if only one of them is rotated. This step closes that gap
+      # for both vendors, once per deploy, with the secret that matters, and
+      # needs no separate schedule or approval to do it.
       #
       # `inputs.command == 'deploy'`, the same check "Write the run summary"
       # above already reads via KAMAL_COMMAND, rather than inventing a second
@@ -358,16 +400,55 @@ jobs:
       - name: Verify the shipped SMTP credential (the deploy itself already completed)
         if: success() && inputs.command == 'deploy'
         env:
-          SMTP_ADDRESS: ${{ steps.smtp_cfg.outputs.address }}
-          SMTP_PORT: ${{ steps.smtp_cfg.outputs.port }}
-          APP_HOST: ${{ steps.smtp_cfg.outputs.app_host }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          SMTP_SPARE_ADDRESS: ${{ secrets.SMTP_SPARE_ADDRESS }}
-          SMTP_SPARE_PORT: "587"
-          SMTP_SPARE_USERNAME: ${{ secrets.SMTP_SPARE_USERNAME }}
-          SMTP_SPARE_PASSWORD: ${{ secrets.SMTP_SPARE_PASSWORD }}
+          SMTP_ADDRESS: ${{ steps.mail.outputs.live_host }}
+          SMTP_PORT: ${{ steps.mail.outputs.live_port }}
+          SMTP_LIVE_VENDOR: ${{ steps.mail.outputs.live_vendor }}
+          SMTP_STANDBY_VENDOR: ${{ steps.mail.outputs.standby_vendor }}
+          # Literal, matching config/deploy.yml's env.clear.APP_HOST -- see
+          # smtp-probe.yml's own "Probe both endpoints" step for why this is a
+          # literal rather than a repository variable (there are none here).
+          APP_HOST: game.mezin.eu
+          MAIL_ROLE: ${{ vars.MAIL_ROLE }}
+          SMTP_GMAIL_DEPLOY_USERNAME: ${{ secrets.SMTP_GMAIL_DEPLOY_USERNAME }}
+          SMTP_GMAIL_DEPLOY_PASSWORD: ${{ secrets.SMTP_GMAIL_DEPLOY_PASSWORD }}
+          SMTP_FASTMAIL_DEPLOY_USERNAME: ${{ secrets.SMTP_FASTMAIL_DEPLOY_USERNAME }}
+          SMTP_FASTMAIL_DEPLOY_PASSWORD: ${{ secrets.SMTP_FASTMAIL_DEPLOY_PASSWORD }}
+          SMTP_SPARE_ADDRESS: ${{ steps.mail.outputs.standby_host }}
+          SMTP_SPARE_PORT: ${{ steps.mail.outputs.standby_port }}
+          # The spare's values are the PROBE secrets, not the deploy secrets:
+          # the deploy credentials for the standby vendor are not what the
+          # six-hourly probe watches, so verifying against them here would
+          # prove nothing about the thing that actually gets exercised.
+          SMTP_GMAIL_PROBE_USERNAME: ${{ secrets.SMTP_GMAIL_PROBE_USERNAME }}
+          SMTP_GMAIL_PROBE_PASSWORD: ${{ secrets.SMTP_GMAIL_PROBE_PASSWORD }}
+          SMTP_FASTMAIL_PROBE_USERNAME: ${{ secrets.SMTP_FASTMAIL_PROBE_USERNAME }}
+          SMTP_FASTMAIL_PROBE_PASSWORD: ${{ secrets.SMTP_FASTMAIL_PROBE_PASSWORD }}
         run: |
+          set -euo pipefail
+          case "$MAIL_ROLE" in
+            gmail)
+              export SMTP_USERNAME="$SMTP_GMAIL_DEPLOY_USERNAME"
+              export SMTP_PASSWORD="$SMTP_GMAIL_DEPLOY_PASSWORD" ;;
+            fastmail)
+              export SMTP_USERNAME="$SMTP_FASTMAIL_DEPLOY_USERNAME"
+              export SMTP_PASSWORD="$SMTP_FASTMAIL_DEPLOY_PASSWORD" ;;
+            *)
+              echo "MAIL_ROLE is '${MAIL_ROLE}' -- refusing to verify a credential shipped for nobody" >&2
+              exit 1 ;;
+          esac
+
+          case "$SMTP_STANDBY_VENDOR" in
+            gmail)
+              export SMTP_SPARE_USERNAME="$SMTP_GMAIL_PROBE_USERNAME"
+              export SMTP_SPARE_PASSWORD="$SMTP_GMAIL_PROBE_PASSWORD" ;;
+            fastmail)
+              export SMTP_SPARE_USERNAME="$SMTP_FASTMAIL_PROBE_USERNAME"
+              export SMTP_SPARE_PASSWORD="$SMTP_FASTMAIL_PROBE_PASSWORD" ;;
+            *)
+              echo "standby vendor is '${SMTP_STANDBY_VENDOR}' -- refusing to probe nothing" >&2
+              exit 1 ;;
+          esac
+
           set +e
           ruby ops/smtp/probe.rb > verdict.json
           exit_code=$?

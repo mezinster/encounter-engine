@@ -45,70 +45,73 @@ jobs:
         with:
           ruby-version: "3.3.12"
 
-      # The app's real SMTP host, port, and HELO domain all live in
-      # config/deploy.yml, so the probe reads them from there rather than
-      # carrying its own copies. Without this the probe would keep testing
-      # Gmail on a stale port after a cutover to Fastmail -- failing forever
-      # against the wrong endpoint while the app sent mail correctly, and
-      # filing an issue every six hours to say so. Step 3 of the failover
-      # runbook edits config/deploy.yml, and the probe follows it
-      # automatically.
-      - name: Read the app's configured SMTP host, port, and HELO domain
+      # Both this workflow and deploy.yml call the same resolver, so the probe
+      # cannot end up watching a different vendor than the one production is
+      # sending through. Before this, the host came from config/deploy.yml while
+      # the credential came from a fixed secret -- the host followed a cutover
+      # and the credential did not, so the probe authenticated Gmail against
+      # Fastmail and filed a `down` issue every six hours while the app was fine.
+      - name: Resolve which vendor is live
         id: cfg
+        env:
+          MAIL_ROLE: ${{ vars.MAIL_ROLE }}
         run: |
           set -euo pipefail
-          ruby -ryaml -e '
-            clear = YAML.unsafe_load_file("config/deploy.yml").dig("env", "clear")
-            address  = clear["SMTP_ADDRESS"]
-            port     = clear["SMTP_PORT"] || "587"
-            app_host = clear["APP_HOST"]
-            abort "config/deploy.yml has no env.clear.SMTP_ADDRESS -- probe cannot know what to test" if
-              address.to_s.empty?
-            File.open(ENV.fetch("GITHUB_OUTPUT"), "a") do |f|
-              f.puts "address=#{address}"
-              f.puts "port=#{port}"
-              f.puts "app_host=#{app_host}"
-            end
-            warn "probing primary host: #{address}:#{port}"
-          '
+          ruby ops/smtp/roles.rb
 
       - name: Probe both endpoints
         id: probe
         continue-on-error: true
         env:
-          SMTP_ADDRESS: ${{ steps.cfg.outputs.address }}
-          SMTP_PORT: ${{ steps.cfg.outputs.port }}
-          # NOT secrets.SMTP_USERNAME/SMTP_PASSWORD -- those exist only as
-          # `production` ENVIRONMENT secrets (required-reviewer protected), and
-          # this job carries no `environment:`, so they would resolve to empty
-          # strings here rather than hanging -- the first live run proved
-          # exactly that ("primary not configured"). Giving this job
-          # `environment: production` would fix the empty string but park every
-          # six-hourly run on a human approval, forever.
-          #
-          # SMTP_PROBE_USERNAME/PASSWORD are a dedicated app password on the
-          # SAME Gmail account, stored as repository secrets so an unattended
-          # schedule can read them. This proves the ACCOUNT is healthy --
-          # catches suspension, the daily-quota trip, Google blocking the
-          # account, network/TLS breakage -- but it is a different credential
-          # from the one the app actually ships, so a green run here does NOT
-          # prove the deploy's own SMTP_USERNAME/SMTP_PASSWORD still
-          # authenticate (e.g. that credential specifically being rotated or
-          # revoked). `.github/workflows/deploy.yml`'s final step covers that
-          # gap, at deploy time, with the real environment secrets.
-          #
-          # Do not "fix" this back to secrets.SMTP_USERNAME/SMTP_PASSWORD --
-          # see above, that is the empty-string bug this comment exists to
-          # prevent from being reintroduced. See docs/runbooks/smtp-failover.md
-          # and design spec §D10.
-          SMTP_USERNAME: ${{ secrets.SMTP_PROBE_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PROBE_PASSWORD }}
-          SMTP_SPARE_ADDRESS: ${{ secrets.SMTP_SPARE_ADDRESS }}
-          SMTP_SPARE_PORT: "587"
-          SMTP_SPARE_USERNAME: ${{ secrets.SMTP_SPARE_USERNAME }}
-          SMTP_SPARE_PASSWORD: ${{ secrets.SMTP_SPARE_PASSWORD }}
-          APP_HOST: ${{ steps.cfg.outputs.app_host }}
+          SMTP_ADDRESS: ${{ steps.cfg.outputs.live_host }}
+          SMTP_PORT: ${{ steps.cfg.outputs.live_port }}
+          SMTP_LIVE_VENDOR: ${{ steps.cfg.outputs.live_vendor }}
+          SMTP_STANDBY_VENDOR: ${{ steps.cfg.outputs.standby_vendor }}
+          SMTP_SPARE_ADDRESS: ${{ steps.cfg.outputs.standby_host }}
+          SMTP_SPARE_PORT: ${{ steps.cfg.outputs.standby_port }}
+          # Indexed by vendor so a cutover needs no secret edit. Both pairs are
+          # passed in and the script below picks -- rather than `secrets[...]`
+          # dynamic indexing, which works but is harder to read in a log when
+          # something is wrong at 3am.
+          GMAIL_PROBE_USERNAME: ${{ secrets.SMTP_GMAIL_PROBE_USERNAME }}
+          GMAIL_PROBE_PASSWORD: ${{ secrets.SMTP_GMAIL_PROBE_PASSWORD }}
+          FASTMAIL_PROBE_USERNAME: ${{ secrets.SMTP_FASTMAIL_PROBE_USERNAME }}
+          FASTMAIL_PROBE_PASSWORD: ${{ secrets.SMTP_FASTMAIL_PROBE_PASSWORD }}
+          # Literal, matching config/deploy.yml's env.clear.APP_HOST. Verified
+          # 2026-08-26 that this repository has no Actions variables at all, so
+          # there is no vars.APP_HOST to read. If APP_HOST ever changes, it
+          # changes in both places -- which is why the value is named here
+          # rather than silently defaulted inside probe.rb.
+          APP_HOST: game.mezin.eu
         run: |
+          # Plain case, assigning directly. An earlier draft of this plan used a
+          # pick() helper called in a command substitution -- and its `exit 1`
+          # for an unknown vendor would have exited only the SUBSHELL, leaving an
+          # empty prefix and, under `set +e`, empty credentials. The probe would
+          # then have reported "not configured" instead of failing. Unreachable
+          # in practice (the vendor comes from our own validated resolver) but
+          # silent, which is the failure shape this project keeps removing.
+          select_creds() {
+            case "$1" in
+              gmail)    printf '%s\n%s\n' "$GMAIL_PROBE_USERNAME"    "$GMAIL_PROBE_PASSWORD" ;;
+              fastmail) printf '%s\n%s\n' "$FASTMAIL_PROBE_USERNAME" "$FASTMAIL_PROBE_PASSWORD" ;;
+              *)        return 1 ;;
+            esac
+          }
+
+          set -euo pipefail
+          if ! { read -r SMTP_USERNAME; read -r SMTP_PASSWORD; } < <(select_creds "$SMTP_LIVE_VENDOR"); then
+            echo "unknown live vendor '${SMTP_LIVE_VENDOR}' -- refusing to probe nothing" >&2
+            exit 1
+          fi
+          if ! { read -r SMTP_SPARE_USERNAME; read -r SMTP_SPARE_PASSWORD; } < <(select_creds "$SMTP_STANDBY_VENDOR"); then
+            echo "unknown standby vendor '${SMTP_STANDBY_VENDOR}' -- refusing to probe nothing" >&2
+            exit 1
+          fi
+          export SMTP_USERNAME SMTP_PASSWORD SMTP_SPARE_USERNAME SMTP_SPARE_PASSWORD
+
+          # set +e only around the probe itself: its non-zero exit is DATA (the
+          # verdict), not a failure of this step. Everything above must abort.
           set +e
           ruby ops/smtp/probe.rb > verdict.json
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"

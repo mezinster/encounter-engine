@@ -141,7 +141,6 @@ firewall** — предполагается, что фильтрацией за�
 | `env.clear.APP_HOST` | **один** домен — тот, что попадёт в ссылки в письмах |
 | `env.clear.TZ` | часовой пояс сервера, например `Europe/Vienna` |
 | `env.clear.DEFAULT_LOCALE` | язык по умолчанию: `ru`, `en`, `uk`, `ka`, `tr`, `be` или `pl` |
-| `env.clear.SMTP_ADDRESS` / `SMTP_PORT` | ваш SMTP |
 | `accessories.db.image` | образ PostgreSQL (см. ниже) |
 | `accessories.db.host` | тот же сервер |
 
@@ -188,6 +187,7 @@ SECRET_KEY_BASE=$SECRET_KEY_BASE
 | `SECRET_KEY_BASE` | ключ, которым подписываются cookies сессий |
 | `POSTGRES_PASSWORD` | пароль пользователя базы |
 | `SMTP_USERNAME`, `SMTP_PASSWORD` | учётные данные почты |
+| `SMTP_ADDRESS`, `SMTP_PORT` | ваш SMTP |
 | `KAMAL_REGISTRY_PASSWORD` | токен реестра образов |
 
 `DATABASE_URL` и `MAIL_FROM` в `.kamal/secrets` **собираются** из перечисленного выше, а не

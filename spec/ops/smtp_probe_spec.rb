@@ -79,4 +79,42 @@ RSpec.describe SMTPProbe do
 
     expect(result["summary"]).to include("Net::SMTPAuthenticationError")
   end
+
+  describe "vendor labelling" do
+    def ok_with(role, vendor)
+      { "role" => role, "vendor" => vendor, "configured" => true, "ok" => true }
+    end
+
+    def broken_with(role, vendor)
+      { "role" => role, "vendor" => vendor, "configured" => true, "ok" => false,
+        "error_class" => "Net::SMTPAuthenticationError", "error" => "535 5.7.8 nope" }
+    end
+
+    # "primary" alone is unreadable six months later, and actively misleading
+    # after a cutover: it names a role whose vendor has changed. The issue this
+    # files is public and long-lived, so it must say WHICH vendor failed.
+    it "names the vendor in a failure summary, not just the role" do
+      result = described_class.classify([broken_with("primary", "fastmail"), ok_with("spare", "gmail")])
+
+      expect(result["summary"]).to include("fastmail")
+      expect(result["verdict"]).to eq("down")
+    end
+
+    it "names the vendor when the standby is the broken one" do
+      result = described_class.classify([ok_with("primary", "fastmail"), broken_with("spare", "gmail")])
+
+      expect(result["summary"]).to include("gmail")
+      expect(result["verdict"]).to eq("degraded")
+    end
+
+    # A green run is the cheapest place to answer "which is which right now",
+    # so the healthy summary carries the mapping too.
+    it "states the live and standby vendors even when everything passes" do
+      result = described_class.classify([ok_with("primary", "gmail"), ok_with("spare", "fastmail")])
+
+      expect(result["verdict"]).to eq("ok")
+      expect(result["summary"]).to include("gmail")
+      expect(result["summary"]).to include("fastmail")
+    end
+  end
 end

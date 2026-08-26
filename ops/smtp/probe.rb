@@ -39,8 +39,8 @@ module SMTPProbe
   end
 
   # Connects, STARTTLS, AUTH, QUIT. Sends nothing.
-  def check(role:, address:, port:, user_name:, password:, helo_domain:)
-    return { "role" => role, "configured" => false, "ok" => false } if
+  def check(role:, vendor:, address:, port:, user_name:, password:, helo_domain:)
+    return { "role" => role, "vendor" => vendor, "configured" => false, "ok" => false } if
       address.to_s.empty? || user_name.to_s.empty? || password.to_s.empty?
 
     smtp = Net::SMTP.new(address, port.to_i)
@@ -57,11 +57,11 @@ module SMTPProbe
     # for the probe's own bug. Production gets this right already --
     # config/environments/production.rb passes domain: ENV.fetch("APP_HOST").
     smtp.start(helo_domain, user_name, password, :plain) { }
-    { "role" => role, "configured" => true, "ok" => true }
+    { "role" => role, "vendor" => vendor, "configured" => true, "ok" => true }
   rescue StandardError => e
     # StandardError is correct HERE, unlike in MailDelivery: this script's only
     # job is to report what went wrong, and every failure mode is interesting.
-    { "role" => role, "configured" => true, "ok" => false,
+    { "role" => role, "vendor" => vendor, "configured" => true, "ok" => false,
       "error_class" => e.class.to_s, "error" => redact(e.message) }
   end
 
@@ -84,11 +84,18 @@ module SMTPProbe
         "ok"
       end
 
+    # Roles are positions; vendors are facts. After a cutover "primary" means a
+    # different company than it did last week, and this string outlives the
+    # incident in a public issue -- so say both.
+    mapping = results.map { |r| "#{r['role']}: #{r['vendor']}" }.join(", ")
+
     summary =
       if failures.empty?
-        (["all configured SMTP endpoints authenticate"] + notes).join("; ")
+        (["all configured SMTP endpoints authenticate (#{mapping})"] + notes).join("; ")
       else
-        described = failures.map { |f| "#{f['role']}: #{f['error_class']} #{f['error']}" }
+        described = failures.map do |f|
+          "#{f['role']} (#{f['vendor']}): #{f['error_class']} #{f['error']}"
+        end
         (described + notes).join("; ")
       end
 
@@ -109,12 +116,14 @@ if $PROGRAM_NAME == __FILE__
 
   results = [
     SMTPProbe.check(role: "primary",
+                    vendor:      ENV["SMTP_LIVE_VENDOR"].to_s,
                     address:     ENV["SMTP_ADDRESS"] || "smtp.gmail.com",
                     port:        ENV["SMTP_PORT"] || 587,
                     user_name:   ENV["SMTP_USERNAME"],
                     password:    ENV["SMTP_PASSWORD"],
                     helo_domain: helo_domain),
     SMTPProbe.check(role: "spare",
+                    vendor:      ENV["SMTP_STANDBY_VENDOR"].to_s,
                     address:     ENV["SMTP_SPARE_ADDRESS"],
                     port:        ENV["SMTP_SPARE_PORT"] || 587,
                     user_name:   ENV["SMTP_SPARE_USERNAME"],

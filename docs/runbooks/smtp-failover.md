@@ -66,9 +66,9 @@ one you're looking at, re-run the probe (`gh workflow run smtp-probe.yml`, or tr
 Actions tab) rather than guessing from a stale issue.
 
 **`degraded` is not urgent, but it is real.** An unrehearsed fallback is not a fallback — it's a
-hope, same as an untested backup. Fix the spare's credentials (rotate the Fastmail app password,
-update the `SMTP_SPARE_USERNAME`/`SMTP_SPARE_PASSWORD` GitHub secrets), then re-dispatch the probe
-to confirm.
+hope, same as an untested backup. Fix the spare's credentials — rotate whichever vendor is
+currently in the spare role's app password, and update the `SMTP_SPARE_USERNAME`/
+`SMTP_SPARE_PASSWORD` GitHub secrets to match — then re-dispatch the probe to confirm.
 
 ---
 

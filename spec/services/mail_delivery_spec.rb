@@ -49,6 +49,19 @@ describe MailDelivery do
       expect { described_class.attempt { raise I18n::MissingTranslationData.new(:ru, "x", {}) } }
         .to raise_error(I18n::MissingTranslationData)
     end
+
+    # EOFError is a SUBCLASS of IOError (EOFError.ancestors includes IOError),
+    # and EOFError is deliberately rescued above -- a clean FIN. IOError itself
+    # is a different animal: net/smtp raises it directly for a programming
+    # error, like starting an already-started SMTP session ("SMTP session
+    # already started"). That must keep raising. Without this example, someone
+    # "simplifying" the rescue list by replacing the EOFError entry with the
+    # broader IOError would pass every other test in this file while silently
+    # starting to swallow those programming errors too.
+    it "lets an IOError through, even though EOFError (a subclass) is rescued above" do
+      expect { described_class.attempt { raise IOError, "SMTP session already started" } }
+        .to raise_error(IOError)
+    end
   end
 
   it "returns true when the block completes" do

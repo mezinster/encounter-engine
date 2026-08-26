@@ -70,6 +70,7 @@
   font-family: var(--font-mono);
   font-size: 1.15rem;
   letter-spacing: 0.02em;
+  -webkit-user-select: all; /* Safari, incl. iOS Safari, supports unprefixed user-select only from 17.0 */
   user-select: all;
 }
 

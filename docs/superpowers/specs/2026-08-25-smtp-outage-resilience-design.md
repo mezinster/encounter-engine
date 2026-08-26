@@ -95,9 +95,11 @@ Net::ReadTimeout
 SocketError
 OpenSSL::SSL::SSLError
 Errno::ECONNREFUSED, Errno::ECONNRESET, Errno::EHOSTUNREACH, Errno::ETIMEDOUT, Errno::ENETUNREACH
+EOFError                  # < IOError, see below -- a clean FIN, not an RST
+Errno::EPIPE
 ```
 
-Two non-obvious facts, both verified rather than assumed:
+Three non-obvious facts, all verified rather than assumed:
 
 * **`Net::SMTPError` is a module, not a class.** It is mixed into five error classes with five
   different superclasses (`Net::SMTPAuthenticationError < Net::ProtoAuthError`,
@@ -108,6 +110,19 @@ Two non-obvious facts, both verified rather than assumed:
 * **`Net::OpenTimeout` descends from `Timeout::Error`, not `IOError`.** A rescue list assembled by
   reasoning about the hierarchy would omit the single most likely failure — a connection that is
   dropped rather than refused.
+* **`EOFError` and `Errno::EPIPE` cover the peer closing the connection outright, and
+  `Errno::ECONNRESET` above does not reach either.** `ECONNRESET` fires only for an RST — an abrupt,
+  abnormal teardown. A clean FIN — a greylisting relay, an over-quota Gmail dropping the session
+  right after its 220 greeting, a load balancer reaping an idle connection — is the far more common
+  shape of "the other end hung up", and it surfaces to `net/protocol.rb` as a bare `EOFError` on
+  read, or `Errno::EPIPE` if this process is still writing when the peer is already gone. Neither is
+  an `ECONNRESET`. Reproduced against a real socket (server greets 220 then closes; server accepts
+  then closes) — both raised `EOFError`, uncaught, before these two entries were added. Note that
+  `EOFError < IOError`: §D9 aside, this is exactly why the rescue list names `EOFError` and not the
+  broader `IOError` — see the class comment in `app/services/mail_delivery.rb` and the "everything
+  else" spec in `spec/services/mail_delivery_spec.rb` for why `IOError` itself must keep raising
+  (`net/smtp` raises it for "SMTP session already started" and similar programming errors, which
+  are bugs, not transport failures).
 
 `StandardError` is **not** rescued. A template bug or an `I18n::MissingTranslationData` must keep
 raising loudly; swallowing those would trade a visible outage for an invisible one — the same

@@ -92,6 +92,12 @@ jobs:
         if: failure() || steps.probe.outputs.exit_code != '0'
         env:
           GH_TOKEN: ${{ github.token }}
+          # gh resolves the repository from the checkout's git remote by
+          # default. This step also runs via failure() when checkout itself
+          # failed, in which case there is no remote to resolve from -- gh
+          # would fail before either issue command below could run. Setting
+          # GH_REPO removes that dependency entirely.
+          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
 
@@ -134,8 +140,25 @@ jobs:
           # and a low-urgency `degraded` verdict would file 4 a day until
           # someone acts. Comment on the one open issue instead of opening a
           # new one every run.
-          ISSUE=$(gh issue list --label smtp --state open --limit 1 --json number --jq '.[0].number // empty')
+          #
+          # `|| echo ""` -- under `set -euo pipefail`, a transient `gh`
+          # failure here (rate limit, network blip, or no git remote when
+          # this step runs after a failed checkout) would otherwise abort the
+          # step before EITHER gh issue comment or gh issue create runs,
+          # silently turning "issue filed" into "issue not filed". Falling
+          # through to an empty ISSUE takes the create path instead -- worst
+          # case a duplicate issue, never a silent no-op.
+          ISSUE=$(gh issue list --label smtp --state open --limit 1 --json number --jq '.[0].number // empty' || echo "")
           if [ -n "$ISSUE" ]; then
+            # Retitle on every comment, not just when the verdict escalates:
+            # de-duplication keys on the label alone, so a fresh `down` can
+            # land as a comment on an issue titled from an earlier `degraded`
+            # run. `degraded`'s own title is glossed in the issue body as
+            # "the SITE IS FINE" -- leaving that headline in place while the
+            # primary is down points the operator at the wrong urgency.
+            # Retitling to the current run's verdict every time keeps the
+            # title honest without having to parse or compare the old one.
+            gh issue edit "$ISSUE" --title "$TITLE"
             gh issue comment "$ISSUE" --body-file issue-body.md
           else
             gh issue create --title "$TITLE" --body-file issue-body.md --label smtp

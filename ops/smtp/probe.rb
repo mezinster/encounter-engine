@@ -99,7 +99,13 @@ end
 if $PROGRAM_NAME == __FILE__
   # Same HELO domain for both endpoints: it identifies this client (the app),
   # not whichever server it happens to be talking to right now.
-  helo_domain = ENV["APP_HOST"] || "game.mezin.eu"
+  #
+  # `|| "game.mezin.eu"` alone guards only an UNSET APP_HOST. The workflow's
+  # `cfg` step writes `app_host=` unconditionally (smtp-probe.yml), and a
+  # GitHub Actions `env:` populated from an empty step output is "", not
+  # unset -- so ENV["APP_HOST"] would read as "" and the `||` would not fire,
+  # sending a bare `EHLO `. .to_s.empty? treats unset and empty the same way.
+  helo_domain = ENV["APP_HOST"].to_s.empty? ? "game.mezin.eu" : ENV["APP_HOST"]
 
   results = [
     SMTPProbe.check(role: "primary",

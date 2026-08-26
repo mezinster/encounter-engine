@@ -4,8 +4,16 @@ For whoever is on call when the SMTP probe fails. Commands are copy-pasteable, b
 you act — a `degraded` verdict and a `down` verdict call for different responses, and this document
 exists mainly to keep you from cutting over when you didn't need to.
 
-**Rehearsed:** _not yet — fill in the date and what was verified the first time someone actually
-walks §3, §4, and §5 end to end._
+**Rehearsed:** **2026-08-26 — not a rehearsal, a real cutover.** Gmail → Fastmail, in production, ten
+minutes after the switcher merged. `gh variable set MAIL_ROLE --body fastmail` and a deploy: no secret
+edits, no `config/deploy.yml` change, no commit. The deploy's own verification step authenticated the
+shipped Fastmail credential, and the next probe reported
+`ok — all configured SMTP endpoints authenticate (primary: fastmail, spare: gmail)`, following the
+cutover in **both** host and credential with no human step. Production has sent as `@mezin.eu` since.
+
+What that leaves unproven: cutting **back** (the same two commands with `gmail`, never run), and §5's
+header checks — nobody has yet read the `From:`, SPF and DKIM headers of a message that actually
+arrived. The credential works; what a recipient sees is still inferred rather than observed.
 
 `docs/runbooks/smtp-credentials.md` §1 lists the eight vendor-named secrets a cutover depends on.
 **Those secrets existing is not the same thing as rehearsed.** A credential that authenticates is

@@ -271,7 +271,16 @@ jobs:
       # summary.json ONLY. Never manifest.json.
       - name: Upload the k6 summary
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        # v7.0.1. The v4.6.2 pin this replaced declared `using: node20`, which is
+        # the deprecation GitHub now warns about on every run. Every major from
+        # v5 to v7 is a runtime bump plus additive inputs -- v5 and v6 moved to
+        # Node 24, v7 added an optional `archive:` and switched the package to
+        # ESM internally. The three inputs used below are unchanged throughout.
+        #
+        # The one caveat in those release notes -- a minimum runner of 2.327.1 --
+        # applies to SELF-HOSTED runners. This job is `runs-on: ubuntu-latest`,
+        # so GitHub keeps the runner current.
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: k6-summary-${{ github.run_id }}
           path: summary.json

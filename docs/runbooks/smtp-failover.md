@@ -5,7 +5,12 @@ you act — a `degraded` verdict and a `down` verdict call for different respons
 exists mainly to keep you from cutting over when you didn't need to.
 
 **Rehearsed:** _not yet — fill in the date and what was verified the first time someone actually
-walks §3 and §4 end to end._
+walks §3, §4, and §5 end to end._
+
+The three `SMTP_SPARE_*` secrets exist as of 2026-08-26. **That is not the same thing as
+rehearsed.** A credential that authenticates is a configured spare; "rehearsed" means someone
+actually cut over, sent a real message, and read its headers per §5 — do not let the secrets
+existing read as that having happened.
 
 ---
 
@@ -23,7 +28,7 @@ and the app now degrades instead of breaking:
   generated password on screen once, instead of losing it.
 - **Invitations still succeed.** If a notification can't be sent, the acting captain sees a flash
   warning that it didn't go out, but the invitation itself is still created/accepted.
-- **Password reset behaves identically either way**, deliberately — see §6.
+- **Password reset behaves identically either way**, deliberately — see §7.
 
 So: **an SMTP outage is no longer a site-down emergency.** It's a "some people aren't getting email"
 degradation. That changes how fast you need to move, not whether you need to fix it.
@@ -151,9 +156,60 @@ step for it because there is no second place to change it.
    prove an end-to-end send). Delete the throwaway account/team afterward if you want to keep the
    data clean; it isn't required for the check itself.
 
+   Don't stop at "it arrived." Go to §5 and read the headers — that's the only part of this that
+   actually looks at what the recipient got.
+
 ---
 
-## 5. Cut back
+## 5. Read the headers — the probe can't see this
+
+`ops/smtp/probe.rb` authenticates and quits. It **never sends a message**, so a green probe proves
+the *credential* and nothing about the *envelope*. All of the following produce a green probe and
+a broken cutover:
+
+- `MAIL_FROM` failing to recompose, so `From:` still names the old credential
+- the relay silently rewriting `From:` (Gmail does this for any non-verified alias)
+- SPF or DKIM failing, so mail delivers today and spam-folders next week
+- the letter landing in Junk instead of the inbox
+
+The throwaway account from §4 step 2 is what this section checks. If you haven't registered one
+yet, do that first.
+
+**Step 1 — make a real message go out.** Register the throwaway account (§4 step 2 covers this)
+with `<an address you control and can read now>` — not a personal address committed to this file;
+substitute your own. The maintainer's usual choice is their own `@mezin.eu` mailbox. Registration
+exercises the welcome letter through the real send path, the same one every signup uses.
+
+**Step 2 — open the full headers of what arrived** ("Show original" / "View source" in most
+clients) and check these, in this order:
+
+| Header | Expect | What it proves / what a bad value means |
+|---|---|---|
+| `From:` | the new primary's `SMTP_USERNAME` | The `MAIL_FROM` derivation in `.kamal/secrets` held **and** the relay did not rewrite it. A stale address here means the deploy step did not actually recompose the env — the secret changed but the container did not. |
+| `Return-Path:` | the authenticating account | This is the envelope sender, and it is what SPF is evaluated against — not `From:`. Worth reading separately because the two can differ. |
+| `Authentication-Results:` → `spf=` | `pass` | `mezin.eu` publishes `v=spf1 include:spf.messagingengine.com ?all`, so Fastmail is authorised and Gmail is not. Sending as `@mezin.eu` through Gmail would fail here. |
+| `Authentication-Results:` → `dkim=` | `pass` | Verified 2026-08-26: all three Fastmail selectors are live (`fm1`/`fm2`/`fm3._domainkey.mezin.eu` → `dkim.fmhosted.com`). So a Fastmail-sent `@mezin.eu` message is signed. |
+| `Authentication-Results:` → `dmarc=` | `none` — **and that is expected** | `mezin.eu` publishes **no** DMARC policy. `_dmarc.mezin.eu` appears to answer only because the domain serves a **wildcard TXT** record — verified: a random subdomain returns the same string. There is no `v=DMARC1`. Do not chase this during an incident; it is a known gap recorded in §8 of the design. |
+| Delivery folder | Inbox, not Junk | The whole point. This app forms teams by emailed invitation, so spam-foldering is a silent failure. |
+| Links in the body | `game.mezin.eu` | Built from `APP_HOST` via `default_url_options`, which a cutover does **not** change. A glance costs nothing and catches a mis-set env. |
+
+**Step 3 — when a check fails:**
+
+- **`From:` still shows the old account** → the deploy did not recompose `MAIL_FROM`. It is derived
+  in `.kamal/secrets` as `MAIL_FROM=${SMTP_USERNAME}` at deploy time, not at secret-set time, so
+  changing the GitHub secret alone changes nothing running. Re-run the deploy.
+- **`spf=fail` or `spf=softfail`** → the From domain and the sending relay disagree. Check that the
+  new `SMTP_USERNAME` is an address on a domain whose SPF authorises the vendor now doing the
+  sending.
+
+**A green probe does not substitute for any of this.** It's the same blind spot §8 (What this does
+not cover) already records for per-recipient rejections: the probe never sends, so it cannot see
+anything about what a recipient actually receives. Delete the throwaway account/team once you're
+done with it if you want to keep the data clean; it isn't required for the check itself.
+
+---
+
+## 6. Cut back
 
 Same four steps as §3, in reverse, once the primary (Gmail) is confirmed working again — don't cut
 back on a hunch, confirm with the probe first:
@@ -171,11 +227,12 @@ back on a hunch, confirm with the probe first:
 3. `config/deploy.yml`'s `SMTP_ADDRESS` back to `smtp.gmail.com`, commit.
 4. Push, `gh workflow run deploy.yml -f command=deploy`.
 
-Then re-verify per §4 against the primary.
+Then re-verify per §4 and §5 against the primary — the same envelope surprises (a stale `From:`,
+an SPF mismatch, a spam-foldered letter) apply in this direction too, not just on the way out.
 
 ---
 
-## 6. Why password reset looks unchanged either way
+## 7. Why password reset looks unchanged either way
 
 If you're debugging a report that "password reset silently did nothing," this isn't the SMTP outage
 — it's working as designed. `PasswordResetsController` calls `MailDelivery.attempt` and **discards
@@ -188,7 +245,7 @@ you either way.
 
 ---
 
-## 7. What this does not cover
+## 8. What this does not cover
 
 The probe authenticates and quits — it **never sends a message**, deliberately, so as not to spend
 sending reputation proving sending reputation works. That means it cannot see, and this runbook does

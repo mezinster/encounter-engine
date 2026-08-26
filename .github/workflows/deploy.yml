@@ -182,9 +182,19 @@ jobs:
       # The same resolver the probe uses, so the two cannot disagree about which
       # vendor production is sending through. A bad MAIL_ROLE fails HERE, before
       # anything is deployed, rather than shipping mail pointed at nowhere.
+      #
+      # Deliberately NOT gated on `inputs.command == 'deploy'`, unlike the
+      # verification steps below: `kamal setup` pushes the same env into the
+      # container as `kamal deploy` does, and config/environments/production.rb
+      # reads `ENV.fetch("SMTP_ADDRESS", "smtp.gmail.com")` -- `Hash#fetch`'s
+      # default only fires on an ABSENT key. A `setup` run skipping this step
+      # would still set SMTP_ADDRESS, just to "", which is present-and-empty,
+      # not absent -- so the default would never kick in and the host would
+      # boot with mail broken (address "", port 0) from its first deploy, with
+      # nothing failing to say so. Don't re-add this gate for symmetry with the
+      # steps below; it would reintroduce exactly that failure mode.
       - name: Resolve which SMTP vendor to ship
         id: mail
-        if: success() && inputs.command == 'deploy'
         env:
           MAIL_ROLE: ${{ vars.MAIL_ROLE }}
         run: |

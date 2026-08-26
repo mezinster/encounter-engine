@@ -73,8 +73,23 @@ class UsersController < ApplicationController
 
     if @user.save
       authenticate_user
-      send_welcome_letter_to(@user)
-      redirect_to dashboard_path
+
+      # MailDelivery.attempt returns false only on a TRANSPORT failure; a bug in
+      # the mailer or a missing translation still raises. See
+      # app/services/mail_delivery.rb.
+      #
+      # The else branch is unreachable from the acceptance suite:
+      # config/environments/test.rb sets delivery_method = :test, which never
+      # raises, so "Удачная регистрация" still redirects to the dashboard and
+      # still sends exactly one letter. No feature file changes.
+      if MailDelivery.attempt { send_welcome_letter_to(@user, generated_password) }
+        redirect_to dashboard_path
+      else
+        # The only surviving copy of this password. Do not redirect, do not log.
+        @generated_password = generated_password
+        response.headers["Cache-Control"] = "no-store"
+        render :welcome_password
+      end
     else
       render :new, status: :unprocessable_entity
     end
@@ -158,10 +173,16 @@ class UsersController < ApplicationController
 
   # Merb original: app/controllers/users.rb#send_welcome_letter_to, which
   # passed user.email and user.password to NotificationMailer#welcome_letter.
-  # user.password is the plaintext virtual attribute set earlier in #create
-  # (before_save hashes it into password_digest -- see User#encrypt_password),
-  # so it's still readable here.
-  def send_welcome_letter_to(user)
-    NotificationMailer.welcome_letter(user, user.password).deliver_now
+  # This now takes the password as a PARAMETER, rather than reading
+  # user.password (the plaintext virtual attribute set earlier in #create) off
+  # the record: the welcome_password view also renders generated_password
+  # straight from #create's local, and the two traced back to the same
+  # assignment only by coincidence. Nothing enforced that they'd stay equal --
+  # if @user were ever reloaded before this ran, user.password would be nil
+  # and the letter would silently carry a different password than the screen
+  # already showed. Passing it explicitly makes the two provably the same
+  # value rather than accidentally the same value.
+  def send_welcome_letter_to(user, password)
+    NotificationMailer.welcome_letter(user, password).deliver_now
   end
 end

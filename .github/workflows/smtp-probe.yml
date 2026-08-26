@@ -1,0 +1,169 @@
+# Proves the SMTP credentials still authenticate -- the live one AND the warm
+# spare -- without sending any mail. See
+# docs/superpowers/specs/2026-08-25-smtp-outage-resilience-design.md §D7.
+#
+# Six-hourly, not every fifteen minutes, and that is a deliberate trade: each
+# run performs a real AUTH from a GitHub runner IP, which is itself mildly
+# provocative to Gmail. Connect-only would avoid it but would not detect a
+# revoked app password, which is the failure being hunted.
+#
+# The spare is probed on every run even while the primary is healthy. An idle
+# fallback that nobody exercises is not a fallback.
+name: SMTP probe
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ruby/setup-ruby@a4effe49ee8ee5b8b5091268c473a4628afb5651 # v1.245.0
+        with:
+          ruby-version: "3.3.12"
+
+      # The app's real SMTP host, port, and HELO domain all live in
+      # config/deploy.yml, so the probe reads them from there rather than
+      # carrying its own copies. Without this the probe would keep testing
+      # Gmail on a stale port after a cutover to Fastmail -- failing forever
+      # against the wrong endpoint while the app sent mail correctly, and
+      # filing an issue every six hours to say so. Step 3 of the failover
+      # runbook edits config/deploy.yml, and the probe follows it
+      # automatically.
+      - name: Read the app's configured SMTP host, port, and HELO domain
+        id: cfg
+        run: |
+          set -euo pipefail
+          ruby -ryaml -e '
+            clear = YAML.unsafe_load_file("config/deploy.yml").dig("env", "clear")
+            address  = clear["SMTP_ADDRESS"]
+            port     = clear["SMTP_PORT"] || "587"
+            app_host = clear["APP_HOST"]
+            abort "config/deploy.yml has no env.clear.SMTP_ADDRESS -- probe cannot know what to test" if
+              address.to_s.empty?
+            File.open(ENV.fetch("GITHUB_OUTPUT"), "a") do |f|
+              f.puts "address=#{address}"
+              f.puts "port=#{port}"
+              f.puts "app_host=#{app_host}"
+            end
+            warn "probing primary host: #{address}:#{port}"
+          '
+
+      - name: Probe both endpoints
+        id: probe
+        continue-on-error: true
+        env:
+          SMTP_ADDRESS: ${{ steps.cfg.outputs.address }}
+          SMTP_PORT: ${{ steps.cfg.outputs.port }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SPARE_ADDRESS: ${{ secrets.SMTP_SPARE_ADDRESS }}
+          SMTP_SPARE_PORT: "587"
+          SMTP_SPARE_USERNAME: ${{ secrets.SMTP_SPARE_USERNAME }}
+          SMTP_SPARE_PASSWORD: ${{ secrets.SMTP_SPARE_PASSWORD }}
+          APP_HOST: ${{ steps.cfg.outputs.app_host }}
+        run: |
+          set +e
+          ruby ops/smtp/probe.rb > verdict.json
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat verdict.json
+
+      # gh, not actions/github-script: this repo files issues with the gh CLI
+      # (see vm-scale.yml), gh is preinstalled on runners, and that keeps a
+      # third-party action out of the one step that holds issues: write.
+      #
+      # `if: failure() || ...`, not just the exit-code check: a hard failure in
+      # the `cfg` step above aborts the job BEFORE `probe` ever runs, and a step
+      # with only an implicit success() check is skipped whenever an earlier
+      # step failed -- so a cfg crash used to file no issue at all, directly
+      # contradicting the "a crash with no issue is the one outcome that leaves
+      # nobody informed" comment below. failure() makes this step run in that
+      # case too; verdict.json then won't exist, which the crashed-probe
+      # fallback below already handles correctly.
+      - name: File an issue when the verdict is not ok
+        if: failure() || steps.probe.outputs.exit_code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # gh resolves the repository from the checkout's git remote by
+          # default. This step also runs via failure() when checkout itself
+          # failed, in which case there is no remote to resolve from -- gh
+          # would fail before either issue command below could run. Setting
+          # GH_REPO removes that dependency entirely.
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # jq -e fails on a missing or unparseable file, which IS the
+          # crashed-probe case (cfg failed, or probe wrote nothing readable).
+          # Fall back to a title saying so, rather than dying and filing
+          # nothing -- a crash with no issue is the one outcome that leaves
+          # nobody informed.
+          if SUMMARY=$(jq -er '.summary' verdict.json 2>/dev/null); then
+            VERDICT=$(jq -r '.verdict' verdict.json)
+          else
+            VERDICT=crashed
+            SUMMARY="probe wrote no readable verdict -- see the run log"
+          fi
+
+          TITLE="SMTP probe: ${VERDICT} -- ${SUMMARY}"
+          TITLE="${TITLE:0:200}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          {
+            echo '```json'
+            cat verdict.json 2>/dev/null || echo '(no verdict.json was written)'
+            echo '```'
+            echo
+            echo 'Cutover procedure: `docs/runbooks/smtp-failover.md`.'
+            echo
+            echo 'A `degraded` verdict means the SITE IS FINE but the warm spare does'
+            echo 'not authenticate -- fix it before it is needed, not after.'
+            echo
+            echo "[run]($RUN_URL)"
+          } > issue-body.md
+
+          # The label may not exist yet; gh issue create fails outright if it
+          # does not, so ensure it first and ignore "already exists".
+          gh label create smtp --description "SMTP credential probe" --color B60205 2>/dev/null || true
+
+          # Same pattern as vm-scale.yml: "A comment every fifteen minutes
+          # would be 96 a day and nobody would read the one that mattered."
+          # A weekend Gmail outage would otherwise file ~12 identical issues,
+          # and a low-urgency `degraded` verdict would file 4 a day until
+          # someone acts. Comment on the one open issue instead of opening a
+          # new one every run.
+          #
+          # `|| echo ""` -- under `set -euo pipefail`, a transient `gh`
+          # failure here (rate limit, network blip, or no git remote when
+          # this step runs after a failed checkout) would otherwise abort the
+          # step before EITHER gh issue comment or gh issue create runs,
+          # silently turning "issue filed" into "issue not filed". Falling
+          # through to an empty ISSUE takes the create path instead -- worst
+          # case a duplicate issue, never a silent no-op.
+          ISSUE=$(gh issue list --label smtp --state open --limit 1 --json number --jq '.[0].number // empty' || echo "")
+          if [ -n "$ISSUE" ]; then
+            # Retitle on every comment, not just when the verdict escalates:
+            # de-duplication keys on the label alone, so a fresh `down` can
+            # land as a comment on an issue titled from an earlier `degraded`
+            # run. `degraded`'s own title is glossed in the issue body as
+            # "the SITE IS FINE" -- leaving that headline in place while the
+            # primary is down points the operator at the wrong urgency.
+            # Retitling to the current run's verdict every time keeps the
+            # title honest without having to parse or compare the old one.
+            gh issue edit "$ISSUE" --title "$TITLE"
+            gh issue comment "$ISSUE" --body-file issue-body.md
+          else
+            gh issue create --title "$TITLE" --body-file issue-body.md --label smtp
+          fi
+
+      - name: Fail the run so the badge reflects reality
+        if: failure() || steps.probe.outputs.exit_code != '0'
+        run: exit 1

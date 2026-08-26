@@ -26,7 +26,15 @@ class PasswordResetsController < ApplicationController
 
     if user
       token = user.issue_reset_password_token!
-      NotificationMailer.password_reset(user, token).deliver_now
+      # Return value DELIBERATELY DISCARDED, and this comment is why.
+      #
+      # This send happens only inside `if user`, so a transport failure here
+      # occurs only for a registered address. Reporting it -- a different
+      # flash, a different status, anything -- would tell the caller that the
+      # address exists, which is the one thing this action is built not to
+      # say (see the comment above #create, and sessions_controller.rb:24).
+      # A dead SMTP server must look exactly like an unknown address.
+      MailDelivery.attempt { NotificationMailer.password_reset(user, token).deliver_now }
     end
 
     redirect_to login_path, notice: t("password_resets.create.sent")

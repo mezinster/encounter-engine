@@ -571,11 +571,17 @@ Expected: `yaml ok`.
 - [ ] **Step 4: Confirm no `config/deploy.yml` read remains**
 
 ```bash
-grep -n "deploy.yml" .github/workflows/smtp-probe.yml
+grep -n "load_file\|unsafe_load" .github/workflows/smtp-probe.yml
 ```
 
-Expected: no match. If one remains, the probe still has a second source of truth and Task 1's whole
+Expected: no match. If one remains, the probe still reads a second source of truth and Task 1's whole
 purpose is defeated.
+
+Check the **functional read**, not the string `deploy.yml`. An earlier version of this step grepped for
+the filename and expected zero hits — but the comments in this workflow legitimately *mention*
+`config/deploy.yml` while explaining why it is no longer read, and why both workflows now share one
+resolver. Those comments are the most valuable lines in the file. A check that would be satisfied by
+deleting them is measuring the wrong thing.
 
 - [ ] **Step 5: Commit**
 

@@ -492,26 +492,44 @@ In the `Probe both endpoints` step, replace the `SMTP_*` env entries with:
 Then replace that step's `run:` block with:
 
 ```bash
-          set +e
-          pick() {
+          # Plain case, assigning directly. An earlier draft of this plan used a
+          # pick() helper called in a command substitution -- and its `exit 1`
+          # for an unknown vendor would have exited only the SUBSHELL, leaving an
+          # empty prefix and, under `set +e`, empty credentials. The probe would
+          # then have reported "not configured" instead of failing. Unreachable
+          # in practice (the vendor comes from our own validated resolver) but
+          # silent, which is the failure shape this project keeps removing.
+          select_creds() {
             case "$1" in
-              gmail)    echo "GMAIL_PROBE" ;;
-              fastmail) echo "FASTMAIL_PROBE" ;;
-              *) echo "unknown vendor: $1" >&2; exit 1 ;;
+              gmail)    printf '%s\n%s\n' "$GMAIL_PROBE_USERNAME"    "$GMAIL_PROBE_PASSWORD" ;;
+              fastmail) printf '%s\n%s\n' "$FASTMAIL_PROBE_USERNAME" "$FASTMAIL_PROBE_PASSWORD" ;;
+              *)        return 1 ;;
             esac
           }
-          live_prefix=$(pick "$SMTP_LIVE_VENDOR")
-          standby_prefix=$(pick "$SMTP_STANDBY_VENDOR")
 
-          export SMTP_USERNAME="$(eval echo \"\$${live_prefix}_USERNAME\")"
-          export SMTP_PASSWORD="$(eval echo \"\$${live_prefix}_PASSWORD\")"
-          export SMTP_SPARE_USERNAME="$(eval echo \"\$${standby_prefix}_USERNAME\")"
-          export SMTP_SPARE_PASSWORD="$(eval echo \"\$${standby_prefix}_PASSWORD\")"
+          set -euo pipefail
+          if ! { read -r SMTP_USERNAME; read -r SMTP_PASSWORD; } < <(select_creds "$SMTP_LIVE_VENDOR"); then
+            echo "unknown live vendor '${SMTP_LIVE_VENDOR}' -- refusing to probe nothing" >&2
+            exit 1
+          fi
+          if ! { read -r SMTP_SPARE_USERNAME; read -r SMTP_SPARE_PASSWORD; } < <(select_creds "$SMTP_STANDBY_VENDOR"); then
+            echo "unknown standby vendor '${SMTP_STANDBY_VENDOR}' -- refusing to probe nothing" >&2
+            exit 1
+          fi
+          export SMTP_USERNAME SMTP_PASSWORD SMTP_SPARE_USERNAME SMTP_SPARE_PASSWORD
 
+          # set +e only around the probe itself: its non-zero exit is DATA (the
+          # verdict), not a failure of this step. Everything above must abort.
+          set +e
           ruby ops/smtp/probe.rb > verdict.json
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
           cat verdict.json
 ```
+
+If process substitution (`< <(...)`) reads awkwardly to you, an equally correct shape is a single
+`case` that assigns all four variables inline per vendor, with a `*)` arm that echoes and exits at
+**top level**. Either is fine; what is not fine is any form where the failure arm runs inside a
+subshell, because there its `exit` cannot stop the step.
 
 **`APP_HOST` note:** the old `cfg` step supplied it from `config/deploy.yml`. The resolver does not
 read that file, so it is a literal now, matching `config/deploy.yml`'s `env.clear.APP_HOST`. Do not
@@ -522,12 +540,24 @@ It matters that this stays a real value rather than leaning on `probe.rb`'s inte
 default exists only to stop a bare `EHLO` when the variable arrives empty, and a silent fallback is
 not the same thing as a configured value.
 
-- [ ] **Step 2b: Reconsider the `eval` before you keep it**
+- [ ] **Step 2b: Prove the unknown-vendor arm actually aborts**
 
-`eval echo` is the shortest way to indirect through a prefix, and it is also the classic shell
-injection shape. The values here come from `pick`, which only ever emits two literals, so it is safe
-as written — but if you can express the same selection with a plain `case` that assigns both pairs
-directly, prefer that and say so in your report. Readability under stress beats brevity here.
+The whole point of the rewrite above is that a bad vendor stops the step rather than silently
+probing with empty credentials. Verify it locally rather than trusting the shape:
+
+```bash
+export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
+cat > /tmp/arm.$$ <<'SH'
+GMAIL_PROBE_USERNAME=u; GMAIL_PROBE_PASSWORD=p
+FASTMAIL_PROBE_USERNAME=u2; FASTMAIL_PROBE_PASSWORD=p2
+SMTP_LIVE_VENDOR=gnail
+SH
+# append your select_creds function and the two `if ! { read ... }` guards, then:
+bash /tmp/arm.$$; echo "exit=$?"; rm -f /tmp/arm.$$
+```
+
+Expected: a non-zero exit and the message naming `gnail`. If it exits 0, the failure arm is inside a
+subshell and the guard does nothing — fix it before moving on and say so in your report.
 
 - [ ] **Step 3: Validate the YAML**
 

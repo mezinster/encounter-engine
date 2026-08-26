@@ -242,12 +242,52 @@ ssh mezin 'docker run --rm \
 
 ### 4.5 Bring it back up
 
+This is one of the few places anything runs `kamal` **from a laptop** rather than from
+`.github/workflows/deploy.yml`. The workflow supplies every variable `.kamal/secrets` interpolates;
+your shell does not, so export them first:
+
+```bash
+export SECRET_KEY_BASE=…        # boot raises without it
+export POSTGRES_PASSWORD=…      # DATABASE_URL is composed from it
+export SMTP_ADDRESS=…           # smtp.gmail.com or smtp.fastmail.com — see below
+export SMTP_PORT=587
+export SMTP_USERNAME=…          # the live vendor's deploy credential
+export SMTP_PASSWORD=…          # MAIL_FROM derives from SMTP_USERNAME
+export KAMAL_REGISTRY_PASSWORD=…
+export ANTHROPIC_API_KEY=…      # unset simply disables AI translation
+```
+
+**`SMTP_ADDRESS` and `SMTP_PORT` fail silently if you forget them, and that is new.** They used to be
+committed literals in `config/deploy.yml`'s `env.clear`; the endpoint switcher moved them to
+`env.secret` so a cutover needs no commit. Kamal raises only for a key **absent from
+`.kamal/secrets`** — `SMTP_ADDRESS=$SMTP_ADDRESS` is present, so an unset shell variable makes it
+present-and-empty. `config/environments/production.rb` then reads
+`ENV.fetch("SMTP_ADDRESS", "smtp.gmail.com")`, and `fetch` does **not** use its default for a key that
+exists and is empty. The app boots, `/up` returns 200, and mail is configured with `address: ""` and
+`port: 0`. Nothing fails. Nothing says so.
+
+`SECRET_KEY_BASE` is the opposite and the reason this is easy to miss: forget that one and boot raises
+immediately, which trains you to expect a missing variable to be loud.
+
+Which vendor is live — and therefore which credential and host to export:
+
+```bash
+gh variable get MAIL_ROLE       # gmail | fastmail
+```
+
+`ops/smtp/endpoints.yml` maps that to a host and port, and `docs/runbooks/smtp-credentials.md` §1 says
+which secret pair holds the credential. Then:
+
 ```bash
 cd /path/to/encounter-engine
 bundle exec kamal accessory boot db
 bundle exec kamal deploy
 curl -sS -o /dev/null -w '%{http_code}\n' https://game.mezin.eu/up   # expect 200
 ```
+
+A 200 proves the app is serving. It proves nothing about mail — for that, dispatch the SMTP probe
+(`gh workflow run "SMTP probe"`) and confirm a verdict of `ok` that **names both vendors**. A bare
+`ok` is not enough: an unconfigured spare also yields `ok`, with a note.
 
 ### 4.6 Afterwards
 

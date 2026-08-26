@@ -63,9 +63,19 @@ jobs:
     timeout-minutes: 90
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      # v7.0.1, the SHA the other eleven checkout steps in this repo use. The
+      # v4.2.2 pin this replaced declares `using: node20` in its action.yml
+      # (verified), which is what produced the "Node 20 is being deprecated"
+      # notice on every run of this workflow. v7.0.1 declares node24.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: ruby/setup-ruby@a4effe49ee8ee5b8b5091268c473a4628afb5651 # v1.245.0
+      # Was v1.245.0, whose Ruby catalogue stops at 3.3.8 -- so this step could
+      # never have succeeded with the 3.3.12 requested below. It failed with
+      # "Unknown version 3.3.12 for ruby on ubuntu-24.04" the first time it was
+      # actually reached. This workflow is dispatched by hand and had not been
+      # run, so the breakage sat here unnoticed; it surfaced only when
+      # smtp-probe.yml copied this pin and then ran on a schedule.
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
         with:
           ruby-version: "3.3.12"
 

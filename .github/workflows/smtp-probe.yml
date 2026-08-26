@@ -26,7 +26,22 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: ruby/setup-ruby@a4effe49ee8ee5b8b5091268c473a4628afb5651 # v1.245.0
+      # v1.321.0, NOT the v1.245.0 SHA that perf-probe.yml carried. setup-ruby
+      # ships a fixed catalogue of Ruby builds per release, and v1.245.0's
+      # predates 3.3.12 -- its list stops at 3.3.8, so it fails with "Unknown
+      # version 3.3.12 for ruby on ubuntu-24.04" before the probe runs at all.
+      #
+      # Nothing local can catch that: the YAML parses, the SHA is real and
+      # pinned, and the version matches .ruby-version. It is only visible on a
+      # real runner, which is how it reached master -- this workflow's first
+      # scheduled run was the first time any workflow in this repo actually
+      # executed that step. perf-probe.yml carried the same pin and the same
+      # 3.3.12 request, and was broken in exactly this way without anyone
+      # noticing, because it is dispatched by hand and had not been run.
+      #
+      # This SHA is the one deploy.yml already uses. When adding a workflow,
+      # copy the newest pin in the repo, not the nearest one.
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
         with:
           ruby-version: "3.3.12"
 
@@ -63,8 +78,31 @@ jobs:
         env:
           SMTP_ADDRESS: ${{ steps.cfg.outputs.address }}
           SMTP_PORT: ${{ steps.cfg.outputs.port }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          # NOT secrets.SMTP_USERNAME/SMTP_PASSWORD -- those exist only as
+          # `production` ENVIRONMENT secrets (required-reviewer protected), and
+          # this job carries no `environment:`, so they would resolve to empty
+          # strings here rather than hanging -- the first live run proved
+          # exactly that ("primary not configured"). Giving this job
+          # `environment: production` would fix the empty string but park every
+          # six-hourly run on a human approval, forever.
+          #
+          # SMTP_PROBE_USERNAME/PASSWORD are a dedicated app password on the
+          # SAME Gmail account, stored as repository secrets so an unattended
+          # schedule can read them. This proves the ACCOUNT is healthy --
+          # catches suspension, the daily-quota trip, Google blocking the
+          # account, network/TLS breakage -- but it is a different credential
+          # from the one the app actually ships, so a green run here does NOT
+          # prove the deploy's own SMTP_USERNAME/SMTP_PASSWORD still
+          # authenticate (e.g. that credential specifically being rotated or
+          # revoked). `.github/workflows/deploy.yml`'s final step covers that
+          # gap, at deploy time, with the real environment secrets.
+          #
+          # Do not "fix" this back to secrets.SMTP_USERNAME/SMTP_PASSWORD --
+          # see above, that is the empty-string bug this comment exists to
+          # prevent from being reintroduced. See docs/runbooks/smtp-failover.md
+          # and design spec §D10.
+          SMTP_USERNAME: ${{ secrets.SMTP_PROBE_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PROBE_PASSWORD }}
           SMTP_SPARE_ADDRESS: ${{ secrets.SMTP_SPARE_ADDRESS }}
           SMTP_SPARE_PORT: "587"
           SMTP_SPARE_USERNAME: ${{ secrets.SMTP_SPARE_USERNAME }}

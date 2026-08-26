@@ -747,6 +747,24 @@ just-in-time hole in the NSG for the runner's IP and closing it again afterward.
 `docs/superpowers/specs/2026-08-05-kamal-deployment-design.md` for the design and
 `docs/runbooks/restore.md` for restoring the production database.
 
+**SMTP failover is a variable, not a set of secrets to rewrite.** Two vendors can serve production
+mail, Gmail and Fastmail. `ops/smtp/endpoints.yml` (committed) maps each vendor name to its host
+and port; the `MAIL_ROLE` **repository variable** — not a secret — names which one is live right
+now. `.github/workflows/deploy.yml` and `.github/workflows/smtp-probe.yml` both resolve `MAIL_ROLE`
+through the same pure function, `ops/smtp/roles.rb`, specifically so the deploy and the six-hourly
+monitoring probe can never disagree about which vendor production is actually sending through.
+Credentials are named by **vendor**, not by role: `SMTP_<VENDOR>_<USE>_<FIELD>`
+(`SMTP_GMAIL_DEPLOY_USERNAME`, `SMTP_FASTMAIL_PROBE_PASSWORD`, and so on). That naming replaced an
+earlier scheme where a secret's name meant a *role* — `SMTP_SPARE_*` meant "whichever vendor is not
+primary right now" — so its correct value inverted on every cutover, and every value that inverts
+is a value someone eventually forgets to rewrite: a missed `SMTP_SPARE_*` update once left a
+supposedly-monitored standby unwatched, and a `gh secret set` missing `--env production` once
+created an unread repository secret while the deploy kept quietly shipping the old credential.
+Naming by vendor instead means `SMTP_GMAIL_DEPLOY_*` is always Gmail's deploy credential, live or
+not, so a cutover — `gh variable set MAIL_ROLE --body fastmail`, then a deploy — never touches a
+secret at all. See `docs/runbooks/smtp-failover.md` for the incident procedure and
+`docs/runbooks/smtp-credentials.md` for the inventory of all eight secrets and how to rotate each.
+
 `create-heroku-instance <app-name> <TZ> [DEFAULT_LOCALE]` is the old per-instance Heroku
 provisioning script (sets `RAILS_ENV=production`, `TZ`, `DEFAULT_LOCALE`, generates a
 `SECRET_KEY_BASE`). It is no longer how production is deployed — kept for now as history, not as a

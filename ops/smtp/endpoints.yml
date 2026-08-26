@@ -17,10 +17,11 @@
 # one not listed here fails loudly (SMTPRoles.resolve raises). But adding a
 # map entry alone is not enough to make a vendor usable: the two-vendor
 # `case`/select also exists in .github/workflows/smtp-probe.yml (choosing the
-# probe credential) and in .github/workflows/deploy.yml (three separate
-# steps, choosing the deploy credential and the standby probe credential). A
-# vendor added only here would resolve fine and then fail to find any
-# credentials in either workflow.
+# probe credential) and in .github/workflows/deploy.yml (three `case` blocks
+# across two steps -- Deploy, and Verify the shipped SMTP credential --
+# choosing the deploy credential and the standby probe credential). A vendor
+# added only here would resolve fine and then fail to find any credentials in
+# either workflow.
 #
 # See docs/superpowers/specs/2026-08-26-smtp-endpoint-switcher-design.md
 gmail:

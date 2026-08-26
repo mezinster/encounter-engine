@@ -304,8 +304,12 @@ jobs:
           # not re-derived: that step already ran ops/smtp/roles.rb and is the
           # single source of truth both this summary and the Deploy step read
           # from. Runs for both `deploy` and `setup` (see that step's comment),
-          # so these are populated on every run this step can reach, including
-          # a run that failed before the Deploy step itself.
+          # so these are populated on any run that gets past the resolve step
+          # itself -- including one that failed before the Deploy step. A run
+          # that fails earlier still, in "Authenticate to Azure" or "Open SSH
+          # to this runner only", never reaches the resolver: MAIL_HOST and
+          # MAIL_PORT are empty in that case, though MAIL_VENDOR still prints,
+          # since it comes from vars.MAIL_ROLE rather than the resolver.
           MAIL_VENDOR: ${{ vars.MAIL_ROLE }}
           MAIL_HOST: ${{ steps.mail.outputs.live_host }}
           MAIL_PORT: ${{ steps.mail.outputs.live_port }}
@@ -367,11 +371,15 @@ jobs:
       # docs/runbooks/smtp-credentials.md §4). Either way, a green six-hourly
       # probe proves the ACCOUNT is healthy (catches suspension, the
       # daily-quota trip, the vendor blocking the account, network/TLS
-      # breakage) but says nothing about whether the credential actually
-      # shipped to production still authenticates -- e.g. that specific
-      # credential being rotated or revoked elsewhere. This step
-      # closes exactly that gap, once per deploy, with the secret that
-      # matters, and needs no separate schedule or approval to do it.
+      # breakage). For Gmail it says nothing beyond that about whether the
+      # credential actually shipped to production still authenticates --
+      # the probe and deploy passwords are different values, so one being
+      # rotated or revoked elsewhere is invisible to the probe. For Fastmail
+      # the probe pair IS the deploy pair, so a green probe does exercise the
+      # shipped value -- but the two secret entries are still separate and
+      # can drift if only one of them is rotated. This step closes that gap
+      # for both vendors, once per deploy, with the secret that matters, and
+      # needs no separate schedule or approval to do it.
       #
       # `inputs.command == 'deploy'`, the same check "Write the run summary"
       # above already reads via KAMAL_COMMAND, rather than inventing a second

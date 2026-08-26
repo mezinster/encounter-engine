@@ -65,7 +65,7 @@ three:
 | Verdict | Means | Do |
 |---|---|---|
 | `ok` | Both endpoints authenticate. | Nothing. |
-| `degraded` | The **primary is fine**; the **spare** doesn't authenticate. | **Fix the spare. Do not cut over** — the site is not affected, and cutting over would trade a working primary for a spare you just found out is broken. |
+| `degraded` | The **primary is fine**; the **spare** doesn't authenticate. | **Fix the spare. Do not cut over** — the site is not affected, and cutting over would trade a working primary for a spare you just found out is broken. If you cut over recently, confirm the deploy actually went green first — see **"Before you trust the probe: confirm the deploy actually shipped"** below; a failed deploy makes this verdict mean the opposite. |
 | `down` | The **primary** doesn't authenticate (or didn't respond at all). | **Cut over** — go to §3. |
 
 The verdict and a human-readable summary are both in the filed issue's JSON. If you're unsure which
@@ -129,7 +129,7 @@ Rotating, creating or auditing any of the eight underlying credentials — inclu
 this file. This runbook is only about *which vendor is live*; that file is about the secrets
 themselves.
 
-Then go verify: §4, then §5.
+Then go verify: **"Before you trust the probe: confirm the deploy actually shipped"** below, then §4, then §5.
 
 ---
 

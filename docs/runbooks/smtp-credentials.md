@@ -162,9 +162,10 @@ Two other places say the same thing without you having to run anything:
 - The **last green run of `smtp-probe.yml`** — its verdict JSON labels each endpoint `primary` or
   `spare` and names the vendor behind each role (`primary: fastmail`, for example), so you don't
   have to infer which vendor "primary" meant that week.
-- The **step summary of the last successful `deploy.yml` run** — its "Resolve which SMTP vendor to
-  ship" and "Verify the shipped SMTP credential" steps both log the vendor they resolved and
-  shipped.
+- The **step summary of the last successful `deploy.yml` run** — its "Mail vendor" row, written by
+  the "Write the run summary" step, names the vendor; on a `deploy` run (not `setup`), the "Verify
+  the shipped SMTP credential" step's verdict JSON names it again. The "Resolve which SMTP vendor
+  to ship" step itself only logs the vendor to the run log (stderr), not to the step summary.
 
 If those disagree with each other, trust the deploy — it's the one that actually shipped a
 credential to production, not just checked one.

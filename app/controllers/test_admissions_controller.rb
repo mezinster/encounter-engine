@@ -38,8 +38,11 @@ class TestAdmissionsController < ApplicationController
     TestAdmission.create!(:game_run => run, :team => team)
     record_admin_action("test_admit_team", @game, team.name) if acting_as_operator?(@game)
 
-    redirect_to game_path(@game),
-                :notice => t("test_admissions.team_admitted", :name => team.name)
+    delivered = notify(recipients_for(team)) do |recipient|
+      NotificationMailer.test_admission_notification(recipient, @game, team)
+    end
+
+    redirect_with_delivery_result(delivered, "team_admitted", team.name)
   end
 
   def create_player
@@ -67,8 +70,14 @@ class TestAdmissionsController < ApplicationController
     TestAdmission.admit_player!(run, user)
     record_admin_action("test_admit_player", @game, user.nickname) if acting_as_operator?(@game)
 
-    redirect_to game_path(@game),
-                :notice => t("test_admissions.player_admitted", :name => user.nickname)
+    # nil team: the admission DOES have one in the database, but it is the
+    # disposable team admit_player! just created -- no members, no captain, and
+    # no name the recipient would recognise. See NotificationMailer.
+    delivered = notify([ user ]) do |recipient|
+      NotificationMailer.test_admission_notification(recipient, @game, nil)
+    end
+
+    redirect_with_delivery_result(delivered, "player_admitted", user.nickname)
   end
 
   def revoke
@@ -84,10 +93,31 @@ class TestAdmissionsController < ApplicationController
     # Read BEFORE the revoke: afterwards the row is gone and the disposable
     # team with it, so neither the notice nor the audit entry could say who.
     label = admission.solo? ? admission.user&.nickname : admission.team.name
+
+    # Read before the revoke, mirroring the label above -- but be honest about
+    # what that is worth, because the obvious reason is wrong. revoke! destroys
+    # the team only for a SOLO admission (`doomed = solo? ? team : nil`), and
+    # the solo branch here reads admission.user, whose row it never touches. A
+    # team admission's team survives outright. Mutation-tested: moving both
+    # reads below revoke! leaves the suite green.
+    #
+    # Kept above it anyway, for the same reason TestAdmission.held_by keeps its
+    # non-load-bearing team guard -- it costs nothing and states the intent
+    # ("these are the people this admission covered") at the point where that
+    # is still unambiguously true. It is not load-bearing today, and a future
+    # reader who moves it will not break anything.
+    team_for_letter = admission.solo? ? nil : admission.team
+    recipients      = admission.solo? ? [ admission.user ].compact
+                                      : recipients_for(admission.team)
+
     admission.revoke!
     record_admin_action("test_revoke_admission", @game, label) if acting_as_operator?(@game)
 
-    redirect_to game_path(@game), :notice => t("test_admissions.revoked", :name => label)
+    delivered = notify(recipients) do |recipient|
+      NotificationMailer.test_admission_revoked(recipient, @game, team_for_letter)
+    end
+
+    redirect_with_delivery_result(delivered, "revoked", label)
   end
 
   # GET. Renders a confirmation page and admits nobody -- see the routes
@@ -117,6 +147,38 @@ class TestAdmissionsController < ApplicationController
   end
 
   private
+
+  # "The captain, plus all members." Team#adopt_captain already forces the
+  # captain into members, so the union is a no-op on every team that exists
+  # today and .uniq is the part doing real work -- without it a captain would
+  # get two identical letters. The union is written out anyway so that a team
+  # whose captain somehow sits outside members still reaches them.
+  def recipients_for(team)
+    (team.members.to_a + [ team.captain ]).compact.uniq
+  end
+
+  # One MailDelivery.attempt per recipient, accumulated with `&` -- NOT `&&`.
+  # It must not short-circuit: the grant is already written, one unreachable
+  # address must not deny the rest of the team their letter, and the caller
+  # wants a single summary flash rather than one per recipient. Same idiom and
+  # same reasoning as InvitationsController#reject_rest_of_invitations.
+  def notify(recipients)
+    recipients.reduce(true) do |all_delivered, recipient|
+      all_delivered & MailDelivery.attempt { yield(recipient).deliver_now }
+    end
+  end
+
+  # alert:, not notice:, on the unnotified branch -- components.css gives
+  # .flash--alert a danger border, and the four invitation sites already warn
+  # in red for this same class of failure. The operation itself succeeded
+  # either way; what failed is only the telling.
+  def redirect_with_delivery_result(delivered, key, name)
+    if delivered
+      redirect_to game_path(@game), :notice => t("test_admissions.#{key}", :name => name)
+    else
+      redirect_to game_path(@game), :alert => t("test_admissions.#{key}_unnotified", :name => name)
+    end
+  end
 
   def find_game
     @game = Game.find(params[:game_id])

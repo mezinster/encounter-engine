@@ -538,6 +538,9 @@ be:
     author_needs_no_admission: "Аўтар і так можа тэставаць сваю гульню"
     revoked: "%{name} больш не ўдзельнічае ў тэставанні"
     joined: "Вы дапушчаны да тэставання гульні «%{game}»"
+    team_admitted_unnotified: "Каманда «%{name}» дапушчана да тэсціравання, але ліст адправіць не ўдалося"
+    player_admitted_unnotified: "Гулец %{name} дапушчаны да тэсціравання, але ліст адправіць не ўдалося"
+    revoked_unnotified: "%{name} больш не ўдзельнічае ў тэсціраванні, але паведамленне адправіць не ўдалося"
     token_reset: "Ранейшая спасылка больш не дзейнічае"
     invite:
       legend: "Запрашэнне на тэставанне"
@@ -789,6 +792,26 @@ be:
         праігнаруйце гэты ліст — пароль застанецца ранейшым.
   # Deliberately identical across every locale file -- each language is named
   # in its own endonym rather than translated. See the comment in ru.yml.
+    test_admission_notification:
+      subject_solo: "Вас запрасілі тэсціраваць гульню %{game_name}"
+      body_solo: |-
+        Вас запрасілі ўзяць удзел у тэсціраванні гульні %{game_name}.
+
+        Каб пачаць, перайдзіце па спасылцы:
+        %{url}
+      subject_team: "Каманду %{team_name} запрасілі тэсціраваць гульню %{game_name}"
+      body_team: |-
+        Вашу каманду %{team_name} запрасілі ўзяць удзел у тэсціраванні гульні %{game_name}.
+
+        Каб пачаць, перайдзіце па спасылцы:
+        %{url}
+    test_admission_revoked:
+      subject_solo: "Тэсціраванне гульні %{game_name}: доступ адкліканы"
+      body_solo: |-
+        Ваш доступ да тэсціравання гульні %{game_name} адкліканы аўтарам.
+      subject_team: "Тэсціраванне гульні %{game_name}: доступ каманды %{team_name} адкліканы"
+      body_team: |-
+        Доступ вашай каманды %{team_name} да тэсціравання гульні %{game_name} адкліканы аўтарам.
   locales:
     ru: "Русский"
     en: "English"

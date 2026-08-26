@@ -544,6 +544,9 @@ ka:
     author_needs_no_admission: "ავტორს უკვე შეუძლია საკუთარი თამაშის ტესტირება"
     revoked: "მონაწილე %{name} აღარ მონაწილეობს ტესტირებაში"
     joined: "თქვენ დაშვებული ხართ თამაშის «%{game}» ტესტირებაზე"
+    team_admitted_unnotified: "გუნდი «%{name}» დაშვებულია ტესტირებაზე, მაგრამ წერილის გაგზავნა ვერ მოხერხდა"
+    player_admitted_unnotified: "მოთამაშე %{name} დაშვებულია ტესტირებაზე, მაგრამ წერილის გაგზავნა ვერ მოხერხდა"
+    revoked_unnotified: "%{name} აღარ მონაწილეობს ტესტირებაში, მაგრამ შეტყობინების გაგზავნა ვერ მოხერხდა"
     token_reset: "წინა ბმული აღარ მოქმედებს"
     invite:
       legend: "მოწვევა ტესტირებაზე"
@@ -816,6 +819,29 @@ ka:
   # a reader sees their own language's name spelled the way they'd recognise
   # it no matter which locale currently renders the page. spec/i18n_spec.rb's
   # untranslated-copy-paste check knows about this key and allows it.
+    # Same treatment as Turkish: the case suffix sits on a common noun
+    # ("თამაში"/"გუნდი") and the interpolated name is set off after it, so no
+    # suffix ever lands on a value a player typed.
+    test_admission_notification:
+      subject_solo: "მიწვეული ხართ თამაშის ტესტირებაში: %{game_name}"
+      body_solo: |-
+        მიწვეული ხართ მონაწილეობა მიიღოთ თამაშის ტესტირებაში: %{game_name}.
+
+        დასაწყებად გადადით ბმულზე:
+        %{url}
+      subject_team: "გუნდი «%{team_name}» მიწვეულია თამაშის ტესტირებაში: %{game_name}"
+      body_team: |-
+        თქვენი გუნდი «%{team_name}» მიწვეულია მონაწილეობა მიიღოს თამაშის ტესტირებაში: %{game_name}.
+
+        დასაწყებად გადადით ბმულზე:
+        %{url}
+    test_admission_revoked:
+      subject_solo: "თამაშის ტესტირება: %{game_name} — წვდომა გაუქმებულია"
+      body_solo: |-
+        თქვენი წვდომა თამაშის ტესტირებაზე — %{game_name} — ავტორმა გააუქმა.
+      subject_team: "თამაშის ტესტირება: %{game_name} — გუნდის «%{team_name}» წვდომა გაუქმებულია"
+      body_team: |-
+        თქვენი გუნდის «%{team_name}» წვდომა თამაშის ტესტირებაზე — %{game_name} — ავტორმა გააუქმა.
   locales:
     ru: "Русский"
     en: "English"

@@ -592,8 +592,8 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 2827 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
-  measured 2026-08-24 on the docs-site branch. This figure has now been wrong five times: 1603
+- **RSpec** — 2904 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+  measured 2026-08-26 on the test-admission-mail branch. This figure has now been wrong five times: 1603
   while the real number was 1751, then 1751 while it was 1829, then 1829 while it was 1851 —
   measured on 2026-08-16 before the AI translation work began — and it said 1934 while the real
   number was 2820. The Cucumber figure beside it was wrong once too. Which is the point of the

@@ -70,6 +70,24 @@ The verdict and a human-readable summary are both in the filed issue's JSON. If 
 one you're looking at, re-run the probe (`gh workflow run smtp-probe.yml`, or trigger it from the
 Actions tab) rather than guessing from a stale issue.
 
+**A green six-hourly probe proves the Gmail *account* is healthy — it does not prove the exact
+credential the app ships still works.** `.github/workflows/smtp-probe.yml` cannot read
+`SMTP_USERNAME`/`SMTP_PASSWORD` — those exist only as `production` **environment** secrets, gated by
+a required reviewer, and an unattended schedule cannot wait on one (four approval prompts a day,
+forever). So the six-hourly run instead feeds the probe's primary slot from
+`SMTP_PROBE_USERNAME`/`SMTP_PROBE_PASSWORD`: a dedicated app password on the *same* Gmail account,
+stored as **repository** secrets specifically so the unattended schedule can read them. It still
+catches what actually breaks in practice — account suspension, the daily-quota trip, Google blocking
+the account, network/TLS breakage — but it is a different credential from the one running in
+production, so it cannot see that credential specifically being rotated or revoked elsewhere.
+
+`.github/workflows/deploy.yml` closes that one remaining gap instead, at the point where it's cheap
+to close: its job already carries `environment: production`, so its final step,
+**"Verify the shipped SMTP credential (the deploy itself already completed)"**, authenticates with
+the real `SMTP_USERNAME`/`SMTP_PASSWORD` that were just shipped, with no extra approval needed. A
+failure there means the shipped mail credential doesn't authenticate — not that the deploy itself
+failed; the step name says so on purpose. See design spec §D10.
+
 **`degraded` is not urgent, but it is real.** An unrehearsed fallback is not a fallback — it's a
 hope, same as an untested backup. Fix the spare's credentials — rotate whichever vendor is
 currently in the spare role's app password, and update the `SMTP_SPARE_USERNAME`/
@@ -259,3 +277,12 @@ not help with:
 - **Deliverability problems that aren't authentication failures** — spam-foldering, DKIM/DMARC
   alignment issues, reputation damage from a previous incident. The probe proves the credential
   still authenticates, not that the mail that goes out is actually read.
+- **The six-hourly probe's own credential does not move with a cutover.** `SMTP_PROBE_USERNAME`/
+  `SMTP_PROBE_PASSWORD` are a Gmail-specific app password (§2), but the probe's *primary* role
+  always dials whatever `SMTP_ADDRESS` currently is — which §3 step 3 repoints to Fastmail on
+  cutover. Nothing in §3 rotates the probe credential to match, so immediately after a real cutover
+  the six-hourly probe would authenticate a Gmail credential against Fastmail's server and
+  misreport `down`, even though the real credential (proven separately by the next deploy's
+  verification step) is fine. Noticed while wiring up the two-credential arrangement above and
+  recorded rather than silently worked around; a probe credential that follows the primary role
+  across a cutover is unscoped follow-up work, not something this fix attempted.

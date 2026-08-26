@@ -290,3 +290,106 @@ jobs:
             echo "| SSH opened for | ${opened_for} |"
             echo "| JIT firewall rule | ${jit_rule} |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Same source config/deploy.yml that .github/workflows/smtp-probe.yml's
+      # `cfg` step reads -- mirrored narrowly (just the three values needed to
+      # dial out) rather than duplicated wholesale, so the host/port/HELO
+      # domain can never drift between the six-hourly probe and this
+      # deploy-time check. See that step's own comment for why these three
+      # values live in config/deploy.yml and not a copy pinned in a workflow.
+      #
+      # Gated the same as the verification step below -- see that step's
+      # comment for why (`deploy` only, and only once the deploy itself
+      # succeeded).
+      - name: Read the app's configured SMTP host, port, and HELO domain
+        id: smtp_cfg
+        if: success() && inputs.command == 'deploy'
+        run: |
+          set -euo pipefail
+          ruby -ryaml -e '
+            clear = YAML.unsafe_load_file("config/deploy.yml").dig("env", "clear")
+            address  = clear["SMTP_ADDRESS"]
+            port     = clear["SMTP_PORT"] || "587"
+            app_host = clear["APP_HOST"]
+            abort "config/deploy.yml has no env.clear.SMTP_ADDRESS" if address.to_s.empty?
+            File.open(ENV.fetch("GITHUB_OUTPUT"), "a") do |f|
+              f.puts "address=#{address}"
+              f.puts "port=#{port}"
+              f.puts "app_host=#{app_host}"
+            end
+          '
+
+      # Proves the exact SMTP credential THIS deploy just shipped -- a
+      # different credential from the one the six-hourly smtp-probe.yml
+      # workflow uses, and that difference is deliberate, not an
+      # inconsistency to "fix":
+      #
+      # This job already carries `environment: production` (see line 21), so
+      # it already holds the REAL secrets.SMTP_USERNAME/SMTP_PASSWORD with no
+      # second approval needed -- that environment is exactly what an
+      # unattended six-hourly schedule cannot use (required-reviewer
+      # protected; see smtp-probe.yml's own comment on this). smtp-probe.yml
+      # instead authenticates with SMTP_PROBE_USERNAME/SMTP_PROBE_PASSWORD, a
+      # dedicated app password on the same Gmail account stored as a
+      # repository secret, which proves the ACCOUNT is healthy (catches
+      # suspension, the daily-quota trip, Google blocking the account,
+      # network/TLS breakage) but says nothing about whether the credential
+      # actually shipped to production still authenticates -- e.g. that
+      # specific credential being rotated or revoked elsewhere. This step
+      # closes exactly that gap, once per deploy, with the secret that
+      # matters, and needs no separate schedule or approval to do it.
+      #
+      # `inputs.command == 'deploy'`, the same check "Write the run summary"
+      # above already reads via KAMAL_COMMAND, rather than inventing a second
+      # way to tell `deploy` and `setup` apart: `setup` boots accessories and
+      # is not what ships an app credential, so there is nothing new to
+      # verify. `success()` skips this when an earlier step (including the
+      # `Deploy` step itself) failed -- checking a credential from a deploy
+      # that didn't happen would prove nothing.
+      #
+      # A failure HERE does not mean the deploy failed -- the deploy already
+      # completed by the time this step runs. It means the mail credential
+      # this deploy just shipped does not authenticate. The step name says so
+      # on purpose; don't shorten it to something that could read as deploy
+      # failure.
+      #
+      # Reuses the Ruby "Install Ruby and gems" already set up for this job
+      # (line 44) -- no second setup-ruby step needed.
+      - name: Verify the shipped SMTP credential (the deploy itself already completed)
+        if: success() && inputs.command == 'deploy'
+        env:
+          SMTP_ADDRESS: ${{ steps.smtp_cfg.outputs.address }}
+          SMTP_PORT: ${{ steps.smtp_cfg.outputs.port }}
+          APP_HOST: ${{ steps.smtp_cfg.outputs.app_host }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SPARE_ADDRESS: ${{ secrets.SMTP_SPARE_ADDRESS }}
+          SMTP_SPARE_PORT: "587"
+          SMTP_SPARE_USERNAME: ${{ secrets.SMTP_SPARE_USERNAME }}
+          SMTP_SPARE_PASSWORD: ${{ secrets.SMTP_SPARE_PASSWORD }}
+        run: |
+          set +e
+          ruby ops/smtp/probe.rb > verdict.json
+          exit_code=$?
+          set -e
+
+          {
+            echo "## Deploy-time SMTP credential check"
+            echo
+            echo "Proves the credential THIS deploy just shipped -- a different"
+            echo "credential from the one the six-hourly probe uses (see"
+            echo "smtp-probe.yml). A failure below means the shipped mail"
+            echo "credential does not authenticate, not that the deploy failed"
+            echo "-- the deploy already completed."
+            echo
+            echo '```json'
+            # Falls back rather than failing this block outright: under `set
+            # -e`, a missing verdict.json (the probe script itself crashed,
+            # not just a bad verdict) would otherwise abort here before
+            # `exit "$exit_code"` below runs, leaving the summary half-written
+            # and the real exit code unreported.
+            cat verdict.json 2>/dev/null || echo '(no verdict.json was written -- see the run log above)'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit "$exit_code"

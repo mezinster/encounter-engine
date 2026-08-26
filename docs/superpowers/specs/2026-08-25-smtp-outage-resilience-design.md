@@ -241,6 +241,60 @@ it to the open internet rather than to a private container log. The probe redact
 of the pattern: it runs on a bare CI runner and must never require Rails, so sharing the constant
 with `MailDelivery` is not available and duplication is correct here.
 
+### D10 — the probe gets a dedicated credential; the deploy verifies the real one
+
+The first live run of `smtp-probe.yml` (2026-08-26) exposed a gap this design didn't account for:
+`SMTP_USERNAME`/`SMTP_PASSWORD` exist **only** as `production` **environment** secrets, and that
+environment has a required-reviewer protection rule. A scheduled job has no reviewer to satisfy, so
+reading them directly would not fail loudly — it would hang, every six hours, forever. The verdict
+that actually came back was legible only because of D9's redaction work: `{"verdict":"down",
+"summary":"all configured SMTP endpoints authenticate; primary not configured"}` — correct, and a
+clear signal that the credential path itself was wrong, not the mail account.
+
+Two options were considered and one was rejected:
+
+- **Give the probe job `environment: production`.** Rejected: it would fix the empty string by
+  making the real secrets readable, but the required-reviewer rule comes along with them — every
+  six-hourly run would then park on a human approval, turning "unattended monitoring" into "four
+  approval prompts a day, forever." The whole point of a scheduled probe is that nobody has to be
+  there.
+- **Move `SMTP_USERNAME`/`SMTP_PASSWORD` to repository scope.** Rejected without much debate: that
+  scope is exactly what the `production` environment's branch/reviewer policy exists to keep the
+  live mail credential out of, for reasons that have nothing to do with this probe. Fixing a
+  monitoring gap by weakening the credential it monitors would be trading a real protection for a
+  convenience.
+
+**What was chosen instead — two credentials, two jobs, two different things proven:**
+
+1. A **dedicated probe app password**, on the same Gmail account as the real one, stored as
+   **repository** secrets (`SMTP_PROBE_USERNAME`/`SMTP_PROBE_PASSWORD`) so the unattended six-hourly
+   schedule can read it with no approval. It authenticates, so it still catches everything §0 named
+   as the actual threat model — account suspension, the daily-quota trip, Google blocking the
+   account, network/TLS breakage. What it does **not** prove is that the credential actually running
+   in production, specifically, hasn't been rotated or revoked out from under the app — it's a
+   sibling credential, not the shipped one.
+2. A **deploy-time verification** — the last step of `.github/workflows/deploy.yml`'s `deploy` job,
+   named `Verify the shipped SMTP credential (the deploy itself already completed)` so a failure
+   there cannot be misread as the deploy having failed. That job already carries
+   `environment: production` for the Kamal deploy itself, so it already holds the real
+   `SMTP_USERNAME`/`SMTP_PASSWORD` with no second approval to add. It runs only for the `deploy`
+   command (never `setup`, gated the same way the job's existing summary step already distinguishes
+   the two: `inputs.command == 'deploy'`) and only once the deploy itself succeeded, feeding
+   `ops/smtp/probe.rb` the real primary secrets and the repository `SMTP_SPARE_*` for the spare, so
+   one deploy proves both endpoints with the credentials that matter. `ops/smtp/probe.rb` itself was
+   not touched — per D6/D7 it already takes credentials from the environment without caring which
+   secret filled them, which is exactly what lets one script serve both callers.
+
+Together the two checks cover what neither covers alone: the scheduled probe watches the account
+continuously without anyone's attention, and the deploy step proves the one thing that changes only
+at deploy time — that the specific credential just shipped still works. Neither makes the other
+redundant. One gap noticed, **not** fixed here: the dedicated probe password is Gmail-specific, while the
+probe's primary *address* follows `config/deploy.yml` across a cutover (§3 of the runbook) — so a
+real cutover to Fastmail would leave the six-hourly probe authenticating a Gmail credential against
+Fastmail's server until the probe credential is updated too. Recorded in
+`docs/runbooks/smtp-failover.md` §8 rather than fixed here; it's unscoped follow-up, not a defect in
+this fix.
+
 ---
 
 ## 2. The frozen feature files are untouched

@@ -26,7 +26,22 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: ruby/setup-ruby@a4effe49ee8ee5b8b5091268c473a4628afb5651 # v1.245.0
+      # v1.321.0, NOT the v1.245.0 SHA that perf-probe.yml carried. setup-ruby
+      # ships a fixed catalogue of Ruby builds per release, and v1.245.0's
+      # predates 3.3.12 -- its list stops at 3.3.8, so it fails with "Unknown
+      # version 3.3.12 for ruby on ubuntu-24.04" before the probe runs at all.
+      #
+      # Nothing local can catch that: the YAML parses, the SHA is real and
+      # pinned, and the version matches .ruby-version. It is only visible on a
+      # real runner, which is how it reached master -- this workflow's first
+      # scheduled run was the first time any workflow in this repo actually
+      # executed that step. perf-probe.yml carried the same pin and the same
+      # 3.3.12 request, and was broken in exactly this way without anyone
+      # noticing, because it is dispatched by hand and had not been run.
+      #
+      # This SHA is the one deploy.yml already uses. When adding a workflow,
+      # copy the newest pin in the repo, not the nearest one.
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
         with:
           ruby-version: "3.3.12"
 

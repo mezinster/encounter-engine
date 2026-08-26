@@ -124,7 +124,7 @@ hold, and nothing needs rewriting when the roles swap. `.github/workflows/smtp-p
 the same `MAIL_ROLE` through the same `ops/smtp/roles.rb`, so the six-hourly probe follows this
 cutover on its very next run with no separate step — see §4.
 
-Rotating, creating or auditing any of the eight underlying credentials — including which two need
+Rotating, creating or auditing any of the eight underlying credentials — including which four need
 `--env production` and which four must never have it — is `docs/runbooks/smtp-credentials.md`, not
 this file. This runbook is only about *which vendor is live*; that file is about the secrets
 themselves.

@@ -756,14 +756,21 @@ monitoring probe can never disagree about which vendor production is actually se
 Credentials are named by **vendor**, not by role: `SMTP_<VENDOR>_<USE>_<FIELD>`
 (`SMTP_GMAIL_DEPLOY_USERNAME`, `SMTP_FASTMAIL_PROBE_PASSWORD`, and so on). That naming replaced an
 earlier scheme where a secret's name meant a *role* — `SMTP_SPARE_*` meant "whichever vendor is not
-primary right now" — so its correct value inverted on every cutover, and every value that inverts
-is a value someone eventually forgets to rewrite: a missed `SMTP_SPARE_*` update once left a
-supposedly-monitored standby unwatched, and a `gh secret set` missing `--env production` once
-created an unread repository secret while the deploy kept quietly shipping the old credential.
-Naming by vendor instead means `SMTP_GMAIL_DEPLOY_*` is always Gmail's deploy credential, live or
-not, so a cutover — `gh variable set MAIL_ROLE --body fastmail`, then a deploy — never touches a
-secret at all. See `docs/runbooks/smtp-failover.md` for the incident procedure and
-`docs/runbooks/smtp-credentials.md` for the inventory of all eight secrets and how to rotate each.
+primary right now" — so its correct value inverted on every cutover. Neither mistake that scheme
+invited ever actually reached production: a review pass caught the `SMTP_SPARE_*` role-swap gap
+before the cutover procedure was ever run (`5139ca8`), and caught a `gh secret set` missing
+`--env production` the same way (`ef3ffbf`) — the runbook has never been walked end to end (its own
+header still reads `Rehearsed: not yet`). The environment-versus-repository confusion that scheme
+invited *did* bite once operationally, in the other direction: the SMTP probe's first live
+scheduled run reported `primary not configured`, because `SMTP_USERNAME` lives in the `production`
+**environment** while the probe job declares no `environment:` at all, so the value arrived as an
+empty string rather than the job failing outright. A value that has to be right in two different
+scopes, or right in two different secrets depending on which vendor is live, is a value someone
+eventually gets wrong — which is the whole argument for naming by vendor. Naming by vendor instead
+means `SMTP_GMAIL_DEPLOY_*` is always Gmail's deploy credential, live or not, so a cutover —
+`gh variable set MAIL_ROLE --body fastmail`, then a deploy — never touches a secret at all. See
+`docs/runbooks/smtp-failover.md` for the incident procedure and `docs/runbooks/smtp-credentials.md`
+for the inventory of all eight secrets and how to rotate each.
 
 `create-heroku-instance <app-name> <TZ> [DEFAULT_LOCALE]` is the old per-instance Heroku
 provisioning script (sets `RAILS_ENV=production`, `TZ`, `DEFAULT_LOCALE`, generates a

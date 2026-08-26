@@ -67,14 +67,15 @@ env:
     # mailers build absolute URLs from, so it is the canonical domain: the app
     # answers on both, every emailed link points at game.mezin.eu.
     APP_HOST: game.mezin.eu
-    # Changing this host is step 4 of docs/runbooks/smtp-failover.md. The warm
-    # spare is Fastmail (smtp.fastmail.com) -- proven on every run of the SMTP
-    # probe workflow, never used by the app until someone cuts over.
-    SMTP_ADDRESS: smtp.gmail.com
-    SMTP_PORT: "587"
   secret:
     - SECRET_KEY_BASE
     - DATABASE_URL
+    # Not secrets in any real sense -- they are in ops/smtp/endpoints.yml, in
+    # git. They travel through the secrets file because that is Kamal's
+    # mechanism for "a value the deploy supplies", and the deploy now picks them
+    # from the map according to MAIL_ROLE rather than from a committed literal.
+    - SMTP_ADDRESS
+    - SMTP_PORT
     - SMTP_USERNAME
     - SMTP_PASSWORD
     # Derived from SMTP_USERNAME rather than set here — see .kamal/secrets.

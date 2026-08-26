@@ -300,6 +300,15 @@ jobs:
           # what keeps the next added field safe.
           KAMAL_COMMAND: ${{ inputs.command }}
           JOB_STATUS: ${{ job.status }}
+          # From the "Resolve which SMTP vendor to ship" step's own outputs,
+          # not re-derived: that step already ran ops/smtp/roles.rb and is the
+          # single source of truth both this summary and the Deploy step read
+          # from. Runs for both `deploy` and `setup` (see that step's comment),
+          # so these are populated on every run this step can reach, including
+          # a run that failed before the Deploy step itself.
+          MAIL_VENDOR: ${{ vars.MAIL_ROLE }}
+          MAIL_HOST: ${{ steps.mail.outputs.live_host }}
+          MAIL_PORT: ${{ steps.mail.outputs.live_port }}
         run: |
           # Read the target out of config/deploy.yml rather than writing the
           # address a fourth time (it is already there twice, plus the host-key
@@ -334,6 +343,7 @@ jobs:
             echo "| Result | ${result} |"
             echo "| Commit | \`${GITHUB_SHA:0:7}\` on \`${GITHUB_REF_NAME}\` |"
             echo "| Target host | \`${deploy_host}\` |"
+            echo "| Mail vendor | \`${MAIL_VENDOR}\` (${MAIL_HOST}:${MAIL_PORT}) |"
             echo "| SSH opened for | ${opened_for} |"
             echo "| JIT firewall rule | ${jit_rule} |"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -349,13 +359,17 @@ jobs:
       # second approval needed -- that environment is exactly what an
       # unattended six-hourly schedule cannot use (required-reviewer
       # protected; see smtp-probe.yml's own comment on this). smtp-probe.yml
-      # instead authenticates with SMTP_PROBE_USERNAME/SMTP_PROBE_PASSWORD, a
-      # dedicated app password on the same Gmail account stored as a
-      # repository secret, which proves the ACCOUNT is healthy (catches
-      # suspension, the daily-quota trip, Google blocking the account,
-      # network/TLS breakage) but says nothing about whether the credential
-      # actually shipped to production still authenticates -- e.g. that
-      # specific credential being rotated or revoked elsewhere. This step
+      # instead authenticates with SMTP_<VENDOR>_PROBE_USERNAME/PASSWORD,
+      # repository secrets stored one pair per vendor. Whether that pair is a
+      # DIFFERENT credential from the one this step verifies depends on the
+      # vendor: for Gmail it's a dedicated app password on the same account;
+      # for Fastmail it's the very same value as the deploy credential (see
+      # docs/runbooks/smtp-credentials.md §4). Either way, a green six-hourly
+      # probe proves the ACCOUNT is healthy (catches suspension, the
+      # daily-quota trip, the vendor blocking the account, network/TLS
+      # breakage) but says nothing about whether the credential actually
+      # shipped to production still authenticates -- e.g. that specific
+      # credential being rotated or revoked elsewhere. This step
       # closes exactly that gap, once per deploy, with the secret that
       # matters, and needs no separate schedule or approval to do it.
       #

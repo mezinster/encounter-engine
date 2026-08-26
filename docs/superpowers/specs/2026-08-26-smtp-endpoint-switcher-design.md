@@ -173,7 +173,7 @@ No secret edits. No commit. No role to reason about.
 |---|---|
 | `ops/smtp/endpoints.yml` | vendor → `{host, port}`. Plain YAML, no ERB. |
 | `docs/runbooks/smtp-credentials.md` | The inventory: every secret, its scope, vendor, purpose, where its value is kept, and the exact rotation command with the correct `--env` flag baked in. |
-| `spec/ops/smtp_endpoints_spec.rb` | Resolution is a pure function; fixtures, no network. |
+| `spec/ops/smtp_roles_spec.rb` | Resolution is a pure function; fixtures, no network. Named for `SMTPRoles`, the module it tests, rather than for the data file it happens to read. |
 
 **Modified**
 

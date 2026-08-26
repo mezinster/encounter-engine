@@ -117,15 +117,15 @@ if $PROGRAM_NAME == __FILE__
   results = [
     SMTPProbe.check(role: "primary",
                     vendor:      ENV["SMTP_LIVE_VENDOR"].to_s,
-                    address:     ENV["SMTP_ADDRESS"] || "smtp.gmail.com",
-                    port:        ENV["SMTP_PORT"] || 587,
+                    address:     ENV["SMTP_ADDRESS"].to_s.empty? ? "smtp.gmail.com" : ENV["SMTP_ADDRESS"],
+                    port:        ENV["SMTP_PORT"].to_s.empty? ? 587 : ENV["SMTP_PORT"],
                     user_name:   ENV["SMTP_USERNAME"],
                     password:    ENV["SMTP_PASSWORD"],
                     helo_domain: helo_domain),
     SMTPProbe.check(role: "spare",
                     vendor:      ENV["SMTP_STANDBY_VENDOR"].to_s,
                     address:     ENV["SMTP_SPARE_ADDRESS"],
-                    port:        ENV["SMTP_SPARE_PORT"] || 587,
+                    port:        ENV["SMTP_SPARE_PORT"].to_s.empty? ? 587 : ENV["SMTP_SPARE_PORT"],
                     user_name:   ENV["SMTP_SPARE_USERNAME"],
                     password:    ENV["SMTP_SPARE_PASSWORD"],
                     helo_domain: helo_domain)

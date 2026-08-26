@@ -17,11 +17,11 @@ when the endpoint-switcher branch ships. Everything here describes the target st
 | `SMTP_GMAIL_DEPLOY_USERNAME` | `production` **environment** | Gmail | the app sends with this when Gmail is live | password manager |
 | `SMTP_GMAIL_DEPLOY_PASSWORD` | `production` **environment** | Gmail | the app sends with this when Gmail is live | password manager |
 | `SMTP_FASTMAIL_DEPLOY_USERNAME` | `production` **environment** | Fastmail | the app sends with this when Fastmail is live | password manager |
-| `SMTP_FASTMAIL_DEPLOY_PASSWORD` | `production` **environment** | Fastmail | the app sends with this when Fastmail is live | password manager (same value as the probe password below — §3) |
+| `SMTP_FASTMAIL_DEPLOY_PASSWORD` | `production` **environment** | Fastmail | the app sends with this when Fastmail is live | password manager (same value as the probe password below — §4) |
 | `SMTP_GMAIL_PROBE_USERNAME` | repository | Gmail | six-hourly monitoring only, never sends | password manager |
 | `SMTP_GMAIL_PROBE_PASSWORD` | repository | Gmail | six-hourly monitoring only, never sends | password manager |
-| `SMTP_FASTMAIL_PROBE_USERNAME` | repository | Fastmail | six-hourly monitoring only, never sends | password manager (same value as the deploy password above — §3) |
-| `SMTP_FASTMAIL_PROBE_PASSWORD` | repository | Fastmail | six-hourly monitoring only, never sends | password manager (same value as the deploy password above — §3) |
+| `SMTP_FASTMAIL_PROBE_USERNAME` | repository | Fastmail | six-hourly monitoring only, never sends | password manager (same value as the deploy password above — §4) |
+| `SMTP_FASTMAIL_PROBE_PASSWORD` | repository | Fastmail | six-hourly monitoring only, never sends | password manager (same value as the deploy password above — §4) |
 
 That's the whole inventory. `vars.MAIL_ROLE` (a repository *variable*, not a secret — `gmail` or
 `fastmail`) says which vendor is live; `ops/smtp/endpoints.yml`, committed, says each vendor's host
@@ -33,9 +33,10 @@ SMTP password lives in this project.
 ## 2. Rotate one
 
 **Read this whole section before typing anything.** The four deploy commands and the four probe
-commands are not the same shape, and the difference is not a style choice — see §4. Do not "clean
-up" the probe commands by adding `--env production` to match the deploy ones, and do not drop it
-from the deploy ones to match the probe ones. Both of those look tidy and both are wrong.
+commands are not the same shape, and the difference is not a style choice — the reason is spelled
+out just below the two command blocks. Do not "clean up" the probe commands by adding
+`--env production` to match the deploy ones, and do not drop it from the deploy ones to match the
+probe ones. Both of those look tidy and both are wrong.
 
 Every command below gives `gh` **no `--body`**, so the new value is prompted on hidden input and
 never touches your shell history. Have the new value ready from your password manager before you
@@ -65,14 +66,19 @@ creates a *repository* secret of the same name instead. `.github/workflows/deplo
 declares `environment: production`, and GitHub resolves an environment secret ahead of a
 repository one of the same name for that job. So the deploy keeps reading the *old* environment
 secret, the new repository secret sits there unread, and nothing anywhere says so — no error, no
-warning, a green deploy. The rotation looks done and changed nothing. This has already bitten this
-repository once (`fix/smtp-runbook-env-scope`, see the git log).
+warning, a green deploy. The rotation looks done and changed nothing. This exact mechanism has
+already bitten this repository operationally, the other direction: the SMTP probe's first live
+scheduled run reported `primary not configured`, because `SMTP_USERNAME` was an environment secret
+and the probe job declares no `environment:` at all — the value arrived as an empty string rather
+than the job failing outright. Same environment-versus-repository confusion, different secret.
 
 The probe four are the mirror image: they genuinely are repository secrets, because
-`.github/workflows/smtp-probe.yml` runs on a schedule with no `environment:` declared at all (see
-§3 for why). Adding `--env production` to one of these would put the value where the unattended
-probe job cannot read it, and the six-hourly run would start reporting `not configured` for that
-vendor — a false alarm with a real cause.
+`.github/workflows/smtp-probe.yml` runs on a schedule with no `environment:` declared at all — the
+`production` environment carries a required-reviewer rule, so an environment-scoped probe would
+park every six-hourly run on a human approval, four times a day, forever. Adding
+`--env production` to one of these would put the value where the unattended probe job cannot read
+it, and the six-hourly run would start reporting `not configured` for that vendor — a false alarm
+with a real cause.
 
 **To check which shape a secret currently has:**
 

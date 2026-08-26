@@ -344,7 +344,8 @@ jobs:
       # inconsistency to "fix":
       #
       # This job already carries `environment: production` (see line 21), so
-      # it already holds the REAL secrets.SMTP_USERNAME/SMTP_PASSWORD with no
+      # it already holds the REAL SMTP_<VENDOR>_DEPLOY_USERNAME/PASSWORD
+      # secrets for whichever vendor MAIL_ROLE selects, with no
       # second approval needed -- that environment is exactly what an
       # unattended six-hourly schedule cannot use (required-reviewer
       # protected; see smtp-probe.yml's own comment on this). smtp-probe.yml

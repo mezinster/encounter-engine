@@ -1,0 +1,13 @@
+<%# notification_mailer.test_admission_notification.body_{solo,team} in
+    config/locales/*.yml. game_name and team_name are author-written game
+    data, not platform chrome, so they are interpolated rather than
+    translated -- same rule as invitation_notification's team_name.
+
+    host: @host, not default_url_options -- only production.rb sets
+    action_mailer.default_url_options, so a bare _url helper raises
+    ActionController::UrlGenerationError in test and development. See
+    password_reset.text.erb, which resolves the same way. %>
+<%= t("notification_mailer.test_admission_notification.#{@team ? "body_team" : "body_solo"}",
+      game_name: @game.name,
+      team_name: @team&.name,
+      url: show_current_level_url(game_id: @game.id, host: @host)) %>

@@ -519,6 +519,12 @@ ru:
     author_needs_no_admission: "Автор уже может тестировать свою игру"
     revoked: "%{name} больше не участвует в тестировании"
     joined: "Вы допущены к тестированию игры «%{game}»"
+    # The grant succeeded and only the letter failed, so these say so
+    # rather than reporting a failure. Rendered as alert:, not notice: --
+    # see TestAdmissionsController#redirect_with_delivery_result.
+    team_admitted_unnotified: "Команда «%{name}» допущена к тестированию, но письмо отправить не удалось"
+    player_admitted_unnotified: "Игрок %{name} допущен к тестированию, но письмо отправить не удалось"
+    revoked_unnotified: "%{name} больше не участвует в тестировании, но уведомление отправить не удалось"
     token_reset: "Прежняя ссылка больше не действует"
     invite:
       legend: "Приглашение на тестирование"
@@ -783,6 +789,32 @@ ru:
 
         Ссылка действует %{hours} ч. Если вы не запрашивали сброс, просто
         проигнорируйте это письмо — пароль останется прежним.
+    # Admission to a TESTING run, granted by the author or an operator to
+    # someone who did not ask for it -- so unlike the self-service token
+    # link (TestAdmissionsController#join), the recipient has no other way
+    # of learning about it. Two shapes: a whole team, or one player alone.
+    # game_name and team_name are author-written content, interpolated and
+    # never translated.
+    test_admission_notification:
+      subject_solo: "Вас пригласили тестировать игру %{game_name}"
+      body_solo: |-
+        Вас пригласили принять участие в тестировании игры %{game_name}.
+
+        Чтобы начать, перейдите по ссылке:
+        %{url}
+      subject_team: "Команду %{team_name} пригласили тестировать игру %{game_name}"
+      body_team: |-
+        Вашу команду %{team_name} пригласили принять участие в тестировании игры %{game_name}.
+
+        Чтобы начать, перейдите по ссылке:
+        %{url}
+    test_admission_revoked:
+      subject_solo: "Тестирование игры %{game_name}: доступ отозван"
+      body_solo: |-
+        Ваш доступ к тестированию игры %{game_name} отозван автором.
+      subject_team: "Тестирование игры %{game_name}: доступ команды %{team_name} отозван"
+      body_team: |-
+        Доступ вашей команды %{team_name} к тестированию игры %{game_name} отозван автором.
   # Language names for the switcher (app/views/layouts/_header.html.erb) and
   # the profile form's language field (app/views/users/edit.html.erb).
   # Deliberately identical across every locale file: each language is named

@@ -180,7 +180,7 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1009 leaf
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1020 leaf
   keys** each (measured 2026-08-26): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
@@ -201,8 +201,10 @@ add steps there or Cucumber will auto-require them a second time.
   eight leaf keys of its own, across all seven files, for the two failure-visible UI changes: the
   signup page that shows the generated password on screen when the welcome letter could not be
   sent, and the invitation flash warning when a notification did not go out. 1001 + 8 = 1009 is
-  correct this time because it was verified against both endpoints, not assumed — recount rather
-  than reason about it:
+  correct this time because it was verified against both endpoints, not assumed. The test-admission
+  notification work then added **eleven** more to all seven files — eight mailer leaves (two mails,
+  each with a solo and a team subject and body) and three `test_admissions.*_unnotified` flash
+  keys — landing at 1020, again measured at both ends. Recount rather than reason about it:
 
 ```bash
 ruby -ryaml -e 'def leaves(h,p="") h.flat_map { |k,v| v.is_a?(Hash) ? leaves(v,"#{p}#{k}.") : ["#{p}#{k}"] } end

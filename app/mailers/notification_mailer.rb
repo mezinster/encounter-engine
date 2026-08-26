@@ -72,6 +72,40 @@ class NotificationMailer < ActionMailer::Base
     mail_in_recipient_locale(team.captain, :accept_notification)
   end
 
+  # Someone other than the author was admitted to a TESTING run. Two shapes,
+  # the same distinction TestAdmission draws with user_id: a team admitted as
+  # itself (team present) or one player admitted alone (team nil).
+  #
+  # A solo admission DOES have a team in the database -- the disposable one,
+  # holding no members and no captain, which exists only because users.team_id
+  # is a single column (see TestAdmission's class comment). It is an
+  # implementation detail of the grant, not something the recipient has any
+  # name for, so the caller passes nil and the mail never mentions a team.
+  def test_admission_notification(user, game, team)
+    @user = user
+    @game = game
+    @team = team
+    @host = app_host
+    mail_in_recipient_locale(user, :test_admission_notification,
+                             :subject_key => team ? "subject_team" : "subject_solo")
+  end
+
+  # The counterpart grant-removal notice. Same (user, game, team) shape and
+  # the same nil-means-solo convention as #test_admission_notification.
+  #
+  # The caller must build its recipient list BEFORE TestAdmission#revoke!
+  # runs: revoking a solo admission destroys the disposable team along with
+  # the row, so afterwards there is nothing left to read the recipients off.
+  # TestAdmissionsController#revoke already does this for its flash label.
+  def test_admission_revoked(user, game, team)
+    @user = user
+    @game = game
+    @team = team
+    @host = app_host
+    mail_in_recipient_locale(user, :test_admission_revoked,
+                             :subject_key => team ? "subject_team" : "subject_solo")
+  end
+
   private
 
   # The recipient's locale governs the language of the mail, not the
@@ -80,12 +114,12 @@ class NotificationMailer < ActionMailer::Base
   # nil/blank (e.g. accounts created before the i18n foundation task), so
   # this falls back to the application default locale, same as
   # config.i18n.fallbacks does for view rendering.
-  def mail_in_recipient_locale(recipient, template)
+  def mail_in_recipient_locale(recipient, template, subject_key: "subject")
     locale = recipient.locale.presence || I18n.default_locale
 
     I18n.with_locale(locale) do
       mail(to: recipient.email,
-           subject: t("notification_mailer.#{template}.subject", **subject_vars),
+           subject: t("notification_mailer.#{template}.#{subject_key}", **subject_vars),
            template_name: template)
     end
   end
@@ -97,6 +131,7 @@ class NotificationMailer < ActionMailer::Base
     vars = { host: app_host }
     vars[:nickname] = @user.nickname if @user
     vars[:team_name] = @team.name if @team
+    vars[:game_name] = @game.name if @game
     vars
   end
 

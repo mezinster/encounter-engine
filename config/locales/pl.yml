@@ -544,6 +544,9 @@ pl:
     revoked: "%{name} nie bierze już udziału w testach"
     token_reset: "Poprzedni link przestał działać"
     joined: "Masz dostęp do testów gry «%{game}»"
+    team_admitted_unnotified: "Drużyna «%{name}» została dopuszczona do testów, ale nie udało się wysłać listu"
+    player_admitted_unnotified: "Gracz %{name} został dopuszczony do testów, ale nie udało się wysłać listu"
+    revoked_unnotified: "%{name} nie bierze już udziału w testach, ale nie udało się wysłać powiadomienia"
     invite:
       legend: "Zaproszenie do testów"
       explanation: "Zapraszamy Cię do przetestowania gry «%{game}». To wersja robocza: wyniki nie zostaną zachowane."
@@ -794,6 +797,26 @@ pl:
         prostu zignoruj tę wiadomość — hasło pozostanie bez zmian.
   # Deliberately identical across every locale file -- each language is named
   # in its own endonym rather than translated. See the comment in ru.yml.
+    test_admission_notification:
+      subject_solo: "Zaproszono Cię do testowania gry %{game_name}"
+      body_solo: |-
+        Zaproszono Cię do udziału w testach gry %{game_name}.
+
+        Aby zacząć, otwórz ten odnośnik:
+        %{url}
+      subject_team: "Drużynę %{team_name} zaproszono do testowania gry %{game_name}"
+      body_team: |-
+        Twoją drużynę %{team_name} zaproszono do udziału w testach gry %{game_name}.
+
+        Aby zacząć, otwórz ten odnośnik:
+        %{url}
+    test_admission_revoked:
+      subject_solo: "Testy gry %{game_name}: dostęp cofnięty"
+      body_solo: |-
+        Autor cofnął Twój dostęp do testów gry %{game_name}.
+      subject_team: "Testy gry %{game_name}: dostęp drużyny %{team_name} został cofnięty"
+      body_team: |-
+        Autor cofnął dostęp Twojej drużyny %{team_name} do testów gry %{game_name}.
   locales:
     ru: "Русский"
     en: "English"

@@ -152,6 +152,97 @@ RSpec.describe NotificationMailer do
     end
   end
 
+  # Two shapes, distinguished by whether a team is passed -- the same
+  # distinction TestAdmission draws with user_id. A solo admission's team is
+  # the DISPOSABLE one (no members, no captain), which exists only because
+  # users.team_id is a single column; naming it to the recipient would be
+  # meaningless, so the solo mail never mentions a team at all.
+  describe "#test_admission_notification" do
+    let(:game) { create_game(:author => create_user, :name => "Ночной дозор") }
+
+    it "addresses a solo tester's invitation to that tester" do
+      mail = described_class.test_admission_notification(user, game, nil)
+      expect(mail.to).to eq(["iv@diesel.kg"])
+    end
+
+    it "names the team in a team admission's subject" do
+      team = create_team(:captain => create_user)
+      mail = described_class.test_admission_notification(user, game, team)
+      expect(mail.subject).to include(team.name)
+    end
+
+    it "names the team in a team admission's body" do
+      team = create_team(:captain => create_user)
+      mail = described_class.test_admission_notification(user, game, team)
+      expect(mail.body.encoded).to include(team.name)
+    end
+
+    # A solo admission's team in the database is the DISPOSABLE one -- no
+    # members, no captain, created only so the tester has somewhere to hang a
+    # passing. Naming it to the recipient would be gibberish ("your team
+    # Team#a7f3c1 has been invited"), so the caller passes nil, and this pins
+    # that the body never grows a team sentence by accident.
+    it "never mentions a team in a solo admission's body" do
+      mail = described_class.test_admission_notification(user, game, nil)
+      expect(mail.body.encoded).not_to match(/команд|team/i)
+    end
+
+    it "links the recipient to the play screen for that game" do
+      mail = described_class.test_admission_notification(user, game, nil)
+      expect(mail.body.encoded).to include("/play/#{game.id}")
+    end
+
+    it "writes the invitation in the recipient's locale, not the sender's" do
+      I18n.with_locale(:ru) do
+        mail = described_class.test_admission_notification(user, game, nil)
+        expect(mail.subject).to eq(
+          I18n.t("notification_mailer.test_admission_notification.subject_solo",
+                 game_name: game.name, locale: :en)
+        )
+      end
+    end
+  end
+
+  # The counterpart to #test_admission_notification: a tester who was told
+  # they are in should be told when they are out, since they may well have
+  # set an evening aside. Same two shapes, same nil-team convention.
+  describe "#test_admission_revoked" do
+    let(:game) { create_game(:author => create_user, :name => "Ночной дозор") }
+
+    it "addresses a solo tester's revocation to that tester" do
+      mail = described_class.test_admission_revoked(user, game, nil)
+      expect(mail.to).to eq(["iv@diesel.kg"])
+    end
+
+    it "names the game in a solo revocation's subject" do
+      mail = described_class.test_admission_revoked(user, game, nil)
+      expect(mail.subject).to include(game.name)
+    end
+
+    it "names the team in a team revocation's subject" do
+      team = create_team(:captain => create_user)
+      mail = described_class.test_admission_revoked(user, game, team)
+      expect(mail.subject).to include(team.name)
+    end
+
+    # Nothing to click any more -- the whole point of the mail is that the
+    # play screen would now refuse them. A link would be a broken promise.
+    it "offers no play link, because the access it announces is gone" do
+      mail = described_class.test_admission_revoked(user, game, nil)
+      expect(mail.body.encoded).not_to include("/play/")
+    end
+
+    it "writes the revocation in the recipient's locale, not the sender's" do
+      I18n.with_locale(:ru) do
+        mail = described_class.test_admission_revoked(user, game, nil)
+        expect(mail.subject).to eq(
+          I18n.t("notification_mailer.test_admission_revoked.subject_solo",
+                 game_name: game.name, locale: :en)
+        )
+      end
+    end
+  end
+
   # Saves and restores each var's *prior* value (not just ENV.delete), so a
   # developer who happens to already export APP_HOST or MAIL_FROM in their
   # shell doesn't see this example corrupt it for the rest of the process,

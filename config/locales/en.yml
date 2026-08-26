@@ -519,6 +519,9 @@ en:
     author_needs_no_admission: "The author can already test their own game"
     revoked: "%{name} is no longer part of the test"
     joined: "You have been admitted to the test of «%{game}»"
+    team_admitted_unnotified: "The team %{name} was admitted to testing, but the letter could not be sent"
+    player_admitted_unnotified: "%{name} was admitted to testing, but the letter could not be sent"
+    revoked_unnotified: "%{name} is no longer testing, but the notification could not be sent"
     token_reset: "The previous link no longer works"
     invite:
       legend: "Test invitation"
@@ -768,6 +771,26 @@ en:
 
         The link is valid for %{hours} hours. If you did not ask for a reset,
         ignore this message — your password is unchanged.
+    test_admission_notification:
+      subject_solo: "You have been invited to test the game %{game_name}"
+      body_solo: |-
+        You have been invited to take part in testing the game %{game_name}.
+
+        To start, follow this link:
+        %{url}
+      subject_team: "The team %{team_name} has been invited to test the game %{game_name}"
+      body_team: |-
+        Your team %{team_name} has been invited to take part in testing the game %{game_name}.
+
+        To start, follow this link:
+        %{url}
+    test_admission_revoked:
+      subject_solo: "Testing the game %{game_name}: access withdrawn"
+      body_solo: |-
+        Your access to testing the game %{game_name} has been withdrawn by the author.
+      subject_team: "Testing the game %{game_name}: your team %{team_name} no longer has access"
+      body_team: |-
+        Your team %{team_name}'s access to testing the game %{game_name} has been withdrawn by the author.
   # Language names for the switcher (app/views/layouts/_header.html.erb) and
   # the profile form's language field (app/views/users/edit.html.erb).
   # Deliberately identical across every locale file: each language is named

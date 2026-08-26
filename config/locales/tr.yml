@@ -569,6 +569,9 @@ tr:
     author_needs_no_admission: "Yazar kendi oyununu zaten test edebilir"
     revoked: "%{name} adlı katılımcı artık testte yer almıyor"
     joined: "«%{game}» adlı oyunun testine kabul edildiniz"
+    team_admitted_unnotified: "«%{name}» adlı takım teste kabul edildi, ancak mektup gönderilemedi"
+    player_admitted_unnotified: "%{name} adlı oyuncu teste kabul edildi, ancak mektup gönderilemedi"
+    revoked_unnotified: "%{name} artık teste katılmıyor, ancak bildirim gönderilemedi"
     token_reset: "Önceki bağlantı artık geçerli değil"
     invite:
       legend: "Test daveti"
@@ -825,6 +828,30 @@ tr:
         bu iletiyi yok sayın — parolanız değişmeden kalır.
   # Deliberately identical across every locale file -- each language is named
   # in its own endonym rather than translated. See the comment in ru.yml.
+    # Every %{game_name}/%{team_name} here is followed by "adlı" plus a common
+    # noun, so the case suffix attaches to the noun and never to the name a
+    # player typed -- the rule the other 37 interpolated keys in this file
+    # follow. See the Turkish note in CLAUDE.md.
+    test_admission_notification:
+      subject_solo: "%{game_name} adlı oyunun testine davet edildiniz"
+      body_solo: |-
+        %{game_name} adlı oyunun testine katılmaya davet edildiniz.
+
+        Başlamak için bu bağlantıyı açın:
+        %{url}
+      subject_team: "%{team_name} adlı takım, %{game_name} adlı oyunu test etmeye davet edildi"
+      body_team: |-
+        %{team_name} adlı takımınız, %{game_name} adlı oyunun testine katılmaya davet edildi.
+
+        Başlamak için bu bağlantıyı açın:
+        %{url}
+    test_admission_revoked:
+      subject_solo: "%{game_name} adlı oyunun testi: erişiminiz kaldırıldı"
+      body_solo: |-
+        %{game_name} adlı oyunun testine erişiminiz yazar tarafından kaldırıldı.
+      subject_team: "%{game_name} adlı oyunun testi: %{team_name} adlı takımın erişimi kaldırıldı"
+      body_team: |-
+        %{team_name} adlı takımınızın %{game_name} adlı oyunun testine erişimi yazar tarafından kaldırıldı.
   locales:
     ru: "Русский"
     en: "English"

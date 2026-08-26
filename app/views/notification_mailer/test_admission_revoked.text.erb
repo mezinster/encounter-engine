@@ -1,0 +1,7 @@
+<%# notification_mailer.test_admission_revoked.body_{solo,team}. No URL here,
+    deliberately: the access this letter announces the end of is exactly what
+    the play screen would now refuse, so a link would be a broken promise.
+    See the mailer spec's "offers no play link" example. %>
+<%= t("notification_mailer.test_admission_revoked.#{@team ? "body_team" : "body_solo"}",
+      game_name: @game.name,
+      team_name: @team&.name) %>

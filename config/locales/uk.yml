@@ -536,6 +536,9 @@ uk:
     author_needs_no_admission: "Автор і так може тестувати свою гру"
     revoked: "%{name} більше не бере участі в тестуванні"
     joined: "Вас допущено до тестування гри «%{game}»"
+    team_admitted_unnotified: "Команду «%{name}» допущено до тестування, але лист надіслати не вдалося"
+    player_admitted_unnotified: "Гравця %{name} допущено до тестування, але лист надіслати не вдалося"
+    revoked_unnotified: "%{name} більше не бере участі в тестуванні, але сповіщення надіслати не вдалося"
     token_reset: "Попереднє посилання більше не діє"
     invite:
       legend: "Запрошення на тестування"
@@ -794,6 +797,26 @@ uk:
   # a reader sees their own language's name spelled the way they'd recognise
   # it no matter which locale currently renders the page. spec/i18n_spec.rb's
   # untranslated-copy-paste check knows about this key and allows it.
+    test_admission_notification:
+      subject_solo: "Вас запросили тестувати гру %{game_name}"
+      body_solo: |-
+        Вас запросили взяти участь у тестуванні гри %{game_name}.
+
+        Щоб почати, перейдіть за посиланням:
+        %{url}
+      subject_team: "Команду %{team_name} запросили тестувати гру %{game_name}"
+      body_team: |-
+        Вашу команду %{team_name} запросили взяти участь у тестуванні гри %{game_name}.
+
+        Щоб почати, перейдіть за посиланням:
+        %{url}
+    test_admission_revoked:
+      subject_solo: "Тестування гри %{game_name}: доступ відкликано"
+      body_solo: |-
+        Ваш доступ до тестування гри %{game_name} відкликано автором.
+      subject_team: "Тестування гри %{game_name}: доступ команди %{team_name} відкликано"
+      body_team: |-
+        Доступ вашої команди %{team_name} до тестування гри %{game_name} відкликано автором.
   locales:
     ru: "Русский"
     en: "English"

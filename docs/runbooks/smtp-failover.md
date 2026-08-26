@@ -97,8 +97,43 @@ currently in the spare role's app password, and update the `SMTP_SPARE_USERNAME`
 
 ## 3. Cut over (verdict is `down`)
 
-Four things change, in this order. **Do not skip the `MAIL_FROM` reasoning below** — there is no
+Five things change, in this order. **Do not skip the `MAIL_FROM` reasoning below** — there is no
 step for it because there is no second place to change it.
+
+None of the values below can be read back out of GitHub once they're set — have them ready from
+wherever they're actually kept (password manager / secure note) before you type the first command.
+Here is the whole sequence, top to bottom, to run once you have them:
+
+```bash
+# 1. Promote Fastmail to primary. These two are `production`-*environment* secrets, not
+#    repository secrets — --env production is required, or gh silently creates a repository
+#    secret instead. The environment secret still shadows it for the deploy job, so nothing
+#    errors and the cutover does nothing.
+gh secret set SMTP_USERNAME --env production   # the Fastmail username
+gh secret set SMTP_PASSWORD --env production   # the Fastmail password
+
+# 2. Demote Gmail to spare, so the probe still has a spare to watch. Repository secrets —
+#    no --env flag, and none of these three should ever get one.
+gh secret set SMTP_SPARE_ADDRESS    # smtp.gmail.com
+gh secret set SMTP_SPARE_USERNAME   # the Gmail app username, just replaced above
+gh secret set SMTP_SPARE_PASSWORD   # the Gmail app password, just replaced above
+
+# 3. Rotate the six-hourly probe onto the real new primary instead of a Gmail proxy.
+#    Also a repository secret — no --env flag.
+gh secret set SMTP_PROBE_USERNAME   # same Fastmail credential as SMTP_USERNAME, step 1
+gh secret set SMTP_PROBE_PASSWORD   # same Fastmail credential as SMTP_PASSWORD, step 1
+
+# 4. Point the app itself at Fastmail and commit.
+git add config/deploy.yml   # SMTP_ADDRESS: smtp.gmail.com -> smtp.fastmail.com
+git commit -m "Cut SMTP over to the Fastmail spare"
+
+# 5. Ship it.
+git push
+gh workflow run deploy.yml -f command=deploy
+
+# 6. Confirm the probe agrees (this is §4 step 1) — then go read the headers, §5.
+gh workflow run smtp-probe.yml
+```
 
 1. **Update the GitHub secrets the app itself reads.** Set `SMTP_USERNAME` and `SMTP_PASSWORD` to
    the Fastmail spare's credentials — the same ones already proven live by the probe's
@@ -108,9 +143,17 @@ step for it because there is no second place to change it.
    never lands in your shell history:
 
    ```bash
-   gh secret set SMTP_USERNAME
-   gh secret set SMTP_PASSWORD
+   gh secret set SMTP_USERNAME  --env production
+   gh secret set SMTP_PASSWORD  --env production
    ```
+
+   **`--env production` is not optional, on either line.** These two secrets live in the
+   `production` *environment*, not at repository level — unlike the `SMTP_SPARE_*` secrets in the
+   next step, which genuinely are repository secrets and correctly carry no flag. Drop the flag
+   here and `gh` quietly creates a *repository* secret of the same name instead; the environment
+   secret still shadows it for the deploy job, so the deploy stays green and keeps shipping the old
+   credential — nothing errors. Resist the urge to tidy these two command blocks into matching
+   shapes; they're different on purpose.
 
 2. **Point `SMTP_SPARE_*` at the endpoint you're moving away from — Gmail — not at Fastmail
    again.** Skip this and the probe authenticates the same Fastmail credential twice under two
@@ -126,7 +169,21 @@ step for it because there is no second place to change it.
    gh secret set SMTP_SPARE_PASSWORD  # the Gmail app password, just replaced above
    ```
 
-3. **Change the one `SMTP_ADDRESS` line in `config/deploy.yml`** from `smtp.gmail.com` to
+3. **Rotate the probe's credential onto the real new primary.** Left alone,
+   `SMTP_PROBE_USERNAME`/`SMTP_PROBE_PASSWORD` stay the Gmail app password from §2 while step 1
+   just moved the app's own `SMTP_ADDRESS` role to Fastmail — so the six-hourly probe would
+   authenticate a Gmail credential against Fastmail's server, misreport `down`, and file a public
+   `smtp` issue every six hours for as long as the cutover lasts. Fastmail is convenient here in a
+   way Gmail never was: the credential is the value you just typed into `SMTP_USERNAME`/
+   `SMTP_PASSWORD` above, and it's fine to hold as a repository secret, so the probe can run the
+   *real* primary credential instead of a dedicated proxy account:
+
+   ```bash
+   gh secret set SMTP_PROBE_USERNAME   # same Fastmail credential as SMTP_USERNAME, step 1
+   gh secret set SMTP_PROBE_PASSWORD   # same Fastmail credential as SMTP_PASSWORD, step 1
+   ```
+
+4. **Change the one `SMTP_ADDRESS` line in `config/deploy.yml`** from `smtp.gmail.com` to
    `smtp.fastmail.com` (it's commented — the comment points back at this file). Commit it:
 
    ```bash
@@ -143,12 +200,13 @@ step for it because there is no second place to change it.
    `v=spf1 include:spf.messagingengine.com ?all` — Fastmail, and only Fastmail — so a Fastmail
    sender is already SPF-aligned for `@mezin.eu`. Nothing to add, nothing to wait on propagating.
 
-   This one line also retargets the probe. `.github/workflows/smtp-probe.yml` no longer carries its
-   own copy of the host — it reads `env.clear.SMTP_ADDRESS` out of `config/deploy.yml` at the start
-   of every run, so the six-hourly probe (and any manual dispatch) starts checking Fastmail the
-   moment this commit lands, with no separate step to remember.
+   This one line also retargets the probe's *primary* role. `.github/workflows/smtp-probe.yml` no
+   longer carries its own copy of the host — it reads `env.clear.SMTP_ADDRESS` out of
+   `config/deploy.yml` at the start of every run, so the six-hourly probe (and any manual dispatch)
+   starts checking Fastmail as primary the moment this commit lands. (The probe's *credential* for
+   that role is step 3, above — the address alone isn't enough.)
 
-4. **Push and dispatch the deploy workflow.**
+5. **Push and dispatch the deploy workflow.**
 
    ```bash
    git push
@@ -165,9 +223,9 @@ step for it because there is no second place to change it.
    gh workflow run smtp-probe.yml
    ```
 
-   It reads the primary host from `config/deploy.yml` at the start of the run (see §3 step 3), so
-   it is already checking Fastmail as the primary — and Gmail as the spare, per step 2 — no separate
-   address to update here.
+   It reads the primary host from `config/deploy.yml` at the start of the run (see §3 step 4), so
+   it is already checking Fastmail as the primary — and Gmail as the spare, per step 2 — with the
+   probe's own credential already rotated in step 3. No separate address to update here.
 
 2. Register a throwaway account on the live site and confirm the welcome letter actually arrives
    (not just that the probe authenticates — the probe never sends anything, by design, so it can't
@@ -229,10 +287,13 @@ done with it if you want to keep the data clean; it isn't required for the check
 
 ## 6. Cut back
 
-Same four steps as §3, in reverse, once the primary (Gmail) is confirmed working again — don't cut
+Same five steps as §3, in reverse, once the primary (Gmail) is confirmed working again — don't cut
 back on a hunch, confirm with the probe first:
 
-1. `gh secret set SMTP_USERNAME` / `gh secret set SMTP_PASSWORD`, back to Gmail's values.
+1. `gh secret set SMTP_USERNAME --env production` / `gh secret set SMTP_PASSWORD --env production`,
+   back to Gmail's values. Same reason as §3 step 1: these are `production`-*environment* secrets,
+   and the flag is what makes the command actually change what the app ships, rather than creating
+   a repository secret nobody reads while the deploy quietly keeps using Fastmail.
 2. **Point `SMTP_SPARE_*` back at Fastmail** — the endpoint you're moving away from this time.
    Skipping this repeats the exact §3 step 2 mistake in the other direction: the probe would
    authenticate Gmail twice under two role labels, `degraded` would go silent again, and Fastmail —
@@ -242,8 +303,17 @@ back on a hunch, confirm with the probe first:
    gh secret set SMTP_SPARE_USERNAME  # the Fastmail credential, just retired from primary above
    gh secret set SMTP_SPARE_PASSWORD
    ```
-3. `config/deploy.yml`'s `SMTP_ADDRESS` back to `smtp.gmail.com`, commit.
-4. Push, `gh workflow run deploy.yml -f command=deploy`.
+3. **Rotate the probe's credential back to a dedicated Gmail proxy.** Gmail's real production
+   credential becomes a `production`-environment secret again in step 1 — unreadable by the
+   unattended six-hourly schedule — so the probe can no longer run the real primary credential the
+   way it could while Fastmail was primary (§3 step 3). Restore the original dedicated Gmail app
+   password here, the one described in §2 — not the value you just set in step 1:
+   ```bash
+   gh secret set SMTP_PROBE_USERNAME   # the dedicated Gmail probe app password, not the primary's
+   gh secret set SMTP_PROBE_PASSWORD
+   ```
+4. `config/deploy.yml`'s `SMTP_ADDRESS` back to `smtp.gmail.com`, commit.
+5. Push, `gh workflow run deploy.yml -f command=deploy`.
 
 Then re-verify per §4 and §5 against the primary — the same envelope surprises (a stale `From:`,
 an SPF mismatch, a spam-foldered letter) apply in this direction too, not just on the way out.
@@ -277,12 +347,13 @@ not help with:
 - **Deliverability problems that aren't authentication failures** — spam-foldering, DKIM/DMARC
   alignment issues, reputation damage from a previous incident. The probe proves the credential
   still authenticates, not that the mail that goes out is actually read.
-- **The six-hourly probe's own credential does not move with a cutover.** `SMTP_PROBE_USERNAME`/
-  `SMTP_PROBE_PASSWORD` are a Gmail-specific app password (§2), but the probe's *primary* role
-  always dials whatever `SMTP_ADDRESS` currently is — which §3 step 3 repoints to Fastmail on
-  cutover. Nothing in §3 rotates the probe credential to match, so immediately after a real cutover
-  the six-hourly probe would authenticate a Gmail credential against Fastmail's server and
-  misreport `down`, even though the real credential (proven separately by the next deploy's
-  verification step) is fine. Noticed while wiring up the two-credential arrangement above and
-  recorded rather than silently worked around; a probe credential that follows the primary role
-  across a cutover is unscoped follow-up work, not something this fix attempted.
+- **The six-hourly probe's own credential used to be a real gap here — it isn't any more, but it's
+  worth knowing why.** `SMTP_PROBE_USERNAME`/`SMTP_PROBE_PASSWORD` don't follow the primary role
+  automatically: the probe's *primary* dials whatever `SMTP_ADDRESS` currently is (§2), but its
+  credential is a separate secret that has to be set deliberately. §3 step 3 and §6 step 3 are that
+  deliberate step: on cutover the probe picks up the real Fastmail credential (repository-scoped
+  already, so no dedicated proxy is needed); on cutback it goes back to the dedicated Gmail app
+  password from §2. Skip either rotation step and the probe authenticates the *previous* primary's
+  credential against the *new* primary's server, misreports `down`, and files a public `smtp`
+  issue every six hours for as long as the mismatch lasts — during whichever half of the incident
+  you're in.

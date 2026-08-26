@@ -20,7 +20,7 @@ when the endpoint-switcher branch ships. Everything here describes the target st
 | `SMTP_FASTMAIL_DEPLOY_PASSWORD` | `production` **environment** | Fastmail | the app sends with this when Fastmail is live | password manager (same value as the probe password below — §4) |
 | `SMTP_GMAIL_PROBE_USERNAME` | repository | Gmail | six-hourly monitoring only, never sends | password manager |
 | `SMTP_GMAIL_PROBE_PASSWORD` | repository | Gmail | six-hourly monitoring only, never sends | password manager |
-| `SMTP_FASTMAIL_PROBE_USERNAME` | repository | Fastmail | six-hourly monitoring only, never sends | password manager (same value as the deploy password above — §4) |
+| `SMTP_FASTMAIL_PROBE_USERNAME` | repository | Fastmail | six-hourly monitoring only, never sends | password manager (same value as the deploy username above — §4) |
 | `SMTP_FASTMAIL_PROBE_PASSWORD` | repository | Fastmail | six-hourly monitoring only, never sends | password manager (same value as the deploy password above — §4) |
 
 That's the whole inventory. `vars.MAIL_ROLE` (a repository *variable*, not a secret — `gmail` or

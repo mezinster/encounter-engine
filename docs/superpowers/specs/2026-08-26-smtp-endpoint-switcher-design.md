@@ -235,6 +235,19 @@ irreversible move in the sequence.
 * **A wrong `MAIL_ROLE` deploys the wrong vendor.** The deploy's verification step catches it within
   the same run, because it authenticates what it shipped — but it catches it after the deploy, not
   before.
+* **A failed deploy leaves `MAIL_ROLE` ahead of production, and the probe cannot tell.** Setting the
+  variable and dispatching the deploy in §3 of the failover runbook are two steps; if the second one
+  fails (the NSG/`az` flakiness the retry loops in `deploy.yml` exist for is real and observed), the
+  variable already names the new vendor but the container never shipped it — the old vendor is still
+  what's actually sending. The next scheduled probe resolves `primary: <new vendor>`, authenticates
+  it fine, and finds the old vendor — the one actually serving production — failing, which reports
+  `degraded`. §2 of that runbook's verdict table tells the operator `degraded` means "the site is not
+  affected, do not cut over," which during an outage is exactly backwards. Not new in shape — the old
+  probe reading `config/deploy.yml` on `master` had the same window between commit and deploy — but
+  the window is now one command wide instead of a commit-push-merge, and it wasn't previously listed
+  here. Mitigated procedurally, not mechanically: the failover runbook now has a step between §3 and
+  §4 requiring `gh run list --workflow deploy.yml --limit 1` to show `success` before any probe
+  verdict following a cutover is trusted.
 * **Fastmail's revocation is coupled** (S6).
 * **Still no runtime failover.** A cutover remains a deploy — four to five minutes, measured across
   the three most recent production deploys (3m51s, 4m18s, 4m52s) — initiated by a human who has

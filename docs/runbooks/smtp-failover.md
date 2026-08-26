@@ -114,7 +114,7 @@ That address change is safe to send from without touching DNS: `mezin.eu`'s SPF 
 is already SPF-aligned for `@mezin.eu`. Nothing to add, nothing to wait on propagating.
 
 **There is nothing to set in GitHub secrets, and that is the design, not an omission.** This
-runbook used to have five `gh secret set` calls here, a `config/deploy.yml` edit and a commit,
+runbook used to have seven `gh secret set` calls here, a `config/deploy.yml` edit and a commit,
 because secrets were named by **role**: `SMTP_USERNAME` meant "whoever is primary right now",
 `SMTP_SPARE_*` meant "whoever isn't" — so a cutover had to rewrite which vendor each name pointed
 at, by hand, or the deploy kept shipping the old vendor while the probe silently watched the wrong
@@ -130,6 +130,36 @@ this file. This runbook is only about *which vendor is live*; that file is about
 themselves.
 
 Then go verify: §4, then §5.
+
+---
+
+## Before you trust the probe: confirm the deploy actually shipped
+
+If the deploy dispatched in §3 **fails** -- the NSG/`az` flakiness both retry loops in
+`deploy.yml` exist for is real and observed -- `MAIL_ROLE` is now ahead of production: the
+variable names the new vendor, but the container never picked it up, and the old vendor is still
+what's actually sending. The next scheduled probe run resolves `primary: <the new vendor>`,
+authenticates it fine, and finds the OLD vendor -- the one actually serving production, and quite
+possibly the one that was down -- failing to authenticate. That reports **`degraded`**, and §2's
+table for `degraded` says *"the site is not affected... do not cut over."* During an outage, that
+is the exact opposite of true.
+
+**Before reading anything the probe says right after a cutover, confirm the deploy run itself
+finished green:**
+
+```bash
+gh run list --workflow deploy.yml --limit 1
+```
+
+If it did not succeed, the cutover has not actually happened yet. Re-dispatch the deploy (or fix
+whatever made it fail) before treating any probe verdict -- `ok`, `degraded`, or `down` -- as a
+description of what production is doing. Once that run shows `success`, the probe's verdict can be
+trusted again.
+
+This is not a new failure mode this design created: the same window existed when the host lived in
+`config/deploy.yml` on `master`, between the commit and the deploy. What changed is the width of
+the window -- one command wide instead of a commit, push and merge -- not its existence. See
+design spec §6.
 
 ---
 

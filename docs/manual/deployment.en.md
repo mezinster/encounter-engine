@@ -139,7 +139,6 @@ living at `game.mezin.eu`. What to change:
 | `env.clear.APP_HOST` | **one** domain — the one that will appear in e-mailed links |
 | `env.clear.TZ` | the server's timezone, e.g. `Europe/Vienna` |
 | `env.clear.DEFAULT_LOCALE` | default language: `ru`, `en`, `uk`, `ka`, `tr`, `be` or `pl` |
-| `env.clear.SMTP_ADDRESS` / `SMTP_PORT` | your SMTP server |
 | `accessories.db.image` | your PostgreSQL image (see below) |
 | `accessories.db.host` | the same server |
 
@@ -185,6 +184,7 @@ What you have to supply:
 | `SECRET_KEY_BASE` | the key that signs session cookies |
 | `POSTGRES_PASSWORD` | the database user's password |
 | `SMTP_USERNAME`, `SMTP_PASSWORD` | mail credentials |
+| `SMTP_ADDRESS`, `SMTP_PORT` | your SMTP server |
 | `KAMAL_REGISTRY_PASSWORD` | image registry token |
 
 `DATABASE_URL` and `MAIL_FROM` are **composed** in `.kamal/secrets` from the values above rather

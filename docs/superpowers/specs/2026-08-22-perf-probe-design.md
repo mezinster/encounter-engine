@@ -324,6 +324,39 @@ The IP is read with `az vm show -d --query publicIps` rather than
 `awk '/PublicIpAddress/{getline; getline; print $3}'` over `--output table`,
 which depended on the column layout of human-facing text.
 
+**And each generator measures its own baseline** (fixed 2026-08-27, on the
+evidence of the first `vm` run). `Measure this generator's baseline` ran on the
+GitHub runner, three steps before the generator VM was provisioned — so for
+`generator: vm` it measured the *runner's* network and the record filed it under
+`"generator": {"kind": "vm", "region": "westeurope"}`.
+
+Run 33078663339 recorded **133.8 ms** for a generator sharing a region with the
+app. `ops/perf/baseline.sh`'s own header puts that figure at **13.5 ms** and says
+in as many words that a runner reading and a westeurope-VM reading are "not the
+same measurement". Nothing raised, and the number is plausible enough to survive
+review — it is simply the wrong machine's.
+
+Two consequences, and the second is the worse one:
+
+* `docs/perf/README.md` instructs the reader to *subtract the baseline either
+  way*. Following that would remove ~134 ms of latency the run never paid.
+* It concealed the only reason the `vm` generator exists. §4 justifies it as
+  "same-region and faithful"; a record that reports the runner's network cannot
+  show that being true.
+
+The runner step is now gated on `generator: runner`, and the vm step copies
+`baseline.sh` to the generator and runs it there — the same script, so the two
+numbers differ only in where they were taken. It runs **before** the
+`K6_STARTED` marker: `baseline.sh` exits non-zero when it cannot measure, so a
+failure aborts the step before the marker and the guard refuses to write a
+record at all, rather than writing one that cannot be compared to anything.
+That is the script's own instruction to its caller, followed.
+
+No `schema` bump. The field's meaning has not changed — it was always supposed
+to be the generator's own figure, and was measured from the wrong host. The
+directory holds no affected record: the only `vm` result produced under the old
+code was never merged, precisely so that it would not.
+
 It generates its own cohort id and passes it as `LOAD_TEST_CONFIRM`.
 
 **This is a deliberate weakening of a safety property and is recorded as such.**

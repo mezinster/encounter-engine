@@ -13,7 +13,7 @@ times slower depending only on how fast they arrive. ([по-русски](../man
 
 ## Why a record rather than a number
 
-On 2026-08-21, against production on a `Standard_B1ms`:
+On 2026-08-21, by hand, against production on a `Standard_B1ms`:
 
 | arrival | p95 | errors | CPU |
 |---|---|---|---|
@@ -26,6 +26,41 @@ bcrypt logins landing together on one vCPU is the entire difference.
 A note reading `120 teams → 196 ms` would have been actively misleading within a
 month. So every parameter that could explain a difference is captured at the
 moment of the run, because none of it can be reconstructed afterwards.
+
+## What the records say so far
+
+Three runs on 2026-08-27, all `vm` generator, all 120 teams on the same
+`Standard_B1ms`, varying only `run.stampede_window`:
+
+| window | logins/s | p50 | p90 | p95 | outcome |
+|---|---|---|---|---|---|
+| `30s`  | 4 | 2229 ms | — | **8047 ms** | aborted at 32 s |
+| `60s`  | 2 | 27.5 ms | 57.8 ms | **309 ms** | completed, 5m30s |
+| `120s` | 1 | 28.4 ms | 59.4 ms | **318 ms** | completed |
+
+**Halving the arrival rate made it 26× faster, and halving it again did
+nothing** — 309 ms against 318 ms. That flatness is the finding. Below the line
+the host barely notices the crowd; above it, work arrives faster than one vCPU
+can retire it and the queue does the rest. Between 2 and 4 logins per second
+this host crosses it.
+
+A bcrypt verify at cost 12 measures ~254 ms of single-core CPU, so 4 arrivals/s
+offers ≈1.02 cores to a machine that has one. The prediction and the measurement
+agree, and the percentile shape says the same thing a third way: in the healthy
+runs `p90` is ~58 ms and `p95` is ~310 ms, and the ~8% of requests that are
+logins are exactly the slice between them. The password check is visible in the
+distribution.
+
+**Operationally: 120 teams need about a minute to arrive, not thirty seconds** —
+roughly two arrivals per second. `docs/manual/performance.en.md` says this in
+plain language for whoever is running the game night
+([по-русски](../manual/performance.ru.md)).
+
+Two caveats worth keeping attached to those numbers. Neither passing run lasted
+long enough to touch the credit bank — both started at 288 of 288 and ran 5½
+minutes — so this says nothing yet about hour two of a real game; that is what
+`hold` is for. And the exact edge is not pinned: 60 s cleared the 2 000 ms
+threshold with a 6× margin, so the real cliff sits nearer 30–40 s than 60.
 
 ## The fields that are not obvious
 

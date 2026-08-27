@@ -85,6 +85,51 @@ This is exactly why the gentle test on its own is misleading. It said "the serve
 working, we have plenty of room." That was true, and it was an answer to a question a real game
 night never asks.
 
+### Then we asked how much time the crowd needs
+
+On 27 August 2026 we ran the same 120 teams three more times, changing one thing only: how long
+they took to arrive.
+
+| the 120 teams arrived over | how long a page took | did the test survive? |
+|---|---|---|
+| 30 seconds | **8.0 seconds** | no — stopped early, too slow to continue |
+| 60 seconds | **0.31 seconds** | yes, comfortably, for the full run |
+| 120 seconds | **0.32 seconds** | yes, comfortably, for the full run |
+
+**Doubling the time the crowd takes to arrive made the site twenty-six times faster.** Nothing else
+was different: same server, same game, same number of teams, same day.
+
+And notice the last two rows. Going from one minute to two changed essentially nothing — 0.31 to
+0.32 seconds. There was nothing left to fix. **One minute is already enough**, and past that you are
+buying something you already have.
+
+That is what a limit looks like from both sides. Below it the server barely notices the crowd.
+Above it, work arrives faster than one server can do it, the queue grows, and everybody waits behind
+everybody else. Between 30 and 60 seconds this site crosses that line.
+
+### What to do about it, in one sentence
+
+**Give 120 teams about a minute to get in, not thirty seconds.**
+
+In practice that means not sending everyone the same "we start now" message at the same instant.
+Announce the start a minute or two ahead, or let teams log in before the whistle rather than at it.
+Nothing needs to be bought or rebuilt; the crowd simply needs a door wide enough for the time you
+give it.
+
+If your game is much larger than 120 teams, give it proportionally longer — the server's capacity is
+roughly *two teams arriving per second*, and that figure is what all of the above amounts to.
+
+### Why logging in is the part that matters
+
+The tests point at one thing. In the healthy runs, nine requests in ten finished in about **0.06
+seconds** — and the slowest one in twenty took about **0.31 seconds**, five times longer. That slow
+slice is almost exactly the share of requests that are logins.
+
+You can see the password check in the numbers. It costs roughly a quarter of a second of pure
+arithmetic, every time, and it cannot be cached or skipped — that is the point of it, as described
+above. Everything else the site does is fast. So the question is never "can the server handle 120
+teams", it is "how many password checks per second", and the answer on this machine is about two.
+
 ---
 
 ## What a test does to the real site

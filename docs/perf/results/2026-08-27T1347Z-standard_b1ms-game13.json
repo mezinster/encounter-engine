@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "at": "2026-08-27T13:47:49Z",
-  "note": "",
+  "note": "baseline_warm_ms nulled 2026-08-27. It read 133.8, which was the GitHub runner's network, not this generator's: the baseline step ran on the runner three steps before the generator was provisioned (fixed in PR #164). The latency figures below are real; the generator's own baseline for this run was never measured, and null says so. For comparison the next vm run, 15:09Z, measured 4.6 ms from the generator itself.",
   "host": {
     "size": "Standard_B1ms",
     "vcpu": 1,
@@ -10,7 +10,7 @@
     "cpu_credits_max_7d": 288.0
   },
   "generator": {
-    "baseline_warm_ms": 133.8,
+    "baseline_warm_ms": null,
     "kind": "vm",
     "region": "westeurope"
   },

@@ -70,7 +70,28 @@ az identity federated-credential create --name github-master \
   --issuer "$ISSUER" \
   --subject "${SUBJECT_PREFIX}:ref:refs/heads/master" \
   --audiences api://AzureADTokenExchange
+
+# Added 2026-08-27. perf-probe.yml needs the same two reads this identity
+# already grants -- the VM's shape and its CPU credit balance -- but its job
+# carries `environment: production`, so its OIDC subject ends
+# :environment:production and the branch credential above cannot match it.
+# A second credential rather than a second identity: the roles are identical,
+# and duplicating them would mean two things to keep in step.
+#
+# Read-only in both directions. This widens WHO may borrow a credential that
+# can only read one VM; it does not widen what the credential can do.
+az identity federated-credential create --name github-production \
+  --identity-name ee-vmscale-reader-oidc -g $RG \
+  --issuer "$ISSUER" \
+  --subject "${SUBJECT_PREFIX}:environment:production" \
+  --audiences api://AzureADTokenExchange
 ```
+
+**The reader now has two credentials, the operator still exactly one.** That asymmetry is the
+design, not drift: the operator's single `:environment:vm-resize` subject is what makes the
+reviewer's approval and Azure's authorisation the same act, and adding a second subject to it
+would quietly undo §2's whole argument. Adding one to a read-only identity costs nothing of the
+kind.
 
 ## 2. The operator identity
 

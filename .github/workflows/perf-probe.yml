@@ -389,7 +389,26 @@ jobs:
           # after provision.sh returned. The old code scp'd and ran `k6` at
           # once, racing that install -- winning or losing by however long the
           # copy happened to take.
-          ssh ${SSHOPTS} "azureuser@${IP}" 'cloud-init status --wait'
+          # `--wait` blocks until cloud-init has finished, and blocking is the
+          # ONLY thing this line is for. Its exit code answers a different
+          # question and is not one worth failing on: 0 is done, 1 is error,
+          # and 2 is "done, but some module logged a recoverable error".
+          #
+          # Run 33090016701 hit the 2. cloud-init printed `status: done` and
+          # exited 2 anyway, and `set -e` killed the step 50ms later -- before
+          # the next line could ask the question that actually matters. No
+          # record was written, which was the guard below working correctly on
+          # a failure that should never have been one.
+          #
+          # A degraded cloud-init that installed k6 is fine here; a spotless one
+          # that did not is not; and only `k6 version` separates them. So block
+          # on the wait, report the code, and let the next line be the
+          # assertion. The cause of that particular 2 was never reproduced --
+          # two generators built afterwards came up clean -- so this does not
+          # depend on knowing it.
+          ci_rc=0
+          ssh ${SSHOPTS} "azureuser@${IP}" 'cloud-init status --wait' || ci_rc=$?
+          [ "$ci_rc" = 0 ] || echo "::warning::cloud-init exited ${ci_rc} (2 = finished with recoverable errors); k6 is checked next"
           ssh ${SSHOPTS} "azureuser@${IP}" 'k6 version'
 
           # The generator's own baseline, measured FROM the generator and

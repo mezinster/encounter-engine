@@ -16,7 +16,18 @@
 #   python3 -c "from cloudinit.handlers import type_from_starts_with as f; \
 #     print(f(open('load_test/cloud-init.yml').read()))"
 # must print text/cloud-config, not None.
-package_update: true
+# No `package_update: true`. Nothing here uses apt -- k6 arrives as a tarball
+# over curl, and curl, tar and install are all in the Azure Ubuntu image
+# already. What it did buy was ~20-30s of boot and one more network dependency
+# that can fail: an `apt-get update` against a flaky mirror is a RECOVERABLE
+# error, which leaves cloud-init reporting `status: done` while exiting 2.
+#
+# That exit code failed a probe run (33090016701) at the readiness check, with
+# k6 most likely installed perfectly well. The workflow no longer treats the
+# code as the answer -- `k6 version` does -- but an unused package refresh was
+# never worth the failure surface either way. Removing it is not a proven fix
+# for that run; the cause was never reproduced. It removes the likeliest
+# candidate and some boot time, and the real guard is in the workflow.
 runcmd:
   - curl -fsSL https://github.com/grafana/k6/releases/download/v0.52.0/k6-v0.52.0-linux-amd64.tar.gz -o /tmp/k6.tgz
   - tar xzf /tmp/k6.tgz --strip-components=1 -C /tmp k6-v0.52.0-linux-amd64/k6

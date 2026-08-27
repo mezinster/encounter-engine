@@ -179,14 +179,16 @@ actually use.
 ## 5. The record
 
 ```json
-{ "at": "2026-08-21T20:15Z", "note": "first stampede",
+{ "schema": 2,
+  "at": "2026-08-21T20:15Z", "note": "first stampede",
   "host":      { "size": "Standard_B1ms", "vcpu": 1, "ram_gib": 2,
                  "cpu_credits_remaining_start": 287.9,
                  "cpu_credits_max_7d": 288.0 },
   "generator": { "kind": "vm", "region": "westeurope",
                  "baseline_warm_ms": 13.5 },
   "game":      { "id": 4, "levels": 71 },
-  "run":       { "scenario": "stampede", "teams": 120 },
+  "run":       { "scenario": "stampede", "teams": 120,
+                 "stampede_window": "30s" },
   "app":       { "sha": "276f55a" },
   "result":    { "p50_ms": 2650, "p95_ms": 5860, "max_ms": 7600,
                  "error_rate": 0.0, "outcome": "aborted",
@@ -194,8 +196,20 @@ actually use.
 ```
 
 **Record everything that could explain a difference, at the moment of the
-run**, because none of it can be reconstructed afterwards. Two fields earn
+run**, because none of it can be reconstructed afterwards. Three fields earn
 particular mention:
+
+* **`schema`, added 2026-08-27, and why an ambition needed a version number.**
+  The sentence above is an aspiration, and this document had already fallen
+  short of it once: `run.stampede_window` was missing until the day the first
+  successful run exposed it, so the very axis §1.1 is built on could not be read
+  off a record. The lesson is not that the list is now complete — it is that the
+  list will change again, and that a reader years from now must be able to tell
+  *"this run had no arrival window"* from *"this record predates the field"*
+  without knowing when anything was added. A record with no `schema` key is
+  version 1. Bump the constant when a field is added, removed, or changes
+  meaning; `docs/perf/README.md` holds the table and a spec pins the value to a
+  literal so the bump is deliberate.
 
 * **The two credit fields, and why there are two.** "CPU Credits Remaining" is
   an absolute **count**, not a percentage — a `Standard_B1ms` banks up to 288,

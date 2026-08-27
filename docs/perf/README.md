@@ -66,7 +66,7 @@ far, and one of them is the only record of the login stampede in existence.
 A directory of JSON is greppable and diffable, which is enough to start:
 
 ```bash
-jq -r '[.at, .host.size, .run.scenario, .run.teams, .run.stampede_window,
+jq -r '[.at, .host.size, .run.scenario, .run.teams, .run.stampede_window // "-",
         .result.p95_ms, .generator.baseline_warm_ms, .result.outcome] | @tsv' \
    docs/perf/results/*.json | column -t
 ```
@@ -76,8 +76,42 @@ same host when comparing games, and subtract the baseline either way.
 
 **`run.stampede_window` is in that list for the reason the table at the top of
 this file exists.** Its two rows — 196 ms and 5 860 ms — are the same 120 teams
-on the same host, differing by nothing but how long they took to arrive. Records
-written before 2026-08-27 do not carry the field and will show `null`; for those,
-the window was always `30s`, because nothing could set it. It is `null` by design
-for `ramp` and `hold`, which pace themselves — there it means "not applicable",
-not "unmeasured".
+on the same host, differing by nothing but how long they took to arrive. It is
+`null` by design for `ramp` and `hold`, which pace themselves — there it means
+"not applicable", not "unmeasured".
+
+## `schema`
+
+Every record says which version of this format wrote it. **A record with no
+`schema` key at all is version 1.**
+
+| version | what changed |
+|---|---|
+| 1 | the original shape: `run` carries `scenario` and `teams` only |
+| 2 | adds `run.stampede_window` (2026-08-27) |
+
+It is one integer and it earns its place immediately, because absence is
+ambiguous in a way that is entirely silent. On a **stampede** record,
+`"stampede_window": null` could mean the run genuinely had no arrival window, or
+that the record predates the field — and only a reader who happens to know the
+field arrived on 2026-08-27 can tell them apart. A directory whose meaning
+depends on remembering its own history is the thing this format exists to avoid.
+
+So, reading older records:
+
+```bash
+# version-1 records, which is where the ambiguity lives
+jq -r 'select((.schema // 1) == 1) | [.at, .run.scenario, .result.p95_ms] | @tsv' \
+   docs/perf/results/*.json
+```
+
+Every version-1 **stampede** ran a `30s` arrival window, because nothing could
+set `STAMPEDE_WINDOW` before the input existed. That is an inference from the
+code of the day rather than something the record states — which is exactly the
+kind of inference a later reader should not have to make unaided, and the reason
+the version is now stamped rather than implied.
+
+**Bump `Perf::BuildRecord::SCHEMA` when a field is added, removed, or changes
+meaning; leave it alone for a refactor.** A spec pins the constant to a literal
+so that bumping it is a decision rather than an accident, and the failure of that
+example is the prompt to add a row to the table above.

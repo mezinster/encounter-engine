@@ -13,6 +13,26 @@ require "json"
 
 module Perf
   class BuildRecord
+    # The version of the RECORD FORMAT, not of this file. Bump it when a field
+    # is added, removed, or changes meaning; leave it alone for a refactor.
+    #
+    # It exists because absence is ambiguous and the ambiguity is silent.
+    # `"stampede_window": null` on a stampede record could mean the run had no
+    # window or that the record was written before the field existed, and only
+    # a reader who knows the field arrived on 2026-08-27 can tell -- a
+    # directory whose meaning depends on remembering its own history is exactly
+    # what this format exists to avoid. With a version, that reading is
+    # mechanical: no `schema` key at all is version 1.
+    #
+    #   1  the original shape. `run` carries scenario and teams only. Every
+    #      version-1 stampede ran a 30s arrival window, because nothing could
+    #      set STAMPEDE_WINDOW -- an inference from the code of the day, which
+    #      is precisely the kind of inference a later reader should not have to
+    #      make unaided, and the reason this constant now exists.
+    #   2  adds run.stampede_window (2026-08-27), null for ramp and hold, which
+    #      pace themselves.
+    SCHEMA = 2
+
     def self.call(**kwargs)
       new(**kwargs).to_h
     end
@@ -27,7 +47,8 @@ module Perf
     end
 
     def to_h
-      { "at"        => @run["at"],
+      { "schema"    => SCHEMA,
+        "at"        => @run["at"],
         "note"      => @run["note"],
         "host"      => @host,
         "generator" => @generator,

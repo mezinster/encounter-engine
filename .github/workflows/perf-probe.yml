@@ -335,13 +335,25 @@ jobs:
           # line before k6 is invoked, so it distinguishes "k6 ran and died"
           # from "we never got as far as k6".
           echo "K6_STARTED=1" >> "$GITHUB_ENV"
+          # Wall time around k6 alone, not around the step. This is what tells a
+          # later reader whether a run was cut short -- see the K6_SECONDS
+          # comment on the vm generator below, which explains why the record
+          # could not say so before.
+          K6_T0=$(date +%s)
           k6 run --summary-export summary.json \
             --env PHASE=${{ inputs.scenario }} \
             --env TEAMS=${{ inputs.teams }} \
             --env STAMPEDE_WINDOW=${{ inputs.stampede_window }} \
             --env BASE_URL="https://${APP_HOST}" \
             --env MANIFEST="$PWD/manifest.json" \
-            load_test/main.js
+            load_test/main.js || true
+          # `|| true` so the two lines below still run, matching what the vm
+          # generator already does. Without it the step shell's `-e` exits the
+          # moment k6 returns non-zero -- which is precisely a run that crossed
+          # a threshold, so `duration_s` would have gone missing in the one case
+          # it exists to describe. The step is `continue-on-error` either way;
+          # what changes is only whether these two lines are reached.
+          echo "K6_SECONDS=$(( $(date +%s) - K6_T0 ))" >> "$GITHUB_ENV"
           echo "GEN_REGION=" >> "$GITHUB_ENV"
 
       - name: Run k6 from a westeurope generator
@@ -436,12 +448,27 @@ jobs:
           # aborts the step before the marker is written, which is exactly the
           # distinction the guard step below needs.
           echo "K6_STARTED=1" >> "$GITHUB_ENV"
+          # How long k6 ACTUALLY ran, recorded as run.duration_s. A k6 summary
+          # is written both by a run that reached its planned end and by one
+          # `abortOnFail` killed mid-flight, and nothing inside it separates
+          # them -- so before this existed, `outcome` guessed, and guessed wrong
+          # for every `hold` run: those set `abortOnFail: false`, so no
+          # threshold can cut one short, yet a crossed `checks` threshold filed
+          # the 40-minute run of 2026-08-27 as "aborted". 2430 against a planned
+          # 40 minutes says it ran; 32 against a 30s stampede says it did not.
+          #
+          # Timed around the ssh, which is as close to k6 as this side can get.
+          # It therefore includes ssh setup -- a second or two against runs
+          # measured in minutes, and erring long, which is the safe direction:
+          # it can never make a completed run look truncated.
+          K6_T0=$(date +%s)
           ssh ${SSHOPTS} "azureuser@${IP}" \
             "k6 run --summary-export summary.json \
                --env PHASE=${{ inputs.scenario }} --env TEAMS=${{ inputs.teams }} \
                --env STAMPEDE_WINDOW=${{ inputs.stampede_window }} \
                --env BASE_URL=https://${APP_HOST} --env MANIFEST=/home/azureuser/manifest.json \
                load_test/main.js" || true
+          echo "K6_SECONDS=$(( $(date +%s) - K6_T0 ))" >> "$GITHUB_ENV"
           scp ${SSHOPTS} "azureuser@${IP}:~/summary.json" summary.json || true
           echo "GEN_REGION=westeurope" >> "$GITHUB_ENV"
 
@@ -473,6 +500,46 @@ jobs:
           echo "::error::Read the generator step above, not the application."
           exit 1
 
+      # The other half of the credit story, and the half `hold` was built to
+      # ask for. The reading taken before the run says what the bank held; only
+      # a second reading says what the run COST -- and version 2 of the record
+      # had no field for it, so the 40-minute run of 2026-08-27 could not answer
+      # its own question. That answer (287.5 of 288 at its lowest, back to 288.0
+      # by the end) had to be recovered from Azure by hand the next day, and
+      # metric retention is 93 days against a record meant to last years.
+      #
+      # THREE steps, and the third is not optional. `azure/login` replaces the
+      # CLI session, so reading as ee-vmscale-reader-oidc leaves the job holding
+      # the wrong identity for its own teardown -- and "Close SSH again" failing
+      # would leave port 22 open to a runner address, which is a worse outcome
+      # than any missing measurement. Hence: both reading steps are
+      # `continue-on-error` (a missing reading is null, which the record already
+      # states honestly), and the re-authentication is `always()` so it restores
+      # the deploy identity even when they fail.
+      - name: Authenticate to Azure (read-only identity, for the after reading)
+        if: env.K6_STARTED == '1'
+        continue-on-error: true
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        with:
+          client-id: ${{ secrets.AZURE_VMSCALE_READER_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Read what the run cost the credit bank
+        if: env.K6_STARTED == '1'
+        continue-on-error: true
+        run: |
+          RUN_SECONDS="${K6_SECONDS:-0}" ./ops/perf/host_facts.sh after > host_after.json
+          cat host_after.json
+
+      - name: Re-authenticate to Azure (deploy identity, for the teardown)
+        if: always()
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Build and commit the record
         run: |
           set -euo pipefail
@@ -485,14 +552,24 @@ jobs:
             region  = ENV["GEN_REGION"].to_s
             record  = Perf::BuildRecord.new(
               :summary   => summary,
-              :host      => JSON.parse(File.read("host.json")),
+              # host.json is the shape and the balance BEFORE; host_after.json
+              # is what the run cost. Absent when the reading failed or k6 never
+              # ran, and absent is correct -- the keys are simply missing rather
+              # than present and lying.
+              :host      => JSON.parse(File.read("host.json")).merge(
+                              File.exist?("host_after.json") ?
+                                JSON.parse(File.read("host_after.json")) : {}),
               :generator => JSON.parse(File.read("baseline.json")).merge(
                               "kind"   => ENV["GENERATOR"],
                               "region" => region.empty? ? nil : region),
               :game      => JSON.parse(File.read("game.json")),
+              # duration_s is nil, not 0, when nothing measured it: absent data
+              # is never read as reassuring, and a run recorded as lasting zero
+              # seconds is a claim rather than a gap.
               :run       => { "at" => ENV["AT"], "note" => ENV["NOTE"],
                               "scenario" => ENV["SCENARIO"], "teams" => ENV["TEAMS"].to_i,
-                              "stampede_window" => ENV["STAMPEDE_WINDOW"] },
+                              "stampede_window" => ENV["STAMPEDE_WINDOW"],
+                              "duration_s" => ENV["K6_SECONDS"].to_s.empty? ? nil : ENV["K6_SECONDS"].to_i },
               :app       => { "sha" => ENV["GITHUB_SHA"][0, 7] })
             path = File.join("docs/perf/results", record.filename)
             FileUtils.mkdir_p(File.dirname(path))

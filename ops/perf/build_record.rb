@@ -31,7 +31,16 @@ module Perf
     #      make unaided, and the reason this constant now exists.
     #   2  adds run.stampede_window (2026-08-27), null for ramp and hold, which
     #      pace themselves.
-    SCHEMA = 2
+    #   3  (2026-08-28) `result.abort_reason` becomes `result.thresholds_crossed`,
+    #      a list; `result.outcome` stops claiming a run was cut short, which it
+    #      could never observe; `run.duration_s` records how long k6 actually
+    #      ran; `host` gains the credit readings taken AFTER the run. Version 2
+    #      derived outcome as `crossed.any? ? "aborted" : "completed"`, so the
+    #      40-minute hold run of 2026-08-27 -- which ran to its planned end and
+    #      passed both latency thresholds -- was filed as "aborted" next to a
+    #      stampede that really was killed at 32 seconds. Reading a version-2
+    #      record: "aborted" means "some threshold was crossed" and nothing more.
+    SCHEMA = 3
 
     def self.call(**kwargs)
       new(**kwargs).to_h
@@ -54,7 +63,8 @@ module Perf
         "generator" => @generator,
         "game"      => @game,
         "run"       => @run.slice("scenario", "teams").merge(
-                         "stampede_window" => stampede_window),
+                         "stampede_window" => stampede_window,
+                         "duration_s"      => @run["duration_s"]),
         "app"       => @app,
         "result"    => result }
     end
@@ -87,12 +97,12 @@ module Perf
       d = @summary.dig("metrics", "http_req_duration") || {}
       f = @summary.dig("metrics", "http_req_failed") || {}
 
-      { "p50_ms"       => ms(d["med"]),
-        "p95_ms"       => ms(d["p(95)"]),
-        "max_ms"       => ms(d["max"]),
-        "error_rate"   => f["value"],
-        "outcome"      => crossed.any? ? "aborted" : "completed",
-        "abort_reason" => crossed.keys.first }
+      { "p50_ms"             => ms(d["med"]),
+        "p95_ms"             => ms(d["p(95)"]),
+        "max_ms"             => ms(d["max"]),
+        "error_rate"         => f["value"],
+        "outcome"            => "completed",
+        "thresholds_crossed" => crossed.keys }
     end
 
     # k6 wrote no summary: it died before finishing -- a crash, a startup guard
@@ -100,9 +110,26 @@ module Perf
     # on this date, and the design is explicit that a failed run is data.
     def errored
       { "p50_ms" => nil, "p95_ms" => nil, "max_ms" => nil, "error_rate" => nil,
-        "outcome" => "errored", "abort_reason" => nil }
+        "outcome" => "errored", "thresholds_crossed" => nil }
     end
 
+    # `outcome` answers one question and no longer pretends to answer two: did
+    # this run produce a measurement at all. It cannot honestly say more. This
+    # class is a pure function of a k6 summary, and a summary is written both by
+    # a run that finished and by one `abortOnFail` killed mid-flight -- nothing
+    # in it distinguishes them. Version 2 guessed, by treating any crossed
+    # threshold as an abort, and the guess was wrong for every `hold` run ever
+    # taken: load_test/main.js sets `abortOnFail: PHASE != "hold"` on the two
+    # thresholds that carry it and gives `checks` none at all, so no threshold
+    # can cut a hold run short and "aborted" was unreachable as a description of
+    # one.
+    #
+    # `run.duration_s` is what answers the question instead, and it is a
+    # measurement rather than an inference: 32 seconds against a 30s-window
+    # stampede says it was killed; 2430 against a 40-minute hold says it was
+    # not. Encoding main.js's abort policy here was the alternative, and it
+    # would have put that policy in two files that can drift apart silently --
+    # which is the failure this whole format exists to prevent.
     def crossed
       (@summary["metrics"] || {}).select do |_name, metric|
         metric.is_a?(Hash) && metric["thresholds"].is_a?(Hash) &&

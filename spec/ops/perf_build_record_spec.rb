@@ -10,12 +10,21 @@
 # FLAT (`.med`, `.["p(95)"]`) with no `.values` nesting; `http_req_failed`
 # carries `value`, not `rate`; and a threshold entry is `true` when it was
 # CROSSED, which reads backwards until you see it.
+#
+# The third fixture is not synthetic either: it is the summary k6 exported from
+# the 40-minute `hold` run of 2026-08-27, downloaded from that workflow run's
+# own artifact (run 33109290689). It is here because it is the shape the first
+# two cannot express -- THREE metrics carrying thresholds, exactly one crossed,
+# and that one being `checks`, which load_test/main.js gives no `abortOnFail`.
+# A hand-written fixture would have been a guess about the case that mattered
+# most.
 require "spec_helper"
 require_relative "../../ops/perf/build_record"
 
 describe Perf::BuildRecord do
   let(:aborted) { JSON.parse(File.read("spec/fixtures/perf/k6-summary-aborted.json")) }
   let(:clean)   { JSON.parse(File.read("spec/fixtures/perf/k6-summary-clean.json")) }
+  let(:hold)    { JSON.parse(File.read("spec/fixtures/perf/k6-summary-hold-checks.json")) }
 
   def call(overrides = {})
     described_class.call(**{
@@ -26,10 +35,17 @@ describe Perf::BuildRecord do
                       "baseline_warm_ms" => 13.5 },
       :game      => { "id" => 4, "levels" => 71 },
       :run       => { "scenario" => "stampede", "teams" => 120,
-                      "stampede_window" => "30s",
+                      "stampede_window" => "30s", "duration_s" => 32,
                       "at" => "2026-08-21T20:15:00Z", "note" => "first stampede" },
       :app       => { "sha" => "276f55a" }
     }.merge(overrides))
+  end
+
+  # The real parameters of the run the third fixture was exported from: 120
+  # teams held for k6's full 40 minutes, which it reported as 40m30.0s.
+  let(:hold_run) do
+    { "scenario" => "hold", "teams" => 120, "stampede_window" => nil,
+      "duration_s" => 2430, "at" => "2026-08-27T19:37:19Z", "note" => "" }
   end
 
   it "carries every parameter that could explain a difference" do
@@ -38,7 +54,7 @@ describe Perf::BuildRecord do
     expect(r["generator"]["baseline_warm_ms"]).to eq(13.5)
     expect(r["game"]).to eq("id" => 4, "levels" => 71)
     expect(r["run"]).to eq("scenario" => "stampede", "teams" => 120,
-                           "stampede_window" => "30s")
+                           "stampede_window" => "30s", "duration_s" => 32)
     expect(r["app"]["sha"]).to eq("276f55a")
     expect(r["note"]).to eq("first stampede")
     expect(r["at"]).to eq("2026-08-21T20:15:00Z")
@@ -58,8 +74,8 @@ describe Perf::BuildRecord do
   # while the constant drifted; this example is what makes bumping the version
   # a decision rather than an accident, and its failure is the prompt to write
   # down what changed in docs/perf/README.md.
-  it "is at version 2 -- version 1 predates run.stampede_window" do
-    expect(Perf::BuildRecord::SCHEMA).to eq(2)
+  it "is at version 3 -- version 2 called every crossed threshold an abort" do
+    expect(Perf::BuildRecord::SCHEMA).to eq(3)
   end
 
   # The arrival window is the parameter this file's own header is about: the
@@ -102,16 +118,38 @@ describe Perf::BuildRecord do
 
   # The two aborted runs of 2026-08-21 are the most valuable measurements taken
   # so far. A transformer that only handled clean runs would have discarded them.
-  it "records an aborted run as a result, naming what tripped" do
-    r = call["result"]
-    expect(r["outcome"]).to eq("aborted")
-    expect(r["abort_reason"]).to eq("http_req_duration")
+  it "names every threshold a run crossed, not merely the first" do
+    expect(call["result"]["thresholds_crossed"]).to eq(["http_req_duration"])
   end
 
-  it "records a clean run as completed, with no abort reason" do
+  it "records a clean run as completed, with nothing crossed" do
     r = call(:summary => clean)["result"]
     expect(r["outcome"]).to eq("completed")
-    expect(r["abort_reason"]).to be_nil
+    expect(r["thresholds_crossed"]).to eq([])
+  end
+
+  # The defect version 3 exists to fix. `outcome` was
+  # `crossed.any? ? "aborted" : "completed"`, so ANY breached threshold read as
+  # a run that had been cut short. For `hold` no threshold can cut a run short:
+  # load_test/main.js sets `abortOnFail: PHASE !== "hold"` on the two that carry
+  # it and gives `checks` none at all. So the 40-minute run of 2026-08-27 ran to
+  # its planned end, passed both latency thresholds, and was filed as "aborted"
+  # -- a word no reader could have known was unreachable for that scenario.
+  it "does not call a run aborted on the strength of a crossed threshold" do
+    r = call(:summary => hold, :run => hold_run)["result"]
+    expect(r["outcome"]).to eq("completed")
+    expect(r["thresholds_crossed"]).to eq(["checks"])
+  end
+
+  # The other half of the same point, and the half the old shape destroyed: the
+  # two thresholds that WOULD have aborted a stampede were both satisfied, with
+  # a five-fold margin on latency. A reader of `"aborted"` / `"checks"` had no
+  # way to recover that.
+  it "keeps the satisfied thresholds out of the crossed list" do
+    r = call(:summary => hold, :run => hold_run)["result"]
+    expect(r["p95_ms"]).to eq(371.5)
+    expect(r["thresholds_crossed"]).not_to include("http_req_duration")
+    expect(r["thresholds_crossed"]).not_to include("http_req_failed")
   end
 
   # k6 died before writing a summary -- a crash, a guard refusal, an unreachable
@@ -121,6 +159,45 @@ describe Perf::BuildRecord do
     expect(r["outcome"]).to eq("errored")
     expect(r["p95_ms"]).to be_nil
     expect(r["error_rate"]).to be_nil
+  end
+
+  # nil, not []. An empty list asserts "nothing was crossed", which is a
+  # measurement; a run that wrote no summary produced none. Absent data is never
+  # read as reassuring -- the rule ops/perf/host_facts.sh already applies to the
+  # credit fields, here applied to thresholds.
+  it "leaves the crossed list null when there was no measurement to cross" do
+    expect(call(:summary => nil)["result"]["thresholds_crossed"]).to be_nil
+  end
+
+  # The fact that separates "cut short at 32 seconds" from "ran its planned 40
+  # minutes and breached at the end" -- which is exactly the pair the old
+  # `outcome` conflated. Establishing it for the 2026-08-27 hold run meant
+  # reading the workflow log by hand, and Actions logs age out.
+  it "records how long the run actually lasted" do
+    expect(call(:run => hold_run)["run"]["duration_s"]).to eq(2430)
+  end
+
+  it "leaves the duration null rather than guessing when it was not measured" do
+    r = call(:run => { "scenario" => "hold", "teams" => 120,
+                       "at" => "2026-08-27T19:37:19Z", "note" => "" })
+    expect(r["run"]).to have_key("duration_s")
+    expect(r["run"]["duration_s"]).to be_nil
+  end
+
+  # `hold` exists to ask what an hour of play does to a burstable VM's credit
+  # bank, and version 2 recorded only the balance the run STARTED with -- so the
+  # scenario could not answer its own question. Two readings after, not one: a
+  # bank that dipped and recovered reads as untouched at the end, and the dip is
+  # the interesting half.
+  it "carries the credit standing after the run, not only before it" do
+    r = call(:host => { "size" => "Standard_B1ms", "vcpu" => 1, "ram_gib" => 2,
+                        "cpu_credits_remaining_start" => 288.0,
+                        "cpu_credits_remaining_end" => 288.0,
+                        "cpu_credits_min_during" => 287.5,
+                        "cpu_credits_max_7d" => 288.0 })
+    expect(r["host"]).to include("cpu_credits_remaining_start" => 288.0,
+                                 "cpu_credits_remaining_end" => 288.0,
+                                 "cpu_credits_min_during" => 287.5)
   end
 
   # A runner's region is not reliably knowable. A field that is sometimes a fact

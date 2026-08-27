@@ -56,11 +56,70 @@ roughly two arrivals per second. `docs/manual/performance.en.md` says this in
 plain language for whoever is running the game night
 ([по-русски](../manual/performance.ru.md)).
 
-Two caveats worth keeping attached to those numbers. Neither passing run lasted
-long enough to touch the credit bank — both started at 288 of 288 and ran 5½
-minutes — so this says nothing yet about hour two of a real game; that is what
-`hold` is for. And the exact edge is not pinned: 60 s cleared the 2 000 ms
-threshold with a 6× margin, so the real cliff sits nearer 30–40 s than 60.
+One caveat remains attached to those numbers, and one has since been answered.
+The exact edge is still not pinned: 60 s cleared the 2 000 ms threshold with a
+6× margin, so the real cliff sits nearer 30–40 s than 60. The other — that
+neither passing run lasted long enough to touch the credit bank, so nothing
+there spoke to hour two of a real game — is what the next section is about.
+
+## What forty minutes of play costs: nothing
+
+`hold` ran on 2026-08-27, 120 teams, the full 40 minutes, same `Standard_B1ms`,
+`vm` generator (workflow run 33109290689). It **ran to its planned end** and
+both latency thresholds passed:
+
+| | |
+|---|---|
+| p50 / p90 / p95 | 29.0 ms / 49.1 ms / **371.5 ms** (threshold p95 < 2 000) |
+| HTTP failures | **0.29%** (threshold < 2%) |
+| throughput | 3.68 req/s, 4 241 iterations |
+| CPU credits | **min 287.5 of 288**, ended 288.0 |
+| CPU, steady state | **9–13%**, against a 20% baseline |
+| available memory | 830–870 MB, flat |
+
+**The credit bank is not the constraint at this load.** A `Standard_B1ms` earns
+at a 20% baseline and this run sat at roughly half of it, so the machine was
+*accruing* credits for most of the 40 minutes rather than spending them. Memory
+did not drift either. Hour two is not where the risk is — the whistle is.
+
+That also confirms the arrival model from the other direction: 3.68 req/s is the
+~3.5 req/s the harness design predicted for 120 teams playing steadily.
+
+### The one breach is the run's own startup
+
+`checks` came in at 98.97% against a `rate>0.99` threshold — short by three
+checks. The 89 failures were not spread evenly:
+
+| check | passed | failed | |
+|---|---|---|---|
+| `logged in` | 120 | **22** | **84%** |
+| `on the level screen` | 4 254 | 33 | 99% |
+| `answer accepted by the app` | 4 202 | 34 | 99% |
+
+142 login attempts for 120 teams. `load_test/main.js` caches one login per VU
+and retries when it fails, so every team did get in — but 22 attempts did not.
+
+**`HOLD` is `constant-vus`, which starts all 120 VUs simultaneously.** That is a
+*zero-second* arrival window: narrower than any stampede in the table above, and
+the 30 s one already aborted at p95 8 047 ms. Azure agrees about the timing —
+across the whole 40 minutes exactly one five-minute bucket touched the credit
+bank (the first, at 26.2% average CPU); every bucket after it reads 9–13%.
+
+The percentile shape says it a third way. This run's **p90 of 49 ms is lower
+than either healthy stampede run** (57.8 ms and 59.4 ms) while its p95 is higher
+(371 ms against 309 and 318). A cleaner body with a fatter tail is what a
+startup spike looks like when it is averaged into a whole-run aggregate.
+
+**So this is a harness defect, not a product finding.** `hold` is meant to
+measure steady state and is currently paying the stampede toll on the way in,
+then averaging it into the result. It needs a warm-up that the measurement
+excludes — a short ramp to `TEAMS`, or a `startTime` offset on the measured
+phase. Until then, read a hold run's `p95` as a ceiling and its `p90` as the
+truth.
+
+**The record for this run is a version-2 record and says `"outcome": "aborted"`.**
+It was not. That wording is the defect version 3 exists to fix — see `schema`
+below.
 
 ## The fields that are not obvious
 
@@ -90,21 +149,68 @@ Both are `null` when Azure has no datapoint — never zero. Absent data must not
 read as reassuring: a missing reading is unknown, and zero would mean
 "exhausted", the opposite conclusion.
 
+**`host.cpu_credits_remaining_end` and `host.cpu_credits_min_during`** (v3) —
+what the run *cost*, as opposed to what the bank held when it began. Two
+readings and not one, because a bank that dipped during the run and recovered by
+the end reads as untouched if you only look at the end: on the hold run above,
+`_end` is 288.0 and `_during` is 287.5, and the second is the one that shows the
+login burst happened at all. `cpu_credits_window` records how far back the
+minimum was taken, since a window that stopped short of the run's own start
+would report the calm after the burst as the whole story.
+
 **`app.sha`** separates "the host got slower" from "we shipped something".
 
-**`result.outcome`** is `completed`, `aborted` or `errored`. A failed run is
-data — the two aborts of 2026-08-21 are the most valuable measurements taken so
-far, and one of them is the only record of the login stampede in existence.
+**`run.duration_s`** (v3) — how long k6 actually ran. This is the field that
+separates *cut short at 32 seconds* from *ran its planned 40 minutes and
+breached a threshold at the end*, and nothing before version 3 carried it:
+establishing it for the hold run above meant reading the workflow log by hand
+the following day, and Actions logs age out.
+
+**`result.outcome`** is `completed` or `errored`, and it answers exactly one
+question: did this run produce a measurement at all. `errored` means k6 wrote no
+summary — a crash, a startup guard refusing, an unreachable host. A failed run
+is data; the two aborts of 2026-08-21 are the most valuable measurements taken
+so far, and one of them is the only record of the login stampede in existence.
+
+**In version 2 `outcome` also claimed to know whether a run had been cut short,
+and it could not.** It was derived as "was any threshold crossed", which is a
+different question. `Perf::BuildRecord` is a pure function of a k6 summary, and
+k6 writes a summary both for a run that finished and for one `abortOnFail`
+killed mid-flight — nothing inside distinguishes them. Read `"aborted"` on any
+version-1 or version-2 record as **"some threshold was crossed"** and nothing
+more, then reach for the run's own log if you need to know which happened.
+
+**`result.thresholds_crossed`** (v3) — the list of metrics that breached, `[]`
+when none did, and `null` when there was no measurement to breach. A list rather
+than version 2's single `abort_reason`, because a run can cross more than one
+and the first one alphabetically is not the interesting one. It is also what
+makes a *passing* threshold visible: the hold run crossed `checks` while
+satisfying `http_req_duration` and `http_req_failed` with a five-fold margin,
+and `"abort_reason": "checks"` destroyed that half of the story.
 
 ## Reading them
 
 A directory of JSON is greppable and diffable, which is enough to start:
 
 ```bash
-jq -r '[.at, .host.size, .run.scenario, .run.teams, .run.stampede_window // "-",
-        .result.p95_ms, .generator.baseline_warm_ms, .result.outcome] | @tsv' \
-   docs/perf/results/*.json | column -t
+jq -r '[.at, .host.size, .run.scenario, .run.teams,
+        .run.stampede_window     // "-",
+        .run.duration_s          // "-",
+        .result.p95_ms           // "-",
+        .generator.baseline_warm_ms // "-",
+        .result.outcome,
+        ((.result.thresholds_crossed // ["?"]) | join(",") | if . == "" then "-" else . end)]
+       | @tsv' docs/perf/results/*.json | column -t
 ```
+
+**Every `// "-"` there is load-bearing, not decoration.** `column -t` splits on
+runs of whitespace, so a genuinely null field — and several are null by design,
+including the deliberately-nulled `baseline_warm_ms` on the 13:47Z record —
+collapses and silently shifts every column after it one place left. A record
+that reads as belonging to the wrong run is the failure this directory exists to
+prevent, so it must not be reachable by pasting the recipe this file supplies.
+A `-` also distinguishes *not applicable* from `?`, which marks a field the
+record's own version predates.
 
 Compare like with like: same scenario and team count when comparing host shapes,
 same host when comparing games, and subtract the baseline either way.
@@ -124,6 +230,7 @@ Every record says which version of this format wrote it. **A record with no
 |---|---|
 | 1 | the original shape: `run` carries `scenario` and `teams` only |
 | 2 | adds `run.stampede_window` (2026-08-27) |
+| 3 | `result.abort_reason` → `result.thresholds_crossed` (a list); `result.outcome` stops claiming a run was cut short; adds `run.duration_s` and the `host.cpu_credits_*` readings taken after the run (2026-08-28) |
 
 It is one integer and it earns its place immediately, because absence is
 ambiguous in a way that is entirely silent. On a **stampede** record,
@@ -145,6 +252,19 @@ set `STAMPEDE_WINDOW` before the input existed. That is an inference from the
 code of the day rather than something the record states — which is exactly the
 kind of inference a later reader should not have to make unaided, and the reason
 the version is now stamped rather than implied.
+
+**Version 3 exists because a field can go stale without ever changing.**
+`outcome` never lied about a stampede: those thresholds carry `abortOnFail`, so
+a crossed one really did cut the run short. `hold` then arrived with
+`abortOnFail: false` — a change in `load_test/main.js`, not in the record format
+— and from that day `"aborted"` was unreachable as a true description of a hold
+run, while still being the value written. Nothing failed. The first hold run
+ever taken was filed under a word that could not apply to it.
+
+That is the argument for `duration_s` being a *measurement* rather than an
+inference. Teaching `Perf::BuildRecord` which thresholds abort which scenarios
+would have worked, and would have put that policy in two files free to drift
+apart in silence — which is the failure this whole format exists to prevent.
 
 **Bump `Perf::BuildRecord::SCHEMA` when a field is added, removed, or changes
 meaning; leave it alone for a refactor.** A spec pins the constant to a literal

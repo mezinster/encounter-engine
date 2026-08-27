@@ -110,12 +110,19 @@ than either healthy stampede run** (57.8 ms and 59.4 ms) while its p95 is higher
 (371 ms against 309 and 318). A cleaner body with a fatter tail is what a
 startup spike looks like when it is averaged into a whole-run aggregate.
 
-**So this is a harness defect, not a product finding.** `hold` is meant to
-measure steady state and is currently paying the stampede toll on the way in,
-then averaging it into the result. It needs a warm-up that the measurement
-excludes — a short ramp to `TEAMS`, or a `startTime` offset on the measured
-phase. Until then, read a hold run's `p95` as a ceiling and its `p90` as the
-truth.
+**So this was a harness defect, not a product finding** — `hold` is meant to
+measure steady state and was paying the stampede toll on the way in, then
+averaging it into the result. It has since been fixed in two halves, because
+either alone leaves half the problem: the hold now **staggers its own arrivals**
+over `WARMUP` seconds (60 by default — the rate this project measured as
+comfortable and now advises operators to use), and it **tags every request made
+after a VU has logged in**, with its thresholds declared against the tagged
+submetric. Staggering stops the failures; tagging stops the remaining warm-up
+from being averaged into a number that claims to describe forty minutes of play.
+
+**On the 2026-08-27 record specifically, read `p90` as the truth and `p95` as a
+ceiling.** It predates both halves, and its `whole_run` field is absent for the
+same reason — there was no warm-up excluded from it to report.
 
 **This run's record was written by the version-2 probe and said `"outcome":
 "aborted"`.** It was not aborted. That wording is the defect version 3 exists to
@@ -183,6 +190,22 @@ killed mid-flight — nothing inside distinguishes them. Read `"aborted"` on any
 version-1 or version-2 record as **"some threshold was crossed"** and nothing
 more, then reach for the run's own log if you need to know which happened.
 
+**`result.measured_from`** (v4) — which metric the percentiles above were read
+from. `http_req_duration` means the whole run; `http_req_duration{phase:steady}`
+means the run's own warm-up was excluded, and `whole_run` then carries what the
+unfiltered figures were. It is a field rather than a rule the reader has to know
+because the decision is made from the summary and not from the scenario: a
+summary contains that submetric exactly when the harness tagged one, since k6
+builds a tag submetric only where a threshold names it.
+
+**`result.whole_run`** (v4) — the same four figures over every request,
+including the arrival phase, and `null` when nothing was excluded. Excluding a
+warm-up is a measurement decision, and this directory's whole premise is that a
+record must carry what would otherwise explain a difference; a record reporting
+only the flattering number would be doing the opposite. `null` rather than a
+copy is deliberate — its presence *is* the statement that a distinction was
+drawn, and repeating the same numbers underneath would invent one that was not.
+
 **`result.thresholds_crossed`** (v3) — the list of metrics that breached, `[]`
 when none did, and `null` when there was no measurement to breach. A list rather
 than version 2's single `abort_reason`, because a run can cross more than one
@@ -201,6 +224,8 @@ jq -r '[.at, .host.size, .run.scenario, .run.teams,
         .run.duration_s          // "-",
         .result.p95_ms           // "-",
         .generator.baseline_warm_ms // "-",
+        (if .result.measured_from == null then "?"
+         elif (.result.measured_from | test("phase:steady")) then "steady" else "all" end),
         .result.outcome,
         ((.result.thresholds_crossed // ["?"]) | join(",") | if . == "" then "-" else . end)]
        | @tsv' docs/perf/results/*.json | column -t
@@ -234,6 +259,7 @@ Every record says which version of this format wrote it. **A record with no
 | 1 | the original shape: `run` carries `scenario` and `teams` only |
 | 2 | adds `run.stampede_window` (2026-08-27) |
 | 3 | `result.abort_reason` → `result.thresholds_crossed` (a list); `result.outcome` stops claiming a run was cut short; adds `run.duration_s` and the `host.cpu_credits_*` readings taken after the run (2026-08-28) |
+| 4 | the percentiles describe the steady phase where a run recorded one; adds `result.measured_from` and `result.whole_run` (2026-08-28) |
 
 It is one integer and it earns its place immediately, because absence is
 ambiguous in a way that is entirely silent. On a **stampede** record,

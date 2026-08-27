@@ -44,6 +44,24 @@ describe Perf::BuildRecord do
     expect(r["at"]).to eq("2026-08-21T20:15:00Z")
   end
 
+  # Without this, `"stampede_window": null` on a stampede record is ambiguous
+  # in the one way that matters: it could mean the run genuinely had no window,
+  # or that the record predates the field existing. Only a reader who happens to
+  # know the field was added on 2026-08-27 can tell, and a directory whose
+  # meaning depends on remembering its own history is the thing this whole
+  # format exists to avoid.
+  it "stamps the version of the format each record was written by" do
+    expect(call["schema"]).to eq(Perf::BuildRecord::SCHEMA)
+  end
+
+  # Pinned to a literal deliberately. `eq(SCHEMA)` above would pass forever
+  # while the constant drifted; this example is what makes bumping the version
+  # a decision rather than an accident, and its failure is the prompt to write
+  # down what changed in docs/perf/README.md.
+  it "is at version 2 -- version 1 predates run.stampede_window" do
+    expect(Perf::BuildRecord::SCHEMA).to eq(2)
+  end
+
   # The arrival window is the parameter this file's own header is about: the
   # 196ms-vs-5860ms pair it cites as the reason the record exists differs by
   # nothing except how long the same 120 teams took to arrive. It was the one

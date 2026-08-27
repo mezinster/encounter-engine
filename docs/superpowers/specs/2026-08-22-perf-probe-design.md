@@ -132,6 +132,17 @@ size and a commit SHA. Nothing sensitive. It is commit noise on `master`, which
 is the accepted price of a durable, diffable, greppable history that lives
 beside the code that produced it.
 
+**It arrives as a pull request, not a direct push** (revised 2026-08-27). This
+section said "commits it" and the workflow duly ran `git push`, which `master`
+rejects: pull requests are required, `enforce_admins` is on, and there is no
+bypass allowance. The rejection would have landed *after* the cohort was seeded
+and the load run — the most expensive point in the workflow at which to discover
+it — and would have thrown away the one artefact the run exists to produce. The
+record now goes to `perf-record/<run_id>` and `gh pr create` opens the pull
+request, with the record itself quoted in the body so it is readable without
+checking the branch out. The cost is a merge click; the benefit is that a
+protection change on `master` can no longer silently destroy a completed probe.
+
 ## 4. Inputs
 
 `workflow_dispatch` only.
@@ -251,11 +262,27 @@ not a follow-up, and it should land before or with the workflow.
 
 ## 9. Open questions
 
-1. Whether the workflow should carry an `environment:` approval gate as
-   `vm-scale.yml`'s apply job does. Seeding is reversible and cheap, so
-   `workflow_dispatch` alone is probably adequate — but it does create hundreds
-   of production rows, and the question deserves an explicit answer rather than
-   a default.
+1. ~~Whether the workflow should carry an `environment:` approval gate as
+   `vm-scale.yml`'s apply job does.~~ **Answered 2026-08-27, and not on the
+   merits.** The question was framed as a policy choice about seeding hundreds
+   of production rows; it is not a choice at all. §6 above says the workflow
+   "reuses `deploy.yml`'s production-access pattern unchanged … no new access
+   path and no new secret" — true only *with* `environment: production`, which
+   the implementation omitted. Every secret involved (`SSH_PRIVATE_KEY`,
+   `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) is scoped to
+   that environment, and `ee-deploy-oidc` trusts exactly one federated subject,
+   ending `:environment:production`. Outside it, `secrets.X` is the empty string
+   and Azure issues no token.
+
+   The first dispatch, [run 33059853248][r1], failed at `Load the deploy SSH
+   key` with *"The ssh-private-key argument is empty"* — the first step that
+   bothered to validate its input, four steps past the actual mistake. Nothing
+   was seeded and no NSG rule was opened, so the run was inert; the red
+   "TEARDOWN DID NOT COMPLETE" it printed was an alarm about a cohort that never
+   existed, since fixed. The gate is now present, the approval click is its
+   price, and it is charged once per probe.
+
+   [r1]: https://github.com/mezinster/encounter-engine/actions/runs/33059853248
 2. Whether `hold` is worth supporting at all until a run gets close to a real
    ceiling. At 10% CPU the credit bank cannot drain, so the phase currently has
    nothing to observe.

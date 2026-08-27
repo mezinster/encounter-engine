@@ -502,8 +502,21 @@ to watch, change your mind, and try something else.
 When the point is to produce a result that can be compared to another result
 later, use the probe instead: `.github/workflows/perf-probe.yml`, dispatched with
 a source game, a team count, a scenario and a generator. It seeds, measures its
-own network baseline, runs k6, commits a record to `docs/perf/results/`, and
+own network baseline, runs k6, records a result in `docs/perf/results/`, and
 tears down the cohort and the generator under `always()`.
+
+**It pauses for an approval before it does any of that.** The job carries
+`environment: production`, which is where the SSH key and the Azure credentials
+it needs actually live — see the comment on the job for why this is not
+optional. So a dispatch sits at *Waiting* until you click Review deployments;
+nothing has been seeded at that point and cancelling costs nothing.
+
+**The record arrives as a pull request**, on a branch named
+`perf-record/<run_id>`, because `master` does not accept direct pushes. The run
+is finished and the result is durable once that branch is on the server; merging
+is a separate, unhurried click. If the job summary shows a compare link instead
+of a pull request, the repository setting *Allow GitHub Actions to create and
+approve pull requests* is off — the link opens the same pull request by hand.
 
 It **never resizes the host** — it records the shape it finds. Comparing host
 shapes means accumulating runs across resizes made for other reasons, which

@@ -41,8 +41,9 @@ on:
         default: ""
 
 permissions:
-  contents: write   # commits the record
-  id-token: write   # OIDC to Azure, for the NSG hole and the host facts
+  contents: write        # pushes the record's branch
+  pull-requests: write   # opens the pull request that lands it on master
+  id-token: write        # OIDC to Azure, for the NSG hole and the host facts
 
 # Two probes at once would seed two cohorts, and the seeder's advisory lock
 # would refuse the second mid-workflow rather than politely queueing it.
@@ -61,6 +62,22 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    # Required, not merely cautious, and for two separate reasons. Every secret
+    # this job needs -- SSH_PRIVATE_KEY, AZURE_CLIENT_ID, AZURE_TENANT_ID,
+    # AZURE_SUBSCRIPTION_ID -- lives on the `production` environment, not on the
+    # repository; outside the environment `secrets.X` is the empty string with
+    # no warning, and the first step that validates its input is the one that
+    # reports the failure. And `ee-deploy-oidc` trusts exactly one federated
+    # subject,
+    # repo:mezinster@10500786/encounter-engine@1322568945:environment:production
+    # -- so `azure/login` could not work here either. Same reasoning, same
+    # wording, as database.yml.
+    #
+    # This settles open question 1 of the design (section 9): the gate is not a
+    # policy choice about seeding hundreds of production rows, it is the only
+    # configuration in which this workflow can reach production at all. The
+    # approval click is the price, and it is charged once per probe.
+    environment: production
 
     steps:
       # v7.0.1, the SHA the other eleven checkout steps in this repo use. The
@@ -81,7 +98,10 @@ jobs:
 
       # The cohort id is generated BEFORE anything is seeded and exported
       # immediately, so the always() teardown below knows what to remove even if
-      # seeding itself fails halfway through.
+      # seeding itself fails halfway through. Whether that teardown RUNS is a
+      # separate question, answered by COHORT_SEEDED, which the seed step writes
+      # on its first line -- knowing the name of a cohort is not evidence that
+      # one was created.
       - name: Generate the cohort id
         run: |
           echo "COHORT=lt-$(date -u +%Y-%m-%dT%H%M)-probe" >> "$GITHUB_ENV"
@@ -116,6 +136,10 @@ jobs:
         run: |
           RUNNER_IP=$(curl -fsS --max-time 10 https://api.ipify.org || curl -fsS --max-time 10 https://ifconfig.me)
           [ -n "$RUNNER_IP" ] || { echo "could not determine runner IP"; exit 1; }
+          # Set BEFORE the create, not after: `az` can fail having already made
+          # the rule, and a hole left open in the NSG is a worse outcome than a
+          # delete that finds nothing. The teardown step below reads this.
+          echo "NSG_RULE_OPEN=1" >> "$GITHUB_ENV"
           az network nsg rule create \
             --resource-group mezineu --nsg-name webNSG \
             --name "perf-jit-${{ github.run_id }}" \
@@ -134,6 +158,15 @@ jobs:
       - name: Seed the cohort
         run: |
           set -euo pipefail
+          # Marks "rows may exist in production from here on". Written before the
+          # seeder runs, so a seed that dies halfway is still torn down -- which
+          # is the case the COHORT export near the top of this job exists for.
+          # What it does NOT do is fire when this step never ran at all: a
+          # failure before it (no SSH key, no Azure, no runner IP) used to end
+          # with a red "TEARDOWN DID NOT COMPLETE" naming a cohort that was
+          # never created, and an alarm that cries wolf is one nobody reads on
+          # the day it is real.
+          echo "COHORT_SEEDED=1" >> "$GITHUB_ENV"
           ssh -o ConnectTimeout=30 "${SSH_USER}@${SSH_HOST}" \
             "C=\$(docker ps --format '{{.Names}}' | grep encounter-engine-web)
              docker exec -e LOAD_TEST_COHORT='${COHORT}' -e LOAD_TEST_CONFIRM='${COHORT}' \
@@ -227,18 +260,75 @@ jobs:
           TEAMS: ${{ inputs.teams }}
           NOTE: ${{ inputs.note }}
 
+      # `master` is protected -- pull requests required, enforce_admins on, and
+      # no bypass allowances -- so a plain `git push` here is rejected. That
+      # rejection would land AFTER the cohort has been seeded and the load has
+      # been run, which is the most expensive point in the workflow at which to
+      # discover it, and it would discard the one artefact the run exists to
+      # produce. The record goes to its own branch and opens a pull request.
+      #
+      # Every input is read from the environment rather than interpolated into
+      # the script, for the reason the step above already does it: `note` is
+      # free text, and `${{ }}` splices it into the shell before bash sees a
+      # quote.
       - name: Commit the record
         run: |
+          set -euo pipefail
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH="perf-record/${GITHUB_RUN_ID}"
+          TITLE="perf: ${SCENARIO}, ${TEAMS} teams, game ${SOURCE_GAME}"
+          git checkout -b "$BRANCH"
           git add "$RECORD"
-          git commit -m "perf: ${{ inputs.scenario }}, ${{ inputs.teams }} teams, game ${{ inputs.source_game }}"
-          git push
+          git commit -m "$TITLE"
+          git push -u origin "$BRANCH"
+          {
+            echo "Recorded by [run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})."
+            echo
+            echo '```json'
+            cat "$RECORD"
+            echo '```'
+          } > pr-body.md
 
-      # Every exit path, including cancellation. A silent failure here leaves
-      # hundreds of accounts in production.
+          # The branch is already pushed by this point, so the record is safe
+          # whatever happens next -- opening the pull request is a convenience,
+          # not the durability mechanism, and it must not be able to fail a run
+          # whose result is already on the server.
+          #
+          # It CAN fail: the repository has "Allow GitHub Actions to create and
+          # approve pull requests" off
+          # (`can_approve_pull_request_reviews: false`, checked 2026-08-27), and
+          # with it off `gh pr create` under GITHUB_TOKEN is refused outright.
+          # Turning it on is a repository-wide grant covering the approve half
+          # too, so it is the owner's call rather than this workflow's; until it
+          # is made, the compare link below is one click from the same pull
+          # request.
+          if gh pr create --base master --head "$BRANCH" \
+               --title "$TITLE" --body-file pr-body.md >pr.log 2>&1; then
+            cat pr.log
+            { echo "### Record"; echo; cat pr.log; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            cat pr.log
+            COMPARE="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/master...${BRANCH}?expand=1"
+            echo "::warning::could not open the pull request automatically; the record is pushed to ${BRANCH}"
+            {
+              echo "### Record pushed to \`${BRANCH}\`"
+              echo
+              echo "Opening the pull request automatically was refused. [Open it here](${COMPARE})."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SCENARIO: ${{ inputs.scenario }}
+          TEAMS: ${{ inputs.teams }}
+          SOURCE_GAME: ${{ inputs.source_game }}
+
+      # Every exit path from the seed step onward, including cancellation. A
+      # silent failure here leaves hundreds of accounts in production, which is
+      # why it exits non-zero and prints the manual recovery command rather than
+      # warning.
       - name: Tear down the cohort
-        if: always() && env.COHORT != ''
+        if: always() && env.COHORT_SEEDED == '1'
         run: |
           set -uo pipefail
           ssh -o ConnectTimeout=30 "${SSH_USER}@${SSH_HOST}" \
@@ -257,7 +347,7 @@ jobs:
         run: ./load_test/provision.sh destroy || echo "::warning::generator destroy failed; check the encounter-loadgen resource group"
 
       - name: Close SSH again
-        if: always()
+        if: always() && env.NSG_RULE_OPEN == '1'
         run: |
           for attempt in 1 2 3 4 5; do
             az network nsg rule delete --resource-group mezineu --nsg-name webNSG \

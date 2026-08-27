@@ -292,8 +292,30 @@ jobs:
 
       # No continue-on-error. A result with no baseline cannot be compared to
       # anything and is not worth the traffic it would cost to produce.
-      - name: Measure this generator's baseline
-        run: ./ops/perf/baseline.sh "https://${APP_HOST}/up" | tee baseline.json
+      #
+      # Gated on `runner`, which it never was. This step runs HERE, on the
+      # GitHub runner, three steps before the vm generator is provisioned -- so
+      # for `generator: vm` it measured the runner's network and the record
+      # filed it under `"generator": {"kind": "vm", "region": "westeurope"}`.
+      # Run 33078663339 recorded 133.8ms for a generator sharing a region with
+      # the app; baseline.sh's own header puts that figure at 13.5ms and says
+      # in as many words that the two are "not the same measurement".
+      #
+      # Nothing raised. README.md tells the reader to subtract the baseline,
+      # and following that instruction would have subtracted 134ms of latency
+      # the run never paid -- and hidden the entire benefit the vm generator
+      # exists to provide. The vm path measures its own, on the generator,
+      # below.
+      #
+      # Redirected rather than piped through `tee`, for the reason the
+      # host-facts step above spells out: the step shell is `bash -e` with no
+      # `pipefail`, so a pipeline exits with tee's status and this script's
+      # deliberate non-zero exit would be discarded.
+      - name: Measure the runner's baseline
+        if: inputs.generator == 'runner'
+        run: |
+          ./ops/perf/baseline.sh "https://${APP_HOST}/up" > baseline.json
+          cat baseline.json
 
       - name: Install k6
         run: |
@@ -369,6 +391,22 @@ jobs:
           # copy happened to take.
           ssh ${SSHOPTS} "azureuser@${IP}" 'cloud-init status --wait'
           ssh ${SSHOPTS} "azureuser@${IP}" 'k6 version'
+
+          # The generator's own baseline, measured FROM the generator and
+          # before any load -- the same script the runner path uses, so the two
+          # numbers mean the same thing and differ only by where they were
+          # taken. `bash <file>` rather than executing it, because scp does not
+          # carry the mode bit without -p.
+          #
+          # Ahead of the K6_STARTED marker deliberately: baseline.sh exits
+          # non-zero when it cannot measure, and its header is explicit that a
+          # result with no baseline is not worth producing. Failing here aborts
+          # the step before the marker, so the guard below refuses to write a
+          # record at all rather than writing one nothing can be compared to.
+          scp ${SSHOPTS} ops/perf/baseline.sh "azureuser@${IP}:~/baseline.sh"
+          ssh ${SSHOPTS} "azureuser@${IP}" \
+            "bash ~/baseline.sh 'https://${APP_HOST}/up'" > baseline.json
+          cat baseline.json
 
           scp ${SSHOPTS} manifest.json "azureuser@${IP}:~/manifest.json"
           scp -r ${SSHOPTS} load_test "azureuser@${IP}:~/"

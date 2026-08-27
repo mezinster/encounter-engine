@@ -117,9 +117,12 @@ excludes — a short ramp to `TEAMS`, or a `startTime` offset on the measured
 phase. Until then, read a hold run's `p95` as a ceiling and its `p90` as the
 truth.
 
-**The record for this run is a version-2 record and says `"outcome": "aborted"`.**
-It was not. That wording is the defect version 3 exists to fix — see `schema`
-below.
+**This run's record was written by the version-2 probe and said `"outcome":
+"aborted"`.** It was not aborted. That wording is the defect version 3 exists to
+fix, and the record has since been rewritten to version 3 — its `note` names
+which four fields were re-derived afterwards rather than measured by the
+workflow, and where each came from. Every value the probe did measure is
+untouched. See `schema` below.
 
 ## The fields that are not obvious
 

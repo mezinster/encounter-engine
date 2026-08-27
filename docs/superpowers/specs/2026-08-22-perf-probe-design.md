@@ -152,10 +152,29 @@ protection change on `master` can no longer silently destroy a completed probe.
 | `source_game` | game id | the "different games" axis |
 | `teams` | integer | cohort size; for `ramp`, at least the top plateau — `main.js` already refuses otherwise |
 | `scenario` | `ramp` / `hold` / `stampede` | which question is being asked |
+| `stampede_window` | duration, default `30s` | `stampede` only: how long the teams take to arrive |
 | `generator` | `runner` / `vm` | free and fast, or same-region and faithful |
 | `note` | free text | "before the Postgres tuning" |
 
 `stampede` does not exist yet — see §8.
+
+**`stampede_window` added 2026-08-27**, after the first successful probe run
+([33066075206][r2]) reproduced the login stampede independently: p95 **5650 ms**
+against the 5860 ms measured by hand on 2026-08-21, zero errors, every check
+passing. `main.js` had read `STAMPEDE_WINDOW` since it was written and nothing
+could set it, so the axis this whole document is organised around — *the same
+120 teams differ by 30× depending only on how fast they arrive* — was the one
+axis the workflow could not vary.
+
+It is also the cheapest test of why. A bcrypt-cost-12 verify is ~254 ms of
+single-core CPU, and 120 teams over 30 s is 4 logins/s, so arrivals alone offer
+≈1.02 cores to a 1-vCPU host. Utilisation at ~1.0 produces exactly what was
+observed: latency climbing, nothing failing. If that is right, widening the
+window divides the arrival rate and p95 should collapse — and where it crosses
+2 s is the operationally useful number, the arrival rate a game night may
+actually use.
+
+[r2]: https://github.com/mezinster/encounter-engine/actions/runs/33066075206
 
 ## 5. The record
 

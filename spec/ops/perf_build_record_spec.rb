@@ -26,6 +26,7 @@ describe Perf::BuildRecord do
                       "baseline_warm_ms" => 13.5 },
       :game      => { "id" => 4, "levels" => 71 },
       :run       => { "scenario" => "stampede", "teams" => 120,
+                      "stampede_window" => "30s",
                       "at" => "2026-08-21T20:15:00Z", "note" => "first stampede" },
       :app       => { "sha" => "276f55a" }
     }.merge(overrides))
@@ -36,10 +37,41 @@ describe Perf::BuildRecord do
     expect(r["host"]).to include("size" => "Standard_B1ms", "credits_pct_start" => 96)
     expect(r["generator"]["baseline_warm_ms"]).to eq(13.5)
     expect(r["game"]).to eq("id" => 4, "levels" => 71)
-    expect(r["run"]).to eq("scenario" => "stampede", "teams" => 120)
+    expect(r["run"]).to eq("scenario" => "stampede", "teams" => 120,
+                           "stampede_window" => "30s")
     expect(r["app"]["sha"]).to eq("276f55a")
     expect(r["note"]).to eq("first stampede")
     expect(r["at"]).to eq("2026-08-21T20:15:00Z")
+  end
+
+  # The arrival window is the parameter this file's own header is about: the
+  # 196ms-vs-5860ms pair it cites as the reason the record exists differs by
+  # nothing except how long the same 120 teams took to arrive. It was the one
+  # thing `run` did not carry, so two records a month apart could disagree by
+  # 30x with no field explaining why.
+  it "carries the arrival window, which is what the 196ms/5860ms pair differs by" do
+    fast = call(:run => { "scenario" => "stampede", "teams" => 120,
+                          "stampede_window" => "22m",
+                          "at" => "2026-08-21T20:15:00Z", "note" => "" })
+    slow = call(:run => { "scenario" => "stampede", "teams" => 120,
+                          "stampede_window" => "30s",
+                          "at" => "2026-08-21T20:15:00Z", "note" => "" })
+    expect(fast["run"]["stampede_window"]).to eq("22m")
+    expect(slow["run"]["stampede_window"]).to eq("30s")
+    expect(fast["run"].reject { |k, _| k == "stampede_window" })
+      .to eq(slow["run"].reject { |k, _| k == "stampede_window" })
+  end
+
+  # Recording "30s" against a ramp would assert a parameter that had no effect
+  # on it -- STAMPEDE_WINDOW is read by the stampede scenario alone. The key
+  # stays present so every record has the same shape and diffs cleanly; null
+  # says "not applicable" rather than "unmeasured".
+  it "records no arrival window for a scenario that has none" do
+    r = call(:run => { "scenario" => "ramp", "teams" => 120,
+                       "stampede_window" => "30s",
+                       "at" => "2026-08-21T20:15:00Z", "note" => "" })
+    expect(r["run"]).to have_key("stampede_window")
+    expect(r["run"]["stampede_window"]).to be_nil
   end
 
   it "reads the latency percentiles out of k6's flat metric shape" do

@@ -32,7 +32,8 @@ module Perf
         "host"      => @host,
         "generator" => @generator,
         "game"      => @game,
-        "run"       => @run.slice("scenario", "teams"),
+        "run"       => @run.slice("scenario", "teams").merge(
+                         "stampede_window" => stampede_window),
         "app"       => @app,
         "result"    => result }
     end
@@ -90,6 +91,24 @@ module Perf
 
     def ms(value)
       value && value.round(1)
+    end
+
+    # The header above cites 196ms against 5860ms, same host, same game, same
+    # 120 teams -- differing by nothing but how long those teams took to
+    # arrive. That window was the one parameter `run` did not carry, so the
+    # two records the docstring is about would have been indistinguishable in
+    # this directory apart from the number they disagree by.
+    #
+    # nil for anything but a stampede, because STAMPEDE_WINDOW is read by that
+    # scenario alone (load_test/main.js) -- recording "30s" against a ramp
+    # would assert a parameter that had no effect on it. The key is emitted
+    # either way so every record keeps the same shape and diffs cleanly; here
+    # null means "not applicable", not "unmeasured".
+    def stampede_window
+      return nil unless @run["scenario"].to_s == "stampede"
+
+      value = @run["stampede_window"].to_s
+      value.empty? ? nil : value
     end
   end
 end

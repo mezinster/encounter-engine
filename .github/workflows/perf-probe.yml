@@ -293,6 +293,10 @@ jobs:
         if: inputs.generator == 'runner'
         continue-on-error: true
         run: |
+          # See "Fail if no load was generated at all" below. Written on the
+          # line before k6 is invoked, so it distinguishes "k6 ran and died"
+          # from "we never got as far as k6".
+          echo "K6_STARTED=1" >> "$GITHUB_ENV"
           k6 run --summary-export summary.json \
             --env PHASE=${{ inputs.scenario }} \
             --env TEAMS=${{ inputs.teams }} \
@@ -311,6 +315,13 @@ jobs:
           [ -n "$IP" ] || IP=$(az vm show -d -g encounter-loadgen -n loadgen --query publicIps -o tsv)
           scp -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 manifest.json "azureuser@${IP}:~/manifest.json"
           scp -r -o ConnectTimeout=30 load_test "azureuser@${IP}:~/"
+          # Deliberately after the scps and before the ssh: reaching this line
+          # means a generator exists and is holding the test. Everything above
+          # runs under `set -euo pipefail` with no `|| true`, so a generator
+          # that was never provisioned -- run 33064139352 -- aborts the step
+          # before the marker is written, which is exactly the distinction the
+          # guard step below needs.
+          echo "K6_STARTED=1" >> "$GITHUB_ENV"
           ssh -o ConnectTimeout=30 "azureuser@${IP}" \
             "k6 run --summary-export summary.json \
                --env PHASE=${{ inputs.scenario }} --env TEAMS=${{ inputs.teams }} \
@@ -318,6 +329,34 @@ jobs:
                load_test/main.js" || true
           scp -o ConnectTimeout=30 "azureuser@${IP}:~/summary.json" summary.json || true
           echo "GEN_REGION=westeurope" >> "$GITHUB_ENV"
+
+      # `continue-on-error` on the two generator steps above is there so that k6
+      # ABORTING is recorded as a result rather than failing the build -- a run
+      # that fell over under load is the most interesting thing this workflow
+      # can find. It was never meant to hide a generator that never started.
+      #
+      # Run 33064139352 could not tell those apart. provision.sh died on an
+      # authorisation error, k6 never ran, no summary was written, a record was
+      # committed reading `"outcome": "errored"`, and the job reported SUCCESS
+      # -- after seeding 120 real accounts into production. Read months later,
+      # that record says the app errored under a 120-team stampede on a B1ms.
+      # The app was never asked. That is worse than no record, which is why this
+      # runs BEFORE the record is built rather than annotating it afterwards.
+      #
+      # K6_STARTED is written by whichever generator step got as far as
+      # invoking k6. Absent, the instrument never ran: a build failure, and a
+      # fact about this workflow rather than about production. Present with no
+      # summary.json, k6 died on its own terms -- a crash, a startup guard
+      # refusing, an unreachable host -- and that IS a result, recorded as
+      # "errored" exactly as the step below intends.
+      - name: Fail if no load was generated at all
+        if: env.K6_STARTED != '1'
+        run: |
+          echo "::error::No load was generated: the '${{ inputs.generator }}' generator never reached k6."
+          echo "::error::The cohort was seeded and has been torn down, and no measurement exists."
+          echo "::error::No record is written for this run, because a record would claim the app was tested."
+          echo "::error::Read the generator step above, not the application."
+          exit 1
 
       - name: Build and commit the record
         run: |

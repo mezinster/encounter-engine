@@ -140,14 +140,35 @@ jobs:
           # the rule, and a hole left open in the NSG is a worse outcome than a
           # delete that finds nothing. The teardown step below reads this.
           echo "NSG_RULE_OPEN=1" >> "$GITHUB_ENV"
-          az network nsg rule create \
-            --resource-group mezineu --nsg-name webNSG \
-            --name "perf-jit-${{ github.run_id }}" \
-            --priority 901 --direction Inbound --access Allow --protocol Tcp \
-            --source-address-prefixes "${RUNNER_IP}/32" \
-            --destination-port-ranges 22 \
-            --description "JIT SSH for perf probe run ${{ github.run_id }}" \
-            --output none
+          # Retried for the reason deploy.yml's identical step spells out at
+          # length: the Azure CLI is flaky here, not this command. Under Python
+          # 3.14 azure.cli.core imports across threads and that path deadlocks
+          # on _ModuleLock (Azure/azure-cli#32980).
+          #
+          # This step is where that bug was hit a SECOND time, in run
+          # 33061481727, with `_frozen_importlib._DeadlockError` raised from the
+          # LRO poller thread inside msal's `import requests  # Lazy load` --
+          # while `az network nsg rule delete` in the cleanup step of the same
+          # job succeeded on its first attempt, which is the tell that it is a
+          # race. deploy.yml grew this loop when it was hit the first time; the
+          # probe copied the command out of that step without it.
+          for attempt in 1 2 3 4 5; do
+            if az network nsg rule create \
+                 --resource-group mezineu --nsg-name webNSG \
+                 --name "perf-jit-${{ github.run_id }}" \
+                 --priority 901 --direction Inbound --access Allow --protocol Tcp \
+                 --source-address-prefixes "${RUNNER_IP}/32" \
+                 --destination-port-ranges 22 \
+                 --description "JIT SSH for perf probe run ${{ github.run_id }}" \
+                 --output none; then
+              echo "rule created on attempt ${attempt}"
+              exit 0
+            fi
+            echo "attempt ${attempt} failed; retrying in 10s"
+            sleep 10
+          done
+          echo "could not open port 22 after 5 attempts"
+          exit 1
 
       # BEFORE load. cpu_credits_remaining_start means the balance the run
       # started with; reading it afterwards would record the balance the run

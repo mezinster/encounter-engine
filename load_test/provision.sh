@@ -7,8 +7,11 @@
 # VM lives about two hours.
 #
 # The resource group is the point. `az vm delete` leaves the NIC, NSG, public
-# IP and OS disk behind, quietly billing. Deleting the GROUP removes everything
-# or fails loudly.
+# IP and OS disk behind, quietly billing -- this VM leaves six resources, only
+# one of which is the VM. What matters is that NOTHING survives a run, and that
+# somebody checks rather than assumes; `destroy` below empties the group by id
+# and then asserts it is empty. The group itself is permanent, so that CI's
+# rights can be scoped to it instead of to the subscription -- see `destroy`.
 set -euo pipefail
 
 RG="${LOAD_TEST_RG:-encounter-loadgen}"
@@ -74,8 +77,43 @@ case "${1:-}" in
     echo "resource group -- run '$0 destroy' as soon as the run is over."
     ;;
   destroy)
-    az group delete --name "$RG" --yes --no-wait
-    echo "deleting resource group $RG (async)"
+    # Empties the group; does NOT delete it. Two reasons, and the second is
+    # the one that actually protects you.
+    #
+    # 1. The group is permanent so that a role assignment can be SCOPED to it.
+    #    `az group delete` takes the scope down with the resources, and
+    #    recreating it afterwards needs resourceGroups/write at SUBSCRIPTION
+    #    scope -- so keeping the old line would have meant handing CI
+    #    subscription-wide Contributor, an identity that could then resize or
+    #    delete the production VM. ee-deploy-oidc holds Contributor on this
+    #    group and Network Contributor on one NSG, and that is all.
+    #
+    # 2. The old line was `az group delete --yes --no-wait` followed by an echo
+    #    saying it was deleting. Fire and forget: a delete that FAILED left a
+    #    VM billing and nothing ever noticed. The point of the group was never
+    #    the group, it was the guarantee that nothing survives the run -- and
+    #    that guarantee was being announced rather than checked. It is checked
+    #    now, and a non-empty group is a non-zero exit.
+    #
+    # Deleted by id, in passes: `az resource delete` refuses a NIC still
+    # attached to a VM or a disk still attached to a NIC, and the ordering is
+    # not worth encoding when retrying is this cheap.
+    for pass in 1 2 3 4 5; do
+      ids="$(az resource list -g "$RG" --query "[].id" -o tsv)"
+      [ -z "$ids" ] && break
+      echo "pass ${pass}: $(printf '%s\n' "$ids" | wc -l) resource(s) left"
+      # shellcheck disable=SC2086
+      printf '%s\n' $ids | xargs -r -n1 az resource delete --ids >/dev/null 2>&1 || true
+    done
+
+    remaining="$(az resource list -g "$RG" --query "length(@)" -o tsv)"
+    if [ "$remaining" != "0" ]; then
+      echo "::error::${RG} still holds ${remaining} resource(s) after 5 passes -- THEY ARE BILLING" >&2
+      az resource list -g "$RG" --query "[].{name:name,type:type}" -o table >&2
+      echo "::error::delete them by hand: az group delete --name ${RG} --yes" >&2
+      exit 1
+    fi
+    echo "$RG is empty"
     ;;
   *)
     echo "usage: $0 create|destroy" >&2; exit 64 ;;

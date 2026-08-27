@@ -276,10 +276,53 @@ absent from the ladder yields `null`, on this document's own reasoning about the
 credit fields: a shape nobody has costed is exactly the shape a reader should be
 told nothing about.
 
-**Still unresolved: the `vm` generator.** `load_test/provision.sh` creates a VM
-in the `encounter-loadgen` resource group, and `ee-deploy-oidc` has no rights
-there either. `generator: runner` is the default and is unaffected; the `vm`
-path has never run and will fail on authorisation when it first does.
+**The `vm` generator** (resolved 2026-08-27; it had never run, and failed on
+authorisation the first time it did — run 33064139352). `ee-deploy-oidc` now
+also holds **Contributor scoped to the `encounter-loadgen` resource group**, and
+that group is **permanent**:
+
+```bash
+az group create --name encounter-loadgen --location westeurope
+az role assignment create \
+  --assignee-object-id "$(az identity show -g MEZINEU -n ee-deploy-oidc --query principalId -o tsv)" \
+  --assignee-principal-type ServicePrincipal --role Contributor \
+  --scope "/subscriptions/$SUB/resourceGroups/encounter-loadgen"
+```
+
+No new identity, no new secret and no third `azure/login`: `ee-deploy-oidc`
+already trusts `:environment:production`, which is what this workflow runs as.
+Its rights remain two narrow assignments — Network Contributor on `webNSG`,
+Contributor on `encounter-loadgen` — and it still cannot read, resize or delete
+the production VM.
+
+**Permanent, because `az group delete` would take the scope with it.** A role
+assignment scoped to a resource group dies when that group does, and recreating
+the group afterwards needs `resourceGroups/write` at *subscription* scope. Keeping
+the old destroy would therefore have meant subscription-wide Contributor for an
+identity reachable by anything that can dispatch this workflow. So `destroy`
+empties the group instead and then **asserts** it is empty — which is a stronger
+guarantee than the line it replaced, `az group delete --yes --no-wait` followed
+by an echo claiming success: a delete that failed left a VM billing and nothing
+noticed.
+
+Three things measured on a live generator the same day, each of which the
+workflow had assumed away:
+
+| | |
+|---|---|
+| `provision.sh create` | 46 s, VM reachable |
+| k6 present | **23 s *after* `create` returned** — cloud-init runs `package_update` then downloads it |
+| `destroy` | 3 passes (6 → 4 → 3 → 0 resources), ~2 min |
+
+The k6 gap is why the step now waits on `cloud-init status --wait` and checks
+`k6 version` before copying anything: the old code scp'd and ran `k6` at once,
+racing the install and winning or losing by however long the copy took. The
+delete passes are why `destroy` retries rather than encoding an order — Azure
+refuses a NIC attached to a VM, and a disk attached to a NIC.
+
+The IP is read with `az vm show -d --query publicIps` rather than
+`awk '/PublicIpAddress/{getline; getline; print $3}'` over `--output table`,
+which depended on the column layout of human-facing text.
 
 It generates its own cohort id and passes it as `LOAD_TEST_CONFIRM`.
 

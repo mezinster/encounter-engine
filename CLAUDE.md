@@ -444,7 +444,9 @@ A superadmin can translate a game's author-written content via the Claude API
   There is no ActiveJob backend here and the host has one vCPU. The wrap is
   load-bearing: an unwrapped thread leaks a connection from the pool.
   `TranslationRun.sweep_stale!` exists because a thread killed by a deploy
-  would otherwise leave the game locked out of translation forever.
+  would otherwise leave the game locked out of translation forever. Replacing
+  this with a real queue was costed on 2026-08-27 and deliberately declined —
+  see **Why there is no background-job queue** below before proposing it again.
 
 `ANTHROPIC_API_KEY` is an env var via the Kamal secret, not Azure Key Vault —
 Kamal 2.12 ships no Azure adapter, so Key Vault would mean a custom adapter or
@@ -452,6 +454,101 @@ an entrypoint shim, and a new boot-time failure mode for the whole app, for one
 key. With the variable unset the feature is entirely absent, so development and
 CI need no credential. See
 `docs/superpowers/specs/2026-08-16-ai-translation-design.md`.
+
+## Why there is no background-job queue
+
+Adding SolidQueue via the Puma plugin — Active Job in-process, no extra
+container — was designed out to the point of choosing a mode and a database on
+2026-08-27, and then **declined on the evidence**. It is written down because
+it is an obvious idea that will occur to the next reader too, and because three
+of the four benefits anyone would expect from it are already implemented by
+hand here.
+
+**What a queue would NOT buy, because the code already does it.** The AI
+translation runner is the site that looks most like it needs a job, and it is
+the one that needs it least:
+
+  * **Retries** — `Translation::Runner#translate` rescues `Client::Error` *per
+    unit, never per run*. A field that failed simply has no proposal row.
+  * **Resumability** — `already_proposed?` is scoped to `@run` and its own
+    comment says so: it asks "did THIS run already do it".
+  * **Not re-paying on resume** — same mechanism. A resumed run skips every
+    field it already proposed, so recovery costs nothing at the API.
+  * **A way to trigger the resume** — `TranslationRunsController#retry`,
+    `FAILED`-only, calling `start(run)` on the *same* run.
+
+So the recovery path after a deploy kills a run is complete today: the row sits
+in `running`, the next visitor trips `sweep_stale_runs` which marks it `FAILED`,
+and the operator clicks Retry, which resumes free. **The entire delta a queue
+would add at this site is that nobody has to click Retry.**
+
+**A scheduler has no customer either.** `sweep_stale!` is the only thing that
+wants one, and it is retired by the same change that would introduce it.
+Everything else that looks periodic is deliberately not:
+
+  * Time-based state is **evaluated lazily on read** — `access_codes.expires_at`,
+    `game_runs.starts_at`, the registration deadline. `AccessCode#active?` asks
+    `expires_at > Time.now`. Nothing needs a sweep to *transition* anything.
+  * The real periodic work lives in **GitHub Actions on purpose** — and there
+    are exactly two scheduled workflows, `smtp-probe.yml` (`17 */6 * * *`) and
+    `vm-scale.yml` (`*/15 * * * *`); `perf-probe.yml` is `workflow_dispatch`
+    only, not a cron. Both of the real two must run *when the app is down or
+    unhealthy*, which is precisely what an in-app scheduler cannot do. Moving
+    them in would be a regression, not a tidy-up.
+
+**The one site with a real problem is the one a queue cannot currently help.**
+`GameFileUpload` burns 2.8 s plus 1.7 s per variant of libvips inside the Puma
+worker holding the request (see `MAX_PIXELS` and its comment). That is worth
+isolating in a separate process — but it is blocked on **memory**, not on
+queueing, and the numbers are the reason:
+
+  * A Rails process in this app boots at **170 MiB** RSS (`RAILS_ENV=production`,
+    measured 2026-08-27 with the boot recipe under Testing).
+  * SolidQueue's `fork` mode — the one that gives isolation — forks **one
+    process per actor**: supervisor, dispatcher, scheduler, worker. Four Ruby
+    VMs, not one. Copy-on-write erodes as the GC dirties pages.
+  * Production `Available Memory Bytes` over 14 days: **min 472 MiB**, max 922
+    MiB (measured 2026-08-27 via `ops/vmscale/gather.sh`, which is read-only).
+
+Four forked actors do not fit inside a 472 MiB floor, and this file's VM-scaling
+section explains why guessing wrong there is not survivable: the OOM killer
+takes Postgres or Puma, and recovery is a restore rather than a resize. The fix
+is the `B2s` rung (+$17.52/month) that the VM-scaling design already costed —
+a money decision, not a software one.
+
+`async` mode (workers as threads inside Puma) *does* fit, and suits the
+I/O-bound translation work well since the GVL is released across the Claude API
+call. It buys the one click above. It does not help the libvips case at all,
+because the work stays in the web process either way.
+
+**Re-measure before trusting any number here.** Both figures move:
+
+```bash
+bash ops/vmscale/gather.sh | jq -r 'def mib: (./1048576)|floor;
+  [.metrics.hourly_14d.available_memory_bytes[].min | select(.!=null)]
+  | "14d available memory: min \(min|mib) MiB, max \(max|mib) MiB"'
+```
+
+### What would flip this decision
+
+Any one of these, and the answer changes. None of them is true today:
+
+  1. **A product feature that needs a timer** — "your game starts in an hour",
+     or a nudge as the registration deadline approaches. That would be the
+     first genuine scheduler customer. Build the queue when you build that
+     feature, not before.
+  2. **The VM moves to `B2s` or higher.** Then `fork` mode fits, and the
+     libvips isolation — a decompression bomb killing a worker instead of the
+     play screen — becomes reachable. That is the actual prize.
+  3. **A second web process or replica appears.** The process-local rate
+     limiter breaks that day regardless (`config/environments/production.rb`
+     says so at length), so this layer is being rethought anyway.
+  4. **Mail volume grows** enough that synchronous SMTP hurts. Note that mail
+     was deliberately excluded even from the declined design:
+     `MailDelivery.attempt` returns `true|false` *so the controller can react*,
+     and signup renders the generated password on screen when the letter did
+     not go out. Enqueueing removes the boolean and that failure branch
+     stops working.
 
 ## The user manual is served at runtime, not just read from a checkout
 

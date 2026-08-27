@@ -66,10 +66,18 @@ far, and one of them is the only record of the login stampede in existence.
 A directory of JSON is greppable and diffable, which is enough to start:
 
 ```bash
-jq -r '[.at, .host.size, .run.scenario, .run.teams,
+jq -r '[.at, .host.size, .run.scenario, .run.teams, .run.stampede_window,
         .result.p95_ms, .generator.baseline_warm_ms, .result.outcome] | @tsv' \
    docs/perf/results/*.json | column -t
 ```
 
 Compare like with like: same scenario and team count when comparing host shapes,
 same host when comparing games, and subtract the baseline either way.
+
+**`run.stampede_window` is in that list for the reason the table at the top of
+this file exists.** Its two rows — 196 ms and 5 860 ms — are the same 120 teams
+on the same host, differing by nothing but how long they took to arrive. Records
+written before 2026-08-27 do not carry the field and will show `null`; for those,
+the window was always `30s`, because nothing could set it. It is `null` by design
+for `ramp` and `hold`, which pace themselves — there it means "not applicable",
+not "unmeasured".

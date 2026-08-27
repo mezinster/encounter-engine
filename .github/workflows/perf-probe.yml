@@ -30,6 +30,22 @@ on:
         type: choice
         default: stampede
         options: [stampede, ramp, hold]
+      stampede_window:
+        # The question the probe exists to answer, made dispatchable. main.js
+        # has read STAMPEDE_WINDOW since it was written; nothing could set it.
+        #
+        # 120 teams over 30s is 4 logins/s, and a bcrypt-cost-12 verify is
+        # ~254ms of single core, so arrivals alone offer ~1.02 cores to a
+        # 1-vCPU host. Utilisation at ~1.0 is why run 33066075206 read p95
+        # 5.65s with ZERO errors and every check passing -- a queue, not a
+        # fault. Widening this window divides the arrival rate, so it is the
+        # one knob that tests that explanation and, if it holds, says how fast
+        # teams may actually arrive on a game night.
+        #
+        # Ignored by `ramp` and `hold`, which set their own pacing.
+        description: "Stampede only: how long the teams take to arrive"
+        type: string
+        default: "30s"
       generator:
         description: "Where load comes from"
         type: choice
@@ -300,6 +316,7 @@ jobs:
           k6 run --summary-export summary.json \
             --env PHASE=${{ inputs.scenario }} \
             --env TEAMS=${{ inputs.teams }} \
+            --env STAMPEDE_WINDOW=${{ inputs.stampede_window }} \
             --env BASE_URL="https://${APP_HOST}" \
             --env MANIFEST="$PWD/manifest.json" \
             load_test/main.js
@@ -325,6 +342,7 @@ jobs:
           ssh -o ConnectTimeout=30 "azureuser@${IP}" \
             "k6 run --summary-export summary.json \
                --env PHASE=${{ inputs.scenario }} --env TEAMS=${{ inputs.teams }} \
+               --env STAMPEDE_WINDOW=${{ inputs.stampede_window }} \
                --env BASE_URL=https://${APP_HOST} --env MANIFEST=/home/azureuser/manifest.json \
                load_test/main.js" || true
           scp -o ConnectTimeout=30 "azureuser@${IP}:~/summary.json" summary.json || true
@@ -376,7 +394,8 @@ jobs:
                               "region" => region.empty? ? nil : region),
               :game      => JSON.parse(File.read("game.json")),
               :run       => { "at" => ENV["AT"], "note" => ENV["NOTE"],
-                              "scenario" => ENV["SCENARIO"], "teams" => ENV["TEAMS"].to_i },
+                              "scenario" => ENV["SCENARIO"], "teams" => ENV["TEAMS"].to_i,
+                              "stampede_window" => ENV["STAMPEDE_WINDOW"] },
               :app       => { "sha" => ENV["GITHUB_SHA"][0, 7] })
             path = File.join("docs/perf/results", record.filename)
             FileUtils.mkdir_p(File.dirname(path))
@@ -388,6 +407,7 @@ jobs:
           GENERATOR: ${{ inputs.generator }}
           SCENARIO: ${{ inputs.scenario }}
           TEAMS: ${{ inputs.teams }}
+          STAMPEDE_WINDOW: ${{ inputs.stampede_window }}
           NOTE: ${{ inputs.note }}
 
       # `master` is protected -- pull requests required, enforce_admins on, and
@@ -407,7 +427,8 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           BRANCH="perf-record/${GITHUB_RUN_ID}"
-          TITLE="perf: ${SCENARIO}, ${TEAMS} teams, game ${SOURCE_GAME}"
+          TITLE="perf: ${SCENARIO}, ${TEAMS} teams over ${STAMPEDE_WINDOW}, game ${SOURCE_GAME}"
+          [ "$SCENARIO" = "stampede" ] || TITLE="perf: ${SCENARIO}, ${TEAMS} teams, game ${SOURCE_GAME}"
           git checkout -b "$BRANCH"
           git add "$RECORD"
           git commit -m "$TITLE"
@@ -451,6 +472,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SCENARIO: ${{ inputs.scenario }}
           TEAMS: ${{ inputs.teams }}
+          STAMPEDE_WINDOW: ${{ inputs.stampede_window }}
           SOURCE_GAME: ${{ inputs.source_game }}
 
       # Every exit path from the seed step onward, including cancellation. A

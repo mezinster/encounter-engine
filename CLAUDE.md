@@ -846,6 +846,31 @@ just-in-time hole in the NSG for the runner's IP and closing it again afterward.
 `docs/superpowers/specs/2026-08-05-kamal-deployment-design.md` for the design and
 `docs/runbooks/restore.md` for restoring the production database.
 
+**Copying a production-access step out of `deploy.yml` means copying what surrounds it, not just
+the command.** `perf-probe.yml` did the first and not the second, and broke twice in two days for
+two unrelated reasons that were the same mistake:
+
+  * Its job carried no `environment: production`, so `SSH_PRIVATE_KEY`, `AZURE_CLIENT_ID`,
+    `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID` — all **environment** secrets, none of them
+    repository secrets — interpolated to the empty string. Actions does not warn; the run died four
+    steps later at `webfactory/ssh-agent` with *"The ssh-private-key argument is empty."* Nor was
+    that half the story: `ee-deploy-oidc` trusts exactly one federated subject, ending
+    `:environment:production`, so `azure/login` could not have worked either. **Any workflow in this
+    repository that touches production needs that line**; `database.yml:44-50` explains it in place.
+  * Its `az network nsg rule create` had no retry loop. The Azure CLI on the hosted runner is on
+    Python 3.14, where `azure.cli.core` imports across threads and deadlocks on `_ModuleLock`
+    (`_frozen_importlib._DeadlockError`, Azure/azure-cli#32980). `deploy.yml` grew a five-attempt
+    loop when it hit this; the probe copied the command and left the loop behind. The tell that it
+    is a **race and not a misconfiguration** is that `az network nsg rule delete` succeeded on its
+    first attempt in the same job, seconds later — so treat a lone `DeadlockError` from any `az`
+    call here as flakiness to retry, not as something you broke. Read-only calls
+    (`az vm show`, `az monitor metrics list`) have not been observed hitting it; `vm-scale.yml`
+    exercises them on a schedule.
+
+Neither failure could have been caught before dispatch: both suites run in the test environment and
+neither evaluates a workflow file. This is the same seam the libvips and `!docs/manual` entries
+describe — the error exists only between a developer's machine and the thing CI actually runs.
+
 **SMTP failover is a variable, not a set of secrets to rewrite.** Two vendors can serve production
 mail, Gmail and Fastmail. `ops/smtp/endpoints.yml` (committed) maps each vendor name to its host
 and port; the `MAIL_ROLE` **repository variable** — not a secret — names which one is live right

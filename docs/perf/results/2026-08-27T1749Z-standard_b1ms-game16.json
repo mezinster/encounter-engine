@@ -1,0 +1,37 @@
+{
+  "schema": 2,
+  "at": "2026-08-27T17:49:43Z",
+  "note": "",
+  "host": {
+    "size": "Standard_B1ms",
+    "vcpu": 1,
+    "ram_gib": 2,
+    "cpu_credits_remaining_start": 288.0,
+    "cpu_credits_max_7d": 288.0
+  },
+  "generator": {
+    "baseline_warm_ms": 4.6,
+    "kind": "vm",
+    "region": "westeurope"
+  },
+  "game": {
+    "id": 16,
+    "levels": 71
+  },
+  "run": {
+    "scenario": "stampede",
+    "teams": 120,
+    "stampede_window": "60s"
+  },
+  "app": {
+    "sha": "5004f33"
+  },
+  "result": {
+    "p50_ms": 27.5,
+    "p95_ms": 309.1,
+    "max_ms": 403.8,
+    "error_rate": 0,
+    "outcome": "completed",
+    "abort_reason": null
+  }
+}

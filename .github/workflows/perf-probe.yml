@@ -327,25 +327,65 @@ jobs:
         continue-on-error: true
         run: |
           set -euo pipefail
-          ./load_test/provision.sh create | tee provision.log
-          IP=$(awk '/PublicIpAddress/{getline; getline; print $3}' provision.log)
-          [ -n "$IP" ] || IP=$(az vm show -d -g encounter-loadgen -n loadgen --query publicIps -o tsv)
-          scp -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 manifest.json "azureuser@${IP}:~/manifest.json"
-          scp -r -o ConnectTimeout=30 load_test "azureuser@${IP}:~/"
+          ./load_test/provision.sh create
+
+          # `az vm show`, not the old `awk '/PublicIpAddress/{getline; getline;
+          # print $3}' provision.log`, which read a column position out of
+          # `--output table` -- human-facing text that az is free to re-align
+          # in any release. Asking for the one field is both shorter and
+          # immune to that.
+          IP="$(az vm show -d -g encounter-loadgen -n loadgen --query publicIps -o tsv)"
+          [ -n "$IP" ] || { echo "::error::generator has no public IP"; exit 1; }
+          echo "generator at ${IP}"
+
+          # `--generate-ssh-keys` in provision.sh wrote a fresh throwaway
+          # keypair to ~/.ssh/id_rsa and injected the public half into the VM.
+          # It is NOT the deploy key, which is the one loaded into the agent --
+          # so say which key to use rather than letting ssh work through the
+          # agent's offering first.
+          SSHOPTS="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=30"
+          SSHOPTS="${SSHOPTS} -o IdentitiesOnly=yes -i ${HOME}/.ssh/id_rsa"
+
+          # provision.sh opens the generator's own NSG to this runner as its
+          # last act, and an NSG change is applied asynchronously -- 64 seconds
+          # of it in run 33064139352, against the production host. Measured
+          # 2026-08-27 the VM's own ~46s build usually covers the propagation
+          # here, but "usually" is not a guarantee worth a failed provision.
+          start=$SECONDS
+          for attempt in $(seq 1 30); do
+            if timeout 5 bash -c "cat < /dev/null > /dev/tcp/${IP}/22" 2>/dev/null; then
+              echo "generator port 22 answered after $((SECONDS - start))s (attempt ${attempt})"
+              break
+            fi
+            [ "$attempt" = 30 ] && { echo "::error::generator port 22 never answered"; exit 1; }
+            sleep 5
+          done
+
+          # sshd answering does not mean the box is ready. cloud-init runs
+          # `package_update: true` and then downloads k6 from GitHub, and
+          # measured directly on 2026-08-27 the k6 binary appeared 23 SECONDS
+          # after provision.sh returned. The old code scp'd and ran `k6` at
+          # once, racing that install -- winning or losing by however long the
+          # copy happened to take.
+          ssh ${SSHOPTS} "azureuser@${IP}" 'cloud-init status --wait'
+          ssh ${SSHOPTS} "azureuser@${IP}" 'k6 version'
+
+          scp ${SSHOPTS} manifest.json "azureuser@${IP}:~/manifest.json"
+          scp -r ${SSHOPTS} load_test "azureuser@${IP}:~/"
           # Deliberately after the scps and before the ssh: reaching this line
-          # means a generator exists and is holding the test. Everything above
-          # runs under `set -euo pipefail` with no `|| true`, so a generator
-          # that was never provisioned -- run 33064139352 -- aborts the step
-          # before the marker is written, which is exactly the distinction the
-          # guard step below needs.
+          # means a generator exists, is ready, and is holding the test.
+          # Everything above runs under `set -euo pipefail` with no `|| true`,
+          # so a generator that was never provisioned -- run 33064139352 --
+          # aborts the step before the marker is written, which is exactly the
+          # distinction the guard step below needs.
           echo "K6_STARTED=1" >> "$GITHUB_ENV"
-          ssh -o ConnectTimeout=30 "azureuser@${IP}" \
+          ssh ${SSHOPTS} "azureuser@${IP}" \
             "k6 run --summary-export summary.json \
                --env PHASE=${{ inputs.scenario }} --env TEAMS=${{ inputs.teams }} \
                --env STAMPEDE_WINDOW=${{ inputs.stampede_window }} \
                --env BASE_URL=https://${APP_HOST} --env MANIFEST=/home/azureuser/manifest.json \
                load_test/main.js" || true
-          scp -o ConnectTimeout=30 "azureuser@${IP}:~/summary.json" summary.json || true
+          scp ${SSHOPTS} "azureuser@${IP}:~/summary.json" summary.json || true
           echo "GEN_REGION=westeurope" >> "$GITHUB_ENV"
 
       # `continue-on-error` on the two generator steps above is there so that k6
@@ -494,9 +534,16 @@ jobs:
             exit 1
           fi
 
+      # Fails the job rather than warning, matching the cohort teardown above.
+      # `provision.sh destroy` now asserts the group is empty and exits non-zero
+      # with THEY ARE BILLING if it is not, and downgrading that to a warning
+      # would be the same false green this workflow spent a day removing: a run
+      # reporting success while a VM it created keeps charging. The generator
+      # also holds the manifest, which carries a live password for every seeded
+      # captain and every answer code in the source game.
       - name: Destroy the generator
         if: always() && inputs.generator == 'vm'
-        run: ./load_test/provision.sh destroy || echo "::warning::generator destroy failed; check the encounter-loadgen resource group"
+        run: ./load_test/provision.sh destroy
 
       - name: Close SSH again
         if: always() && env.NSG_RULE_OPEN == '1'

@@ -216,6 +216,38 @@ The workflow reuses `deploy.yml`'s production-access pattern unchanged: OIDC to
 Azure, a just-in-time NSG rule for the runner's IP, SSH, rule deleted in the
 same job. No new access path and no new secret.
 
+**That last sentence was wrong, and §5's host facts are why** (corrected
+2026-08-27). `ee-deploy-oidc` holds exactly one role assignment — Network
+Contributor on `webNSG` — because it is the identity that can open port 22, and
+it is deliberately unable to do anything else. `host_facts.sh` needs
+`Microsoft.Compute/virtualMachines/read` and metrics read on `web`, which that
+identity does not have and should not be given. In run 33062376105 its first
+`az vm show` returned `AuthorizationFailed` while the step reported **success**
+(`script | tee file` under `bash -e` exits with `tee`'s status), so the facts
+this section calls load-bearing had never once been collected.
+
+The probe therefore uses **two** identities: `ee-vmscale-reader-oidc`, which
+already holds Reader and Monitoring Reader on `web` for `vm-scale.yml` and
+nothing else, gathers the host facts *before* the NSG is touched — they are API
+reads and need no SSH hole — and `ee-deploy-oidc` takes over for everything
+after. The reader gained one federated credential for
+`:environment:production` alongside its existing `:ref:refs/heads/master`; no
+role assignment changed, and neither identity is logged in while the other's
+work happens.
+
+`az vm list-skus` was dropped rather than authorised. It reads at *subscription*
+scope, so no VM-scoped identity can ever call it, and the two numbers it fetched
+— vCPU and RAM for the current size — are already committed in
+`ops/vmscale/ladder.json`, the same file `policy.rb` decides against. A size
+absent from the ladder yields `null`, on this document's own reasoning about the
+credit fields: a shape nobody has costed is exactly the shape a reader should be
+told nothing about.
+
+**Still unresolved: the `vm` generator.** `load_test/provision.sh` creates a VM
+in the `encounter-loadgen` resource group, and `ee-deploy-oidc` has no rights
+there either. `generator: runner` is the default and is unaffected; the `vm`
+path has never run and will fail on authorisation when it first does.
+
 It generates its own cohort id and passes it as `LOAD_TEST_CONFIRM`.
 
 **This is a deliberate weakening of a safety property and is recorded as such.**

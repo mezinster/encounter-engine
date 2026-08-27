@@ -21,6 +21,13 @@
 # ops/vmscale/gather.sh already reads these for the scaling policy. This is the
 # same queries kept separate, because that script returns a much larger document
 # shaped for policy.rb rather than for a record.
+#
+# Every az call below is read-only and VM-scoped: `az vm show` and
+# `az monitor metrics list` against one virtual machine, which is exactly what
+# ee-vmscale-reader-oidc holds (Reader + Monitoring Reader on `web`, and
+# nothing else). Keep it that way. The NSG identity that the rest of the probe
+# runs under, ee-deploy-oidc, cannot read any of this and is not meant to --
+# see the comment on the workflow step that calls this script.
 set -euo pipefail
 RG="${RG:-MEZINEU}"
 VM="${VM:-web}"
@@ -29,11 +36,23 @@ ID="$(az vm show -g "$RG" -n "$VM" --query id -o tsv)"
 SIZE="$(az vm show -g "$RG" -n "$VM" --query hardwareProfile.vmSize -o tsv)"
 LOC="$(az vm show -g "$RG" -n "$VM" --query location -o tsv)"
 
-# list-skus, not the deprecated list-sizes, which warns on every invocation.
-CAPS="$(az vm list-skus -l "$LOC" --size "$SIZE" --resource-type virtualMachines \
-  --query "[0].capabilities[?name=='vCPUs' || name=='MemoryGB'].[name,value]" -o tsv)"
-VCPU="$(awk '$1=="vCPUs"    {print $2}' <<<"$CAPS")"
-RAM="$(awk  '$1=="MemoryGB" {print $2}' <<<"$CAPS")"
+# Read from ops/vmscale/ladder.json, not from `az vm list-skus`.
+#
+# Not a preference -- the az call cannot work here. `list-skus` reads
+# /subscriptions/<id>/providers/Microsoft.Compute/skus, a SUBSCRIPTION-scoped
+# resource, while every identity this repository gives to CI is scoped to a
+# single VM or a single NSG. Buying two integers that are already committed in
+# this repository would mean widening a credential from one VM to the whole
+# subscription, which is a bad trade in the direction that matters.
+#
+# The ladder is the same file ops/vmscale/policy.rb decides against, so the two
+# cannot disagree about what a Standard_B1ms is. A size that is not on it yields
+# null rather than a guess, on the same reasoning as the credit fields below:
+# absent data is never read as reassuring, and a shape nobody has costed is
+# exactly the shape a reader should be told nothing about.
+LADDER="${LADDER:-$(dirname "$0")/../vmscale/ladder.json}"
+VCPU="$(jq -r --arg s "$SIZE" '.[] | select(.size == $s) | .vcpu    // empty' "$LADDER")"
+RAM="$( jq -r --arg s "$SIZE" '.[] | select(.size == $s) | .ram_gib // empty' "$LADDER")"
 
 credit_metric() {
   az monitor metrics list --resource "$ID" \

@@ -121,7 +121,47 @@ jobs:
           echo '23.100.7.86 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBESJGNohuozwA1DTg1Tjlghw/G0krguiE0Enw5BfMew' >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Authenticate to Azure
+      # TWO Azure identities, in this order, and the order is the point.
+      #
+      # ee-deploy-oidc -- the one the rest of this job runs under -- holds
+      # exactly one role assignment: Network Contributor on webNSG. It cannot
+      # read the VM, and it should not be able to: it is the identity that can
+      # open port 22, so it is the one worth keeping thin. host_facts.sh needs
+      # Reader and Monitoring Reader on `web`, which is precisely and only what
+      # ee-vmscale-reader-oidc already holds for vm-scale.yml.
+      #
+      # Run 33062376105 reported this step green while its very first `az vm
+      # show` returned AuthorizationFailed -- see the host-facts step below for
+      # how a green tick hid that -- so the facts had never once been gathered.
+      #
+      # Host facts are Azure API reads and need no SSH hole, so they run BEFORE
+      # the NSG is touched. That is what lets one job use two identities without
+      # either of them being logged in while the other's work happens.
+      - name: Authenticate to Azure (read-only identity)
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        with:
+          client-id: ${{ secrets.AZURE_VMSCALE_READER_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # BEFORE load. cpu_credits_remaining_start means the balance the run
+      # started with; reading it afterwards would record the balance the run
+      # itself produced, which is a different fact wearing the same name.
+      #
+      # Redirected, NOT piped through `tee`. The step shell is `bash -e` without
+      # `pipefail`, so `host_facts.sh | tee host.json` exits with tee's status:
+      # in run 33062376105 the script aborted on its first az call and the step
+      # went green in three seconds, leaving an empty host.json for
+      # Perf::BuildRecord to read. A record asserting host facts that were never
+      # gathered is worse than a failed run, and is the exact thing this
+      # script's own "absent data is never read as reassuring" comment exists to
+      # prevent. `> file` then `cat` keeps the log output without the pipe.
+      - name: Gather the host shape and credit standing
+        run: |
+          ./ops/perf/host_facts.sh > host.json
+          cat host.json
+
+      - name: Authenticate to Azure (deploy identity, for the NSG)
         uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -136,6 +176,14 @@ jobs:
         run: |
           RUNNER_IP=$(curl -fsS --max-time 10 https://api.ipify.org || curl -fsS --max-time 10 https://ifconfig.me)
           [ -n "$RUNNER_IP" ] || { echo "could not determine runner IP"; exit 1; }
+          echo "opening 22 for ${RUNNER_IP}/32"
+          # Handed to the wait step below, which needs it to say something
+          # useful when port 22 never answers. deploy.yml keeps the same
+          # variable for its run summary, and for the same reason it is NOT
+          # called RUNNER_IP: the GITHUB_ and RUNNER_ prefixes are reserved for
+          # Actions' own use and a $GITHUB_ENV line claiming one is discarded
+          # silently.
+          echo "JIT_SOURCE_IP=${RUNNER_IP}" >> "$GITHUB_ENV"
           # Set BEFORE the create, not after: `az` can fail having already made
           # the rule, and a hole left open in the NSG is a worse outcome than a
           # delete that finds nothing. The teardown step below reads this.
@@ -170,11 +218,33 @@ jobs:
           echo "could not open port 22 after 5 attempts"
           exit 1
 
-      # BEFORE load. cpu_credits_remaining_start means the balance the run
-      # started with; reading it afterwards would record the balance the run
-      # itself produced, which is a different fact wearing the same name.
-      - name: Gather the host shape and credit standing
-        run: ./ops/perf/host_facts.sh | tee host.json
+      # Azure applies an NSG change asynchronously, and this workflow is the
+      # only one here that SSHes IMMEDIATELY after opening the hole --
+      # deploy.yml has a Docker build and push between the two, so it has never
+      # had to care. Run 33062376105 died in the step below with
+      # `ssh: connect to host 23.100.7.86 port 22: Connection timed out`, three
+      # seconds after `rule created on attempt 1`.
+      #
+      # Waiting on the CONDITION rather than sleeping a guessed interval, and
+      # printing how long it took, because that number is the evidence the
+      # failed run could not produce. Two hypotheses survived the investigation
+      # -- propagation lag, or a rule written for an address that is not this
+      # runner's SSH egress -- and they are told apart by whether this ever
+      # succeeds and after how long. If it does not, the error names the address
+      # so the next reader is not left guessing again.
+      - name: Wait for port 22 to answer
+        run: |
+          start=$SECONDS
+          for attempt in $(seq 1 30); do
+            if timeout 5 bash -c "cat < /dev/null > /dev/tcp/${SSH_HOST}/22" 2>/dev/null; then
+              echo "port 22 answered after $((SECONDS - start))s (attempt ${attempt})"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::port 22 on ${SSH_HOST} never answered in $((SECONDS - start))s"
+          echo "::error::the JIT rule was opened for ${JIT_SOURCE_IP}/32 -- if that is not this runner's SSH egress address then the rule is wrong, not slow"
+          exit 1
 
       - name: Seed the cohort
         run: |

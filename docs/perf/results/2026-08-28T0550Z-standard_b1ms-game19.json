@@ -1,0 +1,50 @@
+{
+  "schema": 4,
+  "at": "2026-08-28T05:50:50Z",
+  "note": "",
+  "host": {
+    "size": "Standard_B1ms",
+    "vcpu": 1,
+    "ram_gib": 2,
+    "cpu_credits_remaining_start": 288.0,
+    "cpu_credits_max_7d": 288.0,
+    "cpu_credits_remaining_end": 287.71,
+    "cpu_credits_min_during": 287.52,
+    "cpu_credits_window": "52m"
+  },
+  "generator": {
+    "baseline_warm_ms": 4.1,
+    "kind": "vm",
+    "region": "westeurope"
+  },
+  "game": {
+    "id": 19,
+    "levels": 71
+  },
+  "run": {
+    "scenario": "hold",
+    "teams": 120,
+    "stampede_window": null,
+    "duration_s": 2493
+  },
+  "app": {
+    "sha": "87cd131"
+  },
+  "result": {
+    "measured_from": "http_req_duration{phase:steady}",
+    "p50_ms": 29.5,
+    "p95_ms": 50.6,
+    "max_ms": 3767.7,
+    "error_rate": 0,
+    "whole_run": {
+      "p50_ms": 29.4,
+      "p95_ms": 53.9,
+      "max_ms": 3767.7,
+      "error_rate": 0
+    },
+    "outcome": "completed",
+    "thresholds_crossed": [
+
+    ]
+  }
+}

@@ -109,22 +109,22 @@ az role assignment create --assignee-object-id "$OPERATOR_PRINCIPAL" \
   --role "Virtual Machine Contributor" --scope "$VM_ID"
 
 # TWO assignments, and the second is not optional -- see the note below.
-NIC_ID=$(az vm show -g $RG -n $VM --query 'networkProfile.networkInterfaces[0].id' -o tsv)
+#
+# The definition is a committed file, not JSON pasted into this shell. It was
+# pasted twice on 2026-08-28, and that is exactly where a quoting mistake yields
+# a role that looks right in the terminal and grants something else. The file
+# carries __SUB__/__RG__ placeholders because this repository is public and does
+# not publish its subscription id; spec/ops/vmscale_roles_spec.rb fails if a
+# real one ever lands in it.
+sed -e "s|__SUB__|$SUB|" -e "s|__RG__|$RG|" \
+  ops/vmscale/roles/vm-resize-links.json > /tmp/vm-resize-links.json
 
-az role definition create --role-definition "$(cat <<JSON
-{
-  "Name": "NIC Join (vmscale)",
-  "Description": "Attach an existing NIC during a VM PUT, which is what az vm resize performs. Nothing else.",
-  "Actions": ["Microsoft.Network/networkInterfaces/join/action"],
-  "NotActions": [], "DataActions": [], "NotDataActions": [],
-  "AssignableScopes": ["/subscriptions/$SUB/resourceGroups/$RG"]
-}
-JSON
-)"
+az role definition create --role-definition /tmp/vm-resize-links.json
 
 az role assignment create --assignee-object-id "$OPERATOR_PRINCIPAL" \
   --assignee-principal-type ServicePrincipal \
-  --role "NIC Join (vmscale)" --scope "$NIC_ID"
+  --role "VM Resize Links (vmscale)" \
+  --scope "/subscriptions/$SUB/resourceGroups/$RG"
 
 az identity federated-credential create --name github-vm-resize \
   --identity-name ee-vmscale-operator-oidc -g $RG \
@@ -135,10 +135,11 @@ az identity federated-credential create --name github-vm-resize \
 
 **Why the second assignment, and why the first one alone silently is not enough.**
 `az vm resize` is a **PUT on the virtual machine**, not a narrow patch. A VM PUT
-revalidates the machine's whole network profile, so Azure requires
-`Microsoft.Network/networkInterfaces/join/action` on every attached NIC —
-`webVMNic`, which lives at `.../providers/Microsoft.Network/networkInterfaces/webVMNic`
-and is therefore **outside** the scope of an assignment made against
+revalidates the machine's **whole model**, so Azure requires permission on every
+resource linked into it — each attached NIC (`join/action`) and each attached
+managed disk (`write`). Those live at `.../providers/Microsoft.Network/...` and
+`.../providers/Microsoft.Compute/disks/...`, and are therefore **outside** the
+scope of an assignment made against
 `.../providers/Microsoft.Compute/virtualMachines/web`.
 
 The confusing part is that `Virtual Machine Contributor` **does** grant that action
@@ -153,14 +154,47 @@ because the scheduled runs only ever reach the `observe` job — which uses the
 executing this runbook for the first time, that is the whole reason both
 assignments are here.
 
-A one-action custom role rather than a second `Virtual Machine Contributor`
-assignment on the NIC: that built-in would also work and is one command shorter,
-but it grants `networkInterfaces/*`, which includes deleting the production NIC.
-This identity's entire justification is that it can do exactly one thing.
+**It took two failures to see the shape of this, and the first fix was wrong.**
+The 2026-08-28 dispatch failed on the NIC; a NIC-scoped grant was added; the
+next dispatch failed on the OS disk, with a data disk waiting behind it. Granting
+one linked resource at a time is whack-a-mole — and worse, it silently re-breaks
+the day a disk is replaced, which happens on a restore or a storage resize.
 
-Note that this changes nothing about check (d) below — the new assignment is at
-**resource** scope, on a single NIC, so neither identity holds anything at
-resource-group or subscription scope.
+So the role is scoped to the **resource group** and holds exactly two actions.
+That is a deliberate trade, and it is the one place in this setup where scope is
+wider than a single resource:
+
+  * **What it buys:** the resize survives the VM's shape changing. No new grant
+    is needed when a disk is replaced or a second NIC appears.
+  * **What it costs:** `Microsoft.Compute/disks/write` at resource-group scope
+    permits *creating* a disk in `MEZINEU`. That is the honest downside.
+  * **Why it is acceptable:** two actions, no create/delete/read of VMs, nothing
+    on the NSG, no data plane — and the reviewer gate in §3 still stands between
+    this identity and any token at all. Breadth of scope is traded for narrowness
+    of capability, and `spec/ops/vmscale_roles_spec.rb` fails if that action list
+    ever grows.
+
+A custom role rather than a second `Virtual Machine Contributor` assignment: that
+built-in would also work and is one command shorter, but it grants
+`networkInterfaces/*` and `disks/delete`, which includes destroying the
+production disk. This identity's entire justification is that it can do very
+little.
+
+**Check (d) below is amended, not quietly broken.** It used to read "neither
+identity holds anything at subscription or resource-group scope"; the operator
+now does, by design, and the check asserts *which* role that is. An invariant
+consciously narrowed is fine; one silently false is not.
+
+**Retiring `NIC Join (vmscale)`.** The first, NIC-scoped fix is superseded by
+this role and is now redundant. Remove it only after a resize has actually
+succeeded, so there is never a window where neither grant works:
+
+```bash
+az role assignment delete --assignee-object-id "$OPERATOR_PRINCIPAL" \
+  --role "NIC Join (vmscale)" \
+  --scope "$(az vm show -g $RG -n $VM --query 'networkProfile.networkInterfaces[0].id' -o tsv)"
+az role definition delete --name "NIC Join (vmscale)"
+```
 
 ## 3. The GitHub environment and secrets
 
@@ -246,19 +280,48 @@ az role assignment list --assignee "$READER_PRINCIPAL" --all \
   --query '[].{role:roleDefinitionName, scope:scope}' -o table
 # Expect: only "Monitoring Reader" and "Reader", both scoped to the web VM.
 
-# c2. The operator can join the NIC, or `az vm resize` fails with
-#     LinkedAuthorizationFailed after the reviewer has already approved.
-az role assignment list --assignee "$OPERATOR_PRINCIPAL" --all \
-  --query "[?contains(scope, 'networkInterfaces')].{role:roleDefinitionName, scope:scope}" -o table
-# Expect: one row, "NIC Join (vmscale)", scoped to webVMNic. Empty means the
-# resize will be authorised right up to the moment it is attempted.
+# FIRST, a warning about the answers below, because it wastes an afternoon
+# otherwise. Azure RBAC replicates lazily, and a role or assignment created
+# minutes ago can:
+#
+#   * not appear in `az role definition list` at all, while
+#     `az role definition create` refuses the same name as "already exists";
+#   * appear in `az role assignment list` with roleDefinitionName **null**,
+#     printing as `None`, even though the assignment is real and working.
+#
+# Both happened repeatedly while §2 was being executed on 2026-08-28. A null
+# name is a DISPLAY failure, not a missing grant -- confirm with
+# `--query "[].roleDefinitionId"`, which is populated immediately, or simply
+# wait a few minutes and re-run. Do not "fix" it by creating the role again.
+#
+# Note also that `az role definition list` at SUBSCRIPTION scope does not return
+# a custom role whose assignableScopes is a nested resource group. Query the
+# resource group scope, as §2 creates it:
+#   az role definition list --scope "/subscriptions/$SUB/resourceGroups/$RG" --custom-role-only true
 
-# d. Neither identity holds anything at subscription or resource-group scope.
-for P in "$READER_PRINCIPAL" "$OPERATOR_PRINCIPAL"; do
-  az role assignment list --assignee "$P" --all \
-    --query "[?scope=='/subscriptions/$SUB' || scope=='/subscriptions/$SUB/resourceGroups/$RG']" -o tsv
-done
+# c2. The operator can reach the VM's LINKED resources -- its disks and its NIC
+#     -- or `az vm resize` fails with LinkedAuthorizationFailed after the
+#     reviewer has already approved. Both 2026-08-28 failures were this.
+az role assignment list --assignee "$OPERATOR_PRINCIPAL" --all \
+  --query "[?roleDefinitionName=='VM Resize Links (vmscale)'].{role:roleDefinitionName, scope:scope}" -o table
+# Expect: one row, scoped to the resource group. Empty means the resize is
+# authorised right up to the moment it is attempted, and no earlier.
+
+# d. The reader holds nothing at subscription or resource-group scope, and the
+#    operator holds exactly one thing there: the two-action links role above.
+#    AMENDED 2026-08-28 -- see §2. It previously expected no output at all.
+az role assignment list --assignee "$READER_PRINCIPAL" --all \
+  --query "[?scope=='/subscriptions/$SUB' || scope=='/subscriptions/$SUB/resourceGroups/$RG']" -o tsv
 # Expect: no output at all.
+
+az role assignment list --assignee "$OPERATOR_PRINCIPAL" --all \
+  --query "[?scope=='/subscriptions/$SUB'].{role:roleDefinitionName}" -o tsv
+# Expect: no output at all -- nothing at SUBSCRIPTION scope, ever.
+
+az role assignment list --assignee "$OPERATOR_PRINCIPAL" --all \
+  --query "[?scope=='/subscriptions/$SUB/resourceGroups/$RG'].{role:roleDefinitionName}" -o tsv
+# Expect: exactly "VM Resize Links (vmscale)" and nothing else. Any other role
+# at this scope is the thing §2's trade was careful NOT to grant.
 
 # e. The subject prefixes match the identity that already works.
 az identity federated-credential list --identity-name ee-deploy-oidc -g $RG --query "[0].subject" -o tsv

@@ -1,5 +1,6 @@
 // load_test/main.js
-import { fail } from 'k6';
+import { fail, sleep } from 'k6';
+import exec from 'k6/execution';
 import { manifest, teamFor } from './lib/manifest.js';
 import { login } from './lib/auth.js';
 import { playOnce } from './lib/play.js';
@@ -12,6 +13,25 @@ const TEAMS = Number(__ENV.TEAMS || 60);
 // CPU at 120 teams (load average 0.20), so that ladder never got near a
 // ceiling. Override with --env LADDER for a different run.
 const LADDER = (__ENV.LADDER || '120,250,500,1000').split(',').map(Number);
+
+// Seconds over which the hold's own teams log in, and the tag boundary that
+// keeps that minute out of the measurement.
+//
+// `constant-vus` starts every VU in the SAME INSTANT. That is a zero-second
+// arrival window -- sharper than any stampede this project has run, against a
+// host measured to cross its limit somewhere between 30 and 60 seconds. The
+// first hold run, 2026-08-27, paid for it twice: 22 of 142 login attempts
+// failed, taking the `checks` threshold down with them, and the burst was then
+// averaged into a 40-minute summary meant to describe steady play. The tell was
+// in the percentiles -- p95 371.5ms sitting above a p90 of 49ms, a clean body
+// with a startup-shaped tail, when both healthy stampedes had a HIGHER p90 and
+// a lower p95.
+//
+// 60s is not arbitrary: it is the arrival window the sweep of the same day
+// measured as comfortable (p95 309ms, zero errors), and the one
+// docs/manual/performance.en.md now tells operators to give their players. The
+// test arrives through the door it advises them to use.
+const WARMUP = Number(__ENV.WARMUP || 60);
 
 // teamFor(vu) assigns teams by `vu % teams.length`. If the ramp's top
 // plateau exceeds the seeded cohort, VUs wrap around and several concurrent
@@ -67,10 +87,14 @@ const RAMP = {
   exec: 'session',
 };
 
+// Forty minutes of steady play PLUS the warm-up, not forty including it. A VU
+// that waits 59s to log in would otherwise get 39 minutes of the 40, and the
+// question this scenario asks -- what an hour does to the credit bank -- is
+// about elapsed play rather than elapsed wall clock.
 const HOLD = {
   executor: 'constant-vus',
   vus: TEAMS,          // ~70% of the ramp's last clean plateau
-  duration: '40m',
+  duration: `${40 * 60 + WARMUP}s`,
   exec: 'session',
 };
 
@@ -99,6 +123,20 @@ const STAMPEDE = {
 // through to the ramp and run a completely different test under the name you
 // asked for. An unknown phase must refuse.
 const SCENARIOS = { ramp: RAMP, hold: HOLD, stampede: STAMPEDE };
+
+// Empty for every scenario but the hold -- see the thresholds block below.
+const STEADY = PHASE === 'hold' ? '{phase:steady}' : '';
+
+const THRESHOLDS = {
+  [`http_req_duration${STEADY}`]: [
+    { threshold: 'p(95)<2000', abortOnFail: PHASE !== 'hold', delayAbortEval: '30s' },
+  ],
+  [`http_req_failed${STEADY}`]: [
+    { threshold: 'rate<0.02', abortOnFail: PHASE !== 'hold', delayAbortEval: '30s' },
+  ],
+  checks: ['rate>0.99'],
+};
+if (STEADY !== '') THRESHOLDS[`checks${STEADY}`] = ['rate>0.99'];
 if (!SCENARIOS[PHASE]) {
   fail(`unknown PHASE ${JSON.stringify(PHASE)} -- expected one of ` +
     `${Object.keys(SCENARIOS).join(', ')}`);
@@ -127,15 +165,30 @@ export const options = {
   // is what makes pointing them at it defensible. Only `hold` is meant to run
   // past a breach, because observing what happens after the CPU credit bank
   // empties is its entire purpose.
-  thresholds: {
-    'http_req_duration': [
-      { threshold: 'p(95)<2000', abortOnFail: PHASE !== 'hold', delayAbortEval: '30s' },
-    ],
-    'http_req_failed': [
-      { threshold: 'rate<0.02', abortOnFail: PHASE !== 'hold', delayAbortEval: '30s' },
-    ],
-    'checks': ['rate>0.99'],
-  },
+  //
+  // `hold` alone measures a SUBMETRIC. k6 builds `metric{tag:value}` only where
+  // a threshold names it, so declaring these here is what makes the steady
+  // phase exist in the summary at all -- and that is a deliberate invariant, not
+  // a side effect: a summary containing `http_req_duration{phase:steady}` is a
+  // summary from a run that had a warm-up to exclude. ops/perf/build_record.rb
+  // reads it that way and never asks which scenario ran, so this file stays the
+  // one place the policy lives. The ramp and the stampede keep the plain
+  // metrics, because for them the logins ARE the measurement -- excluding them
+  // would delete the finding.
+  //
+  // `checks` is the exception, and stays declared on the WHOLE run for every
+  // scenario including the hold. lib/auth.js runs its `logged in` check before
+  // the tag is set -- deliberately, since a login is arriving rather than
+  // playing -- so a hold that measured only the steady phase would be blind to
+  // its own warm-up collapsing. That is not a theoretical gap: a failed login
+  // here answers 200 with the login page, so it appears in neither
+  // `http_req_failed` nor any duration percentile, and `checks` is the only
+  // place it shows at all. Before the stagger, a whole-run `checks` threshold
+  // was breached by the arrival burst and said little; with arrivals spread
+  // over WARMUP, a breach means the app could not absorb even that, which is
+  // worth failing on. The hold gets BOTH -- the whole-run threshold as the
+  // alarm, the steady one as the measurement.
+  thresholds: THRESHOLDS,
 };
 
 // Module scope in k6 is PER VU, so this caches one login per virtual user for
@@ -150,8 +203,21 @@ let team = null;
 export function session() {
   const base = __ENV.BASE_URL || manifest().base_url;
   if (token === null) {
+    // Spread the hold's arrivals over WARMUP seconds instead of firing all of
+    // them at once. __VU is 1-based and runs to TEAMS, so this is an even
+    // spacing: VU 1 goes immediately, the last waits just under the full
+    // window. It costs one sleep per VU, once, in its first iteration.
+    if (STEADY !== '') sleep((WARMUP * (__VU - 1)) / TEAMS);
+
     team = teamFor(__VU);
     token = login(base, team);
+
+    // From here on this VU is playing, not arriving, and its requests carry the
+    // tag the hold's thresholds are declared against. Set AFTER the login, so
+    // the login itself -- the expensive part, and the part the stampede
+    // scenario exists to measure -- stays outside the steady phase. On the
+    // other scenarios STEADY is '' and this tags nothing anyone reads.
+    if (STEADY !== '') exec.vu.tags.phase = 'steady';
   }
   playOnce(base, token, team);
 }

@@ -18,6 +18,22 @@
 # and that one being `checks`, which load_test/main.js gives no `abortOnFail`.
 # A hand-written fixture would have been a guess about the case that mattered
 # most.
+#
+# The fourth and fifth were generated the same way as the first two, on
+# 2026-08-28 with the same k6 v0.52.0 the probe installs, by a scenario that
+# flips `exec.vu.tags.phase` from `warmup` to `steady` after its first request
+# and declares thresholds on both the plain metric and the submetric:
+#
+#   k6 run --summary-export steady.json         --env LIMIT=60000 fx.js
+#   k6 run --summary-export steady-crossed.json --env LIMIT=1     fx.js
+#
+# They pin two things worth knowing before reading the transformer. The
+# submetric key is a literal `http_req_duration{phase:steady}` -- a flat string
+# in `metrics`, not a nested structure. And in `steady-phase` the whole-run p95
+# is 105.2 ms against the steady phase's 82.7 ms, from nothing but each VU's
+# first request paying a TLS handshake: the warm-up really does move the number,
+# at three requests, which is the effect this version exists to remove from a
+# 40-minute run.
 require "spec_helper"
 require_relative "../../ops/perf/build_record"
 
@@ -25,6 +41,10 @@ describe Perf::BuildRecord do
   let(:aborted) { JSON.parse(File.read("spec/fixtures/perf/k6-summary-aborted.json")) }
   let(:clean)   { JSON.parse(File.read("spec/fixtures/perf/k6-summary-clean.json")) }
   let(:hold)    { JSON.parse(File.read("spec/fixtures/perf/k6-summary-hold-checks.json")) }
+  let(:steady)  { JSON.parse(File.read("spec/fixtures/perf/k6-summary-steady-phase.json")) }
+  let(:steady_crossed) do
+    JSON.parse(File.read("spec/fixtures/perf/k6-summary-steady-crossed.json"))
+  end
 
   def call(overrides = {})
     described_class.call(**{
@@ -74,8 +94,8 @@ describe Perf::BuildRecord do
   # while the constant drifted; this example is what makes bumping the version
   # a decision rather than an accident, and its failure is the prompt to write
   # down what changed in docs/perf/README.md.
-  it "is at version 3 -- version 2 called every crossed threshold an abort" do
-    expect(Perf::BuildRecord::SCHEMA).to eq(3)
+  it "is at version 4 -- version 3 measured the warm-up along with the run" do
+    expect(Perf::BuildRecord::SCHEMA).to eq(4)
   end
 
   # The arrival window is the parameter this file's own header is about: the
@@ -206,6 +226,68 @@ describe Perf::BuildRecord do
     r = call(:generator => { "kind" => "runner", "region" => nil,
                              "baseline_warm_ms" => 94.0 })
     expect(r["generator"]).to include("kind" => "runner", "region" => nil)
+  end
+
+  # `hold` starts every VU in the same instant, so its first minute is an arrival
+  # burst sharper than any stampede this project has run -- and version 3
+  # averaged that burst into a summary meant to describe steady play. The run of
+  # 2026-08-27 reported p95 371.5 ms with a p90 of 49 ms, LOWER than either
+  # healthy stampede: a clean body with a startup-shaped tail. The harness now
+  # tags requests taken after each VU has logged in, and the measurement follows
+  # the tag.
+  it "measures the steady phase when the run recorded one" do
+    r = call(:summary => steady)["result"]
+    expect(r["measured_from"]).to eq("http_req_duration{phase:steady}")
+    expect(r["p50_ms"]).to eq(77.1)
+    expect(r["p95_ms"]).to eq(82.7)
+  end
+
+  # Beside it, never instead of it. Excluding the warm-up is a measurement
+  # decision, and a record that quietly reported the better number would be
+  # hiding exactly the kind of parameter this whole format exists to carry --
+  # the difference here is 82.7 ms against 105.2 ms, from three requests.
+  it "keeps the whole run beside the steady phase, so nothing is hidden" do
+    r = call(:summary => steady)["result"]
+    expect(r["whole_run"]).to include("p50_ms" => 77.4, "p95_ms" => 105.2,
+                                      "max_ms" => 105.2)
+  end
+
+  # nil, not a copy of the top-level figures. `whole_run` present asserts that
+  # something WAS excluded; on a run with no warm-up to exclude, repeating the
+  # same numbers underneath would invent a distinction that was never drawn.
+  it "reports no separate whole-run figure when nothing was excluded" do
+    r = call(:summary => clean)["result"]
+    expect(r["measured_from"]).to eq("http_req_duration")
+    expect(r["whole_run"]).to be_nil
+  end
+
+  # The builder must not learn which scenarios have a warm-up. That is the
+  # mistake version 3 was written to undo -- `outcome` encoded main.js's abort
+  # policy and went stale when main.js changed underneath it. So the rule is
+  # about the DATA: measure the steady submetric when the summary contains one,
+  # whatever scenario produced it.
+  it "decides from the summary, not from the scenario name" do
+    r = call(:summary => steady,
+             :run => { "scenario" => "stampede", "teams" => 120,
+                       "stampede_window" => "30s", "duration_s" => 32,
+                       "at" => "2026-08-21T20:15:00Z", "note" => "" })["result"]
+    expect(r["measured_from"]).to eq("http_req_duration{phase:steady}")
+  end
+
+  it "names a crossed threshold by the submetric it was declared on" do
+    r = call(:summary => steady_crossed)["result"]
+    expect(r["thresholds_crossed"]).to eq(["http_req_duration{phase:steady}"])
+  end
+
+  # have_key, not just nil. Every record keeps the same shape so the directory
+  # diffs cleanly -- the same reason `stampede_window` is emitted for scenarios
+  # that have none. A key that vanishes on errored runs would make `jq` reading
+  # across the directory hand back nothing and look like a value.
+  it "reports no measurement source for a run that produced no summary" do
+    r = call(:summary => nil)["result"]
+    expect(r).to have_key("measured_from")
+    expect(r).to have_key("whole_run")
+    expect(r["measured_from"]).to be_nil
   end
 
   it "names the file so a listing sorts chronologically and reads legibly" do

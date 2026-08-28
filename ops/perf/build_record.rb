@@ -40,7 +40,20 @@ module Perf
     #      passed both latency thresholds -- was filed as "aborted" next to a
     #      stampede that really was killed at 32 seconds. Reading a version-2
     #      record: "aborted" means "some threshold was crossed" and nothing more.
-    SCHEMA = 3
+    #   4  (2026-08-28) the percentiles describe the STEADY phase when the run
+    #      recorded one, `result.measured_from` names which metric they came
+    #      from, and `result.whole_run` carries the unfiltered figures beside
+    #      them. `hold` starts every VU in the same instant, so version 3
+    #      averaged an arrival burst sharper than any stampede into a summary
+    #      meant to describe steady play -- visible in the 2026-08-27 run as a
+    #      p95 of 371.5 ms sitting above a p90 of 49 ms.
+    SCHEMA = 4
+
+    # The suffix k6 gives a submetric derived from a tag; the key in `metrics`
+    # is the literal string `http_req_duration{phase:steady}`, flat, not nested.
+    # load_test/main.js tags every request a VU makes once it has logged in, so
+    # the submetric is the run without its own warm-up.
+    STEADY = "{phase:steady}"
 
     def self.call(**kwargs)
       new(**kwargs).to_h
@@ -94,22 +107,71 @@ module Perf
     def result
       return errored if @summary.nil?
 
-      d = @summary.dig("metrics", "http_req_duration") || {}
-      f = @summary.dig("metrics", "http_req_failed") || {}
-
-      { "p50_ms"             => ms(d["med"]),
-        "p95_ms"             => ms(d["p(95)"]),
-        "max_ms"             => ms(d["max"]),
-        "error_rate"         => f["value"],
+      { "measured_from"      => measured_key,
+        "p50_ms"             => ms(measured["med"]),
+        "p95_ms"             => ms(measured["p(95)"]),
+        "max_ms"             => ms(measured["max"]),
+        "error_rate"         => failed["value"],
+        "whole_run"          => whole_run,
         "outcome"            => "completed",
         "thresholds_crossed" => crossed.keys }
+    end
+
+    # Decided from the DATA, never from `@run["scenario"]`. Teaching this class
+    # which scenarios have a warm-up would repeat the mistake version 3 undid:
+    # `outcome` encoded load_test/main.js's abort policy, main.js changed
+    # underneath it, and the field went stale without ever changing. A summary
+    # that contains the submetric was tagged by the harness that produced it,
+    # which is a fact about that run rather than a belief about its name.
+    def steady?
+      metrics.key?("http_req_duration#{STEADY}")
+    end
+
+    def measured_key
+      steady? ? "http_req_duration#{STEADY}" : "http_req_duration"
+    end
+
+    def measured
+      metrics[measured_key] || {}
+    end
+
+    # Follows the same decision as the percentiles rather than making its own:
+    # an error rate over the whole run beside a p95 over part of it would be two
+    # different populations reported as one measurement. Falls back to the plain
+    # metric if a harness ever tags durations without tagging failures.
+    def failed
+      (steady? && metrics["http_req_failed#{STEADY}"]) ||
+        metrics["http_req_failed"] || {}
+    end
+
+    # Beside the measurement, never instead of it. Excluding a warm-up is a
+    # decision, and a record that reported only the flattering number would hide
+    # exactly the kind of parameter this format exists to carry -- on the
+    # fixture that pins this, three requests separate 82.7 ms from 105.2 ms.
+    #
+    # nil, not a copy, when nothing was excluded: `whole_run` being present is
+    # itself the statement that a distinction was drawn, and repeating the same
+    # figures underneath would invent one that was not.
+    def whole_run
+      return nil unless steady?
+
+      d = metrics["http_req_duration"] || {}
+      f = metrics["http_req_failed"] || {}
+      { "p50_ms" => ms(d["med"]), "p95_ms" => ms(d["p(95)"]),
+        "max_ms" => ms(d["max"]), "error_rate" => f["value"] }
+    end
+
+    def metrics
+      @summary["metrics"] || {}
     end
 
     # k6 wrote no summary: it died before finishing -- a crash, a startup guard
     # refusing, an unreachable host. Still a fact about this host and this game
     # on this date, and the design is explicit that a failed run is data.
     def errored
-      { "p50_ms" => nil, "p95_ms" => nil, "max_ms" => nil, "error_rate" => nil,
+      { "measured_from" => nil,
+        "p50_ms" => nil, "p95_ms" => nil, "max_ms" => nil, "error_rate" => nil,
+        "whole_run" => nil,
         "outcome" => "errored", "thresholds_crossed" => nil }
     end
 
@@ -131,7 +193,7 @@ module Perf
     # would have put that policy in two files that can drift apart silently --
     # which is the failure this whole format exists to prevent.
     def crossed
-      (@summary["metrics"] || {}).select do |_name, metric|
+      metrics.select do |_name, metric|
         metric.is_a?(Hash) && metric["thresholds"].is_a?(Hash) &&
           metric["thresholds"].values.any? { |breached| breached == true }
       end

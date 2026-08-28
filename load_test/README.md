@@ -52,6 +52,24 @@ ignored by `ramp`. `--env
 WRONG_SHARE` (default 0.85) is `lib/play.js`'s share of deliberately-wrong answers — raise it
 towards 1 for a smoke test you don't want to accidentally finish the seeded game.
 
+**`--env WARMUP` sets how long the `hold` phase's teams take to log in** (default 60 seconds), and
+is ignored by the other two. `constant-vus` starts every VU in the same instant, which is a
+*zero-second* arrival window — sharper than any stampede this project has run. The first hold run
+paid for it twice: 22 of its 142 login attempts failed, and the burst was then averaged into a
+40-minute summary meant to describe steady play. So the hold staggers its own arrivals over `WARMUP`
+seconds, at the rate `docs/manual/performance.en.md` tells operators to use, and **tags every
+request a VU makes after it has logged in** with `phase:steady`. The hold's latency and failure
+thresholds are declared against those tagged submetrics, which is what makes k6 emit them at all — so a summary containing
+`http_req_duration{phase:steady}` is, by construction, a summary from a run that had a warm-up to
+exclude. `ops/perf/build_record.rb` reads it that way and never asks which scenario ran. The run
+lasts `40m + WARMUP`, so a VU that waited out the window still gets its full forty minutes of play.
+
+**`checks` is the exception and stays on the whole run**, for the hold too. The `logged in` check
+fires before the tag is set, so a hold measuring only its steady phase would be blind to its own
+warm-up collapsing — and a failed login here answers `200` with the login page, so it shows up in
+neither `http_req_failed` nor any duration percentile. The hold declares both: the whole-run
+`checks` as the alarm, `checks{phase:steady}` as the measurement.
+
 **`--env LADDER` sets the `ramp` phase's plateaus** (default `120,250,500,1000`) and is ignored by
 `hold`. Each comma-separated number is a **team count for one plateau**, not a rate — one VU is one
 team, same as `TEAMS` above — and `main.js` turns each into a 30s ramp followed by a 4m hold, same
@@ -217,7 +235,7 @@ for the POST check, a real "the app accepted this" response) without the marker.
 |---|---|---|
 | `ramp` | how many teams can play at once, once they are in | `LADDER` (default `120,250,500,1000`) |
 | `stampede` | what happens when every team arrives together | `TEAMS`, `STAMPEDE_WINDOW` (default `30s`) |
-| `hold` | what happens after the CPU credit bank drains | `TEAMS`, runs 40 minutes |
+| `hold` | what happens after the CPU credit bank drains | `TEAMS`, `WARMUP` (default `60s`), runs 40 minutes of measured play after it |
 
 **`stampede` is the one that matters most, and it exists because of a
 measurement.** On 2026-08-21, against production on a `Standard_B1ms`:

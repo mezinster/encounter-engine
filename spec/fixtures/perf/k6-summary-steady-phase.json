@@ -1,0 +1,164 @@
+{
+    "metrics": {
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 14,
+            "value": 0
+        },
+        "http_req_tls_handshaking": {
+            "min": 0,
+            "med": 0,
+            "max": 87.200193,
+            "p(90)": 60.97034790000009,
+            "p(95)": 87.13539060000001,
+            "avg": 12.450049285714286
+        },
+        "checks": {
+            "passes": 14,
+            "fails": 0,
+            "value": 1
+        },
+        "http_reqs": {
+            "count": 14,
+            "rate": 2.044489460467716
+        },
+        "http_req_duration{phase:steady}": {
+            "min": 76.42486,
+            "med": 77.1272475,
+            "max": 83.130468,
+            "p(90)": 82.08872120000001,
+            "p(95)": 82.6620781,
+            "avg": 78.29613408333333,
+            "thresholds": {
+                "p(95)<60000": false
+            }
+        },
+        "http_req_sending": {
+            "min": 0.049056,
+            "med": 0.0818015,
+            "max": 1.137599,
+            "p(90)": 0.801519600000001,
+            "p(95)": 1.10271805,
+            "avg": 0.22963671428571433
+        },
+        "http_req_failed{phase:steady}": {
+            "passes": 0,
+            "fails": 12,
+            "thresholds": {
+                "rate<0.02": false
+            },
+            "value": 0
+        },
+        "vus_max": {
+            "value": 2,
+            "min": 2,
+            "max": 2
+        },
+        "http_req_blocked": {
+            "avg": 38.256007142857136,
+            "min": 0.000301,
+            "med": 0.0006305,
+            "max": 267.794442,
+            "p(90)": 187.4483146000003,
+            "p(95)": 267.78694685
+        },
+        "http_req_waiting": {
+            "avg": 81.8149845,
+            "min": 76.252354,
+            "med": 77.1989175,
+            "max": 104.01844,
+            "p(90)": 97.68285990000003,
+            "p(95)": 103.99761335000001
+        },
+        "http_req_duration": {
+            "p(90)": 98.58724990000002,
+            "p(95)": 105.2178283,
+            "avg": 82.14247264285713,
+            "min": 76.42486,
+            "med": 77.3776705,
+            "max": 105.229423,
+            "thresholds": {
+                "p(95)<60000": false
+            }
+        },
+        "vus": {
+            "value": 2,
+            "min": 2,
+            "max": 2
+        },
+        "checks{phase:steady}": {
+            "passes": 12,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "iteration_duration": {
+            "p(95)": 1456.2611185,
+            "avg": 1141.2249390833333,
+            "min": 1076.674653,
+            "med": 1078.1197305,
+            "max": 1456.297512,
+            "p(90)": 1418.7480695000002
+        },
+        "http_req_connecting": {
+            "avg": 10.47664207142857,
+            "min": 0,
+            "med": 0,
+            "max": 73.378031,
+            "p(90)": 51.306470600000075,
+            "p(95)": 73.32403355
+        },
+        "data_received": {
+            "count": 11121,
+            "rate": 1624.0548064186764
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 82.14247264285713,
+            "min": 76.42486,
+            "med": 77.3776705,
+            "max": 105.229423,
+            "p(90)": 98.58724990000002,
+            "p(95)": 105.2178283
+        },
+        "data_sent": {
+            "count": 1510,
+            "rate": 220.5127918075894
+        },
+        "http_req_receiving": {
+            "min": 0.045454,
+            "med": 0.085887,
+            "max": 0.162226,
+            "p(90)": 0.15436660000000002,
+            "p(95)": 0.1601863,
+            "avg": 0.09785142857142856
+        },
+        "iterations": {
+            "rate": 1.7524195375437568,
+            "count": 12
+        }
+    },
+    "root_group": {
+        "checks": {
+            "warm ok": {
+                "path": "::warm ok",
+                "id": "4a92a20c03639e3db5bb52b7db9e7006",
+                "passes": 2,
+                "fails": 0,
+                "name": "warm ok"
+            },
+            "steady ok": {
+                "passes": 12,
+                "fails": 0,
+                "name": "steady ok",
+                "path": "::steady ok",
+                "id": "b7883c9d82cd849954ba704b48e4a04c"
+            }
+        },
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {}
+    }
+}

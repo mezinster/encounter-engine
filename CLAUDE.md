@@ -850,8 +850,21 @@ Four things about it are non-obvious:
   contains no NIC, so it applies to nothing. The error is `LinkedAuthorizationFailed` and it names
   an action nobody asked for, which reads like the wrong role rather than the wrong scope. This was
   latent from setup until 2026-08-28 because **the cron only ever reaches `observe`**, which uses
-  the reader — the first `apply` that ever ran is the one that found it. `vm-scaling-setup.md` §2
-  now creates a one-action `NIC Join (vmscale)` custom role beside it.
+  the reader — the first `apply` that ever ran is the one that found it.
+
+  **It is not just the NIC, and the first fix was the wrong shape.** A VM PUT revalidates the whole
+  VM model, so every *linked* resource needs its own grant: each NIC (`join/action`) and each
+  attached managed disk (`write`). A NIC-scoped grant was added, the next dispatch failed on the OS
+  disk, and a data disk was waiting behind that. Granting one resource at a time also re-breaks
+  silently whenever a disk is replaced — which a restore or a storage resize does. So
+  `vm-scaling-setup.md` §2 now creates **`VM Resize Links (vmscale)`**, two actions, assigned at
+  **resource-group** scope: breadth of scope traded for narrowness of capability. That is the one
+  place in this setup where an assignment is wider than a single resource, and the runbook's
+  check (d) was **amended** to say so rather than left quietly false. The definitions live in
+  `ops/vmscale/roles/*.json` as committed files with `__SUB__`/`__RG__` placeholders — this
+  repository is public and derives the subscription id at runtime, and
+  `spec/ops/vmscale_roles_spec.rb` fails if a real one lands in a role file or if the action list
+  grows.
 - **A manual dispatch overrides `policy.rb` wholesale, including its budget refusal.** The `Decide`
   step replaces the engine's verdict with the operator's chosen size and sets `apply=true`
   unconditionally. That is right for the scale-down path it was written for — cheaper is always

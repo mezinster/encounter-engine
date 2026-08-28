@@ -1,0 +1,14 @@
+{
+  "Name": "VM Resize Links (vmscale)",
+  "Description": "The linked-resource actions an `az vm resize` PUT revalidates: write the attached managed disks, join the attached NIC. Held by ee-vmscale-operator-oidc alongside Virtual Machine Contributor on the web VM. Grants no create, no delete, no read, and nothing on the NSG. __SUB__ and __RG__ are substituted at apply time -- see docs/runbooks/vm-scaling-setup.md.",
+  "Actions": [
+    "Microsoft.Compute/disks/write",
+    "Microsoft.Network/networkInterfaces/join/action"
+  ],
+  "NotActions": [],
+  "DataActions": [],
+  "NotDataActions": [],
+  "AssignableScopes": [
+    "/subscriptions/__SUB__/resourceGroups/__RG__"
+  ]
+}

@@ -187,14 +187,40 @@ consciously narrowed is fine; one silently false is not.
 
 **Retiring `NIC Join (vmscale)`.** The first, NIC-scoped fix is superseded by
 this role and is now redundant. Remove it only after a resize has actually
-succeeded, so there is never a window where neither grant works:
+succeeded, so there is never a window where neither grant works. Done on
+2026-08-28:
 
 ```bash
 az role assignment delete --assignee-object-id "$OPERATOR_PRINCIPAL" \
   --role "NIC Join (vmscale)" \
   --scope "$(az vm show -g $RG -n $VM --query 'networkProfile.networkInterfaces[0].id' -o tsv)"
-az role definition delete --name "NIC Join (vmscale)"
+
+# --scope IS REQUIRED on the second command, and omitting it does not fail.
+az role definition delete --name "NIC Join (vmscale)" \
+  --scope "/subscriptions/$SUB/resourceGroups/$RG"
 ```
+
+**`az role definition delete` reports success without deleting anything if you
+omit `--scope`.** Run bare, it looks at subscription scope — which, per the note
+in §5, does not return a custom role whose `assignableScopes` is a nested
+resource group. It finds nothing to delete, deletes nothing, and exits **0**.
+The role was still there two minutes later. This is the §5 replication note's
+trap arriving from the other direction, and it is worse here because the two
+failures are indistinguishable from the terminal: a delete that silently
+no-ops and a delete that worked but has not propagated both present as
+*"I ran it, and it is still listed."*
+
+Telling them apart takes **repeated** reads, not one. During the real
+retirement, consecutive `az role definition list` calls seconds apart disagreed
+with each other — present, gone, present, gone — which is itself the evidence
+that the answer is being served from replicas in different states. Read until
+several consecutive answers agree; a single clean read means nothing, and so
+does a single dirty one.
+
+The assignment is the half that matters. A role definition with no assignments
+grants nothing, so once `az role assignment list` is stable at two rows the
+identity is correct regardless of how long the empty definition takes to
+disappear.
 
 ## 3. The GitHub environment and secrets
 

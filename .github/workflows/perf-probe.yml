@@ -123,6 +123,28 @@ jobs:
           echo "COHORT=lt-$(date -u +%Y-%m-%dT%H%M)-probe" >> "$GITHUB_ENV"
           echo "AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
+      # BEFORE the cohort is seeded, the generator is provisioned or the NSG is
+      # touched -- which is the entire point of its position in this file.
+      #
+      # ci.yml runs the same check on every push and pull request, so a script
+      # that reaches here is usually already known to be sound. Usually is not
+      # always: this workflow is `workflow_dispatch`, so it can be dispatched
+      # from any ref, including a branch whose CI has not finished or has never
+      # run. The cost of being wrong is asymmetric enough to pay for the twelve
+      # seconds -- by the time k6 would otherwise have complained, 120 accounts
+      # exist in production, a VM is running in westeurope and port 22 is open
+      # to this runner.
+      - name: Install k6
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://github.com/grafana/k6/releases/download/v0.52.0/k6-v0.52.0-linux-amd64.tar.gz \
+            | tar xz --strip-components=1 -C "$HOME/.local/bin" k6-v0.52.0-linux-amd64/k6
+          chmod +x "$HOME/.local/bin/k6"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Check the load-test script before anything is created
+        run: bin/check-load-test-script
+
       - name: Load the deploy SSH key
         uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
@@ -316,14 +338,6 @@ jobs:
         run: |
           ./ops/perf/baseline.sh "https://${APP_HOST}/up" > baseline.json
           cat baseline.json
-
-      - name: Install k6
-        run: |
-          mkdir -p "$HOME/.local/bin"
-          curl -fsSL https://github.com/grafana/k6/releases/download/v0.52.0/k6-v0.52.0-linux-amd64.tar.gz \
-            | tar xz --strip-components=1 -C "$HOME/.local/bin" k6-v0.52.0-linux-amd64/k6
-          chmod +x "$HOME/.local/bin/k6"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       # An aborted run is a RESULT the record must capture, not a build failure.
       # This is the only step in the workflow allowed to continue on error.

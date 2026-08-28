@@ -1,0 +1,261 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Asserts that load_test/main.js still builds the options every scenario needs,
+# and that its startup guards still refuse the runs they exist to refuse.
+#
+# WHY THIS EXISTS. Nothing else in this repository executes that file. Both
+# suites run in the test environment against Rails; `main.js` is JavaScript
+# handed to k6 on a machine neither of them ever touches. So until this script,
+# a typo in the thresholds block was discoverable only by DISPATCHING A PROBE --
+# which seeds 120 real accounts into production, provisions a generator VM and
+# opens port 22 through the NSG before it gets as far as running k6. That is a
+# very expensive way to learn about a missing brace, and it is the same seam
+# CLAUDE.md describes for libvips and for `!docs/manual`: the error exists only
+# between a developer's machine and the thing CI actually runs.
+#
+# It also pins the part that is easy to get subtly wrong rather than loudly
+# wrong. `hold` measures a tagged SUBMETRIC and the other two measure the plain
+# metrics, and k6 creates `metric{tag:value}` only where a threshold names it --
+# so deleting one threshold key does not fail, it silently changes which
+# population the record describes. ops/perf/build_record.rb decides what to read
+# from the presence of that submetric, so these two files have to agree about it
+# and nothing else checks that they do.
+#
+# Runs k6 for real -- `k6 inspect` parses the script, evaluates module scope and
+# prints the resolved options without generating any load. No network, no
+# production, nothing seeded.
+#
+# Plain stdlib Ruby with no Rails and no gems, on purpose: CI runs it in a job
+# with no bundle, and a developer can run it from a checkout with nothing
+# installed but k6.
+#
+#   bin/check-load-test-script
+#
+# Exits 0 and prints one line per case when everything holds; prints what it
+# expected against what it got, and exits 1, when it does not.
+
+require "json"
+require "open3"
+require "tmpdir"
+
+SCRIPT = File.expand_path("../load_test/main.js", __dir__)
+
+# The k6 version is pinned in TWO places already and this check would be a
+# third, so rather than adding a templating mechanism to keep them in step, the
+# check that has to run k6 anyway asserts they agree.
+#
+# The two are `.github/workflows/perf-probe.yml`, which installs k6 on the
+# runner, and `load_test/cloud-init.yml`, which installs it on the westeurope
+# generator VM -- a file Azure consumes directly, so it cannot read a version
+# from anywhere else without being rendered at dispatch time. Drift between them
+# means the probe's two generators are not running the same instrument, which
+# would show up as a difference between records that no field in them explains.
+# Drift between either and the version CI installs means this file is checking a
+# script against a k6 that never runs it.
+PINS = {
+  ".github/workflows/perf-probe.yml" => %r{k6/releases/download/(v[\d.]+)/},
+  "load_test/cloud-init.yml"         => %r{k6/releases/download/(v[\d.]+)/}
+}.freeze
+
+def pinned_version
+  found = PINS.map do |file, pattern|
+    path = File.expand_path("../#{file}", __dir__)
+    match = File.read(path)[pattern, 1] if File.exist?(path)
+    abort("no k6 version found in #{file}") if match.nil?
+    [file, match]
+  end.to_h
+
+  versions = found.values.uniq
+  return versions.first if versions.size == 1
+
+  abort(<<~MSG)
+    the k6 version is pinned differently in different places:
+    #{found.map { |f, v| "  #{v}  #{f}" }.join("\n")}
+    The probe would then run one instrument on the runner and another on the
+    generator VM, and no field in a record explains a difference like that.
+  MSG
+end
+
+# RAISES rather than skipping. A missing binary must redden the build: an
+# example that reports "pending" reads exactly like one that passed, which is
+# how this repository's countdown specs shed their coverage for a fortnight
+# without anyone noticing (see the shared.countdown.* note in CLAUDE.md).
+def require_k6!
+  want = pinned_version
+  out, status = Open3.capture2e("k6", "version")
+  abort("k6 ran but did not report a version:\n#{out}") unless status.success?
+
+  unless out.include?("k6 #{want} ")
+    abort(<<~MSG)
+      this check is running k6 that is not the version the probe installs.
+
+        pinned:  #{want}
+        running: #{out.strip}
+
+      Checking load_test/main.js against a k6 the probe never uses proves
+      nothing about the runs that matter. Install the pinned version, or update
+      the pins deliberately -- #{PINS.keys.join(" and ")}.
+    MSG
+  end
+  puts "using #{out.strip} (pinned #{want})"
+rescue Errno::ENOENT
+  abort <<~MSG
+    k6 is not on PATH, so the load-test script cannot be checked.
+
+    This is a failure, not a reason to skip: the whole point of this check is
+    that nothing else in the repository ever executes load_test/main.js.
+
+    Install the version .github/workflows/perf-probe.yml pins (#{pinned_version}):
+      V=#{pinned_version}
+      curl -fsSL https://github.com/grafana/k6/releases/download/$V/k6-$V-linux-amd64.tar.gz \\
+        | tar xz --strip-components=1 -C ~/.local/bin k6-$V-linux-amd64/k6
+  MSG
+end
+
+# A manifest with `count` teams, written to a temporary file. Generated rather
+# than committed: a fixture full of plausible-looking credentials is a thing
+# somebody eventually mistakes for real ones, and the cohort-guard cases below
+# need different sizes anyway.
+def with_manifest(count)
+  Dir.mktmpdir("load-test-check") do |dir|
+    path = File.join(dir, "manifest.json")
+    teams = Array.new(count) do |i|
+      { "email" => "team#{i + 1}@loadtest.invalid", "password" => "x" }
+    end
+    File.write(path, JSON.generate("base_url" => "https://example.invalid",
+                                   "cohort_id" => "lt-check",
+                                   "teams" => teams,
+                                   "codes" => Array.new(3) { |i| "code#{i}" }))
+    yield path
+  end
+end
+
+def inspect_options(env, manifest)
+  args = env.merge("MANIFEST" => manifest).flat_map { |k, v| ["--env", "#{k}=#{v}"] }
+  Open3.capture3("k6", "inspect", *args, SCRIPT)
+end
+
+@failures = []
+
+def check(name)
+  yield
+  puts "  ok  #{name}"
+rescue StandardError => e
+  @failures << "#{name}: #{e.message}"
+  puts "  FAIL #{name}"
+  puts e.message.lines.map { |l| "       #{l}" }.join
+end
+
+def expect(actual, expected, what)
+  return if actual == expected
+
+  raise "#{what}\n  expected: #{expected.inspect}\n  got:      #{actual.inspect}"
+end
+
+# A scenario that should resolve. Returns the parsed options.
+def options_for(env, teams:)
+  with_manifest(teams) do |manifest|
+    out, err, status = inspect_options(env, manifest)
+    raise "k6 inspect failed (#{status.exitstatus}):\n#{err}" unless status.success?
+
+    return JSON.parse(out)
+  end
+end
+
+# A scenario that should REFUSE, with a message naming the reason.
+def refusal_for(env, teams:, matching:)
+  with_manifest(teams) do |manifest|
+    out, err, status = inspect_options(env, manifest)
+    raise "expected a refusal, but k6 inspect succeeded:\n#{out}" if status.success?
+    raise "refused, but not for the expected reason:\n#{err}" unless err.include?(matching)
+  end
+end
+
+require_k6!
+puts "checking #{SCRIPT.sub("#{Dir.pwd}/", "")}"
+
+# --- hold ---------------------------------------------------------------------
+# The four keys are the whole point of the file's thresholds block and each one
+# is load-bearing:
+#
+#   * the three {phase:steady} keys are what MAKE the submetric exist -- k6
+#     builds a tag submetric only where a threshold names it -- so losing one
+#     silently moves the measurement back onto the arrival burst.
+#   * plain `checks` stays because lib/auth.js runs its `logged in` check before
+#     the steady tag is set. Without it a hold is blind to its own warm-up
+#     collapsing, and a failed login here answers 200 with the login page, so it
+#     shows in no other metric at all.
+check("hold measures the steady phase and still watches the whole run's checks") do
+  o = options_for({ "PHASE" => "hold", "TEAMS" => "120" }, :teams => 120)
+  expect(o["thresholds"].keys.sort,
+         ["checks", "checks{phase:steady}",
+          "http_req_duration{phase:steady}", "http_req_failed{phase:steady}"],
+         "hold's thresholds")
+  expect(o["scenarios"]["hold"]["executor"], "constant-vus", "hold's executor")
+  expect(o["scenarios"]["hold"]["vus"], 120, "hold's VU count")
+end
+
+# 40 minutes of measured play plus the 60s warm-up. If this reads 40m0s the
+# stagger has been removed and every VU is arriving in the same instant again.
+check("hold runs its warm-up on top of the measured forty minutes") do
+  o = options_for({ "PHASE" => "hold", "TEAMS" => "120" }, :teams => 120)
+  expect(o["scenarios"]["hold"]["duration"], "41m0s", "hold's duration")
+
+  short = options_for({ "PHASE" => "hold", "TEAMS" => "120", "WARMUP" => "30" },
+                      :teams => 120)
+  expect(short["scenarios"]["hold"]["duration"], "40m30s",
+         "hold's duration with WARMUP=30")
+end
+
+# --- ramp and stampede --------------------------------------------------------
+# These must NOT acquire the submetric. For them the logins are the measurement
+# -- the stampede exists to ask what happens when 120 teams arrive together --
+# so excluding the arrival phase would delete the finding rather than clean it
+# up, and ops/perf/build_record.rb would then report a stampede's steady tail as
+# though it were the whole run.
+["ramp", "stampede"].each do |phase|
+  check("#{phase} keeps the plain metrics, arrival included") do
+    env = { "PHASE" => phase, "TEAMS" => "120" }
+    env["LADDER"] = "120" if phase == "ramp"
+    o = options_for(env, :teams => 120)
+    expect(o["thresholds"].keys.sort,
+           ["checks", "http_req_duration", "http_req_failed"],
+           "#{phase}'s thresholds")
+  end
+end
+
+check("the stampede's arrival window is the one asked for") do
+  o = options_for({ "PHASE" => "stampede", "TEAMS" => "120",
+                    "STAMPEDE_WINDOW" => "60s" }, :teams => 120)
+  stages = o["scenarios"]["stampede"]["stages"]
+  expect(stages.first["duration"], "1m0s", "the stampede's ramp stage")
+  expect(stages.first["target"], 120, "the stampede's target")
+end
+
+# --- the guards ---------------------------------------------------------------
+# Each of these refusals is a run that would otherwise produce a meaningless
+# number under the name of a real measurement, so a checker that only proved the
+# happy path would be missing the half that costs money.
+check("an unknown phase refuses instead of silently running the ramp") do
+  refusal_for({ "PHASE" => "stamped", "TEAMS" => "120" },
+              :teams => 120, :matching => "unknown PHASE")
+end
+
+check("a stampede larger than the seeded cohort refuses") do
+  refusal_for({ "PHASE" => "stampede", "TEAMS" => "120" },
+              :teams => 60, :matching => "exceeds the seeded cohort")
+end
+
+check("a ladder taller than the seeded cohort refuses") do
+  refusal_for({ "PHASE" => "ramp", "LADDER" => "120,250" },
+              :teams => 120, :matching => "exceeds the seeded cohort")
+end
+
+if @failures.empty?
+  puts "load_test/main.js: all checks passed"
+else
+  warn "\n#{@failures.size} check(s) failed:"
+  @failures.each { |f| warn "  - #{f}" }
+  exit 1
+end

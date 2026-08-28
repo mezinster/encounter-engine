@@ -145,6 +145,47 @@ jobs:
   # Blocking rather than advisory: the baseline was clean when this was added
   # (2026-08-11, 1232 advisories, no vulnerabilities found). A security check
   # nobody has to act on is one nobody reads.
+  # The only thing in this repository that ever executes load_test/main.js.
+  #
+  # Neither suite can: they run in the test environment against Rails, and
+  # main.js is JavaScript handed to k6 on a machine neither of them touches. So
+  # before this job, a typo in its thresholds block was discoverable only by
+  # DISPATCHING A PROBE -- which seeds 120 real accounts into production,
+  # provisions a generator VM and opens port 22 through the NSG before it gets
+  # as far as running k6.
+  #
+  # `k6 inspect` parses the script and prints its resolved options. It generates
+  # no load, reaches no network and touches nothing in Azure.
+  #
+  # Not in `container: ruby:3.3.12` like the three jobs above, and not for
+  # convenience: bin/check-load-test-script is plain stdlib Ruby with no Gemfile
+  # on purpose, so this job needs no bundle, no cache and no database -- it
+  # needs a Ruby and a k6 and nothing else. Keeping it out of the container is
+  # what keeps it that way.
+  load-test-script:
+    name: Load-test script
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Pinned to the same version perf-probe.yml installs on the runner and
+      # cloud-init.yml installs on the generator VM. That is now three copies of
+      # one number, so the checker below reads the other two and fails if they
+      # disagree with each other or with the binary this step just installed --
+      # checking the script against a k6 the probe never runs would prove
+      # nothing about the runs that matter.
+      - name: Install k6
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://github.com/grafana/k6/releases/download/v0.52.0/k6-v0.52.0-linux-amd64.tar.gz \
+            | tar xz --strip-components=1 -C "$HOME/.local/bin" k6-v0.52.0-linux-amd64/k6
+          chmod +x "$HOME/.local/bin/k6"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Check the load-test script
+        run: bin/check-load-test-script
+
   audit:
     name: Gem advisories
     runs-on: ubuntu-latest

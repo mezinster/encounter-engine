@@ -34,6 +34,39 @@ module VMScale
 
     module_function
 
+    # What a hand-picked target would cost, for the apply job to consult before
+    # performing a resize nobody's engine proposed.
+    #
+    # `decide` prices its own target and refuses one over the ceiling with an
+    # `at_budget_ceiling` verdict. A MANUAL dispatch overrides `decide`
+    # wholesale, so on 2026-08-28 a hand-picked Standard_B2ms reached
+    # `az vm resize` with nothing having priced it at all -- $70.08 plus the
+    # $7.50 baseline against a $45 ceiling, on a credit subscription that
+    # DISABLES when its monthly credit runs out, taking the platform dark
+    # rather than degrading it. It failed on an unrelated missing NIC
+    # permission, and the budget was never consulted on the way past.
+    #
+    # It lives here, and not as arithmetic in the workflow's shell, so that one
+    # file prices a rung. Two copies of `usd + baseline` are two things that
+    # can disagree, and this repository has already paid for that lesson twice
+    # -- see ops/smtp/roles.rb, and the ladder both this file and
+    # ops/perf/host_facts.sh read rather than each asking Azure.
+    #
+    # Reports rather than decides: `within` is a fact about money, while
+    # whether to proceed anyway is an authorisation question, and in this
+    # design authorisation belongs to the reviewer gate and the environment.
+    def affordability(input, size)
+      cost    = monthly_total(input, size)
+      ceiling = input.fetch("budget_ceiling_usd").to_f
+
+      { "size"        => size,
+        "monthly_usd" => cost,
+        "ceiling_usd" => ceiling,
+        # Equal is affordable. A `>=` here would refuse a rung priced exactly
+        # at the ceiling, which is the same off-by-one `scale_up` avoids.
+        "within"      => cost <= ceiling }
+    end
+
     def decide(input)
       current = input.fetch("current_size")
       found   = evidence(input)

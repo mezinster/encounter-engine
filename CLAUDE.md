@@ -689,8 +689,12 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 2904 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
-  measured 2026-08-26 on the test-admission-mail branch. This figure has now been wrong five times: 1603
+- **RSpec** — 2920 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+  measured 2026-08-28 at the commit that carries this line. The previous entry read 2904, measured
+  2026-08-26, and was correct on the day: the perf-probe record-schema work then added sixteen
+  examples. That is ordinary drift rather than a ninth mis-measurement, and it is recorded here
+  only because the whole point of the paragraph below is that this number does not hold still.
+  This figure has been *wrong* — as opposed to merely overtaken — five times: 1603
   while the real number was 1751, then 1751 while it was 1829, then 1829 while it was 1851 —
   measured on 2026-08-16 before the AI translation work began — and it said 1934 while the real
   number was 2820. The Cucumber figure beside it was wrong once too. Which is the point of the
@@ -725,6 +729,25 @@ run. The real files are checked by the closure check on every push and PR.
   the environment directly:
   `RAILS_ENV=production SECRET_KEY_BASE=x APP_HOST=example.com SMTP_USERNAME=u SMTP_PASSWORD=p SMTP_ADDRESS=s MAIL_FROM=m@e.com DATABASE_URL="sqlite3:/tmp/probe.sqlite3" bin/rails runner 'puts "ok"'`
   (sqlite because `pg` is production-group and not in the local bundle).
+- **Neither suite executes `load_test/main.js` either, and `bin/check-load-test-script` is what
+  does.** Same seam as the entry above, one layer further out: both suites run in the test
+  environment against Rails, while that file is JavaScript handed to k6 on a machine neither of them
+  touches. Until this check existed, a typo in it was discoverable only by *dispatching a probe* —
+  which seeds 120 real accounts into production, provisions a VM in westeurope and opens port 22
+  through the NSG before it gets as far as running k6. The script runs `k6 inspect` (which parses
+  and prints resolved options, generating no load and creating nothing) and asserts eight things:
+  the thresholds each of the three scenarios must carry, and the four startup refusals — an unknown
+  `PHASE`, and cohorts smaller than the run asks for. The subtle one is why it exists: `hold`
+  measures a tagged submetric and the other two measure the plain metrics, k6 builds
+  `metric{tag:value}` **only where a threshold names it**, so deleting a threshold key does not
+  error — it silently changes which population `ops/perf/build_record.rb` reads. Two files that must
+  agree, with a disagreement that produces a plausible number rather than a crash. It also reads the
+  k6 version pinned in `.github/workflows/perf-probe.yml` and `load_test/cloud-init.yml` and fails
+  if they disagree with each other or with the binary it is running, since a probe whose two
+  generators are different instruments would show up as a difference between records that no field
+  explains. `ci.yml` runs it on every push and pull request; `perf-probe.yml` runs it again as a
+  pre-flight, before anything is created. **It raises rather than skipping when k6 is missing**, for
+  the reason the `shared.countdown.*` note gives.
 - **ActiveSupport core extensions are NOT all loaded in an environment file.** `config/application.rb`
   requires railties selectively rather than `rails/all`, so `active_support/all` is never pulled in,
   and an environment file is evaluated during `initialize!` before the component that would have

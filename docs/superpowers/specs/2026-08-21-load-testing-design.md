@@ -29,11 +29,11 @@ regression gate. It runs against production, off-hours, on a scratch game.
 
 ## 2. Constraints that shape the whole design
 
-**The target is a single burstable VM shared with other services.** The host
-runs danted on 1080, squid-family proxies on 3128-3130 and 8080-8081, and two
-inReach APRS forwarders (`ansible/playbook.yml`). We are a tenant, not the
-owner. Anything that saturates the CPU degrades all of them, and none of them
-belong to this app.
+**The target is a single burstable VM this app shares and does not own.**
+Anything that saturates the CPU degrades everything else on the box, none of
+which belongs to this app — so the cost of overshooting is paid by someone who
+never agreed to the experiment. That is the constraint that shapes every choice
+below.
 
 **Burstable means the ceiling is two numbers, not one.** The VM banks CPU
 credits while idle and spends them under load; when the bank empties it is
@@ -72,13 +72,13 @@ Three approaches were considered:
   and the host never actually saturates. Phase 2 re-runs at ~70% of that level
   and holds it past credit exhaustion.
 * **B. True ramp-to-failure.** Rejected. Would show *how* the box fails, but
-  takes danted, the squid proxies and the APRS forwarders down with it, and on
-  one vCPU the failure mode is most likely undramatic Puma queueing. High
-  collateral cost for modest extra insight.
+  takes everything else on the host down with it, and on one vCPU the failure
+  mode is most likely undramatic Puma queueing. High collateral cost for modest
+  extra insight.
 * **C. Aggressive ramp on a throwaway clone, confirming hold on production.**
   The best engineering answer and rejected only on cost: a clone has neither
-  production's credit history nor its neighbours, so its ceiling is a hypothesis
-  rather than a result, and it costs an extra VM plus a Kamal deploy.
+  production's credit history nor its resident load, so its ceiling is a
+  hypothesis rather than a result, and it costs an extra VM plus a Kamal deploy.
 
 **Failure is defined as an SLO breach, not a crash:** `p(95) > 2000ms` or an
 error rate above 2%. The last plateau that stayed clean is the reported burst
@@ -452,8 +452,8 @@ something a one-cent VM does better.
 * **Automatic (k6).** The thresholds in §4.3. Slowest of the three to react.
 * **Human.** Someone watching Azure Monitor with a finger on Ctrl-C, for the
   things k6 cannot see: CPU credits draining faster than the plateau schedule
-  predicts, distress in danted / the squid proxies / the APRS forwarders, or any
-  sign of a real user on the box.
+  predicts, distress in anything else running on the box, or any sign of a real
+  user on it.
 * **Recovery.** `kamal app boot` if memory ballooned. On roughly 1.1 GB spare, a
   Puma worker that grows under load does not necessarily shrink back.
 

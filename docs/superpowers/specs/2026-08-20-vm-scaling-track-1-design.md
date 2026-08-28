@@ -42,7 +42,7 @@ deploys, translation runs, wal-g pushes — was absorbed for free. A threshold o
 would have proposed a resize several times this week, each time wrongly.
 
 **Memory is the axis with an actual floor.** 472 MB free at the worst observed moment, on a host
-that also carries the Postgres accessory, kamal-proxy, danted and the APRS forwarders. This is the
+that also carries the Postgres accessory, kamal-proxy and workloads this app does not own. This is the
 number that will run out first, and `config/deploy.yml` already argues against itself on this
 basis — `builder.remote: false` and the 64 MB proxy body cap both exist because of it.
 
@@ -242,7 +242,7 @@ minutes or days old:
    reboot — a materially different operation that must not happen by surprise.
 2. **Allowlist the target** against `{B1ms, B2s, B2ms}` with `B1ms` as the floor. A typo cannot
    resize to `B20ms`. The floor stays at `B1ms` deliberately: `B1s` halves the host to 1 GiB, which
-   will not hold Rails, Postgres, kamal-proxy, danted and the APRS forwarders together.
+   will not hold Rails, Postgres, kamal-proxy and everything else on the box together.
 
    The allowlist and the budget ceiling are different limits and both apply. The allowlist bounds
    what the *executor* will ever apply; the ceiling (V7) bounds what the *engine* will propose.

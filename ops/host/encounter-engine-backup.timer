@@ -7,9 +7,8 @@ OnCalendar=*-*-* 03:00:00
 # to the next night. Hosts being off at 03:00 is the usual reason a nightly
 # schedule quietly stops producing backups.
 Persistent=true
-# This box has 1 vCPU and runs danted, several proxies and two APRS
-# forwarders. Spreading the start avoids colliding with whatever else fires
-# on the hour.
+# This box has 1 vCPU and carries workloads besides this app. Spreading the
+# start avoids colliding with whatever else fires on the hour.
 RandomizedDelaySec=15m
 
 [Install]

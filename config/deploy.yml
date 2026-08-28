@@ -51,8 +51,10 @@ registry:
 
 builder:
   arch: amd64
-  # Built in CI and pushed. This host has 1 vCPU and ~1.1 GB spare; building
-  # here would starve danted and the APRS forwarders.
+  # Built in CI and pushed, never on the server. Image builds are the most
+  # memory-hungry thing this project does, and they would be competing with
+  # Puma and the Postgres accessory on a box sized for steady play rather
+  # than for compilation.
   remote: false
 
 ssh:

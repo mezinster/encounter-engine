@@ -245,8 +245,8 @@ reachable only through the docker socket or a 0400 file; putting it in `argv` wi
 to every local UID for the duration of the call.
 
 The host is explicitly multi-tenant — `ansible/playbook.yml:2-4` says *"This host is in production
-use for other things: danted on 1080, squid-family proxies on 3128-3130 and 8080-8081, and two
-inReach APRS forwarders. We are a tenant, not the owner."* — and Postgres binds `127.0.0.1:5432`
+use for other things, and this app is one tenant on it rather than its owner."* — and Postgres
+binds `127.0.0.1:5432`
 (`config/deploy.yml:71`), so a captured password is directly usable from the same machine.
 
 Realistic severity is **low**: the deploy user is already docker-group/root-equivalent and gains

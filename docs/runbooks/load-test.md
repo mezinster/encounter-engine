@@ -12,13 +12,11 @@ first time touching this codebase.
 
 ## 0. Before you start
 
-**This app shares its host with other tenants.** `ansible/playbook.yml`'s own
-header records it: danted on port 1080, squid-family proxies on
-3128-3130/8080-8081, and two inReach APRS forwarders, none of which belong to
-this application. We are a tenant on that box, not the owner. That is *why*
-the ramp phase (§4) is built to stop itself at the first sign of an SLO
-breach instead of running to failure, and it is why §6 below hands a human,
-not k6, the final word on whether to keep going.
+**This app shares its host and does not own it.** Other work runs on the same
+box, none of it belonging to this application, and CPU saturation reaches all of
+it. That is *why* the ramp phase (§4) is built to stop itself at the first sign
+of an SLO breach instead of running to failure, and it is why §6 below hands a
+human, not k6, the final word on whether to keep going.
 
 **The generator holds live production credentials the moment the manifest
 lands on it** — a password for every seeded captain, plus every level's
@@ -314,11 +312,10 @@ have tripped:
   balance is heading toward zero well before you expected the hold phase to
   reach it, something is costing more than the plan assumed — stop and
   investigate before continuing.
-- **Distress in danted, the squid proxies (3128-3130, 8080-8081), or the two
-  inReach APRS forwarders.** These are other tenants' services on the same
-  box (`ansible/playbook.yml`). If they're slow, erroring, or their logs
-  show anything unusual during the run, that's this test's CPU pressure
-  spilling onto someone else's traffic — stop.
+- **Distress in anything else running on the box.** This app is not the only
+  workload on it. If another service is slow, erroring, or its logs show
+  anything unusual during the run, that is this test's CPU pressure spilling
+  onto traffic that has nothing to do with the test — stop.
 - **Any sign of a real user on the box** — a real game starting, a real
   team logging in, anything that suggests §1a's check missed something.
 

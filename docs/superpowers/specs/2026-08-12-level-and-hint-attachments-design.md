@@ -188,7 +188,7 @@ One upload can transit the disk four times, and the app does not own that disk:
 ```
 
 The host is **not dedicated**. `docs/superpowers/specs/2026-08-05-kamal-deployment-design.md`
-records it as a working utility host with other tenants (danted, the APRS forwarders), 1 vCPU,
+records it as a shared host this app is one tenant on, 1 vCPU,
 ~1.1 GB spare RAM, and **30 GB disk with 17 GB free — measured 2026-08-05, before Docker was
 installed.** Real free space today is lower and **must be re-measured before the numbers below are
 committed to.**

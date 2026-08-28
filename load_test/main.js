@@ -160,9 +160,9 @@ export const options = {
   // the reproduction.
   noCookiesReset: true,
   // abortOnFail everywhere EXCEPT the hold. The ramp and the stampede are both
-  // exploratory runs against production, on a host shared with danted, the
-  // squid proxies on 3128-3130/8080-8081 and two APRS forwarders -- the brake
-  // is what makes pointing them at it defensible. Only `hold` is meant to run
+  // exploratory runs against PRODUCTION -- the instance real teams play real
+  // games on, with no staging copy behind it -- and the brake is what makes
+  // pointing them at it defensible at all. Only `hold` is meant to run
   // past a breach, because observing what happens after the CPU credit bank
   // empties is its entire purpose.
   //

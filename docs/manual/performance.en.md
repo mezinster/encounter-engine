@@ -130,6 +130,26 @@ arithmetic, every time, and it cannot be cached or skipped — that is the point
 above. Everything else the site does is fast. So the question is never "can the server handle 120
 teams", it is "how many password checks per second", and the answer on this machine is about two.
 
+### And then we asked whether it gets tired
+
+It does not. On the same day we kept 120 teams playing steadily for **forty minutes** — the test the
+electric-scooter passage above was written for.
+
+The reserve barely moved. It began full, dipped by half of one unit out of 288, and was back to full
+before the run ended. For most of those forty minutes the server was *charging* rather than
+spending: steady play took about a tenth of the machine's power, and the reserve fills whenever the
+draw stays under a fifth. Memory sat flat throughout.
+
+**So hour two is not where the risk is. The whistle is.** A long game does not wear this server
+down; a crowded start overwhelms it. Everything above about giving the crowd a minute to arrive is
+the whole story — and this is the measurement that says no second story is hiding behind it.
+
+One honest footnote, because it is the same lesson a third time. Our own forty-minute test begins by
+starting all 120 teams at the same instant, which is a rush sharper than any of the three in the
+table above. That opening moment produced every failure the test recorded: 22 login attempts out of
+142 did not get through first time. Once everyone was in, nothing failed for forty minutes. **The
+test walked into the same door the players do.**
+
 ---
 
 ## What a test does to the real site

@@ -1,13 +1,16 @@
 {
-  "schema": 2,
+  "schema": 3,
   "at": "2026-08-27T19:37:19Z",
-  "note": "",
+  "note": "Rewritten to schema 3 on 2026-08-28. As written by the version-2 probe this record read \"outcome\": \"aborted\", \"abort_reason\": \"checks\". The run was not aborted: k6 reported `hold ✓ [ 100% ] 120 VUs 40m0s` and the job ran 19:37:11-20:21:50Z. Version 2 derived outcome from \"was any threshold crossed\", and no threshold can cut a hold run short -- load_test/main.js sets abortOnFail: PHASE !== 'hold' on the two that carry it and gives checks none at all. The four fields version 2 had no place for are re-derived here rather than measured by the workflow, and their sources are named so a reader can tell them apart from the rest: duration_s 2430 from k6's own `running (40m30.0s)` line in the run log; the three cpu_credits_* readings from az monitor metrics list over 19:29-20:21Z, queried 2026-08-28, which is the window `host_facts.sh after` would have taken for a 2430-second run. Every other value is untouched and was measured by the probe at the time. Hold records after this one carry all four from the run itself.",
   "host": {
     "size": "Standard_B1ms",
     "vcpu": 1,
     "ram_gib": 2,
     "cpu_credits_remaining_start": 288.0,
-    "cpu_credits_max_7d": 288.0
+    "cpu_credits_max_7d": 288.0,
+    "cpu_credits_remaining_end": 288.0,
+    "cpu_credits_min_during": 287.49,
+    "cpu_credits_window": "51m"
   },
   "generator": {
     "baseline_warm_ms": 4.4,
@@ -21,7 +24,8 @@
   "run": {
     "scenario": "hold",
     "teams": 120,
-    "stampede_window": null
+    "stampede_window": null,
+    "duration_s": 2430
   },
   "app": {
     "sha": "3efc81d"
@@ -31,7 +35,9 @@
     "p95_ms": 371.5,
     "max_ms": 30111.5,
     "error_rate": 0.002911208151382824,
-    "outcome": "aborted",
-    "abort_reason": "checks"
+    "outcome": "completed",
+    "thresholds_crossed": [
+      "checks"
+    ]
   }
 }

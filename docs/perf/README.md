@@ -82,6 +82,10 @@ at a 20% baseline and this run sat at roughly half of it, so the machine was
 *accruing* credits for most of the 40 minutes rather than spending them. Memory
 did not drift either. Hour two is not where the risk is — the whistle is.
 
+The 2026-08-28 run says the same thing from its own record rather than from a
+by-hand query: `cpu_credits_min_during` 287.52, `cpu_credits_remaining_end`
+287.71, over a `52m` window. Two runs, two days, the same answer.
+
 That also confirms the arrival model from the other direction: 3.68 req/s is the
 ~3.5 req/s the harness design predicted for 120 teams playing steadily.
 
@@ -123,6 +127,52 @@ from being averaged into a number that claims to describe forty minutes of play.
 **On the 2026-08-27 record specifically, read `p90` as the truth and `p95` as a
 ceiling.** It predates both halves, and its `whole_run` field is absent for the
 same reason — there was no warm-up excluded from it to report.
+
+### And with both halves in, measured
+
+The same run again on 2026-08-28, 120 teams, same `Standard_B1ms`, against the
+merge that carried the fix (`87cd131`):
+
+| | 2026-08-27 | 2026-08-28 |
+|---|---|---|
+| logins that failed | **22 of 142** | **0 of 120** |
+| `checks` | 98.97%, crossed | **99.35%, passed** |
+| p50 | 29.0 ms | 29.5 ms |
+| p90 | 49.1 ms | 43.6 ms |
+| **p95** | **371.5 ms** | **50.6 ms** |
+| **max** | **30 111 ms** | **3 768 ms** |
+| `http_req_failed` | 0.29% | **0.00%** |
+| `thresholds_crossed` | `["checks"]` | **`[]`** |
+| iterations | 4 241 | 4 305 |
+
+The advice in the paragraph above turned out to be exactly calibrated: read the
+old record's **p90 of 49.1 ms** as the truth, and the new steady **p95 is
+50.6 ms**. Steady play never changed — p50 moved by half a millisecond. What
+changed is that the arrival burst is no longer inside the number.
+
+Note the iteration count went **up** while the run gained a warm-up. The hold
+runs `40m + WARMUP`, so the stagger costs arrival time rather than play time.
+
+**The staggering did nearly all of it, and the tagging is how we know:**
+
+```
+"p95_ms": 50.6,                    ← the steady phase
+"whole_run": { "p95_ms": 53.9 }    ← including the arrival minute
+```
+
+**3.3 ms.** Once teams arrive over a minute instead of together, what remains of
+the warm-up barely moves the number — so the stagger alone would have got most
+of the way, and it is worth writing that down rather than implying both halves
+pulled equal weight. But the gap is only knowable *because* of the tag: without
+`whole_run` the record would show 50.6 ms and no reader could tell whether that
+was clean or still contaminated. The tag answered the question about itself, and
+it stays as standing insurance — if a future run's warm-up misbehaves, that gap
+is where it appears.
+
+**Not everything is explained.** 57 checks still failed — 28 `on the level
+screen`, 29 `answer accepted by the app`, both at 99%, spread across the run
+rather than clustered at its start, and down from 67 of the same two kinds on
+2026-08-27. Inside the threshold, not a regression, and not yet accounted for.
 
 **This run's record was written by the version-2 probe and said `"outcome":
 "aborted"`.** It was not aborted. That wording is the defect version 3 exists to

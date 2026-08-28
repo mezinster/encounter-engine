@@ -40,25 +40,20 @@ Azure Blob. One instance serves every community, against the app's current per-i
 | sshd | `0.0.0.0:22`, publicly reachable |
 | Ports 80 / 443 / 5432 | free |
 
-**This is not a dedicated VM. It is a working utility host**, and the deployment is a new tenant
-that must not disturb the neighbours:
-
-| Service | Port | Note |
-|---|---|---|
-| `danted` SOCKS proxy | `0.0.0.0:1080` | enabled; plausibly load-bearing for the owner's own access |
-| Squid-family proxies | 3128, 3129, 3130, 8080, 8081 | |
-| `inreach` / `inreach-kate` | outbound | live APRS forwarders run from `~/iR-APRSISD` |
-| Postfix | 25, localhost only | |
-| Apache | — | installed but **disabled and inactive**; will not contend for 80 |
+**This app is one tenant on a shared host**, not its owner, and the deployment must leave
+everything it did not install exactly as it found it. Ports 80, 443 and 5432 are free; Postfix
+listens on 25 but on localhost only, and Apache is installed yet disabled, so neither contends for
+anything this deployment needs.
 
 ### Consequences
 
 - **The firewall is not touched.** UFW is currently inactive and Azure's NSG is the control point;
-  it stays that way. An earlier draft had Ansible enabling UFW for 22/80/443 only, which would have
-  firewalled off `danted` and the proxies — potentially severing the owner's access to the machine.
-- **Docker rewrites iptables on install.** On a host whose purpose is relaying traffic this is a
-  real risk, not a formality. Installation must be followed by verifying every existing listener is
-  still reachable, and the plan must state how to roll back if not.
+  it stays that way. An earlier draft had Ansible enabling UFW for 22/80/443 only — a host-level
+  rule written from a playbook is exactly how a machine loses the access nobody remembered it
+  needed, and the NSG already answers the same question somewhere a mistake can be undone.
+- **Docker rewrites iptables on install.** On a host this app does not own, that is a real risk
+  rather than a formality. Installation must be followed by verifying that every listener already
+  on the box is still reachable, and the plan must state how to roll back if not.
 - **Never build images on this box.** 1 vCPU and ~1.1 GB free will not build a Ruby image
   comfortably, and the attempt would starve the running services. CI builds; the VM only pulls.
 - **PostgreSQL needs explicit tuning.** Defaults assume far more memory than is spare here.
@@ -222,8 +217,8 @@ unchanged by this work.
 Ansible configures the **machine** and nothing about the application. On this shared host its scope
 is deliberately small:
 
-- Docker engine and the compose plugin — followed by a check that `danted` (1080), the proxies
-  (3128–3130, 8080–8081) and sshd are all still reachable
+- Docker engine and the compose plugin — followed by a check that sshd and every listener that
+  was already on the box are all still reachable
 - The named Docker volume for PostgreSQL data
 - `unattended-upgrades` for security patches
 - The deploy key in `authorized_keys`
@@ -256,9 +251,9 @@ that tool is Kamal.
 - **Single VM is a single point of failure.** Accepted: the recovery path is rebuild plus restore,
   which the runbook covers. Not worth HA at this scale.
 - **Coexistence on a shared host.** Docker's iptables changes, or memory pressure from PostgreSQL
-  and puma, could disturb `danted` and the proxy services this box exists to run — including the
-  owner's own route to it. Mitigation: verify every existing listener after Docker installs, cap
-  container memory, and keep a rollback path (`docker` removal) documented before starting.
+  and puma, could disturb work already running on this box — including the owner's own route to it.
+  Mitigation: verify every existing listener after Docker installs, cap container memory, and keep
+  a rollback path (`docker` removal) documented before starting.
 - **Capacity.** 1 vCPU and ~1.1 GB spare RAM is genuinely tight for puma plus PostgreSQL plus a
   proxy. Mitigation: tune `shared_buffers`/`work_mem` down, set Docker memory limits, rely on the
   existing 2 GB swap, and measure headroom during acceptance rather than assuming it.

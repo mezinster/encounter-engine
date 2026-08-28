@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Target host: `game.mezin.eu` → `23.100.7.86` (Azure VM, westeurope, Ubuntu 22.04.5, **1 vCPU / 1.9 GB RAM / 17 GB free**). SSH as `mezinster`, passwordless sudo. From this workstation the alias is `ssh mezin`.
-- **This host is shared and in production use.** `danted` (SOCKS, `0.0.0.0:1080`), squid-family proxies (3128, 3129, 3130, 8080, 8081), and two `inreach` APRS forwarders are live. Ports 80/443/5432 are free.
+- **This host is shared and in production use.** Other workloads run on it and this app is one tenant rather than its owner, so nothing here may disturb what is already listening. Ports 80/443/5432 are free.
 - **Never modify the firewall.** UFW is inactive and must stay inactive; Azure's NSG is the control point. Enabling UFW for 22/80/443 would sever the owner's own access.
 - **Never build images on the target host.** 1 vCPU and ~1.1 GB spare will not build a Ruby image without starving the running services. CI builds; the VM pulls.
 - Ruby is pinned to `3.3.12` and Rails to `8.0.5.1` in the Gemfile. Do not change either.
@@ -388,9 +388,9 @@ FROM postgres:16-bookworm
 # wal-g must live INSIDE this image. archive_command is executed by the
 # PostgreSQL process itself, so a wal-g installed on the host is unreachable.
 ARG WALG_VERSION=v3.0.3
-# Pinned deliberately: this deployment host proxies outbound traffic (SOCKS +
-# squid), so a pinned tag alone doesn't rule out the release asset being
-# swapped or tampered with in transit. Must be updated whenever WALG_VERSION
+# Pinned deliberately: outbound traffic from this host does not go straight out,
+# so a pinned tag alone doesn't rule out the release asset being swapped or
+# tampered with in transit. Must be updated whenever WALG_VERSION
 # changes — a stale digest should fail the build loudly, which is intended.
 ARG WALG_SHA256=e56f515e6219f4d498e729023b404b4c9068a4deaebbaf95ac6f4cf6bcd1a783
 RUN apt-get update -qq && \
@@ -403,8 +403,8 @@ RUN apt-get update -qq && \
     chmod +x /usr/local/bin/wal-g && \
     rm -rf /tmp/walg.tar.gz /var/lib/apt/lists/*
 
-# Tuned for a 1 vCPU / 1.9 GB host that is ALSO running danted, several
-# proxies and two APRS forwarders. Defaults assume far more headroom.
+# Tuned for a 1 vCPU / 1.9 GB host that is ALSO running workloads this app
+# does not own. Defaults assume far more headroom.
 COPY <<'CONF' /etc/postgresql/conf.d/10-tuning.conf
 shared_buffers = 128MB
 work_mem = 4MB
@@ -509,7 +509,7 @@ path is wrong — read the job's `docker logs` output rather than guessing.
 ssh mezin 'ss -tlnp 2>/dev/null | awk "NR>1{print \$4}" | sort -u' | tee /tmp/listeners-before.txt
 ```
 
-Expected to include `0.0.0.0:1080`, `0.0.0.0:22`, `*:3128`, `*:3129`, `*:3130`, `*:8080`, `*:8081`, `127.0.0.1:25`. Keep this file — Step 5 compares against it.
+Expected to include `0.0.0.0:22` and `127.0.0.1:25` alongside whatever else the host already serves. Do not edit the captured list — its value is that it is a faithful before-picture. Keep this file, Step 5 compares against it.
 
 - [ ] **Step 2: Write the inventory**
 
@@ -531,11 +531,10 @@ mezin ansible_user=mezinster
 ```yaml
 # ansible/playbook.yml
 # Scope is deliberately small. This host is in production use for other
-# things: danted on 1080, squid-family proxies on 3128-3130 and 8080-8081,
-# and two inReach APRS forwarders. We are a tenant, not the owner.
+# things, and this app is one tenant on it rather than its owner.
 #
 # It does NOT touch the firewall. UFW is inactive and Azure's NSG is the
-# control point. Enabling UFW for 22/80/443 would firewall off danted and
+# control point. Enabling UFW for 22/80/443 would firewall off services and
 # the proxies, plausibly severing the owner's own access to this machine.
 - name: Prepare the host for Kamal
   hosts: web
@@ -608,7 +607,8 @@ Expected: `ok`/`changed` throughout, and the final assertion passing — if UFW 
 ```bash
 ssh mezin 'ss -tlnp 2>/dev/null | awk "NR>1{print \$4}" | sort -u' > /tmp/listeners-after.txt
 diff /tmp/listeners-before.txt /tmp/listeners-after.txt && echo "NO LISTENERS LOST"
-ssh mezin 'systemctl is-active danted inreach inreach-kate'
+ssh mezin 'systemctl list-units --type=service --state=running --no-legend' > /tmp/services-after.txt
+diff /tmp/services-before.txt /tmp/services-after.txt && echo "NO SERVICES LOST"
 ssh mezin 'docker --version'
 ```
 
@@ -703,7 +703,7 @@ registry:
 builder:
   arch: amd64
   # Built in CI and pushed. This host has 1 vCPU and ~1.1 GB spare; building
-  # here would starve danted and the APRS forwarders.
+  # here would starve everything else running on it.
   remote: false
 
 ssh:
@@ -917,10 +917,11 @@ ssh mezin 'docker logs $(docker ps -q --filter name=encounter-engine-web) 2>&1 |
 
 Expected: `up: 200`, root `200`, a Let's Encrypt issuer with valid dates, three running containers, and Rails request logs on stdout — that last one proving Task 1's STDOUT logging works in the real container.
 
-- [ ] **Step 9: Confirm the neighbours are still fine**
+- [ ] **Step 9: Confirm nothing else on the host was disturbed**
 
 ```bash
-ssh mezin 'systemctl is-active danted inreach inreach-kate'
+ssh mezin 'systemctl list-units --type=service --state=running --no-legend' > /tmp/services-after.txt
+diff /tmp/services-before.txt /tmp/services-after.txt && echo "NO SERVICES LOST"
 ssh mezin 'ss -tlnp 2>/dev/null | awk "NR>1{print \$4}" | sort -u' > /tmp/listeners-deployed.txt
 diff /tmp/listeners-before.txt /tmp/listeners-deployed.txt || echo "NOTE: only :80 and :443 should be new"
 ```

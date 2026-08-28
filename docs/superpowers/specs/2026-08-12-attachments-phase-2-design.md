@@ -95,8 +95,8 @@ it now protects a deploy rather than merely leaving slack.
 leaves ~6 GB of genuine headroom after the floor.
 
 **Why 3072, specifically.** Not a round comfort number. It is approximately two full image pulls
-(561 MB each and growing), plus room for Kamal to retain a rollback target, plus slack for the
-neighbours — `/var/log/apache2` is already 442 MB with nobody watching it. The floor exists to keep
+(561 MB each and growing), plus room for Kamal to retain a rollback target, plus slack for
+everything else on the box — `/var/log/apache2` is already 442 MB with nobody watching it. The floor exists to keep
 a deploy possible.
 
 **Why a layer that counts pixels, when every other layer counts bytes.** The five transit stages

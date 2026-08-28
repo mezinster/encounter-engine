@@ -1831,7 +1831,7 @@ Create `docs/runbooks/load-test.md` containing, in this order and with commands 
      burst could trip it while steady-state latency is fine. **An abort firing
      immediately after a step-up must be checked against the burst before it is
      read as "over capacity at this plateau."**
-6. **Abort criteria a human owns**, which k6 cannot see: credits draining faster than the plateau schedule predicts; distress in danted, the squid proxies on 3128-3130/8080-8081, or the two APRS forwarders; any sign of a real user on the box.
+6. **Abort criteria a human owns**, which k6 cannot see: credits draining faster than the plateau schedule predicts; distress in anything else running on the box; any sign of a real user on it.
 7. **Verify the generator is closed** before copying the manifest up:
    `az network nsg rule list --resource-group encounter-loadgen --nsg-name loadgenNSG -o table`
    should show exactly one inbound allow rule, scoped to the operator's `/32`.

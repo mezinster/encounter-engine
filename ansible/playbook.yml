@@ -1,11 +1,12 @@
 # ansible/playbook.yml
-# Scope is deliberately small. This host is in production use for other
-# things: danted on 1080, squid-family proxies on 3128-3130 and 8080-8081,
-# and two inReach APRS forwarders. We are a tenant, not the owner.
+# Scope is deliberately small. This app is one tenant on a shared host and
+# does not have exclusive use of it, so this playbook changes as little as it
+# can and touches nothing it did not install.
 #
 # It does NOT touch the firewall. UFW is inactive and Azure's NSG is the
-# control point. Enabling UFW for 22/80/443 would firewall off danted and
-# the proxies, plausibly severing the owner's own access to this machine.
+# control point. A host-level firewall configured from here could cut access
+# to the machine, and the NSG already answers the same question in a place
+# that cannot lock anyone out by accident.
 - name: Prepare the host for Kamal
   hosts: web
   become: true

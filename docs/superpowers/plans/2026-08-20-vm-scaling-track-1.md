@@ -623,7 +623,7 @@ git add ops/vmscale/policy.rb spec/ops/vmscale_policy_spec.rb
 git commit -m "Trigger on the memory floor
 
 The axis with an actual floor: 472 MB free at the worst observed moment,
-on a host that also carries Postgres, kamal-proxy, danted and the APRS
+on a host that also carries Postgres, kamal-proxy and other
 forwarders. There is no graceful degradation here -- memory pressure
 does not slow the site down, it invokes the OOM killer, and recovery
 from that is a restore rather than a resize.

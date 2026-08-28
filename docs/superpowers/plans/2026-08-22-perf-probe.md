@@ -88,7 +88,7 @@ if (PHASE === 'stampede' && TEAMS > manifest().teams.length) {
 
 ```js
     // The stampede aborts like the ramp does. Both are exploratory runs against
-    // production on a host shared with danted, the squid proxies and two APRS
+    // production, on a host this app shares and does not own -- and the
     // forwarders; only `hold` is meant to run past a breach, because observing
     // what happens after the credit bank empties is its entire purpose.
 ```

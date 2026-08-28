@@ -108,12 +108,59 @@ az role assignment create --assignee-object-id "$OPERATOR_PRINCIPAL" \
   --assignee-principal-type ServicePrincipal \
   --role "Virtual Machine Contributor" --scope "$VM_ID"
 
+# TWO assignments, and the second is not optional -- see the note below.
+NIC_ID=$(az vm show -g $RG -n $VM --query 'networkProfile.networkInterfaces[0].id' -o tsv)
+
+az role definition create --role-definition "$(cat <<JSON
+{
+  "Name": "NIC Join (vmscale)",
+  "Description": "Attach an existing NIC during a VM PUT, which is what az vm resize performs. Nothing else.",
+  "Actions": ["Microsoft.Network/networkInterfaces/join/action"],
+  "NotActions": [], "DataActions": [], "NotDataActions": [],
+  "AssignableScopes": ["/subscriptions/$SUB/resourceGroups/$RG"]
+}
+JSON
+)"
+
+az role assignment create --assignee-object-id "$OPERATOR_PRINCIPAL" \
+  --assignee-principal-type ServicePrincipal \
+  --role "NIC Join (vmscale)" --scope "$NIC_ID"
+
 az identity federated-credential create --name github-vm-resize \
   --identity-name ee-vmscale-operator-oidc -g $RG \
   --issuer "$ISSUER" \
   --subject "${SUBJECT_PREFIX}:environment:vm-resize" \
   --audiences api://AzureADTokenExchange
 ```
+
+**Why the second assignment, and why the first one alone silently is not enough.**
+`az vm resize` is a **PUT on the virtual machine**, not a narrow patch. A VM PUT
+revalidates the machine's whole network profile, so Azure requires
+`Microsoft.Network/networkInterfaces/join/action` on every attached NIC —
+`webVMNic`, which lives at `.../providers/Microsoft.Network/networkInterfaces/webVMNic`
+and is therefore **outside** the scope of an assignment made against
+`.../providers/Microsoft.Compute/virtualMachines/web`.
+
+The confusing part is that `Virtual Machine Contributor` **does** grant that action
+— its definition includes `Microsoft.Network/networkInterfaces/*`. The role is
+right and the scope is wrong: scoped to the VM, its NIC permissions apply to no
+NIC at all. The failure is `LinkedAuthorizationFailed`, and it names an action
+nobody asked for, which reads like the wrong role rather than the wrong scope.
+
+This was latent from the day this runbook was first executed until **2026-08-28**,
+because the scheduled runs only ever reach the `observe` job — which uses the
+*reader*. The first `apply` that ever ran is the one that found it. If you are
+executing this runbook for the first time, that is the whole reason both
+assignments are here.
+
+A one-action custom role rather than a second `Virtual Machine Contributor`
+assignment on the NIC: that built-in would also work and is one command shorter,
+but it grants `networkInterfaces/*`, which includes deleting the production NIC.
+This identity's entire justification is that it can do exactly one thing.
+
+Note that this changes nothing about check (d) below — the new assignment is at
+**resource** scope, on a single NIC, so neither identity holds anything at
+resource-group or subscription scope.
 
 ## 3. The GitHub environment and secrets
 
@@ -198,6 +245,13 @@ az identity federated-credential list --identity-name ee-vmscale-operator-oidc -
 az role assignment list --assignee "$READER_PRINCIPAL" --all \
   --query '[].{role:roleDefinitionName, scope:scope}' -o table
 # Expect: only "Monitoring Reader" and "Reader", both scoped to the web VM.
+
+# c2. The operator can join the NIC, or `az vm resize` fails with
+#     LinkedAuthorizationFailed after the reviewer has already approved.
+az role assignment list --assignee "$OPERATOR_PRINCIPAL" --all \
+  --query "[?contains(scope, 'networkInterfaces')].{role:roleDefinitionName, scope:scope}" -o table
+# Expect: one row, "NIC Join (vmscale)", scoped to webVMNic. Empty means the
+# resize will be authorised right up to the moment it is attempted.
 
 # d. Neither identity holds anything at subscription or resource-group scope.
 for P in "$READER_PRINCIPAL" "$OPERATOR_PRINCIPAL"; do

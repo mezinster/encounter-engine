@@ -12,6 +12,16 @@
 # with GITHUB_TOKEN, and the workarounds are a PAT this repository does not use
 # or a GitHub App.
 #
+# The operator identity needs TWO role assignments, and the second is easy to
+# miss because the error names an action nobody asked for. `az vm resize` is a
+# PUT on the VM, which revalidates its network profile, so it requires
+# `Microsoft.Network/networkInterfaces/join/action` on the attached NIC --
+# a sibling resource, outside the scope of a Virtual Machine Contributor
+# assignment made against the VM. That role DOES grant the action; the
+# assignment's scope simply contains no NIC. The first `apply` this workflow
+# ever ran, on 2026-08-28, died on `LinkedAuthorizationFailed` after eight days
+# of green scheduled runs -- because those only ever reach `observe`.
+#
 # Setup: docs/runbooks/vm-scaling-setup.md
 # Design: docs/superpowers/specs/2026-08-20-vm-scaling-track-1-design.md
 name: VM scale
@@ -31,6 +41,10 @@ on:
         options: [auto, Standard_B1ms, Standard_B2s, Standard_B2ms]
       dry_run:
         description: "Do everything except the resize itself"
+        type: boolean
+        default: false
+      accept_over_budget:
+        description: "Proceed even if the target exceeds the monthly ceiling (credit exhaustion DISABLES the subscription)"
         type: boolean
         default: false
 
@@ -86,6 +100,17 @@ jobs:
 
           # A manual dispatch with an explicit size overrides the engine. This
           # is the documented scale-down path, and it uses the same gate.
+          #
+          # It overrides the verdict ENTIRELY, which is worth seeing plainly:
+          # everything policy.rb concluded above -- including its
+          # `at_budget_ceiling` refusal -- is computed, printed to the log, and
+          # then discarded. That is correct for the case this exists for, since
+          # a scale-down is always cheaper than what is running. It was not
+          # correct for the two scale-UP sizes the `target` input also offers,
+          # and on 2026-08-28 a hand-picked Standard_B2ms went all the way to
+          # `az vm resize` with nothing having priced it. The apply job's
+          # `Re-verify the target` step now prices it there, which is where the
+          # rest of the untrusted-proposal checks already live.
           if [ -n "${MANUAL_TARGET:-}" ] && [ "${MANUAL_TARGET}" != "auto" ]; then
             VERDICT=manual
             TARGET="$MANUAL_TARGET"
@@ -177,6 +202,7 @@ jobs:
     env:
       TARGET: ${{ needs.observe.outputs.target }}
       DRY_RUN: ${{ inputs.dry_run || false }}
+      ACCEPT_OVER_BUDGET: ${{ inputs.accept_over_budget || false }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -209,6 +235,27 @@ jobs:
           az vm list-vm-resize-options -g "$RG" -n "$VM" --query '[].name' -o tsv \
             | grep -qx "$TARGET" \
             || { echo "$TARGET is not offered by this VM's current cluster"; exit 1; }
+
+          # And what it costs, which until 2026-08-28 nothing on this path
+          # asked. `policy.rb` refuses an over-ceiling target of its own with an
+          # `at_budget_ceiling` verdict, but the manual override in `Decide`
+          # replaces the engine's verdict wholesale -- so a hand-picked size
+          # reached `az vm resize` unpriced. A Standard_B2ms was dispatched that
+          # day: $70.08 plus the $7.50 baseline against a $45 ceiling. It failed
+          # on a missing NIC permission, not on the money, and the money was
+          # never consulted.
+          #
+          # Priced by ops/vmscale/affordable.rb rather than by arithmetic here,
+          # so that one file in this repository prices a rung.
+          BUDGET=$(ruby ops/vmscale/affordable.rb "$TARGET")
+          echo "$BUDGET"
+          if [ "$(echo "$BUDGET" | jq -r .within)" != "true" ] \
+             && [ "$ACCEPT_OVER_BUDGET" != "true" ]; then
+            echo "::error::$TARGET costs \$$(echo "$BUDGET" | jq -r .monthly_usd)/mo, over the \$$(echo "$BUDGET" | jq -r .ceiling_usd) ceiling."
+            echo "::error::This subscription is credit-based. Exhausting the credit DISABLES it -- the site goes dark abruptly rather than degrading -- and recovery is a billing change, not a resize."
+            echo "::error::If that is genuinely intended, re-dispatch with accept_over_budget=true."
+            exit 1
+          fi
 
       - name: Resize
         if: env.NOOP != 'true' && env.DRY_RUN != 'true'

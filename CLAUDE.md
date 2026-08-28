@@ -819,6 +819,27 @@ Four things about it are non-obvious:
   real run, with `AADSTS70021: No matching federated identity record found`. The comment in
   `deploy.yml` asserted the plain form for months and was wrong. Read the live value from
   `ee-deploy-oidc` rather than any comment, including this one.
+- **The operator identity needs two role assignments, and `Virtual Machine Contributor` on the VM is
+  only the first.** `az vm resize` is a **PUT on the VM**, which revalidates its network profile and
+  therefore requires `Microsoft.Network/networkInterfaces/join/action` on the attached NIC —
+  `webVMNic`, a sibling resource outside the VM's own scope. The role *does* grant that action
+  (`Microsoft.Network/networkInterfaces/*` is in its definition); the assignment's scope simply
+  contains no NIC, so it applies to nothing. The error is `LinkedAuthorizationFailed` and it names
+  an action nobody asked for, which reads like the wrong role rather than the wrong scope. This was
+  latent from setup until 2026-08-28 because **the cron only ever reaches `observe`**, which uses
+  the reader — the first `apply` that ever ran is the one that found it. `vm-scaling-setup.md` §2
+  now creates a one-action `NIC Join (vmscale)` custom role beside it.
+- **A manual dispatch overrides `policy.rb` wholesale, including its budget refusal.** The `Decide`
+  step replaces the engine's verdict with the operator's chosen size and sets `apply=true`
+  unconditionally. That is right for the scale-down path it was written for — cheaper is always
+  under the ceiling — but the `target` input also offers two scale-*up* sizes, and on 2026-08-28 a
+  hand-picked `Standard_B2ms` ($70.08 + the $7.50 baseline, against a $45 ceiling) reached
+  `az vm resize` with nothing having priced it. It failed on the NIC permission above, not on the
+  money. The apply job's `Re-verify the target` step — whose comment promises *"every check is made
+  again here"* — now prices the target through `ops/vmscale/affordable.rb`, which shares
+  `VMScale::Policy.affordability` with the engine so that one file prices a rung. An over-ceiling
+  target needs `accept_over_budget=true`, deliberately, because on a credit subscription
+  exhaustion **disables** rather than degrades — see the cost note in that runbook.
 - **Absent data is never read as reassuring.** The engine refuses to infer a breach from a short
   metrics window, and equally refuses to infer *calm* from a gap in the 14-day rollup — a day
   missing from any series is unknown, not quiet. The second direction is the one that bites: a

@@ -248,6 +248,62 @@ RSpec.describe VMScale::Policy do
     end
   end
 
+  # The manual dispatch path. `.decide` prices its own target and refuses one
+  # over the ceiling with an `at_budget_ceiling` verdict -- but a manual
+  # dispatch overrides `.decide` wholesale, so on 2026-08-28 a hand-picked
+  # Standard_B2ms reached `az vm resize` with nothing having priced it. It
+  # failed on an unrelated missing permission; the budget was never consulted.
+  #
+  # `.affordability` is what the apply job asks instead, so that a hand-picked
+  # target is priced by THIS file rather than by arithmetic re-implemented in
+  # shell. One pricing rule, which is the whole reason it lives here.
+  describe ".affordability" do
+    def input(ceiling: 45, baseline: 7.5)
+      { "ladder" => REAL_INPUT.fetch("ladder"),
+        "baseline_usd" => baseline,
+        "budget_ceiling_usd" => ceiling }
+    end
+
+    it "prices a target as its rung plus the baseline" do
+      result = described_class.affordability(input, "Standard_B2s")
+      expect(result["monthly_usd"]).to eq(35.04 + 7.5)
+      expect(result["ceiling_usd"]).to eq(45)
+    end
+
+    it "accepts the rung the scaling design costed" do
+      expect(described_class.affordability(input, "Standard_B2s")["within"]).to be(true)
+    end
+
+    # The size actually dispatched on 2026-08-28. $70.08 + $7.50 is $77.58
+    # against a $45 ceiling -- and against a credit subscription that DISABLES
+    # when its monthly credit is exhausted, taking the platform dark rather
+    # than degrading it.
+    it "refuses the size that would exhaust the subscription's credit" do
+      result = described_class.affordability(input, "Standard_B2ms")
+      expect(result["within"]).to be(false)
+      expect(result["monthly_usd"]).to eq(70.08 + 7.5)
+    end
+
+    it "always affords a scale-down, which is the path this override exists for" do
+      expect(described_class.affordability(input, "Standard_B1ms")["within"]).to be(true)
+    end
+
+    # Equal is not over. A rung priced exactly at the ceiling is affordable, and
+    # a `>=` here would refuse it -- the same off-by-one `.decide` avoids.
+    it "treats a target priced exactly at the ceiling as affordable" do
+      result = described_class.affordability(input(ceiling: 35.04 + 7.5), "Standard_B2s")
+      expect(result["within"]).to be(true)
+    end
+
+    # Raises rather than returning false. An unknown size is a broken caller,
+    # not an unaffordable one, and answering "no" would let a typo read as a
+    # budget refusal in the workflow's log.
+    it "raises for a size that is not on the ladder" do
+      expect { described_class.affordability(input, "Standard_D2s_v3") }
+        .to raise_error(KeyError, /not on the ladder/)
+    end
+  end
+
   describe "suppressors" do
     let(:breaching) { build { |i| flood(i, "cpu_credits_remaining", "min", 40.0) } }
 

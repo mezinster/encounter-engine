@@ -689,11 +689,17 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 2920 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
-  measured 2026-08-28 at the commit that carries this line. The previous entry read 2904, measured
-  2026-08-26, and was correct on the day: the perf-probe record-schema work then added sixteen
-  examples. That is ordinary drift rather than a ninth mis-measurement, and it is recorded here
-  only because the whole point of the paragraph below is that this number does not hold still.
+- **RSpec** — 2930 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+  measured 2026-08-28 at the commit that carries this line. It has moved twice in one day: 2904
+  (2026-08-26, correct on the day) → 2920 when the perf-probe record-schema work added sixteen
+  examples → 2930 when the VM-scaling fixes added ten more, six for `VMScale::Policy.affordability`
+  and four for the committed role definitions. **The 2920 was stale before it merged**, and in an
+  instructive way rather than a careless one: it was measured correctly, but two of the three
+  branches in flight that morning added examples and neither touched this line, precisely so the
+  three pull requests would not conflict over one integer. Avoiding the conflict is what produced
+  the staleness. That is drift rather than a ninth mis-measurement, and it is spelled out because
+  the paragraph below exists to say this number does not hold still — including when the reason it
+  moved is that someone was being careful.
   This figure has been *wrong* — as opposed to merely overtaken — five times: 1603
   while the real number was 1751, then 1751 while it was 1829, then 1829 while it was 1851 —
   measured on 2026-08-16 before the AI translation work began — and it said 1934 while the real

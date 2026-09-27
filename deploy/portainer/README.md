@@ -18,7 +18,7 @@ Required:
 | Variable | What it is |
 |---|---|
 | `SECRET_KEY_BASE` | Rails' signing/encryption root. Generate per stack: `openssl rand -hex 64`. Boot refuses to start without it. |
-| `POSTGRES_PASSWORD` | Database password. Keep it **alphanumeric** — it is spliced into `DATABASE_URL` and nothing escapes it. |
+| `POSTGRES_PASSWORD` | Database password, any characters. It reaches the app via `PGPASSWORD`, not inside `DATABASE_URL`, so nothing needs URL-escaping. |
 
 Optional (defaults in parentheses):
 

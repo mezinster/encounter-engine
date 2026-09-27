@@ -1,0 +1,96 @@
+# A self-contained homelab deployment of the app: web + Postgres + Mailpit.
+# Written for Portainer's App Delivery (add this repo as a git Source, point a
+# Workflow at this file), but plain `docker compose up` works identically.
+# This does NOT replace the Kamal production deploy (config/deploy.yml) — it is
+# a second, independent consumer of the same image. See README.md beside this
+# file for the required variables and the Portainer walkthrough.
+
+services:
+  web:
+    # The GHCR package is private; give Portainer a registry credential or make
+    # the package public. WEB_IMAGE exists so a locally-built image can be
+    # tested without touching the GHCR tag.
+    image: ${WEB_IMAGE:-ghcr.io/mezinster/encounter-engine:latest}
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      # Boot raises without this (deliberately — see CLAUDE.md "Session
+      # secret"). Generate one per stack: openssl rand -hex 64
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:?generate with openssl rand -hex 64}
+      # Keep the password URL-safe (alphanumeric): it is spliced into a URL
+      # here and nothing escapes it.
+      DATABASE_URL: postgres://encounter:${POSTGRES_PASSWORD:?set an alphanumeric password}@db/encounter_production
+      # Used for links in outgoing mail and as the SMTP HELO domain. Set it to
+      # the address you browse to (e.g. 192.168.30.32) — nothing breaks if you
+      # don't, but links in letters will point at the wrong host.
+      APP_HOST: ${APP_HOST:-localhost}
+      # Off by default: this stack serves plain HTTP on a LAN, and with
+      # force_ssl on, the Secure-flagged session cookie never comes back from a
+      # browser on http://<lan-ip> — login "succeeds" and you stay logged out.
+      # Set "true" only when a TLS proxy fronts this stack.
+      FORCE_SSL: ${FORCE_SSL:-false}
+      TZ: ${TZ:-Europe/Vienna}
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-ru}
+      # Mail goes to the bundled Mailpit (letters are viewable at
+      # http://<host>:8025, nothing leaves the machine). Point these at a real
+      # relay to send real mail. The credentials are dummies Mailpit is
+      # configured to accept — production.rb hard-codes :plain auth, so they
+      # must be present even when the receiving end ignores them.
+      SMTP_ADDRESS: mail
+      SMTP_PORT: "1025"
+      SMTP_USERNAME: mailpit
+      SMTP_PASSWORD: mailpit
+      MAIL_FROM: ${MAIL_FROM:-encounter@localhost}
+    volumes:
+      # ActiveStorage uploads (config/storage.yml: Disk at /rails/storage).
+      - storage:/rails/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      mail:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # First boot runs db:prepare (schema load) before Puma binds.
+      start_period: 60s
+
+  db:
+    # Same major as production's accessory image, which is postgres:16 plus
+    # wal-g (docs/manual/deployment.en.md). The wal-g half is Azure-specific
+    # backup machinery a homelab doesn't want; the manual blesses plain
+    # postgres:16 for exactly this case.
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: encounter
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set an alphanumeric password}
+      POSTGRES_DB: encounter_production
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U encounter -d encounter_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Deliberately no ports: — the database is reachable only from this
+    # stack's network.
+
+  mail:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      # production.rb always sends AUTH PLAIN; accept it (over plaintext —
+      # this never leaves the Docker network).
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      # The web UI where sent letters land. SMTP (1025) stays internal.
+      - "${MAILPIT_PORT:-8025}:8025"
+
+volumes:
+  storage:
+  pgdata:

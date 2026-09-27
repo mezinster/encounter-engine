@@ -2,11 +2,18 @@ Rails.application.configure do
   config.enable_reloading = false
   config.eager_load = true
   config.consider_all_requests_local = false
-  config.force_ssl = true
+  # FORCE_SSL=false is for the Portainer/homelab stack (deploy/portainer/),
+  # which serves plain HTTP on a LAN: force_ssl marks the session cookie
+  # Secure, and a browser on http://<lan-ip> never sends a Secure cookie
+  # back, so login "succeeds" and you stay logged out. Only the literal
+  # "false" turns it off — the Kamal deploy sets nothing and is unchanged.
+  config.force_ssl = ENV.fetch("FORCE_SSL", "true") != "false"
 
   # kamal-proxy terminates TLS and forwards plain HTTP. Without assume_ssl,
   # force_ssl sees an HTTP request, redirects to HTTPS, and loops forever.
-  config.assume_ssl = true
+  # Tied to force_ssl: with SSL off entirely, pretending requests were HTTPS
+  # would only make cookies and generated URLs lie.
+  config.assume_ssl = config.force_ssl
 
   # Containers have no useful filesystem for logs: log/production.log is
   # invisible to `docker logs` and discarded on redeploy.
@@ -64,7 +71,8 @@ Rails.application.configure do
   # Welcome letters and invitations contain links; without a host they render
   # broken or raise.
   config.action_mailer.default_url_options = {
-    host: ENV.fetch("APP_HOST"), protocol: "https"
+    host: ENV.fetch("APP_HOST"),
+    protocol: config.force_ssl ? "https" : "http"
   }
   config.action_mailer.smtp_settings = {
     address:              ENV.fetch("SMTP_ADDRESS", "smtp.gmail.com"),

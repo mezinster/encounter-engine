@@ -6,8 +6,12 @@ RSpec.describe "production environment configuration" do
   # whose absence breaks production in ways no other test can see.
   let(:source) { File.read(Rails.root.join("config/environments/production.rb")) }
 
-  it "assumes SSL, or force_ssl loops forever behind kamal-proxy" do
-    expect(source).to match(/config\.assume_ssl\s*=\s*true/)
+  it "ties assume_ssl to force_ssl, or force_ssl loops forever behind kamal-proxy" do
+    expect(source).to match(/config\.assume_ssl\s*=\s*config\.force_ssl/)
+  end
+
+  it "defaults FORCE_SSL on, so a deploy that sets nothing keeps TLS enforcement" do
+    expect(source).to match(/ENV\.fetch\("FORCE_SSL",\s*"true"\)/)
   end
 
   it "logs to STDOUT, or logs are trapped inside the container" do

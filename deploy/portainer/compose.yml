@@ -18,9 +18,11 @@ services:
       # Boot raises without this (deliberately — see CLAUDE.md "Session
       # secret"). Generate one per stack: openssl rand -hex 64
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:?generate with openssl rand -hex 64}
-      # Keep the password URL-safe (alphanumeric): it is spliced into a URL
-      # here and nothing escapes it.
-      DATABASE_URL: postgres://encounter:${POSTGRES_PASSWORD:?set an alphanumeric password}@db/encounter_production
+      # The password travels via PGPASSWORD, not inside the URL: libpq reads
+      # it when the URL carries none, and URI.parse chokes on characters like
+      # } or / in a password (URI::InvalidURIError at boot — seen live).
+      DATABASE_URL: postgres://encounter@db/encounter_production
+      PGPASSWORD: ${POSTGRES_PASSWORD:?database password, any characters}
       # Used for links in outgoing mail and as the SMTP HELO domain. Set it to
       # the address you browse to (e.g. 192.168.30.32) — nothing breaks if you
       # don't, but links in letters will point at the wrong host.
@@ -67,7 +69,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: encounter
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set an alphanumeric password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?database password, any characters}
       POSTGRES_DB: encounter_production
     volumes:
       - pgdata:/var/lib/postgresql/data

@@ -255,7 +255,6 @@ pl:
       run: "Bieg nr %{ordinal}"
       pending: "Oczekują na decyzję"
       accepted: "Przyjęte"
-      none: "—"
       accept: "Przyjmij"
       reject: "Odrzuć"
       accepted_notice: "Drużyna przyjęta: %{team}"
@@ -854,6 +853,95 @@ pl:
       signup: "Zarejestruj się"
   manual:
     fallback_note: "Podręcznik nie został jeszcze przetłumaczony na Twój język — pokazano wersję w języku %{language}."
+  titles:
+    dashboard: "Panel osobisty"
+    games: "Gry"
+    game_new: "Nowa gra"
+    game_edit: "Ustawienia gry"
+    level_new: "Nowy poziom"
+    level_edit: "Edycja poziomu"
+    teams: "Drużyny"
+    team_new: "Nowa drużyna"
+    team_room: "Pokój drużyny"
+    results: "Wyniki"
+    standings: "Tabela wyników"
+    live_channel: "Transmisja na żywo"
+    full_log: "Pełny log"
+    level_log: "Log poziomu"
+    game_log: "Log gry"
+    files: "Pliki"
+    access_codes: "Kody dostępu"
+    access_passes: "Dostępy drużyn"
+    translation: "Tłumaczenie"
+    translation_review: "Weryfikacja tłumaczenia"
+    login: "Logowanie"
+    signup: "Rejestracja"
+    profile: "Profil"
+    manual: "Podręcznik"
+    admin: "Administracja"
+    access_code: "Kod dostępu"
+    skip_level: "Pominięcie poziomu"
+    game_finished: "Gra ukończona"
+    access_revoked: "Dostęp cofnięty"
+    game_stopped: "Gra zatrzymana"
+    withdrawal: "Wycofanie gry"
+    invitation: "Zaproszenie"
+    password_reset: "Odzyskiwanie hasła"
+    new_codes: "Nowe kody"
+    adjustment: "Korekta punktów"
+    test_invitation: "Zaproszenie do testów"
+    hint_new: "Nowa podpowiedź"
+    hint_edit: "Edycja podpowiedzi"
+    options: "Opcje odpowiedzi"
+    code_new: "Nowy kod"
+    code_variants: "Warianty kodu"
+    quiz_import: "Import poziomów"
+  empty_states:
+    games:
+      title: "Nie ma jeszcze gier"
+      text: "Gry pojawią się tutaj, gdy tylko zostaną opublikowane."
+    my_games:
+      text: "Utworzone przez Ciebie gry pojawią się tutaj."
+    coming: "Brak nadchodzących gier"
+    finished: "Brak zakończonych gier"
+    teams_by_game: "Nie zarejestrowano jeszcze żadnych drużyn"
+    teams:
+      title: "Nie ma jeszcze drużyn"
+      text: "Utwórz pierwszą lub poczekaj na zaproszenie od kapitana."
+      action: "Utwórz drużynę"
+    game_entries:
+      title: "Nie ma jeszcze zgłoszeń"
+      text: "Zgłoszenia drużyn do tej gry pojawią się tutaj."
+    levels:
+      title: "Nie ma jeszcze poziomów"
+      text: "Dodaj pierwszy poziom, aby można było zagrać w tę grę."
+    admin_entries: "Brak zgłoszeń"
+    admin_games: "Brak gier"
+    admin_teams: "Brak drużyn"
+    admin_audit: "Brak działań"
+    answers: "Brak odpowiedzi"
+    standings:
+      title: "Żadna drużyna jeszcze nie zaczęła"
+      text: "Drużyny pojawią się tutaj, gdy tylko zaczną grę."
+    live_channel:
+      title: "Brak odpowiedzi"
+      text: "Odpowiedzi drużyn pojawią się tutaj w chwili wysłania."
+    results:
+      title: "Nikt jeszcze nie ukończył gry"
+      text: "Drużyny pojawią się tutaj, gdy przejdą ostatni poziom."
+    log: "Brak odpowiedzi"
+    files:
+      title: "Brak plików"
+      text: "Prześlij zdjęcia lub pliki PDF formularzem powyżej."
+    access_codes:
+      title: "Brak kodów"
+      text: "Utwórz partię kodów formularzem powyżej."
+    access_passes:
+      title: "Brak przyznanych dostępów"
+      text: "Przyznaj drużynie dostęp formularzem powyżej."
+    proposals:
+      title: "Brak propozycji"
+      text: "Ten przebieg tłumaczenia niczego nie zaproponował."
   shared:
     live_status:
       updated: "Zaktualizowano %{seconds} s temu"
@@ -1042,7 +1130,6 @@ pl:
       go_to_team_room: "Przejdź do pokoju drużyny"
   index:
     index:
-      title: "Strona główna"
       games_list: "Lista gier"
       hero_title: "Gry miejskie: znajdź kod jako pierwszy"
       hero_lead: "Drużyny szukają kodów w całym mieście — z telefonu."
@@ -1061,6 +1148,7 @@ pl:
       empty_title: "Obecnie nie zaplanowano żadnych gier"
       empty_text: "Zajrzyj później — albo przejrzyj wszystkie gry, także minione."
       team_line: "Drużyna: «%{team}»"
+      team_separator: "·"
       team_room: "Pokój drużyny"
       how_heading: "Jak grać"
       step1_title: "Zarejestruj się"
@@ -1326,6 +1414,18 @@ pl:
               settled: "nie można zmienić po dodaniu tłumaczeń"
         game_run:
           attributes:
+            max_team_number:
+              format: "%{message}"
+              blank: "Nie podano liczby drużyn"
+              not_a_number: "Zakres liczby drużyn to od 1 do 10000"
+              greater_than: "Zakres liczby drużyn to od 1 do 10000"
+              less_than: "Zakres liczby drużyn to od 1 do 10000"
+            ordinal:
+              format: "%{message}"
+              blank: "Nie udało się ustalić numeru przebiegu"
+              not_a_number: "Nie udało się ustalić numeru przebiegu"
+              greater_than: "Nie udało się ustalić numeru przebiegu"
+              taken: "Przebieg o takim numerze już istnieje"
             starts_at:
               format: "%{message}"
               blank: "Nie podano daty rozpoczęcia gry"

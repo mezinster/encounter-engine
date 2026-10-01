@@ -277,7 +277,6 @@ tr:
       run: "%{ordinal}. koşu"
       pending: "Karar bekliyor"
       accepted: "Kabul edildi"
-      none: "—"
       accept: "Kabul et"
       reject: "Reddet"
       accepted_notice: "Takım kabul edildi: %{team}"
@@ -889,6 +888,95 @@ tr:
       signup: "Kaydol"
   manual:
     fallback_note: "Kılavuz henüz sizin dilinize çevrilmedi — «%{language}» dilindeki sürüm gösteriliyor."
+  titles:
+    dashboard: "Kişisel panel"
+    games: "Oyunlar"
+    game_new: "Yeni oyun"
+    game_edit: "Oyun ayarları"
+    level_new: "Yeni seviye"
+    level_edit: "Seviyeyi düzenle"
+    teams: "Takımlar"
+    team_new: "Yeni takım"
+    team_room: "Takım odası"
+    results: "Sonuçlar"
+    standings: "Puan tablosu"
+    live_channel: "Canlı yayın"
+    full_log: "Tam kayıt"
+    level_log: "Seviye kaydı"
+    game_log: "Oyun kaydı"
+    files: "Dosyalar"
+    access_codes: "Erişim kodları"
+    access_passes: "Takım erişimleri"
+    translation: "Çeviri"
+    translation_review: "Çeviri incelemesi"
+    login: "Giriş"
+    signup: "Kayıt ol"
+    profile: "Profil"
+    manual: "Kılavuz"
+    admin: "Yönetim"
+    access_code: "Erişim kodu"
+    skip_level: "Seviye atlama"
+    game_finished: "Oyun tamamlandı"
+    access_revoked: "Erişim geri alındı"
+    game_stopped: "Oyun durduruldu"
+    withdrawal: "Oyunu geri çekme"
+    invitation: "Davet"
+    password_reset: "Parola sıfırlama"
+    new_codes: "Yeni kodlar"
+    adjustment: "Puan düzeltmesi"
+    test_invitation: "Test daveti"
+    hint_new: "Yeni ipucu"
+    hint_edit: "İpucu düzenleme"
+    options: "Cevap seçenekleri"
+    code_new: "Yeni kod"
+    code_variants: "Kod varyantları"
+    quiz_import: "Seviye içe aktarma"
+  empty_states:
+    games:
+      title: "Henüz oyun yok"
+      text: "Oyunlar yayımlandığında burada görünecek."
+    my_games:
+      text: "Oluşturduğunuz oyunlar burada görünecek."
+    coming: "Yaklaşan oyun yok"
+    finished: "Biten oyun yok"
+    teams_by_game: "Henüz kayıtlı takım yok"
+    teams:
+      title: "Henüz takım yok"
+      text: "İlk takımı siz oluşturun ya da bir kaptanın davetini bekleyin."
+      action: "Takım oluştur"
+    game_entries:
+      title: "Henüz başvuru yok"
+      text: "Takımların bu oyuna yaptığı başvurular burada görünecek."
+    levels:
+      title: "Henüz seviye yok"
+      text: "Oyunun oynanabilmesi için ilk seviyeyi ekleyin."
+    admin_entries: "Başvuru yok"
+    admin_games: "Oyun yok"
+    admin_teams: "Takım yok"
+    admin_audit: "Henüz işlem yok"
+    answers: "Cevap yok"
+    standings:
+      title: "Henüz başlayan takım yok"
+      text: "Takımlar oyuna başlar başlamaz burada görünür."
+    live_channel:
+      title: "Henüz cevap yok"
+      text: "Takımların cevapları gönderildikleri anda burada görünür."
+    results:
+      title: "Henüz bitiren yok"
+      text: "Takımlar son seviyeyi tamamladığında burada görünür."
+    log: "Cevap yok"
+    files:
+      title: "Henüz dosya yok"
+      text: "Yukarıdaki formla fotoğraf veya PDF yükleyin."
+    access_codes:
+      title: "Henüz kod yok"
+      text: "Yukarıdaki formla bir kod grubu oluşturun."
+    access_passes:
+      title: "Henüz verilmiş erişim yok"
+      text: "Yukarıdaki formla bir takıma erişim verin."
+    proposals:
+      title: "Öneri yok"
+      text: "Bu çeviri çalıştırması hiçbir şey önermedi."
   shared:
     live_status:
       updated: "%{seconds} sn önce güncellendi"
@@ -1081,7 +1169,6 @@ tr:
       go_to_team_room: "Takım odasına git"
   index:
     index:
-      title: "Ana sayfa"
       games_list: "Oyun listesi"
       hero_title: "Şehir oyunları: kodu herkesten önce bul"
       hero_lead: "Takımlar şehrin dört bir yanında kod arar — telefondan."
@@ -1100,6 +1187,7 @@ tr:
       empty_title: "Şu anda planlanmış oyun yok"
       empty_text: "Daha sonra tekrar bakın — ya da geçmişteki oyunlar dahil tüm oyunlara göz atın."
       team_line: "Takımınız: «%{team}»"
+      team_separator: "·"
       team_room: "Takım odası"
       how_heading: "Nasıl oynanır"
       step1_title: "Kayıt olun"
@@ -1369,6 +1457,18 @@ tr:
               settled: "çeviriler eklendikten sonra değiştirilemez"
         game_run:
           attributes:
+            max_team_number:
+              format: "%{message}"
+              blank: "Takım sayısını belirtmediniz"
+              not_a_number: "Takım sayısı aralığı 1 ile 10000 arasındadır"
+              greater_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
+              less_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
+            ordinal:
+              format: "%{message}"
+              blank: "Tur numarası belirlenemedi"
+              not_a_number: "Tur numarası belirlenemedi"
+              greater_than: "Tur numarası belirlenemedi"
+              taken: "Bu numaralı bir tur zaten var"
             starts_at:
               format: "%{message}"
               blank: "Oyunun başlangıç tarihini belirtmediniz"

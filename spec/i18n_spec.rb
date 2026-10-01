@@ -45,7 +45,9 @@ RSpec.describe "internationalization" do
   %i[uk ka tr be pl].each do |locale|
     it "only defines keys that also exist in ru (#{locale}.yml may be an incomplete subset)" do
       data = locale_data(locale)
-      expect(data.keys - ru.keys).to eq([])
+      # date.abbr_month_names is the one deliberate exception: ru/en take theirs
+      # from rails-i18n, while be overrides it to get lowercase abbreviations.
+      expect(data.keys - ru.keys - %w[date.abbr_month_names]).to eq([])
     end
   end
 
@@ -135,6 +137,7 @@ RSpec.describe "internationalization" do
       time.formats.home_card
       time.formats.home_row
       sessions.new.email_label
+      index.index.team_separator
       password_resets.new.email
       messengers.telegram
       messengers.whatsapp
@@ -154,7 +157,6 @@ RSpec.describe "internationalization" do
       locales.tr
       locales.be
       locales.pl
-      admin.entries.none
     ]
 
     shared_keys = en.keys & ru.keys

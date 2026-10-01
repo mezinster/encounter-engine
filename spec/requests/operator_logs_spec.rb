@@ -87,5 +87,12 @@ describe "the operator's log screens", type: :request do
       expect(row.at_css(".lc-code").text.strip).to eq("мост")
       expect(doc.at_css("[data-live-status]")).to be_present
     end
+
+    it "keeps the pager inside the live region, so a refresh replaces it with the rows" do
+      51.times { |i| log("код#{i}") }
+      get show_live_channel_path(:game_id => game.id)
+
+      expect(doc.at_css("#livechannel-live .pager")).to be_present
+    end
   end
 end

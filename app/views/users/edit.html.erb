@@ -1,3 +1,4 @@
+<% page_title t("titles.profile") %>
 <h2><%= t("users.edit.title", nickname: @current_user.nickname) %></h2>
 
 <%= error_messages_for @user, header: "<h2>#{t("shared.error_header")}</h2>" %>
@@ -24,11 +25,11 @@
       pairs would read as five unrelated settings. %>
   <fieldset class="field">
     <legend><%= t("users.edit.messengers_label") %></legend>
-    <label><%= f.check_box :on_telegram %> <%= t("messengers.telegram") %></label>
-    <label><%= f.check_box :on_whatsapp %> <%= t("messengers.whatsapp") %></label>
-    <label><%= f.check_box :on_viber %> <%= t("messengers.viber") %></label>
-    <label><%= f.check_box :on_signal %> <%= t("messengers.signal") %></label>
-    <label><%= f.check_box :on_max %> <%= t("messengers.max") %></label>
+    <label class="check"><%= f.check_box :on_telegram %> <span><%= t("messengers.telegram") %></span></label>
+    <label class="check"><%= f.check_box :on_whatsapp %> <span><%= t("messengers.whatsapp") %></span></label>
+    <label class="check"><%= f.check_box :on_viber %> <span><%= t("messengers.viber") %></span></label>
+    <label class="check"><%= f.check_box :on_signal %> <span><%= t("messengers.signal") %></span></label>
+    <label class="check"><%= f.check_box :on_max %> <span><%= t("messengers.max") %></span></label>
   </fieldset>
   <% if @user.captain? %>
     <div class="field">

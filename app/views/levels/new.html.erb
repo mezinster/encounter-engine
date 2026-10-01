@@ -1,3 +1,4 @@
+<% page_title t("titles.level_new"), game: @game %>
 <h2><%= t("levels.new.heading", name: @level.game.name) %></h2>
 
 <%= error_messages_for @level, header: "<h2>#{t("shared.error_header")}</h2>" %>
@@ -47,8 +48,8 @@
       phrased as the absence of the other. %>
   <fieldset class="field">
     <legend><%= t("levels.form.codes_rule") %></legend>
-    <label><%= f.radio_button :any_code_passes, true %> <%= t("levels.codes_rule_any") %></label>
-    <label><%= f.radio_button :any_code_passes, false %> <%= t("levels.codes_rule_all") %></label>
+    <label class="check"><%= f.radio_button :any_code_passes, true %> <span><%= t("levels.codes_rule_any") %></span></label>
+    <label class="check"><%= f.radio_button :any_code_passes, false %> <span><%= t("levels.codes_rule_all") %></span></label>
   </fieldset>
 
   <%= f.submit t("levels.new.submit"), class: "btn btn--go" %>

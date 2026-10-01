@@ -1,3 +1,4 @@
+<% page_title t("titles.options"), game: @game %>
 <h2>
   <%= t("options.index.title") %> "<strong><%= @level.name %></strong>"
 </h2>
@@ -66,8 +67,7 @@
       <%= f.text_field :text %>
     </div>
     <div class="field">
-      <%= f.label :is_correct, t("options.index.is_correct_label") %>
-      <%= f.check_box :is_correct %>
+      <label class="check"><%= f.check_box :is_correct %> <span><%= t("options.index.is_correct_label") %></span></label>
     </div>
     <%= f.submit t("options.index.submit"), class: "btn btn--go" %>
   <% end %>

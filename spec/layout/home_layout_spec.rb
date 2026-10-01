@@ -118,4 +118,37 @@ describe "the home page, measured", :layout, type: :request do
       end
     end
   end
+
+  # M2: with no games, a signed-in page's empty card title is an h2 under the
+  # section's h1, and base.css sizes every h2 like that heading. The card title
+  # must read as part of the card, so it has to be smaller.
+  describe "the signed-in empty card" do
+    def empty_home_html
+      user = create_user
+      put login_path, :params => { :email => user.email, :password => "1234" }
+      get root_path
+      expect(response).to have_http_status(:ok)
+      response.body
+    end
+
+    def size_probe
+      <<~JS
+        var title = document.querySelector(".home-empty :is(h2, h3)");
+        var heading = document.querySelector(".home-section-heading");
+        var RESULT = {
+          titleTag: title && title.tagName.toLowerCase(),
+          titleSize: title && parseFloat(getComputedStyle(title).fontSize),
+          headingSize: heading && parseFloat(getComputedStyle(heading).fontSize)
+        };
+      JS
+    end
+
+    { "phone" => [ 390, 680 ], "desktop" => [ 1280, 800 ] }.each do |name, (width, height)|
+      it "sets the card title smaller than the section heading at #{width}x#{height} -- #{name}" do
+        m = measure(empty_home_html, width, height, size_probe, :tmp_name => "home-empty-measure.html")
+        expect(m["titleTag"]).to eq("h2")
+        expect(m["titleSize"]).to be < m["headingSize"]
+      end
+    end
+  end
 end

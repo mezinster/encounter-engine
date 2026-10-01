@@ -1,3 +1,4 @@
+<% page_title t("titles.hint_edit"), game: @game %>
 <p>
   <%= t("hints.edit.heading_prefix") %> "<%= link_to @level.name, game_level_path(@game, @level) %>" <%= t("hints.edit.heading_game_prefix") %> "<%= link_to @game.name, game_path(@game) %>"
 </p>

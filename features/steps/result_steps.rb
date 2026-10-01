@@ -27,12 +27,22 @@ end
 # `&#39;` is an apostrophe again -- which is the whole point of moving off the
 # raw body. Positive assertions cannot go vacuous by widening, and the negative
 # form below is if anything stricter with `:all` than with visible-only.
+#
+# Since E1 the <title> is per page and carries game, team and level names, and
+# `:all` text of the whole document includes <head>. So "see" means the body:
+# the Merb app's title was constant, so the body is all these assertions ever
+# effectively matched, and a name present only in the title must not satisfy
+# them.
+def page_body
+  page.find(:xpath, "/html/body")
+end
+
 Then /должен увидеть "(.*)"$/ do |text|
-  expect(page).to have_text(:all, text)
+  expect(page_body).to have_text(:all, text)
 end
 
 Then /должен увидеть \/(.*)\/$/ do |regex|
-  expect(page).to have_text(:all, /#{regex}/m)
+  expect(page_body).to have_text(:all, /#{regex}/m)
 end
 
 Then /должен увидеть следующее:/ do |strings_table|
@@ -121,5 +131,5 @@ end
 #   this step          -> "1 scenario (1 failed)", expected not to find text
 #                         "Код неверный, вы ввели 'Code1'" in ...
 Then /не должен видеть "(.*)"$/ do |text|
-  expect(page).to have_no_text(:all, text)
+  expect(page_body).to have_no_text(:all, text)
 end

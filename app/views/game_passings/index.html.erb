@@ -1,4 +1,5 @@
-<%= t("game_passings.index.title", name: @game.name) %>
+<% page_title t("titles.standings"), game: @game %>
+<h1 class="page-title"><%= t("game_passings.index.title", name: @game.name) %></h1>
 
 <%# Phone layout (screens.css, .standings / .ops / .opbar): each team is a
     two-line row, its actions and log buttons inside the existing panel, and
@@ -9,6 +10,9 @@
     a node being replaced. %>
 <div class="ops">
 <div class="table-wrap" id="standings-live" data-live>
+<% if @game_passings.empty? %>
+<%= render "shared/empty_state", :title => t("empty_states.standings.title"), :text => t("empty_states.standings.text"), :heading => :h2 %>
+<% else %>
 <table id="stats" class="table--cards table--compact standings">
   <thead>
     <tr>
@@ -74,7 +78,7 @@
 
         <td class="standings-actions" data-label="<%= t("game_passings.index.interventions") %>">
           <details>
-            <summary class="btn team-disclosure"><%= t("game_passings.index.interventions") %></summary>
+            <summary class="btn team-disclosure"><span class="disclosure-label"><%= t("game_passings.index.interventions") %></span><span class="visually-hidden">: <%= game_passing.team.name %></span></summary>
             <%= render "intervention_controls", :game_passing => game_passing, :levels => @levels %>
           </details>
         </td>
@@ -83,6 +87,7 @@
     <% end %>
   </tbody>
 </table>
+<% end %>
 </div>
 
 <p class="ops-full-log"><%= link_to t("game_passings.index.full_log"), show_full_log_path(@game), class: "btn" %></p>

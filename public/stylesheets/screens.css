@@ -697,10 +697,13 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .home-upcoming > * + *, #how-to-play > * + *, .home-organizers > * + * { margin-top: var(--space-4); }
 .home .link-tap { display: inline-flex; align-items: center; min-height: var(--tap); }
 .home-empty > * + * { margin-top: var(--space-2); }
+/* Signed in, the card title is an h2 under the section's h1; base.css would
+   size it like that heading. It belongs to the card, so it reads smaller. */
+.home-empty :is(h2, h3) { font-size: var(--text-lg); }
 .home-note { font-size: var(--text-sm); color: var(--text-dim); }
 .home .tag { white-space: nowrap; flex-shrink: 0; }
 
-.next-game h3 { font-size: var(--text-lg); margin-bottom: var(--space-2); }
+.next-game :is(h2, h3) { font-size: var(--text-lg); margin-bottom: var(--space-2); }
 .next-game .when { margin-top: var(--space-2); font-size: var(--text-lg); font-weight: 600; }
 .next-game .meta { font-size: var(--text-sm); color: var(--text-dim); }
 .next-game-action:not(:empty) { margin-top: var(--space-4); }
@@ -710,8 +713,8 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
             padding: var(--space-1) 0; border-bottom: 1px solid var(--border); }
 .game-row > div { min-width: 0; }
 .game-row .name { font-weight: 600; overflow-wrap: anywhere; }
-.game-row .name, .next-game h3 a { display: inline-flex; align-items: center; min-height: var(--tap); }
-.next-game h3 a { overflow-wrap: anywhere; min-width: 0; max-width: 100%; }
+.game-row .name, .next-game :is(h2, h3) a { display: inline-flex; align-items: center; min-height: var(--tap); }
+.next-game :is(h2, h3) a { overflow-wrap: anywhere; min-width: 0; max-width: 100%; }
 .game-row .when { font-size: var(--text-sm); color: var(--text-dim); }
 
 .timeline { list-style: none; display: flex; flex-direction: column; gap: var(--space-4); }
@@ -794,7 +797,9 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
                                   margin-right: calc(-1 * (var(--tap) + 2 * var(--space-2)) + var(--space-3)); }
   .standings .team-disclosure { position: absolute; top: var(--space-2); right: var(--space-2);
                                 width: var(--tap); min-width: var(--tap); min-height: var(--tap);
-                                padding: 0; overflow: hidden; white-space: nowrap; color: transparent; }
+                                padding: 0; overflow: hidden; white-space: nowrap; }
+  .standings .team-disclosure .disclosure-label { position: absolute; width: 1px; height: 1px; overflow: hidden;
+                                                  clip-path: inset(50%); white-space: nowrap; }
   .standings .team-disclosure::after { position: absolute; inset: 0; margin: 0; display: flex;
                                        align-items: center; justify-content: center;
                                        font-size: var(--text-lg); color: var(--text); }
@@ -832,3 +837,10 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
   #livechannel .lc-code::before { content: " — "; color: var(--text-dim); }
   #livechannel tr { padding: var(--space-2) var(--space-3); margin-bottom: var(--space-2); }
 }
+
+/* --- Empty states (shared/_empty_state) ---------------------------------- */
+.empty-state > * + * { margin-top: var(--space-2); }
+.empty-state-title { font-size: var(--text-lg); }
+.empty-state p, .empty-state-line { color: var(--text-dim); }
+.empty-state-line { font-size: var(--text-sm); }
+.empty-state-action { display: inline-flex; align-items: center; min-height: var(--tap); }

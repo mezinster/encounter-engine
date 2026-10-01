@@ -1,5 +1,5 @@
 <% if hints.empty? %>
-    <em><%= t("hints.list.empty") %></em>
+    <%= render "shared/empty_state", :title => t("hints.list.empty"), :variant => :line %>
 <% else %>
     <ul class="game-list">
     <% hints.each do |hint| %>

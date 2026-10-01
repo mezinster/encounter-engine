@@ -11,12 +11,20 @@
 # directly after it -- on a phone the summary box at the top of the form is
 # usually scrolled out of view.
 #
+# Radios and checkboxes get the marks but no span. Each sits inside its own
+# <label class="check">, so a span after the control would land inside the
+# label, become part of the control's accessible name, and be read twice (once
+# as the name, once as the aria-describedby description). The label's danger
+# colour (`.field label.check:has(.is-invalid)`) and the error summary box
+# carry the message for them instead.
+#
 # The opening tag is edited as a string, never parsed and re-serialised: a
 # <textarea> opens with a newline Rails adds on purpose (the HTML parser eats
 # the first one), and re-serialising would silently drop a leading newline
 # from the user's own text.
 class FieldErrorMarkup
   OPEN_TAG = %r{\A<(input|select|textarea|label)\b([^>]*?)(\s*/)?>}m
+  CHECK_TYPES = %w[radio checkbox].freeze
 
   def self.call(html_tag, instance)
     new(html_tag, instance).to_html
@@ -40,7 +48,7 @@ class FieldErrorMarkup
     id = attribute(attrs, "id")
     messages = messages_for_attribute
     span = ""
-    if id && type != "radio" && messages.any?
+    if id && !CHECK_TYPES.include?(type) && messages.any?
       error_id = "#{id}-error"
       attrs += %( aria-describedby="#{CGI.escapeHTML(error_id)}")
       span = %(<span class="field-error" id="#{CGI.escapeHTML(error_id)}">) +

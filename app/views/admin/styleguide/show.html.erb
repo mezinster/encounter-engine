@@ -1,3 +1,4 @@
+<% page_title t("titles.admin") %>
 <div class="styleguide">
   <h1><%= t("admin.styleguide.show.title") %></h1>
   <p class="notice"><%= t("admin.styleguide.show.intro") %></p>
@@ -80,7 +81,7 @@
   <h2>File thumbnail, every locale</h2>
   <div class="file-table" style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3)">
     <% I18n.available_locales.each do |locale| %>
-      <span class="file-thumb-generic" lang="<%= locale %>"><%= t("game_files.table.no_thumbnail", :locale => locale) %></span>
+      <%= render "game_files/generic_thumb", :locale => locale %>
     <% end %>
   </div>
 
@@ -100,4 +101,8 @@
     <span class="tag tag--danger">закрыта</span>
   </p>
   <p class="countdown">До следующей подсказки 12 мин 04 сек</p>
+
+  <h2>Empty states</h2>
+  <%= render "shared/empty_state", :title => "Команд пока нет", :text => "Создайте первую или дождитесь приглашения капитана.", :action => [ "Создать команду", "#" ] %>
+  <%= render "shared/empty_state", :title => "Ответов нет", :variant => :line %>
 </div>

@@ -1,3 +1,4 @@
+<% page_title t("titles.files"), game: @game %>
 <h1><%= t("game_files.index.title", :game => @game.name) %></h1>
 
 <div class="quota-bar">
@@ -19,5 +20,9 @@
         :count => Setting.integer("max_files_per_upload")) %>
 </p>
 
+<% if @files.empty? %>
+<%= render "shared/empty_state", :title => t("empty_states.files.title"), :text => t("empty_states.files.text"), :heading => :h2 %>
+<% else %>
 <%= render "file_table", :files => @files, :mode => :manage, :field_name => nil,
                          :typed_confirmation_ids => @typed_confirmation_ids %>
+<% end %>

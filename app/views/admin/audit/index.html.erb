@@ -1,6 +1,10 @@
+<% page_title t("titles.admin") %>
 <%# app/views/admin/audit/index.html.erb %>
 <h1><%= t("admin.audit.index.title") %></h1>
 
+<% if @entries.empty? %>
+  <%= render "shared/empty_state", :title => t("empty_states.admin_audit"), :variant => :line %>
+<% else %>
 <div class="table-wrap">
 <table class="table--cards">
   <thead>
@@ -51,5 +55,6 @@
   </tbody>
 </table>
 </div>
+<% end %>
 
 <p><%= link_to t("admin.audit.index.back"), admin_dashboard_path %></p>

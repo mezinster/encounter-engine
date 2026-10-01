@@ -1,13 +1,18 @@
+<% finished = Game.finished.to_a %>
 <fieldset class="card">
   <legend>
     <%= t("dashboard.finished_games.legend") %>
   </legend>
+  <% if finished.empty? %>
+    <%= render "shared/empty_state", :title => t("empty_states.finished"), :variant => :line %>
+  <% else %>
   <ul class="game-list">
-  <% Game.finished.each do |game | %>
+  <% finished.each do |game | %>
     <li>
       <%= t("dashboard.finished_games.finished") %> <b><%= link_to game.name, game_path(game) %></b> |
       <%= link_to t("shared.current_games.view_results"), game_passings_show_results_path(game_id: game.id) %>
     </li>
   <% end %>
   </ul>
+  <% end %>
 </fieldset>

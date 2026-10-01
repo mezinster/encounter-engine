@@ -95,6 +95,9 @@ describe "game_files/_file_table", :type => :view do
 
       expect(rendered).not_to include("<img")
       expect(rendered).to include(I18n.t("game_files.table.no_thumbnail"))
+      generic = Nokogiri::HTML(rendered).at_css(".file-thumb-generic")
+      expect(generic.at_css("svg")).to be_present
+      expect(generic.at_css(".visually-hidden").text.strip).to eq("Нет превью")
     end
 
     it "renders the generic indicator, not a broken <img>, for a file with no blob attached" do

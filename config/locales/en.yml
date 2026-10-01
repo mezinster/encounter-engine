@@ -231,7 +231,6 @@ en:
       run: "Run №%{ordinal}"
       pending: "Awaiting a decision"
       accepted: "Accepted"
-      none: "—"
       accept: "Accept"
       reject: "Reject"
       accepted_notice: "Team accepted: %{team}"
@@ -835,6 +834,95 @@ en:
       signup: "Sign up"
   manual:
     fallback_note: "The manual is not yet available in your language — showing the version in %{language}."
+  titles:
+    dashboard: "Dashboard"
+    games: "Games"
+    game_new: "New game"
+    game_edit: "Game settings"
+    level_new: "New level"
+    level_edit: "Edit level"
+    teams: "Teams"
+    team_new: "New team"
+    team_room: "Team room"
+    results: "Results"
+    standings: "Standings"
+    live_channel: "Live channel"
+    full_log: "Full log"
+    level_log: "Level log"
+    game_log: "Game log"
+    files: "Files"
+    access_codes: "Access codes"
+    access_passes: "Team access"
+    translation: "Translation"
+    translation_review: "Translation review"
+    login: "Sign in"
+    signup: "Sign up"
+    profile: "Profile"
+    manual: "Manual"
+    admin: "Administration"
+    access_code: "Access code"
+    skip_level: "Skip level"
+    game_finished: "Game finished"
+    access_revoked: "Access withdrawn"
+    game_stopped: "Game stopped"
+    withdrawal: "Game withdrawal"
+    invitation: "Invitation"
+    password_reset: "Password reset"
+    new_codes: "New codes"
+    adjustment: "Points adjustment"
+    test_invitation: "Test invitation"
+    hint_new: "New hint"
+    hint_edit: "Edit hint"
+    options: "Answer options"
+    code_new: "New code"
+    code_variants: "Code variants"
+    quiz_import: "Level import"
+  empty_states:
+    games:
+      title: "No games yet"
+      text: "Games will appear here once they are published."
+    my_games:
+      text: "Games you create will appear here."
+    coming: "No upcoming games"
+    finished: "No finished games"
+    teams_by_game: "No teams registered yet"
+    teams:
+      title: "No teams yet"
+      text: "Create the first one, or wait for a captain to invite you."
+      action: "Create a team"
+    game_entries:
+      title: "No applications yet"
+      text: "Teams' applications for this game will appear here."
+    levels:
+      title: "No levels yet"
+      text: "Add the first level so the game can be played."
+    admin_entries: "No applications"
+    admin_games: "No games"
+    admin_teams: "No teams"
+    admin_audit: "No actions yet"
+    answers: "No answers"
+    standings:
+      title: "No team has started yet"
+      text: "Teams appear here as soon as they start."
+    live_channel:
+      title: "No answers yet"
+      text: "Teams' answers appear here as they are sent."
+    results:
+      title: "Nobody has finished yet"
+      text: "Teams appear here when they complete the last level."
+    log: "No answers"
+    files:
+      title: "No files yet"
+      text: "Upload photos or PDFs with the form above."
+    access_codes:
+      title: "No codes yet"
+      text: "Generate a batch of codes with the form above."
+    access_passes:
+      title: "No access granted yet"
+      text: "Grant a team access with the form above."
+    proposals:
+      title: "No proposals"
+      text: "This translation run proposed nothing."
   shared:
     live_status:
       updated: "Updated %{seconds} s ago"
@@ -1010,7 +1098,6 @@ en:
       go_to_team_room: "Go to team room"
   index:
     index:
-      title: "Home page"
       games_list: "List of games"
       hero_title: "City games: find the code before anyone else"
       hero_lead: "Teams hunt for codes all over the city — from their phones."
@@ -1029,6 +1116,7 @@ en:
       empty_title: "No games scheduled right now"
       empty_text: "Check back later — or browse all games, including past ones."
       team_line: "Team: «%{team}»"
+      team_separator: "·"
       team_room: "Team room"
       how_heading: "How to play"
       step1_title: "Sign up"
@@ -1300,6 +1388,18 @@ en:
               settled: "cannot be changed once translations exist"
         game_run:
           attributes:
+            max_team_number:
+              format: "%{message}"
+              blank: "You did not set the number of teams"
+              not_a_number: "The number of teams must be between 1 and 10000"
+              greater_than: "The number of teams must be between 1 and 10000"
+              less_than: "The number of teams must be between 1 and 10000"
+            ordinal:
+              format: "%{message}"
+              blank: "Could not determine the run number"
+              not_a_number: "Could not determine the run number"
+              greater_than: "Could not determine the run number"
+              taken: "A run with this number already exists"
             starts_at:
               format: "%{message}"
               blank: "You did not set the game's start date"

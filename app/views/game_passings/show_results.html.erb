@@ -1,3 +1,4 @@
+<% page_title t("titles.results"), game: @game %>
 <p><%= t("game_passings.show_results.congrats") %></p>
 
 <%# One statement for the whole table rather than an offset on every row: the
@@ -32,7 +33,11 @@
 <% show_penalties = game_passings.any? { |gp| gp.penalty_seconds.to_i > 0 } %>
 
 <%= render "shared/live_status" %>
+<% nobody_yet = game_passings.finished.empty? && (game_passings.ended_by_author - game_passings.finished).empty? %>
 <div class="table-wrap" id="results-live" data-live>
+<% if nobody_yet %>
+<%= render "shared/empty_state", :title => t("empty_states.results.title"), :text => t("empty_states.results.text") %>
+<% else %>
 <table id="results" class="table--cards">
   <thead>
     <tr>
@@ -82,6 +87,7 @@
       <% end %>
   </tbody>
 </table>
+<% end %>
 </div>
 
 <% if full_log_visible?(@game) %>

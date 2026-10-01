@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="<%= I18n.locale %>">
   <head>
-    <title><%= t("layout.title") %></title>
+    <title><%= page_title_text %></title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <%# theme.js below keeps this in step with the in-app theme toggle. %>
+    <meta name="theme-color" content="#12100e">
+    <link rel="icon" href="<%= versioned_asset("/favicon.ico") %>" sizes="32x32">
+    <link rel="icon" type="image/svg+xml" href="<%= versioned_asset("/icons/favicon.svg") %>">
+    <link rel="apple-touch-icon" href="<%= versioned_asset("/apple-touch-icon.png") %>">
+    <link rel="manifest" href="<%= versioned_asset("/site.webmanifest") %>">
     <%= csrf_meta_tags %>
     <link rel="stylesheet" href="<%= versioned_asset("/stylesheets/tokens.css") %>">
     <link rel="stylesheet" href="<%= versioned_asset("/stylesheets/base.css") %>">

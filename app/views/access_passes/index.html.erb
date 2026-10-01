@@ -1,3 +1,4 @@
+<% page_title t("titles.access_passes"), game: @game %>
 <h2 class="page-title"><%= t("access_passes.title") %> &mdash; <%= @game.name %></h2>
 
 <%= form_with url: game_access_passes_path(@game), method: :post, local: true do |f| %>
@@ -8,6 +9,9 @@
   </p>
 <% end %>
 
+<% if @passes.empty? %>
+<%= render "shared/empty_state", :title => t("empty_states.access_passes.title"), :text => t("empty_states.access_passes.text") %>
+<% else %>
 <div class="table-wrap">
 <table class="table--cards">
   <thead>
@@ -52,3 +56,4 @@
   </tbody>
 </table>
 </div>
+<% end %>

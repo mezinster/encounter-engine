@@ -1,6 +1,10 @@
+<% page_title t("titles.admin") %>
 <%# app/views/admin/games/index.html.erb %>
 <h1><%= t("admin.games.index.title") %></h1>
 
+<% if @games.empty? %>
+  <%= render "shared/empty_state", :title => t("empty_states.admin_games"), :variant => :line %>
+<% else %>
 <div class="table-wrap">
 <table class="table--cards">
   <thead>
@@ -118,3 +122,4 @@
   </tbody>
 </table>
 </div>
+<% end %>

@@ -22,6 +22,9 @@
       text and walks to its nearest li/div/section ancestor to assert that a
       team is under the right game. That ancestor must remain the element that
       wraps this game and only this game. %>
+  <% if teams_by_game.empty? %>
+    <%= render "shared/empty_state", :title => t("empty_states.teams_by_game"), :variant => :line %>
+  <% else %>
   <div class="team-groups">
     <% teams_by_game.each do |game, teams| %>
       <div class="panel team-group">
@@ -45,4 +48,5 @@
       </div>
     <% end %>
   </div>
+  <% end %>
 </fieldset>

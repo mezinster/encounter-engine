@@ -5,6 +5,16 @@
  * one-off style is a sign the system is missing a component.
  */
 
+/* Text for screen readers only: off-screen, one pixel, never displayed. */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* --- Buttons -------------------------------------------------------------
  * Hierarchy: go -> neutral (.btn) -> quiet, with danger set apart.
  * go / time / danger are neighbouring hues in this palette, so they are
@@ -180,6 +190,11 @@ fieldset.field > legend { margin-bottom: var(--space-1); color: var(--text-dim);
   color: var(--text);
   font-size: inherit;
 }
+/* An invalid checkbox or radio: FieldErrorMarkup marks the control
+   (is-invalid, aria-invalid) and appends its .field-error span inside the
+   label; the hand-written label.check is never marked itself. */
+.field label.check:has(.is-invalid) { color: var(--danger); }
+.check .field-error { margin-top: 0; }
 
 /* --- Tables --------------------------------------------------------------
  * Real table at width; stacked cards below. The wrapper also lets a wide
@@ -264,16 +279,9 @@ th {
   align-items: center;
   justify-content: center;
   width: 48px;
-  min-height: 48px; /* grows for a label that needs a fourth line (ka: 56px) */
-  overflow: hidden; /* last resort: a translated label must never spill out */
+  height: 48px; /* a file icon in the image thumbnail's box; the label is .visually-hidden */
+  overflow: hidden;
   color: var(--text-dim);
-  font-size: var(--text-xs);
-  line-height: 1.1;
-  text-align: center;
-  overflow-wrap: anywhere;
-  hyphens: auto;
-  /* No uppercase or letter-spacing: translated labels ("Önizleme yok",
-     "Brak podglądu") are wider than 48px with them. */
 }
 
 /* --- Flash, cards, panels, tags ------------------------------------------ */

@@ -1,3 +1,4 @@
+<% page_title t("titles.team_new") %>
 <%= error_messages_for @team, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
 <%= form_with model: @team, url: teams_path do |f| %>

@@ -1,8 +1,9 @@
+<% page_title t("titles.login") %>
 <h2><%= t("sessions.new.title") %></h2>
 
-<% if flash[:error] %>
-  <p class="error"><%= flash[:error] %></p>
-<% end %>
+<%# No flash[:error] block here: the layout's flash loop already renders
+    flash.now[:error] with role="alert", and rendering it here too showed the
+    message twice. %>
 
 <%= form_with url: login_path, method: :post do %>
   <div class="field">

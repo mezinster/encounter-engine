@@ -1,3 +1,4 @@
+<% page_title t("titles.dashboard") %>
 <p class="dash-greeting">
   <%= t("dashboard.index.greeting") %> <%= @current_user.nickname %>
 </p>
@@ -15,7 +16,7 @@
 
   <%= render "dashboard/finished_games" %>
 
-  <%= render "games/game_entries", game_entries: @game_entries %>
+  <%= render "games/game_entries", game_entries: @game_entries, empty_text: nil %>
 
   <%= render "dashboard/teams_by_game", teams_by_game: @teams_by_game %>
 </div>

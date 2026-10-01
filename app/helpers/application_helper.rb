@@ -54,6 +54,25 @@ module ApplicationHelper
     @asset_digests ||= Concurrent::Map.new
   end
 
+  # The browser-tab title, most specific first so a phone's narrow tab shows
+  # what matters: "Page — Game · Site", any part omitted when absent. A view
+  # calls page_title once; the layouts call page_title_text. Game names are
+  # author-written and arrive verbatim -- the layout's <%= %> escapes them.
+  # game_name: wins over game.name; player screens pass the name in the
+  # player's content language, as their own heading shows it, while author
+  # and operator screens keep the stored primary-locale name via game:.
+  def page_title(page = nil, game: nil, game_name: nil)
+    name = game_name.presence || game&.name.presence
+    @page_title_parts = { :page => page.presence, :game => name }
+    nil
+  end
+
+  def page_title_text
+    parts = @page_title_parts || {}
+    head = [ parts[:page], parts[:game] ].compact.join(" — ")
+    [ head.presence, t("layout.title") ].compact.join(" · ")
+  end
+
   # Ports merb-helpers' Errorifier#error_messages_for
   # (merb-helpers/lib/merb-helpers/form/builder.rb:403-416) and
   # its default options from the top-level wrapper

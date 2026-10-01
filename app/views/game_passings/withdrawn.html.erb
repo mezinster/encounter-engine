@@ -1,3 +1,4 @@
+<% page_title t("titles.game_stopped"), game_name: @game.translated(:name, content_locale_for(@game)) %>
 <%# NO .page wrapper of its own, deliberately. halt_if_withdrawn renders this
     under the APPLICATION layout, which has already opened <div class="page">
     -- and .page carries min-height: 100svh, so a second one nested inside it

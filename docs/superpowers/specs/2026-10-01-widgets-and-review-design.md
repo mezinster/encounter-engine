@@ -35,7 +35,7 @@ regressions they exist for.
 | Per-game timezone | **Out of scope** | A model change (column, parsing, display everywhere) — its own sub-project if wanted |
 | Autocomplete | `<datalist>` with the same nickname list | No new exposure; escaping by the tag helper instead of a hand-built JS context |
 | Translation review | **Restyle in place** (table, header, `table--cards`) | Specs assert text and paths only, so markup is free; smallest change that fixes it |
-| Error-message reach | **All** full-sentence fields (19 across 8 models) | One consistent rule rather than fixing signup alone |
+| Error-message reach | **All** full-sentence fields (18 across 7 models) | One consistent rule rather than fixing signup alone |
 | Sentence-format safety | A field drops its name only if **every** message it can produce is a sentence, enforced by spec | Otherwise a stock Rails predicate ("слишком длинный") would render with no noun |
 
 ## §1 Date fields and the timezone hint
@@ -79,7 +79,7 @@ Under each date field, a `<p class="notice">` (already `--text-sm`, dim):
 - followed by a link to the profile edit page, `edit_user_path(current_user)` (`users#edit`, where
   the time-zone select lives — `app/views/users/edit.html.erb`; `users/index` already links to it
   the same way), with a second key, `games.form.timezone_change`.
-- Both forms are reachable only by a signed-in author, so the link is always rendered.
+- Both forms are reachable only by a signed-in author, but the profile link renders only when someone is signed in (view specs render the form without a user).
 
 Two keys, all seven locales. `%{zone}` is a system identifier, not a user-authored name, so the
 Turkish/Georgian suffix rule (CLAUDE.md) does not apply; the ka/tr templates still keep the
@@ -157,7 +157,7 @@ default `"%{attribute} %{message}"`, so every predicate-style field is unaffecte
 
 ### §4.2 The fields
 
-`format: "%{message}"` for exactly these 19, found by auditing every
+`format: "%{message}"` for exactly these 18, found by auditing every
 `activerecord.errors.models.*.attributes.*` entry whose messages are capitalised sentences
 (2026-10-01):
 
@@ -193,11 +193,11 @@ files, which are the two that have case and that every key must exist in.
 
 ### §4.3 Locales
 
-The 19 `format` keys go into all seven files. Fallback to `ru` would cover the other five, but
+The 18 `format` keys go into all seven files. Fallback to `ru` would cover the other five, but
 writing them out keeps "a message key exists in every file" uniform, and `ru`↔`en` parity is
 enforced anyway. `spec/i18n_spec.rb`'s "en must not be an untranslated copy of ru" check gains one
 structural exemption: **a key ending in `.format` whose value is exactly `%{message}`** — a rule,
-not 19 allowlist entries.
+not 18 allowlist entries.
 
 Before → after, in the summary (`error_messages_for`, which uses `full_messages`):
 

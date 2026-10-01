@@ -180,7 +180,7 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1023 leaf
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1048 leaf
   keys** each (measured 2026-10-01): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
@@ -206,6 +206,10 @@ add steps there or Cucumber will auto-require them a second time.
   each with a solo and a team subject and body) and three `test_admissions.*_unnotified` flash
   keys — landing at 1020, again measured at both ends. The UX foundations branch then added three
   (the styleguide's own chrome), taking it to 1023 — measured at the end, not computed from 1020.
+  The widgets-and-review branch then took it to 1048 (measured 2026-10-01, at the end again): 18
+  `.format` keys, two timezone-hint keys and five translation-review column keys, all in every
+  file. The `.format` keys are leaves like any other, which is why the count moved by 25 rather
+  than the 7 a reader would get by counting only the new prose.
   Recount rather than reason about it:
 
 ```bash
@@ -380,13 +384,16 @@ So:
   nothing scrolls inside anything else, and horizontal overflow is 0. Run it after **any** change
   to `.playbar`, `.play-body`, `.play-exit` or `.page--focused`. It is mutation-tested: un-sticking
   the bar, re-capping it into a scrollport, and forcing horizontal overflow each fail it.
-- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds four specs
+- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds five specs
   now — `play_screen_layout_spec.rb`, `translate_panel_layout_spec.rb`, (added alongside the
-  manual, 2026-08-22) `manual_layout_spec.rb`, and `styleguide_layout_spec.rb`, which measures the
+  manual, 2026-08-22) `manual_layout_spec.rb`, `styleguide_layout_spec.rb`, which measures the
   styleguide in both themes: input-border contrast, tap size, type scale, invalid border, `.check`
-  layout and generic-thumbnail fit — all four driving the same
+  layout and generic-thumbnail fit, and `translation_review_layout_spec.rb`, which measures the
+  superadmin translation review: the flagged-row edge in both the table and card layouts (exactly
+  one edge per card), cards on phones, long unbroken text wrapping, and no sideways scroll — all
+  five driving the same
   `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
-  spec once a second screen needed measuring. A new screen with real layout risk gets a fifth file
+  spec once a second screen needed measuring. A new screen with real layout risk gets a sixth file
   the same way, not a special case bolted onto an existing one.
 - The manual's own layout regression is why this file's rhythm assertion exists: `.manual`'s three
   original examples (no page-level horizontal overflow at three viewports) all **passed** on the
@@ -693,8 +700,11 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 2930 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
-  measured 2026-08-28 at the commit that carries this line. It has moved twice in one day: 2904
+- **RSpec** — 2978 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+  measured 2026-10-01 at the commit that carries this line. (This line said 2930 when last
+  written, and the real count at this branch's starting point was already 2955: it had drifted in
+  the interval, not been mis-measured. The widgets-and-review branch's new specs took it the rest
+  of the way.) The history that follows is from 2026-08-28: It has moved twice in one day: 2904
   (2026-08-26, correct on the day) → 2920 when the perf-probe record-schema work added sixteen
   examples → 2930 when the VM-scaling fixes added ten more, six for `VMScale::Policy.affordability`
   and four for the committed role definitions. **The 2920 was stale before it merged**, and in an
@@ -779,6 +789,20 @@ run. The real files are checked by the closure check on every push and PR.
   Ukrainian, Belarusian and Polish the predicate must **agree in gender with its own noun**
   (`Файл не выбран` masc, `Игра не выбрана` fem, `Имя файла не указано` neut), so the same English
   "can't be blank" becomes three different words depending on which attribute it follows.
+  **The exception is a field whose every message is a whole sentence**: it may set
+  `activerecord.errors.models.<model>.attributes.<attr>.format: "%{message}"` (honoured because
+  `config.active_model.i18n_customize_full_message` is on), which drops the noun from the summary
+  box entirely. Eighteen Merb-era fields across seven models (answer, game, game_entry,
+  invitation, level, team, user) do. The design document first said 19 across 8, a miscount.
+  `spec/i18n_sentence_messages_spec.rb` refuses a bare `%{message}` format unless **every**
+  message the field can produce — including any from a validator added later — is a sentence,
+  because a stock Rails predicate ("слишком длинный") under that format would render with no noun
+  at all. `spec/i18n_spec.rb` exempts such keys from its en≠ru check, since a pure placeholder is
+  identical in both languages by construction.
+- **The Dynarch calendar and the jQuery autocomplete are retired**, and
+  `spec/assets_retired_spec.rb` fails if any view references their files again. Date fields are
+  native `datetime-local` inputs and the invitation nickname list is a `<datalist>`; neither needs
+  JavaScript. Do not restore a widget to "fix" a browser's picker.
 - **The mail-failure policy: rescue transport errors only, and redact rather than truncate.**
   `MailDelivery.attempt { ... }` (`app/services/mail_delivery.rb`) wraps every `deliver_now` call
   site and rescues a fixed list of SMTP *transport* errors — `Net::SMTPError`, timeouts,

@@ -25,6 +25,15 @@ describe "the home page", type: :request do
       expect(response.body).to include("Проводите игры в своём городе")
     end
 
+    it "shows the card's team count" do
+      game = scheduled("Ночной Бишкек", 1.day.from_now)
+      set_game_schedule!(game, :max_team_number => 20)
+      create_game_entry(:game => game, :team => create_team, :status => "accepted")
+      get root_path
+
+      expect(doc.at_css(".next-game").text).to include("Команд: 1 из 20")
+    end
+
     it "keeps the frozen anchors" do
       get root_path
 
@@ -173,6 +182,17 @@ describe "the home page", type: :request do
       expect(doc.css(".next-game button")).to be_empty
     end
 
+    it "shows the author who is also a captain «Вы автор игры», not the controls" do
+      authored = create_game(:name => "Авторская", :author => captain)
+      set_game_schedule!(authored, :starts_at => 12.hours.from_now)
+      sign_in(captain)
+      get root_path
+
+      expect(doc.at_css(".next-game").text).to include("Авторская")
+      expect(doc.at_css(".next-game .next-game-action").text).to include("Вы автор игры")
+      expect(doc.css(".next-game button")).to be_empty
+    end
+
     it "shows the team's status on rows" do
       later = scheduled("Тайны старого города", 2.days.from_now)
       rejected = scheduled("Зимний марафон", 3.days.from_now)
@@ -201,7 +221,7 @@ describe "the home page", type: :request do
       get root_path
 
       expect(response.body).to include("«#{team.name}»")
-      expect(doc.css("a").map { |a| a["href"] }).to include(team_room_path)
+      expect(doc.css(".home-upcoming a").map { |a| a["href"] }).to include(team_room_path)
     end
   end
 end

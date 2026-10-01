@@ -4,19 +4,21 @@ require "rails_helper"
 # each language's own manual (heading ids differ per language), the two date
 # formats, and the team line's placeholder in the suffixing languages.
 describe "home page copy" do
-  LOCALES_FOR_HOME = %w[ru en uk be pl tr ka].freeze
-
   def value(locale, key)
     YAML.unsafe_load_file(Rails.root.join("config/locales/#{locale}.yml"))[locale].dig(*key.split("."))
   end
 
-  LOCALES_FOR_HOME.each do |locale|
+  %w[ru en uk be pl tr ka].each do |locale|
     it "points #{locale}'s manual links at real chapter headings of #{locale}'s manual" do
       html = Manual::Renderer.call(File.read(Rails.root.join("docs/manual/#{locale}.md"))).to_s
       ids = Nokogiri::HTML(html).css("h1, h2, h3").map { |h| h["id"] }
 
-      expect(ids).to include(value(locale, "index.index.manual_player_anchor"))
-      expect(ids).to include(value(locale, "index.index.manual_author_anchor"))
+      player = value(locale, "index.index.manual_player_anchor")
+      author = value(locale, "index.index.manual_author_anchor")
+      expect(player).to be_present
+      expect(author).to be_present
+      expect(ids).to include(player)
+      expect(ids).to include(author)
     end
 
     it "renders #{locale}'s home dates with a month name and the time" do

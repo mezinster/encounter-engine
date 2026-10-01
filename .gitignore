@@ -39,6 +39,10 @@ CLAUDE.local.md
 # Superpowers scratch (SDD ledgers, brainstorm mockups)
 .superpowers/
 
+# Superdesign context (init dumps of source, resume state). Regenerable, and
+# its project/draft ids are per-developer -- never committed.
+/.superdesign/
+
 # git worktrees for parallel hotfixes
 .worktrees/
 .claude/worktrees/

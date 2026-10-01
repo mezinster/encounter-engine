@@ -1,0 +1,39 @@
+<% games = upcoming.games %>
+<% counts = game_team_counts(games) %>
+<% gated_status = gated_play_status(games) %>
+<section class="home-upcoming">
+  <%# A signed-in page has no hero, so this heading is its h1. %>
+  <%= content_tag(logged_in? ? :h1 : :h2, t("index.index.upcoming_heading"), class: "home-section-heading") %>
+  <% if upcoming.empty? %>
+    <div class="card">
+      <h3><%= t("index.index.empty_title") %></h3>
+      <p class="home-note"><%= t("index.index.empty_text") %></p>
+    </div>
+  <% else %>
+    <% if upcoming.running.any? %>
+      <ul class="game-rows">
+        <% upcoming.running.each do |game| %>
+          <%= render "index/game_row", game: game, gated_status: gated_status %>
+        <% end %>
+      </ul>
+    <% end %>
+    <% if upcoming.next_game %>
+      <%= render "index/next_game", game: upcoming.next_game, counts: counts %>
+    <% end %>
+    <% rest = upcoming.scheduled + upcoming.gated %>
+    <% if rest.any? %>
+      <ul class="game-rows">
+        <% rest.each do |game| %>
+          <%= render "index/game_row", game: game, gated_status: gated_status %>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+  <p><%= link_to t("index.index.games_list"), games_path, class: "link-tap" %></p>
+  <% if logged_in? && current_user.team %>
+    <p class="home-note">
+      <%= t("index.index.team_line", team: current_user.team.name) %> ·
+      <%= link_to t("index.index.team_room"), team_room_path %>
+    </p>
+  <% end %>
+</section>

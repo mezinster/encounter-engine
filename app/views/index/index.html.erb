@@ -1,9 +1,16 @@
-<h2><%= t("index.index.title") %></h2>
-
-<%# features/games/games-list.feature:33 clicks this exact link text on the
-    home page and expects to land on the full games list, so the heading
-    stays a link to /games rather than becoming plain text now that the
-    list itself also renders inline below. %>
-<h3><%= link_to t("index.index.games_list"), games_path %></h3>
-
-<%= render "games/list", games: @games %>
+<%# The home page. Guests get the explanation (hero, how to play, organizers);
+    signed-in players get only the games, with their team's status. Frozen
+    anchors this page must keep: "Список игр" links to games_path
+    (games-list.feature, index-page.feature); a signed-in user never sees
+    "Зарегистрироваться" here (signup.feature:15); no /dashboard link for a
+    guest (dashboard.feature). %>
+<div class="home">
+  <% unless logged_in? %>
+    <%= render "index/hero" %>
+  <% end %>
+  <%= render "index/upcoming", upcoming: @upcoming %>
+  <% unless logged_in? %>
+    <%= render "index/how_to_play" %>
+    <%= render "index/organizers" %>
+  <% end %>
+</div>

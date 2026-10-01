@@ -1,0 +1,9 @@
+<section class="panel home-organizers">
+  <h2 class="home-section-heading"><%= t("index.index.organizers_heading") %></h2>
+  <ul>
+    <% 1.upto(5) do |n| %>
+      <li><%= t("index.index.organizers_item#{n}") %></li>
+    <% end %>
+  </ul>
+  <%= link_to t("index.index.organizers_link"), "#{manual_path}##{t("index.index.manual_author_anchor")}", class: "link-tap" %>
+</section>

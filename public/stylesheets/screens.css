@@ -682,3 +682,41 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
   table.proposals tr.flagged { border-left: 3px solid var(--danger); }
   table.proposals tr.flagged > td:first-child { box-shadow: none; }
 }
+
+/* --- Home page (index/index) ---------------------------------------------
+ * Players first: hero, upcoming games (card + compact rows), how-to-play
+ * timeline, organizers panel. One column, capped for reading on desktop.
+ * Design: Superdesign drafts 7eaa33ad (guest) and 659ef6ac (signed-in). */
+.home { max-width: 44rem; margin-inline: auto; }
+.home > * + * { margin-top: var(--space-6); }
+.home-hero > p { margin-top: var(--space-3); color: var(--text-dim); }
+.home-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-5); }
+.home-actions .btn { flex: 1 1 12rem; }
+.home-section-heading { font-size: var(--text-h2); line-height: 1.25; font-weight: 600; margin-bottom: var(--space-4); }
+.home .link-tap { display: inline-flex; align-items: center; min-height: var(--tap); }
+.home-note { font-size: var(--text-sm); color: var(--text-dim); }
+.home .tag { white-space: nowrap; flex-shrink: 0; }
+
+.next-game h3 { font-size: var(--text-lg); margin-bottom: var(--space-2); }
+.next-game .when { margin-top: var(--space-2); font-size: var(--text-lg); font-weight: 600; }
+.next-game .meta { font-size: var(--text-sm); color: var(--text-dim); }
+.next-game-action:not(:empty) { margin-top: var(--space-4); }
+
+.game-rows { list-style: none; }
+.game-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3);
+            padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+.game-row > div { min-width: 0; }
+.game-row .name { font-weight: 600; overflow-wrap: anywhere; }
+.game-row .when { font-size: var(--text-sm); color: var(--text-dim); }
+
+.timeline { list-style: none; display: flex; flex-direction: column; gap: var(--space-4); }
+.timeline li { position: relative; padding-left: calc(1.5rem + var(--space-3)); }
+.timeline li:not(:last-child)::before { content: ""; position: absolute; left: calc(0.75rem - 0.5px);
+            top: 1.5rem; bottom: calc(var(--space-4) * -1); width: 1px; background: var(--border-input); }
+.timeline .num { position: absolute; left: 0; top: 0; width: 1.5rem; height: 1.5rem; border: 1px solid var(--go);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: var(--text-sm); font-weight: 600; color: var(--go); background: var(--bg); }
+.timeline h3 { font-size: var(--text-lg); }
+
+.home-organizers ul { list-style: disc; padding-left: var(--space-4); margin: var(--space-3) 0; }
+.home-organizers li { font-size: var(--text-sm); }

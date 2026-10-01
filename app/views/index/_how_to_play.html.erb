@@ -1,0 +1,13 @@
+<section id="how-to-play">
+  <h2 class="home-section-heading"><%= t("index.index.how_heading") %></h2>
+  <ol class="timeline">
+    <% 1.upto(3) do |n| %>
+      <li>
+        <span class="num" aria-hidden="true"><%= n %></span>
+        <h3><%= t("index.index.step#{n}_title") %></h3>
+        <p><%= t("index.index.step#{n}_text") %></p>
+      </li>
+    <% end %>
+  </ol>
+  <p><%= link_to t("index.index.how_more"), "#{manual_path}##{t("index.index.manual_player_anchor")}", class: "link-tap" %></p>
+</section>

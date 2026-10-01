@@ -180,7 +180,7 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1048 leaf
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1051 leaf
   keys** each (measured 2026-10-01): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
@@ -210,7 +210,9 @@ add steps there or Cucumber will auto-require them a second time.
   `.format` keys, two timezone-hint keys and five translation-review column keys, all in every
   file. The `.format` keys are leaves like any other, which is why the count moved by 25 rather
   than the 7 a reader would get by counting only the new prose (the 7 being the 2 hint keys plus
-  the 5 review-column keys; the other 18 are the per-field `format` keys).
+  the 5 review-column keys; the other 18 are the per-field `format` keys). Its follow-up added
+  three more the same day, landing at 1051: `game_run`'s two `format` keys and a sentence for its
+  blank start date, which the safety spec below demanded before it would accept the format.
   Recount rather than reason about it:
 
 ```bash
@@ -794,8 +796,10 @@ run. The real files are checked by the closure check on every push and PR.
   **The exception is a field whose every message is a whole sentence**: it may set
   `activerecord.errors.models.<model>.attributes.<attr>.format: "%{message}"` (honoured because
   `config.active_model.i18n_customize_full_message` is on), which drops the noun from the summary
-  box entirely. Eighteen Merb-era fields across seven models (answer, game, game_entry,
-  invitation, level, team, user) do. The design document first said 19 across 8, a miscount.
+  box entirely. Twenty fields across eight models (answer, game, game_entry, game_run,
+  invitation, level, team, user) do — eighteen Merb-era ones, plus `game_run`'s two schedule
+  fields, which add Game's own sentences and so need the same treatment. The design document
+  first said 19 across 8 for the original set, a miscount of 18 across 7.
   `spec/i18n_sentence_messages_spec.rb` refuses a bare `%{message}` format unless **every**
   message the field can produce — including any from a validator added later — is a sentence,
   because a stock Rails predicate ("слишком длинный") under that format would render with no noun

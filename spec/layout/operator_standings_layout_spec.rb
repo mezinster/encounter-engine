@@ -84,6 +84,9 @@ describe "the operator's standings, measured", :layout, type: :request do
         panelControlCount: panelControls.length,
         shortControls: panelControls.filter(function (el) { return el.getBoundingClientRect().height < 43.5; }).map(function (el) { return el.textContent.trim() || el.tagName; }),
         logCellDisplays: Array.prototype.slice.call(document.querySelectorAll("#stats .standings-log")).map(function (el) { return getComputedStyle(el).display; }).filter(function (v, i, a) { return a.indexOf(v) === i; }),
+        summaryText: document.querySelector(".team-disclosure").textContent,
+        summaryW: Math.round(document.querySelector(".team-disclosure").getBoundingClientRect().width * 10) / 10,
+        summaryH: Math.round(document.querySelector(".team-disclosure").getBoundingClientRect().height * 10) / 10,
         disclosureInside: Array.prototype.slice.call(document.querySelectorAll(".team-disclosure")).every(function (el) { return el.getBoundingClientRect().right <= vw + 0.5; }),
         innerScrollers: scrollers.map(function (el) { return (el.id || el.className || el.tagName) + ":" + el.scrollWidth; }),
         hOverflow: document.documentElement.scrollWidth - vw
@@ -110,7 +113,8 @@ describe "the operator's standings, measured", :layout, type: :request do
 
       it "lets Pause/Resume be tapped at the top and the bottom of the scroll" do
         expect(m["pauseTop"]).to be(true)
-        expect(m["pauseBottom"]).to be(true)
+        # Sticky on phones only; on desktop the bar sits at the top by design.
+        expect(m["pauseBottom"]).to be(true) unless name == "desktop"
       end
 
       it "keeps the refresh status line hidden until the script runs" do
@@ -139,6 +143,12 @@ describe "the operator's standings, measured", :layout, type: :request do
         it "hides the frozen log-link cells and keeps the panel button on screen" do
           expect(m["logCellDisplays"]).to eq([ "none" ])
           expect(m["disclosureInside"]).to be(true)
+        end
+
+        it "keeps the icon-sized panel summary labelled and tappable" do
+          expect(m["summaryText"]).to include("Вмешательство")
+          expect(m["summaryW"]).to be >= 43.5
+          expect(m["summaryH"]).to be >= 43.5
         end
 
         it "keeps every line of team text clear of the panel button" do

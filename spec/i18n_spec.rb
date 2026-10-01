@@ -158,6 +158,10 @@ RSpec.describe "internationalization" do
     shared_keys = en.keys & ru.keys
     suspicious_keys = shared_keys.select do |key|
       value = en[key].to_s
+      # A per-field "%{message}" format is structure, not text: it is the same
+      # in every language by definition. See spec/i18n_sentence_messages_spec.rb.
+      next false if key.end_with?(".format") && value == "%{message}"
+
       !value.strip.empty? && value == ru[key].to_s
     end
 

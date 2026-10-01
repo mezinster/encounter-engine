@@ -474,6 +474,8 @@ en:
       description: "Description"
       starts_at: "Game start"
       registration_deadline: "Registration deadline "
+      timezone_hint: "Times are in your time zone: %{zone}."
+      timezone_change: "Change it in your profile"
       max_team_number: "Maximum number of teams"
       is_draft: "Draft?"
       access_mode: "Access mode"
@@ -1111,6 +1113,12 @@ en:
         failed: "Failed"
         cancelled: "Stopped"
     review:
+      columns:
+        locale: "Language"
+        field: "Field"
+        source: "Source"
+        proposal: "Proposal"
+        state: "Status"
       heading: "Reviewing the translation of “%{game}”"
       accept_all: "Accept everything unflagged"
       accept_flagged: "Accept flagged (%{count})"
@@ -1204,6 +1212,7 @@ en:
         answer:
           attributes:
             value:
+              format: "%{message}"
               blank: "You didn't enter an answer code"
               taken: "That code is already used in this task"
         file_attachment:
@@ -1217,11 +1226,14 @@ en:
         game:
           attributes:
             name:
+              format: "%{message}"
               blank: "Name is required"
               taken: "A game with that name already exists"
             description:
+              format: "%{message}"
               blank: "Description is required"
             max_team_number:
+              format: "%{message}"
               not_a_number: "Team count must be between 1 and 10000"
               greater_than: "Team count must be between 1 and 10000"
               less_than: "Team count must be between 1 and 10000"
@@ -1229,9 +1241,11 @@ en:
             access_mode:
               access_still_owed: "cannot be switched off: teams still hold access they have not used (%{count}). Revoke it, or wait until they have played."
             starts_at:
+              format: "%{message}"
               in_the_past: "You picked a date in the past. That's not allowed :-)"
-              needed_to_unpublish_access: "a scheduled game needs a start date in the future — set one to stop selling access to this game"
+              needed_to_unpublish_access: "A scheduled game needs a start date in the future — set one to stop selling access to this game"
             registration_deadline:
+              format: "%{message}"
               in_the_past: "You set a registration deadline in the past. That's not allowed :-)"
               after_game_start: "You set a registration deadline later than the game's start date. That's not allowed :-)"
             available_locales:
@@ -1242,8 +1256,10 @@ en:
         game_entry:
           attributes:
             game:
+              format: "%{message}"
               blank: "You didn't select a game"
             team_id:
+              format: "%{message}"
               blank: "You didn't specify a team"
         game_file:
           attributes:
@@ -1257,18 +1273,23 @@ en:
         invitation:
           attributes:
             for_user:
+              format: "%{message}"
               blank: "No user with that name exists"
             recepient_nickname:
+              format: "%{message}"
               blank: "You didn't enter a user name"
             for_user_id:
+              format: "%{message}"
               taken: "You've already sent this user an invitation and they haven't responded yet"
             base:
               recipient_already_team_member: "That user is already a member of a team"
         level:
           attributes:
             name:
+              format: "%{message}"
               blank: "Task name is required"
             text:
+              format: "%{message}"
               blank: "Task text is required"
         point_transaction:
           attributes:
@@ -1290,6 +1311,7 @@ en:
         team:
           attributes:
             name:
+              format: "%{message}"
               taken: "A team with that name already exists"
               blank: "Team name cannot be empty"
             captain:
@@ -1301,14 +1323,18 @@ en:
         user:
           attributes:
             email:
+              format: "%{message}"
               blank: "E-mail is required"
               taken: "That address is already registered"
               invalid: "That e-mail address is not valid"
             nickname:
+              format: "%{message}"
               blank: "Name is required"
               taken: "That name is already taken"
             password:
+              format: "%{message}"
               too_short: "Password is too short (minimum 4 characters)"
             password_confirmation:
+              format: "%{message}"
               blank: "Password confirmation is required"
               confirmation: "Password and confirmation do not match"

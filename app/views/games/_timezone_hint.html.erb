@@ -1,0 +1,11 @@
+<%# datetime-local carries no zone. TimeZoneSelection runs every request in
+    the signed-in user's zone, so a typed 18:00 means 18:00 THERE -- this says
+    which zone that is. The offset is for now, so it is right across DST. The
+    link shows only when someone is signed in: the real forms are
+    author-only, but view specs render them with no user. %>
+<p class="notice timezone-hint">
+  <%= t("games.form.timezone_hint", :zone => "#{Time.zone.tzinfo.name} (UTC#{Time.zone.now.formatted_offset})") %>
+  <% if current_user %>
+    <%= link_to t("games.form.timezone_change"), edit_user_path(current_user) %>
+  <% end %>
+</p>

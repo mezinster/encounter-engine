@@ -194,6 +194,18 @@ RSpec.describe "games/new", type: :view do
     expect(rendered).to include(games_path)
   end
 
+  it "names the timezone without a profile link when no one is signed in" do
+    assign(:game, Game.new)
+    view.define_singleton_method(:logged_in?) { false }
+    view.define_singleton_method(:current_user) { nil }
+
+    render
+
+    hint = Nokogiri::HTML(rendered).css("p.timezone-hint").first
+    expect(hint.text).to include("(UTC")
+    expect(hint.at_css("a")).to be_nil
+  end
+
   it "renders validation errors with the shared error header" do
     game = Game.new
     game.valid?

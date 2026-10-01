@@ -498,6 +498,8 @@ pl:
       description: "Opis"
       starts_at: "Początek gry"
       registration_deadline: "Ostateczny termin rejestracji "
+      timezone_hint: "Godziny podawane są w Twojej strefie czasowej: %{zone}."
+      timezone_change: "Zmień w profilu"
       max_team_number: "Maksymalna liczba drużyn"
       is_draft: "Szkic?"
       access_mode: "Tryb dostępu"
@@ -1143,6 +1145,12 @@ pl:
         failed: "Błąd"
         cancelled: "Zatrzymane"
     review:
+      columns:
+        locale: "Język"
+        field: "Pole"
+        source: "Oryginał"
+        proposal: "Tłumaczenie"
+        state: "Status"
       heading: "Sprawdzanie tłumaczenia gry „%{game}”"
       accept_all: "Zaakceptuj wszystko bez uwag"
       accept_flagged: "Zaakceptuj z uwagami (%{count})"
@@ -1230,6 +1238,7 @@ pl:
         answer:
           attributes:
             value:
+              format: "%{message}"
               blank: "Nie wpisano wariantu kodu"
               taken: "Taki kod już jest w zadaniu"
         file_attachment:
@@ -1243,11 +1252,14 @@ pl:
         game:
           attributes:
             name:
+              format: "%{message}"
               blank: "Nie wpisano nazwy"
               taken: "Gra o takiej nazwie już istnieje"
             description:
+              format: "%{message}"
               blank: "Nie wpisano opisu"
             max_team_number:
+              format: "%{message}"
               not_a_number: "Zakres liczby drużyn to od 1 do 10000"
               greater_than: "Zakres liczby drużyn to od 1 do 10000"
               less_than: "Zakres liczby drużyn to od 1 do 10000"
@@ -1255,9 +1267,11 @@ pl:
             access_mode:
               access_still_owed: "nie można wyłączyć: drużyny nie wykorzystały jeszcze przyznanego dostępu (%{count}). Odbierz dostęp albo poczekaj, aż zagrają."
             starts_at:
+              format: "%{message}"
               in_the_past: "Wybrano datę z przeszłości. Tak nie można :-)"
-              needed_to_unpublish_access: "zwykła gra musi mieć datę startu w przyszłości — podaj nową, aby przestać sprzedawać dostęp do tej gry"
+              needed_to_unpublish_access: "Zwykła gra musi mieć datę startu w przyszłości — podaj nową, aby przestać sprzedawać dostęp do tej gry"
             registration_deadline:
+              format: "%{message}"
               in_the_past: "Podano ostateczny termin rejestracji z przeszłości, tak nie można :-)"
               after_game_start: "Podano ostateczny termin rejestracji późniejszy niż data rozpoczęcia gry, tak nie można :-)"
             available_locales:
@@ -1268,8 +1282,10 @@ pl:
         game_entry:
           attributes:
             game:
+              format: "%{message}"
               blank: "Nie wybrano gry"
             team_id:
+              format: "%{message}"
               blank: "Nie wskazano drużyny"
         game_file:
           attributes:
@@ -1283,18 +1299,23 @@ pl:
         invitation:
           attributes:
             for_user:
+              format: "%{message}"
               blank: "Użytkownik o takim imieniu nie istnieje"
             recepient_nickname:
+              format: "%{message}"
               blank: "Nie wpisano imienia użytkownika"
             for_user_id:
+              format: "%{message}"
               taken: "Zaproszenie zostało już do tego użytkownika wysłane, a on jeszcze nie odpowiedział"
             base:
               recipient_already_team_member: "Użytkownik należy już do jednej z drużyn"
         level:
           attributes:
             name:
+              format: "%{message}"
               blank: "Nie wpisano nazwy zadania"
             text:
+              format: "%{message}"
               blank: "Nie wpisano treści zadania"
         point_transaction:
           attributes:
@@ -1316,6 +1337,7 @@ pl:
         team:
           attributes:
             name:
+              format: "%{message}"
               taken: "Drużyna o takiej nazwie już istnieje"
               blank: "Nazwa drużyny nie może być pusta"
             captain:
@@ -1327,14 +1349,18 @@ pl:
         user:
           attributes:
             email:
+              format: "%{message}"
               blank: "Nie wpisano adresu e-mail"
               taken: "Użytkownik o takim adresie jest już zarejestrowany"
               invalid: "Nieprawidłowy format pola e-mail"
             nickname:
+              format: "%{message}"
               blank: "Nie wpisano imienia"
               taken: "Użytkownik o takim imieniu jest już zarejestrowany"
             password:
+              format: "%{message}"
               too_short: "Hasło jest za krótkie (minimum 4 znaki)"
             password_confirmation:
+              format: "%{message}"
               blank: "Nie wpisano potwierdzenia hasła"
               confirmation: "Hasło i jego potwierdzenie nie są zgodne"

@@ -636,3 +636,43 @@ form.button_to { display: inline-block; }
 .manual li + li {
   margin-top: var(--space-2);
 }
+
+/* --- Translation review (translation_proposals/index) --------------------
+ * A superadmin reviewing a language they may not read: the flags are the
+ * safety story (Translation::Flags), so a flagged proposal must be visible
+ * before any text is read -- by shape as well as colour, per the palette's
+ * standing rule. The table stacks into cards below 48rem (.table--cards). */
+table.proposals td { vertical-align: top; }
+table.proposals td.locale,
+table.proposals td.field { color: var(--text-dim); font-size: var(--text-sm); }
+table.proposals td.locale { white-space: nowrap; }
+/* A quiz option's label embeds the author's option text, which is unbounded. */
+table.proposals td.field { white-space: normal; overflow-wrap: anywhere; }
+table.proposals td.source {
+  width: 40%;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  /* The source's line breaks are content the translation must keep. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+table.proposals .proposed,
+table.proposals .accepted { white-space: pre-wrap; overflow-wrap: anywhere; }
+table.proposals tr.flagged > td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
+table.proposals ul.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-2) 0;
+  list-style: none;
+}
+table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text-sm); }
+
+@media (max-width: 47.99rem) {
+  table.proposals td.source { width: auto; }
+  table.proposals td.locale,
+  table.proposals td.field { white-space: normal; }
+  /* In the stacked layout the card itself carries the edge. */
+  table.proposals tr.flagged { border-left: 3px solid var(--danger); }
+  table.proposals tr.flagged > td:first-child { box-shadow: none; }
+}

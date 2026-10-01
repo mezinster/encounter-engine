@@ -58,8 +58,12 @@ module ApplicationHelper
   # what matters: "Page — Game · Site", any part omitted when absent. A view
   # calls page_title once; the layouts call page_title_text. Game names are
   # author-written and arrive verbatim -- the layout's <%= %> escapes them.
-  def page_title(page = nil, game: nil)
-    @page_title_parts = { :page => page.presence, :game => game&.name.presence }
+  # game_name: wins over game.name; player screens pass the name in the
+  # player's content language, as their own heading shows it, while author
+  # and operator screens keep the stored primary-locale name via game:.
+  def page_title(page = nil, game: nil, game_name: nil)
+    name = game_name.presence || game&.name.presence
+    @page_title_parts = { :page => page.presence, :game => name }
     nil
   end
 

@@ -27,4 +27,11 @@ describe ApplicationHelper, "#page_title", type: :helper do
     expect(helper.page_title_text).to eq(%(<b>Игра "А&Б"</b> · #{site}))
     expect(helper.page_title_text).not_to be_html_safe
   end
+
+  # M1: player screens pass the name in the player's content language, which
+  # must win over the stored primary-locale name on the game.
+  it "prefers an explicit game_name over the game's own name" do
+    helper.page_title(nil, game: double(:name => "Ночной дозор"), game_name: "Night Watch")
+    expect(helper.page_title_text).to eq("Night Watch · #{site}")
+  end
 end

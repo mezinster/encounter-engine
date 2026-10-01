@@ -1,3 +1,4 @@
+<% page_title t("titles.game_finished"), game_name: @game.translated(:name, content_locale_for(@game)) %>
 <%# NO .page wrapper of its own, deliberately -- same reason as
     pass_revoked.html.erb, which this view is modelled on: render_finished_passing
     renders this under the APPLICATION layout, which has already opened

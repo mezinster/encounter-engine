@@ -238,8 +238,9 @@ th {
   .table--compact td { padding: 0 var(--space-1); overflow-wrap: anywhere; }
 }
 
-/* The test-run invite link on the game page is one unbroken URL. */
-code { overflow-wrap: anywhere; }
+/* The test-run invite link on the game page is one unbroken URL. Scoped to
+ * it: a global rule broke code identifiers mid-word in the manual's tables. */
+.invite-link { overflow-wrap: anywhere; }
 
 /* --- File table thumbnails ------------------------------------------------
  * game_files/_file_table.html.erb (both :manage and :picker modes) renders

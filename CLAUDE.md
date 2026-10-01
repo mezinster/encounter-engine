@@ -214,7 +214,10 @@ add steps there or Cucumber will auto-require them a second time.
   three more the same day, landing at 1051: `game_run`'s two `format` keys and a sentence for its
   blank start date, which the safety spec below demanded before it would accept the format. The guest-landing
   branch then took it from 1051 to 1088, measured at both ends: 35 keys under `index.index.*`
-  plus `time.formats.home_card` and `home_row`, in every file.
+  plus `time.formats.home_card` and `home_row`, in every file. The operator-mobile branch then took
+  it from 1088 to 1095, measured at both ends: `shared.live_status.{updated,pause,resume}`,
+  `game_passings.index.{level_log_button,game_log_button}` and
+  `logs.show_full_log.{no_answers,accepted}`, in every file.
   Recount rather than reason about it:
 
 ```bash
@@ -389,7 +392,7 @@ So:
   nothing scrolls inside anything else, and horizontal overflow is 0. Run it after **any** change
   to `.playbar`, `.play-body`, `.play-exit` or `.page--focused`. It is mutation-tested: un-sticking
   the bar, re-capping it into a scrollport, and forcing horizontal overflow each fail it.
-- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds six specs
+- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds eight specs
   now — `play_screen_layout_spec.rb`, `translate_panel_layout_spec.rb`, (added alongside the
   manual, 2026-08-22) `manual_layout_spec.rb`, `styleguide_layout_spec.rb`, which measures the
   styleguide in both themes: input-border contrast, tap size, type scale, invalid border, `.check`
@@ -402,9 +405,18 @@ So:
   and on screen; timeline numbers centred on their connecting line (guest only); content capped at 44rem on
   desktop; a visible gap between the blocks inside each section, each timeline step's h3-to-p gap included (the rhythm check, added because
   the plan's first CSS had none — the same class of bug as the manual's); and no sideways scroll —
-  all six driving the same
+  `operator_standings_layout_spec.rb`, which measures the operator's standings screen: phone rows
+  at most 90px for ordinary names; Pause/Resume hit-testable at both scroll ends on phones and at
+  the top on desktop; the paused render proven from the server's text; panel controls at least
+  44px; the icon-sized panel button keeping «Вмешательство» as text and at least 44px; the frozen
+  log-link cells hidden on phones only and visible on desktop; no team text under the panel
+  button; the refresh status line hidden until the script runs; no page or inner sideways scroll;
+  and `operator_logs_layout_spec.rb`, which measures the full log (restacked on phones, still a
+  grid on desktop), the live channel, per-team level and game logs, the game page and the admin
+  entries, each page guarded to render the long strings it measures, with no sideways scroll —
+  all eight driving the same
   `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
-  spec once a second screen needed measuring. A new screen with real layout risk gets a seventh file
+  spec once a second screen needed measuring. A new screen with real layout risk gets a ninth file
   the same way, not a special case bolted onto an existing one.
 - The manual's own layout regression is why this file's rhythm assertion exists: `.manual`'s three
   original examples (no page-level horizontal overflow at three viewports) all **passed** on the
@@ -711,12 +723,12 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 3045 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+- **RSpec** — 3070 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
   measured 2026-10-01 at the commit that carries this line (the asset-versioning fix added five). (This line said 2930 when last
   written, and the real count at this branch's starting point was already 2955: it had drifted in
   the interval, not been mis-measured. The widgets-and-review branch's new specs took it to 2978,
   and its follow-up branch's seven more to 2985, measured at that branch's last code commit; the guest-landing branch then took it from 2985 to
-  3040, measured at its last code commit.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
+  3040, measured at its last code commit; the operator-mobile branch then took it from 3045 to 3070.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
   (2026-08-26, correct on the day) → 2920 when the perf-probe record-schema work added sixteen
   examples → 2930 when the VM-scaling fixes added ten more, six for `VMScale::Policy.affordability`
   and four for the committed role definitions. **The 2920 was stale before it merged**, and in an
@@ -880,6 +892,41 @@ for guests (`dashboard.feature`); and never «Вы не авторизованы
 links use per-locale anchor keys (`index.index.manual_player_anchor`/`manual_author_anchor`),
 verified against each shipped manual by `spec/i18n_home_spec.rb` — renaming a manual heading
 reddens it, which is the point.
+
+## Operator screens on a phone
+
+The standings screen and the logs are what an operator watches from a phone mid-game, and four
+things about them are non-obvious.
+
+- **`public/javascripts/live_region.js` plus `shared/_live_status` poll one region.** Every 20 s it
+  re-fetches the same URL and swaps the single `[data-live]` element, matched by id. One request at
+  a time: a tick while one is in flight is skipped, not queued, and each request aborts after 15 s,
+  so an older response can never land after a newer one and reset the stamp. It holds while the tab
+  is hidden, a `<details>` in the region is open, a field anywhere has focus, or focus is inside
+  the region — except a focused `<summary>` of a *closed* panel, because Chrome on Android focuses
+  a tapped summary and the hold would otherwise never release. A response without the region (an
+  error page, the login page after the session expired) swaps nothing and the stamp keeps counting.
+  Without JavaScript the status line stays hidden: the rule is `.live-status:not([hidden])`, because
+  an author `display` beats the `hidden` attribute — which is exactly the bug review caught. Its
+  spec runs the shipped script under `node` and raises if node is missing.
+- **The standings screen's log-link cells are hidden by an external rule only.**
+  `features/logs/log.feature:29-61` clicks «(лог по уровню)»/«(лог по игре)» on this page, and
+  rack-test ignores external CSS, so the cells stay in the row and phones hide them by stylesheet.
+  Never an inline `style`, a `hidden` attribute, or a move into the closed `<details>` — the same
+  construction as the locale dropdown above. Phones reach the logs through the panel's «Лог уровня»/
+  «Лог игры» buttons, whose labels differ so `click_link` never sees two matches.
+- **The phone row reserves the panel button's width as right padding for its full height.** A grid
+  version collapsed the time column on long level names. The button is an icon whose label is
+  clipped and transparent, still text for screen readers. `.ops`/`.opbar`: the bar is last in the
+  markup so it can stick to the bottom on phones, and flex `order` puts it (and the superadmin
+  «Коды на уровнях» fieldset) back on top from 48rem.
+- **The full log's ✓ is `Level#find_question_by_answer`**, the game's own crediting rule, so it
+  cannot disagree with scoring. That is why `show_full_log` preloads `:options` (`Question#quiz?`
+  reads them) and `full_log_queries_spec` stays flat.
+
+One lesson from building it: parallel agents running temporary CSS mutations in the same worktree
+caused a real regression — a mutation's deletion was committed by another agent. Mutation checks
+must run with no other writer.
 
 ## Stylesheets and scripts are versioned by content
 

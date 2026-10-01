@@ -25,15 +25,16 @@ describe "the home page, measured", :layout, type: :request do
   def probe(theme)
     <<~JS
       document.documentElement.setAttribute("data-theme", "#{theme}");
-      var tappables = Array.prototype.slice.call(document.querySelectorAll(".home .btn, .home .link-tap, .home button"));
+      var tappables = Array.prototype.slice.call(document.querySelectorAll(".home .btn, .home .link-tap, .home button, .home a.name, .home .next-game h3 a"));
       var tags = Array.prototype.slice.call(document.querySelectorAll(".home .tag"));
       var nums = Array.prototype.slice.call(document.querySelectorAll(".timeline .num"));
       var home = document.querySelector(".home");
       function tag(el) { return el.tagName.toLowerCase() + (el.className ? "." + String(el.className).split(" ").join(".") : ""); }
-      var tightPairs = [];
+      var tightPairs = [], pairCount = 0;
       Array.prototype.slice.call(document.querySelectorAll(".home-upcoming, #how-to-play, .home-organizers")).forEach(function (sec) {
         var kids = Array.prototype.slice.call(sec.children);
         for (var i = 1; i < kids.length; i++) {
+          pairCount++;
           var gap = kids[i].getBoundingClientRect().top - kids[i - 1].getBoundingClientRect().bottom;
           if (gap < 8) tightPairs.push((sec.id ? "#" + sec.id : tag(sec)) + ": " + tag(kids[i - 1]) + " -> " + tag(kids[i]) + " (" + Math.round(gap * 10) / 10 + "px)");
         }
@@ -46,6 +47,8 @@ describe "the home page, measured", :layout, type: :request do
       });
       var RESULT = {
         tightPairs: tightPairs,
+        pairCount: pairCount,
+        tagCount: tags.length,
         theme: document.documentElement.getAttribute("data-theme"),
         tappableCount: tappables.length,
         shortTaps: tappables.filter(function (el) { return el.getBoundingClientRect().height < 43.5; })
@@ -84,6 +87,7 @@ describe "the home page, measured", :layout, type: :request do
           end
 
           it "keeps every status tag on one line and on screen" do
+            expect(m["tagCount"]).to be >= 1
             expect(m["wrappedTags"]).to eq([])
             expect(m["tagsInside"]).to be(true)
           end
@@ -93,6 +97,7 @@ describe "the home page, measured", :layout, type: :request do
           end
 
           it "keeps a visible gap between blocks inside each section" do
+            expect(m["pairCount"]).to be > 0
             expect(m["tightPairs"]).to eq([])
           end
 

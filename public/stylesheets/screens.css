@@ -706,9 +706,10 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 
 .game-rows { list-style: none; }
 .game-row { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3);
-            padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+            padding: var(--space-1) 0; border-bottom: 1px solid var(--border); }
 .game-row > div { min-width: 0; }
 .game-row .name { font-weight: 600; overflow-wrap: anywhere; }
+.game-row .name, .next-game h3 a { display: inline-flex; align-items: center; min-height: var(--tap); }
 .game-row .when { font-size: var(--text-sm); color: var(--text-dim); }
 
 .timeline { list-style: none; display: flex; flex-direction: column; gap: var(--space-4); }

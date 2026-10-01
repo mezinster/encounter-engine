@@ -33,7 +33,7 @@
     <%= f.label :available_locale_list, t("games.available_locales_label") %>
     <% I18n.available_locales.each do |locale| %>
       <% is_primary = locale.to_s == @game.primary_locale.to_s %>
-      <label>
+      <label class="check">
         <% if is_primary %>
           <%= check_box_tag "game[available_locale_list][]", locale, true, :disabled => true %>
           <%= hidden_field_tag "game[available_locale_list][]", locale %>
@@ -41,7 +41,7 @@
           <%= check_box_tag "game[available_locale_list][]", locale,
                             @game.available_locale_list.include?(locale.to_s) %>
         <% end %>
-        <%= t("locales.#{locale}") %>
+        <span><%= t("locales.#{locale}") %></span>
       </label>
     <% end %>
   </div>
@@ -60,12 +60,10 @@
     <%= f.text_field :max_team_number %>
   </div>
   <div class="field">
-    <%= f.label :visibility, t("games.form.is_draft") %>
-    <%= f.check_box :visibility, {}, "draft", "listed" %>
+    <label class="check"><%= f.check_box :visibility, {}, "draft", "listed" %> <span><%= t("games.form.is_draft") %></span></label>
   </div>
   <div class="field">
-    <%= f.label :points_enabled, t("games.form.points_enabled") %>
-    <%= f.check_box :points_enabled %>
+    <label class="check"><%= f.check_box :points_enabled %> <span><%= t("games.form.points_enabled") %></span></label>
   </div>
   <div class="field">
     <%= f.label :level_completion_points, t("games.form.level_completion_points") %>

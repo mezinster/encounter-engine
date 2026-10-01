@@ -190,6 +190,11 @@ fieldset.field > legend { margin-bottom: var(--space-1); color: var(--text-dim);
   color: var(--text);
   font-size: inherit;
 }
+/* An invalid checkbox or radio: FieldErrorMarkup marks the control
+   (is-invalid, aria-invalid) and appends its .field-error span inside the
+   label; the hand-written label.check is never marked itself. */
+.field label.check:has(.is-invalid) { color: var(--danger); }
+.check .field-error { margin-top: 0; }
 
 /* --- Tables --------------------------------------------------------------
  * Real table at width; stacked cards below. The wrapper also lets a wide

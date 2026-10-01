@@ -3,10 +3,7 @@
 
 <%= form_with url: game_translation_runs_path(@game), method: :post do %>
   <% @locales.each do |locale| %>
-    <label>
-      <%= check_box_tag "locales[]", locale, false %>
-      <%= t("locales.#{locale}") %>
-    </label>
+    <label class="check"><%= check_box_tag "locales[]", locale, false %> <span><%= t("locales.#{locale}") %></span></label>
   <% end %>
   <%= submit_tag t("translations.new.submit"), :class => "btn btn--go" %>
 <% end %>

@@ -46,8 +46,8 @@
       phrased as the absence of the other. %>
   <fieldset class="field">
     <legend><%= t("levels.form.codes_rule") %></legend>
-    <label><%= f.radio_button :any_code_passes, true %> <%= t("levels.codes_rule_any") %></label>
-    <label><%= f.radio_button :any_code_passes, false %> <%= t("levels.codes_rule_all") %></label>
+    <label class="check"><%= f.radio_button :any_code_passes, true %> <span><%= t("levels.codes_rule_any") %></span></label>
+    <label class="check"><%= f.radio_button :any_code_passes, false %> <span><%= t("levels.codes_rule_all") %></span></label>
   </fieldset>
   <%= render "game_files/picker", :game => @level.game, :attachable => @level,
                                   :param_key => "level", :active_locale => active_locale %>

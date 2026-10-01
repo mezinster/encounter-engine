@@ -42,9 +42,9 @@ describe "the operator's standings, measured", :layout, type: :request do
     <<~JS
       document.documentElement.setAttribute("data-theme", "#{theme}");
       // Server-rendered bar text, captured before the probe touches anything.
-      // The parser closes the <p class="game-control"> before the button_to form,
-      // so the bar's text is read from the whole .opbar (live status is hidden
-      // and empty at this point).
+      // The bar's text is read from the whole .opbar, not just .game-control
+      // (live status is hidden and empty at this point). The control is a div
+      // because a <p> cannot contain the button_to form.
       var barTextBeforeProbe = document.querySelector(".opbar").textContent.replace(/\\s+/g, " ").trim();
       var pauseLabel = document.querySelector(".opbar form.button_to button").textContent.trim();
       var status = document.querySelector("[data-live-status]");

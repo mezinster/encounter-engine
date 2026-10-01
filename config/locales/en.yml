@@ -1253,6 +1253,13 @@ en:
               missing_primary: "must include the game's primary language"
             primary_locale:
               settled: "cannot be changed once translations exist"
+        game_run:
+          attributes:
+            starts_at:
+              format: "%{message}"
+              blank: "You did not set the game's start date"
+            registration_deadline:
+              format: "%{message}"
         game_entry:
           attributes:
             game:

@@ -1322,6 +1322,13 @@ tr:
               missing_primary: "oyunun ana dilini içermelidir"
             primary_locale:
               settled: "çeviriler eklendikten sonra değiştirilemez"
+        game_run:
+          attributes:
+            starts_at:
+              format: "%{message}"
+              blank: "Oyunun başlangıç tarihini belirtmediniz"
+            registration_deadline:
+              format: "%{message}"
         game_entry:
           attributes:
             game:

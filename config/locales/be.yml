@@ -1266,6 +1266,13 @@ be:
               missing_primary: "павінны ўключаць асноўную мову гульні"
             primary_locale:
               settled: "нельга змяніць пасля таго, як дададзены пераклады"
+        game_run:
+          attributes:
+            starts_at:
+              format: "%{message}"
+              blank: "Вы не ўказалі дату пачатку гульні"
+            registration_deadline:
+              format: "%{message}"
         game_entry:
           attributes:
             game:

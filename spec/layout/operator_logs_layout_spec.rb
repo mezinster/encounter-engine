@@ -103,7 +103,12 @@ describe "the operator log screens, measured", :layout, type: :request do
         var s = getComputedStyle(el); return (s.overflowX === "auto" || s.overflowX === "scroll") && el.scrollWidth > el.clientWidth + 1; });
       var teamCells = Array.prototype.slice.call(document.querySelectorAll("table.log-matrix tr:not(.log-level-row) td"));
       var firstTeamRow = document.querySelector("table.log-matrix tr:not(.log-level-row)");
+      var shortRows = Array.prototype.slice.call(document.querySelectorAll("#livechannel tbody tr")).filter(function (tr) {
+        var t = tr.textContent;
+        return ["#{long_answer}", "#{long_level}", "#{long_team}"].every(function (long) { return t.indexOf(long) === -1; }); });
       var RESULT = {
+        liveShortRowCount: shortRows.length,
+        liveShortRowMaxHeight: shortRows.reduce(function (max, tr) { return Math.max(max, tr.getBoundingClientRect().height); }, 0),
         theme: document.documentElement.getAttribute("data-theme"),
         hOverflow: document.documentElement.scrollWidth - vw,
         innerScrollers: scrollers.map(function (el) { return (el.id || el.className || el.tagName) + ":" + el.scrollWidth + "/" + el.clientWidth; }),
@@ -131,6 +136,13 @@ describe "the operator log screens, measured", :layout, type: :request do
           if name == "phone"
             it "has no inner sideways scroller" do
               expect(m["innerScrollers"]).to eq([])
+            end
+
+            if page == "live channel"
+              it "keeps a short entry to its two lines, not one line per fragment" do
+                expect(m["liveShortRowCount"]).to be > 0
+                expect(m["liveShortRowMaxHeight"]).to be <= 90
+              end
             end
 
             if page == "full log"

@@ -824,6 +824,9 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
   /* Live channel as two lines: time · team / level — code. */
   #livechannel .lc-time, #livechannel .lc-team,
   #livechannel .lc-level, #livechannel .lc-code { display: inline; padding: 0; }
+  /* components.css makes every card-cell ::before a block; the separators
+     here must stay inline or each becomes its own line. */
+  #livechannel td::before { display: inline; }
   #livechannel .lc-team::before { content: " · "; color: var(--text-dim); }
   #livechannel .lc-level::before { content: "\A"; white-space: pre; }
   #livechannel .lc-code::before { content: " — "; color: var(--text-dim); }

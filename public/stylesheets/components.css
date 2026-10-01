@@ -228,6 +228,19 @@ th {
   }
 }
 
+/* .table--compact: a .table--cards table whose rows are short enough to read
+ * as lines rather than labelled cards -- the operator's standings and live
+ * channel, read at a glance mid-game. The per-cell labels go; each screen
+ * arranges its own cells (screens.css: .standings, #livechannel). Long
+ * unbroken names and answers wrap inside the card instead of widening it. */
+@media (max-width: 47.99rem) {
+  .table--compact td::before { content: none; }
+  .table--compact td { padding: 0 var(--space-1); overflow-wrap: anywhere; }
+}
+
+/* The test-run invite link on the game page is one unbroken URL. */
+code { overflow-wrap: anywhere; }
+
 /* --- File table thumbnails ------------------------------------------------
  * game_files/_file_table.html.erb (both :manage and :picker modes) renders
  * the thumbnail cell as a real <img> at the "thumb" variant -- up to 320px

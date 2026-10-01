@@ -88,6 +88,11 @@
   width: 100%;
   margin: 0 auto;
   min-width: 0;
+  /* break-word, not anywhere, so a table's min-content width and therefore
+     desktop column layout are unchanged; it only stops a long unbroken name
+     or answer in block text from pushing the page sideways at 390px
+     (measured 93-146px on four operator screens). */
+  overflow-wrap: break-word;
 }
 
 /* Tap-target floor for the primary navigation. These were plain inline text

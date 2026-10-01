@@ -8,7 +8,8 @@
  *
  * It HOLDS -- skips the tick, does not queue it -- while the tab is hidden,
  * while any <details> in the region is open (an intervention panel), while
- * focus is inside the region (except on a closed panel's summary), or while a
+ * KEYBOARD focus (:focus-visible) is inside the region -- held by default when
+ * the browser cannot tell, except on a closed panel's summary -- or while a
  * form field has focus anywhere on the page; and re-checks after the fetch,
  * so a panel opened while a request was in flight is not swapped away. A
  * response without the region (an error page, the login page after the

@@ -413,7 +413,9 @@ So:
   button; the refresh status line hidden until the script runs; no page or inner sideways scroll;
   and `operator_logs_layout_spec.rb`, which measures the full log (restacked on phones, still a
   grid on desktop), the live channel, per-team level and game logs, the game page and the admin
-  entries, each page guarded to render the long strings it measures, with no sideways scroll —
+  entries, each page guarded to render the long strings it measures, with no sideways scroll, plus
+  the live channel's phone row-height check (short rows <= 90px, with a non-empty guard; rows
+  carrying the long strings are excluded because they must wrap) —
   all eight driving the same
   `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
   spec once a second screen needed measuring. A new screen with real layout risk gets a ninth file
@@ -723,12 +725,12 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 3070 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
-  measured 2026-10-01 at the commit that carries this line (the asset-versioning fix added five). (This line said 2930 when last
+- **RSpec** — 3071 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+  measured 2026-10-01 at 61ba83f6, the operator-mobile branch's last code commit. (This line said 2930 when last
   written, and the real count at this branch's starting point was already 2955: it had drifted in
   the interval, not been mis-measured. The widgets-and-review branch's new specs took it to 2978,
   and its follow-up branch's seven more to 2985, measured at that branch's last code commit; the guest-landing branch then took it from 2985 to
-  3040, measured at its last code commit; the operator-mobile branch then took it from 3045 to 3070.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
+  3040, measured at its last code commit; the asset-versioning fix then took it from 3040 to 3045, and the operator-mobile branch from 3045 to 3071, measured at its last code commit.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
   (2026-08-26, correct on the day) → 2920 when the perf-probe record-schema work added sixteen
   examples → 2930 when the VM-scaling fixes added ten more, six for `VMScale::Policy.affordability`
   and four for the committed role definitions. **The 2920 was stale before it merged**, and in an

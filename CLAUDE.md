@@ -711,8 +711,8 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 3040 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
-  measured 2026-10-01 at the commit that carries this line. (This line said 2930 when last
+- **RSpec** — 3045 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+  measured 2026-10-01 at the commit that carries this line (the asset-versioning fix added five). (This line said 2930 when last
   written, and the real count at this branch's starting point was already 2955: it had drifted in
   the interval, not been mis-measured. The widgets-and-review branch's new specs took it to 2978,
   and its follow-up branch's seven more to 2985, measured at that branch's last code commit; the guest-landing branch then took it from 2985 to
@@ -880,6 +880,23 @@ for guests (`dashboard.feature`); and never «Вы не авторизованы
 links use per-locale anchor keys (`index.index.manual_player_anchor`/`manual_author_anchor`),
 verified against each shipped manual by `spec/i18n_home_spec.rb` — renaming a manual heading
 reddens it, which is the point.
+
+## Stylesheets and scripts are versioned by content
+
+There is no asset pipeline: CSS and JS are plain files under `public/`, and the server sends no
+`Cache-Control` for them, so browsers cache them heuristically. On 2026-10-01 that showed up as the
+rebuilt home page rendering **unstyled** from a local container — the server was already sending the
+new `screens.css`, but the browser kept the copy it had from before the deploy, paired with new
+HTML. So every template links them through `ApplicationHelper#versioned_asset`, which appends
+`?v=<first 12 hex of the file's SHA-256>`: the URL changes exactly when the file does, and only that
+file is re-fetched after a deploy. `spec/assets_versioned_spec.rb` fails if any template links a
+`/stylesheets/` or `/javascripts/` file by a literal URL again. The layout harness
+(`spec/support/layout_measurement.rb`) strips the `?v=` before mapping a link to a file on disk.
+
+Cache headers were deliberately left alone: a year-long `immutable` header would also pin the
+unversioned public files (favicon, uploads) for a year, and the versioned URLs already fix
+staleness. If someone reports a half-styled page, ask them to hard-reload first — a copy cached
+before this change has no version in its URL — and then check the URL carries a `?v=`.
 
 ## Conventions
 

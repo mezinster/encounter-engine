@@ -5,12 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <%= csrf_meta_tags %>
-    <link rel="stylesheet" href="/stylesheets/tokens.css">
-    <link rel="stylesheet" href="/stylesheets/base.css">
-    <link rel="stylesheet" href="/stylesheets/layout.css">
-    <link rel="stylesheet" href="/stylesheets/components.css">
-    <link rel="stylesheet" href="/stylesheets/screens.css">
-    <script src="/javascripts/theme.js"></script>
+    <link rel="stylesheet" href="<%= versioned_asset("/stylesheets/tokens.css") %>">
+    <link rel="stylesheet" href="<%= versioned_asset("/stylesheets/base.css") %>">
+    <link rel="stylesheet" href="<%= versioned_asset("/stylesheets/layout.css") %>">
+    <link rel="stylesheet" href="<%= versioned_asset("/stylesheets/components.css") %>">
+    <link rel="stylesheet" href="<%= versioned_asset("/stylesheets/screens.css") %>">
+    <script src="<%= versioned_asset("/javascripts/theme.js") %>"></script>
     <%= yield :head %>
   </head>
   <body>

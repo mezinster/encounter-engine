@@ -50,7 +50,9 @@ module LayoutMeasurement
   # hard-codes width and height; the day that becomes an intrinsic size, a
   # harness that silently measures nothing would have gone on passing.
   def measure(html, width, height, script, tmp_name: "layout-measure.html")
-    page = html.gsub(%r{href="/(stylesheets/[^"]+)"}) do
+    # The ?v= digest (ApplicationHelper#versioned_asset) is dropped: it names a
+    # version of the URL, not a file on disk.
+    page = html.gsub(%r{href="/(stylesheets/[^"?]+)(?:\?[^"]*)?"}) do
       %(href="file://#{Rails.root.join('public', Regexp.last_match(1))}")
     end
     # The delivery route is dynamic (variant, authorization, streaming); none of

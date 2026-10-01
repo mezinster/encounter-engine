@@ -1,0 +1,15 @@
+<% entry = home_entry_for(game) %>
+<% if game.created_by?(current_user) %>
+  <p class="home-note"><%= t("dashboard.coming_games.you_are_author") %></p>
+<% elsif current_user.captain? %>
+  <%= render "shared/game_entry_controls", game_entry: entry, game: game, team: current_user.team, primary: true %>
+<% elsif current_user.team %>
+  <% if entry.nil? || %w[recalled canceled].include?(entry.status) %>
+    <p class="home-note"><%= t("index.index.member_note") %></p>
+  <% else %>
+    <% text, css = home_status_tag(game, entry: entry) %>
+    <span class="<%= css %>"><%= text %></span>
+  <% end %>
+<% else %>
+  <%= link_to t("index.index.no_team"), teams_path, class: "link-tap" %>
+<% end %>

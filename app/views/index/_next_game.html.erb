@@ -1,0 +1,12 @@
+<% text, css = home_status_tag(game) %>
+<article class="card next-game">
+  <h3><%= link_to game.name, game_path(game) %></h3>
+  <span class="<%= css %>"><%= text %></span>
+  <div class="when">
+    <%= game.starts_at ? l_with_zone(game.starts_at, format: :home_card) : t("games.show.starts_at_not_set") %>
+  </div>
+  <div class="meta">
+    <%= t("index.index.teams_count", count: counts[:registered].fetch(game.id, 0), max: game.max_team_number) %>
+  </div>
+  <div class="next-game-action"><%= render("index/card_action", game: game) if logged_in? %></div>
+</article>

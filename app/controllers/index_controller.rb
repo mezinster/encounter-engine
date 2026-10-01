@@ -1,8 +1,8 @@
 # -*- encoding : utf-8 -*-
 class IndexController < ApplicationController
-  # Same scope as GamesController#index's no-user_id branch: a withdrawn or
-  # draft game must stay off the home page exactly as it stays off /games.
   def index
-    @games = Game.visible
+    # The home page's games, classified and capped (app/services/upcoming_games.rb).
+    # The full list lives at /games behind the "Список игр" link.
+    @upcoming = UpcomingGames.call
   end
 end

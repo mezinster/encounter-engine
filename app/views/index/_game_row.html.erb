@@ -1,0 +1,10 @@
+<% text, css = home_status_tag(game, entry: home_entry_for(game), gated_live: gated_status.fetch(game.id, false)) %>
+<li class="game-row">
+  <div>
+    <%= link_to game.name, game_path(game), class: "name" %>
+    <% if game.starts_at && !game.pass_required? %>
+      <div class="when"><%= l_with_zone(game.starts_at, format: :home_row) %></div>
+    <% end %>
+  </div>
+  <span class="<%= css %>"><%= text %></span>
+</li>

@@ -56,6 +56,18 @@
 .field { display: block; margin-bottom: var(--space-4); }
 .field > label { display: block; margin-bottom: var(--space-1); color: var(--text-dim); font-size: var(--text-sm); }
 
+/* Set by FieldErrorMarkup (app/services/field_error_markup.rb), Rails'
+   field_error_proc here. A control and its label are marked in place; the
+   control's own messages follow it in .field-error. */
+label.is-invalid { color: var(--danger); }
+.is-invalid:is(input, select, textarea) { border-color: var(--danger); }
+.field-error {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
 /* The one-time generated password shown on users/welcome_password when the
    welcome letter couldn't be sent. SecureRandom.alphanumeric emits l/1/I and
    O/0, and this is a string a user has to transcribe under time pressure,

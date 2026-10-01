@@ -71,7 +71,9 @@ module ApplicationHelper
     # automatically); CGI.escapeHTML escapes it regardless.
     header_message = header % [ERB::Util.html_escape(errors.size), errors.size == 1 ? "" : "s"]
 
-    markup = +"<div class='#{ERB::Util.html_escape(error_class)}'>#{header_message}<ul>"
+    # role="alert": the summary appears on the response to a failed submit,
+    # and a screen reader should announce it rather than leave it to be found.
+    markup = +"<div class='#{ERB::Util.html_escape(error_class)}' role='alert'>#{header_message}<ul>"
     errors.full_messages.each { |message| markup << (build_li % CGI.escapeHTML(message.to_s)) }
     markup << "</ul></div>"
 

@@ -180,8 +180,8 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1088 leaf
-  keys** each (measured 2026-10-01): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1179 leaf
+  keys** each (`be` 1180, its one deliberate `date.abbr_month_names` override; measured 2026-10-01): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
@@ -218,6 +218,12 @@ add steps there or Cucumber will auto-require them a second time.
   it from 1088 to 1095, measured at both ends: `shared.live_status.{updated,pause,resume}`,
   `game_passings.index.{level_log_button,game_log_button}` and
   `logs.show_full_log.{no_answers,accepted}`, in every file.
+  (The headline figure above still said 1088 when the operator-mobile branch landed at 1095 —
+  the seventh stale instance, caught by the next branch.) The E1 polish branch then took it from
+  1095 to 1179, measured at both ends: 42 `titles.*` keys, 33 `empty_states.*`, the `game_run`
+  sentence messages and `index.index.team_separator`, less the two keys it deleted
+  (`index.index.title`, `admin.entries.none`), in every file; `be` sits one higher at 1180 because
+  it alone overrides `date.abbr_month_names` (lowercase), which `spec/i18n_spec.rb` exempts.
   Recount rather than reason about it:
 
 ```bash
@@ -725,12 +731,12 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 3071 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
-  measured 2026-10-01 at 61ba83f6, the operator-mobile branch's last code commit. (This line said 2930 when last
+- **RSpec** — 3170 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+  measured 2026-10-01 at 913cd86d, the E1 polish branch's last code commit. (This line said 2930 when last
   written, and the real count at this branch's starting point was already 2955: it had drifted in
   the interval, not been mis-measured. The widgets-and-review branch's new specs took it to 2978,
   and its follow-up branch's seven more to 2985, measured at that branch's last code commit; the guest-landing branch then took it from 2985 to
-  3040, measured at its last code commit; the asset-versioning fix then took it from 3040 to 3045, and the operator-mobile branch from 3045 to 3071, measured at its last code commit.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
+  3040, measured at its last code commit; the asset-versioning fix then took it from 3040 to 3045, and the operator-mobile branch from 3045 to 3071, measured at its last code commit; the E1 polish branch then took it from 3071 to 3170, measured at its last code commit.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
   (2026-08-26, correct on the day) → 2920 when the perf-probe record-schema work added sixteen
   examples → 2930 when the VM-scaling fixes added ten more, six for `VMScale::Policy.affordability`
   and four for the committed role definitions. **The 2920 was stale before it merged**, and in an
@@ -929,6 +935,49 @@ things about them are non-obvious.
 One lesson from building it: parallel agents running temporary CSS mutations in the same worktree
 caused a real regression — a mutation's deletion was committed by another agent. Mutation checks
 must run with no other writer.
+
+## Titles, icons and empty states
+
+- **Every screen sets its own `<title>`** on line 1 of its template:
+  `<% page_title t("titles.x"), game: @game %>`, rendered by `ApplicationHelper#page_title_text` as
+  «Page — Game · Активные городские игры». Player screens pass `game_name:` with the *translated*
+  name (the same expression their heading uses) so the tab matches the page; operator and author
+  screens pass `game:` (primary-locale name). Because it is set from the template, validation
+  re-renders are titled too. Two templates are deliberately untitled: `users/show` (a dead view
+  that can only raise) and `logs/index` (no route reaches it).
+- **The title now carries names, so «должен увидеть» looks at the body only.**
+  `features/steps/result_steps.rb` asserts `have_text(:all, …)` against `/html/body`, not the
+  document. Before E1 the title was the constant site name and the difference was invisible; once
+  it carried game, team and level names, ~58 frozen positive assertions could pass from `<head>`
+  alone with the page body broken — and nothing went red. Proven by mutation: with the game name
+  removed from `games/show`'s body, the scoped step fails and the unscoped one still passes. Keep
+  any new text step scoped the same way.
+- **The home-screen icon is one SVG, rendered once.** `public/icons/pin.svg` (the favicon is a copy)
+  is the source; `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` and
+  `public/apple-touch-icon.png` were rendered from it with chrome-headless-shell — no ImageMagick
+  here. To re-render, write a scratch page `<img src="file:///ABS/pin.svg" style="display:block;
+  width:Npx;height:Npx">` and run `chrome-headless-shell --headless --disable-gpu --hide-scrollbars
+  --default-background-color=00000000 --window-size=N,N --screenshot=OUT file:///scratch.html`.
+  The `favicon.ico` link says `sizes="32x32"`, not `"any"`: Chromium prefers an ICO declared `any`
+  over the SVG, and the ICO is the old Rails one.
+- **`public/site.webmanifest` uses `display: "browser"`, not `standalone`, on purpose**: logout is a
+  plain `GET /logout` link and several flows rely on the browser's own back button, so a shell
+  without browser chrome would strand people.
+- **`theme.js` keeps `<meta name="theme-color">` in step with the theme toggle** (on load and on
+  every toggle); `spec/theme_script_spec.rb` runs the shipped script under `node` and ties its two
+  colours to `tokens.css`'s `--bg`, so changing a background without the script reddens it.
+- **`shared/_empty_state` is how a list says it is empty.** A quiet card (title, optional sentence,
+  optional plain link — never `.btn--go`) or a one-line `:line` variant; `heading:` is h2/h3/h4,
+  chosen to fit the page outline. The link appears only where the viewer may act, and never
+  duplicates a button the page already has. Callers keep their containers and ids, and on
+  live-refreshed screens the empty state sits **inside** the `[data-live]` element so one poll
+  swaps it for rows. The live channel keeps its table header above the card because
+  `live-channel.feature:46` asserts the column names on an empty channel.
+- **Every checkbox and radio is a full-size `label.check` row**, except quiz options (their own
+  answer UI) and the drawer toggle. `FieldErrorMarkup` adds no `.field-error` span to a checkbox or
+  radio — inside a wrapping label it would land mid-row and become part of the control's
+  accessible name — so an invalid row is marked by `.field label.check:has(.is-invalid)` (the
+  control is inside the label, so only `:has()` can style the label from it) plus the summary box.
 
 ## Stylesheets and scripts are versioned by content
 

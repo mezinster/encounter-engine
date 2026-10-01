@@ -45,7 +45,9 @@ RSpec.describe "internationalization" do
   %i[uk ka tr be pl].each do |locale|
     it "only defines keys that also exist in ru (#{locale}.yml may be an incomplete subset)" do
       data = locale_data(locale)
-      expect(data.keys - ru.keys).to eq([])
+      # date.abbr_month_names is the one deliberate exception: ru/en take theirs
+      # from rails-i18n, while be overrides it to get lowercase abbreviations.
+      expect(data.keys - ru.keys - %w[date.abbr_month_names]).to eq([])
     end
   end
 

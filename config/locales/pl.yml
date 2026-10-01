@@ -1068,7 +1068,6 @@ pl:
       go_to_team_room: "Przejdź do pokoju drużyny"
   index:
     index:
-      title: "Strona główna"
       games_list: "Lista gier"
       hero_title: "Gry miejskie: znajdź kod jako pierwszy"
       hero_lead: "Drużyny szukają kodów w całym mieście — z telefonu."
@@ -1353,6 +1352,18 @@ pl:
               settled: "nie można zmienić po dodaniu tłumaczeń"
         game_run:
           attributes:
+            max_team_number:
+              format: "%{message}"
+              blank: "Nie podano liczby drużyn"
+              not_a_number: "Zakres liczby drużyn to od 1 do 10000"
+              greater_than: "Zakres liczby drużyn to od 1 do 10000"
+              less_than: "Zakres liczby drużyn to od 1 do 10000"
+            ordinal:
+              format: "%{message}"
+              blank: "Nie udało się ustalić numeru przebiegu"
+              not_a_number: "Nie udało się ustalić numeru przebiegu"
+              greater_than: "Nie udało się ustalić numeru przebiegu"
+              taken: "Przebieg o takim numerze już istnieje"
             starts_at:
               format: "%{message}"
               blank: "Nie podano daty rozpoczęcia gry"

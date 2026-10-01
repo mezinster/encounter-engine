@@ -1107,7 +1107,6 @@ tr:
       go_to_team_room: "Takım odasına git"
   index:
     index:
-      title: "Ana sayfa"
       games_list: "Oyun listesi"
       hero_title: "Şehir oyunları: kodu herkesten önce bul"
       hero_lead: "Takımlar şehrin dört bir yanında kod arar — telefondan."
@@ -1396,6 +1395,18 @@ tr:
               settled: "çeviriler eklendikten sonra değiştirilemez"
         game_run:
           attributes:
+            max_team_number:
+              format: "%{message}"
+              blank: "Takım sayısını belirtmediniz"
+              not_a_number: "Takım sayısı aralığı 1 ile 10000 arasındadır"
+              greater_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
+              less_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
+            ordinal:
+              format: "%{message}"
+              blank: "Tur numarası belirlenemedi"
+              not_a_number: "Tur numarası belirlenemedi"
+              greater_than: "Tur numarası belirlenemedi"
+              taken: "Bu numaralı bir tur zaten var"
             starts_at:
               format: "%{message}"
               blank: "Oyunun başlangıç tarihini belirtmediniz"

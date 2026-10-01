@@ -13,7 +13,7 @@ describe "full-sentence validation messages" do
     # GameRun adds Game's own sentences (looked up from game.attributes.*) on its
     # own fields, so it needs the same bare format -- or the admin open-run alert
     # reads "Starts at Вы выбрали дату из прошлого".
-    "game_run"   => %w[starts_at registration_deadline],
+    "game_run"   => %w[starts_at registration_deadline max_team_number ordinal],
     "invitation" => %w[for_user recepient_nickname for_user_id],
     "level"      => %w[name text],
     "team"       => %w[name],

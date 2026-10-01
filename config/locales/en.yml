@@ -1036,7 +1036,6 @@ en:
       go_to_team_room: "Go to team room"
   index:
     index:
-      title: "Home page"
       games_list: "List of games"
       hero_title: "City games: find the code before anyone else"
       hero_lead: "Teams hunt for codes all over the city — from their phones."
@@ -1327,6 +1326,18 @@ en:
               settled: "cannot be changed once translations exist"
         game_run:
           attributes:
+            max_team_number:
+              format: "%{message}"
+              blank: "You did not set the number of teams"
+              not_a_number: "The number of teams must be between 1 and 10000"
+              greater_than: "The number of teams must be between 1 and 10000"
+              less_than: "The number of teams must be between 1 and 10000"
+            ordinal:
+              format: "%{message}"
+              blank: "Could not determine the run number"
+              not_a_number: "Could not determine the run number"
+              greater_than: "Could not determine the run number"
+              taken: "A run with this number already exists"
             starts_at:
               format: "%{message}"
               blank: "You did not set the game's start date"

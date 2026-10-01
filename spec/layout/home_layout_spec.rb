@@ -10,7 +10,8 @@ describe "the home page, measured", :layout, type: :request do
   def page_html(signed_in:)
     captain = create_user
     team = create_team(:captain => captain)
-    [["Ночной Бишкек", 1.day.from_now], ["Тайны старого города", 2.days.from_now],
+    [["Оченьдлинноеназваниеигрыбезпробеловкотороенедолжнорасширятьстраницу", 12.hours.from_now],
+     ["Ночной Бишкек", 1.day.from_now], ["Тайны старого города", 2.days.from_now],
      ["Очень длинное название игры, которое не должно сдвигать статус за край экрана", 3.days.from_now]].each do |name, at|
       game = create_game(:name => name)
       set_game_schedule!(game, :starts_at => at)

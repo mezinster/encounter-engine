@@ -92,6 +92,18 @@ RSpec.describe "layouts/application", type: :view do
     expect(rendered).to include("Команды")
     expect(rendered).to include(teams_path)
   end
+
+  it "escapes a game name in the title" do
+    view.define_singleton_method(:logged_in?) { false }
+    view.define_singleton_method(:current_user) { nil }
+    view.page_title(nil, game: double(:name => "<script>x</script>"))
+
+    render
+
+    title = Nokogiri::HTML(rendered).at_css("title")
+    expect(title.text).to eq("<script>x</script> · Активные городские игры")
+    expect(rendered).not_to include("<script>x</script> ·")
+  end
 end
 
 RSpec.describe "layouts/in_game", type: :view do

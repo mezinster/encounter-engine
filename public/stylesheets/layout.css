@@ -436,3 +436,4 @@
    Background and font-weight only -- .table--cards is already responsive
    (collapses to cards below 48rem), and anything that changes the row's box
    needs bin/measure-play-screen re-run to catch a new overflow or scroll. */
+.table--cards tr.is-you { background: var(--surface-2); font-weight: 600; }

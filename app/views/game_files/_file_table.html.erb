@@ -29,7 +29,10 @@
           <%= image_tag game_file_delivery_path(file.game, file, "thumb"),
                         :alt => file.filename, :class => "file-thumb-image" %>
         <% else %>
-          <span class="file-thumb-generic"><%= t("game_files.table.no_thumbnail") %></span>
+          <span class="file-thumb-generic">
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm7 1.5V9h5.5L13 3.5z"/></svg>
+            <span class="visually-hidden"><%= t("game_files.table.no_thumbnail") %></span>
+          </span>
         <% end %>
       </td>
       <td><%= file.filename %></td>

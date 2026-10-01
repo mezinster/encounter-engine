@@ -30,6 +30,12 @@ describe "the operator's standings screen", type: :request do
     expect(row.css("td.standings-log").map { |td| td["style"] }.compact).to be_empty
   end
 
+  it "names each panel button after its team, for screen readers" do
+    summary = row_for(playing).at_css("details > summary")
+    expect(summary.text.gsub(/\s+/, " ").strip).to eq("Вмешательство: #{playing.team.name}")
+    expect(summary.at_css("span.visually-hidden")).to be_present
+  end
+
   it "opens with full-size log buttons in the intervention panel" do
     panel = row_for(playing).at_css("details .team-panel-actions")
     buttons = panel.css("a.btn").map { |a| [a.text.strip, a["href"]] }

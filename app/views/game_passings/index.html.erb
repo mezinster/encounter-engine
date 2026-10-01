@@ -75,7 +75,7 @@
 
         <td class="standings-actions" data-label="<%= t("game_passings.index.interventions") %>">
           <details>
-            <summary class="btn team-disclosure"><%= t("game_passings.index.interventions") %></summary>
+            <summary class="btn team-disclosure"><span class="disclosure-label"><%= t("game_passings.index.interventions") %></span><span class="visually-hidden">: <%= game_passing.team.name %></span></summary>
             <%= render "intervention_controls", :game_passing => game_passing, :levels => @levels %>
           </details>
         </td>

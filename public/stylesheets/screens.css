@@ -112,7 +112,7 @@
    context for the number above it, not a number of equal standing. */
 .participation {
   color: var(--text-dim);
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 
 /* --- Admin: the stats screen's figure grid ------------------------------
@@ -130,11 +130,11 @@
   padding: var(--space-4);
 }
 
-.stat-value { font-size: 1.8rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.stat-value { font-size: var(--text-h1); font-weight: 650; font-variant-numeric: tabular-nums; }
 
 .stat-label {
   color: var(--text-dim);
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
@@ -182,7 +182,7 @@ ul.language-tabs li.incomplete a { color: var(--danger); border-color: var(--dan
 
 ul.language-tabs .missing-count {
   margin-left: var(--space-1);
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   opacity: 0.85;
 }
 
@@ -254,7 +254,7 @@ ul.language-tabs .missing-count {
    is an error -- .flash's go/danger treatment would overstate them. */
 .notice, .hint-text {
   color: var(--text-dim);
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 
 /* In-game locale switcher (shared/_content_language_switcher.html.erb) --
@@ -326,7 +326,7 @@ ul.language-tabs .missing-count {
      its own padding (including the iOS home-indicator inset below), so it
      needs none from .main. */
   margin-bottom: calc(-1 * var(--space-5));
-  z-index: 15;
+  z-index: var(--z-sticky);
   padding: var(--space-3) var(--space-4);
   /* Keeps the bar clear of the iOS home indicator. */
   padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
@@ -418,12 +418,12 @@ ul.language-tabs .missing-count {
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--text-dim);
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   overflow: hidden;
   text-align: left;
 }
 
-.attachment-generic-icon { font-size: 1.1rem; line-height: 1; flex: 0 0 auto; }
+.attachment-generic-icon { font-size: var(--text-lg); line-height: 1; flex: 0 0 auto; }
 
 .attachment-generic-filename {
   overflow-wrap: anywhere;

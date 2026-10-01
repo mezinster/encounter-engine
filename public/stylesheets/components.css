@@ -54,7 +54,7 @@
 
 /* --- Forms --------------------------------------------------------------- */
 .field { display: block; margin-bottom: var(--space-4); }
-.field > label { display: block; margin-bottom: var(--space-1); color: var(--text-dim); font-size: 0.9rem; }
+.field > label { display: block; margin-bottom: var(--space-1); color: var(--text-dim); font-size: var(--text-sm); }
 
 /* The one-time generated password shown on users/welcome_password when the
    welcome letter couldn't be sent. SecureRandom.alphanumeric emits l/1/I and
@@ -68,7 +68,7 @@
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   font-family: var(--font-mono);
-  font-size: 1.15rem;
+  font-size: var(--text-lg);
   letter-spacing: 0.02em;
   -webkit-user-select: all; /* Safari, incl. iOS Safari, supports unprefixed user-select only from 17.0 */
   user-select: all;
@@ -110,7 +110,7 @@ table { width: 100%; border-collapse: collapse; }
 th, td { padding: var(--space-3); text-align: left; border-bottom: 1px solid var(--border); }
 th {
   color: var(--text-dim);
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   font-weight: 600;
@@ -133,7 +133,7 @@ th {
     content: attr(data-label);
     display: block;
     color: var(--text-dim);
-    font-size: 0.72rem;
+    font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: 0.07em;
   }
@@ -163,7 +163,7 @@ th {
   width: 48px;
   height: 48px;
   color: var(--text-dim);
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -219,7 +219,7 @@ th {
   display: inline-block;
   padding: 2px var(--space-2);
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-dim);
@@ -244,4 +244,3 @@ th {
   width: 1px;
   height: 1px;
   overflow: hidden;
-}

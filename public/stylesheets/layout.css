@@ -43,7 +43,7 @@
      a phone -- and the very hamburger that had just been pressed, which is
      the only visible way back out on a touch device. The geometry that keeps
      the drawer clear of this bar is #drawer's top, below. */
-  z-index: 40;
+  z-index: var(--z-topbar);
   /* Same reason as .page above: without this, the grid item refuses to
      shrink below its content's intrinsic width. */
   min-width: 0;
@@ -79,7 +79,7 @@
    is nothing to win. */
 @media (max-width: 47.99rem) {
   .topbar { gap: var(--space-2); padding: var(--space-3); }
-  .topbar-time { font-size: 0.875rem; }
+  .topbar-time { font-size: var(--text-sm); }
 }
 
 .main {
@@ -144,7 +144,7 @@
   right: 0;
   /* Inside .topbar's stacking context (z-index 40), so this only orders the
      menu against its siblings in the header. */
-  z-index: 25;
+  z-index: var(--z-dropdown);
   display: none;
   min-width: 10rem;
   padding: var(--space-2);
@@ -209,7 +209,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
-  font-size: 1.2rem;
+  font-size: var(--text-xl);
   cursor: pointer;
 }
 
@@ -236,7 +236,7 @@
   border-right: 1px solid var(--border);
   transform: translateX(-100%);
   transition: transform 0.18s ease;
-  z-index: 30;
+  z-index: var(--z-drawer);
   overflow-y: auto;
 }
 
@@ -252,7 +252,7 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.18s ease;
-  z-index: 25;
+  z-index: var(--z-scrim);
 }
 
 #drawer-state:checked ~ .page .drawer-scrim { opacity: 1; pointer-events: auto; }
@@ -436,4 +436,3 @@
    Background and font-weight only -- .table--cards is already responsive
    (collapses to cards below 48rem), and anything that changes the row's box
    needs bin/measure-play-screen re-run to catch a new overflow or scroll. */
-.table--cards tr.is-you { background: var(--surface-2); font-weight: 600; }

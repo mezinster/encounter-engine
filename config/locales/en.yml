@@ -186,9 +186,14 @@ en:
         allowed_extensions: "Allowed file extensions"
         translation_model: "Translation model"
         translation_max_fields_per_run: "Maximum fields per translation run"
+    styleguide:
+      show:
+        title: "Styleguide"
+        intro: "Every shared component in the current theme. Switch the theme in the header to check the other."
     dashboard:
       show:
         title: "Overview"
+        styleguide_link: "Interface styleguide"
         games_by_status: "Games by status"
         editing_locked: "Editing frozen"
         totals: "Totals"

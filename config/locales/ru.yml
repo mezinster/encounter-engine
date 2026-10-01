@@ -186,9 +186,14 @@ ru:
         allowed_extensions: "Разрешённые расширения файлов"
         translation_model: "Модель для перевода"
         translation_max_fields_per_run: "Максимум полей за один перевод"
+    styleguide:
+      show:
+        title: "Стайлгайд"
+        intro: "Все общие компоненты в текущей теме. Переключите тему в шапке, чтобы проверить вторую."
     dashboard:
       show:
         title: "Обзор"
+        styleguide_link: "Стайлгайд интерфейса"
         games_by_status: "Игры по статусу"
         editing_locked: "Редактирование заморожено"
         totals: "Всего"

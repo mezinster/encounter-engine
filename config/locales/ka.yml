@@ -209,9 +209,14 @@ ka:
         allowed_extensions: "დაშვებული ფაილის გაფართოებები"
         translation_model: "თარგმანის მოდელი"
         translation_max_fields_per_run: "მაქსიმალური ველების რაოდენობა ერთ თარგმანზე"
+    styleguide:
+      show:
+        title: "სტილის გზამკვლევი"
+        intro: "ყველა საერთო კომპონენტი მიმდინარე თემაში. მეორის შესამოწმებლად თემა სათაურში გადართეთ."
     dashboard:
       show:
         title: "მიმოხილვა"
+        styleguide_link: "ინტერფეისის სტილის გზამკვლევი"
         audit_log: "მოქმედებების ჟურნალი"
         games_by_status: "თამაშები სტატუსის მიხედვით"
         editing_locked: "რედაქტირება გაყინულია"

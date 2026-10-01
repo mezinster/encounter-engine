@@ -1,0 +1,93 @@
+<div class="styleguide">
+  <h1><%= t("admin.styleguide.show.title") %></h1>
+  <p class="notice"><%= t("admin.styleguide.show.intro") %></p>
+
+  <h2>Type</h2>
+  <% %w[h1 h2 2xl xl lg md body sm xs].each do |step| %>
+    <p style="font-size: var(--text-<%= step %>)">--text-<%= step %> · Ночной город, уровень 3</p>
+  <% end %>
+
+  <h2>Colour</h2>
+  <div class="stat-grid">
+    <% %w[bg surface surface-2 border border-input text text-dim go time danger focus].each do |token| %>
+      <div class="stat">
+        <div style="height: 2.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--<%= token %>)"></div>
+        <div class="stat-label">--<%= token %></div>
+      </div>
+    <% end %>
+  </div>
+
+  <h2>Buttons</h2>
+  <p>
+    <button type="button" class="btn btn--go">Отправить</button>
+    <button type="button" class="btn">Сохранить</button>
+    <button type="button" class="btn btn--quiet">Отмена</button>
+    <button type="button" class="btn btn--danger">Удалить</button>
+  </p>
+  <p>
+    <button type="button" class="btn btn--go" disabled>Отправить</button>
+    <button type="button" class="btn" disabled>Сохранить</button>
+    <button type="button" class="btn btn--quiet" disabled>Отмена</button>
+    <button type="button" class="btn btn--danger" disabled>Удалить</button>
+  </p>
+
+  <h2>Inputs</h2>
+  <%= form_with :model => @valid_game, :url => admin_styleguide_path, :method => :get, :scope => :valid_game do |f| %>
+    <div class="field"><%= f.label :name, "Название" %><%= f.text_field :name %></div>
+    <div class="field"><%= f.label :max_team_number, "Команд" %><%= f.number_field :max_team_number %></div>
+    <div class="field"><label for="sg_email">E-mail</label><input type="email" id="sg_email" value="captain@example.com"></div>
+    <div class="field"><label for="sg_password">Пароль</label><input type="password" id="sg_password" value="secret"></div>
+    <div class="field"><label for="sg_search">Поиск</label><input type="search" id="sg_search"></div>
+    <div class="field"><label for="sg_url">Ссылка</label><input type="url" id="sg_url"></div>
+    <div class="field"><label for="sg_tel">Телефон</label><input type="tel" id="sg_tel"></div>
+    <div class="field"><label for="sg_date">Дата</label><input type="date" id="sg_date"></div>
+    <div class="field"><label for="sg_datetime">Начало</label><input type="datetime-local" id="sg_datetime"></div>
+    <div class="field"><label for="sg_select">Язык</label><select id="sg_select"><option>Русский</option><option>English</option></select></div>
+    <div class="field"><%= f.label :description, "Описание" %><%= f.text_area :description %></div>
+    <div class="field"><label for="sg_disabled">Отключено</label><input type="text" id="sg_disabled" value="только чтение" disabled></div>
+  <% end %>
+
+  <h2>Invalid</h2>
+  <%= error_messages_for @invalid_game, :header => "<h2>#{t("shared.error_header")}</h2>" %>
+  <%= form_with :model => @invalid_game, :url => admin_styleguide_path, :method => :get, :scope => :game do |f| %>
+    <div class="field"><%= f.label :name, "Название" %><%= f.text_field :name %></div>
+    <div class="field"><%= f.label :max_team_number, "Команд" %><%= f.number_field :max_team_number %></div>
+    <div class="field"><%= f.label :description, "Описание" %><%= f.text_area :description %></div>
+    <fieldset class="field">
+      <legend>Видимость</legend>
+      <label class="check"><%= f.radio_button :visibility, "draft" %> Черновик</label>
+      <label class="check"><%= f.radio_button :visibility, "listed" %> В списке</label>
+    </fieldset>
+  <% end %>
+
+  <h2>Checks</h2>
+  <label class="check"><input type="checkbox" checked> Начислять очки</label>
+  <label class="check"><input type="checkbox"> Разрешить пропуск уровня</label>
+  <label class="check"><input type="checkbox" disabled> Отключённый флажок</label>
+  <label class="check"><input type="radio" name="sg_radio" checked> Командная игра</label>
+  <label class="check"><input type="radio" name="sg_radio"> Одиночная игра</label>
+
+  <h2>File</h2>
+  <div class="field"><label for="sg_file">Вложение</label><input type="file" id="sg_file"></div>
+
+  <h2>Flash</h2>
+  <p class="flash flash--notice" role="status">Игра сохранена.</p>
+  <p class="flash flash--error" role="alert">Неверный код.</p>
+
+  <h2>Table</h2>
+  <table class="table--cards">
+    <thead><tr><th>Команда</th><th>Уровень</th><th>Время</th></tr></thead>
+    <tbody>
+      <tr><td data-label="Команда">Совы</td><td data-label="Уровень">3</td><td data-label="Время">01:12:40</td></tr>
+      <tr><td data-label="Команда">Ёжики</td><td data-label="Уровень">2</td><td data-label="Время">01:30:05</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Tags and countdown</h2>
+  <p>
+    <span class="tag">черновик</span>
+    <span class="tag tag--live">идёт</span>
+    <span class="tag tag--danger">закрыта</span>
+  </p>
+  <p class="countdown">До следующей подсказки 12 мин 04 сек</p>
+</div>

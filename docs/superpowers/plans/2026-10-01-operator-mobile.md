@@ -30,6 +30,7 @@
   - `@media` widths only 48rem / 47.99rem / 52rem / 60rem;
   - no shadows or gradients.
 - Code style: hash rockets in Ruby; English comments; literal Russian in spec assertions, never `include(I18n.t(...))`.
+- Link any new stylesheet or script through `versioned_asset("/javascripts/…")` (ApplicationHelper), never a literal URL. `spec/assets_versioned_spec.rb` fails otherwise.
 - Never change a controller's response format or add a route. The one controller change allowed is Task 4's preload.
 - Run only the specs your task names. No full RSpec or Cucumber suite and no background processes. Layout specs run in the foreground with `LAYOUT_SPECS=1`.
 - Precise edits only. Check `git diff --stat` before committing. Write reports with your file tool, never a shell heredoc. Commit messages are plain, with no attribution lines.
@@ -321,7 +322,7 @@ describe "shared/_live_status", type: :view do
     expect(node["data-pause-label"]).to eq("Пауза обновления")
     expect(node["data-resume-label"]).to eq("Возобновить обновление")
     expect(node.at_css("button[type=button][data-live-toggle]")).to be_present
-    expect(rendered).to include('src="/javascripts/live_region.js"')
+    expect(rendered).to match(%r{src="/javascripts/live_region\.js\?v=[0-9a-f]{12}"})
   end
 end
 ```
@@ -341,7 +342,7 @@ end
   <span data-live-stamp></span>
   <button type="button" class="btn btn--quiet" data-live-toggle aria-pressed="false"></button>
 </p>
-<script src="/javascripts/live_region.js" defer></script>
+<script src="<%= versioned_asset("/javascripts/live_region.js") %>" defer></script>
 ```
 
 - [ ] **Step 7: Run** `bundle exec rspec spec/live_region_script_spec.rb spec/views/shared/live_status_spec.rb spec/i18n_spec.rb`, after the YAML check. Expect 0 failures.

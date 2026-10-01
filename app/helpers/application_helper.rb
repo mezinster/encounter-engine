@@ -26,6 +26,34 @@ module ApplicationHelper
 
   # helpers defined here available to all views.
 
+  # "/stylesheets/screens.css" -> "/stylesheets/screens.css?v=<12 hex>".
+  #
+  # Stylesheets and scripts are plain files under public/ -- there is no
+  # asset pipeline, so nothing fingerprints them -- and the server sends no
+  # Cache-Control for them. A browser then caches them heuristically, and
+  # after a deploy a returning visitor got new HTML with an old screens.css:
+  # seen on 2026-10-01, the rebuilt home page rendered unstyled from a local
+  # container while the server was already sending the new file. The content
+  # digest in the URL changes exactly when the file does, so a deploy
+  # invalidates only what changed.
+  #
+  # Memoised per path and mtime: computed once per process in production,
+  # recomputed in development the moment a file is edited. A missing file
+  # yields the plain path -- a typo costs one 404, never a 500 on every page.
+  def versioned_asset(path)
+    file = Rails.public_path.join(path.delete_prefix("/"))
+    mtime = File.mtime(file)
+    key = [ file.to_s, mtime ]
+    digest = (ApplicationHelper.asset_digests[key] ||= Digest::SHA256.file(file).hexdigest[0, 12])
+    "#{path}?v=#{digest}"
+  rescue Errno::ENOENT
+    path
+  end
+
+  def self.asset_digests
+    @asset_digests ||= Concurrent::Map.new
+  end
+
   # Ports merb-helpers' Errorifier#error_messages_for
   # (merb-helpers/lib/merb-helpers/form/builder.rb:403-416) and
   # its default options from the top-level wrapper

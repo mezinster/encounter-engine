@@ -158,7 +158,11 @@ describe "the live hint poller's server-side contract", type: :request do
     get show_current_level_path(:game_id => game.id)
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('src="/javascripts/level_hint_updater.js"')
+    # Versioned (ApplicationHelper#versioned_asset), so match the path and the
+    # digest rather than the bare URL. The play screen renders the in_game
+    # layout, so this is also where that layout's stylesheets are checked.
+    expect(response.body).to match(%r{src="/javascripts/level_hint_updater\.js\?v=[0-9a-f]{12}"})
+    expect(response.body).to match(%r{href="/stylesheets/screens\.css\?v=[0-9a-f]{12}"})
   end
 
   it "still returns hint_num, hint_text and next_available_in, with hint_text unescaped" do

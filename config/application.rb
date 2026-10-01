@@ -52,6 +52,12 @@ module EncounterEngine
     # change it here.
     config.i18n.default_locale = :ru
     config.i18n.available_locales = [:ru, :en, :uk, :ka, :tr, :be, :pl]
+
+    # Mark invalid fields in place instead of wrapping them in Rails' default
+    # <div class="field_with_errors">, which broke `.field > label`. A lambda
+    # so FieldErrorMarkup (app/services, autoloaded) is resolved per call,
+    # not at boot. See app/services/field_error_markup.rb.
+    config.action_view.field_error_proc = ->(html_tag, instance) { FieldErrorMarkup.call(html_tag, instance) }
     config.i18n.fallbacks = [:ru]
 
     # Each deployment serves one city, so the zone is per-instance, matching

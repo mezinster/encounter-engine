@@ -16,6 +16,9 @@ Rails.application.routes.draw do
   # superadmins), so only :index exists here -- there is no second editor.
   namespace :admin do
     get "/", to: "dashboard#show", as: :dashboard
+    # Every shared component, rendered from real code. Read-only, so no audit
+    # entry -- see spec/requests/admin_audit_spec.rb.
+    get "/styleguide", to: "styleguide#show", as: :styleguide
     # Operator-tunable rate limits. GET shows the form, PATCH saves it.
     get   "/settings", to: "settings#show",   as: :settings
     patch "/settings", to: "settings#update"

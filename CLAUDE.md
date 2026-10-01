@@ -180,8 +180,8 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1020 leaf
-  keys** each (measured 2026-08-26): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1023 leaf
+  keys** each (measured 2026-10-01): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
@@ -204,7 +204,9 @@ add steps there or Cucumber will auto-require them a second time.
   correct this time because it was verified against both endpoints, not assumed. The test-admission
   notification work then added **eleven** more to all seven files — eight mailer leaves (two mails,
   each with a solo and a team subject and body) and three `test_admissions.*_unnotified` flash
-  keys — landing at 1020, again measured at both ends. Recount rather than reason about it:
+  keys — landing at 1020, again measured at both ends. The UX foundations branch then added three
+  (the styleguide's own chrome), taking it to 1023 — measured at the end, not computed from 1020.
+  Recount rather than reason about it:
 
 ```bash
 ruby -ryaml -e 'def leaves(h,p="") h.flat_map { |k,v| v.is_a?(Hash) ? leaves(v,"#{p}#{k}.") : ["#{p}#{k}"] } end
@@ -378,11 +380,13 @@ So:
   nothing scrolls inside anything else, and horizontal overflow is 0. Run it after **any** change
   to `.playbar`, `.play-body`, `.play-exit` or `.page--focused`. It is mutation-tested: un-sticking
   the bar, re-capping it into a scrollport, and forcing horizontal overflow each fail it.
-- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds three specs
-  now — `play_screen_layout_spec.rb`, `translate_panel_layout_spec.rb`, and (added alongside the
-  manual, 2026-08-22) `manual_layout_spec.rb` — all three driving the same
+- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds four specs
+  now — `play_screen_layout_spec.rb`, `translate_panel_layout_spec.rb`, (added alongside the
+  manual, 2026-08-22) `manual_layout_spec.rb`, and `styleguide_layout_spec.rb`, which measures the
+  styleguide in both themes: input-border contrast, tap size, type scale, invalid border, `.check`
+  layout and generic-thumbnail fit — all four driving the same
   `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
-  spec once a second screen needed measuring. A new screen with real layout risk gets a fourth file
+  spec once a second screen needed measuring. A new screen with real layout risk gets a fifth file
   the same way, not a special case bolted onto an existing one.
 - The manual's own layout regression is why this file's rhythm assertion exists: `.manual`'s three
   original examples (no page-level horizontal overflow at three viewports) all **passed** on the
@@ -794,6 +798,28 @@ run. The real files are checked by the closure check on every push and PR.
   account that just lost its only copy of the password. The four invitation call sites tell the
   acting captain the notification did not go out, via a flash warning, but still complete the
   invitation. See `docs/runbooks/smtp-failover.md` for the operational side.
+
+## Form errors, the type scale, and the styleguide
+
+- **`FieldErrorMarkup` replaced Rails' `field_with_errors` wrapper** (`app/services/field_error_markup.rb`,
+  set as `field_error_proc`). That wrapper div landed between `.field` and its `<label>` and broke
+  `.field > label`. Invalid controls now get `aria-invalid` and `is-invalid`, and their own messages
+  in a linked `.field-error` span (`aria-describedby`) directly after the control — **without the
+  attribute noun**, which is a further reason for the "a validation message is a predicate" rule
+  above: the span shows `errors[attr]`, not `full_messages`, so a standalone sentence reads fine
+  there and a predicate-only one reads fine in the summary box. It edits the opening tag as a
+  string, never parsing and re-serialising it, because a `<textarea>` opens with a newline Rails
+  adds on purpose and re-serialising would drop a leading newline from the user's own text. Source
+  order in `components.css` matters: the invalid-border rule must stay *after* the shared input rule
+  (same specificity), or every invalid input but the textarea keeps its neutral border.
+- **`public/stylesheets/tokens.css` is a contract, and `spec/stylesheets/token_discipline_spec.rb`
+  (default run) enforces it.** Font sizes are `var(--text-*)` steps, z-indexes `var(--z-*)`, and
+  `@media` widths only 48rem/47.99rem/52rem/60rem; a raw value in any stylesheet fails the build.
+  Add a step to `tokens.css` rather than a literal in a rule.
+- **`/admin/styleguide` is the reference page** (superadmin-only): every shared control, button,
+  flash, table and tag rendered as real markup — the invalid specimens come from a real
+  `Game#valid?` through the real `field_error_proc` — and `spec/layout/styleguide_layout_spec.rb`
+  measures it in both themes. A new shared component gets a specimen there before it gets used.
 
 ## Conventions
 

@@ -231,9 +231,14 @@ tr:
         allowed_extensions: "İzin verilen dosya uzantıları"
         translation_model: "Çeviri modeli"
         translation_max_fields_per_run: "Çeviri başına maksimum alan sayısı"
+    styleguide:
+      show:
+        title: "Stil rehberi"
+        intro: "Tüm ortak bileşenler geçerli temada. Diğerini kontrol etmek için başlıktan temayı değiştirin."
     dashboard:
       show:
         title: "Genel bakış"
+        styleguide_link: "Arayüz stil rehberi"
         games_by_status: "Duruma göre oyunlar"
         editing_locked: "Düzenleme donduruldu"
         totals: "Toplam"

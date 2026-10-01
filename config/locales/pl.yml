@@ -210,9 +210,14 @@ pl:
         allowed_extensions: "Dozwolone rozszerzenia plików"
         translation_model: "Model do tłumaczenia"
         translation_max_fields_per_run: "Maksimum pól na jedno tłumaczenie"
+    styleguide:
+      show:
+        title: "Przewodnik stylu"
+        intro: "Wszystkie wspólne komponenty w bieżącym motywie. Przełącz motyw w nagłówku, aby sprawdzić drugi."
     dashboard:
       show:
         title: "Przegląd"
+        styleguide_link: "Przewodnik stylu interfejsu"
         games_by_status: "Gry według statusu"
         editing_locked: "Edycja zablokowana"
         totals: "Łącznie"

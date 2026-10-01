@@ -6,9 +6,11 @@
  */
 
 /* --- Buttons -------------------------------------------------------------
+ * Hierarchy: go -> neutral (.btn) -> quiet, with danger set apart.
  * go / time / danger are neighbouring hues in this palette, so they are
  * separated by TREATMENT as well:
  *   .btn--go     filled, the only filled warm control on a screen
+ *   .btn--quiet  no fill, no border -- cancel and back
  *   .btn--danger outlined, never filled, always behind a confirm
  *   .countdown   not a button at all -- see below
  */
@@ -44,6 +46,25 @@
 
 .btn--danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
 
+/* Secondary: cancel, back. Quieter than neutral, never competing with go. */
+.btn--quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-dim);
+}
+.btn--quiet:hover { color: var(--text); border-color: transparent; }
+
+/* Disabled by colour and cursor, never opacity: a faded control on the dark
+   theme becomes unreadable rather than inactive. WCAG exempts inactive
+   controls from contrast minimums; legibility is still the point. */
+.btn:disabled,
+.btn:disabled:hover {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
 /* A countdown is information, not an action. Never filled, never bordered --
    if it looks pressable, someone will press it. */
 .countdown {
@@ -54,7 +75,8 @@
 
 /* --- Forms --------------------------------------------------------------- */
 .field { display: block; margin-bottom: var(--space-4); }
-.field > label { display: block; margin-bottom: var(--space-1); color: var(--text-dim); font-size: 0.9rem; }
+.field > label { display: block; margin-bottom: var(--space-1); color: var(--text-dim); font-size: var(--text-sm); }
+
 
 /* The one-time generated password shown on users/welcome_password when the
    welcome letter couldn't be sent. SecureRandom.alphanumeric emits l/1/I and
@@ -68,19 +90,21 @@
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   font-family: var(--font-mono);
-  font-size: 1.15rem;
+  font-size: var(--text-lg);
   letter-spacing: 0.02em;
   -webkit-user-select: all; /* Safari, incl. iOS Safari, supports unprefixed user-select only from 17.0 */
   user-select: all;
 }
 
 input[type="text"], input[type="email"], input[type="password"],
-input[type="date"], textarea, select {
+input[type="date"], input[type="datetime-local"], input[type="number"],
+input[type="search"], input[type="url"], input[type="tel"],
+textarea, select {
   width: 100%;
   min-height: var(--tap);
   padding: var(--space-2) var(--space-3);
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-input);
   border-radius: var(--radius-sm);
   color: var(--text);
   font: inherit;   /* 16px floor from base.css -- stops iOS zooming on focus */
@@ -91,6 +115,71 @@ input[type="date"], textarea, select {
    two lines for level text and game descriptions, the core authoring
    content. */
 textarea { min-height: 8em; }
+
+input:disabled, select:disabled, textarea:disabled {
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+/* A checkbox or radio wrapped in its label: the whole row is the target. */
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  cursor: pointer;
+}
+input[type="checkbox"], input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  vertical-align: middle;
+  accent-color: var(--go);
+}
+
+input[type="file"] { font: inherit; }
+input[type="file"]::file-selector-button {
+  min-height: var(--tap);
+  margin-right: var(--space-3);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Set by FieldErrorMarkup (app/services/field_error_markup.rb), Rails'
+   field_error_proc here. A control and its label are marked in place; the
+   control's own messages follow it in .field-error.
+
+   ORDER MATTERS: the invalid-control rule has the same specificity (0,1,1) as
+   the shared text-input rule's `border` shorthand and the `input:disabled`
+   rule above, so it only wins by coming after them. Moved above, every
+   invalid input but the textarea silently kept its neutral border. */
+label.is-invalid { color: var(--danger); }
+.is-invalid:is(input, select, textarea) { border-color: var(--danger); }
+.field-error {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+fieldset.field { border: 0; padding: 0; }
+fieldset.field > legend { margin-bottom: var(--space-1); color: var(--text-dim); font-size: var(--text-sm); }
+/* `.field > label` (0,1,1) beats `.check` (0,1,0). An option's text is
+   content, not a field caption, so a .check row directly inside a .field
+   (a fieldset of radios) keeps its row layout and body text. */
+.field > label.check {
+  display: flex;
+  margin-bottom: 0;
+  color: var(--text);
+  font-size: inherit;
+}
 
 /* --- Tables --------------------------------------------------------------
  * Real table at width; stacked cards below. The wrapper also lets a wide
@@ -110,7 +199,7 @@ table { width: 100%; border-collapse: collapse; }
 th, td { padding: var(--space-3); text-align: left; border-bottom: 1px solid var(--border); }
 th {
   color: var(--text-dim);
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   font-weight: 600;
@@ -133,7 +222,7 @@ th {
     content: attr(data-label);
     display: block;
     color: var(--text-dim);
-    font-size: 0.72rem;
+    font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: 0.07em;
   }
@@ -161,11 +250,16 @@ th {
   align-items: center;
   justify-content: center;
   width: 48px;
-  height: 48px;
+  min-height: 48px; /* grows for a label that needs a fourth line (ka: 56px) */
+  overflow: hidden; /* last resort: a translated label must never spill out */
   color: var(--text-dim);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: var(--text-xs);
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  /* No uppercase or letter-spacing: translated labels ("Önizleme yok",
+     "Brak podglądu") are wider than 48px with them. */
 }
 
 /* --- Flash, cards, panels, tags ------------------------------------------ */
@@ -219,7 +313,7 @@ th {
   display: inline-block;
   padding: 2px var(--space-2);
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-dim);

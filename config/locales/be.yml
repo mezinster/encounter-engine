@@ -205,9 +205,14 @@ be:
         allowed_extensions: "Дазволеныя пашырэнні файлаў"
         translation_model: "Мадэль для перакладу"
         translation_max_fields_per_run: "Максімум палёў за адзін пераклад"
+    styleguide:
+      show:
+        title: "Стайлгайд"
+        intro: "Усе агульныя кампаненты ў бягучай тэме. Пераключыце тэму ў шапцы, каб праверыць другую."
     dashboard:
       show:
         title: "Агляд"
+        styleguide_link: "Стайлгайд інтэрфейсу"
         games_by_status: "Гульні паводле статусу"
         editing_locked: "Рэдагаванне замарожана"
         totals: "Усяго"

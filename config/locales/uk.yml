@@ -203,9 +203,14 @@ uk:
         allowed_extensions: "Дозволені розширення файлів"
         translation_model: "Модель для перекладу"
         translation_max_fields_per_run: "Максимум полів за один переклад"
+    styleguide:
+      show:
+        title: "Стайлгайд"
+        intro: "Усі спільні компоненти в поточній темі. Перемкніть тему в шапці, щоб перевірити другу."
     dashboard:
       show:
         title: "Огляд"
+        styleguide_link: "Стайлгайд інтерфейсу"
         audit_log: "Журнал дій"
         games_by_status: "Ігри за статусом"
         editing_locked: "Редагування заморожено"

@@ -14,6 +14,10 @@
   --surface:    #1c1917;
   --surface-2:  #241f1c;
   --border:     #332e29;
+  /* Form-control edges. WCAG 1.4.11 needs 3:1 for the boundary that tells
+     you where a field is; --border (1.41 / 1.30 / 1.21) is decorative and
+     stays for cards. Against bg / surface / surface-2: 3.92 / 3.61 / 3.37. */
+  --border-input: #7a7066;
   --text:       #f5f1ed;
   --text-dim:   #9a8f85;
 
@@ -34,6 +38,9 @@
   --surface:    #ffffff;
   --surface-2:  #f3efec;
   --border:     #ddd5cd;
+  /* As in the dark block. --border is 1.37 / 1.45 / 1.27 here.
+     Against bg / surface / surface-2: 3.91 / 4.14 / 3.62. */
+  --border-input: #857b71;
   --text:       #1c1917;
   --text-dim:   #6b6259;
 
@@ -53,6 +60,18 @@
   color-scheme: light;
 }
 
+/* Breakpoints. CSS custom properties do not work inside @media, so these
+ * cannot be tokens; this list is the contract instead, and
+ * spec/stylesheets/token_discipline_spec.rb refuses any other width.
+ *   max-width: 47.99rem / min-width: 48rem
+ *       the drawer becomes a static column; .table--cards stops stacking
+ *   min-width: 52rem
+ *       the play bar becomes a side panel. Not noise: the owner's laptop is
+ *       ~845 CSS px, just above 832, so folding this into 60rem would give
+ *       that laptop the phone layout
+ *   min-width: 60rem
+ *       wide layouts
+ */
 :root {
   --space-1: 4px;
   --space-2: 8px;
@@ -66,6 +85,28 @@
 
   --font-ui:   system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Type scale. Every font-size in base/components/layout/screens.css reads
+     one of these. --text-body keeps its 16px floor: iOS zooms a focused
+     input below 16px, and inputs inherit it. */
+  --text-xs:   0.8rem;
+  --text-sm:   0.875rem;
+  --text-md:   1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-body: clamp(16px, 0.95rem + 0.2vw, 18px);
+  --text-h1:   clamp(1.6rem, 1.3rem + 1.4vw, 2.4rem);
+  --text-h2:   clamp(1.2rem, 1.05rem + 0.7vw, 1.6rem);
+
+  /* Stacking layers. --z-dropdown and --z-scrim share a value, not a
+     meaning: .locale-menu sits inside .topbar's stacking context, so its 25
+     orders it only among the topbar's children. */
+  --z-sticky:   15;  /* .playbar */
+  --z-scrim:    25;  /* .drawer-scrim */
+  --z-drawer:   30;  /* #drawer */
+  --z-topbar:   40;  /* .topbar */
+  --z-dropdown: 25;  /* .locale-menu */
 
   --tap: 44px;
 }

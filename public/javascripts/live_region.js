@@ -8,7 +8,8 @@
  *
  * It HOLDS -- skips the tick, does not queue it -- while the tab is hidden,
  * while any <details> in the region is open (an intervention panel), while
- * focus is inside the region, or while a form field has focus anywhere on the page; and re-checks after the fetch,
+ * focus is inside the region (except on a closed panel's summary), or while a
+ * form field has focus anywhere on the page; and re-checks after the fetch,
  * so a panel opened while a request was in flight is not swapped away. A
  * response without the region (an error page, the login page after the
  * session expired) swaps nothing: the old content stays and the stamp keeps
@@ -21,7 +22,8 @@
   "use strict";
 
   var INTERVAL_MS = 20000;
-  var TIMEOUT_MS = 15000; // shorter than the interval, so a stuck request never spans two ticks
+  // Shorter than the interval, so a stuck request never spans two ticks.
+  var TIMEOUT_MS = 15000;
   var STORAGE_KEY = "liveRegionPaused";
 
   function holdReason(doc, region) {
@@ -29,8 +31,16 @@
     if (region.querySelector("details[open]")) return "panel";
     var active = doc.activeElement;
     if (active && /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName)) return "focus";
-    // Focus on a link, summary or button inside the region: a swap would destroy it.
-    if (active && active !== doc.body && region.contains && region.contains(active)) return "focus";
+    // Focus on a link or button inside the region: a swap would destroy it.
+    // Exception: a closed panel's <summary>. Chrome and Android Firefox focus
+    // a tapped summary, so closing a panel leaves focus inside the region;
+    // holding there would pause refresh indefinitely, and a closed panel has
+    // nothing editable to lose. (An open one is caught by "panel" above.)
+    if (active && active !== doc.body && region.contains && region.contains(active)) {
+      var closedSummary = active.tagName === "SUMMARY" && active.parentNode &&
+                          active.parentNode.tagName === "DETAILS" && !active.parentNode.open;
+      if (!closedSummary) return "focus";
+    }
     return null;
   }
 

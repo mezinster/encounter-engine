@@ -88,6 +88,37 @@ describe "live_region.js" do
     expect(result).to eq(["focus", nil])
   end
 
+  it "does not hold on a closed panel's summary, but still holds on other focus in the region" do
+    result = run_js(<<~JS)
+      var summary = { tagName: "SUMMARY", parentNode: { tagName: "DETAILS", open: false } };
+      var openSummary = { tagName: "SUMMARY", parentNode: { tagName: "DETAILS", open: true } };
+      var link = { tagName: "A", parentNode: { tagName: "P" } };
+      function region(openPanel) { return { querySelector: function (s) { return s === "details[open]" && openPanel ? {} : null; },
+                                            contains: function () { return true; } }; }
+      function doc(el) { return { hidden: false, activeElement: el, body: {} }; }
+      console.log(JSON.stringify([
+        LR.holdReason(doc(summary), region(false)),
+        LR.holdReason(doc(openSummary), region(true)),
+        LR.holdReason(doc(link), region(false))
+      ]));
+    JS
+    expect(result).to eq([nil, "panel", "focus"])
+  end
+
+  it "fetches again after a network error or a non-2xx response" do
+    result = run_js(start_harness + <<~JS)
+      (async function () {
+        var h = make(); h.hook.tick();
+        h.fetches[0].reject(new Error("offline")); await settle();
+        h.hook.tick();
+        h.fetches[1].resolve({ ok: false, text: function () { return Promise.resolve("boom"); } }); await settle();
+        h.hook.tick();
+        console.log(JSON.stringify([h.fetches.length, h.region.innerHTML, h.swaps]));
+      })();
+    JS
+    expect(result).to eq([3, "old", 0])
+  end
+
   # start() driven with small fakes. Every fetch is a promise the example
   # resolves by hand; setInterval/setTimeout callbacks are captured.
   let(:start_harness) do

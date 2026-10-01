@@ -98,9 +98,8 @@ class Admin::GamesController < ApplicationController
   rescue ActiveRecord::RecordInvalid => e
     # The schedule is validated on the run in its :open context. Reporting its
     # own message rather than a generic one is what tells an operator WHICH
-    # field is wrong. The run's schedule messages are whole sentences, each with
-    # its own punctuation, so they are joined with a space -- to_sentence would
-    # glue them with "и" ("… :-) и Вы указали …").
-    redirect_to admin_games_path, :alert => e.record.errors.full_messages.join(" ")
+    # field is wrong. The run's messages are whole sentences, so they are joined
+    # as sentences (SentenceJoin), not glued with to_sentence's "и".
+    redirect_to admin_games_path, :alert => SentenceJoin.call(e.record.errors.full_messages)
   end
 end

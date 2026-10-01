@@ -24,6 +24,14 @@ describe "the open-run alert's wording", type: :request do
     expect(flash[:alert]).to eq("Вы выбрали дату из прошлого. Так нельзя :-)")
   end
 
+  # Pinned as a literal: the sentence the safety spec required for GameRun's
+  # presence validator, closed with the full stop SentenceJoin adds.
+  it "names a missing start date in a sentence" do
+    post open_run_admin_game_path(game), :params => { :starts_at => "", :max_team_number => "10" }
+
+    expect(flash[:alert]).to eq("Вы не указали дату начала игры.")
+  end
+
   it "joins two sentences with a space, not with и" do
     post open_run_admin_game_path(game),
          :params => { :starts_at => 1.day.ago.strftime("%Y-%m-%d %H:%M"),

@@ -727,6 +727,9 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .home-organizers ul { list-style: disc; padding-left: var(--space-4); }
 .home-organizers li { font-size: var(--text-sm); }
 
+/* A long unbroken team name wraps in its cell at every width. */
+.standings .standings-team { overflow-wrap: anywhere; }
+
 /* --- Operator standings on a phone (game_passings/index) -------------------
  * .ops wraps the table, the full-log link and the control bar. The bar is
  * last in the markup (so it can stick to the bottom on a phone) and is moved
@@ -768,26 +771,33 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
     border-top: 1px solid var(--border);
   }
 
-  /* One team = two lines: name, then level . time. The row is a 3-column
-     grid: [level auto][time 1fr][46% reserved]. The reserved third column is
-     empty on both lines and is where the absolutely positioned panel button
-     (max-width 46%, top-right of the row) sits, so neither line can run under
-     it: the name spans columns 1-2, level and time sit in columns 1 and 2,
-     and each can only shrink or wrap inside its column. The actions cell
-     takes row 3 across all columns, so an open panel runs full width under
-     the two lines. */
-  .standings tr { position: relative; display: grid;
-                  grid-template-columns: minmax(0, auto) minmax(0, 1fr) 46%;
+  /* One team = two lines: name, then level · time (inline cells). The row's
+     right padding reserves the panel button's column (tap + 2 * space-2) for
+     the row's full height, so neither line can run under the button, which
+     is absolutely positioned in that padding. The summary shows only its
+     arrow: the label is clipped and transparent but stays real text in the
+     accessibility tree, so the control keeps its name. (font-size: 0 would
+     do the same but the type-scale spec forbids a raw size.) */
+  .standings tr { display: block; position: relative;
+                  padding: var(--space-2) calc(var(--tap) + 2 * var(--space-2)) var(--space-2) var(--space-3);
                   min-height: calc(var(--tap) + 2 * var(--space-2));
-                  margin-bottom: var(--space-2); padding: var(--space-2) var(--space-3); }
-  .standings .standings-team { grid-column: 1 / 3; grid-row: 1; font-weight: 600; }
-  .standings .standings-level { grid-column: 1; grid-row: 2; }
-  .standings .standings-time { grid-column: 2; grid-row: 2; }
-  .standings .standings-time::before { content: " \00b7 "; color: var(--text-dim); }
+                  margin-bottom: var(--space-2); }
+  .standings .standings-team { display: block; font-weight: 600; }
+  .standings .standings-level, .standings .standings-time { display: inline; }
+  /* display: inline overrides .table--cards td::before { display: block }. */
+  .standings .standings-time::before { content: " · "; display: inline; color: var(--text-dim); }
   .standings .standings-log { display: none; }
-  .standings .standings-actions { grid-column: 1 / -1; grid-row: 3; padding: 0; }
+  /* The open panel spans the row's content edges as before: the row's right
+     padding is (tap + 2 * space-2) but the content edge is space-3 from the
+     border, so pull the cell out by the difference. */
+  .standings .standings-actions { display: block; padding: 0;
+                                  margin-right: calc(-1 * (var(--tap) + 2 * var(--space-2)) + var(--space-3)); }
   .standings .team-disclosure { position: absolute; top: var(--space-2); right: var(--space-2);
-                                max-width: 46%; }
+                                width: var(--tap); min-width: var(--tap); min-height: var(--tap);
+                                padding: 0; overflow: hidden; white-space: nowrap; color: transparent; }
+  .standings .team-disclosure::after { position: absolute; inset: 0; margin: 0; display: flex;
+                                       align-items: center; justify-content: center;
+                                       font-size: var(--text-lg); color: var(--text); }
   .standings details[open] .team-panel { margin-top: var(--space-2); }
   .standings .team-panel-actions .btn,
   .standings .team-panel-actions select,
@@ -804,6 +814,7 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .log-none { color: var(--text-dim); font-size: var(--text-sm); }
 
 @media (max-width: 47.99rem) {
+  .log-matrix, .log-matrix tbody, .log-matrix tr, .log-matrix td { display: block; width: auto; }
   .log-matrix td { border: 0; padding: var(--space-1) 0 var(--space-2) var(--space-3);
                    overflow-wrap: anywhere; }
   .log-matrix .log-level-row td { padding: var(--space-4) 0 var(--space-1);

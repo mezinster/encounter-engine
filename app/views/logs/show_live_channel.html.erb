@@ -29,5 +29,10 @@
     <% end %>
   </tbody>
 </table>
+<%# features/logs/live-channel.feature:46 (frozen) expects the column headings on an
+    empty channel, so the table and its header stay; the card goes under them. %>
+<% if @logs.empty? %>
+<%= render "shared/empty_state", :title => t("empty_states.live_channel.title"), :text => t("empty_states.live_channel.text") %>
+<% end %>
 <%= render "shared/pager", :current => @page, :total => @total_pages %>
 </div>

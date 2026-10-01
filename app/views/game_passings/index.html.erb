@@ -10,6 +10,9 @@
     a node being replaced. %>
 <div class="ops">
 <div class="table-wrap" id="standings-live" data-live>
+<% if @game_passings.empty? %>
+<%= render "shared/empty_state", :title => t("empty_states.standings.title"), :text => t("empty_states.standings.text") %>
+<% else %>
 <table id="stats" class="table--cards table--compact standings">
   <thead>
     <tr>
@@ -84,6 +87,7 @@
     <% end %>
   </tbody>
 </table>
+<% end %>
 </div>
 
 <p class="ops-full-log"><%= link_to t("game_passings.index.full_log"), show_full_log_path(@game), class: "btn" %></p>

@@ -20,5 +20,9 @@
         :count => Setting.integer("max_files_per_upload")) %>
 </p>
 
+<% if @files.empty? %>
+<%= render "shared/empty_state", :title => t("empty_states.files.title"), :text => t("empty_states.files.text") %>
+<% else %>
 <%= render "file_table", :files => @files, :mode => :manage, :field_name => nil,
                          :typed_confirmation_ids => @typed_confirmation_ids %>
+<% end %>

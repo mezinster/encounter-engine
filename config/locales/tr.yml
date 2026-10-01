@@ -938,6 +938,28 @@ tr:
     admin_teams: "Takım yok"
     admin_audit: "Henüz işlem yok"
     answers: "Cevap yok"
+    standings:
+      title: "Henüz başlayan takım yok"
+      text: "Takımlar oyuna başlar başlamaz burada görünür."
+    live_channel:
+      title: "Henüz cevap yok"
+      text: "Takımların cevapları gönderildikleri anda burada görünür."
+    results:
+      title: "Henüz bitiren yok"
+      text: "Takımlar son seviyeyi tamamladığında burada görünür."
+    log: "Cevap yok"
+    files:
+      title: "Henüz dosya yok"
+      text: "Yukarıdaki formla fotoğraf veya PDF yükleyin."
+    access_codes:
+      title: "Henüz kod yok"
+      text: "Yukarıdaki formla bir kod grubu oluşturun."
+    access_passes:
+      title: "Henüz verilmiş erişim yok"
+      text: "Yukarıdaki formla bir takıma erişim verin."
+    proposals:
+      title: "Öneri yok"
+      text: "Bu çeviri çalıştırması hiçbir şey önermedi."
   shared:
     live_status:
       updated: "%{seconds} sn önce güncellendi"

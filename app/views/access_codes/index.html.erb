@@ -62,6 +62,9 @@
 
 <h3><%= t("access_codes.title") %></h3>
 
+<% if @batches.empty? %>
+<%= render "shared/empty_state", :title => t("empty_states.access_codes.title"), :text => t("empty_states.access_codes.text") %>
+<% else %>
 <div class="table-wrap">
 <table class="table--cards">
   <thead>
@@ -110,3 +113,4 @@
   </tbody>
 </table>
 </div>
+<% end %>

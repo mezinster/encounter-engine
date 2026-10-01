@@ -903,6 +903,28 @@ pl:
     admin_teams: "Brak drużyn"
     admin_audit: "Brak działań"
     answers: "Brak odpowiedzi"
+    standings:
+      title: "Żadna drużyna jeszcze nie zaczęła"
+      text: "Drużyny pojawią się tutaj, gdy tylko zaczną grę."
+    live_channel:
+      title: "Brak odpowiedzi"
+      text: "Odpowiedzi drużyn pojawią się tutaj w chwili wysłania."
+    results:
+      title: "Nikt jeszcze nie ukończył gry"
+      text: "Drużyny pojawią się tutaj, gdy przejdą ostatni poziom."
+    log: "Brak odpowiedzi"
+    files:
+      title: "Brak plików"
+      text: "Prześlij zdjęcia lub pliki PDF formularzem powyżej."
+    access_codes:
+      title: "Brak kodów"
+      text: "Utwórz partię kodów formularzem powyżej."
+    access_passes:
+      title: "Brak przyznanych dostępów"
+      text: "Przyznaj drużynie dostęp formularzem powyżej."
+    proposals:
+      title: "Brak propozycji"
+      text: "Ten przebieg tłumaczenia niczego nie zaproponował."
   shared:
     live_status:
       updated: "Zaktualizowano %{seconds} s temu"

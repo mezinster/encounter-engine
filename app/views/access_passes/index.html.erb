@@ -9,6 +9,9 @@
   </p>
 <% end %>
 
+<% if @passes.empty? %>
+<%= render "shared/empty_state", :title => t("empty_states.access_passes.title"), :text => t("empty_states.access_passes.text") %>
+<% else %>
 <div class="table-wrap">
 <table class="table--cards">
   <thead>
@@ -53,3 +56,4 @@
   </tbody>
 </table>
 </div>
+<% end %>

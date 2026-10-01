@@ -884,6 +884,28 @@ en:
     admin_teams: "No teams"
     admin_audit: "No actions yet"
     answers: "No answers"
+    standings:
+      title: "No team has started yet"
+      text: "Teams appear here as soon as they start."
+    live_channel:
+      title: "No answers yet"
+      text: "Teams' answers appear here as they are sent."
+    results:
+      title: "Nobody has finished yet"
+      text: "Teams appear here when they complete the last level."
+    log: "No answers"
+    files:
+      title: "No files yet"
+      text: "Upload photos or PDFs with the form above."
+    access_codes:
+      title: "No codes yet"
+      text: "Generate a batch of codes with the form above."
+    access_passes:
+      title: "No access granted yet"
+      text: "Grant a team access with the form above."
+    proposals:
+      title: "No proposals"
+      text: "This translation run proposed nothing."
   shared:
     live_status:
       updated: "Updated %{seconds} s ago"

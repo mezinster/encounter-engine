@@ -491,6 +491,8 @@ uk:
       description: "Опис"
       starts_at: "Початок гри"
       registration_deadline: "Кінцевий термін реєстрації "
+      timezone_hint: "Час вказується у вашому часовому поясі: %{zone}."
+      timezone_change: "Змінити в профілі"
       max_team_number: "Максимальна кількість команд"
       is_draft: "Чернетка?"
       access_mode: "Режим доступу"

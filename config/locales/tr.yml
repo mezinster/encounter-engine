@@ -520,6 +520,8 @@ tr:
       description: "Açıklama"
       starts_at: "Oyunun başlangıcı"
       registration_deadline: "Son kayıt tarihi "
+      timezone_hint: "Saatler sizin saat diliminizdedir: %{zone}."
+      timezone_change: "Profilden değiştirin"
       max_team_number: "En fazla takım sayısı"
       is_draft: "Taslak mı?"
       access_mode: "Erişim modu"

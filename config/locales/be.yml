@@ -493,6 +493,8 @@ be:
       description: "Апісанне"
       starts_at: "Пачатак гульні"
       registration_deadline: "Крайні тэрмін рэгістрацыі "
+      timezone_hint: "Час указваецца ў вашым часавым поясе: %{zone}."
+      timezone_change: "Змяніць у профілі"
       max_team_number: "Максімальная колькасць каманд"
       is_draft: "Чарнавік?"
       access_mode: "Рэжым доступу"

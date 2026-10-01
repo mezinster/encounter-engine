@@ -474,6 +474,8 @@ en:
       description: "Description"
       starts_at: "Game start"
       registration_deadline: "Registration deadline "
+      timezone_hint: "Times are in your time zone: %{zone}."
+      timezone_change: "Change it in your profile"
       max_team_number: "Maximum number of teams"
       is_draft: "Draft?"
       access_mode: "Access mode"

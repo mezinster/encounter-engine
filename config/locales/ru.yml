@@ -474,6 +474,8 @@ ru:
       description: "Описание"
       starts_at: "Начало игры"
       registration_deadline: "Крайний срок регистрации "
+      timezone_hint: "Время указывается в вашем часовом поясе: %{zone}."
+      timezone_change: "Изменить в профиле"
       max_team_number: "Максимальное количество команд"
       is_draft: "Черновик?"
       access_mode: "Режим доступа"

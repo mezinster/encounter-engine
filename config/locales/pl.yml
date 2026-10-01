@@ -498,6 +498,8 @@ pl:
       description: "Opis"
       starts_at: "Początek gry"
       registration_deadline: "Ostateczny termin rejestracji "
+      timezone_hint: "Godziny podawane są w Twojej strefie czasowej: %{zone}."
+      timezone_change: "Zmień w profilu"
       max_team_number: "Maksymalna liczba drużyn"
       is_draft: "Szkic?"
       access_mode: "Tryb dostępu"

@@ -497,6 +497,8 @@ ka:
       description: "აღწერა"
       starts_at: "თამაშის დაწყება"
       registration_deadline: "რეგისტრაციის ბოლო ვადა "
+      timezone_hint: "დრო მითითებულია თქვენს სასაათო სარტყელში: %{zone}."
+      timezone_change: "პროფილში შეცვლა"
       max_team_number: "გუნდების მაქსიმალური რაოდენობა"
       is_draft: "მონახაზი?"
       access_mode: "წვდომის რეჟიმი"

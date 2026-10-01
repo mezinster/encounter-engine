@@ -1,23 +1,24 @@
 <% if game_entry %>
   <% case game_entry.status %>
   <% when "new" %>
-    <%= t("shared.game_entry_controls.applied") %>
-    <%= button_to t("shared.game_entry_controls.recall"), recall_game_entry_path(game_entry) %>
-  <% when "accepted"%> <%= t("shared.game_entry_controls.registered") %>
-    <%= button_to t("shared.game_entry_controls.decline"), cancel_game_entry_path(game_entry) %>
+    <span class="notice"><%= t("shared.game_entry_controls.applied") %></span>
+    <%= button_to t("shared.game_entry_controls.recall"), recall_game_entry_path(game_entry), class: "btn" %>
+  <% when "accepted" %>
+    <span class="notice"><%= t("shared.game_entry_controls.registered") %></span>
+    <%= button_to t("shared.game_entry_controls.decline"), cancel_game_entry_path(game_entry), class: "btn" %>
   <% when "recalled", "rejected", "canceled", nil %>
     <% if game.can_request? %>
-      <%= button_to t("shared.game_entry_controls.reapply"), reopen_game_entry_path(game_entry) %>
+      <%= button_to t("shared.game_entry_controls.reapply"), reopen_game_entry_path(game_entry), class: "btn btn--go" %>
     <% else %>
-      <%= t("shared.game_entry_controls.entries_exceeded") %>
+      <span class="notice"><%= t("shared.game_entry_controls.entries_exceeded") %></span>
     <% end %>
   <% end %>
 <% else %>
   <% if !game.can_request? %>
-    <%= t("shared.game_entry_controls.entries_exceeded") %>
+    <span class="notice"><%= t("shared.game_entry_controls.entries_exceeded") %></span>
   <% elsif game.registration_deadline and game.registration_deadline <= Time.now %>
-    <%= t("shared.game_entry_controls.deadline_passed") %>
+    <span class="notice"><%= t("shared.game_entry_controls.deadline_passed") %></span>
   <% else %>
-    <%= button_to t("shared.game_entry_controls.apply"), new_game_entry_path(:game_id => game.id, :team_id => team.id) %>
+    <%= button_to t("shared.game_entry_controls.apply"), new_game_entry_path(:game_id => game.id, :team_id => team.id), class: "btn btn--go" %>
   <% end %>
 <% end %>

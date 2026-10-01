@@ -209,7 +209,8 @@ add steps there or Cucumber will auto-require them a second time.
   The widgets-and-review branch then took it to 1048 (measured 2026-10-01, at the end again): 18
   `.format` keys, two timezone-hint keys and five translation-review column keys, all in every
   file. The `.format` keys are leaves like any other, which is why the count moved by 25 rather
-  than the 7 a reader would get by counting only the new prose.
+  than the 7 a reader would get by counting only the new prose (the 7 being the 2 hint keys plus
+  the 5 review-column keys; the other 18 are the per-field `format` keys).
   Recount rather than reason about it:
 
 ```bash
@@ -390,7 +391,8 @@ So:
   styleguide in both themes: input-border contrast, tap size, type scale, invalid border, `.check`
   layout and generic-thumbnail fit, and `translation_review_layout_spec.rb`, which measures the
   superadmin translation review: the flagged-row edge in both the table and card layouts (exactly
-  one edge per card), cards on phones, long unbroken text wrapping, and no sideways scroll — all
+  one edge per card), cards on phones, long unbroken text wrapping, and no sideways scroll, including
+  a quiz-option row whose label embeds a long option text — all
   five driving the same
   `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
   spec once a second screen needed measuring. A new screen with real layout risk gets a sixth file
@@ -704,7 +706,7 @@ run. The real files are checked by the closure check on every push and PR.
   measured 2026-10-01 at the commit that carries this line. (This line said 2930 when last
   written, and the real count at this branch's starting point was already 2955: it had drifted in
   the interval, not been mis-measured. The widgets-and-review branch's new specs took it the rest
-  of the way.) The history that follows is from 2026-08-28: It has moved twice in one day: 2904
+  of the way.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
   (2026-08-26, correct on the day) → 2920 when the perf-probe record-schema work added sixteen
   examples → 2930 when the VM-scaling fixes added ten more, six for `VMScale::Policy.affordability`
   and four for the committed role definitions. **The 2920 was stale before it merged**, and in an

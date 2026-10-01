@@ -180,7 +180,7 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1051 leaf
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1088 leaf
   keys** each (measured 2026-10-01): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
@@ -212,7 +212,9 @@ add steps there or Cucumber will auto-require them a second time.
   than the 7 a reader would get by counting only the new prose (the 7 being the 2 hint keys plus
   the 5 review-column keys; the other 18 are the per-field `format` keys). Its follow-up added
   three more the same day, landing at 1051: `game_run`'s two `format` keys and a sentence for its
-  blank start date, which the safety spec below demanded before it would accept the format.
+  blank start date, which the safety spec below demanded before it would accept the format. The guest-landing
+  branch then took it from 1051 to 1088, measured at both ends: 35 keys under `index.index.*`
+  plus `time.formats.home_card` and `home_row`, in every file.
   Recount rather than reason about it:
 
 ```bash
@@ -387,17 +389,22 @@ So:
   nothing scrolls inside anything else, and horizontal overflow is 0. Run it after **any** change
   to `.playbar`, `.play-body`, `.play-exit` or `.page--focused`. It is mutation-tested: un-sticking
   the bar, re-capping it into a scrollport, and forcing horizontal overflow each fail it.
-- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds five specs
+- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds six specs
   now — `play_screen_layout_spec.rb`, `translate_panel_layout_spec.rb`, (added alongside the
   manual, 2026-08-22) `manual_layout_spec.rb`, `styleguide_layout_spec.rb`, which measures the
   styleguide in both themes: input-border contrast, tap size, type scale, invalid border, `.check`
   layout and generic-thumbnail fit, and `translation_review_layout_spec.rb`, which measures the
   superadmin translation review: the flagged-row edge in both the table and card layouts (exactly
   one edge per card), cards on phones, long unbroken text wrapping, and no sideways scroll, including
-  a quiz-option row whose label embeds a long option text — all
-  five driving the same
+  a quiz-option row whose label embeds a long option text, and `home_layout_spec.rb`, which
+  measures the home page (guest and signed in, both themes, 390×680 and 1280×800): every button
+  and link in the content, game-name links included, at least 44px tall; status tags on one line
+  and on screen; timeline numbers centred on their connecting line; content capped at 44rem on
+  desktop; a visible gap between the blocks inside each section (the rhythm check, added because
+  the plan's first CSS had none — the same class of bug as the manual's); and no sideways scroll —
+  all six driving the same
   `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
-  spec once a second screen needed measuring. A new screen with real layout risk gets a sixth file
+  spec once a second screen needed measuring. A new screen with real layout risk gets a seventh file
   the same way, not a special case bolted onto an existing one.
 - The manual's own layout regression is why this file's rhythm assertion exists: `.manual`'s three
   original examples (no page-level horizontal overflow at three viewports) all **passed** on the
@@ -704,11 +711,12 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 2985 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+- **RSpec** — 3038 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
   measured 2026-10-01 at the commit that carries this line. (This line said 2930 when last
   written, and the real count at this branch's starting point was already 2955: it had drifted in
   the interval, not been mis-measured. The widgets-and-review branch's new specs took it to 2978,
-  and its follow-up branch's seven more to 2985, measured at that branch's last code commit.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
+  and its follow-up branch's seven more to 2985, measured at that branch's last code commit; the guest-landing branch then took it from 2985 to
+  3038.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
   (2026-08-26, correct on the day) → 2920 when the perf-probe record-schema work added sixteen
   examples → 2930 when the VM-scaling fixes added ten more, six for `VMScale::Policy.affordability`
   and four for the committed role definitions. **The 2920 was stale before it merged**, and in an
@@ -850,6 +858,25 @@ run. The real files are checked by the closure check on every push and PR.
   flash, table and tag rendered as real markup — the invalid specimens come from a real
   `Game#valid?` through the real `field_error_proc` — and `spec/layout/styleguide_layout_spec.rb`
   measures it in both themes. A new shared component gets a specimen there before it gets used.
+
+## The home page
+
+`/` is `IndexController#index`, built from `UpcomingGames` (`app/services/upcoming_games.rb`:
+running games, the next game as a card, other scheduled ones, code-gated ones; at most four rows,
+two queries, and classification through `Game#status`, never re-derived in SQL), `IndexHelper`
+(one status tag per game) and the partials under `app/views/index/`. Guests get a hero, how-to-play
+and an organizers block; signed-in players get only the games, with their team's status. The
+captain's card reuses `shared/_game_entry_controls`, the dashboard's partial, which now carries
+`.btn` classes — its button text is unchanged because frozen Cucumber steps press the buttons by text.
+
+Four frozen anchors the page must keep, each with its feature file: «Список игр» links to
+`games_path` (`games-list.feature`, `index-page.feature`); a signed-in user never sees
+«Зарегистрироваться» (`signup.feature:15` — the match is case-sensitive, and two refusal notices
+contain a lowercase «зарегистрироваться», which must never be capitalised); no `/dashboard` link
+for guests (`dashboard.feature`); and never «Вы не авторизованы» (`index-page.feature`). Manual
+links use per-locale anchor keys (`index.index.manual_player_anchor`/`manual_author_anchor`),
+verified against each shipped manual by `spec/i18n_home_spec.rb` — renaming a manual heading
+reddens it, which is the point.
 
 ## Conventions
 

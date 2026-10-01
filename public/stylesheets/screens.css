@@ -697,6 +697,9 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .home-upcoming > * + *, #how-to-play > * + *, .home-organizers > * + * { margin-top: var(--space-4); }
 .home .link-tap { display: inline-flex; align-items: center; min-height: var(--tap); }
 .home-empty > * + * { margin-top: var(--space-2); }
+/* Signed in, the card title is an h2 under the section's h1; base.css would
+   size it like that heading. It belongs to the card, so it reads smaller. */
+.home-empty :is(h2, h3) { font-size: var(--text-lg); }
 .home-note { font-size: var(--text-sm); color: var(--text-dim); }
 .home .tag { white-space: nowrap; flex-shrink: 0; }
 

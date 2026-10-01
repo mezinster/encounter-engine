@@ -99,4 +99,19 @@ describe "checkbox and radio rows", :type => :request do
     expect(box).not_to be_nil
     expect(text_of(label_of(box))).to eq("plan.jpg")
   end
+
+  # (d) A real model error: an out-of-range visibility fails Game's inclusion
+  # validation and re-renders the form. The box inside label.check is marked,
+  # and no message span lands inside the label (it would become part of the
+  # box's accessible name).
+  it "marks an invalid draft checkbox inside its check row without a span" do
+    post games_path, :params => { :game => { :name => "Ночной дозор", :visibility => "bogus" } }
+
+    box = doc.at_css("input[type=checkbox][name='game[visibility]']")
+    expect(box["class"].to_s.split).to include("is-invalid")
+    expect(box["aria-invalid"]).to eq("true")
+    label = label_of(box)
+    expect(text_of(label)).to eq("Черновик?")
+    expect(label.at_css(".field-error")).to be_nil
+  end
 end

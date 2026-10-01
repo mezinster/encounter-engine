@@ -64,13 +64,20 @@ describe FieldErrorMarkup, type: :helper do
     expect(out).not_to include("field-error")
   end
 
-  it "gives a checkbox its message and leaves the companion hidden input alone" do
+  # A checkbox sits inside its label.check, so a span after it would join the
+  # label's text -- the box's accessible name -- and be read twice. Like a
+  # radio, it is marked and left without a span; the label's danger colour and
+  # the summary box carry the message.
+  it "marks a checkbox but gives it no message span, leaving the hidden companion alone" do
     game.errors.add(:points_enabled, "x")
     out = helper.check_box(:game, :points_enabled, :object => game)
     doc = html(out)
     expect(doc.at_css("input[type=hidden]")["aria-invalid"]).to be_nil
-    expect(doc.at_css("input[type=checkbox]")["aria-invalid"]).to eq("true")
-    expect(doc.at_css("#game_points_enabled-error").text).to eq("x")
+    box = doc.at_css("input[type=checkbox]")
+    expect(box["aria-invalid"]).to eq("true")
+    expect(box["class"].split).to include("is-invalid")
+    expect(box["aria-describedby"]).to be_nil
+    expect(out).not_to include("field-error")
   end
 
   it "gives a label the class and nothing else" do

@@ -1040,6 +1040,8 @@ tr:
       title: "«%{game}» adlı oyunun tam cevap günlüğü"
       correct_answer_one: "Doğru kod:"
       correct_answer_many: "Doğru kodlar:"
+      no_answers: "— yanıt yok"
+      accepted: "kabul edildi"
     show_game_log:
       title: '"%{game}" adlı oyunda "%{team}" adlı takımın cevap günlüğü'
       correct_answer: "Doğru kod:"

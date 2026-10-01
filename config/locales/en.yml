@@ -969,6 +969,8 @@ en:
       title: "Full answer log for “%{game}”"
       correct_answer_one: "Correct code:"
       correct_answer_many: "Correct codes:"
+      no_answers: "— no answers"
+      accepted: "accepted"
     show_game_log:
       title: 'Answer log for team "%{team}" in game "%{game}"'
       correct_answer: "Correct code:"

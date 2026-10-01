@@ -1022,6 +1022,8 @@ ka:
       title: "თამაშის «%{game}» პასუხების სრული ლოგი"
       correct_answer_one: "სწორი კოდი:"
       correct_answer_many: "სწორი კოდები:"
+      no_answers: "— პასუხები არ არის"
+      accepted: "სწორია"
     show_game_log:
       title: 'გუნდის "%{team}" პასუხების ლოგი თამაშში "%{game}"'
       correct_answer: "სწორი კოდი:"

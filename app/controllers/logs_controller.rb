@@ -72,12 +72,13 @@ class LogsController < ApplicationController
     # the questions themselves, and the two Question#correct_answer makes
     # (answers.empty? then answers.first). That is the same per-row shape as
     # the cell N+1 below, on the same page, and the query-count guard measures
-    # both together.
+    # both together. options is preloaded too: Level#find_question_by_answer
+    # (the full log's ✓) calls Question#quiz?, which reads options.
     #
     # Paged by LEVEL -- the rows this matrix lists -- in the order acts_as_list
     # keeps them, so page 1 is levels 1-20 rather than an arbitrary twenty.
     @levels, @page, @total_pages =
-      page_of(Level.of_game(@game).includes(:questions => :answers).order(:position),
+      page_of(Level.of_game(@game).includes(:questions => [:answers, :options]).order(:position),
               params[:page], :per => 20)
 
     if @game.pass_required?

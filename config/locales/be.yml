@@ -988,6 +988,8 @@ be:
       title: "Поўны лог адказаў гульні «%{game}»"
       correct_answer_one: "Правільны код:"
       correct_answer_many: "Правільныя коды:"
+      no_answers: "— няма адказаў"
+      accepted: "правільна"
     show_game_log:
       title: 'Лог адказаў каманды "%{team}" па гульні "%{game}"'
       correct_answer: "Правільны код:"

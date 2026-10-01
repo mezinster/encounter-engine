@@ -995,6 +995,8 @@ uk:
       title: "Повний лог відповідей гри «%{game}»"
       correct_answer_one: "Правильний код:"
       correct_answer_many: "Правильні коди:"
+      no_answers: "— немає відповідей"
+      accepted: "правильно"
     show_game_log:
       title: 'Лог відповідей команди "%{team}" по грі "%{game}"'
       correct_answer: "Правильний код:"

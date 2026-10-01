@@ -999,6 +999,8 @@ ru:
       title: "Полный лог ответов игры «%{game}»"
       correct_answer_one: "Верный код:"
       correct_answer_many: "Верные коды:"
+      no_answers: "— нет ответов"
+      accepted: "верно"
     show_game_log:
       title: 'Лог ответов команды "%{team}" по игре "%{game}"'
       correct_answer: "Верный код:"

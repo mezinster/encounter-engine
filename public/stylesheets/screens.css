@@ -779,3 +779,28 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
   .standings .team-panel-actions input[type=submit],
   .standings .team-panel-actions button { min-height: var(--tap); width: 100%; }
 }
+
+/* --- Full log on a phone (logs/show_full_log) -------------------------------
+ * Desktop keeps the levels x teams grid. Below 48rem the same markup
+ * restacks: each level row is a section heading, each team cell an indented
+ * block -- no inner sideways scroller, whatever the team count. */
+.log-team { display: block; }
+.log-ok { color: var(--go); font-weight: 600; margin-left: var(--space-1); }
+.log-none { color: var(--text-dim); font-size: var(--text-sm); }
+
+@media (max-width: 47.99rem) {
+  .log-matrix, .log-matrix tbody, .log-matrix tr, .log-matrix td { display: block; width: auto; }
+  .log-matrix td { border: 0; padding: var(--space-1) 0 var(--space-2) var(--space-3);
+                   overflow-wrap: anywhere; }
+  .log-matrix .log-level-row td { padding: var(--space-4) 0 var(--space-1);
+                                  border-top: 1px solid var(--border); }
+  .log-matrix ul { list-style: none; }
+
+  /* Live channel as two lines: time · team / level — code. */
+  #livechannel .lc-time, #livechannel .lc-team,
+  #livechannel .lc-level, #livechannel .lc-code { display: inline; padding: 0; }
+  #livechannel .lc-team::before { content: " · "; color: var(--text-dim); }
+  #livechannel .lc-level::before { content: "\A"; white-space: pre; }
+  #livechannel .lc-code::before { content: " — "; color: var(--text-dim); }
+  #livechannel tr { padding: var(--space-2) var(--space-3); margin-bottom: var(--space-2); }
+}

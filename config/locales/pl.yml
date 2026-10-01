@@ -1001,6 +1001,8 @@ pl:
       title: "Pełny dziennik odpowiedzi gry „%{game}”"
       correct_answer_one: "Poprawny kod:"
       correct_answer_many: "Poprawne kody:"
+      no_answers: "— brak odpowiedzi"
+      accepted: "poprawnie"
     show_game_log:
       title: 'Dziennik odpowiedzi drużyny "%{team}" w grze "%{game}"'
       correct_answer: "Poprawny kod:"

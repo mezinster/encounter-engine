@@ -11,7 +11,7 @@
 <div class="ops">
 <div class="table-wrap" id="standings-live" data-live>
 <% if @game_passings.empty? %>
-<%= render "shared/empty_state", :title => t("empty_states.standings.title"), :text => t("empty_states.standings.text") %>
+<%= render "shared/empty_state", :title => t("empty_states.standings.title"), :text => t("empty_states.standings.text"), :heading => :h2 %>
 <% else %>
 <table id="stats" class="table--cards table--compact standings">
   <thead>

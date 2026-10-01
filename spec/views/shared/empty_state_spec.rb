@@ -17,6 +17,18 @@ describe "shared/_empty_state", type: :view do
     expect(Nokogiri::HTML(rendered).at_css("h2.empty-state-title")).to be_present
   end
 
+  it "allows an h4 under a section's h3" do
+    render :partial => "shared/empty_state", :locals => { :title => "Кодов пока нет", :heading => :h4 }
+    expect(Nokogiri::HTML(rendered).at_css("h4.empty-state-title").text).to eq("Кодов пока нет")
+  end
+
+  it "falls back to h3 for a heading outside h2-h4" do
+    render :partial => "shared/empty_state", :locals => { :title => "Игр пока нет", :heading => :script }
+    doc = Nokogiri::HTML(rendered)
+    expect(doc.at_css("h3.empty-state-title").text).to eq("Игр пока нет")
+    expect(doc.at_css("script")).to be_nil
+  end
+
   it "renders a one-line variant" do
     render :partial => "shared/empty_state", :locals => { :title => "Ответов нет", :variant => :line }
     doc = Nokogiri::HTML(rendered)

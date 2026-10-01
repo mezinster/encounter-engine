@@ -4,7 +4,10 @@
 
 <% empty_action = (logged_in? && !current_user.member_of_any_team?) ? [t("empty_states.teams.action"), new_team_path] : nil %>
 <% if @teams.empty? %>
-  <%= render "shared/empty_state", :title => t("empty_states.teams.title"), :text => t("empty_states.teams.text"), :action => empty_action %>
+  <%# The sentence asks the reader to create a team, so it shows only where the
+      create link does; everyone else gets the title alone. %>
+  <%= render "shared/empty_state", :title => t("empty_states.teams.title"), :heading => :h2,
+                                   :text => (empty_action && t("empty_states.teams.text")), :action => empty_action %>
 <% else %>
 <div class="table-wrap">
 <table class="table--cards">

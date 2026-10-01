@@ -10,7 +10,7 @@
 
 <% if games.empty? %>
   <%= render "shared/empty_state", :title => t("empty_states.games.title"),
-                                  :text => local_assigns[:empty_text] || t("empty_states.games.text") %>
+                                  :text => (local_assigns.key?(:empty_text) ? local_assigns[:empty_text] : t("empty_states.games.text")) %>
 <% else %>
 <div class="table-wrap">
 <%# Deliberately NOT class="game-list". That class is used by nine other views

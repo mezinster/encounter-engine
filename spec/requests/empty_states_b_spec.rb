@@ -39,6 +39,7 @@ describe "empty states on operator and author screens", type: :request do
       live = page.at_css("#standings-live[data-live]")
       expect(live).to be_present
       expect(live.at_css(".empty-state-title").text).to eq("Команды ещё не начали")
+      expect(live.at_css("h2.empty-state-title")).to be_present
       expect(response.body).to include("Команды появятся здесь, как только начнут игру.")
       expect(page.at_css("table#stats")).to be_nil
       expect(page.css(".ops > *").map { |n| n["class"] }).to eq(["table-wrap", "ops-full-log", "opbar"])
@@ -66,6 +67,21 @@ describe "empty states on operator and author screens", type: :request do
       expect(response.body).to include("Команды появятся здесь, когда пройдут последний уровень.")
       expect(page.at_css("table#results")).to be_nil
       expect_clean_copy
+    end
+
+    # (g) A team the author ended without it finishing still gets a row, so
+    # the card must not claim nobody is there.
+    it "keeps the table when a team was ended by the author without finishing" do
+      passing = create_game_passing(:level => level)
+      passing.update_column(:status, "ended")
+      sign_in(author)
+      get "/stats/show_results/#{game.id}"
+
+      expect(titles).to be_empty
+      row = page.at_css("#results-live[data-live] table#results tbody tr")
+      expect(row).to be_present
+      expect(row.text).to include(passing.team.name)
+      expect(row.text).to include("Не финишировали")
     end
 
     it "keeps the table when a team has finished" do
@@ -100,6 +116,18 @@ describe "empty states on operator and author screens", type: :request do
 
       expect(page.at_css("#livechannel-live[data-live] table#livechannel tbody tr")).to be_present
       expect(titles).to be_empty
+    end
+
+    # (h) The pager is inside the live region, so a poll replaces it with the
+    # rows it pages. 51 answers make a second page of 50.
+    it "keeps the pager inside #livechannel-live" do
+      team = create_team
+      51.times { |i| create_log(:game => game, :level => level, :team => team, :game_run => game.current_run, :answer => "код#{i}") }
+      sign_in(author)
+      get show_live_channel_path(:game_id => game.id)
+
+      expect(page.at_css("#livechannel-live[data-live] .pager")).to be_present
+      expect(page.css(".pager").size).to eq(1)
     end
   end
 
@@ -143,6 +171,7 @@ describe "empty states on operator and author screens", type: :request do
       get game_game_files_path(game)
 
       expect(titles).to eq(["Файлов пока нет"])
+      expect(page.at_css(".empty-state h2.empty-state-title")).to be_present
       expect(response.body).to include("Загрузите фотографии или PDF формой выше.")
       expect(page.at_css("table.file-table")).to be_nil
       expect_clean_copy
@@ -167,6 +196,8 @@ describe "empty states on operator and author screens", type: :request do
       get game_access_codes_path(gated)
 
       expect(titles).to eq(["Кодов пока нет"])
+      # The card belongs under the «Коды доступа» h3, so its title is an h4.
+      expect(page.at_css(".empty-state h4.empty-state-title")).to be_present
       expect(response.body).to include("Создайте партию кодов формой выше.")
       expect(page.css("table.table--cards")).to be_empty
       expect_clean_copy

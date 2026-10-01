@@ -99,6 +99,7 @@ describe "empty states on browsing lists", type: :request do
       get teams_path
 
       expect(page.css(".empty-state-title").map(&:text)).to include("Команд пока нет")
+      expect(page.at_css(".empty-state h2.empty-state-title")).to be_present
       expect(response.body).to include("Создайте первую или дождитесь приглашения капитана.")
       expect(page.css(".empty-state a.empty-state-action").map(&:text)).to eq(["Создать команду"])
       expect(page.css("table.table--cards")).to be_empty
@@ -109,8 +110,18 @@ describe "empty states on browsing lists", type: :request do
       get teams_path
 
       expect(page.css(".empty-state-title").map(&:text)).to include("Команд пока нет")
+      expect(page.at_css(".empty-state h2.empty-state-title")).to be_present
       expect(page.css(".empty-state-action")).to be_empty
       expect(response.body).not_to include("Создать команду")
+    end
+
+    # M6: the sentence asks the reader to create a team, so it renders only
+    # where the create link does.
+    it "tells a guest no sentence they cannot act on" do
+      get teams_path
+
+      expect(page.css(".empty-state p")).to be_empty
+      expect(response.body).not_to include("Создайте первую или дождитесь приглашения капитана.")
     end
 
     it "never offers a team member the create link" do
@@ -137,6 +148,7 @@ describe "empty states on browsing lists", type: :request do
       expect(page.css(".empty-state-title").map(&:text)).to include("Команд пока нет")
       expect(page.css(".empty-state-action")).to be_empty
       expect(response.body).not_to include("Создать команду")
+      expect(response.body).not_to include("Создайте первую или дождитесь приглашения капитана.")
     end
 
     it "keeps the table when there are teams" do

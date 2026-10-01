@@ -26,12 +26,22 @@
   var TIMEOUT_MS = 15000;
   var STORAGE_KEY = "liveRegionPaused";
 
+  // Desktop Chrome focuses a clicked link, so plain focus would hold refresh
+  // after a click and a bfcache Back. Only keyboard focus (:focus-visible)
+  // counts; if the browser cannot say, keep the safe behaviour and hold.
+  function keyboardFocused(el) {
+    try {
+      if (el.matches) return !!el.matches(":focus-visible");
+    } catch (e) { /* unsupported selector: fall through */ }
+    return true;
+  }
+
   function holdReason(doc, region) {
     if (doc.hidden) return "hidden";
     if (region.querySelector("details[open]")) return "panel";
     var active = doc.activeElement;
     if (active && /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName)) return "focus";
-    // Focus on a link or button inside the region: a swap would destroy it.
+    // Keyboard focus on a link or button inside the region: a swap would destroy it.
     // Exception: a closed panel's <summary>. Chrome and Android Firefox focus
     // a tapped summary, so closing a panel leaves focus inside the region;
     // holding there would pause refresh indefinitely, and a closed panel has
@@ -39,7 +49,7 @@
     if (active && active !== doc.body && region.contains && region.contains(active)) {
       var closedSummary = active.tagName === "SUMMARY" && active.parentNode &&
                           active.parentNode.tagName === "DETAILS" && !active.parentNode.open;
-      if (!closedSummary) return "focus";
+      if (!closedSummary && keyboardFocused(active)) return "focus";
     }
     return null;
   }

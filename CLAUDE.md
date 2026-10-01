@@ -902,8 +902,8 @@ things about them are non-obvious.
   re-fetches the same URL and swaps the single `[data-live]` element, matched by id. One request at
   a time: a tick while one is in flight is skipped, not queued, and each request aborts after 15 s,
   so an older response can never land after a newer one and reset the stamp. It holds while the tab
-  is hidden, a `<details>` in the region is open, a field anywhere has focus, or focus is inside
-  the region — except a focused `<summary>` of a *closed* panel, because Chrome on Android focuses
+  is hidden, a `<details>` in the region is open, a field anywhere has focus, or keyboard focus (`:focus-visible`) is
+  inside the region — except a focused `<summary>` of a *closed* panel, because Chrome on Android focuses
   a tapped summary and the hold would otherwise never release. A response without the region (an
   error page, the login page after the session expired) swaps nothing and the stamp keeps counting.
   Without JavaScript the status line stays hidden: the rule is `.live-status:not([hidden])`, because

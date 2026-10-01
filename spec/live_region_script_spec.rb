@@ -77,9 +77,9 @@ describe "live_region.js" do
 
   it "holds while focus is on a link inside the region" do
     result = run_js(<<~JS)
-      var inside = { tagName: "A" };
+      var inside = { tagName: "A", matches: function () { return true; } };
       var region = { querySelector: function () { return null; }, contains: function (n) { return n === inside; } };
-      var other = { tagName: "A" };
+      var other = { tagName: "A", matches: function () { return true; } };
       console.log(JSON.stringify([
         LR.holdReason({ hidden: false, activeElement: inside, body: {} }, region),
         LR.holdReason({ hidden: false, activeElement: other, body: {} }, region)
@@ -88,11 +88,32 @@ describe "live_region.js" do
     expect(result).to eq(["focus", nil])
   end
 
+  it "holds on in-region focus only when it is keyboard focus (:focus-visible)" do
+    result = run_js(<<~JS)
+      var seen = [];
+      function el(fn) { return { tagName: "A", matches: fn }; }
+      var clicked = el(function (sel) { seen.push(sel); return false; });
+      var tabbed = el(function () { return true; });
+      var legacy = { tagName: "A" };
+      var throwing = el(function () { throw new Error("bad selector"); });
+      var region = { querySelector: function () { return null; }, contains: function () { return true; } };
+      function doc(e) { return { hidden: false, activeElement: e, body: {} }; }
+      console.log(JSON.stringify([
+        LR.holdReason(doc(clicked), region), seen[0],
+        LR.holdReason(doc(tabbed), region),
+        LR.holdReason(doc(legacy), region),
+        LR.holdReason(doc(throwing), region)
+      ]));
+    JS
+    expect(result).to eq([nil, ":focus-visible", "focus", "focus", "focus"])
+  end
+
   it "does not hold on a closed panel's summary, but still holds on other focus in the region" do
     result = run_js(<<~JS)
-      var summary = { tagName: "SUMMARY", parentNode: { tagName: "DETAILS", open: false } };
-      var openSummary = { tagName: "SUMMARY", parentNode: { tagName: "DETAILS", open: true } };
-      var link = { tagName: "A", parentNode: { tagName: "P" } };
+      var yes = function () { return true; };
+      var summary = { tagName: "SUMMARY", matches: yes, parentNode: { tagName: "DETAILS", open: false } };
+      var openSummary = { tagName: "SUMMARY", matches: yes, parentNode: { tagName: "DETAILS", open: true } };
+      var link = { tagName: "A", matches: yes, parentNode: { tagName: "P" } };
       function region(openPanel) { return { querySelector: function (s) { return s === "details[open]" && openPanel ? {} : null; },
                                             contains: function () { return true; } }; }
       function doc(el) { return { hidden: false, activeElement: el, body: {} }; }

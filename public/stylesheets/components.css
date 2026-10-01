@@ -6,9 +6,11 @@
  */
 
 /* --- Buttons -------------------------------------------------------------
+ * Hierarchy: go -> neutral (.btn) -> quiet, with danger set apart.
  * go / time / danger are neighbouring hues in this palette, so they are
  * separated by TREATMENT as well:
  *   .btn--go     filled, the only filled warm control on a screen
+ *   .btn--quiet  no fill, no border -- cancel and back
  *   .btn--danger outlined, never filled, always behind a confirm
  *   .countdown   not a button at all -- see below
  */
@@ -43,6 +45,25 @@
 }
 
 .btn--danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+
+/* Secondary: cancel, back. Quieter than neutral, never competing with go. */
+.btn--quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-dim);
+}
+.btn--quiet:hover { color: var(--text); border-color: transparent; }
+
+/* Disabled by colour and cursor, never opacity: a faded control on the dark
+   theme becomes unreadable rather than inactive. WCAG exempts inactive
+   controls from contrast minimums; legibility is still the point. */
+.btn:disabled,
+.btn:disabled:hover {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
 
 /* A countdown is information, not an action. Never filled, never bordered --
    if it looks pressable, someone will press it. */
@@ -87,12 +108,14 @@ label.is-invalid { color: var(--danger); }
 }
 
 input[type="text"], input[type="email"], input[type="password"],
-input[type="date"], textarea, select {
+input[type="date"], input[type="datetime-local"], input[type="number"],
+input[type="search"], input[type="url"], input[type="tel"],
+textarea, select {
   width: 100%;
   min-height: var(--tap);
   padding: var(--space-2) var(--space-3);
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-input);
   border-radius: var(--radius-sm);
   color: var(--text);
   font: inherit;   /* 16px floor from base.css -- stops iOS zooming on focus */
@@ -103,6 +126,44 @@ input[type="date"], textarea, select {
    two lines for level text and game descriptions, the core authoring
    content. */
 textarea { min-height: 8em; }
+
+input:disabled, select:disabled, textarea:disabled {
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+/* A checkbox or radio wrapped in its label: the whole row is the target. */
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  cursor: pointer;
+}
+input[type="checkbox"], input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  accent-color: var(--go);
+}
+
+input[type="file"] { font: inherit; }
+input[type="file"]::file-selector-button {
+  min-height: var(--tap);
+  margin-right: var(--space-3);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+fieldset.field { border: 0; padding: 0; }
+fieldset.field > legend { margin-bottom: var(--space-1); color: var(--text-dim); font-size: var(--text-sm); }
 
 /* --- Tables --------------------------------------------------------------
  * Real table at width; stacked cards below. The wrapper also lets a wide

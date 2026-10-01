@@ -399,8 +399,8 @@ So:
   a quiz-option row whose label embeds a long option text, and `home_layout_spec.rb`, which
   measures the home page (guest and signed in, both themes, 390×680 and 1280×800): every button
   and link in the content, game-name links included, at least 44px tall; status tags on one line
-  and on screen; timeline numbers centred on their connecting line; content capped at 44rem on
-  desktop; a visible gap between the blocks inside each section (the rhythm check, added because
+  and on screen; timeline numbers centred on their connecting line (guest only); content capped at 44rem on
+  desktop; a visible gap between the blocks inside each section, each timeline step's h3-to-p gap included (the rhythm check, added because
   the plan's first CSS had none — the same class of bug as the manual's); and no sideways scroll —
   all six driving the same
   `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
@@ -711,12 +711,12 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 3038 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+- **RSpec** — 3040 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
   measured 2026-10-01 at the commit that carries this line. (This line said 2930 when last
   written, and the real count at this branch's starting point was already 2955: it had drifted in
   the interval, not been mis-measured. The widgets-and-review branch's new specs took it to 2978,
   and its follow-up branch's seven more to 2985, measured at that branch's last code commit; the guest-landing branch then took it from 2985 to
-  3038.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
+  3040, measured at its last code commit.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
   (2026-08-26, correct on the day) → 2920 when the perf-probe record-schema work added sixteen
   examples → 2930 when the VM-scaling fixes added ten more, six for `VMScale::Policy.affordability`
   and four for the committed role definitions. **The 2920 was stale before it merged**, and in an
@@ -868,6 +868,9 @@ two queries, and classification through `Game#status`, never re-derived in SQL),
 and an organizers block; signed-in players get only the games, with their team's status. The
 captain's card reuses `shared/_game_entry_controls`, the dashboard's partial, which now carries
 `.btn` classes — its button text is unchanged because frozen Cucumber steps press the buttons by text.
+The partial takes a `primary:` local: the home card passes `primary: true` so its apply/reapply
+button is the screen's one filled `.btn--go`, while the dashboard's per-game list stays plain
+`.btn` (`components.css`: `.btn--go` is the only filled warm control on a screen).
 
 Four frozen anchors the page must keep, each with its feature file: «Список игр» links to
 `games_path` (`games-list.feature`, `index-page.feature`); a signed-in user never sees

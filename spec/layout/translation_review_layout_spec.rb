@@ -14,7 +14,8 @@ describe "the translation review table, measured", :layout, type: :request do
     game  = create_game(:author => create_user, :is_draft => true, :primary_locale => "ru",
                         :available_locale_list => %w[ru en])
     level = create_level(:game => game, :name => "Первый",
-                         :text => "Найдите табличку на здании с часами. " * 12)
+                         :text => ("Найдите табличку на здании с часами. " * 12) +
+                         " https://example.com/" + "a" * 200)
     run   = TranslationRun.create!(:game => game, :actor => admin, :model => "claude-opus-5",
                                    :state => TranslationRun::SUCCEEDED)
     TranslationProposal.create!(:translation_run => run, :translatable => level, :field => "text",
@@ -57,6 +58,8 @@ describe "the translation review table, measured", :layout, type: :request do
         rowDisplays: flagged.concat(clean).map(function (tr) { return getComputedStyle(tr).display; }),
         textareaFills: !!cell && Math.abs(area.getBoundingClientRect().width -
           (cell.clientWidth - parseFloat(getComputedStyle(cell).paddingLeft) - parseFloat(getComputedStyle(cell).paddingRight))) < 2,
+        firstCellShadow: flagged.length ? getComputedStyle(flagged[0].cells[0]).boxShadow : null,
+        rowBorderLeft: flagged.length ? getComputedStyle(flagged[0]).borderLeftWidth : null,
         hOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
       };
     JS
@@ -82,10 +85,15 @@ describe "the translation review table, measured", :layout, type: :request do
         end
 
         it "does not scroll sideways" do
-          expect(m["hOverflow"]).to eq(0)
+          expect(m["hOverflow"]).to eq(0), "hOverflow was #{m["hOverflow"]}"
         end
 
         if name == "phone"
+          it "draws one edge per card, not two" do
+            expect(m["firstCellShadow"]).to eq("none")
+            expect(m["rowBorderLeft"]).to eq("3px")
+          end
+
           it "stacks every proposal into a card" do
             expect(m["rowDisplays"].uniq).to eq(["block"])
           end

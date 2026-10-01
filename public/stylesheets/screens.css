@@ -651,7 +651,10 @@ table.proposals td.source {
   border-radius: var(--radius-sm);
   /* The source's line breaks are content the translation must keep. */
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
+table.proposals .proposed,
+table.proposals .accepted { overflow-wrap: anywhere; }
 table.proposals tr.flagged > td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
 table.proposals ul.flags {
   display: flex;

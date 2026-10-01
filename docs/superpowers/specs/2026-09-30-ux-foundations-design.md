@@ -181,10 +181,11 @@ The proc receives `(html_tag, instance)` and parses `html_tag` as a fragment:
 - **No `id`** (rare; `*_tag` helpers without one): mark invalid, no message span — there is
   nothing to link it to.
 
-Messages are the **predicate** form ("не может быть пустым"), which reads correctly because the
-field's own label sits directly above it. This depends on the convention CLAUDE.md already sets —
-a message is a predicate, the noun comes from `activerecord.attributes` — and is a second reason
-to keep it.
+Messages are shown as stored, without the attribute name. Most are the **predicate** form
+("не может быть пустым"), which reads correctly because the field's own label sits directly above
+it — the convention CLAUDE.md already sets, and a second reason to keep it. Older models are not
+all on that convention: `User`'s Merb-era messages are full sentences ("Вы не ввели имя"). Those
+read correctly under a field too, so they are shown unchanged rather than rewritten here.
 
 ### §2.4 Live regions
 

@@ -860,6 +860,10 @@ ru:
   manual:
     fallback_note: "Руководство пока не переведено на ваш язык — показана версия на языке «%{language}»."
   shared:
+    live_status:
+      updated: "Обновлено %{seconds} с назад"
+      pause: "Пауза обновления"
+      resume: "Возобновить обновление"
     times_in_zone: "Время показано в поясе %{zone}"
     test_runs:
       legend: "Тестирование"

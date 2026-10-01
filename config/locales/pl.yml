@@ -855,6 +855,10 @@ pl:
   manual:
     fallback_note: "Podręcznik nie został jeszcze przetłumaczony na Twój język — pokazano wersję w języku %{language}."
   shared:
+    live_status:
+      updated: "Zaktualizowano %{seconds} s temu"
+      pause: "Wstrzymaj odświeżanie"
+      resume: "Wznów odświeżanie"
     times_in_zone: "Czas podano w strefie %{zone}"
     test_runs:
       legend: "Testowanie"

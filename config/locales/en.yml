@@ -836,6 +836,10 @@ en:
   manual:
     fallback_note: "The manual is not yet available in your language — showing the version in %{language}."
   shared:
+    live_status:
+      updated: "Updated %{seconds} s ago"
+      pause: "Pause updates"
+      resume: "Resume updates"
     times_in_zone: "Times shown in %{zone}"
     test_runs:
       legend: "Testing"

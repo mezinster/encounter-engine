@@ -850,6 +850,10 @@ be:
   manual:
     fallback_note: "Дапаможнік яшчэ не перакладзены на вашу мову — паказана версія на мове «%{language}»."
   shared:
+    live_status:
+      updated: "Абноўлена %{seconds} с таму"
+      pause: "Прыпыніць абнаўленне"
+      resume: "Аднавіць абнаўленне"
     times_in_zone: "Час паказаны ў поясе %{zone}"
     test_runs:
       legend: "Тэставанне"

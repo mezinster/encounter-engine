@@ -855,6 +855,10 @@ uk:
   manual:
     fallback_note: "Посібник ще не перекладено вашою мовою — показано версію мовою «%{language}»."
   shared:
+    live_status:
+      updated: "Оновлено %{seconds} с тому"
+      pause: "Призупинити оновлення"
+      resume: "Відновити оновлення"
     times_in_zone: "Час показано в поясі %{zone}"
     test_runs:
       legend: "Тестування"

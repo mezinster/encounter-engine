@@ -890,6 +890,10 @@ tr:
   manual:
     fallback_note: "Kılavuz henüz sizin dilinize çevrilmedi — «%{language}» dilindeki sürüm gösteriliyor."
   shared:
+    live_status:
+      updated: "%{seconds} sn önce güncellendi"
+      pause: "Güncellemeyi duraklat"
+      resume: "Güncellemeyi sürdür"
     times_in_zone: "Saatler %{zone} saat diliminde gösterilmiştir"
     test_runs:
       legend: "Test"

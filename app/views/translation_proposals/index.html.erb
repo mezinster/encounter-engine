@@ -54,7 +54,9 @@
           <% if proposal.edited? %>
             <p class="accepted">
               <strong><%= t("translations.review.edited") %></strong>
-              <%= proposal.accepted_text %>
+              <%# The span, not the <p>, keeps line breaks: pre-wrap on the <p>
+                  would also render this template's own newlines and indentation. %>
+              <span class="accepted-text"><%= proposal.accepted_text %></span>
             </p>
           <% end %>
         <% end %>

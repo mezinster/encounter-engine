@@ -34,6 +34,14 @@ describe "the translation review table, measured", :layout, type: :request do
     TranslationProposal.create!(:translation_run => run, :translatable => option, :field => "text",
                                 :locale => "en", :source_text => option.text,
                                 :proposed_text => "Monument to the founder of the city", :state => "pending")
+    # A proposal the reviewer edited before accepting: its row shows the
+    # "edited" label above the accepted wording, which keeps its own line break.
+    edited_level = create_level(:game => game, :name => "Второй", :text => "Под скамейкой")
+    TranslationProposal.create!(:translation_run => run, :translatable => edited_level, :field => "text",
+                                :locale => "en", :source_text => edited_level.text,
+                                :proposed_text => "Under the bench",
+                                :accepted_text => "Look under\nthe bench",
+                                :state => TranslationProposal::ACCEPTED)
     put login_path, :params => { :email => admin.email, :password => "1234" }
     get game_translation_run_proposals_path(game, run)
     expect(response).to have_http_status(:ok)
@@ -69,6 +77,28 @@ describe "the translation review table, measured", :layout, type: :request do
           (cell.clientWidth - parseFloat(getComputedStyle(cell).paddingLeft) - parseFloat(getComputedStyle(cell).paddingRight))) < 2,
         firstCellShadow: flagged.length ? getComputedStyle(flagged[0].cells[0]).boxShadow : null,
         rowBorderLeft: flagged.length ? getComputedStyle(flagged[0]).borderLeftWidth : null,
+        // The "edited" label must sit on the paragraph's first line: pre-wrap on
+        // the <p> itself would render the template's own leading newline and
+        // indentation, pushing it a line down. The accepted wording keeps its
+        // line break, so its box is two lines tall.
+        // Compared with half the paragraph's own line height: the label is set
+        // smaller than the paragraph, so even on the first line its box starts a
+        // few pixels down (half-leading); a rendered blank line moves it a whole
+        // line (measured 31px desktop, 64px phone before the fix).
+        editedLabelOnFirstLine: (function () {
+          var p = document.querySelector("table.proposals .accepted");
+          var label = p && p.querySelector("strong");
+          if (!label) return null;
+          var offset = label.getBoundingClientRect().top - p.getBoundingClientRect().top;
+          return offset < parseFloat(getComputedStyle(p).lineHeight) / 2;
+        })(),
+        // Counting the wording's line boxes would depend on how much fits on a
+        // line at each viewport; the computed white-space is what keeps the
+        // reviewer's own line break, so that is what is pinned.
+        acceptedTextWhiteSpace: (function () {
+          var span = document.querySelector("table.proposals .accepted .accepted-text");
+          return span ? getComputedStyle(span).whiteSpace : null;
+        })(),
         hOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
       };
     JS
@@ -91,6 +121,11 @@ describe "the translation review table, measured", :layout, type: :request do
 
         it "fills the proposal cell with its textarea" do
           expect(m["textareaFills"]).to be(true)
+        end
+
+        it "puts an edited proposal's label on the first line, and keeps the accepted wording's line break" do
+          expect(m["editedLabelOnFirstLine"]).to be(true)
+          expect(m["acceptedTextWhiteSpace"]).to eq("pre-wrap")
         end
 
         it "does not scroll sideways" do

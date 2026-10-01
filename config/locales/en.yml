@@ -231,7 +231,6 @@ en:
       run: "Run №%{ordinal}"
       pending: "Awaiting a decision"
       accepted: "Accepted"
-      none: "—"
       accept: "Accept"
       reject: "Reject"
       accepted_notice: "Team accepted: %{team}"
@@ -861,6 +860,30 @@ en:
     profile: "Profile"
     manual: "Manual"
     admin: "Administration"
+  empty_states:
+    games:
+      title: "No games yet"
+      text: "Games will appear here once they are published."
+    my_games:
+      text: "Games you create will appear here."
+    coming: "No upcoming games"
+    finished: "No finished games"
+    teams_by_game: "No teams registered yet"
+    teams:
+      title: "No teams yet"
+      text: "Create the first one, or wait for a captain to invite you."
+      action: "Create a team"
+    game_entries:
+      title: "No applications yet"
+      text: "Teams' applications for this game will appear here."
+    levels:
+      title: "No levels yet"
+      text: "Add the first level so the game can be played."
+    admin_entries: "No applications"
+    admin_games: "No games"
+    admin_teams: "No teams"
+    admin_audit: "No actions yet"
+    answers: "No answers"
   shared:
     live_status:
       updated: "Updated %{seconds} s ago"

@@ -17,7 +17,7 @@
     <%= t("dashboard.my_games.legend", count: @games.size) %>
   </legend>
 
-  <%= render "games/list", games: @games %>
+  <%= render "games/list", games: @games, empty_text: t("empty_states.my_games.text") %>
 
   <p>
     <%= link_to t("dashboard.my_games.create"), new_game_path, class: "btn" %>

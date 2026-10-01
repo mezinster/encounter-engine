@@ -255,7 +255,6 @@ pl:
       run: "Bieg nr %{ordinal}"
       pending: "Oczekują na decyzję"
       accepted: "Przyjęte"
-      none: "—"
       accept: "Przyjmij"
       reject: "Odrzuć"
       accepted_notice: "Drużyna przyjęta: %{team}"
@@ -880,6 +879,30 @@ pl:
     profile: "Profil"
     manual: "Podręcznik"
     admin: "Administracja"
+  empty_states:
+    games:
+      title: "Nie ma jeszcze gier"
+      text: "Gry pojawią się tutaj, gdy tylko zostaną opublikowane."
+    my_games:
+      text: "Utworzone przez Ciebie gry pojawią się tutaj."
+    coming: "Brak nadchodzących gier"
+    finished: "Brak zakończonych gier"
+    teams_by_game: "Nie zarejestrowano jeszcze żadnych drużyn"
+    teams:
+      title: "Nie ma jeszcze drużyn"
+      text: "Utwórz pierwszą lub poczekaj na zaproszenie od kapitana."
+      action: "Utwórz drużynę"
+    game_entries:
+      title: "Nie ma jeszcze zgłoszeń"
+      text: "Zgłoszenia drużyn do tej gry pojawią się tutaj."
+    levels:
+      title: "Nie ma jeszcze poziomów"
+      text: "Dodaj pierwszy poziom, aby można było zagrać w tę grę."
+    admin_entries: "Brak zgłoszeń"
+    admin_games: "Brak gier"
+    admin_teams: "Brak drużyn"
+    admin_audit: "Brak działań"
+    answers: "Brak odpowiedzi"
   shared:
     live_status:
       updated: "Zaktualizowano %{seconds} s temu"

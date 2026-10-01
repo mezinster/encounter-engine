@@ -277,7 +277,6 @@ tr:
       run: "%{ordinal}. koşu"
       pending: "Karar bekliyor"
       accepted: "Kabul edildi"
-      none: "—"
       accept: "Kabul et"
       reject: "Reddet"
       accepted_notice: "Takım kabul edildi: %{team}"
@@ -915,6 +914,30 @@ tr:
     profile: "Profil"
     manual: "Kılavuz"
     admin: "Yönetim"
+  empty_states:
+    games:
+      title: "Henüz oyun yok"
+      text: "Oyunlar yayımlandığında burada görünecek."
+    my_games:
+      text: "Oluşturduğunuz oyunlar burada görünecek."
+    coming: "Yaklaşan oyun yok"
+    finished: "Biten oyun yok"
+    teams_by_game: "Henüz kayıtlı takım yok"
+    teams:
+      title: "Henüz takım yok"
+      text: "İlk takımı siz oluşturun ya da bir kaptanın davetini bekleyin."
+      action: "Takım oluştur"
+    game_entries:
+      title: "Henüz başvuru yok"
+      text: "Takımların bu oyuna yaptığı başvurular burada görünecek."
+    levels:
+      title: "Henüz seviye yok"
+      text: "Oyunun oynanabilmesi için ilk seviyeyi ekleyin."
+    admin_entries: "Başvuru yok"
+    admin_games: "Oyun yok"
+    admin_teams: "Takım yok"
+    admin_audit: "Henüz işlem yok"
+    answers: "Cevap yok"
   shared:
     live_status:
       updated: "%{seconds} sn önce güncellendi"

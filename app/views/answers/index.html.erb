@@ -11,6 +11,9 @@
 <p>
   <em><%= t("answers.index.variants_label") %></em>
 </p>
+<% if @answers.empty? %>
+  <%= render "shared/empty_state", :title => t("empty_states.answers"), :variant => :line %>
+<% else %>
 <div class="table-wrap">
 <table>
   <% @answers.each do |answer| %>
@@ -21,6 +24,7 @@
 <% end %>
 </table>
 </div>
+<% end %>
 
 <%= form_with model: @answer, url: game_level_question_answers_path(@game, @level, @question) do |f| %>
   <div class="field">

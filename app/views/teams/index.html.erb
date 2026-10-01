@@ -2,6 +2,10 @@
 <%# app/views/teams/index.html.erb %>
 <h1><%= t("teams.index.title") %></h1>
 
+<% empty_action = (logged_in? && !current_user.member_of_any_team?) ? [t("empty_states.teams.action"), new_team_path] : nil %>
+<% if @teams.empty? %>
+  <%= render "shared/empty_state", :title => t("empty_states.teams.title"), :text => t("empty_states.teams.text"), :action => empty_action %>
+<% else %>
 <div class="table-wrap">
 <table class="table--cards">
   <thead>
@@ -57,3 +61,4 @@
   </tbody>
 </table>
 </div>
+<% end %>

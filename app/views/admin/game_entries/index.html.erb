@@ -20,7 +20,7 @@
 <fieldset class="card">
   <legend><%= t("admin.entries.pending") %></legend>
   <% if @pending.empty? %>
-    <p><%= t("admin.entries.none") %></p>
+    <%= render "shared/empty_state", :title => t("empty_states.admin_entries"), :variant => :line %>
   <% else %>
     <ul class="game-list">
       <% @pending.each do |entry| %>
@@ -52,7 +52,7 @@
 <fieldset class="card">
   <legend><%= t("admin.entries.accepted") %></legend>
   <% if @accepted.empty? %>
-    <p><%= t("admin.entries.none") %></p>
+    <%= render "shared/empty_state", :title => t("empty_states.admin_entries"), :variant => :line %>
   <% else %>
     <ul class="game-list">
       <% @accepted.each do |entry| %>

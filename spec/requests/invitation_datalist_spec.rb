@@ -38,6 +38,14 @@ describe "the invitation nickname list", type: :request do
     expect(doc.css("[onmouseover]")).to be_empty
   end
 
+  it "renders a tag-closing nickname as inert text" do
+    other.update!(:nickname => %q{x"></option></datalist><b>bold})
+    get new_invitation_path
+
+    expect(doc.css("datalist#invitation-nicknames option").map { |o| o["value"] }).to include(other.nickname)
+    expect(doc.at_css("b")).to be_nil
+  end
+
   # Carried over from the retired invitations_autocomplete_spec.rb: a nickname
   # ending in a backslash once escaped the closing quote of a JS string literal
   # and put the next value in executable position. In an attribute there is no
@@ -54,5 +62,7 @@ describe "the invitation nickname list", type: :request do
 
     expect(response.body).not_to match(/jquery(\.autocomplete)?\.(js|css)/)
     expect(doc.css("script[type='application/json']")).to be_empty
+    # No inline script either: that is the JS context the backslash bug lived in.
+    expect(doc.css("script:not([src])")).to be_empty
   end
 end

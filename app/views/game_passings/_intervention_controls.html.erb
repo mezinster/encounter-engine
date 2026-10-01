@@ -4,6 +4,18 @@
     that writes a column directly. %>
 <div class="panel team-panel">
   <div class="team-panel-actions">
+    <%# The row's own log links are hidden on phones (index.html.erb explains
+        why they must stay in the row); these are the phone's way to them,
+        full-size. Same condition as the row: a finished team has no current
+        level to show a log for. %>
+    <% unless game_passing.finished? %>
+      <%= link_to t("game_passings.index.level_log_button"),
+                  show_level_log_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
+                  :class => "btn" %>
+    <% end %>
+    <%= link_to t("game_passings.index.game_log_button"),
+                show_game_log_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
+                :class => "btn" %>
     <%= form_with :url => move_team_path(:game_id => game_passing.game_id, :team_id => game_passing.team_id),
                   :method => :post, :local => true do |f| %>
       <%# Level names are author-written content: rendered verbatim, never

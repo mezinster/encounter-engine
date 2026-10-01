@@ -938,6 +938,8 @@ pl:
       finished: "(ukończyli grę)"
       level_log: "(dziennik poziomu)"
       game_log: "(dziennik gry)"
+      level_log_button: "Dziennik poziomu"
+      game_log_button: "Dziennik gry"
       full_log: "Pełny dziennik odpowiedzi"
       interventions: "Interwencja"
       move: "Przenieś"

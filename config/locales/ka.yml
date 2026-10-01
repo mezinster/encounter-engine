@@ -966,6 +966,8 @@ ka:
       finished: "(დაასრულეს თამაში)"
       level_log: "(ლოგი დონეზე)"
       game_log: "(ლოგი თამაშზე)"
+      level_log_button: "დონის ლოგი"
+      game_log_button: "თამაშის ლოგი"
       full_log: "პასუხების სრული ლოგი"
     show_current_level:
       choose: "აირჩიეთ პასუხი"

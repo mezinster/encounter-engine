@@ -906,6 +906,8 @@ en:
       finished: "(finished the game)"
       level_log: "(level log)"
       game_log: "(game log)"
+      level_log_button: "Level log"
+      game_log_button: "Game log"
       full_log: "Full answer log"
       interventions: "Intervene"
       move: "Move"

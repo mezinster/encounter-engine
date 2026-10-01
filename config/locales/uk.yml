@@ -939,6 +939,8 @@ uk:
       finished: "(завершили гру)"
       level_log: "(лог по рівню)"
       game_log: "(лог по грі)"
+      level_log_button: "Лог рівня"
+      game_log_button: "Лог гри"
       full_log: "Повний лог відповідей"
     show_current_level:
       choose: "Оберіть відповідь"

@@ -967,6 +967,8 @@ tr:
       finished: "(oyunu bitirdiler)"
       level_log: "(seviye günlüğü)"
       game_log: "(oyun günlüğü)"
+      level_log_button: "Seviye günlüğü"
+      game_log_button: "Oyun günlüğü"
       full_log: "Tam cevap günlüğü"
       interventions: "Müdahale"
       move: "Taşı"

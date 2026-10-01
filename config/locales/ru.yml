@@ -930,6 +930,8 @@ ru:
       finished: "(закончили игру)"
       level_log: "(лог по уровню)"
       game_log: "(лог по игре)"
+      level_log_button: "Лог уровня"
+      game_log_button: "Лог игры"
       full_log: "Полный лог ответов"
       interventions: "Вмешательство"
       move: "Перевести"

@@ -726,3 +726,56 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 
 .home-organizers ul { list-style: disc; padding-left: var(--space-4); }
 .home-organizers li { font-size: var(--text-sm); }
+
+/* --- Operator standings on a phone (game_passings/index) -------------------
+ * .ops wraps the table, the full-log link and the control bar. The bar is
+ * last in the markup (so it can stick to the bottom on a phone) and is moved
+ * back to the top from 48rem with flex order, so desktop does not change.
+ * gap, not `> * + *` margins: with order changed, a sibling margin would
+ * land on the wrong element. */
+.ops { display: flex; flex-direction: column; gap: var(--space-4); }
+.live-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+               font-size: var(--text-sm); color: var(--text-dim); }
+
+@media (min-width: 48rem) {
+  .ops > .opbar { order: -1; }
+  .opbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+}
+
+@media (max-width: 47.99rem) {
+  /* The play screen's .playbar treatment (see its comment above): sticky to
+     the bottom, full bleed, clear of the iOS home indicator. .ops is the last
+     thing in .main, so its negative bottom margin cancels .main's padding and
+     the bar can rest on the viewport's bottom edge at maximum scroll. */
+  .ops { margin-bottom: calc(-1 * var(--space-5)); }
+  .opbar {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--z-sticky);
+    margin-left: calc(-1 * var(--space-4));
+    margin-right: calc(-1 * var(--space-4));
+    padding: var(--space-2) var(--space-4);
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .opbar .game-control { margin: 0; }
+
+  /* One team = two lines: name, then level · time. The panel button sits
+     top-right; an open panel runs full width under the two lines. */
+  .standings tr { position: relative; min-height: calc(var(--tap) + 2 * var(--space-2));
+                  margin-bottom: var(--space-2); padding: var(--space-2) var(--space-3); }
+  .standings .standings-team { font-weight: 600; margin-right: 48%; }
+  .standings .standings-level, .standings .standings-time { display: inline; }
+  .standings .standings-time::before { content: " · "; color: var(--text-dim); }
+  .standings .standings-level { margin-right: 0; }
+  .standings .standings-log { display: none; }
+  .standings .standings-actions { padding: 0; }
+  .standings .team-disclosure { position: absolute; top: var(--space-2); right: var(--space-2);
+                                max-width: 46%; }
+  .standings details[open] .team-panel { margin-top: var(--space-2); }
+  .standings .team-panel-actions .btn,
+  .standings .team-panel-actions select,
+  .standings .team-panel-actions input[type=submit],
+  .standings .team-panel-actions button { min-height: var(--tap); width: 100%; }
+}

@@ -925,6 +925,8 @@ be:
       finished: "(скончылі гульню)"
       level_log: "(лог па ўзроўні)"
       game_log: "(лог па гульні)"
+      level_log_button: "Лог узроўню"
+      game_log_button: "Лог гульні"
       full_log: "Поўны лог адказаў"
       interventions: "Умяшанне"
       move: "Перавесці"

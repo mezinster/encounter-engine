@@ -696,6 +696,7 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 /* base.css zeroes block margins, so each section spaces its own children. */
 .home-upcoming > * + *, #how-to-play > * + *, .home-organizers > * + * { margin-top: var(--space-4); }
 .home .link-tap { display: inline-flex; align-items: center; min-height: var(--tap); }
+.home-empty > * + * { margin-top: var(--space-2); }
 .home-note { font-size: var(--text-sm); color: var(--text-dim); }
 .home .tag { white-space: nowrap; flex-shrink: 0; }
 

@@ -860,6 +860,10 @@ ru:
   manual:
     fallback_note: "Руководство пока не переведено на ваш язык — показана версия на языке «%{language}»."
   shared:
+    live_status:
+      updated: "Обновлено %{seconds} с назад"
+      pause: "Пауза обновления"
+      resume: "Возобновить обновление"
     times_in_zone: "Время показано в поясе %{zone}"
     test_runs:
       legend: "Тестирование"
@@ -926,6 +930,8 @@ ru:
       finished: "(закончили игру)"
       level_log: "(лог по уровню)"
       game_log: "(лог по игре)"
+      level_log_button: "Лог уровня"
+      game_log_button: "Лог игры"
       full_log: "Полный лог ответов"
       interventions: "Вмешательство"
       move: "Перевести"
@@ -993,6 +999,8 @@ ru:
       title: "Полный лог ответов игры «%{game}»"
       correct_answer_one: "Верный код:"
       correct_answer_many: "Верные коды:"
+      no_answers: "— нет ответов"
+      accepted: "верно"
     show_game_log:
       title: 'Лог ответов команды "%{team}" по игре "%{game}"'
       correct_answer: "Верный код:"

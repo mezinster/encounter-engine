@@ -850,6 +850,10 @@ be:
   manual:
     fallback_note: "Дапаможнік яшчэ не перакладзены на вашу мову — паказана версія на мове «%{language}»."
   shared:
+    live_status:
+      updated: "Абноўлена %{seconds} с таму"
+      pause: "Прыпыніць абнаўленне"
+      resume: "Аднавіць абнаўленне"
     times_in_zone: "Час паказаны ў поясе %{zone}"
     test_runs:
       legend: "Тэставанне"
@@ -921,6 +925,8 @@ be:
       finished: "(скончылі гульню)"
       level_log: "(лог па ўзроўні)"
       game_log: "(лог па гульні)"
+      level_log_button: "Лог узроўню"
+      game_log_button: "Лог гульні"
       full_log: "Поўны лог адказаў"
       interventions: "Умяшанне"
       move: "Перавесці"
@@ -982,6 +988,8 @@ be:
       title: "Поўны лог адказаў гульні «%{game}»"
       correct_answer_one: "Правільны код:"
       correct_answer_many: "Правільныя коды:"
+      no_answers: "— няма адказаў"
+      accepted: "правільна"
     show_game_log:
       title: 'Лог адказаў каманды "%{team}" па гульні "%{game}"'
       correct_answer: "Правільны код:"

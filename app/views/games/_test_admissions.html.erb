@@ -70,7 +70,7 @@
       <%# Rendered as text, not as an anchor: the author's job is to copy it
           into a chat, and a clickable link on their own page only invites them
           to follow it themselves. %>
-      <code><%= test_invite_url(:game_id => @game.id,
+      <code class="invite-link"><%= test_invite_url(:game_id => @game.id,
                                 :token => @game.current_run.test_token) %></code>
       <%= button_to t("test_admissions.panel.reset_token"),
                     reset_test_token_path(:game_id => @game.id), :class => "btn" %>

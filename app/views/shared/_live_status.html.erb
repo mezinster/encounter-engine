@@ -1,0 +1,13 @@
+<%# The refresh stamp and pause toggle for a screen with one [data-live]
+    region (public/javascripts/live_region.js). Rendered hidden: the script
+    unhides it, so without JavaScript nothing claims the page is updating.
+    data-template keeps the literal %{seconds} -- t() without an interpolation
+    hash returns the string untouched -- and the script fills it in. %>
+<p class="live-status" data-live-status hidden
+   data-template="<%= t("shared.live_status.updated") %>"
+   data-pause-label="<%= t("shared.live_status.pause") %>"
+   data-resume-label="<%= t("shared.live_status.resume") %>">
+  <span data-live-stamp></span>
+  <button type="button" class="btn btn--quiet" data-live-toggle aria-pressed="false"></button>
+</p>
+<script src="<%= versioned_asset("/javascripts/live_region.js") %>" defer></script>

@@ -836,6 +836,10 @@ en:
   manual:
     fallback_note: "The manual is not yet available in your language — showing the version in %{language}."
   shared:
+    live_status:
+      updated: "Updated %{seconds} s ago"
+      pause: "Pause updates"
+      resume: "Resume updates"
     times_in_zone: "Times shown in %{zone}"
     test_runs:
       legend: "Testing"
@@ -902,6 +906,8 @@ en:
       finished: "(finished the game)"
       level_log: "(level log)"
       game_log: "(game log)"
+      level_log_button: "Level log"
+      game_log_button: "Game log"
       full_log: "Full answer log"
       interventions: "Intervene"
       move: "Move"
@@ -963,6 +969,8 @@ en:
       title: "Full answer log for “%{game}”"
       correct_answer_one: "Correct code:"
       correct_answer_many: "Correct codes:"
+      no_answers: "— no answers"
+      accepted: "accepted"
     show_game_log:
       title: 'Answer log for team "%{team}" in game "%{game}"'
       correct_answer: "Correct code:"

@@ -855,6 +855,10 @@ uk:
   manual:
     fallback_note: "Посібник ще не перекладено вашою мовою — показано версію мовою «%{language}»."
   shared:
+    live_status:
+      updated: "Оновлено %{seconds} с тому"
+      pause: "Призупинити оновлення"
+      resume: "Відновити оновлення"
     times_in_zone: "Час показано в поясі %{zone}"
     test_runs:
       legend: "Тестування"
@@ -935,6 +939,8 @@ uk:
       finished: "(завершили гру)"
       level_log: "(лог по рівню)"
       game_log: "(лог по грі)"
+      level_log_button: "Лог рівня"
+      game_log_button: "Лог гри"
       full_log: "Повний лог відповідей"
     show_current_level:
       choose: "Оберіть відповідь"
@@ -989,6 +995,8 @@ uk:
       title: "Повний лог відповідей гри «%{game}»"
       correct_answer_one: "Правильний код:"
       correct_answer_many: "Правильні коди:"
+      no_answers: "— немає відповідей"
+      accepted: "правильно"
     show_game_log:
       title: 'Лог відповідей команди "%{team}" по грі "%{game}"'
       correct_answer: "Правильний код:"

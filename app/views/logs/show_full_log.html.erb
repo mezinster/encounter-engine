@@ -11,12 +11,13 @@
     (fix round 1), so all four callers, this one included, render it
     unconditionally rather than each repeating the check. %>
 <%= render "shared/run_context" %>
+<%= render "shared/live_status" %>
 
-<div class="table-wrap">
-<table id="stats">
+<div class="table-wrap" id="fulllog-live" data-live>
+<table id="stats" class="log-matrix">
   <tbody>
     <% @levels.each do |level| %>
-      <tr>
+      <tr class="log-level-row">
         <td colspan="<%= @teams.size %>">
           <h2><%= level.name %></h2>
           <%# size, not count: count issues a COUNT even when the association is
@@ -35,7 +36,7 @@
       <tr>
         <% @teams.each do |team| %>
         <td>
-          <%= team.name %>
+          <strong class="log-team"><%= team.name %></strong>
           <%# @logs is Log.of_run(@run) (LogsController#show_full_log). This used
               to re-query with Log.of_team(team).of_level(level), and because
               logs.team/logs.level are name strings rather than foreign keys
@@ -43,11 +44,18 @@
               named level across EVERY game the team ever played, not just this
               one. %>
           <% team_logs = logs_by_cell.fetch([ team.id, level.id ], []) %>
-          <ul>
-          <% team_logs.each do |team_log| %>
-            <li><%= team_log.time.strftime("%H:%M:%S") %>&nbsp;<%= team_log.answer %></li>
+          <% if team_logs.empty? %>
+            <p class="log-none"><%= t("logs.show_full_log.no_answers") %></p>
+          <% else %>
+            <ul>
+            <% team_logs.each do |team_log| %>
+              <%# ✓ when the game would accept this answer -- the same method
+                  the game credits with (strip + upcase, quiz questions
+                  skipped); no second matching rule lives here. %>
+              <li><%= team_log.time.strftime("%H:%M:%S") %>&nbsp;<%= team_log.answer %><% if level.find_question_by_answer(team_log.answer) %><span class="log-ok" role="img" aria-label="<%= t("logs.show_full_log.accepted") %>">✓</span><% end %></li>
+            <% end %>
+            </ul>
           <% end %>
-          </ul>
         </td>
         <% end %>
       </tr>

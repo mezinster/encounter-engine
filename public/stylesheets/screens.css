@@ -726,3 +726,109 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 
 .home-organizers ul { list-style: disc; padding-left: var(--space-4); }
 .home-organizers li { font-size: var(--text-sm); }
+
+/* A long unbroken team name wraps in its cell at every width. */
+.standings .standings-team { overflow-wrap: anywhere; }
+
+/* --- Operator standings on a phone (game_passings/index) -------------------
+ * .ops wraps the table, the full-log link and the control bar. The bar is
+ * last in the markup (so it can stick to the bottom on a phone) and is moved
+ * back to the top from 48rem with flex order, so desktop does not change.
+ * gap, not `> * + *` margins: with order changed, a sibling margin would
+ * land on the wrong element. */
+.ops { display: flex; flex-direction: column; gap: var(--space-4); }
+.live-status:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+               font-size: var(--text-sm); color: var(--text-dim); }
+
+.opbar .game-control { margin: 0; }
+/* Visual order on desktop: bar, level-codes fieldset, table (as before the
+   rework). Markup order is table, link, bar, fieldset so the bar can stick
+   to the bottom on phones; phones put the fieldset before the bar. */
+.ops > .ops-codes { order: 1; }
+.ops > .opbar { order: 2; }
+
+@media (min-width: 48rem) {
+  .ops > .opbar { order: -2; }
+  .ops > .ops-codes { order: -1; }
+  .opbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+}
+
+@media (max-width: 47.99rem) {
+  /* The play screen's .playbar treatment (see its comment above): sticky to
+     the bottom, full bleed, clear of the iOS home indicator. .ops is the last
+     thing in .main, so its negative bottom margin cancels .main's padding and
+     the bar can rest on the viewport's bottom edge at maximum scroll. */
+  .ops { margin-bottom: calc(-1 * var(--space-5)); }
+  .opbar {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--z-sticky);
+    margin-left: calc(-1 * var(--space-4));
+    margin-right: calc(-1 * var(--space-4));
+    padding: var(--space-2) var(--space-4);
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  /* One team = two lines: name, then level · time (inline cells). The row's
+     right padding reserves the panel button's column (tap + 2 * space-2) for
+     the row's full height, so neither line can run under the button, which
+     is absolutely positioned in that padding. The summary shows only its
+     arrow: the label is clipped and transparent but stays real text in the
+     accessibility tree, so the control keeps its name. (font-size: 0 would
+     do the same but the type-scale spec forbids a raw size.) */
+  .standings tr { display: block; position: relative;
+                  padding: var(--space-2) calc(var(--tap) + 2 * var(--space-2)) var(--space-2) var(--space-3);
+                  min-height: calc(var(--tap) + 2 * var(--space-2));
+                  margin-bottom: var(--space-2); }
+  .standings .standings-team { display: block; font-weight: 600; }
+  .standings .standings-level, .standings .standings-time { display: inline; }
+  /* display: inline overrides .table--cards td::before { display: block }. */
+  .standings .standings-time::before { content: " · "; display: inline; color: var(--text-dim); }
+  .standings .standings-log { display: none; }
+  /* The open panel spans the row's content edges as before: the row's right
+     padding is (tap + 2 * space-2) but the content edge is space-3 from the
+     border, so pull the cell out by the difference. */
+  .standings .standings-actions { display: block; padding: 0;
+                                  margin-right: calc(-1 * (var(--tap) + 2 * var(--space-2)) + var(--space-3)); }
+  .standings .team-disclosure { position: absolute; top: var(--space-2); right: var(--space-2);
+                                width: var(--tap); min-width: var(--tap); min-height: var(--tap);
+                                padding: 0; overflow: hidden; white-space: nowrap; color: transparent; }
+  .standings .team-disclosure::after { position: absolute; inset: 0; margin: 0; display: flex;
+                                       align-items: center; justify-content: center;
+                                       font-size: var(--text-lg); color: var(--text); }
+  .standings details[open] .team-panel { margin-top: var(--space-2); }
+  .standings .team-panel-actions .btn,
+  .standings .team-panel-actions select,
+  .standings .team-panel-actions input[type=submit],
+  .standings .team-panel-actions button { min-height: var(--tap); width: 100%; }
+}
+
+/* --- Full log on a phone (logs/show_full_log) -------------------------------
+ * Desktop keeps the levels x teams grid. Below 48rem the same markup
+ * restacks: each level row is a section heading, each team cell an indented
+ * block -- no inner sideways scroller, whatever the team count. */
+.log-team { display: block; }
+.log-ok { color: var(--go); font-weight: 600; margin-left: var(--space-1); }
+.log-none { color: var(--text-dim); font-size: var(--text-sm); }
+
+@media (max-width: 47.99rem) {
+  .log-matrix, .log-matrix tbody, .log-matrix tr, .log-matrix td { display: block; width: auto; }
+  .log-matrix td { border: 0; padding: var(--space-1) 0 var(--space-2) var(--space-3);
+                   overflow-wrap: anywhere; }
+  .log-matrix .log-level-row td { padding: var(--space-4) 0 var(--space-1);
+                                  border-top: 1px solid var(--border); }
+  .log-matrix ul { list-style: none; }
+
+  /* Live channel as two lines: time · team / level — code. */
+  #livechannel .lc-time, #livechannel .lc-team,
+  #livechannel .lc-level, #livechannel .lc-code { display: inline; padding: 0; }
+  /* components.css makes every card-cell ::before a block; the separators
+     here must stay inline or each becomes its own line. */
+  #livechannel td::before { display: inline; }
+  #livechannel .lc-team::before { content: " · "; color: var(--text-dim); }
+  #livechannel .lc-level::before { content: "\A"; white-space: pre; }
+  #livechannel .lc-code::before { content: " — "; color: var(--text-dim); }
+  #livechannel tr { padding: var(--space-2) var(--space-3); margin-bottom: var(--space-2); }
+}

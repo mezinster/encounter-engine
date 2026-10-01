@@ -1,9 +1,10 @@
 <h2><%= t("logs.show_live_channel.title", name: @game.name) %></h2>
 
 <%= render "shared/run_context" %>
+<%= render "shared/live_status" %>
 
-<div class="table-wrap">
-<table id="livechannel" class="table--cards">
+<div class="table-wrap" id="livechannel-live" data-live>
+<table id="livechannel" class="table--cards table--compact">
   <thead>
     <tr>
       <th><%= t("logs.show_live_channel.time") %></th>
@@ -19,10 +20,10 @@
         loading every log for the run. %>
     <% @logs.each do |log| %>
       <tr>
-        <td data-label="<%= t("logs.show_live_channel.time") %>"><%= log.time.strftime("%H:%M:%S") %></td>
-        <td data-label="<%= t("logs.show_live_channel.team") %>"><%= log.team_record&.name || log.team %></td>
-        <td data-label="<%= t("logs.show_live_channel.level") %>"><%= log.level_record&.name || log.level %></td>
-        <td data-label="<%= t("logs.show_live_channel.code") %>"><%= log.answer %></td>
+        <td class="lc-time" data-label="<%= t("logs.show_live_channel.time") %>"><%= log.time.strftime("%H:%M:%S") %></td>
+        <td class="lc-team" data-label="<%= t("logs.show_live_channel.team") %>"><%= log.team_record&.name || log.team %></td>
+        <td class="lc-level" data-label="<%= t("logs.show_live_channel.level") %>"><%= log.level_record&.name || log.level %></td>
+        <td class="lc-code" data-label="<%= t("logs.show_live_channel.code") %>"><%= log.answer %></td>
         </tr>
     <% end %>
   </tbody>

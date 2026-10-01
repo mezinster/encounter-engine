@@ -1,43 +1,15 @@
 <%= t("game_passings.index.title", name: @game.name) %>
 
-<p class="game-control">
-  <% if @game.paused? %>
-    <%= t("game_passings.index.paused_since", :time => l(@game.paused_at, :format => :long)) %>
-    <%= button_to t("game_passings.index.resume"), resume_game_path(@game), :method => :post, :class => "btn" %>
-  <% else %>
-    <%= button_to t("game_passings.index.pause"), pause_game_path(@game), :method => :post, :class => "btn" %>
-  <% end %>
-</p>
-
-<%# Superadmins only, matching InterventionsController's filter. Only
-    multi-code levels appear: on a one-code level both rules behave
-    identically, so a control there would be a button that changes nothing. %>
-<% if logged_in? && current_user.superadmin? %>
-  <% adjustable = @game.levels.select(&:multi_question?) %>
-  <% if adjustable.any? %>
-    <fieldset class="card">
-      <legend><%= t("game_passings.index.level_codes_legend") %></legend>
-      <% adjustable.each do |level| %>
-        <p class="game-control">
-          <strong><%= level.name %></strong>
-          <em><%= level.any_code_passes? ? t("levels.codes_rule_any") : t("levels.codes_rule_all") %></em>
-          <% if level.any_code_passes? %>
-            <%= button_to t("game_passings.index.require_all_codes"),
-                          require_all_codes_level_path(:game_id => @game.id, :id => level.id),
-                          :method => :post, :class => "btn" %>
-          <% else %>
-            <%= button_to t("game_passings.index.allow_any_code"),
-                          allow_any_code_level_path(:game_id => @game.id, :id => level.id),
-                          :method => :post, :class => "btn" %>
-          <% end %>
-        </p>
-      <% end %>
-    </fieldset>
-  <% end %>
-<% end %>
-
-<div class="table-wrap">
-<table id="stats" class="table--cards">
+<%# Phone layout (screens.css, .standings / .ops / .opbar): each team is a
+    two-line row, its actions and log buttons inside the existing panel, and
+    pause/resume in a bar that sticks to the bottom of the screen. The bar
+    comes AFTER the table in the markup so position: sticky; bottom: 0 can
+    hold it there; .ops puts it back on top from 48rem. Only the table is the
+    live region -- the bar is never swapped, so a tap on Pause never lands on
+    a node being replaced. %>
+<div class="ops">
+<div class="table-wrap" id="standings-live" data-live>
+<table id="stats" class="table--cards table--compact standings">
   <thead>
     <tr>
       <th><%= t("game_passings.index.team") %></th>
@@ -62,19 +34,27 @@
     %>
     <% game_passings_sorted_by_current_level_position.each do |game_passing| %>
       <tr>
-        <td data-label="<%= t("game_passings.index.team") %>"><%= game_passing.team.name %></td>
+        <td class="standings-team" data-label="<%= t("game_passings.index.team") %>"><%= game_passing.team.name %></td>
         <% if game_passing.exited? %>
-          <td data-label="<%= t("game_passings.index.level") %>"><%= t("game_passings.index.exited") %></td>
-          <td data-label="<%= t("game_passings.index.time_at_level") %>"><%= Level.find(game_passing.current_level_id).name %></td>
+          <td class="standings-level" data-label="<%= t("game_passings.index.level") %>"><%= t("game_passings.index.exited") %></td>
+          <td class="standings-time" data-label="<%= t("game_passings.index.time_at_level") %>"><%= Level.find(game_passing.current_level_id).name %></td>
         <% elsif game_passing.finished? %>
-          <td data-label="<%= t("game_passings.index.level") %>"><%= t("game_passings.index.finished") %></td>
-          <td data-label="<%= t("game_passings.index.time_at_level") %>">--:--:--</td>
+          <td class="standings-level" data-label="<%= t("game_passings.index.level") %>"><%= t("game_passings.index.finished") %></td>
+          <td class="standings-time" data-label="<%= t("game_passings.index.time_at_level") %>">--:--:--</td>
         <% else %>
-          <td data-label="<%= t("game_passings.index.level") %>"><%= game_passing.current_level.name %></td>
-          <td data-label="<%= t("game_passings.index.time_at_level") %>"><%= game_passing.time_at_level %></td>
+          <td class="standings-level" data-label="<%= t("game_passings.index.level") %>"><%= game_passing.current_level.name %></td>
+          <td class="standings-time" data-label="<%= t("game_passings.index.time_at_level") %>"><%= game_passing.time_at_level %></td>
         <% end %>
 
-        <td data-label="#">
+        <%# Frozen: features/logs/log.feature:29-61 sees and clicks these two
+            links on this page. Phones hide these cells by an external
+            stylesheet rule ONLY -- rack-test parses no stylesheet, so they
+            stay clickable for the contract. An inline style, a hidden
+            attribute or moving them into the closed <details> would each
+            make them invisible to it. People on phones use the panel's
+            buttons instead (different labels, so click_link never sees two
+            matches). %>
+        <td class="standings-log" data-label="#">
           <em>
             <%=
                unless game_passing.finished?
@@ -86,13 +66,13 @@
           </em>
         </td>
 
-        <td data-label="#">
+        <td class="standings-log" data-label="#">
           <em>
             <%= link_to t("game_passings.index.game_log"), show_game_log_path(game_id: game_passing.game_id, team_id: game_passing.team_id) %>
           </em>
         </td>
 
-        <td data-label="<%= t("game_passings.index.interventions") %>">
+        <td class="standings-actions" data-label="<%= t("game_passings.index.interventions") %>">
           <details>
             <summary class="btn team-disclosure"><%= t("game_passings.index.interventions") %></summary>
             <%= render "intervention_controls", :game_passing => game_passing, :levels => @levels %>
@@ -105,4 +85,44 @@
 </table>
 </div>
 
-<p><%= link_to t("game_passings.index.full_log"), show_full_log_path(@game), class: "btn" %></p>
+<p class="ops-full-log"><%= link_to t("game_passings.index.full_log"), show_full_log_path(@game), class: "btn" %></p>
+
+<div class="opbar">
+  <div class="game-control">
+    <% if @game.paused? %>
+      <%= t("game_passings.index.paused_since", :time => l(@game.paused_at, :format => :long)) %>
+      <%= button_to t("game_passings.index.resume"), resume_game_path(@game), :method => :post, :class => "btn" %>
+    <% else %>
+      <%= button_to t("game_passings.index.pause"), pause_game_path(@game), :method => :post, :class => "btn" %>
+    <% end %>
+  </div>
+  <%= render "shared/live_status" %>
+</div>
+
+<%# Superadmins only, matching InterventionsController's filter. Only
+    multi-code levels appear: on a one-code level both rules behave
+    identically, so a control there would be a button that changes nothing. %>
+<% if logged_in? && current_user.superadmin? %>
+  <% adjustable = @game.levels.select(&:multi_question?) %>
+  <% if adjustable.any? %>
+    <fieldset class="card ops-codes">
+      <legend><%= t("game_passings.index.level_codes_legend") %></legend>
+      <% adjustable.each do |level| %>
+        <div class="game-control">
+          <strong><%= level.name %></strong>
+          <em><%= level.any_code_passes? ? t("levels.codes_rule_any") : t("levels.codes_rule_all") %></em>
+          <% if level.any_code_passes? %>
+            <%= button_to t("game_passings.index.require_all_codes"),
+                          require_all_codes_level_path(:game_id => @game.id, :id => level.id),
+                          :method => :post, :class => "btn" %>
+          <% else %>
+            <%= button_to t("game_passings.index.allow_any_code"),
+                          allow_any_code_level_path(:game_id => @game.id, :id => level.id),
+                          :method => :post, :class => "btn" %>
+          <% end %>
+        </div>
+      <% end %>
+    </fieldset>
+  <% end %>
+<% end %>
+</div>

@@ -44,6 +44,7 @@ describe "the operator's log screens", type: :request do
       expect(accepted.first).to end_with("мост")
       expect(items.find { |li| li.text.include?("неверно") }.at_css(".log-ok")).to be_nil
       expect(cell_for(team.name).at_css(".log-ok")["aria-label"]).to eq("верно")
+      expect(cell_for(team.name).at_css(".log-ok")["role"]).to eq("img")
     end
 
     it "does not mark a quiz level's leftover code the game refuses" do

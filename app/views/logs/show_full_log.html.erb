@@ -52,7 +52,7 @@
               <%# ✓ when the game would accept this answer -- the same method
                   the game credits with (strip + upcase, quiz questions
                   skipped); no second matching rule lives here. %>
-              <li><%= team_log.time.strftime("%H:%M:%S") %>&nbsp;<%= team_log.answer %><% if level.find_question_by_answer(team_log.answer) %><span class="log-ok" aria-label="<%= t("logs.show_full_log.accepted") %>">✓</span><% end %></li>
+              <li><%= team_log.time.strftime("%H:%M:%S") %>&nbsp;<%= team_log.answer %><% if level.find_question_by_answer(team_log.answer) %><span class="log-ok" role="img" aria-label="<%= t("logs.show_full_log.accepted") %>">✓</span><% end %></li>
             <% end %>
             </ul>
           <% end %>

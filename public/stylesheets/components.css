@@ -274,18 +274,9 @@ th {
   align-items: center;
   justify-content: center;
   width: 48px;
-  min-height: 48px; /* a file icon fills the image thumbnail's 48px box; the label is .visually-hidden.
-                       min-height, not height: the styleguide specimen's ka label needs 52px */
+  height: 48px; /* a file icon in the image thumbnail's box; the label is .visually-hidden */
   overflow: hidden;
   color: var(--text-dim);
-  /* The file table renders an icon plus a .visually-hidden label, so none of
-     this applies there. The styleguide specimen still shows the translated
-     label as visible text, and it must wrap inside the box in every locale. */
-  font-size: var(--text-xs);
-  line-height: 1.1;
-  text-align: center;
-  overflow-wrap: anywhere;
-  hyphens: auto;
 }
 
 /* --- Flash, cards, panels, tags ------------------------------------------ */

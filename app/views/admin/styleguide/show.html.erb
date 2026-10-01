@@ -81,7 +81,7 @@
   <h2>File thumbnail, every locale</h2>
   <div class="file-table" style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3)">
     <% I18n.available_locales.each do |locale| %>
-      <span class="file-thumb-generic" lang="<%= locale %>"><%= t("game_files.table.no_thumbnail", :locale => locale) %></span>
+      <%= render "game_files/generic_thumb", :locale => locale %>
     <% end %>
   </div>
 

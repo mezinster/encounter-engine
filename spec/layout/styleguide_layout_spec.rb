@@ -97,8 +97,8 @@ describe "the styleguide, measured", :layout, type: :request do
         invalidCount: invalid.length, invalidNotRed: invalidNotRed,
         fieldCheckCount: fieldChecks.length, fieldChecksNotFlex: fieldChecksNotFlex,
         thumbCount: thumbs.length,
-        // overflow-wrap: anywhere lets a label break mid-word to fit, so
-        // fitting alone cannot see uppercase/tracking creeping back in.
+        // The thumbnail is an icon plus a visually-hidden label now; this guards
+        // against text styling creeping back onto the box.
         thumbsShouted: thumbs.filter(function (el) { var s = getComputedStyle(el); return s.textTransform !== "none" || s.letterSpacing !== "normal"; }).length, thumbsOverflowing: thumbsOverflowing,
         theme: document.documentElement.getAttribute("data-theme"),
         controls: controls.length,
@@ -142,7 +142,7 @@ describe "the styleguide, measured", :layout, type: :request do
           expect(m["fieldChecksNotFlex"]).to eq([])
         end
 
-        it "fits the generic thumbnail label in its box, in every locale" do
+        it "fits the generic thumbnail icon in its box, in every locale" do
           expect(m["thumbCount"]).to eq(7)
           expect(m["thumbsShouted"]).to eq(0)
           expect(m["thumbsOverflowing"]).to eq([])

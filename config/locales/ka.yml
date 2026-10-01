@@ -1166,6 +1166,12 @@ ka:
         failed: "შეცდომა"
         cancelled: "შეჩერდა"
     review:
+      columns:
+        locale: "ენა"
+        field: "ველი"
+        source: "ორიგინალი"
+        proposal: "თარგმანი"
+        state: "სტატუსი"
       heading: "თამაშის «%{game}» თარგმანის განხილვა"
       accept_all: "ყველას მიღება შენიშვნების გარეშე"
       accept_flagged: "მიღება შენიშვნებით (%{count})"

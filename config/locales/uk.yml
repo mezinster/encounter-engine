@@ -1139,6 +1139,12 @@ uk:
         failed: "Помилка"
         cancelled: "Зупинено"
     review:
+      columns:
+        locale: "Мова"
+        field: "Поле"
+        source: "Оригінал"
+        proposal: "Переклад"
+        state: "Статус"
       heading: "Перевірка перекладу гри «%{game}»"
       accept_all: "Прийняти все без зауважень"
       accept_flagged: "Прийняти із зауваженнями (%{count})"

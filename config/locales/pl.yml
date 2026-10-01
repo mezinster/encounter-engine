@@ -1145,6 +1145,12 @@ pl:
         failed: "Błąd"
         cancelled: "Zatrzymane"
     review:
+      columns:
+        locale: "Język"
+        field: "Pole"
+        source: "Oryginał"
+        proposal: "Tłumaczenie"
+        state: "Status"
       heading: "Sprawdzanie tłumaczenia gry „%{game}”"
       accept_all: "Zaakceptuj wszystko bez uwag"
       accept_flagged: "Zaakceptuj z uwagami (%{count})"

@@ -1188,6 +1188,12 @@ tr:
         failed: "Başarısız"
         cancelled: "Durduruldu"
     review:
+      columns:
+        locale: "Dil"
+        field: "Alan"
+        source: "Kaynak"
+        proposal: "Öneri"
+        state: "Durum"
       heading: "«%{game}» adlı oyunun çevirisinin incelenmesi"
       accept_all: "Sorunsuz olanların tümünü kabul et"
       accept_flagged: "Sorunlu olanları kabul et (%{count})"

@@ -1132,6 +1132,12 @@ be:
         failed: "Памылка"
         cancelled: "Спынена"
     review:
+      columns:
+        locale: "Мова"
+        field: "Поле"
+        source: "Арыгінал"
+        proposal: "Пераклад"
+        state: "Статус"
       heading: "Праверка перакладу гульні «%{game}»"
       accept_all: "Прыняць усё без заўваг"
       accept_flagged: "Прыняць з заўвагамі (%{count})"

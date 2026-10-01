@@ -4,16 +4,26 @@
               accept_all_game_translation_run_proposals_path(@game, @run),
               :class => "btn btn--go" %>
 
-<table class="proposals">
+<table class="proposals table--cards">
+  <thead>
+    <tr>
+      <th><%= t("translations.review.columns.locale") %></th>
+      <th><%= t("translations.review.columns.field") %></th>
+      <th><%= t("translations.review.columns.source") %></th>
+      <th><%= t("translations.review.columns.proposal") %></th>
+      <th><%= t("translations.review.columns.state") %></th>
+    </tr>
+  </thead>
+  <tbody>
   <% @proposals.each do |proposal| %>
     <tr class="<%= "flagged" if proposal.flagged? %>">
-      <td><%= t("locales.#{proposal.locale}") %></td>
-      <td><%= @game.label_for(proposal.translatable, proposal.field) %></td>
+      <td class="locale" data-label="<%= t("translations.review.columns.locale") %>"><%= t("locales.#{proposal.locale}") %></td>
+      <td class="field" data-label="<%= t("translations.review.columns.field") %>"><%= @game.label_for(proposal.translatable, proposal.field) %></td>
       <%# Rendered as text, never as HTML. Author-written game content is
           escaped everywhere in this application and a translation of it is
           no different. %>
-      <td class="source"><%= proposal.source_text %></td>
-      <td>
+      <td class="source" data-label="<%= t("translations.review.columns.source") %>"><%= proposal.source_text %></td>
+      <td class="proposal" data-label="<%= t("translations.review.columns.proposal") %>">
         <%# Accept and Reject are offered ONLY while the proposal is pending.
             Both actions scope their lookup to .pending, so a button on an
             already-reviewed row raises RecordNotFound -- and this app installs
@@ -27,7 +37,7 @@
             <% if proposal.flagged? %>
               <ul class="flags">
                 <% proposal.flag_list.each do |flag| %>
-                  <li><%= t("translations.flags.#{flag}") %></li>
+                  <li class="tag tag--danger"><%= t("translations.flags.#{flag}") %></li>
                 <% end %>
               </ul>
             <% end %>
@@ -49,9 +59,10 @@
           <% end %>
         <% end %>
       </td>
-      <td><%= t("translations.review.state.#{proposal.state}") %></td>
+      <td class="state" data-label="<%= t("translations.review.columns.state") %>"><%= t("translations.review.state.#{proposal.state}") %></td>
     </tr>
   <% end %>
+  </tbody>
 </table>
 
 <%# Below the table, not beside "accept everything unflagged" at the top:

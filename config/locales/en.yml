@@ -1113,6 +1113,12 @@ en:
         failed: "Failed"
         cancelled: "Stopped"
     review:
+      columns:
+        locale: "Language"
+        field: "Field"
+        source: "Source"
+        proposal: "Proposal"
+        state: "Status"
       heading: "Reviewing the translation of “%{game}”"
       accept_all: "Accept everything unflagged"
       accept_flagged: "Accept flagged (%{count})"

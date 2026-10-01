@@ -1143,6 +1143,12 @@ ru:
         failed: "Ошибка"
         cancelled: "Остановлен"
     review:
+      columns:
+        locale: "Язык"
+        field: "Поле"
+        source: "Оригинал"
+        proposal: "Перевод"
+        state: "Статус"
       heading: "Проверка перевода игры «%{game}»"
       accept_all: "Принять всё без замечаний"
       accept_flagged: "Принять с замечаниями (%{count})"

@@ -76,6 +76,9 @@ describe "full-sentence validation messages" do
         expect(lowercase).to eq([]), "not a sentence:\n#{lowercase.join("\n")}"
       end
 
+      # Messages added by custom `validate` methods via `errors.add` (e.g. game's `exceeds_requested`,
+      # `in_the_past`, `after_game_start`) are not visible to `validators_on`; they are covered only by
+      # the every-message-is-a-sentence example.
       it "has a sentence for every message a validator on those fields can raise" do
         missing = SENTENCE_FIELDS.flat_map do |model, attrs|
           klass = model.camelize.constantize

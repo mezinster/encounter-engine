@@ -25,6 +25,15 @@ describe "the translation review table, measured", :layout, type: :request do
     TranslationProposal.create!(:translation_run => run, :translatable => level, :field => "name",
                                 :locale => "en", :source_text => "Первый", :proposed_text => "First",
                                 :state => "pending")
+    # A quiz option's label embeds the author's option text, which is unbounded:
+    # the field column must wrap it rather than widen the table.
+    question = create_question(:level => level)
+    option   = create_option(:question => question,
+                             :text => "Памятник основателю города у старого моста через реку напротив " \
+                                      "здания бывшей городской думы " + "Длиннейшееслово" * 4)
+    TranslationProposal.create!(:translation_run => run, :translatable => option, :field => "text",
+                                :locale => "en", :source_text => option.text,
+                                :proposed_text => "Monument to the founder of the city", :state => "pending")
     put login_path, :params => { :email => admin.email, :password => "1234" }
     get game_translation_run_proposals_path(game, run)
     expect(response).to have_http_status(:ok)

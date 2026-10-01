@@ -31,7 +31,8 @@
     two permanently empty columns. %>
 <% show_penalties = game_passings.any? { |gp| gp.penalty_seconds.to_i > 0 } %>
 
-<div class="table-wrap">
+<%= render "shared/live_status" %>
+<div class="table-wrap" id="results-live" data-live>
 <table id="results" class="table--cards">
   <thead>
     <tr>

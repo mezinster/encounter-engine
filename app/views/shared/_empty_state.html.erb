@@ -1,0 +1,15 @@
+<%# shared/_empty_state -- what a list says when it has nothing in it.
+    A quiet card: a title, optionally one sentence, and -- only where the
+    viewer may act -- one plain link (never a filled .btn--go). The :line
+    variant is a single dim sentence for places where a card would be heavier
+    than the list it replaces. Callers keep their containers and ids; this
+    replaces only the empty table or list inside them. %>
+<% if local_assigns[:variant] == :line %>
+  <p class="empty-state-line"><%= title %></p>
+<% else %>
+  <div class="card empty-state">
+    <%= content_tag(local_assigns.fetch(:heading, :h3), title, :class => "empty-state-title") %>
+    <% if local_assigns[:text].present? %><p><%= text %></p><% end %>
+    <% if local_assigns[:action] %><p><%= link_to action[0], action[1], :class => "empty-state-action" %></p><% end %>
+  </div>
+<% end %>

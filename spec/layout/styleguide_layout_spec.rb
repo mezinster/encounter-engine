@@ -48,7 +48,7 @@ describe "the styleguide, measured", :layout, type: :request do
         return { id: el.id || el.name || el.type, worst: Math.round(worst * 100) / 100 };
       }).filter(function (c) { return c.worst < 3; });
 
-      var shortTargets = Array.prototype.slice.call(document.querySelectorAll(".styleguide .btn, .styleguide .check"))
+      var shortTargets = Array.prototype.slice.call(document.querySelectorAll(".styleguide .btn, .styleguide .check, .styleguide .empty-state-action"))
         .map(function (el) { return { text: el.textContent.trim().slice(0, 30), h: Math.round(el.getBoundingClientRect().height) }; })
         .filter(function (t) { return t.h < 44; });
 
@@ -93,7 +93,11 @@ describe "the styleguide, measured", :layout, type: :request do
       var thumbsOverflowing = thumbs.filter(function (el) { return el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight; })
         .map(function (el) { return { lang: el.lang, sw: el.scrollWidth, cw: el.clientWidth, sh: el.scrollHeight, ch: el.clientHeight }; });
 
+      var empties = Array.prototype.slice.call(document.querySelectorAll(".styleguide .empty-state"));
+      var emptyGaps = empties.map(function (c) { var k = c.children; var g = []; for (var i = 1; i < k.length; i++) g.push(k[i].getBoundingClientRect().top - k[i-1].getBoundingClientRect().bottom); return g; });
+
       var RESULT = {
+        emptyCount: empties.length, emptyMinGap: Math.min.apply(null, [].concat.apply([], emptyGaps).concat([999])),
         invalidCount: invalid.length, invalidNotRed: invalidNotRed,
         fieldCheckCount: fieldChecks.length, fieldChecksNotFlex: fieldChecksNotFlex,
         thumbCount: thumbs.length,
@@ -146,6 +150,11 @@ describe "the styleguide, measured", :layout, type: :request do
           expect(m["thumbCount"]).to eq(7)
           expect(m["thumbsShouted"]).to eq(0)
           expect(m["thumbsOverflowing"]).to eq([])
+        end
+
+        it "lays out an empty state with visible gaps" do
+          expect(m["emptyCount"]).to be >= 1
+          expect(m["emptyMinGap"]).to be >= 4
         end
 
         it "does not scroll sideways" do

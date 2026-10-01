@@ -834,3 +834,10 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
   #livechannel .lc-code::before { content: " — "; color: var(--text-dim); }
   #livechannel tr { padding: var(--space-2) var(--space-3); margin-bottom: var(--space-2); }
 }
+
+/* --- Empty states (shared/_empty_state) ---------------------------------- */
+.empty-state > * + * { margin-top: var(--space-2); }
+.empty-state-title { font-size: var(--text-lg); }
+.empty-state p, .empty-state-line { color: var(--text-dim); }
+.empty-state-line { font-size: var(--text-sm); }
+.empty-state-action { display: inline-flex; align-items: center; min-height: var(--tap); }

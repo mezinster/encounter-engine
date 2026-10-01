@@ -72,7 +72,7 @@ Every existing declaration (19 across `base`, `components`, `layout`, `screens`)
 | h1 clamp | `h1` (`base.css:40`) | `--text-h1` | none |
 | h2 clamp | `h2` (`base.css:41`) | `--text-h2` | none |
 | 1.05rem | `h3` (`base.css:42`) | `--text-lg` | +0.075rem |
-| 0.68rem | `.file-table .file-thumb-generic` (`components.css:166`) | `--text-xs` | +0.12rem — **check it still fits its 48px box** |
+| 0.68rem | `.file-table .file-thumb-generic` (`components.css:166`) | `--text-xs` | +0.12rem — **check it still fits its 48px box**. It did not: `.file-thumb-generic` dropped its uppercase and letter-spacing so translated labels fit the 48px box (and the box may grow taller, never wider, for a label that needs a further line) |
 | 0.72rem | `.table--cards td::before` (`components.css:136`) | `--text-xs` | +0.08rem |
 | 0.75rem | `.tag` (`components.css:222`) | `--text-xs` | +0.05rem |
 | 0.78rem | `th`, `.stat-label`, `ul.language-tabs .missing-count`, `.attachment-item--generic` | `--text-xs` | +0.02rem |
@@ -144,8 +144,11 @@ the token, matching how `tokens.css` already records its contrast decisions.
   `--border-input`. This styles the 20 `number_field`s that render with browser defaults today.
 - **Checkbox and radio.** `accent-color: var(--go)`, `width`/`height: 1.25rem`. A new `.check`
   pattern — a label wrapping its input, `display: flex`, `min-height: var(--tap)` — makes the
-  whole row the tap target. Applies to the 17 `check_box` and 5 `radio_button` uses; existing
-  `.quiz-option` styling is left as it is.
+  whole row the tap target. The global sizing/accent/alignment rule reaches every checkbox and
+  radio now; adopting the `.check` row pattern in the existing forms (17 `check_box` and 5
+  `radio_button` uses) is deferred to the screen-by-screen wave items (E, D), because each form's
+  Cucumber steps must be checked as it is redesigned. Existing `.quiz-option` styling is left as
+  it is.
 - **File input.** `::file-selector-button` takes the `.btn` look.
 - **`:disabled`.** Inputs and buttons get `color: var(--text-dim)` and `cursor: not-allowed`.
   **No opacity**: on the dark theme a faded control becomes unreadable rather than inactive.

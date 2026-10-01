@@ -10,7 +10,7 @@ describe "live_region.js" do
   let(:script) { Rails.root.join("public/javascripts/live_region.js").to_s }
 
   before do
-    _, status = Open3.capture2("node", "--version") rescue raise("node is not on PATH; these examples must run, not skip")
+    Open3.capture2("node", "--version") rescue raise("node is not on PATH; these examples must run, not skip")
   end
 
   def run_js(body)
@@ -73,5 +73,115 @@ describe "live_region.js" do
       console.log(JSON.stringify([found && found.innerHTML, missing, unparsable]));
     JS
     expect(result).to eq(["fresh", nil, nil])
+  end
+
+  it "holds while focus is on a link inside the region" do
+    result = run_js(<<~JS)
+      var inside = { tagName: "A" };
+      var region = { querySelector: function () { return null; }, contains: function (n) { return n === inside; } };
+      var other = { tagName: "A" };
+      console.log(JSON.stringify([
+        LR.holdReason({ hidden: false, activeElement: inside, body: {} }, region),
+        LR.holdReason({ hidden: false, activeElement: other, body: {} }, region)
+      ]));
+    JS
+    expect(result).to eq(["focus", nil])
+  end
+
+  # start() driven with small fakes. Every fetch is a promise the example
+  # resolves by hand; setInterval/setTimeout callbacks are captured.
+  let(:start_harness) do
+    <<~JS
+      function make(opts) {
+        opts = opts || {};
+        var h = { fetches: [], timers: [], aborts: 0, swaps: 0, detailsOpen: false };
+        var region = { id: "r", _html: "old",
+          get innerHTML() { return this._html; }, set innerHTML(v) { this._html = v; h.swaps++; },
+          querySelector: function (s) { return s === "details[open]" && h.detailsOpen ? {} : null; },
+          contains: function () { return false; } };
+        var stamp = {}, toggle = { addEventListener: function () {}, setAttribute: function () {} };
+        var status = { hidden: true,
+          getAttribute: function () { return "x"; },
+          querySelector: function (s) { return s === "[data-live-stamp]" ? stamp : toggle; } };
+        var doc = { hidden: false, activeElement: null, body: {},
+          querySelector: function (s) { return s === "[data-live]" ? region : s === "[data-live-status]" ? status : null; } };
+        var win = { location: { href: "/x" }, scrollX: 0, scrollY: 0, scrollTo: function () {},
+          fetch: function (url, o) {
+            var f = {}; f.promise = new Promise(function (res, rej) { f.resolve = res; f.reject = rej; });
+            f.signal = o.signal; h.fetches.push(f); return f.promise; },
+          DOMParser: function () { this.parseFromString = function (html) {
+            return { getElementById: function (id) { return html.indexOf('id="' + id + '"') >= 0 ? { innerHTML: "fresh" } : null; } }; }; },
+          setInterval: function () { return 1; },
+          setTimeout: function (fn, ms) { h.ms = ms; h.timers.push({ fn: fn, ms: ms }); return h.timers.length; },
+          clearTimeout: function (id) { h.timers[id - 1] = null; } };
+        if (!opts.noAbort) win.AbortController = function () { var self = this; this.signal = {};
+          this.abort = function () { h.aborts++; }; };
+        h.region = region; h.hook = LR.start(doc, win);
+        return h;
+      }
+      function ok(body) { return { ok: true, text: function () { return Promise.resolve(body); } }; }
+      function settle() { return new Promise(function (r) { setTimeout(r, 0); }); }
+    JS
+  end
+
+  it "skips a tick while a request is pending, and fetches again once it completes" do
+    result = run_js(start_harness + <<~JS)
+      (async function () {
+        var h = make(); h.hook.tick(); h.hook.tick();
+        var during = h.fetches.length;
+        h.fetches[0].resolve(ok('<div id="r">x</div>')); await settle();
+        h.hook.tick();
+        console.log(JSON.stringify([during, h.fetches.length, h.region.innerHTML, h.ms]));
+      })();
+    JS
+    expect(result).to eq([1, 2, "fresh", 15000])
+  end
+
+  it "swaps nothing when the response lacks the region" do
+    result = run_js(start_harness + <<~JS)
+      (async function () {
+        var h = make(); h.hook.tick();
+        h.fetches[0].resolve(ok('<form id="login"></form>')); await settle();
+        h.hook.tick();
+        console.log(JSON.stringify([h.region.innerHTML, h.swaps, h.fetches.length]));
+      })();
+    JS
+    expect(result).to eq(["old", 0, 2])
+  end
+
+  it "does not swap when a panel was opened while the fetch was in flight" do
+    result = run_js(start_harness + <<~JS)
+      (async function () {
+        var h = make(); h.hook.tick();
+        h.detailsOpen = true;
+        h.fetches[0].resolve(ok('<div id="r">x</div>')); await settle();
+        console.log(JSON.stringify([h.region.innerHTML, h.swaps]));
+      })();
+    JS
+    expect(result).to eq(["old", 0])
+  end
+
+  it "ignores a response that arrives after the request timed out, and frees the next tick" do
+    result = run_js(start_harness + <<~JS)
+      (async function () {
+        var h = make(); h.hook.tick();
+        h.timers[0].fn();
+        h.hook.tick();
+        var fetchedAgain = h.fetches.length;
+        h.fetches[0].resolve(ok('<div id="r">x</div>')); await settle();
+        console.log(JSON.stringify([h.aborts, fetchedAgain, h.region.innerHTML, h.swaps]));
+      })();
+    JS
+    expect(result).to eq([1, 2, "old", 0])
+  end
+
+  it "still prevents overlap without AbortController" do
+    result = run_js(start_harness + <<~JS)
+      (async function () {
+        var h = make({ noAbort: true }); h.hook.tick(); h.hook.tick();
+        console.log(JSON.stringify([h.fetches.length, h.fetches[0].signal === undefined]));
+      })();
+    JS
+    expect(result).to eq([1, true])
   end
 end

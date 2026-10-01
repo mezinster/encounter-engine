@@ -734,11 +734,19 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
  * gap, not `> * + *` margins: with order changed, a sibling margin would
  * land on the wrong element. */
 .ops { display: flex; flex-direction: column; gap: var(--space-4); }
-.live-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+.live-status:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
                font-size: var(--text-sm); color: var(--text-dim); }
 
+.opbar .game-control { margin: 0; }
+/* Visual order on desktop: bar, level-codes fieldset, table (as before the
+   rework). Markup order is table, link, bar, fieldset so the bar can stick
+   to the bottom on phones; phones put the fieldset before the bar. */
+.ops > .ops-codes { order: 1; }
+.ops > .opbar { order: 2; }
+
 @media (min-width: 48rem) {
-  .ops > .opbar { order: -1; }
+  .ops > .opbar { order: -2; }
+  .ops > .ops-codes { order: -1; }
   .opbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
 }
 
@@ -759,18 +767,25 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
     background: var(--surface);
     border-top: 1px solid var(--border);
   }
-  .opbar .game-control { margin: 0; }
 
-  /* One team = two lines: name, then level · time. The panel button sits
-     top-right; an open panel runs full width under the two lines. */
-  .standings tr { position: relative; min-height: calc(var(--tap) + 2 * var(--space-2));
+  /* One team = two lines: name, then level . time. The row is a 3-column
+     grid: [level auto][time 1fr][46% reserved]. The reserved third column is
+     empty on both lines and is where the absolutely positioned panel button
+     (max-width 46%, top-right of the row) sits, so neither line can run under
+     it: the name spans columns 1-2, level and time sit in columns 1 and 2,
+     and each can only shrink or wrap inside its column. The actions cell
+     takes row 3 across all columns, so an open panel runs full width under
+     the two lines. */
+  .standings tr { position: relative; display: grid;
+                  grid-template-columns: minmax(0, auto) minmax(0, 1fr) 46%;
+                  min-height: calc(var(--tap) + 2 * var(--space-2));
                   margin-bottom: var(--space-2); padding: var(--space-2) var(--space-3); }
-  .standings .standings-team { font-weight: 600; margin-right: 48%; }
-  .standings .standings-level, .standings .standings-time { display: inline; }
-  .standings .standings-time::before { content: " · "; color: var(--text-dim); }
-  .standings .standings-level { margin-right: 0; }
+  .standings .standings-team { grid-column: 1 / 3; grid-row: 1; font-weight: 600; }
+  .standings .standings-level { grid-column: 1; grid-row: 2; }
+  .standings .standings-time { grid-column: 2; grid-row: 2; }
+  .standings .standings-time::before { content: " \00b7 "; color: var(--text-dim); }
   .standings .standings-log { display: none; }
-  .standings .standings-actions { padding: 0; }
+  .standings .standings-actions { grid-column: 1 / -1; grid-row: 3; padding: 0; }
   .standings .team-disclosure { position: absolute; top: var(--space-2); right: var(--space-2);
                                 max-width: 46%; }
   .standings details[open] .team-panel { margin-top: var(--space-2); }
@@ -789,7 +804,6 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .log-none { color: var(--text-dim); font-size: var(--text-sm); }
 
 @media (max-width: 47.99rem) {
-  .log-matrix, .log-matrix tbody, .log-matrix tr, .log-matrix td { display: block; width: auto; }
   .log-matrix td { border: 0; padding: var(--space-1) 0 var(--space-2) var(--space-3);
                    overflow-wrap: anywhere; }
   .log-matrix .log-level-row td { padding: var(--space-4) 0 var(--space-1);

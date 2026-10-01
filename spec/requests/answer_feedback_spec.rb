@@ -113,4 +113,21 @@ describe "answer feedback", type: :request do
       expect(response.body).not_to include("Код неверный")
     end
   end
+
+  describe "screen-reader roles" do
+    let!(:first_level)  { create_level(:game => game, :correct_answer => "enstart") }
+    let!(:second_level) { create_level(:game => game, :correct_answer => "enfinish") }
+
+    it "announces a correct code as a status" do
+      post post_answer_path(:game_id => game.id), :params => { :answer => "enstart" }
+
+      expect(Nokogiri::HTML(response.body).at_css(".flash")["role"]).to eq("status")
+    end
+
+    it "announces a wrong code as an alert" do
+      post post_answer_path(:game_id => game.id), :params => { :answer => "nope" }
+
+      expect(Nokogiri::HTML(response.body).at_css(".flash--alert")["role"]).to eq("alert")
+    end
+  end
 end

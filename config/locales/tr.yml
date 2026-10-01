@@ -1126,6 +1126,7 @@ tr:
       empty_title: "Şu anda planlanmış oyun yok"
       empty_text: "Daha sonra tekrar bakın — ya da geçmişteki oyunlar dahil tüm oyunlara göz atın."
       team_line: "Takımınız: «%{team}»"
+      team_separator: "·"
       team_room: "Takım odası"
       how_heading: "Nasıl oynanır"
       step1_title: "Kayıt olun"

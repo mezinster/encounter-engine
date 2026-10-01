@@ -1087,6 +1087,7 @@ pl:
       empty_title: "Obecnie nie zaplanowano żadnych gier"
       empty_text: "Zajrzyj później — albo przejrzyj wszystkie gry, także minione."
       team_line: "Drużyna: «%{team}»"
+      team_separator: "·"
       team_room: "Pokój drużyny"
       how_heading: "Jak grać"
       step1_title: "Zarejestruj się"

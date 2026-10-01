@@ -1055,6 +1055,7 @@ en:
       empty_title: "No games scheduled right now"
       empty_text: "Check back later — or browse all games, including past ones."
       team_line: "Team: «%{team}»"
+      team_separator: "·"
       team_room: "Team room"
       how_heading: "How to play"
       step1_title: "Sign up"

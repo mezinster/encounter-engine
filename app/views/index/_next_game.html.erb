@@ -1,6 +1,6 @@
 <% text, css = home_status_tag(game) %>
 <article class="card next-game">
-  <h3><%= link_to game.name, game_path(game) %></h3>
+  <%= content_tag(logged_in? ? :h2 : :h3, link_to(game.name, game_path(game))) %>
   <span class="<%= css %>"><%= text %></span>
   <div class="when">
     <%= game.starts_at ? l_with_zone(game.starts_at, format: :home_card) : t("games.show.starts_at_not_set") %>

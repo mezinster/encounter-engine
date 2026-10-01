@@ -135,6 +135,7 @@ RSpec.describe "internationalization" do
       time.formats.home_card
       time.formats.home_row
       sessions.new.email_label
+      index.index.team_separator
       password_resets.new.email
       messengers.telegram
       messengers.whatsapp

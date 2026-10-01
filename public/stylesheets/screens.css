@@ -700,7 +700,7 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .home-note { font-size: var(--text-sm); color: var(--text-dim); }
 .home .tag { white-space: nowrap; flex-shrink: 0; }
 
-.next-game h3 { font-size: var(--text-lg); margin-bottom: var(--space-2); }
+.next-game :is(h2, h3) { font-size: var(--text-lg); margin-bottom: var(--space-2); }
 .next-game .when { margin-top: var(--space-2); font-size: var(--text-lg); font-weight: 600; }
 .next-game .meta { font-size: var(--text-sm); color: var(--text-dim); }
 .next-game-action:not(:empty) { margin-top: var(--space-4); }
@@ -710,8 +710,8 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
             padding: var(--space-1) 0; border-bottom: 1px solid var(--border); }
 .game-row > div { min-width: 0; }
 .game-row .name { font-weight: 600; overflow-wrap: anywhere; }
-.game-row .name, .next-game h3 a { display: inline-flex; align-items: center; min-height: var(--tap); }
-.next-game h3 a { overflow-wrap: anywhere; min-width: 0; max-width: 100%; }
+.game-row .name, .next-game :is(h2, h3) a { display: inline-flex; align-items: center; min-height: var(--tap); }
+.next-game :is(h2, h3) a { overflow-wrap: anywhere; min-width: 0; max-width: 100%; }
 .game-row .when { font-size: var(--text-sm); color: var(--text-dim); }
 
 .timeline { list-style: none; display: flex; flex-direction: column; gap: var(--space-4); }

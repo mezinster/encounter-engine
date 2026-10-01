@@ -38,19 +38,19 @@
         seconds later (flash_dismiss.js). A correct code on a level with
         another code still to find is feedback on the question in front of
         the team and stays put. %>
-    <div class="flash"<%= ' data-dismiss-after="8000"'.html_safe if level_passed %>>
+    <div class="flash" role="status"<%= ' data-dismiss-after="8000"'.html_safe if level_passed %>>
       <% if level_passed %>
         <strong><%= t("game_passings.show_current_level.level_passed", position: level_passed.position) %></strong>
       <% end %>
       <%= answer_feedback_message %>
     </div>
   <% else %>
-    <p class="flash flash--alert">
+    <p class="flash flash--alert" role="alert">
       <%= answer_feedback_message %>
     </p>
   <% end %>
 <% elsif answer_rejected? %>
-  <p class="flash flash--alert">
+  <p class="flash flash--alert" role="alert">
     <%= rejected_answer_message %>
   </p>
 <% end %>

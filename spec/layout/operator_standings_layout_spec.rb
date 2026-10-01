@@ -41,6 +41,12 @@ describe "the operator's standings, measured", :layout, type: :request do
   def probe(theme)
     <<~JS
       document.documentElement.setAttribute("data-theme", "#{theme}");
+      // Server-rendered bar text, captured before the probe touches anything.
+      // The parser closes the <p class="game-control"> before the button_to form,
+      // so the bar's text is read from the whole .opbar (live status is hidden
+      // and empty at this point).
+      var barTextBeforeProbe = document.querySelector(".opbar").textContent.replace(/\\s+/g, " ").trim();
+      var pauseLabel = document.querySelector(".opbar form.button_to button").textContent.trim();
       var status = document.querySelector("[data-live-status]");
       var statusDisplayBeforeScript = status ? getComputedStyle(status).display : "absent";
       if (status) { status.hidden = false;
@@ -49,8 +55,9 @@ describe "the operator's standings, measured", :layout, type: :request do
       var vw = document.documentElement.clientWidth;
       function hit(el) { var r = el.getBoundingClientRect(); if (r.width === 0) return false;
         var t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && (t === el || el.contains(t)); }
-      var pause = document.querySelector(".opbar button");
+      var pause = document.querySelector(".opbar form.button_to button");
       var pauseTop = hit(pause);
+      var scrollable = document.documentElement.scrollHeight > window.innerHeight + 50;
       window.scrollTo(0, document.documentElement.scrollHeight);
       var pauseBottom = hit(pause);
       window.scrollTo(0, 0);
@@ -62,12 +69,14 @@ describe "the operator's standings, measured", :layout, type: :request do
       // Text of the name/level/time cells must never run under the panel
       // button: compare each text line's box with the button's box.
       function overlaps(a, b) { return a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5; }
+      var rowsWithButton = rows.filter(function (r) { return !!r.querySelector(".team-disclosure"); }).length;
+      var rectsCompared = 0;
       var textUnderButton = rows.filter(function (r) {
         var btn = r.querySelector(".team-disclosure"); if (!btn) return false;
         var br = btn.getBoundingClientRect();
         return Array.prototype.some.call(r.querySelectorAll(".standings-team, .standings-level, .standings-time"), function (c) {
           var range = document.createRange(); range.selectNodeContents(c);
-          return Array.prototype.some.call(range.getClientRects(), function (q) { return q.width > 0 && overlaps(q, br); });
+          return Array.prototype.some.call(range.getClientRects(), function (q) { if (q.width > 0) rectsCompared++; return q.width > 0 && overlaps(q, br); });
         });
       }).map(function (r) { return r.querySelector(".standings-team").textContent.trim().slice(0, 20); });
       var firstDetails = document.querySelector("#stats details"); firstDetails.open = true;
@@ -77,6 +86,8 @@ describe "the operator's standings, measured", :layout, type: :request do
       var RESULT = {
         theme: document.documentElement.getAttribute("data-theme"),
         rowCount: rows.length,
+        barTextBeforeProbe: barTextBeforeProbe, pauseLabel: pauseLabel, scrollable: scrollable,
+        measuredHeights: rowHeights.length, rowsWithButton: rowsWithButton, rectsCompared: rectsCompared,
         tallRows: rowHeights.filter(function (h) { return h > 90; }),
         textUnderButton: textUnderButton,
         statusDisplayBeforeScript: statusDisplayBeforeScript,
@@ -111,10 +122,23 @@ describe "the operator's standings, measured", :layout, type: :request do
         expect(m["rowCount"]).to eq(12)
       end
 
+      it "rendered the paused or running state it was asked for" do
+        if paused
+          expect(m["barTextBeforeProbe"]).to include("Игра приостановлена в")
+          expect(m["pauseLabel"]).to eq("Продолжить игру")
+        else
+          expect(m["barTextBeforeProbe"]).not_to include("Игра приостановлена")
+          expect(m["pauseLabel"]).to eq("Приостановить игру")
+        end
+      end
+
       it "lets Pause/Resume be tapped at the top and the bottom of the scroll" do
         expect(m["pauseTop"]).to be(true)
         # Sticky on phones only; on desktop the bar sits at the top by design.
-        expect(m["pauseBottom"]).to be(true) unless name == "desktop"
+        if name != "desktop"
+          expect(m["scrollable"]).to be(true)
+          expect(m["pauseBottom"]).to be(true)
+        end
       end
 
       it "keeps the refresh status line hidden until the script runs" do
@@ -137,6 +161,7 @@ describe "the operator's standings, measured", :layout, type: :request do
         end
       else
         it "keeps each team to a short row" do
+          expect(m["measuredHeights"]).to eq(11)
           expect(m["tallRows"]).to eq([])
         end
 
@@ -152,6 +177,8 @@ describe "the operator's standings, measured", :layout, type: :request do
         end
 
         it "keeps every line of team text clear of the panel button" do
+          expect(m["rowsWithButton"]).to eq(12)
+          expect(m["rectsCompared"]).to be > 0
           expect(m["textUnderButton"]).to eq([])
         end
       end

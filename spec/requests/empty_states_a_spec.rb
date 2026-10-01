@@ -5,10 +5,12 @@ require "rails_helper"
 # the table/list; populated keeps the table/list and shows no empty state.
 # Russian is pinned literally -- include(I18n.t(...)) would pass on a missing key.
 describe "empty states on browsing lists", type: :request do
-  FORBIDDEN = [
-    "не используется", "photo.jpg", "(принять)", "(отказать)",
-    "Добавить новое задание", "Начать тестирование", "Предстоит игра"
-  ].freeze
+  let(:forbidden) do
+    [
+      "не используется", "photo.jpg", "(принять)", "(отказать)",
+      "Добавить новое задание", "Начать тестирование", "Предстоит игра"
+    ]
+  end
 
   def sign_in(user)
     put login_path, :params => { :email => user.email, :password => "1234" }
@@ -25,7 +27,7 @@ describe "empty states on browsing lists", type: :request do
   end
 
   def expect_clean_copy(scope = response.body)
-    FORBIDDEN.each { |s| expect(scope).not_to include(s) }
+    forbidden.each { |s| expect(scope).not_to include(s) }
   end
 
   describe "games list" do
@@ -66,6 +68,15 @@ describe "empty states on browsing lists", type: :request do
       expect(response.body).to include("Команды ещё не зарегистрированы")
       expect(response.body).to include("Заявок пока нет")
       expect_clean_copy
+    end
+
+    it "words the aggregate applications card without a per-game sentence" do
+      get dashboard_path
+
+      card = page.css("fieldset").find { |f| f.css(".empty-state-title").map(&:text).include?("Заявок пока нет") }
+      expect(card).not_to be_nil
+      expect(card.text).not_to include("на эту игру")
+      expect(card.css(".empty-state p")).to be_empty
     end
 
     it "shows the lists, not the empty states, when there is data" do
@@ -113,6 +124,21 @@ describe "empty states on browsing lists", type: :request do
 
     end
 
+    it "hides the create link from a member even on an empty list" do
+      # A real member, but the index query is stubbed empty: a genuine member
+      # always makes the list non-empty, so this is the only way to reach the gate.
+      member = create_user
+      create_team(:captain => member)
+      allow(Team).to receive(:includes).and_return(Team.none)
+      sign_in(member)
+
+      get teams_path
+
+      expect(page.css(".empty-state-title").map(&:text)).to include("Команд пока нет")
+      expect(page.css(".empty-state-action")).to be_empty
+      expect(response.body).not_to include("Создать команду")
+    end
+
     it "keeps the table when there are teams" do
       create_team(:captain => create_user)
 
@@ -134,7 +160,7 @@ describe "empty states on browsing lists", type: :request do
       titles = page.css(".empty-state-title").map(&:text)
       expect(titles).to include("Уровней пока нет", "Заявок пока нет")
       expect(response.body).to include("Добавьте первый уровень, чтобы в игру можно было играть.")
-      expect(response.body).to include("Заявки команд на эту игру появятся здесь.")
+      expect(page.css(".empty-state p").map(&:text)).to include("Заявки команд на эту игру появятся здесь.")
       expect(page.css(".empty-state-action")).to be_empty
       # The page's own add-level button legitimately carries a frozen string;
       # what this task adds (the cards) must not.

@@ -4,7 +4,7 @@
   </legend>
 
   <% if game_entries.empty? %>
-    <%= render "shared/empty_state", :title => t("empty_states.game_entries.title"), :text => t("empty_states.game_entries.text") %>
+    <%= render "shared/empty_state", :title => t("empty_states.game_entries.title"), :text => (local_assigns.key?(:empty_text) ? local_assigns[:empty_text] : t("empty_states.game_entries.text")) %>
   <% else %>
   <ul class="game-list">
 <%# entry.team / entry.game, not Team.find(entry.team_id) / Game.find(...).

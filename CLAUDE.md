@@ -704,11 +704,11 @@ run. The real files are checked by the closure check on every push and PR.
   they are a function of those files alone — so for any ordinary change the real question is whether
   the inherited scenarios still *pass*, not what they add up to.
   Profiles live in `config/cucumber.yml` (default / `rerun` / `wip` / `all`).
-- **RSpec** — 2978 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
+- **RSpec** — 2985 examples, 0 failures, 6 pending (unimplemented controller specs, pre-existing),
   measured 2026-10-01 at the commit that carries this line. (This line said 2930 when last
   written, and the real count at this branch's starting point was already 2955: it had drifted in
-  the interval, not been mis-measured. The widgets-and-review branch's new specs took it the rest
-  of the way.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
+  the interval, not been mis-measured. The widgets-and-review branch's new specs took it to 2978,
+  and its follow-up branch's seven more to 2985, measured at that branch's last code commit.) The history that follows dates from 2026-08-28: the count moved twice in one day, from 2904
   (2026-08-26, correct on the day) → 2920 when the perf-probe record-schema work added sixteen
   examples → 2930 when the VM-scaling fixes added ten more, six for `VMScale::Policy.affordability`
   and four for the committed role definitions. **The 2920 was stale before it merged**, and in an

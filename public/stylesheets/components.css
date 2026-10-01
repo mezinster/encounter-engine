@@ -77,17 +77,6 @@
 .field { display: block; margin-bottom: var(--space-4); }
 .field > label { display: block; margin-bottom: var(--space-1); color: var(--text-dim); font-size: var(--text-sm); }
 
-/* Set by FieldErrorMarkup (app/services/field_error_markup.rb), Rails'
-   field_error_proc here. A control and its label are marked in place; the
-   control's own messages follow it in .field-error. */
-label.is-invalid { color: var(--danger); }
-.is-invalid:is(input, select, textarea) { border-color: var(--danger); }
-.field-error {
-  display: block;
-  margin-top: var(--space-1);
-  color: var(--danger);
-  font-size: var(--text-sm);
-}
 
 /* The one-time generated password shown on users/welcome_password when the
    welcome letter couldn't be sent. SecureRandom.alphanumeric emits l/1/I and
@@ -145,6 +134,7 @@ input[type="checkbox"], input[type="radio"] {
   width: 1.25rem;
   height: 1.25rem;
   margin: 0;
+  vertical-align: middle;
   accent-color: var(--go);
 }
 
@@ -162,8 +152,34 @@ input[type="file"]::file-selector-button {
   cursor: pointer;
 }
 
+/* Set by FieldErrorMarkup (app/services/field_error_markup.rb), Rails'
+   field_error_proc here. A control and its label are marked in place; the
+   control's own messages follow it in .field-error.
+
+   ORDER MATTERS: the invalid-control rule has the same specificity (0,1,1) as
+   the shared text-input rule's `border` shorthand and the `input:disabled`
+   rule above, so it only wins by coming after them. Moved above, every
+   invalid input but the textarea silently kept its neutral border. */
+label.is-invalid { color: var(--danger); }
+.is-invalid:is(input, select, textarea) { border-color: var(--danger); }
+.field-error {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
 fieldset.field { border: 0; padding: 0; }
 fieldset.field > legend { margin-bottom: var(--space-1); color: var(--text-dim); font-size: var(--text-sm); }
+/* `.field > label` (0,1,1) beats `.check` (0,1,0). An option's text is
+   content, not a field caption, so a .check row directly inside a .field
+   (a fieldset of radios) keeps its row layout and body text. */
+.field > label.check {
+  display: flex;
+  margin-bottom: 0;
+  color: var(--text);
+  font-size: inherit;
+}
 
 /* --- Tables --------------------------------------------------------------
  * Real table at width; stacked cards below. The wrapper also lets a wide
@@ -234,11 +250,16 @@ th {
   align-items: center;
   justify-content: center;
   width: 48px;
-  height: 48px;
+  min-height: 48px; /* grows for a label that needs a fourth line (ka: 56px) */
+  overflow: hidden; /* last resort: a translated label must never spill out */
   color: var(--text-dim);
   font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  /* No uppercase or letter-spacing: translated labels ("Önizleme yok",
+     "Brak podglądu") are wider than 48px with them. */
 }
 
 /* --- Flash, cards, panels, tags ------------------------------------------ */

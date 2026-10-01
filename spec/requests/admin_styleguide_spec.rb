@@ -16,13 +16,14 @@ describe "the styleguide", type: :request do
     login_as(ordinary)
     get admin_styleguide_path
 
-    expect(response).not_to have_http_status(:ok)
+    expect(response).to have_http_status(:unauthorized)
   end
 
   it "refuses a signed-out visitor" do
     get admin_styleguide_path
 
-    expect(response).not_to have_http_status(:ok)
+    # A visitor with no session is redirected (302) to login rather than shown a 401.
+    expect(response).to have_http_status(:found)
   end
 
   context "for a superadmin" do

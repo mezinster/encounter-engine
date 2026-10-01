@@ -69,11 +69,11 @@ class FieldErrorMarkup
     end
   end
 
+  # ActiveModelInstanceTag#error_message is Rails' public reader for
+  # object.errors[@method_name]; no private ivar needed.
   def messages_for_attribute
-    object = @instance.object
-    method = @instance.instance_variable_get(:@method_name)
-    return [] unless object.respond_to?(:errors) && method
+    return [] unless @instance.respond_to?(:error_message) && @instance.object.respond_to?(:errors)
 
-    object.errors[method.to_sym].map(&:to_s)
+    Array(@instance.error_message).map(&:to_s)
   end
 end

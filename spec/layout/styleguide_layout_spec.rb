@@ -74,7 +74,32 @@ describe "the styleguide, measured", :layout, type: :request do
         .map(function (el) { return { tag: el.tagName.toLowerCase() + (el.className ? "." + String(el.className).split(" ").join(".") : ""), px: parseFloat(getComputedStyle(el).fontSize) }; })
         .filter(function (e) { return !inScale(e.px); });
 
+      var dangerProbe = document.createElement("span");
+      dangerProbe.style.color = "var(--danger)";
+      document.body.appendChild(dangerProbe);
+      var danger = getComputedStyle(dangerProbe).color;
+      dangerProbe.remove();
+      // Radios and checkboxes are excluded: a native-appearance control ignores
+      // border-color in Chrome (computed stays black even with an inline style),
+      // so there is no border to measure on them.
+      var invalid = Array.prototype.slice.call(document.querySelectorAll(
+        ".styleguide .is-invalid:is(input, select, textarea):not([type=radio]):not([type=checkbox])"));
+      var invalidNotRed = invalid.map(function (el) { return { id: el.id || el.name, border: getComputedStyle(el).borderTopColor }; })
+        .filter(function (e) { return e.border !== danger; });
+      var fieldChecks = Array.prototype.slice.call(document.querySelectorAll(".styleguide .field > label.check"));
+      var fieldChecksNotFlex = fieldChecks.map(function (el) { return getComputedStyle(el).display; })
+        .filter(function (d) { return d !== "flex"; });
+      var thumbs = Array.prototype.slice.call(document.querySelectorAll(".styleguide .file-thumb-generic"));
+      var thumbsOverflowing = thumbs.filter(function (el) { return el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight; })
+        .map(function (el) { return { lang: el.lang, sw: el.scrollWidth, cw: el.clientWidth, sh: el.scrollHeight, ch: el.clientHeight }; });
+
       var RESULT = {
+        invalidCount: invalid.length, invalidNotRed: invalidNotRed,
+        fieldCheckCount: fieldChecks.length, fieldChecksNotFlex: fieldChecksNotFlex,
+        thumbCount: thumbs.length,
+        // overflow-wrap: anywhere lets a label break mid-word to fit, so
+        // fitting alone cannot see uppercase/tracking creeping back in.
+        thumbsShouted: thumbs.filter(function (el) { var s = getComputedStyle(el); return s.textTransform !== "none" || s.letterSpacing !== "normal"; }).length, thumbsOverflowing: thumbsOverflowing,
         theme: document.documentElement.getAttribute("data-theme"),
         controls: controls.length,
         lowContrast: lowContrast,
@@ -105,6 +130,22 @@ describe "the styleguide, measured", :layout, type: :request do
 
         it "puts every text size on the type scale" do
           expect(m["offScale"]).to eq([])
+        end
+
+        it "draws every invalid control's border in --danger" do
+          expect(m["invalidCount"]).to be >= 3
+          expect(m["invalidNotRed"]).to eq([])
+        end
+
+        it "lays out a .check inside a .field as a flex row" do
+          expect(m["fieldCheckCount"]).to be >= 1
+          expect(m["fieldChecksNotFlex"]).to eq([])
+        end
+
+        it "fits the generic thumbnail label in its box, in every locale" do
+          expect(m["thumbCount"]).to eq(7)
+          expect(m["thumbsShouted"]).to eq(0)
+          expect(m["thumbsOverflowing"]).to eq([])
         end
 
         it "does not scroll sideways" do

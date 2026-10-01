@@ -3,8 +3,10 @@
   <p class="notice"><%= t("admin.styleguide.show.intro") %></p>
 
   <h2>Type</h2>
-  <% %w[h1 h2 2xl xl lg md body sm xs].each do |step| %>
-    <p style="font-size: var(--text-<%= step %>)">--text-<%= step %> · Ночной город, уровень 3</p>
+  <% { "h1" => "clamp(1.6rem, 1.3rem + 1.4vw, 2.4rem)", "h2" => "clamp(1.2rem, 1.05rem + 0.7vw, 1.6rem)",
+       "2xl" => "1.5rem", "xl" => "1.25rem", "lg" => "1.125rem", "md" => "1rem",
+       "body" => "clamp(16px, 0.95rem + 0.2vw, 18px)", "sm" => "0.875rem", "xs" => "0.8rem" }.each do |step, value| %>
+    <p style="font-size: var(--text-<%= step %>)">--text-<%= step %> · <%= value %> · Ночной город, уровень 3</p>
   <% end %>
 
   <h2>Colour</h2>
@@ -73,6 +75,14 @@
   <h2>Flash</h2>
   <p class="flash flash--notice" role="status">Игра сохранена.</p>
   <p class="flash flash--error" role="alert">Неверный код.</p>
+  <p class="flash flash--alert" role="alert">Игра закрыта для регистрации.</p>
+
+  <h2>File thumbnail, every locale</h2>
+  <div class="file-table" style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-3)">
+    <% I18n.available_locales.each do |locale| %>
+      <span class="file-thumb-generic" lang="<%= locale %>"><%= t("game_files.table.no_thumbnail", :locale => locale) %></span>
+    <% end %>
+  </div>
 
   <h2>Table</h2>
   <table class="table--cards">

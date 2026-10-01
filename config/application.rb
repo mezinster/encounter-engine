@@ -52,6 +52,13 @@ module EncounterEngine
     # change it here.
     config.i18n.default_locale = :ru
     config.i18n.available_locales = [:ru, :en, :uk, :ka, :tr, :be, :pl]
+    # Lets a field's full message drop the "%{attribute} " prefix via an
+    # activerecord.errors.models.<model>.attributes.<attr>.format key. The
+    # Merb-era messages are whole sentences ("Вы не ввели имя"), and without
+    # this every one of them rendered as "Nickname Вы не ввели имя". Fields
+    # without a `format` keep the default. spec/i18n_sentence_messages_spec.rb
+    # refuses a bare format on any field that can produce a non-sentence.
+    config.active_model.i18n_customize_full_message = true
 
     # Mark invalid fields in place instead of wrapping them in Rails' default
     # <div class="field_with_errors">, which broke `.field > label`. A lambda

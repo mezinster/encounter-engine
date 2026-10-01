@@ -1254,6 +1254,7 @@ ka:
         answer:
           attributes:
             value:
+              format: "%{message}"
               blank: "თქვენ არ შეიყვანეთ კოდის ვარიანტი"
               taken: "ასეთი კოდი უკვე არის დავალებაში"
         file_attachment:
@@ -1267,11 +1268,14 @@ ka:
         game:
           attributes:
             name:
+              format: "%{message}"
               blank: "თქვენ არ შეიყვანეთ დასახელება"
               taken: "ასეთი დასახელების თამაში უკვე არსებობს"
             description:
+              format: "%{message}"
               blank: "თქვენ არ შეიყვანეთ აღწერა"
             max_team_number:
+              format: "%{message}"
               not_a_number: "გუნდების რაოდენობის დიაპაზონია 1-დან 10000-მდე"
               greater_than: "გუნდების რაოდენობის დიაპაზონია 1-დან 10000-მდე"
               less_than: "გუნდების რაოდენობის დიაპაზონია 1-დან 10000-მდე"
@@ -1279,9 +1283,11 @@ ka:
             access_mode:
               access_still_owed: "ვერ გამოირთვება: გუნდებს ჯერ არ გამოუყენებიათ გაცემული წვდომა (%{count}). გააუქმეთ წვდომა ან დაელოდეთ, სანამ ითამაშებენ."
             starts_at:
+              format: "%{message}"
               in_the_past: "თქვენ აირჩიეთ წარსული თარიღი. ასე არ შეიძლება :-)"
               needed_to_unpublish_access: "ჩვეულებრივ თამაშს სჭირდება მომავალი დაწყების თარიღი — მიუთითეთ ახალი, რომ თამაში წვდომის კოდით გაყიდვიდან მოხსნათ"
             registration_deadline:
+              format: "%{message}"
               in_the_past: "თქვენ მიუთითეთ რეგისტრაციის ბოლო ვადა წარსულში, ასე არ შეიძლება :-)"
               after_game_start: "თქვენ მიუთითეთ რეგისტრაციის ბოლო ვადა თამაშის დაწყების თარიღზე გვიან, ასე არ შეიძლება :-)"
             available_locales:
@@ -1292,8 +1298,10 @@ ka:
         game_entry:
           attributes:
             game:
+              format: "%{message}"
               blank: "თქვენ არ აირჩიეთ თამაში"
             team_id:
+              format: "%{message}"
               blank: "თქვენ არ მიუთითეთ გუნდი"
         game_file:
           attributes:
@@ -1307,18 +1315,23 @@ ka:
         invitation:
           attributes:
             for_user:
+              format: "%{message}"
               blank: "ასეთი სახელის მომხმარებელი არ არსებობს"
             recepient_nickname:
+              format: "%{message}"
               blank: "თქვენ არ შეიყვანეთ მომხმარებლის სახელი"
             for_user_id:
+              format: "%{message}"
               taken: "თქვენ უკვე გაუგზავნეთ ამ მომხმარებელს მოწვევა და მას ჯერ არ უპასუხია"
             base:
               recipient_already_team_member: "მომხმარებელი უკვე არის ერთ-ერთი გუნდის წევრი"
         level:
           attributes:
             name:
+              format: "%{message}"
               blank: "თქვენ არ შეიყვანეთ დავალების დასახელება"
             text:
+              format: "%{message}"
               blank: "თქვენ არ შეიყვანეთ დავალების ტექსტი"
         point_transaction:
           attributes:
@@ -1340,6 +1353,7 @@ ka:
         team:
           attributes:
             name:
+              format: "%{message}"
               taken: "ასეთი დასახელების გუნდი უკვე არსებობს"
               blank: "გუნდის დასახელება არ უნდა იყოს ცარიელი"
             captain:
@@ -1351,14 +1365,18 @@ ka:
         user:
           attributes:
             email:
+              format: "%{message}"
               blank: "e-mail არ არის შეყვანილი"
               taken: "ასეთი მისამართის მომხმარებელი უკვე დარეგისტრირებულია"
               invalid: "e-mail ველის არასწორი ფორმატი"
             nickname:
+              format: "%{message}"
               blank: "თქვენ არ შეიყვანეთ სახელი"
               taken: "ასეთი სახელის მომხმარებელი უკვე დარეგისტრირებულია"
             password:
+              format: "%{message}"
               too_short: "ძალიან მოკლე პაროლი (მინიმუმ 4 სიმბოლო)"
             password_confirmation:
+              format: "%{message}"
               blank: "თქვენ არ შეიყვანეთ პაროლის დადასტურება"
               confirmation: "პაროლი და მისი დადასტურება არ ემთხვევა"

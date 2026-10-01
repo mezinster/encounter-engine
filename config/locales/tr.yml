@@ -1273,6 +1273,7 @@ tr:
         answer:
           attributes:
             value:
+              format: "%{message}"
               blank: "Kod seçeneğini girmediniz"
               taken: "Bu kod görevde zaten var"
         file_attachment:
@@ -1286,11 +1287,14 @@ tr:
         game:
           attributes:
             name:
+              format: "%{message}"
               blank: "Adı girmediniz"
               taken: "Bu adda bir oyun zaten var"
             description:
+              format: "%{message}"
               blank: "Açıklamayı girmediniz"
             max_team_number:
+              format: "%{message}"
               not_a_number: "Takım sayısı aralığı 1 ile 10000 arasındadır"
               greater_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
               less_than: "Takım sayısı aralığı 1 ile 10000 arasındadır"
@@ -1298,9 +1302,11 @@ tr:
             access_mode:
               access_still_owed: "kapatılamaz: takımlar verilen erişimi henüz kullanmadı (%{count}). Erişimi geri alın ya da oynamalarını bekleyin."
             starts_at:
+              format: "%{message}"
               in_the_past: "Geçmişten bir tarih seçtiniz. Böyle olmaz :-)"
-              needed_to_unpublish_access: "programlı bir oyunun başlangıç tarihi gelecekte olmalı — bu oyunun erişim satışını durdurmak için yeni bir tarih girin"
+              needed_to_unpublish_access: "Programlı bir oyunun başlangıç tarihi gelecekte olmalı — bu oyunun erişim satışını durdurmak için yeni bir tarih girin"
             registration_deadline:
+              format: "%{message}"
               in_the_past: "Son kayıt tarihini geçmişten seçtiniz, böyle olmaz :-)"
               after_game_start: "Son kayıt tarihini oyunun başlangıç tarihinden sonraya koydunuz, böyle olmaz :-)"
             available_locales:
@@ -1311,8 +1317,10 @@ tr:
         game_entry:
           attributes:
             game:
+              format: "%{message}"
               blank: "Oyunu seçmediniz"
             team_id:
+              format: "%{message}"
               blank: "Takımı belirtmediniz"
         game_file:
           attributes:
@@ -1326,18 +1334,23 @@ tr:
         invitation:
           attributes:
             for_user:
+              format: "%{message}"
               blank: "Bu adda bir kullanıcı yok"
             recepient_nickname:
+              format: "%{message}"
               blank: "Kullanıcı adını girmediniz"
             for_user_id:
+              format: "%{message}"
               taken: "Bu kullanıcıya zaten davet gönderdiniz ve henüz yanıt vermedi"
             base:
               recipient_already_team_member: "Kullanıcı zaten takımlardan birinin üyesi"
         level:
           attributes:
             name:
+              format: "%{message}"
               blank: "Görevin adını girmediniz"
             text:
+              format: "%{message}"
               blank: "Görevin metnini girmediniz"
         point_transaction:
           attributes:
@@ -1359,6 +1372,7 @@ tr:
         team:
           attributes:
             name:
+              format: "%{message}"
               taken: "Bu adda bir takım zaten var"
               blank: "Takımın adı boş olamaz"
             captain:
@@ -1370,14 +1384,18 @@ tr:
         user:
           attributes:
             email:
+              format: "%{message}"
               blank: "E-posta girilmedi"
               taken: "Bu adresle bir kullanıcı zaten kayıtlı"
               invalid: "E-posta alanının biçimi yanlış"
             nickname:
+              format: "%{message}"
               blank: "Adı girmediniz"
               taken: "Bu adda bir kullanıcı zaten kayıtlı"
             password:
+              format: "%{message}"
               too_short: "Parola çok kısa (en az 4 karakter)"
             password_confirmation:
+              format: "%{message}"
               blank: "Parola doğrulamasını girmediniz"
               confirmation: "Parola ve doğrulaması eşleşmiyor"

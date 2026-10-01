@@ -1226,6 +1226,7 @@ uk:
         answer:
           attributes:
             value:
+              format: "%{message}"
               blank: "Ви не ввели варіант коду"
               taken: "Такий код уже є в завданні"
         file_attachment:
@@ -1239,11 +1240,14 @@ uk:
         game:
           attributes:
             name:
+              format: "%{message}"
               blank: "Ви не ввели назву"
               taken: "Гра з такою назвою вже існує"
             description:
+              format: "%{message}"
               blank: "Ви не ввели опис"
             max_team_number:
+              format: "%{message}"
               not_a_number: "Діапазон кількості команд від 1 до 10000"
               greater_than: "Діапазон кількості команд від 1 до 10000"
               less_than: "Діапазон кількості команд від 1 до 10000"
@@ -1251,9 +1255,11 @@ uk:
             access_mode:
               access_still_owed: "не можна вимкнути: команди ще не скористалися виданим доступом (%{count}). Відкличте доступ або дочекайтеся проходження."
             starts_at:
+              format: "%{message}"
               in_the_past: "Ви обрали дату з минулого. Так не можна :-)"
-              needed_to_unpublish_access: "у звичайної гри дата старту має бути в майбутньому — вкажіть нову, щоб перевести гру з доступу за кодом"
+              needed_to_unpublish_access: "У звичайної гри дата старту має бути в майбутньому — вкажіть нову, щоб перевести гру з доступу за кодом"
             registration_deadline:
+              format: "%{message}"
               in_the_past: "Ви вказали кінцевий термін реєстрації з минулого, так не можна :-)"
               after_game_start: "Ви вказали кінцевий термін реєстрації пізніший за дату початку гри, так не можна :-)"
             available_locales:
@@ -1264,8 +1270,10 @@ uk:
         game_entry:
           attributes:
             game:
+              format: "%{message}"
               blank: "Ви не обрали гру"
             team_id:
+              format: "%{message}"
               blank: "Ви не вказали команду"
         game_file:
           attributes:
@@ -1279,18 +1287,23 @@ uk:
         invitation:
           attributes:
             for_user:
+              format: "%{message}"
               blank: "Користувача з таким ім'ям не існує"
             recepient_nickname:
+              format: "%{message}"
               blank: "Ви не ввели імені користувача"
             for_user_id:
+              format: "%{message}"
               taken: "Ви вже надсилали цьому користувачеві запрошення, і він ще не відповів"
             base:
               recipient_already_team_member: "Користувач уже є членом однієї з команд"
         level:
           attributes:
             name:
+              format: "%{message}"
               blank: "Ви не ввели назву завдання"
             text:
+              format: "%{message}"
               blank: "Ви не ввели текст завдання"
         point_transaction:
           attributes:
@@ -1312,6 +1325,7 @@ uk:
         team:
           attributes:
             name:
+              format: "%{message}"
               taken: "Команда з такою назвою вже існує"
               blank: "Назва команди має бути непорожньою"
             captain:
@@ -1323,14 +1337,18 @@ uk:
         user:
           attributes:
             email:
+              format: "%{message}"
               blank: "Не введено e-mail"
               taken: "Користувач з такою адресою вже зареєстрований"
               invalid: "Неправильний формат поля e-mail"
             nickname:
+              format: "%{message}"
               blank: "Ви не ввели ім'я"
               taken: "Користувач з таким ім'ям уже зареєстрований"
             password:
+              format: "%{message}"
               too_short: "Занадто короткий пароль (мінімум 4 символи)"
             password_confirmation:
+              format: "%{message}"
               blank: "Ви не ввели підтвердження пароля"
               confirmation: "Пароль і його підтвердження не збігаються"

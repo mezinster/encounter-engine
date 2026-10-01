@@ -1,3 +1,4 @@
+<% page_title t("titles.access_codes"), game: @game %>
 <h2 class="page-title"><%= t("access_codes.title") %> &mdash; <%= @game.name %></h2>
 
 <%= form_with url: game_access_codes_path(@game), method: :post, local: true do %>

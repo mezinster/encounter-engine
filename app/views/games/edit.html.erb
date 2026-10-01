@@ -1,3 +1,4 @@
+<% page_title t("titles.game_edit"), game: @game %>
 <%= error_messages_for @game, header: "<h2>#{t("shared.error_header")}</h2>" %>
 
 <% active_locale = params[:tab].presence_in(@game.available_locale_list) || @game.primary_locale %>

@@ -1,3 +1,4 @@
+<% page_title t("titles.translation"), game: @game %>
 <h2><%= t("translations.new.heading", :game => @game.name) %></h2>
 
 <%= form_with url: game_translation_runs_path(@game), method: :post do %>

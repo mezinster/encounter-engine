@@ -1,3 +1,4 @@
+<% page_title t("titles.level_log"), game: @game %>
 <h1><%= t("logs.show_level_log.title", team: @team.name, level: @level&.name || "", game: @game.name) %></h1>
 
 <%= render "shared/run_context" %>

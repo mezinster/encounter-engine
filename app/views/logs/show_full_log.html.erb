@@ -1,3 +1,4 @@
+<% page_title t("titles.full_log"), game: @game %>
 <%# One pass over the loaded logs, keyed by the cell that renders them. This
     replaced @logs.of_team(team).of_level(level) inside the levels x teams
     loops, which re-queried per cell because @logs was an unloaded relation --

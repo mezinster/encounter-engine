@@ -1303,6 +1303,13 @@ ka:
               missing_primary: "უნდა მოიცავდეს თამაშის ძირითად ენას"
             primary_locale:
               settled: "ვერ შეიცვლება მას შემდეგ, რაც თარგმანები დაემატა"
+        game_run:
+          attributes:
+            starts_at:
+              format: "%{message}"
+              blank: "თამაშის დაწყების თარიღი არ მიგითითებიათ"
+            registration_deadline:
+              format: "%{message}"
         game_entry:
           attributes:
             game:

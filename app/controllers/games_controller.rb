@@ -146,7 +146,8 @@ class GamesController < ApplicationController
     # set. Game skips both deadline validations while is_testing? instead.
 
     unless @game.save
-      redirect_to @game, :alert => @game.errors.full_messages.to_sentence and return
+      # Game's messages here are whole sentences: SentenceJoin, not to_sentence.
+      redirect_to @game, :alert => SentenceJoin.call(@game.errors.full_messages) and return
     end
 
     # After the save, not before: the save can legitimately fail on the
@@ -288,7 +289,8 @@ class GamesController < ApplicationController
     @game.author_finished_at = nil
 
     unless @game.save
-      redirect_to @game, :alert => @game.errors.full_messages.to_sentence and return
+      # Game's messages here are whole sentences: SentenceJoin, not to_sentence.
+      redirect_to @game, :alert => SentenceJoin.call(@game.errors.full_messages) and return
     end
 
     # Scoped to the run, and this one matters more than its size suggests: it

@@ -1279,6 +1279,13 @@ pl:
               missing_primary: "muszą zawierać język główny gry"
             primary_locale:
               settled: "nie można zmienić po dodaniu tłumaczeń"
+        game_run:
+          attributes:
+            starts_at:
+              format: "%{message}"
+              blank: "Nie podano daty rozpoczęcia gry"
+            registration_deadline:
+              format: "%{message}"
         game_entry:
           attributes:
             game:

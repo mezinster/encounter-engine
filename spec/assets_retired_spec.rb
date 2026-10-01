@@ -7,6 +7,7 @@ describe "retired assets" do
     calendar.js calendar-setup.js calendar-ru-UTF.js calendar.css
     active-bg.gif dark-bg.gif hover-bg.gif menuarrow.gif normal-bg.gif
     rowhover-bg.gif status-bg.gif title-bg.gif today-bg.gif
+    jquery.autocomplete.js jquery.autocomplete.css
   ].freeze
 
   it "are gone from disk" do

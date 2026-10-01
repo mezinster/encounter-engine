@@ -1,67 +1,24 @@
-<% content_for :head do %>
-  <script src="/javascripts/jquery.js"></script>
-  <script src="/javascripts/jquery.autocomplete.js"></script>
-  <link rel="stylesheet" href="/stylesheets/jquery.autocomplete.css">
-<% end %>
-
-<%# The nickname list is emitted as JSON and parsed, never interpolated into a
-    JS string literal. ERB's html_escape does not escape "\", so a nickname
-    ending in a backslash used to escape the closing quote here and put the
-    next value in executable position. to_json escapes the backslash, and
-    escape_html_entities_in_json (on by default) turns "<" into the six
-    characters backslash-u-0-0-3-c, so a nickname containing "</script>"
-    cannot terminate this block early either. Emails are deliberately absent:
-    this page is reachable by any team captain, and captaincy is self-service,
-    so shipping the whole user table's email addresses here handed out the
-    instance's complete login-identifier list. %>
-<script type="application/json" id="invitation-nicknames">
-  <%= raw @all_users.reject { |user| user == @current_user }.map(&:nickname).to_json %>
-</script>
-
-<script>
-
-    $(document).ready(function() {
-
-        var escapeHtml = function(value) {
-            return String(value).replace(/[&<>"']/g, function(character) {
-                return {
-                    '&': '&amp;', '<': '&lt;', '>': '&gt;',
-                    '"': '&quot;', "'": '&#39;'
-                }[character];
-            });
-        };
-
-        var data = JSON.parse(document.getElementById("invitation-nicknames").textContent);
-
-        $("#invitation_recepient_nickname").autocomplete(data, {
-            minChars: 1,
-            width: 310,
-            matchContains: "word",
-            autoFill: false,
-            // jquery.autocomplete.js:671 renders each row with .html(), so
-            // formatItem must return escaped markup. formatMatch and
-            // formatResult must NOT escape -- their return values are used for
-            // matching and for the value written into the field.
-            formatItem: function(row) {
-                return escapeHtml(row[0]);
-            },
-            formatMatch: function(row) {
-                return row[0];
-            },
-            formatResult: function(row) {
-                return row[0];
-            }
-        });
-    })
-
-</script>
-
 <%= error_messages_for @invitation %>
 
 <%= form_with model: @invitation, url: invitations_path do |f| %>
   <div class="field">
     <%= f.label :recepient_nickname, t("invitations.new.recipient_label") %>
-    <%= f.text_field :recepient_nickname %>
+    <%# Suggestions come from a native <datalist>: the browser matches and
+        renders them, on phones as the system suggestion strip, with scripts
+        blocked too. Each nickname is an attribute value written by the tag
+        helper, escaped by default, so there is no JavaScript context to break
+        out of (the old JSON block existed because there was one).
+
+        Emails are deliberately absent: this page is reachable by any team
+        captain, and captaincy is self-service, so shipping the whole user
+        table's email addresses here handed out the instance's complete
+        login-identifier list. %>
+    <%= f.text_field :recepient_nickname, :list => "invitation-nicknames", :autocomplete => "off" %>
+    <datalist id="invitation-nicknames">
+      <% @all_users.reject { |user| user == @current_user }.each do |user| %>
+        <%= tag.option(:value => user.nickname) %>
+      <% end %>
+    </datalist>
   </div>
   <%= f.submit t("invitations.new.submit"), class: "btn btn--go" %>
 <% end %>

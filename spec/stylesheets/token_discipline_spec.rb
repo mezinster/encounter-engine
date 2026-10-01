@@ -4,8 +4,9 @@ require "rails_helper"
 # scale and named the stacking layers. This keeps it that way: a raw value in
 # any of these four files is a step back to fourteen ad-hoc sizes.
 #
-# tokens.css is where the raw values live, so it is not checked. calendar.css
-# and jquery.autocomplete.css are legacy widgets the next wave item deletes.
+# tokens.css is where the raw values live, so it is not checked. These four
+# files are the whole stylesheet set now that the legacy widget stylesheets
+# (calendar.css, jquery.autocomplete.css) are gone.
 describe "stylesheet token discipline" do
   # Constants in a describe body land on Object, so the names are specific.
   TOKEN_DISCIPLINE_FILES = %w[base.css components.css layout.css screens.css].freeze

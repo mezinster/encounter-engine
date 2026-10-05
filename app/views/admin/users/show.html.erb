@@ -7,10 +7,12 @@
 <% may_delete  = may_anon && @user.created_games.empty? %>
 <div class="admin-user">
   <h1><%= @user.nickname %></h1>
-  <p class="admin-user-roles">
-    <% if @user.superadmin? %><span class="tag"><%= t("admin.users.index.superadmin") %></span><% end %>
-    <% if @user.operator? %><span class="tag"><%= t("admin.users.index.operator") %></span><% end %>
-  </p>
+  <% if @user.superadmin? || @user.operator? %>
+    <p class="admin-user-roles">
+      <% if @user.superadmin? %><span class="tag"><%= t("admin.users.index.superadmin") %></span><% end %>
+      <% if @user.operator? %><span class="tag"><%= t("admin.users.index.operator") %></span><% end %>
+    </p>
+  <% end %>
 
   <section class="sheet-section sheet-section--profile">
     <h2 class="fact-label"><%= t("admin.user_page.profile") %></h2>
@@ -39,8 +41,12 @@
   <section class="sheet-section sheet-section--roles">
     <h2 class="fact-label"><%= t("admin.user_page.roles") %></h2>
     <div class="role-row">
+      <%# #revoke refuses yourself, so on your own page there is no button that
+          could only ever produce an alert. %>
       <% if @user.superadmin? %>
-        <%= button_to t("admin.users.show.revoke"), revoke_admin_user_path(@user), :method => :post, :class => "btn" %>
+        <% if @user.id != @current_user.id %>
+          <%= button_to t("admin.users.show.revoke"), revoke_admin_user_path(@user), :method => :post, :class => "btn" %>
+        <% end %>
       <% else %>
         <%= button_to t("admin.users.show.grant"), grant_admin_user_path(@user), :method => :post, :class => "btn btn--go" %>
       <% end %>
@@ -63,6 +69,7 @@
     <section class="sheet-section sheet-section--team">
       <h2 class="fact-label"><%= t("admin.user_page.team") %></h2>
       <%= form_with url: move_admin_user_path(@user), method: :post, :class => "admin-inline-form" do %>
+        <%= label_tag :team_id, t("admin.user_page.team"), :class => "visually-hidden" %>
         <%= select_tag :team_id, options_from_collection_for_select(Team.where.not(:id => @user.team_id).order(:name), :id, :name) %>
         <%= submit_tag t("admin.users.show.move"), :class => "btn" %>
       <% end %>

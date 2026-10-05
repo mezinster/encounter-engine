@@ -180,8 +180,8 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1202 leaf
-  keys** each (`be` 1203, its one deliberate `date.abbr_month_names` override; measured 2026-10-05): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1201 leaf
+  keys** each (`be` 1202, its one deliberate `date.abbr_month_names` override; measured 2026-10-05): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
@@ -231,7 +231,9 @@ add steps there or Cucumber will auto-require them a second time.
   back-link keys removed, in every file. The per-game admin page then took it from 1181 to 1192,
   measured at both ends: twelve `admin.game_page.*` keys added, `admin.entries.back` removed.
   The user page and teams list then took it from 1192 to 1202, measured at both ends: eight
-  `admin.user_page.*` and two `admin.teams_list.*` keys, in every file.
+  `admin.user_page.*` and two `admin.teams_list.*` keys, in every file. The console's review
+  follow-up then took it from 1202 to 1201, measured at both ends: `admin.games.index.delete_confirm`,
+  orphaned when the games list lost its delete button, removed from every file.
   Recount rather than reason about it:
 
 ```bash

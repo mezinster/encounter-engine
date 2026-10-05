@@ -334,7 +334,6 @@ tr:
         lock: "Dondur"
         unlock: "Çöz"
         delete: "Sil"
-        delete_confirm: "«%{name}» adlı oyun tüm seviyeleriyle birlikte silinsin mi? Bu işlem geri alınamaz."
         open_run: "Yeni koşu aç"
         run_starts_at: "Koşunun başlangıcı"
         run_deadline: "Kayıt bitişi"

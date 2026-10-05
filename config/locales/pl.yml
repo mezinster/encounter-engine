@@ -312,7 +312,6 @@ pl:
         lock: "Zablokuj"
         unlock: "Odblokuj"
         delete: "Usuń"
-        delete_confirm: "Usunąć grę «%{name}» wraz ze wszystkimi poziomami? Tej operacji nie da się cofnąć."
         open_run: "Otwórz nowy bieg"
         run_starts_at: "Początek biegu"
         run_deadline: "Rejestracja do"

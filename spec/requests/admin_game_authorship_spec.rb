@@ -19,7 +19,7 @@ describe "reassigning a game's author as an operator", type: :request do
     post set_author_admin_game_path(game), :params => { :nickname => successor.nickname }
 
     expect(game.reload.author_id).to eq(successor.id)
-    expect(response).to redirect_to(admin_games_path)
+    expect(response).to redirect_to(admin_game_path(game))
     expect(flash[:notice]).to eq(I18n.t("admin.games.author_set", :nickname => successor.nickname))
   end
 

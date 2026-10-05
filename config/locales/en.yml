@@ -253,7 +253,6 @@ en:
       accepted_notice: "Team accepted: %{team}"
       rejected_notice: "Application rejected: %{team}"
       gated_note: "This game is played by access — an application cannot be accepted. Admit a team from “Game access”."
-      back: "Back to the games list"
     games:
       index:
         title: "All games"

@@ -299,7 +299,6 @@ tr:
       accepted_notice: "Takım kabul edildi: %{team}"
       rejected_notice: "Başvuru reddedildi: %{team}"
       gated_note: "Bu oyun erişimle oynanır — başvuru kabul edilemez. Takım “Oyun erişimi” sayfasından kabul edilir."
-      back: "Oyun listesine dön"
     games:
       index:
         title: "Tüm oyunlar"

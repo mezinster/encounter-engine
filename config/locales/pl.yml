@@ -277,7 +277,6 @@ pl:
       accepted_notice: "Drużyna przyjęta: %{team}"
       rejected_notice: "Zgłoszenie odrzucone: %{team}"
       gated_note: "Ta gra jest rozgrywana na podstawie dostępu — zgłoszenia nie można przyjąć. Drużynę dopuszcza się przez „Dostęp do gry”."
-      back: "Do listy gier"
     games:
       index:
         title: "Wszystkie gry"

@@ -26,7 +26,7 @@ describe "reviving an ended game", type: :request do
     post unfinish_game_path(game)
 
     expect(game.reload.author_finished?).to be false
-    expect(response).to redirect_to(admin_games_path)
+    expect(response).to redirect_to(admin_game_path(game))
     action = AdminAction.order(:id).last
     expect(action.action).to eq("unfinish")
     expect(action.target_id).to eq(game.id)

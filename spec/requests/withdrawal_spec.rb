@@ -83,11 +83,11 @@ describe "withdrawal", type: :request do
     post withdraw_game_path(game), :params => { :withdrawal_category => "other",
                                                 :withdrawal_mode => "freeze" }
     expect(game.reload.withdrawn?).to be true
-    expect(response).to redirect_to(admin_games_path)
+    expect(response).to redirect_to(admin_game_path(game))
 
     post restore_game_path(game)
     expect(game.reload.withdrawn?).to be false
-    expect(response).to redirect_to(admin_games_path)
+    expect(response).to redirect_to(admin_game_path(game))
   end
 
   it "cannot be withdrawn by the author" do
@@ -104,11 +104,11 @@ describe "withdrawal", type: :request do
     sign_in(superadmin)
     post lock_game_path(game)
     expect(game.reload.editing_locked?).to be true
-    expect(response).to redirect_to(admin_games_path)
+    expect(response).to redirect_to(admin_game_path(game))
 
     post unlock_game_path(game)
     expect(game.reload.editing_locked?).to be false
-    expect(response).to redirect_to(admin_games_path)
+    expect(response).to redirect_to(admin_game_path(game))
   end
 
   it "cannot be locked by the author" do

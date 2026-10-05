@@ -122,4 +122,42 @@ describe "the superadmin's game page", type: :request do
 
     expect(panel("entries").at_css("a[href='#{admin_game_entries_path(game)}']").text).to eq("Заявки (1)")
   end
+
+  describe "after acting" do
+    it "returns to this page when set-author names nobody" do
+      game = create_game(:author => author)
+      sign_in(superadmin)
+      post set_author_admin_game_path(game), :params => { :nickname => "nobody-#{SecureRandom.hex(4)}" }
+
+      expect(response).to redirect_to(admin_game_path(game))
+      expect(flash[:alert]).to be_present
+    end
+
+    it "returns to this page when a run's schedule is invalid" do
+      game = finished_with_level
+      sign_in(superadmin)
+      post open_run_admin_game_path(game), :params => { :starts_at => "", :max_team_number => 5 }
+
+      expect(response).to redirect_to(admin_game_path(game))
+      expect(flash[:alert]).to be_present
+    end
+
+    it "returns to this page after lock and unlock" do
+      game = create_game(:author => author, :is_draft => false)
+      sign_in(superadmin)
+      post lock_game_path(game)
+      expect(response).to redirect_to(admin_game_path(game))
+      post unlock_game_path(game)
+      expect(response).to redirect_to(admin_game_path(game))
+    end
+
+    it "links the entries screen back to this page" do
+      game = create_game(:author => author)
+      sign_in(superadmin)
+      get admin_game_entries_path(game)
+
+      link = Nokogiri::HTML(response.body).at_css("main a[href='#{admin_game_path(game)}']")
+      expect(link.text).to eq("К управлению игрой")
+    end
+  end
 end

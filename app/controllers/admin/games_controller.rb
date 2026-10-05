@@ -67,7 +67,7 @@ class Admin::GamesController < ApplicationController
     # Refused before anything changes, matching Admin::UsersController#revoke,
     # so the log never holds an entry for a change that did not happen.
     if successor.nil?
-      redirect_to admin_games_path, :alert => t("admin.games.no_such_user") and return
+      redirect_to admin_game_path(game), :alert => t("admin.games.no_such_user") and return
     end
 
     # Read before the write: afterwards game.author is the successor, so the
@@ -77,7 +77,7 @@ class Admin::GamesController < ApplicationController
     game.transfer_authorship_to!(successor)
     record_admin_action("set_author", game, "#{previous} -> #{successor.nickname}")
 
-    redirect_to admin_games_path,
+    redirect_to admin_game_path(game),
                 :notice => t("admin.games.author_set", :nickname => successor.nickname)
   end
 
@@ -89,12 +89,12 @@ class Admin::GamesController < ApplicationController
     game = Game.find(params[:id])
 
     unless game.author_finished?
-      redirect_to admin_games_path,
+      redirect_to admin_game_path(game),
                   :alert => t("admin.games.cannot_open_unfinished") and return
     end
 
     if game.levels.empty?
-      redirect_to admin_games_path,
+      redirect_to admin_game_path(game),
                   :alert => t("admin.games.cannot_open_without_levels") and return
     end
 
@@ -103,13 +103,13 @@ class Admin::GamesController < ApplicationController
                          :max_team_number => params[:max_team_number])
 
     record_admin_action("open_run", game, run.ordinal.to_s)
-    redirect_to admin_games_path,
+    redirect_to admin_game_path(game),
                 :notice => t("admin.games.run_opened", :ordinal => run.ordinal)
   rescue ActiveRecord::RecordInvalid => e
     # The schedule is validated on the run in its :open context. Reporting its
     # own message rather than a generic one is what tells an operator WHICH
     # field is wrong. The run's messages are whole sentences, so they are joined
     # as sentences (SentenceJoin), not glued with to_sentence's "и".
-    redirect_to admin_games_path, :alert => SentenceJoin.call(e.record.errors.full_messages)
+    redirect_to admin_game_path(game), :alert => SentenceJoin.call(e.record.errors.full_messages)
   end
 end

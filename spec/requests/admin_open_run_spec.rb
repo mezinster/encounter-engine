@@ -30,7 +30,7 @@ describe "opening a run as an operator", type: :request do
     }.to change { game.runs.reload.count }.by(1)
 
     expect(game.reload.current_run.ordinal).to eq(2)
-    expect(response).to redirect_to(admin_games_path)
+    expect(response).to redirect_to(admin_game_path(game))
     expect(flash[:notice]).to eq(I18n.t("admin.games.run_opened", :ordinal => 2))
   end
 

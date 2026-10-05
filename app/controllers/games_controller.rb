@@ -179,7 +179,7 @@ class GamesController < ApplicationController
     detail << ": #{params[:withdrawal_note]}" if params[:withdrawal_note].present?
 
     record_admin_action("withdraw", @game, detail)
-    redirect_to admin_games_path, :notice => t("games.withdrawn_notice")
+    redirect_to admin_game_path(@game), :notice => t("games.withdrawn_notice")
   rescue ArgumentError
     # A missing or unknown category OR mode is a form error the operator can
     # correct on the spot, not a refusal to report elsewhere -- withdraw!
@@ -190,7 +190,7 @@ class GamesController < ApplicationController
   def restore
     @game.restore!
     record_admin_action("restore", @game)
-    redirect_to admin_games_path, :notice => t("games.restored_notice")
+    redirect_to admin_game_path(@game), :notice => t("games.restored_notice")
   end
 
   # Revival of an ended game -- the reverse of end_game, restricted to
@@ -201,19 +201,19 @@ class GamesController < ApplicationController
   def unfinish
     @game.unfinish!
     record_admin_action("unfinish", @game)
-    redirect_to admin_games_path, :notice => t("games.unfinished_notice")
+    redirect_to admin_game_path(@game), :notice => t("games.unfinished_notice")
   end
 
   def lock
     @game.lock_editing!
     record_admin_action("lock", @game)
-    redirect_to admin_games_path, :notice => t("games.locked_notice")
+    redirect_to admin_game_path(@game), :notice => t("games.locked_notice")
   end
 
   def unlock
     @game.unlock_editing!
     record_admin_action("unlock", @game)
-    redirect_to admin_games_path, :notice => t("games.unlocked_notice")
+    redirect_to admin_game_path(@game), :notice => t("games.unlocked_notice")
   end
 
   # Handing the game to another player. Mirrors TeamsController#hand_over,

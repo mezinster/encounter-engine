@@ -1,7 +1,8 @@
 module AdminHelper
   # Which admin section the current page belongs to, for the tab bar's
   # aria-current. Keyed by controller_name: entries belong to Games, team
-  # adjustments to Teams.
+  # adjustments to Teams. No default: a new admin controller missing from this
+  # map raises (KeyError) rather than quietly marking «Обзор» as current.
   ADMIN_TAB_FOR_CONTROLLER = {
     "dashboard"        => :dashboard,
     "games"            => :games,
@@ -16,7 +17,7 @@ module AdminHelper
   }.freeze
 
   def admin_tab_current
-    ADMIN_TAB_FOR_CONTROLLER.fetch(controller_name, :dashboard)
+    ADMIN_TAB_FOR_CONTROLLER.fetch(controller_name)
   end
 
   # The console's status tag for a game -- one mapping for the list and the

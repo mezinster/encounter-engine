@@ -288,7 +288,6 @@ en:
         lock: "Lock"
         unlock: "Unlock"
         delete: "Delete"
-        delete_confirm: "Delete the game “%{name}” and all its levels? This cannot be undone."
         open_run: "Open a new run"
         run_starts_at: "Run starts at"
         run_deadline: "Registration until"

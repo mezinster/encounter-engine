@@ -668,17 +668,16 @@ tr:
       submit: "Görev ekle"
     show:
       title: "Görev"
-      game_prefix: "oyun"
-      text_label: "Görev metni:"
+      text_label: "Görev metni"
       edit_link: "Görevin metnini ve adını düzenle"
-      code_label: "Kod:"
-      codes_label: "Kodlar (%{count}):"
+      code_label: "Kod"
+      codes_label: "Kodlar (%{count})"
       add_code: "Bir kod daha ekle"
       options_link: "Cevap seçenekleri"
       delete_code: "Kodu sil"
       delete_code_confirm: "«%{code}» kodu görevden silinsin mi? Bu işlem geri alınamaz."
       options_for_code: "(«%{code}» kodu için)"
-      hints_legend: "İpuçları:"
+      hints_legend: "İpuçları"
       add_hint: "İpucu ekle"
       delete_level: "Bu seviyeyi sil"
       back_to_game: '"%{name}" adlı oyuna dön'
@@ -690,7 +689,7 @@ tr:
     list:
       empty: "İpucu yok"
       after: "Sonra"
-      minutes_colon: "dakika:"
+      minutes: "dakika"
     edit:
       heading_prefix: "Görev ipucunu düzenleme"
       heading_game_prefix: "oyun"

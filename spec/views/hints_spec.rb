@@ -26,8 +26,10 @@ RSpec.describe "hints/_list", type: :view do
     render partial: "hints/list", locals: { hints: [hint] }
 
     expect(rendered).to include(hint.text)
-    expect(rendered).to include(I18n.t("hints.list.after"))
-    expect(rendered).to include(I18n.t("hints.list.minutes_colon"))
+    # Literal Russian, not I18n.t: include(I18n.t(key)) cannot fail on a key
+    # that no longer exists -- it would match the "translation missing" text.
+    expect(rendered).to include("Через")
+    expect(rendered).to include("минут")
     expect(rendered).to include(edit_game_level_hint_path(level.game, level, hint))
     expect(rendered).to include(ERB::Util.html_escape(I18n.t("shared.edit_short")))
     expect(rendered).to include(delete_game_level_hint_path(level.game, level, hint))

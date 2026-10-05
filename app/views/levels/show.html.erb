@@ -1,96 +1,92 @@
 <% page_title @level.name, game: @level.game %>
+<p class="breadcrumb">
+  <%= link_to "← #{@game.name}", game_path(@game) %>
+</p>
+
 <h2>
   <%= t("levels.show.title") %> "<strong><%= @level.name %></strong>"
 </h2>
 
-<p>
-  <em>(<%= t("levels.show.game_prefix") %> "<%= link_to @game.name, game_path(@game) %>")</em>
-</p>
+<%# A sectioned sheet, in the game page's facts style (screens.css, "Game
+    page: the facts panel"): each part under a small label, each code a row
+    with its own actions. The labels' colons are .fact-sep spans hidden by
+    screens.css only -- managing-additional-codes.feature:28 asserts it must
+    NOT see "Коды (2):" after a refused duplicate, and that check is only real
+    while the colon is still in the text rack-test reads. Never an inline style
+    or a hidden attribute, which rack-test honours. %>
+<div class="panel level-sheet">
+  <section class="sheet-section sheet-section--text">
+    <h3 class="fact-label"><%= t("levels.show.text_label") %><span class="fact-sep">:</span></h3>
+    <p class="level-text"><%= with_newlines(@level.text) %></p>
 
-<div class="panel">
-  <p>
-    <em><%= t("levels.show.text_label") %></em>
-  </p>
-
-  <p>
-    <%= with_newlines(@level.text) %>
-  </p>
-
-  <p>
-    <%= link_to t("levels.show.edit_link"), edit_game_level_path(@game, @level), class: "btn" unless @level.game.started? %>
-  </p>
-
-  <% unless @level.multi_question? %>
-    <p>
-      <em><%= t("levels.show.code_label") %></em>
-      <div id="question-<%= @level.questions.first.id %>">
-        <%= @level.correct_answer %>
-        <%= link_to t("shared.edit_short"), game_level_question_answers_path(@game, @level, @level.questions.first) %>
-      </div>
-    </p>
-  <% else %>
-    <p>
-      <em><%= t("levels.show.codes_label", count: @level.questions.count) %></em>
-    </p>
-    <% @level.questions.each do |question| %>
-      <div id="question-<%=  question.id %>">
-        <p><%= question.correct_answer %></p>
-        <%= link_to t("shared.edit_short"), game_level_question_answers_path(@game, @level, question) %>
-        <%# Only once there is more than one code -- the last one cannot be
-            deleted anyway (QuestionsController#delete refuses it), so offering
-            the link on a single-code level would be a button that only ever
-            produces an error. Hidden on a started game for the same reason the
-            action refuses one: removing a code retroactively un-answers it for
-            teams that already found it. %>
-        <% unless @level.game.started? %>
-          <%= button_to t("levels.show.delete_code"),
-                      delete_game_level_question_path(@game, @level, question),
-                      :method => :delete,
-                      :class => "btn btn--danger",
-                      :data => { :confirm => t("levels.show.delete_code_confirm", :code => question.correct_answer) } %>
-        <% end %>
-      </div>
+    <% unless @level.game.started? %>
+      <p><%= link_to t("levels.show.edit_link"), edit_game_level_path(@game, @level), class: "btn" %></p>
     <% end %>
-  <% end %>
+  </section>
 
-  <%# Stated for one-code levels too. Both rules behave identically there, and
-      "Достаточно любого из кодов" stays true -- whereas showing the line only
-      once a second code exists would mean it first appears after the author
-      has already made the decision blind. That silence is the trap this
-      closes. %>
-  <p>
-    <em><%= @level.any_code_passes? ? t("levels.codes_rule_any") : t("levels.codes_rule_all") %></em>
-  </p>
+  <section class="sheet-section sheet-section--codes">
+    <div class="sheet-heading">
+      <% codes_label = @level.multi_question? ? t("levels.show.codes_label", count: @level.questions.count) : t("levels.show.code_label") %>
+      <h3 class="fact-label"><%= codes_label %><span class="fact-sep">:</span></h3>
+      <%# Stated for one-code levels too. Both rules behave identically there,
+          and "Достаточно любого из кодов" stays true -- whereas showing the
+          line only once a second code exists would mean it first appears
+          after the author has already made the decision blind. That silence
+          is the trap this closes. %>
+      <span class="tag"><%= @level.any_code_passes? ? t("levels.codes_rule_any") : t("levels.codes_rule_all") %></span>
+    </div>
 
-  <p>
-    <%= link_to t("levels.show.add_code"), new_game_level_question_path(@game, @level), class: "btn" %>
-  </p>
-
-  <%# Options turn a code question into a quiz question. ONE button per level,
-      not one per code: a quiz level holds a single question by design ("each
-      level is just a question"), and a row of identical buttons gave the
-      author no way to tell which code each belonged to.
-
-      Options hang off a Question, so this manages the FIRST code. On the rare
-      multi-code level that choice is named in the link's suffix rather than
-      left silent -- an author who genuinely wants options on a second code
-      would otherwise have no way to see that this button does not reach it. %>
-  <% first_question = @level.questions.first %>
-  <% if first_question %>
-    <p>
-      <%= link_to t("levels.show.options_link"),
-                  game_level_question_options_path(@game, @level, first_question), class: "btn" %>
-      <% if @level.multi_question? %>
-        <em><%= t("levels.show.options_for_code", :code => first_question.correct_answer) %></em>
+    <%# Each row keeps id="question-<id>": features/answers/steps/answers_steps.rb
+        scopes its "(редактировать)" click into it. %>
+    <ul class="code-list">
+      <% @level.questions.each do |question| %>
+        <li class="code-row" id="question-<%= question.id %>">
+          <code class="code-chip"><%= question.correct_answer %></code>
+          <span class="code-actions">
+            <%= link_to t("shared.edit_short"), game_level_question_answers_path(@game, @level, question) %>
+            <%# Only once there is more than one code -- the last one cannot be
+                deleted anyway (QuestionsController#delete refuses it), so
+                offering the button on a single-code level would be a button
+                that only ever produces an error. Hidden on a started game for
+                the same reason the action refuses one: removing a code
+                retroactively un-answers it for teams that already found it. %>
+            <% if @level.multi_question? && !@level.game.started? %>
+              <%= button_to t("levels.show.delete_code"),
+                          delete_game_level_question_path(@game, @level, question),
+                          :method => :delete,
+                          :class => "btn btn--danger",
+                          :data => { :confirm => t("levels.show.delete_code_confirm", :code => question.correct_answer) } %>
+            <% end %>
+          </span>
+        </li>
       <% end %>
-    </p>
-  <% end %>
+    </ul>
+
+    <%# Options turn a code question into a quiz question. ONE button per level,
+        not one per code: a quiz level holds a single question by design ("each
+        level is just a question"), and a row of identical buttons gave the
+        author no way to tell which code each belonged to.
+
+        Options hang off a Question, so this manages the FIRST code. On the rare
+        multi-code level that choice is named in the link's suffix rather than
+        left silent -- an author who genuinely wants options on a second code
+        would otherwise have no way to see that this button does not reach it. %>
+    <% first_question = @level.questions.first %>
+    <div class="game-control">
+      <%= link_to t("levels.show.add_code"), new_game_level_question_path(@game, @level), class: "btn" %>
+      <% if first_question %>
+        <%= link_to t("levels.show.options_link"),
+                    game_level_question_options_path(@game, @level, first_question), class: "btn" %>
+        <% if @level.multi_question? %>
+          <span class="fact-note"><%= t("levels.show.options_for_code", :code => first_question.correct_answer) %></span>
+        <% end %>
+      <% end %>
+    </div>
+  </section>
 </div>
 
-<fieldset class="card">
-  <legend>
-    <%= t("levels.show.hints_legend") %>
-  </legend>
+<fieldset class="card hints-card">
+  <legend><%= t("levels.show.hints_legend") %><span class="fact-sep">:</span></legend>
 
   <%= render "hints/list", hints: @level.hints %>
 

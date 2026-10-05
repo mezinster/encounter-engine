@@ -632,17 +632,16 @@ be:
       submit: "Дадаць заданне"
     show:
       title: "Заданне"
-      game_prefix: "гульня"
-      text_label: "Тэкст задання:"
+      text_label: "Тэкст задання"
       edit_link: "Рэдагаваць тэкст і назву задання"
-      code_label: "Код:"
-      codes_label: "Коды (%{count}):"
+      code_label: "Код"
+      codes_label: "Коды (%{count})"
       add_code: "Дадаць яшчэ адзін код"
       options_link: "Варыянты адказу"
       delete_code: "Выдаліць код"
       delete_code_confirm: "Выдаліць код «%{code}» з задання? Гэта незваротна."
       options_for_code: "(для кода «%{code}»)"
-      hints_legend: "Падказкі:"
+      hints_legend: "Падказкі"
       add_hint: "Дадаць падказку"
       delete_level: "Выдаліць гэты ўзровень"
       back_to_game: 'Вярнуцца да гульні "%{name}"'
@@ -654,7 +653,7 @@ be:
     list:
       empty: "Падказак няма"
       after: "Праз"
-      minutes_colon: "хвілін:"
+      minutes: "хвілін"
     edit:
       heading_prefix: "Рэдагаванне падказкі да задання"
       heading_game_prefix: "гульні"

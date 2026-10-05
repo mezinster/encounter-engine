@@ -630,17 +630,16 @@ uk:
       submit: "Додати завдання"
     show:
       title: "Завдання"
-      game_prefix: "гра"
-      text_label: "Текст завдання:"
+      text_label: "Текст завдання"
       edit_link: "Редагувати текст і назву завдання"
-      code_label: "Код:"
-      codes_label: "Коди (%{count}):"
+      code_label: "Код"
+      codes_label: "Коди (%{count})"
       add_code: "Додати ще один код"
       options_link: "Варіанти відповіді"
       delete_code: "Видалити код"
       delete_code_confirm: "Видалити код «%{code}» із завдання? Це незворотно."
       options_for_code: "(для коду «%{code}»)"
-      hints_legend: "Підказки:"
+      hints_legend: "Підказки"
       add_hint: "Додати підказку"
       delete_level: "Видалити цей рівень"
       back_to_game: 'Повернутися до гри "%{name}"'
@@ -652,7 +651,7 @@ uk:
     list:
       empty: "Підказок немає"
       after: "Через"
-      minutes_colon: "хвилин:"
+      minutes: "хвилин"
     edit:
       heading_prefix: "Редагування підказки до завдання"
       heading_game_prefix: "гри"

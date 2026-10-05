@@ -645,26 +645,25 @@ ka:
       submit: "დავალების დამატება"
     show:
       title: "დავალება"
-      game_prefix: "თამაში"
-      text_label: "დავალების ტექსტი:"
+      text_label: "დავალების ტექსტი"
       edit_link: "დავალების ტექსტისა და დასახელების რედაქტირება"
-      code_label: "კოდი:"
-      codes_label: "კოდები (%{count}):"
+      code_label: "კოდი"
+      codes_label: "კოდები (%{count})"
       add_code: "კიდევ ერთი კოდის დამატება"
       options_link: "პასუხის ვარიანტები"
       delete_code: "კოდის წაშლა"
       delete_code_confirm: "წაიშალოს კოდი „%{code}“ დავალებიდან? ეს შეუქცევადია."
       options_for_code: "(კოდისთვის „%{code}“)"
-      hints_legend: "მინიშნებები:"
+      hints_legend: "მინიშნებები"
       add_hint: "მინიშნების დამატება"
       delete_level: "ამ დონის წაშლა"
       back_to_game: 'თამაშზე "%{name}" დაბრუნება'
   hints:
     # delay_label and minutes_suffix bracket a number input in
-    # app/views/hints/_form.html.erb; hints.list.after and minutes_colon do the
+    # app/views/hints/_form.html.erb; hints.list.after and minutes do the
     # same around a rendered number in _list.html.erb. Georgian puts the
     # postposition after the numeral, so the pair reads
-    # "გამოჩნდება [5] წუთის შემდეგ" / "მინიშნება 5 წუთის შემდეგ:" rather than
+    # "გამოჩნდება [5] წუთის შემდეგ" / "მინიშნება 5 წუთის შემდეგ" rather than
     # mirroring the Russian "Через [5] минут".
     form:
       text_label: "ტექსტი"
@@ -673,7 +672,7 @@ ka:
     list:
       empty: "მინიშნებები არ არის"
       after: "მინიშნება"
-      minutes_colon: "წუთის შემდეგ:"
+      minutes: "წუთის შემდეგ"
     edit:
       heading_prefix: "მინიშნების რედაქტირება — დავალება"
       heading_game_prefix: "თამაშიდან"

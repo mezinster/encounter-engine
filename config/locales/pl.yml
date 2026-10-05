@@ -78,6 +78,15 @@ pl:
     redeemed: "Kod przyjęty. Gra jest otwarta dla twojej drużyny."
     need_a_team: "Najpierw utwórz drużynę — zachowaliśmy twój kod."
   admin:
+    user_page:
+      profile: "Profil"
+      roles: "Role"
+      team: "Drużyna"
+      account: "Konto"
+      superadmin_hint: "Pełny dostęp do konsoli administracyjnej, w tym do ról innych użytkowników."
+      operator_hint: "Prowadzi gry na przepustki: przepustki, kody dostępu, przebieg gry. Bez dostępu do tej konsoli."
+      anonymise_hint: "Usuwa dane osobowe, odłącza od drużyny i odbiera role; utworzone gry pozostają."
+      delete_hint: "Usuwa konto w całości. Nieodwracalne."
     game_page:
       manage: "Zarządzaj →"
       author: "Autor"

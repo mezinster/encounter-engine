@@ -1004,3 +1004,11 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 @media (min-width: 60rem) {
   .admin-panels { grid-template-columns: 1fr 1fr; align-items: start; }
 }
+
+/* --- Admin console: the user page (admin/users/show) ----------------------- */
+.admin-user-roles { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
+.admin-user .facts { margin-bottom: var(--space-4); }
+.role-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.role-row + .role-row { margin-top: var(--space-3); }
+.role-row form { margin: 0; }
+.role-hint { margin: 0; color: var(--text-dim); font-size: var(--text-sm); max-width: 52ch; }

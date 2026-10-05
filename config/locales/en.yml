@@ -54,6 +54,15 @@ en:
     redeemed: "Code accepted. The game is open to your team."
     need_a_team: "Create a team first — we have kept your code."
   admin:
+    user_page:
+      profile: "Profile"
+      roles: "Roles"
+      team: "Team"
+      account: "Account"
+      superadmin_hint: "Full access to the administration console, including other users' roles."
+      operator_hint: "Runs pass-only games: passes, access codes, gameplay. No access to this console."
+      anonymise_hint: "Erases personal data, detaches them from their team and removes their roles; games they created remain."
+      delete_hint: "Deletes the account entirely. Cannot be undone."
     game_page:
       manage: "Manage →"
       author: "Author"

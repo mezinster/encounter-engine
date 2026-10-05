@@ -99,6 +99,15 @@ tr:
     redeemed: "Kod kabul edildi. Oyun takımınıza açıldı."
     need_a_team: "Önce bir takım oluşturun — kodunuzu sakladık."
   admin:
+    user_page:
+      profile: "Profil"
+      roles: "Roller"
+      team: "Takım"
+      account: "Hesap"
+      superadmin_hint: "Diğer kullanıcıların rolleri dahil yönetim konsoluna tam erişim."
+      operator_hint: "Geçişli oyunları yürütür: geçişler, erişim kodları, oyun akışı. Bu konsola erişimi yoktur."
+      anonymise_hint: "Kişisel verileri siler, takımdan ayırır ve rollerini kaldırır; oluşturduğu oyunlar kalır."
+      delete_hint: "Hesabı tamamen siler. Geri alınamaz."
     game_page:
       manage: "Yönet →"
       author: "Yazar"

@@ -160,4 +160,17 @@ describe "the superadmin's game page", type: :request do
       expect(link.text).to eq("К управлению игрой")
     end
   end
+
+  describe "the games list" do
+    it "gives each row exactly two actions: applications and manage" do
+      game = finished_with_level
+      sign_in(superadmin)
+      get admin_games_path
+
+      row = doc.css("tbody tr").find { |tr| tr.at_css("a[href='#{game_path(game)}']") }
+      actions = row.css("td:last-child a.btn, td:last-child button, td:last-child input[type=submit]")
+      expect(actions.map { |a| a["href"] }).to eq([ admin_game_entries_path(game), admin_game_path(game) ])
+      expect(row.css("form")).to be_empty
+    end
+  end
 end

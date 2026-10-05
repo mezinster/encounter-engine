@@ -110,14 +110,14 @@ describe "reassigning a game's author as an operator", type: :request do
     expect(game.reload.author_id).to eq(author.id)
   end
 
-  it "offers the form on the console" do
+  it "offers the form on the game's admin page" do
     # game is a lazy let: referencing it only inside the expectation would
     # create it AFTER the page was rendered, and the console would have listed
     # an empty table.
     listed = game
     sign_in(operator)
 
-    get admin_games_path
+    get admin_game_path(listed)
 
     expect(response.body).to include(set_author_admin_game_path(listed))
   end

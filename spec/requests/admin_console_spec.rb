@@ -68,7 +68,8 @@ describe "the admin console", type: :request do
     create_game_passing(:level => create_level(:game => played))
     sign_in(superadmin)
 
-    get admin_games_path
+    # Per-game controls live on the game's admin page since 2026-10-05.
+    get admin_game_path(played)
 
     # The console links to the withdrawal FORM, not the POST endpoint --
     # withdrawal now carries a required reason and a choice of mode.
@@ -94,11 +95,12 @@ describe "the admin console", type: :request do
     running = create_game(:author => author, :is_draft => false)
     sign_in(superadmin)
 
-    get admin_games_path
-
+    get admin_game_path(finished)
     expect(response.body).to match(
       %r{<form[^>]*method="post"[^>]*action="#{Regexp.escape(unfinish_game_path(finished))}"}
     )
+
+    get admin_game_path(running)
     expect(response.body).not_to include(unfinish_game_path(running))
   end
 

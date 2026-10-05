@@ -26,7 +26,7 @@ describe "the open-a-run form on the admin console", type: :request do
   def form_html
     listed = game
     sign_in(operator)
-    get admin_games_path
+    get admin_game_path(listed)
     Capybara.string(response.body).find("form[action='#{open_run_admin_game_path(listed)}']")
   end
 

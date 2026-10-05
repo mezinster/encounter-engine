@@ -1012,3 +1012,9 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .role-row + .role-row { margin-top: var(--space-3); }
 .role-row form { margin: 0; }
 .role-hint { margin: 0; color: var(--text-dim); font-size: var(--text-sm); max-width: 52ch; }
+
+/* --- Admin console: the teams list (admin/teams/index) --------------------- */
+.row-more { margin-top: var(--space-2); }
+.row-more > summary { display: inline-flex; align-items: center; min-height: var(--tap); cursor: pointer; color: var(--text-dim); }
+.row-more form { margin: var(--space-2) 0 0; }
+.members-more { color: var(--text-dim); white-space: nowrap; }

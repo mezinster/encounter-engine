@@ -54,6 +54,9 @@ en:
     redeemed: "Code accepted. The game is open to your team."
     need_a_team: "Create a team first — we have kept your code."
   admin:
+    teams_list:
+      more: "More"
+      members_more: "and %{count} more"
     user_page:
       profile: "Profile"
       roles: "Roles"

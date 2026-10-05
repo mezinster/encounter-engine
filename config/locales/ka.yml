@@ -77,6 +77,9 @@ ka:
     redeemed: "კოდი მიღებულია. თამაში ხელმისაწვდომია თქვენი გუნდისთვის."
     need_a_team: "ჯერ შექმენით გუნდი — კოდი შევინახეთ."
   admin:
+    teams_list:
+      more: "მეტი"
+      members_more: "და კიდევ %{count}"
     user_page:
       profile: "პროფილი"
       roles: "როლები"

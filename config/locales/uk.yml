@@ -71,6 +71,9 @@ uk:
     redeemed: "Код прийнято. Гра відкрита для вашої команди."
     need_a_team: "Спочатку створіть команду — код ми зберегли."
   admin:
+    teams_list:
+      more: "Ще"
+      members_more: "і ще %{count}"
     user_page:
       profile: "Профіль"
       roles: "Ролі"

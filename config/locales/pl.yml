@@ -78,6 +78,9 @@ pl:
     redeemed: "Kod przyjęty. Gra jest otwarta dla twojej drużyny."
     need_a_team: "Najpierw utwórz drużynę — zachowaliśmy twój kod."
   admin:
+    teams_list:
+      more: "Więcej"
+      members_more: "i %{count} więcej"
     user_page:
       profile: "Profil"
       roles: "Role"

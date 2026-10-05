@@ -965,13 +965,15 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .hint-body { margin-top: var(--space-2); overflow-wrap: anywhere; }
 
 /* --- Admin console: the section tabs (admin/_tabs) -------------------------
- * One row always; a narrow screen scrolls the bar itself, never the page. */
+ * Wraps rather than scrolling: the eight tabs need ~960px, so a scrolling bar
+ * hid three or four of them behind a sideways scroll on a 845-1024px laptop
+ * -- measured, and the console is used mostly on desktop. */
 .admin-tabs {
   margin-bottom: var(--space-5);
   border-bottom: 1px solid var(--border);
-  overflow-x: auto;
 }
-.admin-tabs ul { display: flex; gap: var(--space-1); margin: 0; white-space: nowrap; }
+.admin-tabs ul { display: flex; flex-wrap: wrap; gap: 0 var(--space-1); margin: 0; }
+.admin-tabs li { white-space: nowrap; }
 .admin-tabs a {
   display: inline-flex;
   align-items: center;

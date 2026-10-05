@@ -1,7 +1,7 @@
 <%# The admin console's sections. Rendered from layouts/application for every
     admin/* controller (spec/requests/admin_tabs_spec.rb visits every admin
-    page). One row; on a narrow screen it scrolls inside itself rather than
-    wrapping or widening the page. %>
+    page). Wraps onto a second row when it does not fit, so no tab is ever
+    hidden behind a sideways scroll (see screens.css). %>
 <% tabs = [
      [ :dashboard,  admin_dashboard_path ],
      [ :games,      admin_games_path ],

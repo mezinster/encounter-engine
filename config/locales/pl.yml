@@ -637,17 +637,16 @@ pl:
       submit: "Dodaj zadanie"
     show:
       title: "Zadanie"
-      game_prefix: "gra"
-      text_label: "Treść zadania:"
+      text_label: "Treść zadania"
       edit_link: "Edytuj treść i nazwę zadania"
-      code_label: "Kod:"
-      codes_label: "Kody (%{count}):"
+      code_label: "Kod"
+      codes_label: "Kody (%{count})"
       add_code: "Dodaj jeszcze jeden kod"
       options_link: "Warianty odpowiedzi"
       delete_code: "Usuń kod"
       delete_code_confirm: "Usunąć kod «%{code}» z zadania? Tej operacji nie da się cofnąć."
       options_for_code: "(dla kodu «%{code}»)"
-      hints_legend: "Podpowiedzi:"
+      hints_legend: "Podpowiedzi"
       add_hint: "Dodaj podpowiedź"
       delete_level: "Usuń ten poziom"
       back_to_game: 'Wróć do gry "%{name}"'
@@ -659,7 +658,7 @@ pl:
     list:
       empty: "Brak podpowiedzi"
       after: "Po"
-      minutes_colon: "minutach:"
+      minutes: "minutach"
     edit:
       heading_prefix: "Edycja podpowiedzi do zadania"
       heading_game_prefix: "gry"

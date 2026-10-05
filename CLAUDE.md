@@ -180,8 +180,8 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1179 leaf
-  keys** each (`be` 1180, its one deliberate `date.abbr_month_names` override; measured 2026-10-01): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1178 leaf
+  keys** each (`be` 1179, its one deliberate `date.abbr_month_names` override; measured 2026-10-05): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
@@ -224,6 +224,9 @@ add steps there or Cucumber will auto-require them a second time.
   sentence messages and `index.index.team_separator`, less the two keys it deleted
   (`index.index.title`, `admin.entries.none`), in every file; `be` sits one higher at 1180 because
   it alone overrides `date.abbr_month_names` (lowercase), which `spec/i18n_spec.rb` exempts.
+  The level-page redesign then took it from 1179 to 1178, measured at both ends: it deleted
+  `levels.show.game_prefix` (the breadcrumb replaced it) and renamed `hints.list.minutes_colon` to
+  `minutes`, which moves no count, in every file.
   Recount rather than reason about it:
 
 ```bash
@@ -398,7 +401,7 @@ So:
   nothing scrolls inside anything else, and horizontal overflow is 0. Run it after **any** change
   to `.playbar`, `.play-body`, `.play-exit` or `.page--focused`. It is mutation-tested: un-sticking
   the bar, re-capping it into a scrollport, and forcing horizontal overflow each fail it.
-- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds nine specs
+- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds ten specs
   now — `play_screen_layout_spec.rb`, `translate_panel_layout_spec.rb`, (added alongside the
   manual, 2026-08-22) `manual_layout_spec.rb`, `styleguide_layout_spec.rb`, which measures the
   styleguide in both themes: input-border contrast, tap size, type scale, invalid border, `.check`
@@ -425,10 +428,14 @@ So:
   which measures the game page's facts panel (both themes, 390×680 and 1280×800): the `.fact-sep`
   separators the frozen features read as text (`Автор - avthor`, `Описание:`) hidden by stylesheet
   alone, labels upright and dimmer than values, tiles several to a row and the operator's
-  pass/code buttons side by side on desktop, and no sideways scroll —
-  all nine driving the same
+  pass/code buttons side by side on desktop, and no sideways scroll — and
+  `level_sheet_layout_spec.rb`, which measures the author's level page the same way: the hidden
+  `.fact-sep` colons (`Коды (2):` is a frozen *negative* assertion, real only while the colon is
+  in the text), upright dim section labels, every button at least 44px, each code's delete button
+  on that code's row on desktop even for an unbroken code, and no sideways scroll —
+  all ten driving the same
   `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
-  spec once a second screen needed measuring. A new screen with real layout risk gets a tenth file
+  spec once a second screen needed measuring. A new screen with real layout risk gets an eleventh file
   the same way, not a special case bolted onto an existing one.
 - The manual's own layout regression is why this file's rhythm assertion exists: `.manual`'s three
   original examples (no page-level horizontal overflow at three viewports) all **passed** on the

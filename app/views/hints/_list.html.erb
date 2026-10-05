@@ -1,19 +1,27 @@
 <% if hints.empty? %>
     <%= render "shared/empty_state", :title => t("hints.list.empty"), :variant => :line %>
 <% else %>
-    <ul class="game-list">
+    <ul class="hint-list">
     <% hints.each do |hint| %>
-        <li>
-          <p>
-            <em><%= t("hints.list.after") %></em> <strong><%= link_to hint.delay_in_minutes, edit_game_level_hint_path(hint.level.game, hint.level, hint) unless @level.game.started? %></strong> <em><%= t("hints.list.minutes_colon") %></em>
-            <em>
-              <%= link_to t("shared.edit_short"), edit_game_level_hint_path(hint.level.game, hint.level, hint) unless @level.game.started? %>
-              <%= button_to t("shared.delete_short"), delete_game_level_hint_path(hint.level.game, hint.level, hint), :method => :delete unless @level.game.started? %>
-            </em>
-          </p>
-          <p>
-            <%= with_newlines(hint.text) %>
-          </p>
+        <li class="hint-row">
+          <div class="hint-head">
+            <%# The delay used to exist only as the edit link, which is withheld
+                once the game starts -- so a started game's hints showed no
+                delay at all. The number now always renders; it is a link only
+                while the hint can still be edited. %>
+            <span class="tag">
+              <%= t("hints.list.after") %>
+              <strong><%= @level.game.started? ? hint.delay_in_minutes : link_to(hint.delay_in_minutes, edit_game_level_hint_path(hint.level.game, hint.level, hint)) %></strong>
+              <%= t("hints.list.minutes") %>
+            </span>
+            <% unless @level.game.started? %>
+              <span class="hint-actions">
+                <%= link_to t("shared.edit_short"), edit_game_level_hint_path(hint.level.game, hint.level, hint) %>
+                <%= button_to t("shared.delete_short"), delete_game_level_hint_path(hint.level.game, hint.level, hint), :method => :delete, :class => "btn btn--danger" %>
+              </span>
+            <% end %>
+          </div>
+          <p class="hint-body"><%= with_newlines(hint.text) %></p>
         </li>
     <% end %>
     </ul>

@@ -853,7 +853,9 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
  *
  * .fact-sep carries the " - " and the colons the frozen features read as
  * text (see the comment in the template). Hidden HERE and only here: an
- * inline style or a hidden attribute would hide it from rack-test too. */
+ * inline style or a hidden attribute would hide it from rack-test too.
+ *
+ * .fact-label, .fact-sep and .fact-note are shared with the level page below. */
 .fact-sep { display: none; }
 
 /* 15rem: three across in the desktop main column, so a date and its zone
@@ -897,3 +899,67 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 }
 
 .game-description-text { max-width: 68ch; line-height: 1.6; overflow-wrap: anywhere; }
+
+/* --- Level page: the author's sectioned sheet (levels/show) ---------------
+ * The game page's facts style carried over: each part under a .fact-label,
+ * each code a row with its own actions, hints as rows with a delay badge. */
+.breadcrumb { margin-bottom: var(--space-2); font-size: var(--text-sm); }
+
+.sheet-section + .sheet-section {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.sheet-heading { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-bottom: var(--space-2); }
+.sheet-heading .fact-label { margin: 0; }
+
+.level-text { max-width: 68ch; line-height: 1.6; overflow-wrap: anywhere; }
+.sheet-section--text .btn { margin-top: var(--space-3); }
+
+.code-list {
+  margin: 0 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.code-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  min-height: var(--tap);
+}
+.code-row + .code-row { border-top: 1px solid var(--border); }
+/* From tablet width the row never wraps: a long code wraps inside its own
+   chip instead, so a code's delete button always sits on that code's row.
+   A phone has no room for both, so there the actions drop below. */
+@media (min-width: 48rem) {
+  .code-row { flex-wrap: nowrap; }
+  .code-row .code-chip { min-width: 0; }
+  .code-actions { flex: none; }
+}
+
+.code-chip {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+/* button_to wraps its button in a <form>; inline so it sits in the row. */
+.code-actions, .hint-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.code-actions form, .hint-actions form { display: inline; margin: 0; }
+
+.sheet-section--codes .game-control { margin-bottom: 0; }
+
+.hint-list { margin: 0 0 var(--space-3); }
+.hint-row { padding: var(--space-3) 0; }
+.hint-row + .hint-row { border-top: 1px solid var(--border); }
+.hint-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); }
+/* A delay is a number, not a status: keep the badge's case as written. */
+.hint-head .tag { text-transform: none; letter-spacing: normal; font-size: var(--text-sm); }
+.hint-body { margin-top: var(--space-2); overflow-wrap: anywhere; }

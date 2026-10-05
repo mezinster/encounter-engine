@@ -619,17 +619,16 @@ ru:
       submit: "Добавить задание"
     show:
       title: "Задание"
-      game_prefix: "игра"
-      text_label: "Текст задания:"
+      text_label: "Текст задания"
       edit_link: "Редактировать текст и название задания"
-      code_label: "Код:"
-      codes_label: "Коды (%{count}):"
+      code_label: "Код"
+      codes_label: "Коды (%{count})"
       add_code: "Добавить ещё один код"
       options_link: "Варианты ответа"
       delete_code: "Удалить код"
       delete_code_confirm: "Удалить код «%{code}» из задания? Это необратимо."
       options_for_code: "(для кода «%{code}»)"
-      hints_legend: "Подсказки:"
+      hints_legend: "Подсказки"
       add_hint: "Добавить подсказку"
       delete_level: "Удалить этот уровень"
       back_to_game: 'Вернуться к игре "%{name}"'
@@ -641,7 +640,7 @@ ru:
     list:
       empty: "Подсказок нет"
       after: "Через"
-      minutes_colon: "минут:"
+      minutes: "минут"
     edit:
       heading_prefix: "Редактирование подсказки к заданию"
       heading_game_prefix: "игры"

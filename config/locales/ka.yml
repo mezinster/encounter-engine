@@ -77,6 +77,19 @@ ka:
     redeemed: "კოდი მიღებულია. თამაში ხელმისაწვდომია თქვენი გუნდისთვის."
     need_a_team: "ჯერ შექმენით გუნდი — კოდი შევინახეთ."
   admin:
+    game_page:
+      manage: "მართვა →"
+      author: "ავტორი"
+      facts_teams: "გუნდები"
+      facts_playing: "თამაშობს"
+      facts_locales: "ენები"
+      facts_run: "გაშვება"
+      run_ordinal: "№ %{ordinal}"
+      state: "მდგომარეობა"
+      entries: "განაცხადები"
+      new_run: "ახალი გაშვება"
+      danger: "წაშლა"
+      back_to_game: "თამაშის მართვაზე დაბრუნება"
     tabs:
       label: "ადმინისტრირების განყოფილებები"
       dashboard: "მიმოხილვა"

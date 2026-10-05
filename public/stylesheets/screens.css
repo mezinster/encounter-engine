@@ -984,3 +984,22 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 }
 .admin-tabs a:hover { color: var(--text); text-decoration: none; }
 .admin-tabs a[aria-current="page"] { border-bottom-color: var(--go); color: var(--text); font-weight: 600; }
+
+/* --- Admin console: the per-game page (admin/games/show) ------------------- */
+.admin-game-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--text-dim); }
+.admin-game .facts { margin: var(--space-4) 0 var(--space-5); }
+.admin-panels { display: grid; gap: var(--space-4); }
+.admin-panel .fact-label { margin-bottom: var(--space-3); }
+.admin-panel form { margin: 0; }
+.admin-inline-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); }
+.admin-inline-form .field { margin: 0; }
+.admin-panel--danger { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.admin-col { display: grid; gap: var(--space-4); align-content: start; }
+/* The new-run fields wrap rather than shrink: in the narrower column a
+   datetime-local input squeezed below ~14rem hides its time part. */
+.admin-panel--new-run .field { flex: 1 1 14rem; }
+.admin-panel--new-run input { width: 100%; }
+/* Superdesign variant B: two columns from 60rem. */
+@media (min-width: 60rem) {
+  .admin-panels { grid-template-columns: 1fr 1fr; align-items: start; }
+}

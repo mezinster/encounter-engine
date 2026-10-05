@@ -20,6 +20,7 @@ describe "the admin section tabs", type: :request do
   PAGES = {
     "dashboard"         => [ :dashboard,  -> { admin_dashboard_path } ],
     "games list"        => [ :games,      -> { admin_games_path } ],
+    "game page"         => [ :games,      -> { admin_game_path(game) } ],
     "game entries"      => [ :games,      -> { admin_game_entries_path(game) } ],
     "users list"        => [ :users,      -> { admin_users_path } ],
     "user page"         => [ :users,      -> { admin_user_path(superadmin) } ],

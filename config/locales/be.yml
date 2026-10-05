@@ -73,6 +73,19 @@ be:
     redeemed: "Код прыняты. Гульня адкрыта для вашай каманды."
     need_a_team: "Спачатку стварыце каманду — код мы захавалі."
   admin:
+    game_page:
+      manage: "Кіраванне →"
+      author: "Аўтар"
+      facts_teams: "Каманды"
+      facts_playing: "Гуляюць"
+      facts_locales: "Мовы"
+      facts_run: "Забег"
+      run_ordinal: "№ %{ordinal}"
+      state: "Стан"
+      entries: "Заяўкі"
+      new_run: "Новы запуск"
+      danger: "Выдаленне"
+      back_to_game: "Да кіравання гульнёй"
     tabs:
       label: "Раздзелы адміністравання"
       dashboard: "Агляд"

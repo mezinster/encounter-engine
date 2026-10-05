@@ -54,6 +54,19 @@ en:
     redeemed: "Code accepted. The game is open to your team."
     need_a_team: "Create a team first — we have kept your code."
   admin:
+    game_page:
+      manage: "Manage →"
+      author: "Author"
+      facts_teams: "Teams"
+      facts_playing: "Playing"
+      facts_locales: "Languages"
+      facts_run: "Run"
+      run_ordinal: "No. %{ordinal}"
+      state: "Status"
+      entries: "Applications"
+      new_run: "New run"
+      danger: "Deletion"
+      back_to_game: "Back to game management"
     tabs:
       label: "Administration sections"
       dashboard: "Overview"

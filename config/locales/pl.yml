@@ -78,6 +78,19 @@ pl:
     redeemed: "Kod przyjęty. Gra jest otwarta dla twojej drużyny."
     need_a_team: "Najpierw utwórz drużynę — zachowaliśmy twój kod."
   admin:
+    game_page:
+      manage: "Zarządzaj →"
+      author: "Autor"
+      facts_teams: "Drużyny"
+      facts_playing: "Grają"
+      facts_locales: "Języki"
+      facts_run: "Edycja"
+      run_ordinal: "nr %{ordinal}"
+      state: "Stan"
+      entries: "Zgłoszenia"
+      new_run: "Nowa edycja"
+      danger: "Usuwanie"
+      back_to_game: "Wróć do zarządzania grą"
     tabs:
       label: "Sekcje administracji"
       dashboard: "Przegląd"

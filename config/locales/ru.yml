@@ -54,6 +54,19 @@ ru:
     redeemed: "Код принят. Игра открыта для вашей команды."
     need_a_team: "Сначала создайте команду — код мы сохранили."
   admin:
+    game_page:
+      manage: "Управление →"
+      author: "Автор"
+      facts_teams: "Команды"
+      facts_playing: "Играют"
+      facts_locales: "Языки"
+      facts_run: "Забег"
+      run_ordinal: "№ %{ordinal}"
+      state: "Состояние"
+      entries: "Заявки"
+      new_run: "Новый запуск"
+      danger: "Удаление"
+      back_to_game: "К управлению игрой"
     tabs:
       label: "Разделы администрирования"
       dashboard: "Обзор"

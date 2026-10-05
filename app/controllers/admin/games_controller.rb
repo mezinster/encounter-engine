@@ -47,6 +47,16 @@ class Admin::GamesController < ApplicationController
                                      .count
   end
 
+  # Every per-game control the list used to carry in each row, grouped into
+  # panels. One game, so the list's batching concerns do not arise: the counts
+  # below are single queries.
+  def show
+    @game = Game.includes(:author, :runs).find(params[:id])
+    @pending_entry_count = GameEntry.with_status("new")
+                                    .where(:game_run_id => @game.current_run.id)
+                                    .count
+  end
+
   # No lifecycle refusals, deliberately -- the same exemption the comment on
   # Team#in_live_race? documents for the superadmin captaincy path. An operator
   # reassigns a game precisely BECAUSE it is running badly.

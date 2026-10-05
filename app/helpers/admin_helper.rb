@@ -18,4 +18,17 @@ module AdminHelper
   def admin_tab_current
     ADMIN_TAB_FOR_CONTROLLER.fetch(controller_name, :dashboard)
   end
+
+  # The console's status tag for a game -- one mapping for the list and the
+  # game page.
+  def admin_game_status_tag(game)
+    case game.status
+    when :withdrawn then content_tag(:span, t("admin.games.index.withdrawn"), :class => "tag tag--danger")
+    when :draft     then content_tag(:span, t("admin.games.index.draft"),     :class => "tag")
+    when :finished  then content_tag(:span, t("admin.games.index.finished"),  :class => "tag")
+    when :available then content_tag(:span, t("admin.games.index.available"), :class => "tag")
+    when :running   then content_tag(:span, t("admin.games.index.running"),   :class => "tag tag--live")
+    else                 content_tag(:span, t("admin.games.index.scheduled"), :class => "tag")
+    end
+  end
 end

@@ -978,7 +978,7 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
   display: inline-flex;
   align-items: center;
   min-height: var(--tap);
-  padding: 0 var(--space-3);
+  padding: 0 var(--space-2);
   border-bottom: 2px solid transparent;
   color: var(--text-dim);
 }

@@ -1014,6 +1014,16 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .role-hint { margin: 0; color: var(--text-dim); font-size: var(--text-sm); max-width: 52ch; }
 
 /* --- Admin console: the teams list (admin/teams/index) --------------------- */
+/* One fixed shape per row, stacked: «Корректировка очков», the captain
+   picker, «Назначить капитаном». These used to share one wrapping flex row
+   whose select sized itself to the longest nickname in it, so a team with a
+   short captain name laid out sideways while its neighbours stacked (owner's
+   report, 2026-10-05). Side by side does not fit: the table gives this column
+   too little width at 845-1280px. */
+.team-actions-cell .game-control { flex-direction: column; align-items: stretch; margin-bottom: 0; }
+.team-actions-cell .game-control > .btn { align-self: flex-start; }
+.team-actions-cell form { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); margin: 0; }
+.team-actions-cell select { width: 100%; max-width: 18rem; }
 .row-more { margin-top: var(--space-2); }
 .row-more > summary { display: inline-flex; align-items: center; min-height: var(--tap); cursor: pointer; color: var(--text-dim); }
 .row-more form { margin: var(--space-2) 0 0; }

@@ -136,4 +136,54 @@ describe "the superadmin console, measured", :layout, type: :request do
       end
     end
   end
+
+  # Owner's report, 2026-10-05: on the live teams list one row laid its picker
+  # out beside «Корректировка очков» while the others stacked it below. The
+  # controls shared one wrapping flex row and the picker's width followed the
+  # longest nickname in it, so whether a row wrapped depended on the data.
+  TEAM_ACTIONS_PROBE = <<~JS
+    var rows = Array.prototype.slice.call(document.querySelectorAll("tbody tr")).filter(function (tr) { return tr.querySelector("select[name='member_id']"); });
+    function geo(tr) {
+      var adj = tr.querySelector("td:last-child a.btn").getBoundingClientRect();
+      var sel = tr.querySelector("select[name='member_id']").getBoundingClientRect();
+      var sub = tr.querySelector("select[name='member_id']").form.querySelector("[type=submit]").getBoundingClientRect();
+      return { adjLeft: Math.round(adj.left), selLeft: Math.round(sel.left), subLeft: Math.round(sub.left),
+               selBelowAdj: sel.top >= adj.bottom - 1, subBelowSel: sub.top >= sel.bottom - 1 };
+    }
+    var g = rows.map(geo);
+    var RESULT = {
+      rows: g.length,
+      adjLefts: g.map(function (x) { return x.adjLeft; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).length,
+      selLefts: g.map(function (x) { return x.selLeft; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).length,
+      allSelBelowAdj: g.every(function (x) { return x.selBelowAdj; }),
+      subLefts: g.map(function (x) { return x.subLeft; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).length,
+      allSubBelowSel: g.every(function (x) { return x.subBelowSel; })
+    };
+  JS
+
+  %w[dark light].each do |theme|
+    # 1920: the report came from a wide screen; that is where the old row put a
+    # picker beside the button.
+    { "laptop" => [ 845, 700 ], "desktop" => [ 1280, 800 ], "wide" => [ 1920, 1000 ] }.each do |name, (width, height)|
+      it "lays out every teams-list row's actions the same way, #{theme} at #{width}x#{height} -- #{name}" do
+        # The live screenshot's own rows. Whether the old shared flex row
+        # wrapped depended on font metrics and nickname lengths, so a headless
+        # browser cannot reproduce the exact mixed state on demand; what it can
+        # pin is the fix's guarantee -- the same stacked shape in every row --
+        # which the old CSS breaks here (it put these pickers beside the button).
+        [ [ "%", "Николай" ], [ "Captain Flint", "Cap" ], [ "Food Ingesters", "Djner" ] ].each do |team_name, captain_name|
+          captain = create_user
+          captain.update_column(:nickname, captain_name)
+          create_team(:captain => captain).update_column(:name, team_name)
+        end
+        m = measure_admin(superadmin_html(admin_teams_path), width, height, theme, TEAM_ACTIONS_PROBE)
+        expect(m["rows"]).to eq(3)
+        expect(m["adjLefts"]).to eq(1)
+        expect(m["selLefts"]).to eq(1)
+        expect(m["allSelBelowAdj"]).to be(true)
+        expect(m["subLefts"]).to eq(1)
+        expect(m["allSubBelowSel"]).to be(true)
+      end
+    end
+  end
 end

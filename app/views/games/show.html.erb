@@ -24,43 +24,56 @@
     personally wrote). Gated only: the console has nothing to manage on a
     scheduled game. %>
 <% if @game.pass_required? && logged_in? && current_user.may_operate_commercial? %>
-  <p><%= link_to t("games.show.manage_access"), game_access_passes_path(@game), class: "btn" %></p>
-  <p><%= link_to t("games.show.manage_access_codes"), game_access_codes_path(@game), class: "btn" %></p>
+  <div class="game-control">
+    <%= link_to t("games.show.manage_access"), game_access_passes_path(@game), class: "btn" %>
+    <%= link_to t("games.show.manage_access_codes"), game_access_codes_path(@game), class: "btn" %>
+  </div>
 <% end %>
 
-<div class="panel">
-  <p>
-    <em><%= t("games.show.author_label") %></em> - <strong><%= @game.author.nickname %></strong>
-  </p>
+<%# Each field a labelled tile, the description a section of its own.
+    The " - " and the colons are .fact-sep spans hidden by screens.css only:
+    features/games/max-team-number.feature:22-27 and game-profile.feature:14
+    read this panel as text ("Автор - avthor", "Описание:"), and rack-test
+    reads no stylesheet -- the locale dropdown's construction (CLAUDE.md).
+    Never an inline style or a hidden attribute, which rack-test DOES honour. %>
+<div class="panel game-facts">
+  <dl class="facts">
+    <div class="fact fact--author">
+      <dt class="fact-label"><%= t("games.show.author_label") %><span class="fact-sep"> - </span></dt>
+      <dd class="fact-value"><strong><%= @game.author.nickname %></strong></dd>
+    </div>
+    <div class="fact fact--starts">
+      <dt class="fact-label"><%= t("games.show.starts_at_label") %><span class="fact-sep">:</span></dt>
+      <dd class="fact-value">
+        <% if @game.starts_at.nil? %>
+          <span class="fact-unset"><%= t("games.show.starts_at_not_set") %></span>
+        <% else %>
+          <%= l_with_zone(@game.starts_at, format: :short) %>
+        <% end %>
+        <%# Filled by the countdown script at the foot of this template. %>
+        <div id="countdown-example" class="fact-note"></div>
+      </dd>
+    </div>
+    <div class="fact fact--deadline">
+      <dt class="fact-label"><%= t("games.show.registration_deadline_label") %><span class="fact-sep">:</span></dt>
+      <dd class="fact-value">
+        <% if @game.registration_deadline.nil? %>
+          <span class="fact-unset"><%= t("games.show.registration_deadline_not_set") %></span>
+        <% else %>
+          <%= l_with_zone(@game.registration_deadline, format: :short) %>
+        <% end %>
+      </dd>
+    </div>
+    <div class="fact fact--max-teams">
+      <dt class="fact-label"><%= t("games.show.max_team_number_label") %><span class="fact-sep">:</span></dt>
+      <dd class="fact-value"><%= @game.max_team_number %></dd>
+    </div>
+  </dl>
 
-  <p>
-    <% unless @game.starts_at.nil? %>
-      <em><%= t("games.show.starts_at_label") %></em>: <%= l_with_zone(@game.starts_at, format: :short) %>
-    <% else %>
-      <%= t("games.show.starts_at_not_set") %>
-    <% end %>
-  </p>
-  <p>
-    <% unless @game.registration_deadline.nil? %>
-      <em><%= t("games.show.registration_deadline_label") %></em>: <%= l_with_zone(@game.registration_deadline, format: :short) %>
-    <% else %>
-      <%= t("games.show.registration_deadline_not_set") %>
-    <% end %>
-  </p>
-
-  <p>
-    <em><%= t("games.show.description_label") %></em>
-  </p>
-
-  <p>
-    <%= with_newlines(@game.translated(:description, content_locale)) %>
-  </p>
-  <p>
-    <em><%= t("games.show.max_team_number_label") %></em>
-  </p>
-  <p>
-    <%= @game.max_team_number %>
-  </p>
+  <section class="game-description">
+    <h3 class="fact-label"><%= t("games.show.description_label") %><span class="fact-sep">:</span></h3>
+    <p class="game-description-text"><%= with_newlines(@game.translated(:description, content_locale)) %></p>
+  </section>
 </div>
 
 <% if logged_in? and @current_user.author_of?(@game) %>
@@ -139,7 +152,6 @@
 
 <script type="text/javascript" src="<%= versioned_asset("/javascripts/jquery-1.3.2.min.js") %>"></script>
 <%= render "shared/countdown" %>
-<div id="countdown-example"></div>
 
 <script type="text/javascript">
   <% unless @game.starts_at.nil? %>

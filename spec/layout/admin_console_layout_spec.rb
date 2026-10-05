@@ -102,4 +102,38 @@ describe "the superadmin console, measured", :layout, type: :request do
       end
     end
   end
+
+  PEOPLE_PROBE = <<~JS
+    var controls = Array.prototype.slice.call(document.querySelectorAll(".admin-user .btn, .admin-user select, main details.row-more > summary"));
+    var details = Array.prototype.slice.call(document.querySelectorAll("details.row-more"));
+    var RESULT = {
+      count: controls.length,
+      short: controls.filter(function (el) { return el.getBoundingClientRect().height < 43.5; }).map(function (el) { return el.outerHTML.slice(0, 80); }),
+      openDetails: details.filter(function (d) { return d.open; }).length,
+      hOverflow: document.documentElement.scrollWidth - vw
+    };
+  JS
+
+  %w[dark light].each do |theme|
+    { "phone" => [ 390, 680 ], "laptop" => [ 845, 700 ], "desktop" => [ 1280, 800 ] }.each do |name, (width, height)|
+      context "user page and teams list, #{theme} theme at #{width}x#{height} -- #{name}" do
+        it "makes every user-page control full-size, without sideways scroll" do
+          target = create_user
+          create_team(:captain => create_user)
+          m = measure_admin(superadmin_html(admin_user_path(target)), width, height, theme, PEOPLE_PROBE)
+          expect(m["count"]).to be >= 5
+          expect(m["short"]).to eq([])
+          expect(m["hOverflow"]).to be <= 0
+        end
+
+        it "keeps every teams-list disclosure closed and full-size" do
+          2.times { create_team }
+          m = measure_admin(superadmin_html(admin_teams_path), width, height, theme, PEOPLE_PROBE)
+          expect(m["openDetails"]).to eq(0)
+          expect(m["short"]).to eq([])
+          expect(m["hOverflow"]).to be <= 0
+        end
+      end
+    end
+  end
 end

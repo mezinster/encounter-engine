@@ -1018,3 +1018,8 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .row-more > summary { display: inline-flex; align-items: center; min-height: var(--tap); cursor: pointer; color: var(--text-dim); }
 .row-more form { margin: var(--space-2) 0 0; }
 .members-more { color: var(--text-dim); white-space: nowrap; }
+/* Section headings outrank the field labels inside them. */
+.admin-user .sheet-section > h2.fact-label { margin-bottom: var(--space-3); color: var(--text); }
+.admin-user .sheet-section--team select { max-width: 24rem; }
+/* inline-flex suppresses the native <summary> marker; supply one. */
+.row-more > summary::after { content: "▾"; margin-left: var(--space-1); }

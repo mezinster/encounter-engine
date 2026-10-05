@@ -53,4 +53,53 @@ describe "the superadmin console, measured", :layout, type: :request do
       end
     end
   end
+
+  GAME_PAGE_PROBE = <<~JS
+    var controls = Array.prototype.slice.call(document.querySelectorAll(".admin-game .btn, .admin-game input:not([type=hidden]), .admin-game button"));
+    var RESULT = {
+      count: controls.length,
+      short: controls.filter(function (el) { return el.getBoundingClientRect().height < 43.5; }).map(function (el) { return el.outerHTML.slice(0, 80); }),
+      hOverflow: document.documentElement.scrollWidth - vw
+    };
+  JS
+
+  LIST_PROBE = <<~JS
+    var rows = Array.prototype.slice.call(document.querySelectorAll("tbody tr"));
+    var RESULT = {
+      rows: rows.length,
+      actionCounts: rows.map(function (tr) { return tr.querySelectorAll("td:last-child .btn").length; }),
+      hOverflow: document.documentElement.scrollWidth - vw
+    };
+  JS
+
+  # Game names are unique, so each long name carries a suffix.
+  def finished_game(suffix = "")
+    g = create_game(:author => superadmin, :is_draft => false, :name => ("Оченьдлинноеназваниеигрыбезпробелов" * 2) + suffix.to_s)
+    create_level(:game => g)
+    set_game_schedule!(g, :starts_at => 2.days.ago, :author_finished_at => 1.day.ago)
+    g
+  end
+
+  %w[dark light].each do |theme|
+    { "phone" => [ 390, 680 ], "laptop" => [ 845, 700 ], "desktop" => [ 1280, 800 ] }.each do |name, (width, height)|
+      context "game page and list, #{theme} theme at #{width}x#{height} -- #{name}" do
+        it "makes every control on the game page full-size, without sideways scroll" do
+          m = measure_admin(superadmin_html(admin_game_path(finished_game)), width, height, theme, GAME_PAGE_PROBE)
+          expect(m["count"]).to be >= 9
+          expect(m["short"]).to eq([])
+          expect(m["hOverflow"]).to be <= 0
+        end
+
+        it "gives each list row exactly two actions" do
+          3.times { |i| finished_game(i) }
+          m = measure_admin(superadmin_html(admin_games_path), width, height, theme, LIST_PROBE)
+          # create_level's default :game is built eagerly (fixtures_helper), so
+          # each level brings an extra game: assert every row, not a count.
+          expect(m["rows"]).to be >= 3
+          expect(m["actionCounts"].uniq).to eq([ 2 ])
+          expect(m["hOverflow"]).to be <= 0
+        end
+      end
+    end
+  end
 end

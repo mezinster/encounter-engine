@@ -398,7 +398,7 @@ So:
   nothing scrolls inside anything else, and horizontal overflow is 0. Run it after **any** change
   to `.playbar`, `.play-body`, `.play-exit` or `.page--focused`. It is mutation-tested: un-sticking
   the bar, re-capping it into a scrollport, and forcing horizontal overflow each fail it.
-- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds eight specs
+- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds nine specs
   now — `play_screen_layout_spec.rb`, `translate_panel_layout_spec.rb`, (added alongside the
   manual, 2026-08-22) `manual_layout_spec.rb`, `styleguide_layout_spec.rb`, which measures the
   styleguide in both themes: input-border contrast, tap size, type scale, invalid border, `.check`
@@ -421,10 +421,14 @@ So:
   grid on desktop), the live channel, per-team level and game logs, the game page and the admin
   entries, each page guarded to render the long strings it measures, with no sideways scroll, plus
   the live channel's phone row-height check (short rows <= 90px, with a non-empty guard; rows
-  carrying the long strings are excluded because they must wrap) —
-  all eight driving the same
+  carrying the long strings are excluded because they must wrap) — and `game_facts_layout_spec.rb`,
+  which measures the game page's facts panel (both themes, 390×680 and 1280×800): the `.fact-sep`
+  separators the frozen features read as text (`Автор - avthor`, `Описание:`) hidden by stylesheet
+  alone, labels upright and dimmer than values, tiles several to a row and the operator's
+  pass/code buttons side by side on desktop, and no sideways scroll —
+  all nine driving the same
   `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
-  spec once a second screen needed measuring. A new screen with real layout risk gets a ninth file
+  spec once a second screen needed measuring. A new screen with real layout risk gets a tenth file
   the same way, not a special case bolted onto an existing one.
 - The manual's own layout regression is why this file's rhythm assertion exists: `.manual`'s three
   original examples (no page-level horizontal overflow at three viewports) all **passed** on the

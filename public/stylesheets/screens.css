@@ -844,3 +844,56 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 .empty-state p, .empty-state-line { color: var(--text-dim); }
 .empty-state-line { font-size: var(--text-sm); }
 .empty-state-action { display: inline-flex; align-items: center; min-height: var(--tap); }
+
+/* --- Game page: the facts panel (games/show) ------------------------------
+ * Each field a labelled tile, so a reader finds "when does it start" by
+ * scanning labels instead of reading a run of white text. Labels share the
+ * stats screen's treatment (.stat-label above): small, dim, uppercase -- the
+ * <html lang> attribute gives Turkish its dotted İ from the browser.
+ *
+ * .fact-sep carries the " - " and the colons the frozen features read as
+ * text (see the comment in the template). Hidden HERE and only here: an
+ * inline style or a hidden attribute would hide it from rack-test too. */
+.fact-sep { display: none; }
+
+/* 15rem: three across in the desktop main column, so a date and its zone
+   stay on one line; one column on a phone. margin: the UA's <dl> margin. */
+.facts {
+  display: grid;
+  gap: var(--space-4) var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  margin: 0;
+}
+
+.fact { min-width: 0; }
+
+.fact-label {
+  display: block;
+  margin: 0 0 var(--space-1);
+  color: var(--text-dim);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.fact-value {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* "not scheduled yet" is a sentence, not a value: quieter than one. */
+.fact-unset { color: var(--text-dim); font-size: var(--text-md); }
+
+.fact-note { margin-top: var(--space-1); color: var(--text-dim); font-size: var(--text-sm); }
+.fact-note:empty { display: none; }
+
+.game-description {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.game-description-text { max-width: 68ch; line-height: 1.6; overflow-wrap: anywhere; }

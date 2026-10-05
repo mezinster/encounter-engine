@@ -26,14 +26,7 @@
       <td data-label="<%= t("admin.games.index.author") %>"><%= game.author&.nickname %></td>
       <td data-label="<%= t("admin.games.index.locales") %>"><%= game.available_locale_list.join(", ") %></td>
       <td data-label="<%= t("admin.games.index.status") %>">
-        <% case game.status
-           when :withdrawn %><span class="tag tag--danger"><%= t("admin.games.index.withdrawn") %></span>
-        <% when :draft     %><span class="tag"><%= t("admin.games.index.draft") %></span>
-        <% when :finished  %><span class="tag"><%= t("admin.games.index.finished") %></span>
-        <% when :available %><span class="tag"><%= t("admin.games.index.available") %></span>
-        <% when :running   %><span class="tag tag--live"><%= t("admin.games.index.running") %></span>
-        <% else            %><span class="tag"><%= t("admin.games.index.scheduled") %></span>
-        <% end %>
+        <%= admin_game_status_tag(game) %>
         <% if game.editing_locked? %> &middot; <%= t("admin.games.index.locked") %><% end %>
       </td>
       <%# Registered against capacity, plus how many are actually playing --
@@ -50,72 +43,15 @@
         <% end %>
       </td>
       <td>
+        <%# Two actions only: the frequent one, and the door to every other
+            per-game control (admin/games/show). The count comes from
+            @pending_entry_counts -- one grouped query for the whole page. %>
         <div class="game-control">
-          <%= link_to t("admin.games.index.edit"), edit_game_path(game), class: "btn" unless game.started? %>
-          <%# The count comes from @pending_entry_counts -- one grouped query
-              for the whole page. A count per row is the one query pattern a
-              screen listing everything can least afford, and this console
-              shipped with that shape once already. %>
           <%= link_to t("admin.games.index.entries_link",
                         :count => @pending_entry_counts.fetch(game.current_run.id, 0)),
                       admin_game_entries_path(game), :class => "btn" %>
-          <% if game.withdrawn? %>
-            <%= button_to t("admin.games.index.restore"), restore_game_path(game), :method => :post, :class => "btn" %>
-          <% else %>
-            <%= link_to t("admin.games.index.withdraw"), new_withdrawal_game_path(game), :class => "btn" %>
-          <% end %>
-          <%# Independent of the withdraw/restore toggle above: withdrawal and
-              author-finish are separate facts, and a withdrawn-and-finished
-              game legitimately offers both ways back. %>
-          <% if game.author_finished? %>
-            <%= button_to t("admin.games.index.unfinish"), unfinish_game_path(game), :method => :post, :class => "btn" %>
-          <% end %>
-          <% if game.editing_locked? %>
-            <%= button_to t("admin.games.index.unlock"), unlock_game_path(game), :method => :post, :class => "btn" %>
-          <% else %>
-            <%= button_to t("admin.games.index.lock"), lock_game_path(game), :method => :post, :class => "btn" %>
-          <% end %>
+          <%= link_to t("admin.game_page.manage"), admin_game_path(game), :class => "btn" %>
         </div>
-        <%# Inline per row, exactly as admin/teams/index does for set_captain.
-            A text field rather than a select: the target is any user on the
-            instance, not a bounded association, so a dropdown would list the
-            entire membership on every row. %>
-        <div class="game-control">
-          <%= form_with url: set_author_admin_game_path(game), method: :post do %>
-            <%= label_tag "nickname_#{game.id}", t("admin.games.index.author_nickname") %>
-            <%= text_field_tag :nickname, nil, :id => "nickname_#{game.id}", :autocomplete => "off" %>
-            <%= submit_tag t("admin.games.index.set_author"), :class => "btn" %>
-          <% end %>
-        </div>
-        <%# Only for a finished game with levels: opening a run otherwise is
-            refused by the action, and offering a control the action refuses is
-            a promise the page cannot keep. %>
-        <% if game.author_finished? && game.levels.any? %>
-          <div class="game-control">
-            <%= form_with url: open_run_admin_game_path(game), method: :post do %>
-              <%# Native datetime-local inputs, so every browser supplies its
-                  own picker. games/new and games/edit use them too, so all
-                  three places need no JavaScript at all.
-
-                  They submit YYYY-MM-DDTHH:MM, which the action accepts
-                  unchanged. %>
-              <%= label_tag "run_starts_at_#{game.id}", t("admin.games.index.run_starts_at") %>
-              <%= datetime_local_field_tag :starts_at, nil, :id => "run_starts_at_#{game.id}", :required => true %>
-              <%= label_tag "run_deadline_#{game.id}", t("admin.games.index.run_deadline") %>
-              <%= datetime_local_field_tag :registration_deadline, nil, :id => "run_deadline_#{game.id}" %>
-              <%= label_tag "run_max_teams_#{game.id}", t("admin.games.index.run_max_teams") %>
-              <%= number_field_tag :max_team_number, game.max_team_number,
-                                   :id => "run_max_teams_#{game.id}", :min => 1, :max => 9999 %>
-              <%= submit_tag t("admin.games.index.open_run"), :class => "btn" %>
-            <% end %>
-          </div>
-        <% end %>
-        <% if game.deletable? %>
-          <div class="game-control">
-            <%= button_to t("admin.games.index.delete"), delete_game_path(game), :method => :delete, :class => "btn btn--danger",
-                        :data => { :confirm => t("admin.games.index.delete_confirm", :name => game.name) } %>
-          </div>
-        <% end %>
       </td>
     </tr>
   <% end %>

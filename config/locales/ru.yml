@@ -54,6 +54,41 @@ ru:
     redeemed: "Код принят. Игра открыта для вашей команды."
     need_a_team: "Сначала создайте команду — код мы сохранили."
   admin:
+    teams_list:
+      more: "Ещё"
+      members_more: "и ещё %{count}"
+    user_page:
+      profile: "Профиль"
+      roles: "Роли"
+      team: "Команда"
+      account: "Аккаунт"
+      superadmin_hint: "Полный доступ к консоли администрирования, включая роли других пользователей."
+      operator_hint: "Ведёт игры по пропускам: пропуска, коды доступа, ход игры. Без доступа к этой консоли."
+      anonymise_hint: "Стирает личные данные, отвязывает от команды и снимает роли; созданные игры остаются."
+      delete_hint: "Удаляет аккаунт целиком. Необратимо."
+    game_page:
+      manage: "Управление →"
+      author: "Автор"
+      facts_teams: "Команды"
+      facts_playing: "Играют"
+      facts_locales: "Языки"
+      facts_run: "Забег"
+      run_ordinal: "№ %{ordinal}"
+      state: "Состояние"
+      entries: "Заявки"
+      new_run: "Новый запуск"
+      danger: "Удаление"
+      back_to_game: "К управлению игрой"
+    tabs:
+      label: "Разделы администрирования"
+      dashboard: "Обзор"
+      games: "Игры"
+      users: "Пользователи"
+      teams: "Команды"
+      audit: "Журнал"
+      settings: "Настройки"
+      load_test: "Нагрузочный тест"
+      styleguide: "Стайлгайд"
     users:
       granted_notice: "Права администратора выданы"
       revoked_notice: "Права администратора отозваны"
@@ -83,7 +118,6 @@ ru:
         role: "Роль"
         superadmin: "администратор"
         operator: "оператор"
-        back: "К обзору"
       show:
         email: "E-mail"
         phone: "Телефон"
@@ -95,7 +129,6 @@ ru:
         locale: "Язык"
         signed_up: "Регистрация"
         authored_games: "Созданные игры"
-        back: "К списку игроков"
         grant: "Сделать администратором"
         revoke: "Снять права администратора"
         grant_operator: "Сделать оператором"
@@ -112,7 +145,6 @@ ru:
         target: "Объект"
         details: "Подробности"
         unknown_actor: "неизвестно"
-        back: "К обзору"
         action:
           withdraw: "Снял с публикации"
           restore: "Опубликовал"
@@ -193,13 +225,10 @@ ru:
     dashboard:
       show:
         title: "Обзор"
-        styleguide_link: "Стайлгайд интерфейса"
         games_by_status: "Игры по статусу"
         editing_locked: "Редактирование заморожено"
         totals: "Всего"
         entries_by_status: "Заявки по статусу"
-        all_games: "Все игры"
-        all_teams: "Все команды"
         audit_log: "Журнал действий"
         storage: "Хранилище"
         storage_used: "Занято (МБ)"
@@ -236,7 +265,6 @@ ru:
       accepted_notice: "Команда принята: %{team}"
       rejected_notice: "Заявка отклонена: %{team}"
       gated_note: "Игра проходится по доступу — заявку принять нельзя. Команду допускают через «Доступ к игре»."
-      back: "К списку игр"
     games:
       index:
         title: "Все игры"

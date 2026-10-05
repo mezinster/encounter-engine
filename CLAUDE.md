@@ -180,8 +180,8 @@ add steps there or Cucumber will auto-require them a second time.
   game the moment a key doesn't exist. See `features/i18n/switch-language.feature` and the comment
   in `app/views/layouts/_header.html.erb`.
 - **`ru` is the default locale**, and **seven** locales are registered
-  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1178 leaf
-  keys** each (`be` 1179, its one deliberate `date.abbr_month_names` override; measured 2026-10-05): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
+  (`config.i18n.available_locales` in `config/application.rb`), all seven complete at **1202 leaf
+  keys** each (`be` 1203, its one deliberate `date.abbr_month_names` override; measured 2026-10-05): `ru`, `en`, `uk`, `ka`, and `tr`, `be`, `pl` added on 2026-08-09.
   `config.i18n.fallbacks` sends anything missing to `:ru`, which is what makes it safe to add a key
   to `ru.yml` before the others catch up — `spec/i18n_spec.rb` enforces exact `ru`↔`en` parity but
   only requires the other five to be a subset, so they can lag without a red build. Translations
@@ -226,7 +226,12 @@ add steps there or Cucumber will auto-require them a second time.
   it alone overrides `date.abbr_month_names` (lowercase), which `spec/i18n_spec.rb` exempts.
   The level-page redesign then took it from 1179 to 1178, measured at both ends: it deleted
   `levels.show.game_prefix` (the breadcrumb replaced it) and renamed `hints.list.minutes_colon` to
-  `minutes`, which moves no count, in every file.
+  `minutes`, which moves no count, in every file. The admin-console tab bar then took it from
+  1178 to 1181, measured at both ends: nine `admin.tabs.*` keys added, six dashboard-footer and
+  back-link keys removed, in every file. The per-game admin page then took it from 1181 to 1192,
+  measured at both ends: twelve `admin.game_page.*` keys added, `admin.entries.back` removed.
+  The user page and teams list then took it from 1192 to 1202, measured at both ends: eight
+  `admin.user_page.*` and two `admin.teams_list.*` keys, in every file.
   Recount rather than reason about it:
 
 ```bash
@@ -401,7 +406,7 @@ So:
   nothing scrolls inside anything else, and horizontal overflow is 0. Run it after **any** change
   to `.playbar`, `.play-body`, `.play-exit` or `.page--focused`. It is mutation-tested: un-sticking
   the bar, re-capping it into a scrollport, and forcing horizontal overflow each fail it.
-- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds ten specs
+- `bin/measure-play-screen` is not the whole story any more. **`spec/layout/`** holds eleven specs
   now — `play_screen_layout_spec.rb`, `translate_panel_layout_spec.rb`, (added alongside the
   manual, 2026-08-22) `manual_layout_spec.rb`, `styleguide_layout_spec.rb`, which measures the
   styleguide in both themes: input-border contrast, tap size, type scale, invalid border, `.check`
@@ -432,10 +437,16 @@ So:
   `level_sheet_layout_spec.rb`, which measures the author's level page the same way: the hidden
   `.fact-sep` colons (`Коды (2):` is a frozen *negative* assertion, real only while the colon is
   in the text), upright dim section labels, every button at least 44px, each code's delete button
-  on that code's row on desktop even for an unbroken code, and no sideways scroll —
-  all ten driving the same
+  on that code's row on desktop even for an unbroken code, and no sideways scroll — and
+  `admin_console_layout_spec.rb`, which measures the superadmin console (both themes, 390×680,
+  845×700 and 1280×800): the eight section tabs all visible, full-size and never clipped — they
+  wrap rather than scroll, because a scrolling bar hid half of them at 845–1024px — every
+  control on the per-game admin page at least 44px, exactly two actions on every games-list
+  row, every user-page control at least 44px, the teams list's «Ещё» disclosures closed and
+  full-size, and no sideways scroll —
+  all eleven driving the same
   `spec/support/layout_measurement.rb` harness (`measure`, `chrome`), extracted from the play-screen
-  spec once a second screen needed measuring. A new screen with real layout risk gets an eleventh file
+  spec once a second screen needed measuring. A new screen with real layout risk gets a twelfth file
   the same way, not a special case bolted onto an existing one.
 - The manual's own layout regression is why this file's rhythm assertion exists: `.manual`'s three
   original examples (no page-level horizontal overflow at three viewports) all **passed** on the

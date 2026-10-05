@@ -78,6 +78,41 @@ pl:
     redeemed: "Kod przyjęty. Gra jest otwarta dla twojej drużyny."
     need_a_team: "Najpierw utwórz drużynę — zachowaliśmy twój kod."
   admin:
+    teams_list:
+      more: "Więcej"
+      members_more: "i %{count} więcej"
+    user_page:
+      profile: "Profil"
+      roles: "Role"
+      team: "Drużyna"
+      account: "Konto"
+      superadmin_hint: "Pełny dostęp do konsoli administracyjnej, w tym do ról innych użytkowników."
+      operator_hint: "Prowadzi gry na przepustki: przepustki, kody dostępu, przebieg gry. Bez dostępu do tej konsoli."
+      anonymise_hint: "Usuwa dane osobowe, odłącza od drużyny i odbiera role; utworzone gry pozostają."
+      delete_hint: "Usuwa konto w całości. Nieodwracalne."
+    game_page:
+      manage: "Zarządzaj →"
+      author: "Autor"
+      facts_teams: "Drużyny"
+      facts_playing: "Grają"
+      facts_locales: "Języki"
+      facts_run: "Edycja"
+      run_ordinal: "nr %{ordinal}"
+      state: "Stan"
+      entries: "Zgłoszenia"
+      new_run: "Nowa edycja"
+      danger: "Usuwanie"
+      back_to_game: "Wróć do zarządzania grą"
+    tabs:
+      label: "Sekcje administracji"
+      dashboard: "Przegląd"
+      games: "Gry"
+      users: "Użytkownicy"
+      teams: "Drużyny"
+      audit: "Dziennik"
+      settings: "Ustawienia"
+      load_test: "Test obciążenia"
+      styleguide: "Przewodnik stylu"
     users:
       granted_notice: "Uprawnienia administratora zostały nadane"
       revoked_notice: "Uprawnienia administratora zostały cofnięte"
@@ -107,7 +142,6 @@ pl:
         role: "Rola"
         superadmin: "administrator"
         operator: "operator"
-        back: "Do przeglądu"
       show:
         email: "E-mail"
         phone: "Telefon"
@@ -119,7 +153,6 @@ pl:
         locale: "Język"
         signed_up: "Rejestracja"
         authored_games: "Utworzone gry"
-        back: "Do listy graczy"
         grant: "Nadaj uprawnienia administratora"
         revoke: "Odbierz uprawnienia administratora"
         grant_operator: "Nadaj uprawnienia operatora"
@@ -136,7 +169,6 @@ pl:
         target: "Obiekt"
         details: "Szczegóły"
         unknown_actor: "nieznany"
-        back: "Do przeglądu"
         action:
           withdraw: "Wycofał z publikacji"
           restore: "Opublikował"
@@ -217,13 +249,10 @@ pl:
     dashboard:
       show:
         title: "Przegląd"
-        styleguide_link: "Przewodnik stylu interfejsu"
         games_by_status: "Gry według statusu"
         editing_locked: "Edycja zablokowana"
         totals: "Łącznie"
         entries_by_status: "Zgłoszenia według statusu"
-        all_games: "Wszystkie gry"
-        all_teams: "Wszystkie drużyny"
         audit_log: "Dziennik działań"
         storage: "Magazyn"
         storage_used: "Zajęte (MB)"
@@ -260,7 +289,6 @@ pl:
       accepted_notice: "Drużyna przyjęta: %{team}"
       rejected_notice: "Zgłoszenie odrzucone: %{team}"
       gated_note: "Ta gra jest rozgrywana na podstawie dostępu — zgłoszenia nie można przyjąć. Drużynę dopuszcza się przez „Dostęp do gry”."
-      back: "Do listy gier"
     games:
       index:
         title: "Wszystkie gry"

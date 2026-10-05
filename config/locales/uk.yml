@@ -71,6 +71,41 @@ uk:
     redeemed: "Код прийнято. Гра відкрита для вашої команди."
     need_a_team: "Спочатку створіть команду — код ми зберегли."
   admin:
+    teams_list:
+      more: "Ще"
+      members_more: "і ще %{count}"
+    user_page:
+      profile: "Профіль"
+      roles: "Ролі"
+      team: "Команда"
+      account: "Обліковий запис"
+      superadmin_hint: "Повний доступ до консолі адміністрування, зокрема до ролей інших користувачів."
+      operator_hint: "Веде ігри за перепустками: перепустки, коди доступу, перебіг гри. Без доступу до цієї консолі."
+      anonymise_hint: "Стирає особисті дані, відв'язує від команди й знімає ролі; створені ігри лишаються."
+      delete_hint: "Видаляє обліковий запис повністю. Незворотно."
+    game_page:
+      manage: "Керування →"
+      author: "Автор"
+      facts_teams: "Команди"
+      facts_playing: "Грають"
+      facts_locales: "Мови"
+      facts_run: "Забіг"
+      run_ordinal: "№ %{ordinal}"
+      state: "Стан"
+      entries: "Заявки"
+      new_run: "Новий запуск"
+      danger: "Видалення"
+      back_to_game: "До керування грою"
+    tabs:
+      label: "Розділи адміністрування"
+      dashboard: "Огляд"
+      games: "Ігри"
+      users: "Користувачі"
+      teams: "Команди"
+      audit: "Журнал"
+      settings: "Налаштування"
+      load_test: "Навантажувальний тест"
+      styleguide: "Стайлгайд"
     users:
       granted_notice: "Права адміністратора надано"
       revoked_notice: "Права адміністратора знято"
@@ -100,7 +135,6 @@ uk:
         role: "Роль"
         superadmin: "адміністратор"
         operator: "оператор"
-        back: "До огляду"
       show:
         email: "E-mail"
         phone: "Телефон"
@@ -112,7 +146,6 @@ uk:
         locale: "Мова"
         signed_up: "Реєстрація"
         authored_games: "Створені ігри"
-        back: "До списку гравців"
         grant: "Зробити адміністратором"
         revoke: "Зняти права адміністратора"
         grant_operator: "Зробити оператором"
@@ -129,7 +162,6 @@ uk:
         target: "Об'єкт"
         details: "Подробиці"
         unknown_actor: "невідомо"
-        back: "До огляду"
         action:
           withdraw: "Зняв з публікації"
           restore: "Опублікував"
@@ -210,14 +242,11 @@ uk:
     dashboard:
       show:
         title: "Огляд"
-        styleguide_link: "Стайлгайд інтерфейсу"
         audit_log: "Журнал дій"
         games_by_status: "Ігри за статусом"
         editing_locked: "Редагування заморожено"
         totals: "Усього"
         entries_by_status: "Заявки за статусом"
-        all_games: "Усі ігри"
-        all_teams: "Усі команди"
         storage: "Сховище"
         storage_used: "Зайнято (МБ)"
         storage_cap: "Загальний ліміт на сервер (МБ)"
@@ -253,7 +282,6 @@ uk:
       accepted_notice: "Команду прийнято: %{team}"
       rejected_notice: "Заявку відхилено: %{team}"
       gated_note: "Гра проходиться за доступом — заявку прийняти не можна. Команду допускають через «Доступ до гри»."
-      back: "До списку ігор"
     games:
       index:
         title: "Усі ігри"

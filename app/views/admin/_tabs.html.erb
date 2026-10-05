@@ -1,0 +1,22 @@
+<%# The admin console's sections. Rendered from layouts/application for every
+    admin/* controller (spec/requests/admin_tabs_spec.rb visits every admin
+    page). Wraps onto a second row when it does not fit, so no tab is ever
+    hidden behind a sideways scroll (see screens.css). %>
+<% tabs = [
+     [ :dashboard,  admin_dashboard_path ],
+     [ :games,      admin_games_path ],
+     [ :users,      admin_users_path ],
+     [ :teams,      admin_teams_path ],
+     [ :audit,      admin_audit_index_path ],
+     [ :settings,   admin_settings_path ],
+     [ :load_test,  admin_load_test_path ],
+     [ :styleguide, admin_styleguide_path ]
+   ] %>
+<% current = admin_tab_current %>
+<nav class="admin-tabs" aria-label="<%= t("admin.tabs.label") %>">
+  <ul>
+    <% tabs.each do |key, path| %>
+      <li><%= link_to t("admin.tabs.#{key}"), path, :"aria-current" => (key == current ? "page" : nil) %></li>
+    <% end %>
+  </ul>
+</nav>

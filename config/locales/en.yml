@@ -54,6 +54,41 @@ en:
     redeemed: "Code accepted. The game is open to your team."
     need_a_team: "Create a team first — we have kept your code."
   admin:
+    teams_list:
+      more: "More"
+      members_more: "and %{count} more"
+    user_page:
+      profile: "Profile"
+      roles: "Roles"
+      team: "Team"
+      account: "Account"
+      superadmin_hint: "Full access to the administration console, including other users' roles."
+      operator_hint: "Runs pass-only games: passes, access codes, gameplay. No access to this console."
+      anonymise_hint: "Erases personal data, detaches them from their team and removes their roles; games they created remain."
+      delete_hint: "Deletes the account entirely. Cannot be undone."
+    game_page:
+      manage: "Manage →"
+      author: "Author"
+      facts_teams: "Teams"
+      facts_playing: "Playing"
+      facts_locales: "Languages"
+      facts_run: "Run"
+      run_ordinal: "No. %{ordinal}"
+      state: "Status"
+      entries: "Applications"
+      new_run: "New run"
+      danger: "Deletion"
+      back_to_game: "Back to game management"
+    tabs:
+      label: "Administration sections"
+      dashboard: "Overview"
+      games: "Games"
+      users: "Users"
+      teams: "Teams"
+      audit: "Audit log"
+      settings: "Settings"
+      load_test: "Load test"
+      styleguide: "Style guide"
     users:
       granted_notice: "Administrator rights granted"
       revoked_notice: "Administrator rights revoked"
@@ -83,7 +118,6 @@ en:
         role: "Role"
         superadmin: "administrator"
         operator: "operator"
-        back: "Back to overview"
       show:
         email: "Email"
         phone: "Phone"
@@ -95,7 +129,6 @@ en:
         locale: "Language"
         signed_up: "Registered"
         authored_games: "Games created"
-        back: "Back to players"
         grant: "Make administrator"
         revoke: "Revoke administrator rights"
         grant_operator: "Make operator"
@@ -112,7 +145,6 @@ en:
         target: "Target"
         details: "Details"
         unknown_actor: "unknown"
-        back: "Back to overview"
         action:
           withdraw: "Withdrew"
           restore: "Published"
@@ -193,13 +225,10 @@ en:
     dashboard:
       show:
         title: "Overview"
-        styleguide_link: "Interface styleguide"
         games_by_status: "Games by status"
         editing_locked: "Editing frozen"
         totals: "Totals"
         entries_by_status: "Entry requests by status"
-        all_games: "All games"
-        all_teams: "All teams"
         audit_log: "Action log"
         storage: "Storage"
         storage_used: "Used (MB)"
@@ -236,7 +265,6 @@ en:
       accepted_notice: "Team accepted: %{team}"
       rejected_notice: "Application rejected: %{team}"
       gated_note: "This game is played by access — an application cannot be accepted. Admit a team from “Game access”."
-      back: "Back to the games list"
     games:
       index:
         title: "All games"

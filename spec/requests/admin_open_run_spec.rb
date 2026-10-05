@@ -30,7 +30,7 @@ describe "opening a run as an operator", type: :request do
     }.to change { game.runs.reload.count }.by(1)
 
     expect(game.reload.current_run.ordinal).to eq(2)
-    expect(response).to redirect_to(admin_games_path)
+    expect(response).to redirect_to(admin_game_path(game))
     expect(flash[:notice]).to eq(I18n.t("admin.games.run_opened", :ordinal => 2))
   end
 
@@ -143,11 +143,11 @@ describe "opening a run as an operator", type: :request do
     end
   end
 
-  it "offers the form on the console" do
+  it "offers the form on the game's admin page" do
     listed = game
     sign_in(operator)
 
-    get admin_games_path
+    get admin_game_path(listed)
 
     expect(response.body).to include(open_run_admin_game_path(listed))
   end

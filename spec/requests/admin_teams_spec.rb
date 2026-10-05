@@ -263,4 +263,37 @@ describe "the admin teams console", type: :request do
 
     expect(large).to be <= small + 1
   end
+
+  describe "row layout" do
+    def row_for(team)
+      Nokogiri::HTML(response.body).css("tbody tr").find { |tr| tr.text.include?(team.name) }
+    end
+
+    it "puts delete behind a closed disclosure, only for a deletable team" do
+      empty = create_team
+      busy  = create_team(:captain => captain)
+      sign_in(superadmin)
+      get admin_teams_path
+
+      more = row_for(empty).at_css("details.row-more")
+      expect(more).not_to be_nil
+      expect(more["open"]).to be_nil
+      expect(more.at_css("form[action='#{destroy_admin_team_path(empty)}']")).not_to be_nil
+      expect(row_for(busy).at_css("details.row-more")).to be_nil
+    end
+
+    it "shows at most three members, then a count of the rest" do
+      team = create_team(:captain => captain)
+      5.times { team.members << create_user }
+      sign_in(superadmin)
+      get admin_teams_path
+
+      cell = row_for(team).at_css("td.members")
+      shown = team.members.order(:id).first(3).map(&:nickname)
+      expect(cell.text).to include(shown.join(", "))
+      expect(cell.text).to include("и ещё #{team.members.count - 3}")
+      # Every member stays reachable: the captain picker lists them all.
+      expect(row_for(team).css("select[name='member_id'] option").size).to eq(team.members.count)
+    end
+  end
 end

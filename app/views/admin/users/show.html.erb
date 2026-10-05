@@ -1,94 +1,91 @@
 <% page_title t("titles.admin") %>
-<h1><%= @user.nickname %></h1>
+<%# Sectioned like the level page: profile, roles, team, account. Every
+    control keeps the condition Admin::UsersController enforces -- see the
+    comments below, carried over from the flat version of this page. %>
+<% may_move    = !@user.captain? && Team.where.not(:id => @user.team_id).exists? %>
+<% may_anon    = @user.id != @current_user.id && !@user.captain? %>
+<% may_delete  = may_anon && @user.created_games.empty? %>
+<div class="admin-user">
+  <h1><%= @user.nickname %></h1>
+  <p class="admin-user-roles">
+    <% if @user.superadmin? %><span class="tag"><%= t("admin.users.index.superadmin") %></span><% end %>
+    <% if @user.operator? %><span class="tag"><%= t("admin.users.index.operator") %></span><% end %>
+  </p>
 
-<%# A key/value table -- each row's <th> IS its own label, so this is not
-    one of "the three list screens" Step 2 collapses into .table--cards
-    (that component assumes column headers in a <thead>, hidden below
-    48rem while <td> grows a data-label; a row-label table has no <thead>
-    to hide). It still gets the plain table/th/td treatment from
-    components.css -- borders, padding, spacing -- for free.
-    Still wrapped in .table-wrap, independent of the .table--cards question:
-    email/nickname/team name have no length validation, nothing sets
-    word-break on <td>, and one long unbroken value would otherwise push the
-    table past a narrow viewport and scroll the whole page sideways -- the
-    exact failure .table-wrap's overflow-x: auto exists to contain. %>
-<div class="table-wrap">
-<table>
-  <tr><th><%= t("admin.users.show.email") %></th><td><%= @user.email %></td></tr>
-  <tr><th><%= t("admin.users.show.phone") %></th><td><%= @user.phone_number %></td></tr>
-  <tr><th><%= t("admin.users.show.instagram") %></th><td><%= @user.instagram %></td></tr>
-  <tr><th><%= t("admin.users.show.telegram") %></th><td><%= @user.telegram_id %></td></tr>
-  <tr><th><%= t("admin.users.show.messengers") %></th><td><%= messenger_list_for(@user) %></td></tr>
-  <tr><th><%= t("admin.users.show.date_of_birth") %></th><td><%= @user.date_of_birth %></td></tr>
-  <tr><th><%= t("admin.users.show.team") %></th><td><%= @user.team&.name %></td></tr>
-  <tr><th><%= t("admin.users.show.locale") %></th><td><%= @user.locale %></td></tr>
-  <tr><th><%= t("admin.users.show.signed_up") %></th><td><%= l(@user.created_at, :format => :long) %></td></tr>
-</table>
-</div>
+  <section class="sheet-section sheet-section--profile">
+    <h2 class="fact-label"><%= t("admin.user_page.profile") %></h2>
+    <dl class="facts">
+      <% [ [ :email, @user.email ], [ :phone, @user.phone_number ], [ :instagram, @user.instagram ],
+           [ :telegram, @user.telegram_id ], [ :messengers, messenger_list_for(@user) ],
+           [ :date_of_birth, @user.date_of_birth ], [ :team, @user.team&.name ], [ :locale, @user.locale ],
+           [ :signed_up, l(@user.created_at, :format => :long) ] ].each do |key, value| %>
+        <div class="fact">
+          <dt class="fact-label"><%= t("admin.users.show.#{key}") %></dt>
+          <dd class="fact-value"><%= value %></dd>
+        </div>
+      <% end %>
+    </dl>
+    <%# There is no team history: users.team_id is one column. Participation
+        runs through the team, so "games this person played" is deliberately
+        not attempted. %>
+    <h3 class="fact-label"><%= t("admin.users.show.authored_games") %></h3>
+    <ul class="game-list">
+      <% @user.created_games.each do |game| %>
+        <li><%= link_to game.name, game_path(game) %></li>
+      <% end %>
+    </ul>
+  </section>
 
-<h2><%= t("admin.users.show.authored_games") %></h2>
-<%# There is no team history to show: users.team_id is one column, so the schema
-    keeps no record of previous teams. Participation in games runs through the
-    team rather than the user, so "games this person played" is not a question
-    this schema answers directly and is deliberately not attempted. %>
-<ul class="game-list">
-  <% @user.created_games.each do |game| %>
-    <li><%= link_to game.name, game_path(game) %></li>
-  <% end %>
-</ul>
+  <section class="sheet-section sheet-section--roles">
+    <h2 class="fact-label"><%= t("admin.user_page.roles") %></h2>
+    <div class="role-row">
+      <% if @user.superadmin? %>
+        <%= button_to t("admin.users.show.revoke"), revoke_admin_user_path(@user), :method => :post, :class => "btn" %>
+      <% else %>
+        <%= button_to t("admin.users.show.grant"), grant_admin_user_path(@user), :method => :post, :class => "btn btn--go" %>
+      <% end %>
+      <p class="role-hint"><%= t("admin.user_page.superadmin_hint") %></p>
+    </div>
+    <div class="role-row">
+      <% if @user.operator? %>
+        <%= button_to t("admin.users.show.revoke_operator"), revoke_operator_admin_user_path(@user), :method => :post, :class => "btn" %>
+      <% else %>
+        <%= button_to t("admin.users.show.grant_operator"), grant_operator_admin_user_path(@user), :method => :post, :class => "btn btn--go" %>
+      <% end %>
+      <p class="role-hint"><%= t("admin.user_page.operator_hint") %></p>
+    </div>
+  </section>
 
-<div class="game-control">
-  <% if @user.superadmin? %>
-    <%= button_to t("admin.users.show.revoke"), revoke_admin_user_path(@user), :method => :post, :class => "btn btn--danger" %>
-  <% else %>
-    <%= button_to t("admin.users.show.grant"), grant_admin_user_path(@user), :method => :post, :class => "btn btn--go" %>
-  <% end %>
-
-  <% if @user.operator? %>
-    <%= button_to t("admin.users.show.revoke_operator"), revoke_operator_admin_user_path(@user), :method => :post, :class => "btn btn--danger" %>
-  <% else %>
-    <%= button_to t("admin.users.show.grant_operator"), grant_operator_admin_user_path(@user), :method => :post, :class => "btn btn--go" %>
-  <% end %>
-
-  <%# Offered only where Admin::UsersController#destroy would accept: not
-      yourself, not a captain (reassign first), not an author (their games are
-      other people's content -- anonymise instead). The last-superadmin case
-      needs no clause here: only you can be the last one and still be looking
-      at this page, so the self check already covers it.
-
-      Deliberately NO confirmation attribute. This app ships neither Turbo nor
-      rails-ujs, so data-confirm and data-turbo-confirm are both inert -- two
-      such attributes already sit elsewhere in this codebase firing no dialog
-      at all. An attribute implying a safety net nobody gets is worse than
-      none; the controller's guards are the protection. %>
-  <% if @user.id != @current_user.id && !@user.captain? && @user.created_games.empty? %>
-    <%= button_to t("admin.users.show.delete"), destroy_admin_user_path(@user),
-                  :method => :delete, :class => "btn btn--danger" %>
-  <% end %>
-
-  <%# Offered wherever #anonymise would accept -- which, unlike delete above,
-      INCLUDES an author. That difference is the whole reason both operations
-      exist: their games survive with a scrubbed author rather than being
-      orphaned. %>
-  <% if @user.id != @current_user.id && !@user.captain? %>
-    <%= button_to t("admin.users.show.anonymise"), anonymise_admin_user_path(@user),
-                  :method => :post, :class => "btn" %>
-  <% end %>
-
-  <%# The move action refuses a captain, so offering the control here would be
-      a promise it cannot keep -- the remedy is captaincy reassignment on the
-      admin teams screen. A form rather than a link: no Turbo and no
-      rails-ujs, so link_to with method: :post would silently issue a GET, and
-      a select cannot ride button_to. %>
-  <% unless @user.captain? %>
-    <% destinations = Team.where.not(:id => @user.team_id).order(:name) %>
-    <% if destinations.any? %>
-      <%= form_with url: move_admin_user_path(@user), method: :post do %>
-        <%= select_tag :team_id, options_from_collection_for_select(destinations, :id, :name) %>
+  <%# The move action refuses a captain -- the remedy is captaincy
+      reassignment on the admin teams screen. A form: a select cannot ride
+      button_to, and this app has no rails-ujs. %>
+  <% if may_move %>
+    <section class="sheet-section sheet-section--team">
+      <h2 class="fact-label"><%= t("admin.user_page.team") %></h2>
+      <%= form_with url: move_admin_user_path(@user), method: :post, :class => "admin-inline-form" do %>
+        <%= select_tag :team_id, options_from_collection_for_select(Team.where.not(:id => @user.team_id).order(:name), :id, :name) %>
         <%= submit_tag t("admin.users.show.move"), :class => "btn" %>
       <% end %>
-    <% end %>
+    </section>
+  <% end %>
+
+  <%# Offered only where #anonymise / #destroy would accept: not yourself, not
+      a captain; delete additionally not an author (anonymise instead -- their
+      games survive with a scrubbed author). No confirmation attribute: no
+      Turbo, no rails-ujs, so it would be inert; the guards are the protection. %>
+  <% if may_anon %>
+    <section class="sheet-section sheet-section--account danger-row">
+      <h2 class="fact-label"><%= t("admin.user_page.account") %></h2>
+      <div class="role-row">
+        <%= button_to t("admin.users.show.anonymise"), anonymise_admin_user_path(@user), :method => :post, :class => "btn" %>
+        <p class="role-hint"><%= t("admin.user_page.anonymise_hint") %></p>
+      </div>
+      <% if may_delete %>
+        <div class="role-row">
+          <%= button_to t("admin.users.show.delete"), destroy_admin_user_path(@user), :method => :delete, :class => "btn btn--danger" %>
+          <p class="role-hint"><%= t("admin.user_page.delete_hint") %></p>
+        </div>
+      <% end %>
+    </section>
   <% end %>
 </div>
-
-<p><%= link_to t("admin.users.show.back"), admin_users_path %></p>

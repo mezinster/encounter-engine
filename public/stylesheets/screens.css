@@ -963,3 +963,63 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 /* A delay is a number, not a status: keep the badge's case as written. */
 .hint-head .tag { text-transform: none; letter-spacing: normal; font-size: var(--text-sm); }
 .hint-body { margin-top: var(--space-2); overflow-wrap: anywhere; }
+
+/* --- Admin console: the section tabs (admin/_tabs) -------------------------
+ * Wraps rather than scrolling: the eight tabs need ~960px, so a scrolling bar
+ * hid three or four of them behind a sideways scroll on a 845-1024px laptop
+ * -- measured, and the console is used mostly on desktop. */
+.admin-tabs {
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+.admin-tabs ul { display: flex; flex-wrap: wrap; gap: 0 var(--space-1); margin: 0; }
+.admin-tabs li { white-space: nowrap; }
+.admin-tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-2);
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+}
+.admin-tabs a:hover { color: var(--text); text-decoration: none; }
+.admin-tabs a[aria-current="page"] { border-bottom-color: var(--go); color: var(--text); font-weight: 600; }
+
+/* --- Admin console: the per-game page (admin/games/show) ------------------- */
+.admin-game-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--text-dim); }
+.admin-game .facts { margin: var(--space-4) 0 var(--space-5); grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+.admin-panels { display: grid; gap: var(--space-4); }
+.admin-panel .fact-label { margin-bottom: var(--space-3); }
+.admin-panel form { margin: 0; }
+.admin-inline-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); }
+.admin-inline-form .field { margin: 0; flex: 1 1 10rem; }
+.admin-inline-form .field input { width: 100%; }
+.admin-panel--danger { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.admin-col { display: grid; gap: var(--space-4); align-content: start; }
+/* The new-run fields wrap rather than shrink: in the narrower column a
+   datetime-local input squeezed below ~14rem hides its time part. */
+.admin-panel--new-run .field { flex: 1 1 14rem; }
+.admin-panel--new-run input { width: 100%; }
+/* Superdesign variant B: two columns from 60rem. */
+@media (min-width: 60rem) {
+  .admin-panels { grid-template-columns: 1fr 1fr; align-items: start; }
+}
+
+/* --- Admin console: the user page (admin/users/show) ----------------------- */
+.admin-user-roles { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
+.admin-user .facts { margin-bottom: var(--space-4); }
+.role-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.role-row + .role-row { margin-top: var(--space-3); }
+.role-row form { margin: 0; }
+.role-hint { margin: 0; color: var(--text-dim); font-size: var(--text-sm); max-width: 52ch; }
+
+/* --- Admin console: the teams list (admin/teams/index) --------------------- */
+.row-more { margin-top: var(--space-2); }
+.row-more > summary { display: inline-flex; align-items: center; min-height: var(--tap); cursor: pointer; color: var(--text-dim); }
+.row-more form { margin: var(--space-2) 0 0; }
+.members-more { color: var(--text-dim); white-space: nowrap; }
+/* Section headings outrank the field labels inside them. */
+.admin-user .sheet-section > h2.fact-label { margin-bottom: var(--space-3); color: var(--text); }
+.admin-user .sheet-section--team select { max-width: 24rem; }
+/* inline-flex suppresses the native <summary> marker; supply one. */
+.row-more > summary::after { content: "▾"; margin-left: var(--space-1); }

@@ -1,0 +1,115 @@
+<% page_title t("titles.admin") %>
+<%# Every per-game control the games list used to carry in each row. Each
+    panel, and each control in it, renders only when its action would accept --
+    the same predicates the list used. Actions here redirect back to this page. %>
+<% counts = game_team_counts([@game]) %>
+<% playing = counts[:playing].fetch(@game.id, 0) %>
+<div class="admin-game">
+  <h1><%= link_to @game.name, game_path(@game) %></h1>
+  <p class="admin-game-meta">
+    <%= t("admin.game_page.author") %>: <strong><%= @game.author&.nickname %></strong>
+    <%= admin_game_status_tag(@game) %>
+    <% if @game.editing_locked? %><span class="tag"><%= t("admin.games.index.locked") %></span><% end %>
+  </p>
+
+  <dl class="facts">
+    <div class="fact">
+      <dt class="fact-label"><%= t("admin.game_page.facts_teams") %></dt>
+      <dd class="fact-value"><%= counts[:registered].fetch(@game.id, 0) %> / <%= @game.max_team_number %></dd>
+    </div>
+    <div class="fact">
+      <dt class="fact-label"><%= t("admin.game_page.facts_playing") %></dt>
+      <dd class="fact-value"><%= playing %></dd>
+    </div>
+    <div class="fact">
+      <dt class="fact-label"><%= t("admin.game_page.facts_locales") %></dt>
+      <dd class="fact-value"><%= @game.available_locale_list.join(", ") %></dd>
+    </div>
+    <div class="fact">
+      <dt class="fact-label"><%= t("admin.game_page.facts_run") %></dt>
+      <dd class="fact-value"><%= t("admin.game_page.run_ordinal", :ordinal => @game.current_run.ordinal) %></dd>
+    </div>
+  </dl>
+
+  <%# Two columns from 60rem (Superdesign variant B): status and applications
+      on the left, authorship and a new run on the right. %>
+  <div class="admin-panels">
+    <div class="admin-col">
+    <section class="card admin-panel admin-panel--state">
+      <h2 class="fact-label"><%= t("admin.game_page.state") %></h2>
+      <div class="game-control">
+        <% if @game.withdrawn? %>
+          <%= button_to t("admin.games.index.restore"), restore_game_path(@game), :method => :post, :class => "btn" %>
+        <% else %>
+          <%= link_to t("admin.games.index.withdraw"), new_withdrawal_game_path(@game), :class => "btn" %>
+        <% end %>
+        <%# Independent of withdraw/restore: a withdrawn-and-finished game
+            legitimately offers both ways back. %>
+        <% if @game.author_finished? %>
+          <%= button_to t("admin.games.index.unfinish"), unfinish_game_path(@game), :method => :post, :class => "btn" %>
+        <% end %>
+        <% if @game.editing_locked? %>
+          <%= button_to t("admin.games.index.unlock"), unlock_game_path(@game), :method => :post, :class => "btn" %>
+        <% else %>
+          <%= button_to t("admin.games.index.lock"), lock_game_path(@game), :method => :post, :class => "btn" %>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="card admin-panel admin-panel--entries">
+      <h2 class="fact-label"><%= t("admin.game_page.entries") %></h2>
+      <div class="game-control">
+        <%= link_to t("admin.games.index.entries_link", :count => @pending_entry_count),
+                    admin_game_entries_path(@game), :class => "btn" %>
+        <%= link_to t("admin.games.index.edit"), edit_game_path(@game), :class => "btn" unless @game.started? %>
+      </div>
+    </section>
+    </div>
+
+    <div class="admin-col">
+    <%# A text field rather than a select: the target is any user on the
+        instance, so a dropdown would list the entire membership. %>
+    <section class="card admin-panel admin-panel--author">
+      <h2 class="fact-label"><%= t("admin.game_page.author") %></h2>
+      <%= form_with url: set_author_admin_game_path(@game), method: :post, :class => "admin-inline-form" do %>
+        <div class="field">
+          <%= label_tag :nickname, t("admin.games.index.author_nickname") %>
+          <%= text_field_tag :nickname, nil, :autocomplete => "off" %>
+        </div>
+        <%= submit_tag t("admin.games.index.set_author"), :class => "btn" %>
+      <% end %>
+    </section>
+
+    <%# Only for a finished game with levels: Admin::GamesController#open_run
+        refuses every other game. Native datetime-local inputs submit
+        YYYY-MM-DDTHH:MM, which the action accepts unchanged. %>
+    <% if @game.author_finished? && @game.levels.any? %>
+      <section class="card admin-panel admin-panel--new-run">
+        <h2 class="fact-label"><%= t("admin.game_page.new_run") %></h2>
+        <%= form_with url: open_run_admin_game_path(@game), method: :post, :class => "admin-inline-form" do %>
+          <div class="field">
+            <%= label_tag :starts_at, t("admin.games.index.run_starts_at") %>
+            <%= datetime_local_field_tag :starts_at, nil, :required => true %>
+          </div>
+          <div class="field">
+            <%= label_tag :registration_deadline, t("admin.games.index.run_deadline") %>
+            <%= datetime_local_field_tag :registration_deadline, nil %>
+          </div>
+          <div class="field">
+            <%= label_tag :max_team_number, t("admin.games.index.run_max_teams") %>
+            <%= number_field_tag :max_team_number, @game.max_team_number, :min => 1, :max => 9999 %>
+          </div>
+          <%= submit_tag t("admin.games.index.open_run"), :class => "btn" %>
+        <% end %>
+      </section>
+    <% end %>
+    </div>
+  </div>
+
+  <% if @game.deletable? %>
+    <section class="admin-panel admin-panel--danger danger-row">
+      <h2 class="fact-label"><%= t("admin.game_page.danger") %></h2>
+      <%= button_to t("admin.games.index.delete"), delete_game_path(@game), :method => :delete, :class => "btn btn--danger" %>
+    </section>
+  <% end %>
+</div>

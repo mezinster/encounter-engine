@@ -73,6 +73,41 @@ be:
     redeemed: "Код прыняты. Гульня адкрыта для вашай каманды."
     need_a_team: "Спачатку стварыце каманду — код мы захавалі."
   admin:
+    teams_list:
+      more: "Яшчэ"
+      members_more: "і яшчэ %{count}"
+    user_page:
+      profile: "Профіль"
+      roles: "Ролі"
+      team: "Каманда"
+      account: "Уліковы запіс"
+      superadmin_hint: "Поўны доступ да кансолі адміністравання, у тым ліку да роляў іншых карыстальнікаў."
+      operator_hint: "Вядзе гульні па пропусках: пропускі, коды доступу, ход гульні. Без доступу да гэтай кансолі."
+      anonymise_hint: "Сцірае асабістыя даныя, адвязвае ад каманды і здымае ролі; створаныя гульні застаюцца."
+      delete_hint: "Выдаляе ўліковы запіс цалкам. Незваротна."
+    game_page:
+      manage: "Кіраванне →"
+      author: "Аўтар"
+      facts_teams: "Каманды"
+      facts_playing: "Гуляюць"
+      facts_locales: "Мовы"
+      facts_run: "Забег"
+      run_ordinal: "№ %{ordinal}"
+      state: "Стан"
+      entries: "Заяўкі"
+      new_run: "Новы запуск"
+      danger: "Выдаленне"
+      back_to_game: "Да кіравання гульнёй"
+    tabs:
+      label: "Раздзелы адміністравання"
+      dashboard: "Агляд"
+      games: "Гульні"
+      users: "Карыстальнікі"
+      teams: "Каманды"
+      audit: "Журнал"
+      settings: "Налады"
+      load_test: "Нагрузачны тэст"
+      styleguide: "Стайлгайд"
     users:
       granted_notice: "Правы адміністратара выдадзены"
       revoked_notice: "Правы адміністратара адкліканы"
@@ -102,7 +137,6 @@ be:
         role: "Роля"
         superadmin: "адміністратар"
         operator: "аператар"
-        back: "Да агляду"
       show:
         email: "E-mail"
         phone: "Тэлефон"
@@ -114,7 +148,6 @@ be:
         locale: "Мова"
         signed_up: "Рэгістрацыя"
         authored_games: "Створаныя гульні"
-        back: "Да спіса гульцоў"
         grant: "Зрабіць адміністратарам"
         revoke: "Зняць правы адміністратара"
         grant_operator: "Зрабіць аператарам"
@@ -131,7 +164,6 @@ be:
         target: "Аб'ект"
         details: "Падрабязнасці"
         unknown_actor: "невядома"
-        back: "Да агляду"
         action:
           withdraw: "Зняў з публікацыі"
           restore: "Апублікаваў"
@@ -212,13 +244,10 @@ be:
     dashboard:
       show:
         title: "Агляд"
-        styleguide_link: "Стайлгайд інтэрфейсу"
         games_by_status: "Гульні паводле статусу"
         editing_locked: "Рэдагаванне замарожана"
         totals: "Усяго"
         entries_by_status: "Заяўкі паводле статусу"
-        all_games: "Усе гульні"
-        all_teams: "Усе каманды"
         audit_log: "Журнал дзеянняў"
         storage: "Сховішча"
         storage_used: "Занята (МБ)"
@@ -255,7 +284,6 @@ be:
       accepted_notice: "Каманда прынята: %{team}"
       rejected_notice: "Заяўка адхілена: %{team}"
       gated_note: "Гульня праходзіцца па доступе — заяўку прыняць нельга. Каманду дапускаюць праз «Доступ да гульні»."
-      back: "Да спісу гульняў"
     games:
       index:
         title: "Усе гульні"

@@ -32,7 +32,7 @@ Rails.application.routes.draw do
     # forms. Authorship is the exception: there is no author's form an operator
     # can borrow when the point is that the current author cannot or will not
     # act. Mirrors admin teams' set_captain.
-    resources :games, only: [ :index ] do
+    resources :games, only: [ :index, :show ] do
       post "set_author", on: :member
       post "open_run",   on: :member
 

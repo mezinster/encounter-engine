@@ -24,8 +24,14 @@
       <td data-label="<%= t("admin.teams.index.captain") %>">
         <%= team.captain&.nickname || t("admin.teams.index.no_captain") %>
       </td>
-      <td data-label="<%= t("admin.teams.index.members") %>">
-        <%= team.members.map(&:nickname).join(", ") %>
+      <%# One line however big the team: the first three, then a count. Every
+          member is still listed in the captain picker in the last column. %>
+      <% members = team.members.sort_by(&:id) %>
+      <td class="members" data-label="<%= t("admin.teams.index.members") %>">
+        <%= members.first(3).map(&:nickname).join(", ") %>
+        <% if members.size > 3 %>
+          <span class="members-more"><%= t("admin.teams_list.members_more", :count => members.size - 3) %></span>
+        <% end %>
       </td>
       <%# A real form, not a link: this app ships no Turbo and no rails-ujs,
           so link_to ..., method: :post would silently issue a GET against a
@@ -33,25 +39,26 @@
           why this is form_with rather than the button_to used elsewhere on
           the admin screens. %>
       <td>
-        <%# Offered only where #destroy would accept -- an empty, captainless
-            team that never played. Everything else keeps its name, because
-            deleting it would take records of races other people ran.
-
-            No confirmation attribute: this app ships neither Turbo nor
-            rails-ujs, so data-confirm is inert here. The predicate is the
-            protection. %>
-        <% if team.deletable? %>
-          <%= button_to t("admin.teams.index.delete"), destroy_admin_team_path(team),
-                        :method => :delete, :class => "btn btn--danger" %>
-        <% end %>
-        <%= link_to t("interventions.adjust.button"),
-                    new_admin_team_adjustment_path(:team_id => team.id), :class => "btn" %>
-        <% if team.members.any? %>
-          <%= form_with url: set_captain_admin_team_path(team), method: :post do %>
-            <%= select_tag :member_id,
-                           options_from_collection_for_select(team.members, :id, :nickname, team.captain_id) %>
-            <%= submit_tag t("admin.teams.index.set_captain"), :class => "btn" %>
+        <div class="game-control">
+          <%= link_to t("interventions.adjust.button"),
+                      new_admin_team_adjustment_path(:team_id => team.id), :class => "btn" %>
+          <% if team.members.any? %>
+            <%= form_with url: set_captain_admin_team_path(team), method: :post do %>
+              <%= select_tag :member_id,
+                             options_from_collection_for_select(team.members, :id, :nickname, team.captain_id) %>
+              <%= submit_tag t("admin.teams.index.set_captain"), :class => "btn" %>
+            <% end %>
           <% end %>
+        </div>
+        <%# Rare and only ever on an empty, captainless team that never played,
+            so it sits behind a disclosure rather than beside the everyday
+            controls. A native <details>: no JavaScript. %>
+        <% if team.deletable? %>
+          <details class="row-more">
+            <summary><%= t("admin.teams_list.more") %></summary>
+            <%= button_to t("admin.teams.index.delete"), destroy_admin_team_path(team),
+                          :method => :delete, :class => "btn btn--danger" %>
+          </details>
         <% end %>
       </td>
     </tr>

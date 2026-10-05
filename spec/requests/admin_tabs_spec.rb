@@ -71,4 +71,22 @@ describe "the admin section tabs", type: :request do
 
     expect(tabs).to be_nil
   end
+
+  # The tabs replace the dashboard's footer links and the "back to the list"
+  # links whose only target was a sibling admin page.
+  it "leaves no duplicate navigation links on the pages it replaced them on" do
+    sign_in(superadmin)
+
+    get admin_dashboard_path
+    main = Nokogiri::HTML(response.body).at_css("main")
+    expect(main.css("a[href='#{admin_teams_path}']").size).to eq(1)
+    expect(main.css("a[href='#{admin_styleguide_path}']").size).to eq(1)
+
+    [ admin_users_path, admin_user_path(superadmin), admin_audit_index_path ].each do |path|
+      get path
+      main = Nokogiri::HTML(response.body).at_css("main")
+      target = path == admin_user_path(superadmin) ? admin_users_path : admin_dashboard_path
+      expect(main.css("a[href='#{target}']").size).to eq(1), "#{path} still links #{target} outside the tabs"
+    end
+  end
 end

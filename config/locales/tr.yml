@@ -138,7 +138,6 @@ tr:
         role: "Rol"
         superadmin: "yönetici"
         operator: "operatör"
-        back: "Genel bakışa"
       show:
         email: "E-posta"
         phone: "Telefon"
@@ -150,7 +149,6 @@ tr:
         locale: "Dil"
         signed_up: "Kayıt"
         authored_games: "Oluşturulan oyunlar"
-        back: "Oyuncu listesine"
         grant: "Yönetici yap"
         revoke: "Yönetici yetkilerini al"
         grant_operator: "Operatör yap"
@@ -167,7 +165,6 @@ tr:
         target: "Nesne"
         details: "Ayrıntılar"
         unknown_actor: "bilinmiyor"
-        back: "Genel bakışa"
         action:
           withdraw: "Yayından kaldırdı"
           restore: "Yayımladı"
@@ -248,13 +245,10 @@ tr:
     dashboard:
       show:
         title: "Genel bakış"
-        styleguide_link: "Arayüz stil rehberi"
         games_by_status: "Duruma göre oyunlar"
         editing_locked: "Düzenleme donduruldu"
         totals: "Toplam"
         entries_by_status: "Duruma göre başvurular"
-        all_games: "Tüm oyunlar"
-        all_teams: "Tüm takımlar"
         audit_log: "İşlem günlüğü"
         storage: "Depolama"
         storage_used: "Kullanılan (MB)"

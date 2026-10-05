@@ -110,7 +110,6 @@ uk:
         role: "Роль"
         superadmin: "адміністратор"
         operator: "оператор"
-        back: "До огляду"
       show:
         email: "E-mail"
         phone: "Телефон"
@@ -122,7 +121,6 @@ uk:
         locale: "Мова"
         signed_up: "Реєстрація"
         authored_games: "Створені ігри"
-        back: "До списку гравців"
         grant: "Зробити адміністратором"
         revoke: "Зняти права адміністратора"
         grant_operator: "Зробити оператором"
@@ -139,7 +137,6 @@ uk:
         target: "Об'єкт"
         details: "Подробиці"
         unknown_actor: "невідомо"
-        back: "До огляду"
         action:
           withdraw: "Зняв з публікації"
           restore: "Опублікував"
@@ -220,14 +217,11 @@ uk:
     dashboard:
       show:
         title: "Огляд"
-        styleguide_link: "Стайлгайд інтерфейсу"
         audit_log: "Журнал дій"
         games_by_status: "Ігри за статусом"
         editing_locked: "Редагування заморожено"
         totals: "Усього"
         entries_by_status: "Заявки за статусом"
-        all_games: "Усі ігри"
-        all_teams: "Усі команди"
         storage: "Сховище"
         storage_used: "Зайнято (МБ)"
         storage_cap: "Загальний ліміт на сервер (МБ)"

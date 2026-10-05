@@ -117,7 +117,6 @@ pl:
         role: "Rola"
         superadmin: "administrator"
         operator: "operator"
-        back: "Do przeglądu"
       show:
         email: "E-mail"
         phone: "Telefon"
@@ -129,7 +128,6 @@ pl:
         locale: "Język"
         signed_up: "Rejestracja"
         authored_games: "Utworzone gry"
-        back: "Do listy graczy"
         grant: "Nadaj uprawnienia administratora"
         revoke: "Odbierz uprawnienia administratora"
         grant_operator: "Nadaj uprawnienia operatora"
@@ -146,7 +144,6 @@ pl:
         target: "Obiekt"
         details: "Szczegóły"
         unknown_actor: "nieznany"
-        back: "Do przeglądu"
         action:
           withdraw: "Wycofał z publikacji"
           restore: "Opublikował"
@@ -227,13 +224,10 @@ pl:
     dashboard:
       show:
         title: "Przegląd"
-        styleguide_link: "Przewodnik stylu interfejsu"
         games_by_status: "Gry według statusu"
         editing_locked: "Edycja zablokowana"
         totals: "Łącznie"
         entries_by_status: "Zgłoszenia według statusu"
-        all_games: "Wszystkie gry"
-        all_teams: "Wszystkie drużyny"
         audit_log: "Dziennik działań"
         storage: "Magazyn"
         storage_used: "Zajęte (MB)"

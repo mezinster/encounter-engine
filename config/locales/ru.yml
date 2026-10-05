@@ -93,7 +93,6 @@ ru:
         role: "Роль"
         superadmin: "администратор"
         operator: "оператор"
-        back: "К обзору"
       show:
         email: "E-mail"
         phone: "Телефон"
@@ -105,7 +104,6 @@ ru:
         locale: "Язык"
         signed_up: "Регистрация"
         authored_games: "Созданные игры"
-        back: "К списку игроков"
         grant: "Сделать администратором"
         revoke: "Снять права администратора"
         grant_operator: "Сделать оператором"
@@ -122,7 +120,6 @@ ru:
         target: "Объект"
         details: "Подробности"
         unknown_actor: "неизвестно"
-        back: "К обзору"
         action:
           withdraw: "Снял с публикации"
           restore: "Опубликовал"
@@ -203,13 +200,10 @@ ru:
     dashboard:
       show:
         title: "Обзор"
-        styleguide_link: "Стайлгайд интерфейса"
         games_by_status: "Игры по статусу"
         editing_locked: "Редактирование заморожено"
         totals: "Всего"
         entries_by_status: "Заявки по статусу"
-        all_games: "Все игры"
-        all_teams: "Все команды"
         audit_log: "Журнал действий"
         storage: "Хранилище"
         storage_used: "Занято (МБ)"

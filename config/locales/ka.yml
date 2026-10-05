@@ -116,7 +116,6 @@ ka:
         role: "როლი"
         superadmin: "ადმინისტრატორი"
         operator: "ოპერატორი"
-        back: "მიმოხილვაზე დაბრუნება"
       show:
         email: "E-mail"
         phone: "ტელეფონი"
@@ -128,7 +127,6 @@ ka:
         locale: "ენა"
         signed_up: "რეგისტრაცია"
         authored_games: "შექმნილი თამაშები"
-        back: "მოთამაშეების სიაზე დაბრუნება"
         grant: "ადმინისტრატორად დანიშვნა"
         revoke: "ადმინისტრატორის უფლებების ჩამორთმევა"
         grant_operator: "ოპერატორად დანიშვნა"
@@ -145,7 +143,6 @@ ka:
         target: "ობიექტი"
         details: "დეტალები"
         unknown_actor: "უცნობი"
-        back: "მიმოხილვაზე დაბრუნება"
         action:
           withdraw: "მოხსნა გამოქვეყნებიდან"
           restore: "გამოაქვეყნა"
@@ -226,14 +223,11 @@ ka:
     dashboard:
       show:
         title: "მიმოხილვა"
-        styleguide_link: "ინტერფეისის სტილის გზამკვლევი"
         audit_log: "მოქმედებების ჟურნალი"
         games_by_status: "თამაშები სტატუსის მიხედვით"
         editing_locked: "რედაქტირება გაყინულია"
         totals: "სულ"
         entries_by_status: "განაცხადები სტატუსის მიხედვით"
-        all_games: "ყველა თამაში"
-        all_teams: "ყველა გუნდი"
         storage: "საცავი"
         storage_used: "დაკავებულია (მბ)"
         storage_cap: "საერთო ლიმიტი სერვერზე (მბ)"

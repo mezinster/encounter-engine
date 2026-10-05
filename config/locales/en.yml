@@ -54,6 +54,16 @@ en:
     redeemed: "Code accepted. The game is open to your team."
     need_a_team: "Create a team first — we have kept your code."
   admin:
+    tabs:
+      label: "Administration sections"
+      dashboard: "Overview"
+      games: "Games"
+      users: "Users"
+      teams: "Teams"
+      audit: "Audit log"
+      settings: "Settings"
+      load_test: "Load test"
+      styleguide: "Style guide"
     users:
       granted_notice: "Administrator rights granted"
       revoked_notice: "Administrator rights revoked"

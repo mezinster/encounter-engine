@@ -78,6 +78,16 @@ pl:
     redeemed: "Kod przyjęty. Gra jest otwarta dla twojej drużyny."
     need_a_team: "Najpierw utwórz drużynę — zachowaliśmy twój kod."
   admin:
+    tabs:
+      label: "Sekcje administracji"
+      dashboard: "Przegląd"
+      games: "Gry"
+      users: "Użytkownicy"
+      teams: "Drużyny"
+      audit: "Dziennik"
+      settings: "Ustawienia"
+      load_test: "Test obciążenia"
+      styleguide: "Przewodnik stylu"
     users:
       granted_notice: "Uprawnienia administratora zostały nadane"
       revoked_notice: "Uprawnienia administratora zostały cofnięte"

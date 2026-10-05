@@ -963,3 +963,22 @@ table.proposals .accepted strong { color: var(--text-dim); font-size: var(--text
 /* A delay is a number, not a status: keep the badge's case as written. */
 .hint-head .tag { text-transform: none; letter-spacing: normal; font-size: var(--text-sm); }
 .hint-body { margin-top: var(--space-2); overflow-wrap: anywhere; }
+
+/* --- Admin console: the section tabs (admin/_tabs) -------------------------
+ * One row always; a narrow screen scrolls the bar itself, never the page. */
+.admin-tabs {
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.admin-tabs ul { display: flex; gap: var(--space-1); margin: 0; white-space: nowrap; }
+.admin-tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-3);
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+}
+.admin-tabs a:hover { color: var(--text); text-decoration: none; }
+.admin-tabs a[aria-current="page"] { border-bottom-color: var(--go); color: var(--text); font-weight: 600; }

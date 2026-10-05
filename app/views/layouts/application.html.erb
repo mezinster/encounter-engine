@@ -44,6 +44,9 @@
       </nav>
 
       <main class="main">
+        <%# Every admin/* controller is superadmin-only (require_superadmin!),
+            so the controller path is the whole guard. %>
+        <%= render "admin/tabs" if controller_path.start_with?("admin/") %>
         <% flash.each do |type, message| %>
           <p class="flash flash--<%= type %>" role="<%= type.to_s == "notice" ? "status" : "alert" %>"><%= message %></p>
         <% end %>

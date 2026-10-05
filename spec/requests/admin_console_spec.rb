@@ -129,4 +129,26 @@ describe "the admin console", type: :request do
 
     expect(large_query_count).to eq(small_query_count)
   end
+
+  # The list used to call Game#deletable? per row, which reads passings, passes,
+  # codes and the points ledger -- so all four were preloaded. Since the
+  # per-game page took the per-row controls (2026-10-05) the list reads none of
+  # them, and preloading them pulled the instance's largest tables into memory
+  # on every visit only to discard them.
+  it "does not load tables the list no longer reads" do
+    game = create_game(:author => superadmin, :is_draft => false)
+    create_game_passing(:level => create_level(:game => game))
+    sign_in(superadmin)
+
+    sql = []
+    counter = ->(*, payload) { sql << payload[:sql] }
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { get admin_games_path }
+
+    expect(response).to have_http_status(:ok)
+    # Row loads only: the "playing" figure is one grouped COUNT over
+    # game_passings for the whole page (game_team_counts), and that stays.
+    %w[game_passings access_passes access_codes point_transactions].each do |table|
+      expect(sql.grep(/SELECT "#{table}"\.\* FROM "#{table}"/)).to be_empty, "#{table} rows were loaded"
+    end
+  end
 end

@@ -44,7 +44,7 @@
           POST-only route. A select cannot ride button_to either, which is
           why this is form_with rather than the button_to used elsewhere on
           the admin screens. %>
-      <td>
+      <td class="team-actions-cell">
         <div class="game-control">
           <%= link_to t("interventions.adjust.button"),
                       new_admin_team_adjustment_path(:team_id => team.id), :class => "btn" %>

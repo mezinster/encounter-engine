@@ -42,6 +42,24 @@ proxy:
   # a translated message.
   buffering:
     max_request_body: 67108864
+  # kamal-proxy itself, not this app's route through it. v0.10.2 for
+  # GHSA-g8jf-9mcc-x4f2 (high): through v0.10.1 the proxy set no client
+  # timeouts, so one machine holding half-sent requests open could exhaust
+  # it and take down every site on this host, the parked domains included.
+  # 0.10.2 closes a stalled header after 10s, an idle keep-alive after 60s,
+  # and a stalled body after 60s (the timer restarts on progress, so a slow
+  # phone upload that keeps moving is unaffected). Measured on 2026-10-26
+  # against a rehearsal copy of this host's proxy state: 0.9.2 held a
+  # half-sent header past 40s, 0.10.2 closed it at 10.0s.
+  #
+  # Kamal 2.12 boots v0.9.2 by default, and no Kamal release defaults to
+  # 0.10.2 yet, so this override is the fix. Remove it once the Kamal in
+  # Gemfile.lock defaults to v0.10.2 or later -- a pinned old version would
+  # then hold the proxy back. A version change here takes effect only on
+  # `kamal proxy reboot` (deploy.yml: "proxy reboot -y"); `kamal deploy`
+  # leaves a running proxy alone.
+  run:
+    version: v0.10.2
 
 registry:
   server: ghcr.io

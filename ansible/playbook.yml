@@ -182,6 +182,22 @@
     # --health-check-path / is not optional: kamal-proxy defaults to /up, which
     # Rails serves and a plain nginx container does not. Verify with
     # `docker exec kamal-proxy kamal-proxy list`.
+    #
+    # The image is pinned by digest (nginx 1.31.8 on Alpine 3.24, pinned
+    # 2026-10-26). It was the floating `nginx:alpine`, and because the task
+    # below only CREATES the container, the host simply kept whatever that
+    # tag meant on the day of creation: 1.31.3 from July, five patch
+    # releases behind. A pin makes the version a reviewed fact either way.
+    #
+    # This task does not UPDATE a running container. To move to a newer
+    # nginx without dropping the page, on the host: start `parked-next` with
+    # the same arguments and the new digest; check it from another container
+    # on the kamal network (kamal-proxy's image has no wget, so a check run
+    # there returns Docker's error text, identically for both, and proves
+    # nothing); point the route at it with the deploy command above and
+    # `--target parked-next:80`; then recreate `parked` on the new digest,
+    # point the route back at `parked:80`, and remove `parked-next`. Change
+    # the digest here in the same session.
 
     - name: Ensure the kamal network exists
       ansible.builtin.command:
@@ -202,7 +218,8 @@
       ansible.builtin.command:
         cmd: >-
           docker run -d --name parked --network kamal --restart unless-stopped
-          -v /var/www/parked:/usr/share/nginx/html:ro nginx:alpine
+          -v /var/www/parked:/usr/share/nginx/html:ro
+          nginx@sha256:1ef7ca94d7879df82421428ce13bd1eaa412404953859cf7a5b6512c25e67a60
       changed_when: true
 
     - name: Enable unattended security upgrades

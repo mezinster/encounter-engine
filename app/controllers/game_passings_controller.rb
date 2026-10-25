@@ -144,7 +144,16 @@ class GamePassingsController < ApplicationController
     hint = @game_passing.hints_to_show.last
     content_locale = content_locale_for(@game_passing.game)
 
-    render json: { hint_num: @game_passing.hints_to_show.length,
+    # Encoded here rather than handed to `render json:` as a Hash, because a
+    # String passes through the renderer untouched. Rails 8.1's defaults stop
+    # the renderer escaping <, > and & (escape_json_responses), and 8.2
+    # removes the switch to turn it back on; ActiveSupport::JSON.encode still
+    # escapes them under escape_html_entities_in_json. This payload carries
+    # author-written hint text and filenames, so the wire never holds raw
+    # markup even if a future consumer reaches for innerHTML.
+    # spec/requests/live_hint_attachments_spec.rb pins it.
+    render json: ActiveSupport::JSON.encode(
+                 { hint_num: @game_passing.hints_to_show.length,
                     hint_text: hint&.translated(:text, content_locale),
                     # Platform chrome, so it goes through t() like the
                     # server-rendered legend does -- NOT hardcoded in
@@ -162,7 +171,7 @@ class GamePassingsController < ApplicationController
                     # hardcoded in the JS that renders it.
                     attachments_label: t("game_passings.show_current_level.attachments_label"),
                     attachments: hint_attachments_json(hint, content_locale),
-                    next_available_in: next_hint&.available_in(@game_passing.current_level_entered_at, @game_passing.effective_now) }
+                    next_available_in: next_hint&.available_in(@game_passing.current_level_entered_at, @game_passing.effective_now) })
   end
 
   def post_answer

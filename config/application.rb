@@ -16,7 +16,7 @@ Bundler.require(*Rails.groups)
 
 module EncounterEngine
   class Application < Rails::Application
-    config.load_defaults 8.0
+    config.load_defaults 8.1
 
     # lib/ is not autoloaded by default under Rails 8's Zeitwerk setup, so
     # lib/load_test/game_cloner.rb would otherwise need a manual require.

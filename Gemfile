@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 ruby "3.3.13"
 
-gem "rails", "8.0.5.1"
+gem "rails", "8.1.4"
 # Floor, not a feature pin: rack 3.2.6 is the version whose Rack::Sendfile
 # stopped reading the client-supplied X-Sendfile-Type header (see the comment
 # at the send_file call in app/controllers/file_deliveries_controller.rb) --

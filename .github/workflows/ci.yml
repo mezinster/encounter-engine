@@ -9,7 +9,7 @@ jobs:
   cucumber:
     name: Cucumber
     runs-on: ubuntu-latest
-    container: ruby:3.3.12
+    container: ruby:3.3.13
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -60,7 +60,7 @@ jobs:
   rspec:
     name: RSpec
     runs-on: ubuntu-latest
-    container: ruby:3.3.12
+    container: ruby:3.3.13
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -189,7 +189,7 @@ jobs:
   audit:
     name: Gem advisories
     runs-on: ubuntu-latest
-    container: ruby:3.3.12
+    container: ruby:3.3.13
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

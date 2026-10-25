@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-ruby "3.3.12"
+ruby "3.3.13"
 
 gem "rails", "8.0.5.1"
 # Floor, not a feature pin: rack 3.2.6 is the version whose Rack::Sendfile

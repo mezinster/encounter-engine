@@ -125,9 +125,12 @@ describe "attachments on the live hint poller", :type => :request do
 
     expect(response).to have_http_status(:ok)
 
-    # config.load_defaults 8.0 turns on escape_html_entities_in_json, so "<"
-    # travels over the wire as "<" -- the RAW markup string must never
-    # appear unescaped in the body Rails actually sent.
+    # Rails 8.1's defaults stop `render json:` escaping <, > and &, so
+    # GamePassingsController#get_current_level_tip encodes its own payload
+    # with ActiveSupport::JSON.encode, which still does: "<" travels over the
+    # wire as "<" -- the RAW markup string must never appear unescaped
+    # in the body Rails actually sent. This example fails if that call site
+    # goes back to handing `render json:` a Hash.
     expect(response.body).not_to include("<img src=x onerror=alert(1)>")
 
     # JSON.parse restores the escaped sequence to the literal character

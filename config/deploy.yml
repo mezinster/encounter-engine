@@ -86,7 +86,20 @@ env:
 
 accessories:
   db:
-    image: ghcr.io/mezinster/encounter-engine-postgres:latest
+    # Pinned by digest, not :latest. deploy.yml pushes a fresh :latest on
+    # every deploy, but `kamal deploy` never reboots accessories, so :latest
+    # drifts away from what is actually running -- and the next reboot (a
+    # `kamal setup`, an `accessory reboot`, a disaster recovery) would
+    # silently swap in whatever was pushed last. This is the image the db
+    # container was running when it was pinned (2026-10-26: built 2026-08-05,
+    # PostgreSQL 16.14, wal-g v3.0.3). No tag: with both, Docker ignores the
+    # tag, so "name:latest@sha256:..." would read as something it is not.
+    #
+    # To move to a newer image, deliberately: take the digest of a pushed
+    # :<commit-sha> tag (`docker buildx imagetools inspect` on the host),
+    # paste it here, then `kamal accessory reboot db`. docs/runbooks/restore.md
+    # reads this line, and spec/ops/db_image_pin_spec.rb keeps it a digest.
+    image: ghcr.io/mezinster/encounter-engine-postgres@sha256:0376619740d783dcfaa4343fb145eb7d989d241920823125100923565898c7b1
     host: 23.100.7.86
     port: "127.0.0.1:5432:5432"
     env:

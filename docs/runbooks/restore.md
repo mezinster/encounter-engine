@@ -182,13 +182,21 @@ ssh mezin 'docker volume create encounter_engine_pg_data_restored'
 # wal-g's backup-fetch has NO --target-time flag; recovery_target_time below
 # is what stops the replay.
 
-ssh mezin 'docker run -d --name ee-restore \
+#
+# The image is the one config/deploy.yml pins for the db accessory, read from
+# the checkout rather than typed here, so a restore runs the same PostgreSQL
+# and wal-g that wrote the backups. (This line said :latest until 2026-10-26;
+# every deploy moves :latest, so it named whatever was pushed last.)
+IMG=$(ruby -ryaml -e 'puts YAML.load_file("config/deploy.yml").dig("accessories", "db", "image")')
+echo "$IMG"   # must end in @sha256:<64 hex>
+
+ssh mezin "docker run -d --name ee-restore \
   -v encounter_engine_pg_data_restored:/var/lib/postgresql/data \
   -e PGUSER=encounter -e PGDATABASE=encounter_production \
   -e WALG_AZ_PREFIX=azure://encounter-engine-wal \
   -e AZURE_STORAGE_ACCOUNT=eewalxypkl1ft \
   --entrypoint sleep \
-  ghcr.io/mezinster/encounter-engine-postgres:latest infinity'
+  $IMG infinity"
 
 ssh mezin 'docker exec ee-restore wal-g backup-fetch /var/lib/postgresql/data LATEST'
 ```

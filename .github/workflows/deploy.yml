@@ -79,11 +79,12 @@ jobs:
 
       - name: Push the PostgreSQL image
         run: |
-          # Two tags for one image. config/deploy.yml:69 pins the accessory to
-          # :latest, which is mutable -- on its own it leaves no known-good
-          # version to go back to, unlike the app image, which kamal tags by
-          # commit. The :$GITHUB_SHA tag is that rollback target: point the
-          # accessory at it by hand if a published image turns out to be bad.
+          # Two tags for one image. Neither is what production runs: since
+          # 2026-10-26 config/deploy.yml pins the db accessory by DIGEST, so
+          # publishing here changes nothing until someone moves that pin on
+          # purpose. :$GITHUB_SHA names a smoke-tested candidate to move it to
+          # (read its digest with `docker buildx imagetools inspect`); :latest
+          # is kept only so existing tooling that names it still resolves.
           repo=ghcr.io/mezinster/encounter-engine-postgres
           docker tag ee-postgres:candidate "${repo}:latest"
           docker tag ee-postgres:candidate "${repo}:${GITHUB_SHA}"

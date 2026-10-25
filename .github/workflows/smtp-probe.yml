@@ -26,7 +26,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # v1.321.0, NOT the v1.245.0 SHA that perf-probe.yml carried. setup-ruby
+      # v1.334.0 (was v1.321.0, and before that the v1.245.0 SHA perf-probe.yml
+      # carried). v1.334.0 is the first release whose catalogue has 3.3.13 --
+      # the resolv CVE fix -- so bumping .ruby-version without this pin fails
+      # the same way, here, in perf-probe.yml AND in deploy.yml. setup-ruby
       # ships a fixed catalogue of Ruby builds per release, and v1.245.0's
       # predates 3.3.12 -- its list stops at 3.3.8, so it fails with "Unknown
       # version 3.3.12 for ruby on ubuntu-24.04" before the probe runs at all.
@@ -39,11 +42,11 @@ jobs:
       # 3.3.12 request, and was broken in exactly this way without anyone
       # noticing, because it is dispatched by hand and had not been run.
       #
-      # This SHA is the one deploy.yml already uses. When adding a workflow,
-      # copy the newest pin in the repo, not the nearest one.
-      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+      # Every workflow here carries this same SHA. When bumping Ruby, bump
+      # all of them together; when adding a workflow, copy this pin.
+      - uses: ruby/setup-ruby@26e5b7d197ebf60545ee9667bcbace0be11ccaec # v1.334.0
         with:
-          ruby-version: "3.3.12"
+          ruby-version: "3.3.13"
 
       # Both this workflow and deploy.yml call the same resolver, so the probe
       # cannot end up watching a different vendor than the one production is

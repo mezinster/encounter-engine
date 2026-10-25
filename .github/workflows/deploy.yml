@@ -14,7 +14,14 @@ on:
         # in this environment. The Deploy step expands this value unquoted, so
         # it word-splits into three arguments; GitHub validates a `choice`
         # against this list, so the value is never attacker-controlled.
-        options: [deploy, setup, "accessory reboot db"]
+        #
+        # `proxy reboot -y` moves kamal-proxy to the version config/deploy.yml
+        # names under proxy.run (a few seconds of downtime for EVERY site on
+        # the host, the parked domains included). `-y` is required: without
+        # it kamal stops to ask for confirmation and the run hangs. Routes and
+        # TLS certificates live in the kamal-proxy-config volume, so they
+        # survive the container being replaced.
+        options: [deploy, setup, "accessory reboot db", "proxy reboot -y"]
         default: deploy
 
 # Two deploys at once would race on the just-in-time NSG rule below, and the

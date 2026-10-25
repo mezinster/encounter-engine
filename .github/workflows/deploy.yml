@@ -6,7 +6,15 @@ on:
       command:
         description: "kamal subcommand"
         type: choice
-        options: [deploy, setup]
+        # `accessory reboot db` is how the database moves to the image
+        # config/deploy.yml pins: kamal pulls it first, then stops, removes and
+        # starts the container (seconds of downtime -- pick a slot with no game
+        # running). It runs here, not from a laptop, because kamal needs the
+        # production secrets to write the container's env, and those exist only
+        # in this environment. The Deploy step expands this value unquoted, so
+        # it word-splits into three arguments; GitHub validates a `choice`
+        # against this list, so the value is never attacker-controlled.
+        options: [deploy, setup, "accessory reboot db"]
         default: deploy
 
 # Two deploys at once would race on the just-in-time NSG rule below, and the

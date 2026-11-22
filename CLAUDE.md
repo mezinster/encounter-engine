@@ -556,11 +556,13 @@ Everything else that looks periodic is deliberately not:
     `game_runs.starts_at`, the registration deadline. `AccessCode#active?` asks
     `expires_at > Time.now`. Nothing needs a sweep to *transition* anything.
   * The real periodic work lives in **GitHub Actions on purpose** — and there
-    are exactly two scheduled workflows, `smtp-probe.yml` (`17 */6 * * *`) and
-    `vm-scale.yml` (`*/15 * * * *`); `perf-probe.yml` is `workflow_dispatch`
-    only, not a cron. Both of the real two must run *when the app is down or
-    unhealthy*, which is precisely what an in-app scheduler cannot do. Moving
-    them in would be a regression, not a tidy-up.
+    are exactly three scheduled workflows, `smtp-probe.yml` (`17 */6 * * *`),
+    `vm-scale.yml` (`*/15 * * * *`) and `gem-advisories.yml` (`23 6 * * 1`,
+    added 2026-11-22); `perf-probe.yml` is `workflow_dispatch` only, not a
+    cron. The first two must run *when the app is down or unhealthy*, which is
+    precisely what an in-app scheduler cannot do, and the third audits the
+    repository rather than the app. Moving any of them in would be a
+    regression, not a tidy-up.
 
 **The one site with a real problem is the one a queue cannot currently help.**
 `GameFileUpload` burns 2.8 s plus 1.7 s per variant of libvips inside the Puma

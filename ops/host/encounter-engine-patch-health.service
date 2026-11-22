@@ -1,0 +1,16 @@
+[Unit]
+Description=encounter-engine daily OS-patching health report to Azure Blob
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+# Same two lines as encounter-engine-archive.service, for the reasons given
+# there: systemd sets no $HOME for a unit without User=, and MSI auto-login
+# makes each azcopy call authenticate itself with the VM's managed identity.
+Environment=HOME=/root
+Environment=AZCOPY_AUTO_LOGIN_TYPE=MSI
+# A hung azcopy would otherwise hold the unit in "activating" indefinitely.
+# A missing report alerts anyway; this just keeps the journal honest.
+TimeoutStartSec=15min
+ExecStart=/usr/local/bin/encounter-engine-patch-health

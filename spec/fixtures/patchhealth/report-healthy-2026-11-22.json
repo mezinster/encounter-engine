@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "host": "web",
+  "generated_at": "2026-11-22T15:10:41Z",
+  "dpkg_audit": "",
+  "apt_update_success_at": "2026-11-22T09:17:41Z",
+  "dpkg_status_changed_at": "2026-11-22T10:01:47Z",
+  "security_pending": [],
+  "reboot_required_since": null,
+  "last_unattended_upgrades_run": "2026-11-22 06:04:11,087 INFO Starting unattended upgrades script\n2026-11-22 06:04:11,088 INFO Allowed origins are: o=Ubuntu,a=jammy, o=Ubuntu,a=jammy-security, o=UbuntuESMApps,a=jammy-apps-security, o=UbuntuESM,a=jammy-infra-security\n2026-11-22 06:04:11,089 INFO Initial blacklist: \n2026-11-22 06:04:11,089 INFO Initial whitelist (not strict): \n2026-11-22 06:04:16,572 INFO No packages found that can be upgraded unattended and no pending auto-removals"
+}

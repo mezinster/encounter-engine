@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily encounter-engine OS-patching health report
+
+[Timer]
+# 08:10 UTC, after apt-daily-upgrade.timer (06:00 plus up to 60 minutes of
+# random delay), so the report describes today's unattended-upgrades run and
+# not yesterday's. .github/workflows/patch-health.yml reads it at 09:37.
+OnCalendar=*-*-* 08:10:00
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

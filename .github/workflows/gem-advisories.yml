@@ -44,14 +44,20 @@ jobs:
 
       # --update clones ruby-advisory-db at run time. That is the point: the
       # lockfile is the constant and the advisory database is what changes.
-      # The output is kept for the issue body. `tee` keeps the run log readable
-      # too, and PIPESTATUS carries bundle-audit's own exit code past it.
+      #
+      # The report goes to a file and is NOT printed: this repository's logs
+      # and issues are public, and "these advisories are open against what we
+      # run" is more useful to an attacker than to anyone reading Actions.
+      # The lockfile is public anyway, so anyone can reproduce the details
+      # locally, and that is where the maintainer reads them too.
       - name: Check Gemfile.lock against ruby-advisory-db
         id: audit
         run: |
           set +e
-          bundle-audit check --update 2>&1 | tee audit.txt
-          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          bundle-audit check --update > audit.txt 2>&1
+          code=$?
+          echo "exit_code=${code}" >> "$GITHUB_OUTPUT"
+          echo "bundle-audit exit ${code}; advisories found: $(grep -c '^Name: ' audit.txt || true)"
 
       # failure(): a crash before the audit reported (checkout, setup-ruby,
       # gem install) must file an issue too. A scheduled check that dies
@@ -76,8 +82,10 @@ jobs:
           fi
 
           {
-            echo '```'
-            cat audit.txt 2>/dev/null || echo '(no audit output was captured)'
+            echo 'Details are deliberately not here (this repository is public). Reproduce locally:'
+            echo
+            echo '```bash'
+            echo 'gem install bundler-audit && bundle-audit check --update'
             echo '```'
             echo
             echo 'Bump the named gems on a branch: ci.yml runs the same check on the PR.'

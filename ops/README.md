@@ -79,7 +79,10 @@ every day at 09:37 with the read-only `ee-vmscale-reader-oidc` identity, runs
 `ops/patchhealth/policy.rb`, and files a `patch-health` issue when anything is
 unhealthy, including a report that is missing or more than 30 hours old. It was
 added after unattended-upgrades installed nothing for four weeks (2026-10-25 to
-2026-11-21) behind a green systemd unit.
+2026-11-21) behind a green systemd unit. **The issue and the run log name
+finding codes only**, never packages, versions or log lines, because both are
+public on this repository. The full report is on the host:
+`sudo journalctl -u encounter-engine-patch-health.service -n 60`.
 
 Azure setup it depends on, done by hand on 2026-11-22 and not in any template:
 the private `patch-health` container on `eewalxypkl1ft`, and **Storage Blob

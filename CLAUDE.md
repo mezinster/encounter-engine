@@ -556,11 +556,12 @@ Everything else that looks periodic is deliberately not:
     `game_runs.starts_at`, the registration deadline. `AccessCode#active?` asks
     `expires_at > Time.now`. Nothing needs a sweep to *transition* anything.
   * The real periodic work lives in **GitHub Actions on purpose** — and there
-    are exactly three scheduled workflows, `smtp-probe.yml` (`17 */6 * * *`),
-    `vm-scale.yml` (`*/15 * * * *`) and `gem-advisories.yml` (`23 6 * * 1`,
-    added 2026-11-22); `perf-probe.yml` is `workflow_dispatch` only, not a
-    cron. The first two must run *when the app is down or unhealthy*, which is
-    precisely what an in-app scheduler cannot do, and the third audits the
+    are exactly four scheduled workflows, `smtp-probe.yml` (`17 */6 * * *`),
+    `vm-scale.yml` (`*/15 * * * *`), `gem-advisories.yml` (`23 6 * * 1`) and
+    `patch-health.yml` (`37 9 * * *`), the last two added 2026-11-22;
+    `perf-probe.yml` is `workflow_dispatch` only, not a cron. Three of them
+    must run *when the app or host is down or unhealthy*, which is precisely
+    what an in-app scheduler cannot do, and `gem-advisories.yml` audits the
     repository rather than the app. Moving any of them in would be a
     regression, not a tidy-up.
 

@@ -1,0 +1,134 @@
+# Reads the production VM's daily OS-patching report and files an issue when
+# patching is unhealthy, or when the report is missing or old.
+#
+# Why it exists: from 2026-10-25 to 2026-11-21 unattended-upgrades installed
+# nothing. A half-installed package made every run log "Lock could not be
+# acquired" and exit 0, so systemd showed green for four weeks. A check on
+# the host alone could not have caught it either, because nobody reads the
+# host. So the host writes facts (ops/host/encounter-engine-patch-health), this
+# workflow decides (ops/patchhealth/policy.rb), and the issue is what someone
+# actually sees. A host that stops writing produces an old report, and an old
+# report is a finding.
+#
+# Daily at 09:37 UTC, about an hour and a half after the host's 08:10 timer.
+name: Patch health
+
+on:
+  schedule:
+    - cron: "37 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+env:
+  CONTAINER: patch-health
+  BLOB: web.json
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The vm-scale READ-ONLY identity, deliberately with no `environment:`.
+      # Its ref:refs/heads/master federated credential covers any workflow on
+      # master, so no production approval is needed, and that matters because
+      # an alert that waits for a human to approve it is not an alert. Its
+      # only data-plane grant is Storage Blob Data Reader on this one
+      # container, not the account, so it cannot read the WAL backups beside
+      # it. See ops/README.md.
+      - name: Authenticate to Azure (read-only identity)
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        with:
+          client-id: ${{ secrets.AZURE_VMSCALE_READER_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # The account name comes from config/deploy.yml, the single place it is
+      # configured. The host script reads it from the db container, whose env
+      # deploy.yml sets.
+      #
+      # A failed download is NOT a step failure: it becomes `"report": null`,
+      # which the policy reports as no_report. A missing report has to land
+      # in the same issue path as a broken one, not as a red run that only
+      # someone reading Actions would notice.
+      - name: Fetch the report
+        run: |
+          set -uo pipefail
+          ACCT=$(ruby -ryaml -e 'puts YAML.load_file("config/deploy.yml").dig("accessories","db","env","clear","AZURE_STORAGE_ACCOUNT")')
+          REPORT=null
+          for attempt in 1 2 3; do
+            if az storage blob download --auth-mode login --account-name "$ACCT" \
+                 -c "$CONTAINER" -n "$BLOB" -f report.json --only-show-errors >/dev/null; then
+              REPORT=$(jq -c . report.json 2>/dev/null || echo null)
+              break
+            fi
+            # Retried for the same reason deploy.yml retries `az`: the hosted
+            # runner's CLI occasionally deadlocks on import (Azure/azure-cli#32980).
+            sleep $((attempt * 10))
+          done
+          jq -n --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --argjson report "$REPORT" \
+            '{now_utc: $now, report: $report}' > input.json
+
+      - name: Decide
+        id: decide
+        run: |
+          set +e
+          ruby ops/patchhealth/policy.rb < input.json > verdict.json
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat verdict.json
+
+      # Same shape as smtp-probe.yml, whose comments explain each choice:
+      # failure() so a crash still files, GH_REPO so gh needs no remote, and
+      # one open issue commented on rather than a new one every day.
+      - name: File or update the patch-health issue
+        if: failure() || steps.decide.outputs.exit_code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if SUMMARY=$(jq -er '.summary' verdict.json 2>/dev/null); then
+            DETAILS=$(jq -r '.findings[] | "- **\(.code)**: \(.detail)"' verdict.json)
+          else
+            SUMMARY="the check itself crashed -- see the run log"
+            DETAILS="(no verdict was written)"
+          fi
+          TITLE="Patch health: ${SUMMARY}"
+          TITLE="${TITLE:0:200}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          {
+            echo "$DETAILS"
+            echo
+            echo '<details><summary>Report as read</summary>'
+            echo
+            echo '```json'
+            jq . input.json 2>/dev/null || echo '(no input.json)'
+            echo '```'
+            echo '</details>'
+            echo
+            echo 'On the host: `sudo dpkg --audit`, `pgrep -a "apt|dpkg|unattended"`,'
+            echo '`sudo tail -30 /var/log/unattended-upgrades/unattended-upgrades.log`,'
+            echo '`systemctl status encounter-engine-patch-health.timer`. A half-installed'
+            echo 'package is fixed by reinstalling it (`apt-get install <pkg>`); `dpkg --configure -a`'
+            echo 'alone did not clear it on 2026-11-21.'
+            echo
+            echo "[run]($RUN_URL)"
+          } > issue-body.md
+
+          gh label create patch-health --description "VM OS-patching health" --color B60205 2>/dev/null || true
+          ISSUE=$(gh issue list --label patch-health --state open --limit 1 --json number --jq '.[0].number // empty' || echo "")
+          if [ -n "$ISSUE" ]; then
+            gh issue edit "$ISSUE" --title "$TITLE"
+            gh issue comment "$ISSUE" --body-file issue-body.md
+          else
+            gh issue create --title "$TITLE" --body-file issue-body.md --label patch-health
+          fi
+
+      - name: Fail the run so the badge reflects reality
+        if: failure() || steps.decide.outputs.exit_code != '0'
+        run: exit 1

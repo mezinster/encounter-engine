@@ -1,0 +1,188 @@
+#!/usr/bin/python3
+"""Daily report of this host's OS-patching health, uploaded to blob storage.
+
+WHY THIS EXISTS. On 2026-10-25 a VM restart killed the daily apt run
+mid-upgrade and left a package `reinstreq half-installed`. From then on every
+unattended-upgrades run logged "Lock could not be acquired" and exited 0, so
+apt-daily-upgrade.service stayed green in systemd. No security update was
+installed for four weeks, and nothing on the host or anywhere else said so.
+
+WHAT IT DOES. It GATHERS facts and decides nothing. The thresholds live in
+ops/patchhealth/policy.rb, which .github/workflows/patch-health.yml runs
+against the uploaded report, the same split as ops/vmscale (gather.sh gathers,
+policy.rb decides). The host also cannot report its own death. The workflow
+treats a missing or old report as unhealthy, so a host that stops writing
+alerts too.
+
+WHAT IT MUST NOT DO: take the apt or dpkg lock. It never runs `apt-get
+update` or anything that writes. `apt list --upgradable` reads the package
+lists apt-daily already downloaded, and `dpkg --audit` only reads status.
+Contending with the job it is watching would make it part of the problem.
+
+Python, not bash, because the output is JSON and the host has no jq. Stdlib
+only, so it needs nothing that is not on a stock Ubuntu install.
+"""
+
+import datetime
+import json
+import os
+import re
+import socket
+import subprocess
+import sys
+import tempfile
+
+STATE_DIR = "/var/lib/encounter-engine-patch-health"
+SEEN_FILE = os.path.join(STATE_DIR, "security-first-seen.json")
+UU_LOG = "/var/log/unattended-upgrades/unattended-upgrades.log"
+CONTAINER = "patch-health"
+DB_CONTAINER = "encounter-engine-db"
+
+
+def iso(ts):
+    if ts is None:
+        return None
+    return datetime.datetime.fromtimestamp(ts, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def mtime(path):
+    try:
+        return os.stat(path).st_mtime
+    except FileNotFoundError:
+        return None
+
+
+def run(cmd):
+    # stdin=DEVNULL for the reason ops/README.md gives: azcopy consumes
+    # stdin. Kept on every call so the rule never has to be remembered.
+    return subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True)
+
+
+def security_upgradable():
+    """Packages with a pending upgrade from a -security pocket.
+
+    Only -security, not -updates. Phased updates sit in -updates and show up
+    as upgradable for days by design, so counting them would raise false
+    alarms. Security updates are never phased, and unattended-upgrades is
+    configured to install them, so one pending for days means it is stuck.
+    Lines look like: `libfoo/jammy-updates,jammy-security 1.2-3 amd64 [upgradable from: 1.2-2]`.
+    """
+    out = run(["apt", "list", "--upgradable"]).stdout
+    pending = {}
+    for line in out.splitlines():
+        m = re.match(r"^([^/\s]+)/(\S+)\s+(\S+)\s", line)
+        if m and "-security" in m.group(2):
+            pending[m.group(1)] = m.group(3)
+    return pending
+
+
+def first_seen(pending, now):
+    """When each pending (package, version) was first observed.
+
+    A single snapshot cannot tell "published an hour ago" from "stuck for a
+    month", and that difference is the whole signal. So first sightings are
+    kept between runs. A new version of the same package counts as new.
+    """
+    try:
+        with open(SEEN_FILE) as f:
+            seen = json.load(f)
+    except (FileNotFoundError, ValueError):
+        seen = {}
+    current = {}
+    for pkg, ver in pending.items():
+        key = f"{pkg} {ver}"
+        current[key] = seen.get(key, now)
+    os.makedirs(STATE_DIR, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", dir=STATE_DIR, delete=False) as f:
+        json.dump(current, f)
+    os.replace(f.name, SEEN_FILE)
+    return current
+
+
+def last_uu_run():
+    """The lines of the most recent unattended-upgrades run, and only those.
+
+    Scanning a fixed tail would let a failure from three days ago keep firing
+    after it was fixed, or let one fresh success line hide earlier failures.
+    Each run starts with "Starting unattended upgrades script".
+    """
+    try:
+        with open(UU_LOG, errors="replace") as f:
+            lines = f.read().splitlines()
+    except FileNotFoundError:
+        return None
+    start = None
+    for i, line in enumerate(lines):
+        if "Starting unattended upgrades script" in line:
+            start = i
+    if start is None:
+        return None
+    return "\n".join(lines[start:][:40])
+
+
+def storage_account():
+    # Read off the db container, as encounter-engine-archive does, so the
+    # account name is configured in exactly one place: config/deploy.yml.
+    out = run(["docker", "inspect", DB_CONTAINER, "--format", "{{range .Config.Env}}{{println .}}{{end}}"]).stdout
+    for line in out.splitlines():
+        if line.startswith("AZURE_STORAGE_ACCOUNT="):
+            return line.split("=", 1)[1]
+    return None
+
+
+def main():
+    now = datetime.datetime.now(datetime.timezone.utc).timestamp()
+    pending = security_upgradable()
+    seen = first_seen(pending, now)
+    audit = run(["dpkg", "--audit"])
+
+    report = {
+        "schema": 1,
+        "host": socket.gethostname(),
+        "generated_at": iso(now),
+        # dpkg --audit prints nothing when every package is fully installed.
+        # The 2026-10-25 failure showed up here as a half-installed package.
+        "dpkg_audit": (audit.stdout + audit.stderr).strip(),
+        # Written by apt-daily only when `apt-get update` SUCCEEDED. If it
+        # stops moving, the upgradable list below is computed from stale
+        # package lists and its emptiness means nothing.
+        "apt_update_success_at": iso(mtime("/var/lib/apt/periodic/update-success-stamp")),
+        # Rewritten by every dpkg operation that changes anything.
+        "dpkg_status_changed_at": iso(mtime("/var/lib/dpkg/status")),
+        "security_pending": [
+            {"package": k.split(" ", 1)[0], "version": k.split(" ", 1)[1], "first_seen_at": iso(v)}
+            for k, v in sorted(seen.items())
+        ],
+        # Exists when an installed update needs a reboot to take effect
+        # (kernel, libc). Installed but not running is not yet patched.
+        "reboot_required_since": iso(mtime("/var/run/reboot-required")),
+        "last_unattended_upgrades_run": last_uu_run(),
+    }
+
+    body = json.dumps(report, indent=2) + "\n"
+    print(body, end="")
+
+    acct = storage_account()
+    if not acct:
+        print(f"FATAL: could not read AZURE_STORAGE_ACCOUNT off the {DB_CONTAINER} container", file=sys.stderr)
+        return 1
+
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+        f.write(body)
+    try:
+        dest = f"https://{acct}.blob.core.windows.net/{CONTAINER}/{report['host']}.json"
+        res = run(["azcopy", "copy", f.name, dest, "--overwrite=true"])
+        # Exit status AND the status line: azcopy can exit 0 with a job that
+        # ended Failed or CompletedWithErrors. Same check as the archive job.
+        out = res.stdout + res.stderr
+        if res.returncode != 0 or re.search(r"Final Job Status: (Failed|CompletedWithErrors)", out):
+            print(f"FATAL: azcopy upload failed (exit {res.returncode}); its output follows", file=sys.stderr)
+            print(out, file=sys.stderr)
+            return 1
+    finally:
+        os.unlink(f.name)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

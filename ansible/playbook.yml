@@ -164,6 +164,39 @@
         state: started
         daemon_reload: true
 
+    # --- OS-patching health report -----------------------------------------
+    # A daily report of dpkg/apt/unattended-upgrades state, uploaded to the
+    # patch-health container. .github/workflows/patch-health.yml reads it and
+    # files an issue. The workflow alerts when the report goes MISSING, so a
+    # rebuilt host that skips this task shows up the next morning as a
+    # no_report or stale_report issue.
+    - name: Install the patch-health script
+      ansible.builtin.copy:
+        src: ../ops/host/encounter-engine-patch-health
+        dest: /usr/local/bin/encounter-engine-patch-health
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install the patch-health unit and timer
+      ansible.builtin.copy:
+        src: "../ops/host/{{ item }}"
+        dest: /etc/systemd/system/{{ item }}
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - encounter-engine-patch-health.service
+        - encounter-engine-patch-health.timer
+      notify: Reload systemd
+
+    - name: Enable the daily patch-health timer
+      ansible.builtin.systemd:
+        name: encounter-engine-patch-health.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+
     # --- The parked site --------------------------------------------------
     # mezin.by, www.mezin.by, mezin.eu and www.mezin.eu are served by a
     # hand-run nginx container, NOT by Kamal -- it carries no Kamal labels and

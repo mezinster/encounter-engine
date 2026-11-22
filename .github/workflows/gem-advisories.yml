@@ -1,0 +1,105 @@
+# Weekly bundle-audit of master's Gemfile.lock, filing an issue when it finds
+# anything.
+#
+# ci.yml already runs the same check, but only on a push or a pull request, so
+# it answers "is this change safe?" and never "is what we already shipped still
+# safe?". An advisory published against an unchanged lockfile stays invisible
+# until someone happens to push. On 2026-11-22 the Rails 8.1.4 advisories had
+# been public for weeks and nothing had said so, because nothing had run. This
+# workflow is that missing scheduled run.
+#
+# Mondays 06:23 UTC: early in the week, so a finding lands while there is time
+# to act on it before a weekend game, and off the hour, so it is not queued
+# behind every other `0 * * * *` schedule on GitHub's runners.
+name: Gem advisories (weekly)
+
+on:
+  schedule:
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  audit:
+    # On the runner rather than in ci.yml's ruby:3.3.13 container: the issue
+    # step needs gh, which the container does not have, and splitting into two
+    # jobs would mean passing the report between them as an artifact. Same
+    # Ruby either way; bundle-audit only reads the lockfile.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Same pin as smtp-probe.yml. Its comment explains why the pin has to
+      # move with .ruby-version.
+      - uses: ruby/setup-ruby@26e5b7d197ebf60545ee9667bcbace0be11ccaec # v1.334.0
+        with:
+          ruby-version: "3.3.13"
+
+      - name: Install bundler-audit
+        run: gem install bundler-audit --no-document
+
+      # --update clones ruby-advisory-db at run time. That is the point: the
+      # lockfile is the constant and the advisory database is what changes.
+      # The output is kept for the issue body. `tee` keeps the run log readable
+      # too, and PIPESTATUS carries bundle-audit's own exit code past it.
+      - name: Check Gemfile.lock against ruby-advisory-db
+        id: audit
+        run: |
+          set +e
+          bundle-audit check --update 2>&1 | tee audit.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      # failure(): a crash before the audit reported (checkout, setup-ruby,
+      # gem install) must file an issue too. A scheduled check that dies
+      # silently is the failure this workflow exists to remove.
+      - name: File or update the advisories issue
+        if: failure() || steps.audit.outputs.exit_code != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Set explicitly so gh needs no git remote, which a failed checkout
+          # would not have left behind.
+          GH_REPO: ${{ github.repository }}
+          EXIT_CODE: ${{ steps.audit.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "${EXIT_CODE:-}" = "1" ] && [ -s audit.txt ]; then
+            COUNT=$(grep -c '^Name: ' audit.txt || true)
+            TITLE="Gem advisories: ${COUNT} vulnerable gem(s) in Gemfile.lock"
+          else
+            TITLE="Gem advisories: the weekly audit did not complete -- see the run log"
+          fi
+
+          {
+            echo '```'
+            cat audit.txt 2>/dev/null || echo '(no audit output was captured)'
+            echo '```'
+            echo
+            echo 'Bump the named gems on a branch: ci.yml runs the same check on the PR.'
+            echo 'A fix only counts once it is deployed, because production runs the image and not master.'
+            echo
+            echo "[run]($RUN_URL)"
+          } > issue-body.md
+
+          gh label create advisories --description "Weekly gem advisory audit" --color B60205 2>/dev/null || true
+
+          # One open issue, commented on each week, the same de-duplication as
+          # smtp-probe.yml. `|| echo ""` falls through to creating an issue if
+          # the lookup itself fails. The worst case is then a duplicate issue,
+          # never no issue at all.
+          ISSUE=$(gh issue list --label advisories --state open --limit 1 --json number --jq '.[0].number // empty' || echo "")
+          if [ -n "$ISSUE" ]; then
+            gh issue edit "$ISSUE" --title "$TITLE"
+            gh issue comment "$ISSUE" --body-file issue-body.md
+          else
+            gh issue create --title "$TITLE" --body-file issue-body.md --label advisories
+          fi
+
+      - name: Fail the run so the badge reflects reality
+        if: failure() || steps.audit.outputs.exit_code != '0'
+        run: exit 1

@@ -112,11 +112,12 @@ accessories:
     # ignores the tag, so "name:latest@sha256:..." would read as something it
     # is not.
     #
-    # Current: the :a14520f94a7e... image (built 2026-10-25, PostgreSQL 16.15,
+    # Current: the :6dff653fb07e... image (built 2026-11-22, PostgreSQL 16.16,
     # wal-g v3.0.3), smoke-tested by that deploy run before it was pushed.
-    # Previous, and the rollback target: sha256:0376619740d7... (built
-    # 2026-08-05, PostgreSQL 16.14) -- put it back here and reboot again. A
-    # patch-release move either way keeps the on-disk format.
+    # Previous, and the rollback target: sha256:982489a5a7ac... (the
+    # :a14520f94a7e... image, built 2026-10-25, PostgreSQL 16.15) -- put it
+    # back here and reboot again. A patch-release move either way keeps the
+    # on-disk format.
     #
     # To move to a newer image, deliberately: take the digest of a pushed
     # :<commit-sha> tag (`docker buildx imagetools inspect` on the host),
@@ -125,7 +126,7 @@ accessories:
     # reboot runs, this line names an image production is not running, and
     # docs/runbooks/restore.md reads it. spec/ops/db_image_pin_spec.rb keeps
     # it a digest.
-    image: ghcr.io/mezinster/encounter-engine-postgres@sha256:982489a5a7ac4611b3e58e51f9609fca3da5dc17460f04ec24b6c24e5781f7fe
+    image: ghcr.io/mezinster/encounter-engine-postgres@sha256:b21dd869a774eaaa03a6bcbbad913e688c00a8b748962849756be1255d9b7e7d
     host: 23.100.7.86
     port: "127.0.0.1:5432:5432"
     env:

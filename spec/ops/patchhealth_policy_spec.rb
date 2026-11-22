@@ -101,6 +101,51 @@ RSpec.describe PatchHealth::Policy do
     expect(decide(report { |r| r["reboot_required_since"] = "2026-11-20T00:00:00Z" })["verdict"]).to eq("ok")
   end
 
+  describe "the public view (the issue body and the Actions log are world-readable)" do
+    # Everything report-derived in the incident fixture below: package names,
+    # versions, log text, the host name. None of it may appear in public.
+    SECRETS = %w[mdatp libc6 2.35-0ubuntu3.12 openssl 3.0.2-0ubuntu1.21 Lock\ could half\ configured web 06:04].freeze
+
+    let(:broken) do
+      report do |r|
+        r["dpkg_audit"] = "The following packages are only half configured: mdatp"
+        r["last_unattended_upgrades_run"] = "2026-11-22 06:04:11,087 INFO Starting unattended upgrades script\n" \
+                                            "2026-11-22 06:04:11,301 INFO Lock could not be acquired"
+        r["security_pending"] = [{ "package" => "libc6", "version" => "2.35-0ubuntu3.12", "first_seen_at" => "2026-11-01T08:10:00Z" },
+                                 { "package" => "openssl", "version" => "3.0.2-0ubuntu1.21", "first_seen_at" => "2026-11-01T08:10:00Z" }]
+        r["reboot_required_since"] = "2026-11-01T00:00:00Z"
+      end
+    end
+
+    it "carries the codes but none of the report's content" do
+      public = described_class.public_view(decide(broken))
+      text = JSON.generate(public)
+      expect(public["findings"].map { |f| f["code"] })
+        .to contain_exactly("dpkg_broken", "unattended_upgrades_failing", "security_updates_stuck", "reboot_pending")
+      SECRETS.each { |s| expect(text).not_to include(s) }
+    end
+
+    it "says only the fixed sentence for each code" do
+      described_class.public_view(decide(broken))["findings"].each do |f|
+        expect(f.keys).to eq(%w[code text])
+        expect(f["text"]).to eq(described_class::PUBLIC_TEXT.fetch(f["code"]))
+      end
+    end
+
+    it "has a public sentence for every code the policy can emit" do
+      emitted = File.read(File.expand_path("../../ops/patchhealth/policy.rb", __dir__)).scan(/finding\("(\w+)"/).flatten.uniq
+      expect(described_class::PUBLIC_TEXT.keys).to match_array(emitted)
+    end
+
+    it "is what --public prints" do
+      script = File.expand_path("../../ops/patchhealth/policy.rb", __dir__)
+      out, status = Open3.capture2("ruby", script, "--public",
+                                   stdin_data: JSON.generate("now_utc" => NEXT_MORNING, "report" => broken))
+      expect(status.exitstatus).to eq(1)
+      SECRETS.each { |s| expect(out).not_to include(s) }
+    end
+  end
+
   describe "as a command" do
     let(:script) { File.expand_path("../../ops/patchhealth/policy.rb", __dir__) }
 

@@ -73,13 +73,20 @@ jobs:
           jq -n --arg now "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --argjson report "$REPORT" \
             '{now_utc: $now, report: $report}' > input.json
 
+      # THIS REPOSITORY IS PUBLIC, and so are its Actions logs and issues.
+      # The report names pending packages, their versions and how long each
+      # has gone unpatched, which is a ready-made target list. So: --public
+      # (finding codes and fixed sentences only, see PUBLIC_TEXT in the
+      # policy), stderr discarded (a Ruby error message can quote its input),
+      # and input.json is never printed. The details stay on the host, in the
+      # journal of encounter-engine-patch-health.service.
       - name: Decide
         id: decide
         run: |
           set +e
-          ruby ops/patchhealth/policy.rb < input.json > verdict.json
+          ruby ops/patchhealth/policy.rb --public < input.json > verdict.json 2>/dev/null
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
-          cat verdict.json
+          jq -r '.verdict, (.findings[] | .code)' verdict.json 2>/dev/null || echo "policy wrote no verdict"
 
       # Same shape as smtp-probe.yml, whose comments explain each choice:
       # failure() so a crash still files, GH_REPO so gh needs no remote, and
@@ -92,7 +99,7 @@ jobs:
         run: |
           set -euo pipefail
           if SUMMARY=$(jq -er '.summary' verdict.json 2>/dev/null); then
-            DETAILS=$(jq -r '.findings[] | "- **\(.code)**: \(.detail)"' verdict.json)
+            DETAILS=$(jq -r '.findings[] | "- **\(.code)**: \(.text)"' verdict.json)
           else
             SUMMARY="the check itself crashed -- see the run log"
             DETAILS="(no verdict was written)"
@@ -104,14 +111,10 @@ jobs:
           {
             echo "$DETAILS"
             echo
-            echo '<details><summary>Report as read</summary>'
+            echo 'Details are deliberately not here (this repository is public). On the host,'
+            echo 'the full report: `sudo journalctl -u encounter-engine-patch-health.service -n 60`.'
             echo
-            echo '```json'
-            jq . input.json 2>/dev/null || echo '(no input.json)'
-            echo '```'
-            echo '</details>'
-            echo
-            echo 'On the host: `sudo dpkg --audit`, `pgrep -a "apt|dpkg|unattended"`,'
+            echo 'Then: `sudo dpkg --audit`, `pgrep -a "apt|dpkg|unattended"`,'
             echo '`sudo tail -30 /var/log/unattended-upgrades/unattended-upgrades.log`,'
             echo '`systemctl status encounter-engine-patch-health.timer`. A half-installed'
             echo 'package is fixed by reinstalling it (`apt-get install <pkg>`); `dpkg --configure -a`'

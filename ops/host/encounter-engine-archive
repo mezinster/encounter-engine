@@ -13,10 +13,14 @@
 # size looks plausible. The design's own standard is that a procedure nobody has
 # executed is a hypothesis; that is as true of a backup nobody has read back.
 #
-# ENCRYPTED to public keys only. This archive contains three private keys
-# (/var/www/Keys) and the dynamic-DNS credentials in /etc/ddclient.conf, so an
-# unencrypted copy in blob storage is an offsite copy of the machine's
-# credentials. The host cannot decrypt what it writes -- see Task 2's canary.
+# ENCRYPTED to public keys only. This archive contains the SSH host private
+# keys, the Let's Encrypt account and certificate keys, and the dynamic-DNS
+# credentials in /etc/ddclient.conf, so an unencrypted copy in blob storage is
+# an offsite copy of the machine's credentials. (/var/www/Keys, three
+# WordPress-era keys, was archived here until it was deleted from the host on
+# 2026-11-22 along with the rest of /var/www. The owner chose not to keep it,
+# so the path is gone from the list below. Archives up to 2026-11-22 still
+# hold it until they age out.) The host cannot decrypt what it writes -- see Task 2's canary.
 set -euo pipefail
 
 RECIPIENTS=/etc/encounter-engine/archive-recipients.txt
@@ -173,8 +177,8 @@ azcopy_quiet() {
 # Log in HERE, before anything is staged, not just before the upload. A broken
 # or unassigned managed identity is a precondition failure, and discovering it
 # after the tar means the whole archive was built for nothing -- including
-# writing the plaintext tar of three private keys and the ddclient credentials
-# to disk. ops/archive-once.sh logs in at the same point, for the same reason.
+# writing the plaintext tar of the host's private keys and the ddclient
+# credentials to disk. ops/archive-once.sh logs in at the same point, for the same reason.
 #
 # This is a probe, not the mechanism: encounter-engine-archive.service sets
 # AZCOPY_AUTO_LOGIN_TYPE=MSI so each azcopy call authenticates itself, because
@@ -236,7 +240,6 @@ echo "building archive"
 TAR_STATUS=0
 tar --create --zstd --file "$ARCHIVE" \
     --directory / \
-    var/www/Keys \
     etc/systemd/system/encounter-engine-backup.service \
     etc/systemd/system/encounter-engine-backup.timer \
     etc/systemd/system/encounter-engine-archive.service \
@@ -269,7 +272,7 @@ rm -rf "$UPLOADS"
 echo "encrypting"
 age -R "$RECIPIENTS" -o "$ARCHIVE.age" "$ARCHIVE"
 
-# $ARCHIVE is the plaintext tar -- three private keys and the ddclient
+# $ARCHIVE is the plaintext tar -- the host's private keys and the ddclient
 # credentials, per the header comment -- and PLAIN_SUM was already captured
 # above, so nothing downstream needs it on disk. Deleting it here both keeps
 # the free-space math above honest (see "sized at ~2x") and stops the

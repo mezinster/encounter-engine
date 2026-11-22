@@ -394,6 +394,16 @@ can succeed — see §7.
 
 ## 7. Retrieving and decrypting an archive
 
+**Rehearsed 2026-11-22**, following this section as written, on a laptop with no VM access:
+`azcopy list` with `AZCOPY_AUTO_LOGIN_TYPE=AZCLI` worked, and showed 91 consecutive daily archives
+(2026-08-24 to 2026-11-22, no gaps; older ones removed by the lifecycle rule). The **secondary key
+from Key Vault** decrypted `2026-11-22/host-state.tar.zst.age`, and the unpacked tree contained
+every path listed below. Checked against the live host: all 19 upload files matched by sha256, the
+recipients file and the ed25519 host key were identical. Two gaps found and fixed here: there were no
+instructions for installing `azcopy`, and the cleanup tripped on read-only files. The Key Vault copy of
+the secondary key differs from the laptop's `~/.age-keys/secondary.key` only by a trailing newline;
+both produce the same recipient. The primary key is still on the laptop alone.
+
 Archives written after 2026-08-14 are encrypted with `age` to two recipients. The host holds
 only the public keys (`/etc/encounter-engine/archive-recipients.txt`) and cannot read what it
 writes. Everything in this section is done **on a laptop that holds a private key**, not on the
@@ -426,7 +436,7 @@ replaced it precisely because a person can read that one.
 
 *Making it useful would have made it dangerous.* The obvious repair — a workflow that decrypts an
 archive — turns repository write access into read-access over every backup, including the four
-SSH host keys and the three private keys in `/var/www/Keys`. This repository is **public**, so
+SSH host keys, the Let's Encrypt keys and the dynamic-DNS credentials. This repository is **public**, so
 workflow artifacts are downloadable by anyone with read access; a decrypt-to-artifact workflow
 would publish the host's entire state. Restores are rare, and they already work from a laptop.
 
@@ -448,7 +458,16 @@ accessory). Read it from there, not from the `encounter-engine-db` container: `o
 it off that container because they run beside it, but the disaster this section is written for is
 the one where that container — and the host under it — is gone.
 
-**Retrieve, decrypt, unpack.**
+**Retrieve, decrypt, unpack.** You need `az`, `age` and `azcopy`. `azcopy` is a single binary
+that is **not** in apt. A fresh laptop will not have it, and nothing below says where to get it
+until you look here:
+
+```bash
+d=$(mktemp -d) && curl -sSL -o "$d/a.tgz" https://aka.ms/downloadazcopy-v10-linux \
+  && tar -xzf "$d/a.tgz" -C "$d" && install -m755 "$d"/azcopy_linux_amd64_*/azcopy ~/.local/bin/ && rm -rf "$d"
+```
+
+Then:
 
 ```bash
 az login                                # an account with Storage Blob Data Reader on the account
@@ -467,7 +486,8 @@ host uses the same variable with `MSI` instead, from
 
 That unpacks to the paths as they were on the host, relative to the current directory:
 
-- `var/www/Keys` — three private keys
+- `var/www/Keys` — three WordPress-era private keys, **only in archives up to 2026-11-22**: the
+  directory was deleted from the host that day and the owner chose not to keep it
 - `etc/ssh` — all four host key pairs, and `sshd_config`
 - `etc/letsencrypt`
 - `etc/ddclient.conf` — contains the dynamic-DNS credentials
@@ -479,6 +499,14 @@ That unpacks to the paths as they were on the host, relative to the current dire
 - `uploads/` — the `encounter_engine_storage` Docker volume
 
 Unpack into an empty directory and copy out what you need — do not extract over `/`.
+
+**Clean up afterwards, and expect `shred` to refuse some files.** The tar keeps original modes,
+and some Let's Encrypt private keys unpack as read-only, so `shred -u` fails with *Permission
+denied* until you make them writable:
+
+```bash
+chmod -R u+rwX <dir> && find <dir> -type f -exec shred -u {} + && rm -rf <dir>
+```
 
 The one-off archive works identically; only the container, prefix and blob names differ (§8).
 
